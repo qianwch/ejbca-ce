@@ -1,4 +1,10 @@
 
+EJBCA V1.4
+----------
+This is a plugin upgrade from v1.3.
+Deployment has changes, så before deploying version 1.4, delete 
+'ca.jar,ra.jar,apply.war and webdist.war' from the directory $JBOSS_HOME/deploy.
+
 EJBCA V1.3
 ----------
 This is a plugin upgrade from v1.2 or 1.1. Just build and deploy the new

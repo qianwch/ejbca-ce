@@ -1,5 +1,6 @@
 1.4
 ---
+Fixed bug with case-sensitivity for column names in Sybase.
 Added method for easily getting certificates with different keyUsage.
 Better separated and better looking web pages.
 Deployed with EAR-files.
