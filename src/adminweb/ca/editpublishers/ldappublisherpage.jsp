@@ -63,11 +63,13 @@
       <td width="50%" valign="top"> 
         <div align="right"> 
           <%= ejbcawebbean.getText("BASEDN") %>
+          <br>
+          <%= ejbcawebbean.getText("BASEDNDESCR") %>
         </div>
       </td>
       <td width="50%" valign="top"> 
          <input type="text" name="<%=EditPublisherJSPHelper.TEXTFIELD_LDAPBASEDN%>" size="30" maxlength="255" 
-               value='<%= ldappublisher.getBaseDN()%>'> 
+               value='<%= ldappublisher.getBaseDN()%>'>
       </td>
     </tr>
     <tr id="Row<%=row++%2%>"> 
