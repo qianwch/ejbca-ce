@@ -57,7 +57,7 @@ import com.novell.ldap.LDAPModificationSet;
 /**
  * LdapPublisher is a class handling a publishing to various v3 LDAP catalouges.  
  *
- * @version $Id: LdapPublisher.java,v 1.5.2.2 2004-08-25 08:45:20 anatom Exp $
+ * @version $Id: LdapPublisher.java,v 1.5.2.3 2004-08-25 10:53:36 anatom Exp $
  */
 public class LdapPublisher extends BasePublisher{
 	 	
@@ -285,7 +285,6 @@ public class LdapPublisher extends BasePublisher{
             log.info("Certificate of type '" + type + "' will not be published.");
             throw new PublisherException("Certificate of type '" + type + "' will not be published.");                      
         }
-
         try {
         
             lc.connect(getHostname(), Integer.parseInt(getPort()));
@@ -797,72 +796,73 @@ public class LdapPublisher extends BasePublisher{
          *   -- Call the LDAPConnection add method to add it to the directory
          */
         if (extra) {
-            String cn = CertTools.getPartFromDN(dn, "CN");
-            if (cn != null) {
-                attributeSet.add(new LDAPAttribute("cn", cn));
-            }
-            // sn means surname in LDAP, and is required for persons
-            String sn = CertTools.getPartFromDN(dn, "SURNAME");
-            if (person) {
-                if ( (sn == null) && (cn != null) ) {
-                    // Take surname to be the last part of the cn
-                    int index = cn.lastIndexOf(' ');
-                    if (index <=0) {
-                        // If there is no natural sn, use cn since sn is required
-                        sn = cn;
-                    } else {
-                        if (index < cn.length()) sn = cn.substring(index+1);
-                    }
-                }
-            }
-            if (sn != null) {
-               attributeSet.add(new LDAPAttribute("sn", sn));
-            }
-            // gn means givenname in LDAP, and is required for persons
-            String gn = CertTools.getPartFromDN(dn, "GIVENNAME");
-            if (person) {
-                if ( (gn == null) && (cn != null) ) {
-                    // Take givenname to be the first part of the cn
-                    int index = cn.indexOf(' ');
-                    if (index <=0) {
-                        // If there is no natural gn/sn, ignore gn if we are using sn
-                        if (sn == null) gn = cn;
-                    } else {
-                        gn = cn.substring(0, index);
-                    }
-                }
-            }
-            if (gn != null) {
-               attributeSet.add(new LDAPAttribute("givenName", gn));
-            }
-            String l = CertTools.getPartFromDN(dn, "L");
-            if (l != null) {
-                attributeSet.add(new LDAPAttribute("l", l));
-            }
-            String st = CertTools.getPartFromDN(dn, "ST");
-            if (st != null) {
-                attributeSet.add(new LDAPAttribute("st", st));
-            }
-            String ou = CertTools.getPartFromDN(dn, "OU");
-            if (ou != null) {
-                attributeSet.add(new LDAPAttribute("ou", ou));
-            }
-            String o = CertTools.getPartFromDN(dn, "O");
-            if (o != null) {
-                attributeSet.add(new LDAPAttribute("o", o));
-            }
-            String uid = CertTools.getPartFromDN(dn, "uid");
-            if (uid != null) {
-                attributeSet.add(new LDAPAttribute("uid", uid));
-            }        
-            String initials = CertTools.getPartFromDN(dn, "initials");
-            if (initials != null) {
-                attributeSet.add(new LDAPAttribute("initials", initials));
-            }        
-            String title = CertTools.getPartFromDN(dn, "T");
-            if (title != null) {
-                attributeSet.add(new LDAPAttribute("title", title));
-            }        
+        	String cn = CertTools.getPartFromDN(dn, "CN");
+        	if (cn != null) {
+        		attributeSet.add(new LDAPAttribute("cn", cn));
+        	}
+        	String l = CertTools.getPartFromDN(dn, "L");
+        	if (l != null) {
+        		attributeSet.add(new LDAPAttribute("l", l));
+        	}
+        	String ou = CertTools.getPartFromDN(dn, "OU");
+        	if (ou != null) {
+        		attributeSet.add(new LDAPAttribute("ou", ou));
+        	}
+        	// Only persons have (normally) all these extra attributes. 
+        	// A CA might have them if you don't use the default objectClass, but we don't
+        	// handle that case.
+        	if (person) {
+        		// sn means surname in LDAP, and is required for persons
+        		String sn = CertTools.getPartFromDN(dn, "SURNAME");
+        		if ( (sn == null) && (cn != null) ) {
+        			// Take surname to be the last part of the cn
+        			int index = cn.lastIndexOf(' ');
+        			if (index <=0) {
+        				// If there is no natural sn, use cn since sn is required
+        				sn = cn;
+        			} else {
+        				if (index < cn.length()) sn = cn.substring(index+1);
+        			}
+        		}
+        		if (sn != null) {
+        			attributeSet.add(new LDAPAttribute("sn", sn));
+        		}
+        		// gn means givenname in LDAP, and is required for persons
+        		String gn = CertTools.getPartFromDN(dn, "GIVENNAME");
+        		if ( (gn == null) && (cn != null) ) {
+        			// Take givenname to be the first part of the cn
+        			int index = cn.indexOf(' ');
+        			if (index <=0) {
+        				// If there is no natural gn/sn, ignore gn if we are using sn
+        				if (sn == null) gn = cn;
+        			} else {
+        				gn = cn.substring(0, index);
+        			}
+        		}
+        		if (gn != null) {
+        			attributeSet.add(new LDAPAttribute("givenName", gn));
+        		}
+        		String st = CertTools.getPartFromDN(dn, "ST");
+        		if (st != null) {
+        			attributeSet.add(new LDAPAttribute("st", st));
+        		}
+        		String o = CertTools.getPartFromDN(dn, "O");
+        		if (o != null) {
+        			attributeSet.add(new LDAPAttribute("o", o));
+        		}
+        		String uid = CertTools.getPartFromDN(dn, "uid");
+        		if (uid != null) {
+        			attributeSet.add(new LDAPAttribute("uid", uid));
+        		}        
+        		String initials = CertTools.getPartFromDN(dn, "initials");
+        		if (initials != null) {
+        			attributeSet.add(new LDAPAttribute("initials", initials));
+        		}        
+        		String title = CertTools.getPartFromDN(dn, "T");
+        		if (title != null) {
+        			attributeSet.add(new LDAPAttribute("title", title));
+        		}
+        	}
         }
     	log.debug("<getAttributeSet()");
         return attributeSet;
@@ -885,72 +885,73 @@ public class LdapPublisher extends BasePublisher{
         LDAPModificationSet modSet = new LDAPModificationSet();
 
         if (extra) {
-            String cn = CertTools.getPartFromDN(dn, "CN");
-            if (cn != null) {
-                modSet.add(LDAPModification.REPLACE, new LDAPAttribute("cn", cn));
-            }
-            // sn means surname in LDAP, and is required for persons
-            String sn = CertTools.getPartFromDN(dn, "SURNAME");
-            if (person) {
-                if ( (sn == null) && (cn != null) ) {
-                    // Take surname to be the last part of the cn
-                    int index = cn.lastIndexOf(' ');
-                    if (index <=0) {
-                        // If there is no natural sn, use cn since sn is required
-                        sn = cn;
-                    } else {
-                        if (index < cn.length()) sn = cn.substring(index+1);
-                    }
-                }
-            }
-            if (sn != null) {
-                modSet.add(LDAPModification.REPLACE, new LDAPAttribute("sn", sn));
-            }
-            // gn means givenname in LDAP, and is required for persons
-            String gn = CertTools.getPartFromDN(dn, "GIVENNAME");
-            if (person) {
-                if ( (gn == null) && (cn != null) ) {
-                    // Take givenname to be the first part of the cn
-                    int index = cn.indexOf(' ');
-                    if (index <=0) {
-                        // If there is no natural gn/sn, ignore gn if we are using sn
-                        if (sn == null) gn = cn;
-                    } else {
-                        gn = cn.substring(0, index);
-                    }
-                }
-            }
-            if (gn != null) {
-                modSet.add(LDAPModification.REPLACE, new LDAPAttribute("gn", gn));
-            }
+        	String cn = CertTools.getPartFromDN(dn, "CN");
+        	if (cn != null) {
+        		modSet.add(LDAPModification.REPLACE, new LDAPAttribute("cn", cn));
+        	}
             String l = CertTools.getPartFromDN(dn, "L");
             if (l != null) {
                 modSet.add(LDAPModification.REPLACE, new LDAPAttribute("l", l));
-            }
-            String st = CertTools.getPartFromDN(dn, "ST");
-            if (st != null) {
-                modSet.add(LDAPModification.REPLACE, new LDAPAttribute("st", st));
             }
             String ou = CertTools.getPartFromDN(dn, "OU");
             if (ou != null) {
                 modSet.add(LDAPModification.REPLACE, new LDAPAttribute("ou", ou));
             }
-            String o = CertTools.getPartFromDN(dn, "O");
-            if (o != null) {
-            	modSet.add(LDAPModification.REPLACE, new LDAPAttribute("o", o));
-            }
-            String uid = CertTools.getPartFromDN(dn, "uid");
-            if (uid != null) {
-                modSet.add(LDAPModification.REPLACE, new LDAPAttribute("uid", uid));
-            }
-            String initials = CertTools.getPartFromDN(dn, "initials");
-            if (initials != null) {
-            	modSet.add(LDAPModification.REPLACE, new LDAPAttribute("initials", initials));
-            }        
-            String title = CertTools.getPartFromDN(dn, "T");
-            if (title != null) {
-            	modSet.add(LDAPModification.REPLACE, new LDAPAttribute("title", title));
-            }        
+        	// Only persons have (normally) all these extra attributes. 
+        	// A CA might have them if you don't use the default objectClass, but we don't
+        	// handle that case.
+        	if (person) {
+        		// sn means surname in LDAP, and is required for persons
+        		String sn = CertTools.getPartFromDN(dn, "SURNAME");
+        		if ( (sn == null) && (cn != null) ) {
+        			// Take surname to be the last part of the cn
+        			int index = cn.lastIndexOf(' ');
+        			if (index <=0) {
+        				// If there is no natural sn, use cn since sn is required
+        				sn = cn;
+        			} else {
+        				if (index < cn.length()) sn = cn.substring(index+1);
+        			}
+        		}
+        		if (sn != null) {
+        			modSet.add(LDAPModification.REPLACE, new LDAPAttribute("sn", sn));
+        		}
+        		// gn means givenname in LDAP, and is required for persons
+        		String gn = CertTools.getPartFromDN(dn, "GIVENNAME");
+        		if ( (gn == null) && (cn != null) ) {
+        			// Take givenname to be the first part of the cn
+        			int index = cn.indexOf(' ');
+        			if (index <=0) {
+        				// If there is no natural gn/sn, ignore gn if we are using sn
+        				if (sn == null) gn = cn;
+        			} else {
+        				gn = cn.substring(0, index);
+        			}
+        		}
+        		if (gn != null) {
+        			modSet.add(LDAPModification.REPLACE, new LDAPAttribute("gn", gn));
+        		}
+        		String st = CertTools.getPartFromDN(dn, "ST");
+        		if (st != null) {
+        			modSet.add(LDAPModification.REPLACE, new LDAPAttribute("st", st));
+        		}
+        		String o = CertTools.getPartFromDN(dn, "O");
+        		if (o != null) {
+        			modSet.add(LDAPModification.REPLACE, new LDAPAttribute("o", o));
+        		}
+        		String uid = CertTools.getPartFromDN(dn, "uid");
+        		if (uid != null) {
+        			modSet.add(LDAPModification.REPLACE, new LDAPAttribute("uid", uid));
+        		}
+        		String initials = CertTools.getPartFromDN(dn, "initials");
+        		if (initials != null) {
+        			modSet.add(LDAPModification.REPLACE, new LDAPAttribute("initials", initials));
+        		}        
+        		String title = CertTools.getPartFromDN(dn, "T");
+        		if (title != null) {
+        			modSet.add(LDAPModification.REPLACE, new LDAPAttribute("title", title));
+        		}   
+        	}
         }
     	log.debug("<getModificationSet()");
         return modSet;
