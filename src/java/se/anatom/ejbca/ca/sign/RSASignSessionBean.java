@@ -42,7 +42,7 @@ import org.bouncycastle.asn1.*;
 /**
  * Creates X509 certificates using RSA keys.
  *
- * @version $Id: RSASignSessionBean.java,v 1.25 2002-05-15 07:10:18 anatom Exp $
+ * @version $Id: RSASignSessionBean.java,v 1.25.2.1 2002-08-19 11:09:42 anatom Exp $
  */
 public class RSASignSessionBean extends BaseSessionBean implements ISignSession {
 
@@ -133,7 +133,7 @@ public class RSASignSessionBean extends BaseSessionBean implements ISignSession 
             debug("cacertIssuer: " + caCert.getIssuerDN().toString());
             debug("cacertSubject: " + caCert.getSubjectDN().toString());
 
-			// We must keep the same order in the DN in the issuer field in created certificates as there
+            // We must keep the same order in the DN in the issuer field in created certificates as there
             // is in the subject field of the CA-certificate.
             caSubjectName = new X509Name(caCert.getSubjectDN().toString());
             //caSubjectName = CertTools.stringToBcX509Name(caCert.getSubjectDN().toString());
@@ -550,7 +550,9 @@ public class RSASignSessionBean extends BaseSessionBean implements ISignSession 
             GeneralNames gns = new GeneralNames(seq);
             DistributionPointName dpn = new DistributionPointName(0, gns);
             DistributionPoint distp = new DistributionPoint(dpn, null, null);
-            certgen.addExtension(X509Extensions.CRLDistributionPoints.getId(), crldistcritical.booleanValue(), distp);
+            DERConstructedSequence ext = new DERConstructedSequence();
+            ext.addObject(distp);
+            certgen.addExtension(X509Extensions.CRLDistributionPoints.getId(), crldistcritical.booleanValue(), ext);
         }
 
         X509Certificate cert = certgen.generateX509Certificate(privateKey);
