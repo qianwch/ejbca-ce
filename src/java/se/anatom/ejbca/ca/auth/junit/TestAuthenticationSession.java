@@ -21,7 +21,7 @@ import junit.framework.*;
 
 /** Tests authentication session used by signer.
  *
- * @version $Id: TestAuthenticationSession.java,v 1.4 2002-03-24 10:47:23 anatom Exp $
+ * @version $Id: TestAuthenticationSession.java,v 1.4.2.1 2002-07-21 13:06:11 anatom Exp $
  */
 public class TestAuthenticationSession extends TestCase {
 
@@ -76,6 +76,7 @@ public class TestAuthenticationSession extends TestCase {
             pk.username = "foo";
             UserData data = userhome.findByPrimaryKey(pk);
             data.setStatus(UserData.STATUS_NEW);
+            data.setSubjectEmail("foo@anatom.se");
             cat.debug("Reset status to NEW");
         }
         cat.debug("<test01CreateNewUser()");
