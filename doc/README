@@ -8,7 +8,7 @@ create a robust, high performance, transactional, platform independent,
 CA to be used either standalone or integrated into any J2EE application.
 
 EJBCA Homepage can be found at http://ejbca.sourceforge.net/
-Information about contacting the EJBCA team,  contibuting to EJBCA etc can
+Information about contacting the EJBCA team, contributing to EJBCA, etc can
 be found throught the Homepage.
  
 FEATURES
@@ -18,13 +18,19 @@ Built on the EJB 1.1 specification.
 Flexible, component based architecture.
 Multiple levels of CAs.
 Standalone or integrated in any J2EE application.
-Individual enrollment or batch production.
+Individual enrollment or batch production of certificates.
 Enrollment through browsers and/or other applications through open APIs and
  tools.
 Follows X509 and PKIX (RFC2459) standards where applicable.
 Configurable certificate contents.
 Revocation of certificates and CRL creation using scheduled jobs.
 URL-based CRLDistribution Points according to (RFC2459).
+Stores Certificates and CRLs in any SQL database (handled by application
+ server).
+Component based architecture for publishing certificates and CRLs to different
+ sources.
+Existing publisher for LDAP (optional during configuration).
+Component based architecture for authorizing entities when issuing certificates.
 
 SECURITY
 --------
@@ -35,6 +41,10 @@ Please take a minute to thorougly consider the security implications and make
 
 DEPENDENCIES
 ------------
+
+For ease of installation most dependencies are distributed with EJBA.
+The minimal requirements to download and install are JBoss and Ant.
+
 EJBCA uses the OpenSource JCE crypto provider from Bouncycastle
  (www.bouncycastle.org). 
 The provider is distributed with EJBCA as 'jce-jdk13-<version>.jar. The latest
@@ -52,7 +62,7 @@ JBoss used with this release is 2.4.x. See doc/LICENSE-JBOSS for license
 conditions of JBoss.
 
 Ant and Log4j is Copyright 1999-2001, Apache Software Foundation and can be
- obtained from www.apache.org.
+ obtained from jakarta.apache.org.
 Jar file for Log4j is distributed with EJBCA. The version of Log4j used in
 this release is 1.1.3. See doc/LICENSE-APACHE for license conditions of Log4j.
 
@@ -106,8 +116,9 @@ For the impatient:
 3. Copy 'src/ca/keyStore/server.p12' to /tmp.
 4. Start JBoss, jars and wars should be deployed.
 5. Run the tests with 'runtest.sh/cmd'.
+6. Initialize the CA for operation by running 'ca.sh/cmd init'.
 
-Please note that '/tmp' is often regularly cleand on UNIX systems, so it might
+Please note that '/tmp' is often regularly cleaned on UNIX systems, so it might
 be wise to change the location of the keystore in 'src/ca/META-INF/ejb-jar.xml'.
 
 For the others:
@@ -147,6 +158,13 @@ Now edit 'src/ca/META-INF/ejb-jar.xml' to reflect the values you entered for
 EJBCA can process certification requests as well by running 'ca.sh/bat
  processreq' to produce a certification response for subordinate CAs
 
+Initializing CA:
+PKIX requires that a CRL always is available even if it is empty. Therefore the 
+CA must be initialized by running 'ca.sh/cmd init' after the CA keystore has 
+been created and the CA deployed.
+When running 'ca.sh/cmd init' the CA certificate(s) are stored, and published 
+if any Publishers are configured, and a CRL is created and stored/published.
+
 OBS! Don't forget to configure JBoss for security! See 'security.txt'.
 Security is CRITICAL for a CA.
 
@@ -157,6 +175,25 @@ Note that application for certificates only work when the status of a user is
 which can be done through administration with the RA, 'ra.sh/cmd setuserstatus
  <username> <status>'. For a list of all available statuscodes run 'ra.sh/cmd
  setuserstatus'.
+
+Issue CRLS:
+CRLs should be issued regularly. There is a special session bean with JNDI
+name 'CreatCRLSession' deployed in order to create CRLs. This bean can be run
+with 'jobrunner.sh/cmd'.
+
+jobrunner.sh CreateCRLSession
+
+This job should be scheduled with cron on UNIX (and something else on Windows).
+The job should be scheduled to run as often as the CRL period is configured to
+in ca/META-INF/ejb-jar.xml (default 24 hours).
+
+Example crontab entry:
+
+PATH=$PATH:/usr/java/jdk1.3.1_01/bin
+@daily cd /home/ejbca;/home/ejbca/jobrunner.sh CreateCRLSession;
+
+where '/usr/java/jdk1.3.1_01/bin' is the path to where 'java' can be found.
+'/home/ejbca' is where ejbca is installed and 'jobrunner.sh' located.
 
 DEPLOY
 ------
@@ -245,40 +282,40 @@ Options in CertificateStoreSession:
 
 Configuring databases:
 The session beans use direct database communication (from a connection pool) in
- some cases. In these cases the JNDI name if the Datasource used is configured
- in ejb-jar.xml and jaws.xml, (default 'java:/DefaultDS').
+some cases. In these cases the JNDI name if the Datasource used is configured in
+ejb-jar.xml and jaws.xml, (default 'java:/DefaultDS').
 
 Configuring Publishers (LDAP):
 To publish certificates and CRLs in an LDAP directory, uncomment the section
 for the session bean 'PublisherSession1' in 'ca/META-INF/ejb-jar.xml', and
 also the section for method permissions for the same session bean. This will
- configure an
-LDAPPublisherSession so be deployed and when certificates and CRLs are
-created. Don't formget to edit parameters to 'PublisherSession1' to match
+configure an LDAPPublisherSession so be deployed and when certificates and CRLs
+are created. Don't formget to edit parameters to 'PublisherSession1' to match
 your LDAP server.
-Additional Publishers can be configured by adding new session beans
-called 'PublisherSession2', 'PublisherSession3', etc to ejb-jar.xml. 
+Additional Publishers can be configured by adding new session beans called
+'PublisherSession2', 'PublisherSession3', etc to ejb-jar.xml.
 
 Batch creation of certificates:
 Certificates can be created batch-wise with EJBCA. The class
- se.anatom.ejbca.batch.BatchMakeP12 creates PKCS12 keystores for all users
- designated as NEW in the local RA database.
-To be able to batch generate certificates, the users must be registered with
- clear text passwords. To set a clear text password for a user use 'ra.sh/cmd
- setclearpwd <username> <password>'.
-//TODO: more documentation to come here...
-
+se.anatom.ejbca.batch.BatchMakeP12 creates PKCS12 keystores for all users
+designated as NEW in the local RA database. To be able to batch generate
+certificates, the users must be registered with clear text passwords. To set a
+clear text password for a user use 'ra.sh/cmd setclearpwd <username>
+<password>'.
+To generate PKCS12 files for all users with status NEW or FAILED, run
+'batch.sh/cmd'. This will generate files for users if their clear text passwords
+are NOT null.
 
 Administrating CA:
 
 The CA has a command line interface ca.sh/cmd. Options are:
 makeroot - creates a new Root CA keystore.
 makereq - generates a certification request to create a keystore for a
- subordinate CA.
-recrep - receives a certification reply (from another CA) for the above
- generated request.
-processreq - processes a certification request for a subordinate CA and creates
- a certification reply.
+subordinate CA.
+recrep - receives a certification reply (from another CA) for
+the above  generated request.
+processreq - processes a certification request for
+a subordinate CA and creates  a certification reply.
 createcrl - issues a CRL.
 getcrl - retrieves the latest CRL.
 
@@ -291,14 +328,14 @@ Administrating RA:
 
 The RA has a command line interface ra.sh/cmd. Options are:
 adduser - adds a user to the database, after addition a user may apply for a
- certificate.
-deluser - removes a user from the database, any issued certificates remain
- active and present in the database.
-setclearpwd - set a clear text password for a user, needed to generate
- certificates batch-wise.
+certificate.
+deluser - removes a user from the database, any issued certificates
+remain  active and present in the database.
+setclearpwd - set a clear text
+password for a user, needed to generate  certificates batch-wise.
 setuserstatus - sets status of a user, users can only apply for certificates
- when their status is NEW.
-finduser - find a user in the database and lists details.
+when their status is NEW. finduser - find a user in the database and lists
+details.
 listnewusers - lists all users with status NEW.
 revokeuser - revokes a user and all certificates issued to the user.
 
@@ -326,7 +363,7 @@ A collection of samples are in the directory src/java/se/anatom/ejbca/samples.
 These files are a sample of a remote user database providing user authentication
  to the CA when the CA is about to generate
 a certificate for a user. A remote user database is used by configuring the CA
- to use the 'RemoteAuthenticationSession' instead 
+ to use the 'RemoteAuthenticationSession' instead
 of 'LocalAuthenticationSession'.
 The sample files implement a simple file based user database and a servlet that
  responds to the HTTP requests comming from the CA.
@@ -338,7 +375,7 @@ Example how a certificate can be fetched programmatically using HTTP/S. The
  sample generates a certificate request and uses POST to the same servlet
 as used from a browser through
  (http://127.0.0.1:8080/apply/request/apply_man.jsp), the servlet url is
- http://127.0.0.1:8080/apply/certreq. 
+ http://127.0.0.1:8080/apply/certreq.
 The certificate reply containing a PEM-formatted certificate is printed to the
  screen.
 
