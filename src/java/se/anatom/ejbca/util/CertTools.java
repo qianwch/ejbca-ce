@@ -74,7 +74,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 /**
  * Tools to handle common certificate operations.
  *
- * @version $Id: CertTools.java,v 1.64.2.6 2004-11-05 08:31:06 anatom Exp $
+ * @version $Id: CertTools.java,v 1.64.2.7 2004-11-05 08:43:08 anatom Exp $
  */
 public class CertTools {
     private static Logger log = Logger.getLogger(CertTools.class);
@@ -155,6 +155,8 @@ public class CertTools {
      * are: <code> EmailAddress, UID, CN, SN (SerialNumber), GivenName, Initials, SurName, T, OU,
      * O, L, ST, DC, C </code>
      * To change order edit 'dnObjects' in this source file.
+     * Important NOT to mess with the ordering within this class, since cert vierification 
+     * on some clients (IE :-() might depend on order.
      *
      * @param dn String containing DN that will be transformed into X509Name, The DN string has the
      *        format "CN=zz,OU=yy,O=foo,C=SE". Unknown OIDs in the string will be silently
@@ -296,7 +298,7 @@ public class CertTools {
 
     /**
      * Tries to determine if a DN is in reversed form. It does this by taking the last attribute 
-     * and the first attribute. If the last attribute comes before the first in the forwardDNOrder array
+     * and the first attribute. If the last attribute comes before the first in the dNObjects array
      * the DN is assumed to be in reversed order.
      *
      * @param dn String containing DN to be checked, The DN string has the format "C=SE, O=xx, OU=yy, CN=zz".
@@ -320,7 +322,7 @@ public class CertTools {
             	first = first.substring(0,first.indexOf('='));
             	last = last.substring(0,last.indexOf('='));
             	int firsti = 0, lasti = 0;
-            	for (int i = 0; i < dNObjectsForward.length; i++) {
+            	for (int i = 0; i < dNObjects.length; i++) {
             		if (first.toLowerCase().equals(dNObjectsForward[i])) {
             			firsti = i;
             		}
