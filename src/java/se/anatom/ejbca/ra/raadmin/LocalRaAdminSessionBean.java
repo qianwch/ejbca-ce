@@ -27,7 +27,7 @@ import se.anatom.ejbca.SecConst;
  * Stores data used by web server clients.
  * Uses JNDI name for datasource as defined in env 'Datasource' in ejb-jar.xml.
  *
- * @version $Id: LocalRaAdminSessionBean.java,v 1.25 2003-04-01 11:27:24 scop Exp $
+ * @version $Id: LocalRaAdminSessionBean.java,v 1.25.4.1 2003-08-24 13:41:30 anatom Exp $
  */
 public class LocalRaAdminSessionBean extends BaseSessionBean  {
 
@@ -215,23 +215,54 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
 
     /**
      * Adds a profile to the database.
+     *
+     * @param admin administrator performing task
+     * @param profilename readable profile name
+     * @param profile profile to be added
+     *
+     * @return true if added succesfully, false otherwise if profile already exist
      */
-    public boolean addEndEntityProfile(Admin admin, String profilename, EndEntityProfile profile){
-       boolean returnval=false;
-       try{
-          profiledatahome.findByProfileName(profilename);
-       }catch(FinderException e){
-         try{
-           profiledatahome.create(findFreeEndEntityProfileId(),profilename,profile);
-           returnval = true;
-           logsession.log(admin, LogEntry.MODULE_RA, new java.util.Date(),null, null, LogEntry.EVENT_INFO_ENDENTITYPROFILE,"End entity profile " + profilename + " added.");
-         }catch(Exception f){
-            try{
-             logsession.log(admin, LogEntry.MODULE_RA,  new java.util.Date(),null, null, LogEntry.EVENT_ERROR_ENDENTITYPROFILE,"Error adding end entity profile "+ profilename);
-            }catch(Exception re){}
-         }
-       }
-       return returnval;
+    public boolean addEndEntityProfile(Admin admin, String profilename, EndEntityProfile profile) {
+        return addEndEntityProfile(admin,findFreeEndEntityProfileId(),profilename,profile);
+    } // addEndEntityProfile
+
+    /**
+     * Adds a profile to the database.
+     *
+     * @param admin administrator performing task
+     * @param profileid internal ID of new profile, use only if you know it's right.
+     * @param profilename readable profile name
+     * @param profile profile to be added
+     *
+     * @return true if added succesfully, false otherwise if profile already exist
+     */
+    public boolean addEndEntityProfile(Admin admin, int profileid, String profilename, EndEntityProfile profile) {
+        boolean returnval = false;
+
+        if (isFreeEndEntityProfileId(profileid) == false) {
+            return returnval;
+        }
+        try {
+            profiledatahome.findByProfileName(profilename);
+        } catch (FinderException e) {
+            try {
+                profiledatahome.create(new Integer(profileid), profilename, profile);
+                returnval = true;
+                logsession.log(admin, LogEntry.MODULE_RA, new java.util.Date(), null, null,
+                    LogEntry.EVENT_INFO_ENDENTITYPROFILE,
+                    "End entity profile " + profilename + " added.");
+            } catch (Exception f) {
+                error("Error adding end entity profile: ", e);
+
+                try {
+                    logsession.log(admin, LogEntry.MODULE_RA, new java.util.Date(), null, null,
+                        LogEntry.EVENT_ERROR_ENDENTITYPROFILE,
+                        "Error adding end entity profile " + profilename);
+                } catch (RemoteException re) {
+                }
+            }
+        }
+        return returnval;
     } // addEndEntityProfile
 
      /**
@@ -453,22 +484,35 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
     }
 
     // Private methods
+    private int findFreeEndEntityProfileId() {
+        int id = (new Random((new Date()).getTime())).nextInt();
+        boolean foundfree = false;
 
-    private Integer findFreeEndEntityProfileId(){
-      int id = (new Random((new Date()).getTime())).nextInt();
-      boolean foundfree = false;
-
-      while(!foundfree){
-        try{
-          if(id > 1)
-            profiledatahome.findByPrimaryKey(new Integer(id));
-          id++;
-        }catch(FinderException e){
-           foundfree = true;
+        while (!foundfree) {
+            try {
+                if (id > 1) {
+                    profiledatahome.findByPrimaryKey(new Integer(id));
+                }
+                id++;
+            } catch (FinderException e) {
+                foundfree = true;
+            }
         }
-      }
-      return new Integer(id);
+
+        return id;
     } // findFreeEndEntityProfileId
+    
+    private boolean isFreeEndEntityProfileId(int id) {
+        boolean foundfree = false;
+        try {
+            if (id > 1) {
+                profiledatahome.findByPrimaryKey(new Integer(id));
+            }
+        } catch (FinderException e) {
+            foundfree = true;
+        }
+        return foundfree;
+    } // isFreeEndEntityProfileId
 
     /**
      * Changes the admin preference in the database. Returns false if admin doesn't exist.
