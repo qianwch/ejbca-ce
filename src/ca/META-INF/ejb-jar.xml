@@ -168,8 +168,8 @@
         </description>
         <ejb-ref-name>ejb/AuthenticationSession</ejb-ref-name>
         <ejb-ref-type>Session</ejb-ref-type>
-        <home>se.anatom.ejbca.ca.store.IAuthenticationSessionHome</home>
-        <remote>se.anatom.ejbca.ca.store.IAuthenticationSessionRemote</remote>
+        <home>se.anatom.ejbca.ca.auth.IAuthenticationSessionHome</home>
+        <remote>se.anatom.ejbca.ca.auth.IAuthenticationSessionRemote</remote>
         <ejb-link>AuthenticationSession</ejb-link>
      </ejb-ref>
 

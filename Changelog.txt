@@ -4,6 +4,7 @@ Fixed bug with case-sensitivity for column names in Sybase.
 Fixed bug when rolling over subCAs without subjectKeyId in cert.
 Fixed bug with using country=CN in DN.
 Fixed encoding bug in CRL distribution points.
+Fixed typo with AuthenticationSession reference in ejb-jar.xml
 Added method for easily getting certificates with different keyUsage.
 Better separated and better looking web pages.
 Deployed with EAR-files.
