@@ -30,6 +30,12 @@
         <env-entry-value>se.anatom.ejbca.ca.sign.PKCS12SigningDeviceFactory</env-entry-value>
      </env-entry>
      <env-entry>
+        <description>Name of PRNG algorithm used for random source - refer to Appendix A in the Java Cryptography Architecture API Specification And Reference for information about standard PRNG algorithm names.</description>
+        <env-entry-name>randomAlgorithm</env-entry-name>
+        <env-entry-type>java.lang.String</env-entry-type>
+        <env-entry-value>SHA1PRNG</env-entry-value>
+     </env-entry>     
+     <env-entry>
         <description>Location of CA keystore</description>
         <env-entry-name>keyStore</env-entry-name>
         <env-entry-type>java.lang.String</env-entry-type>
