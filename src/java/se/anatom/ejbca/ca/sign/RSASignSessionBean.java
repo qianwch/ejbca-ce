@@ -83,7 +83,7 @@ import se.anatom.ejbca.util.Hex;
 /**
  * Creates and isigns certificates.
  *
- * @version $Id: RSASignSessionBean.java,v 1.130 2004-05-24 20:04:54 anatom Exp $
+ * @version $Id: RSASignSessionBean.java,v 1.130.2.1 2004-11-04 15:49:26 anatom Exp $
  */
 public class RSASignSessionBean extends BaseSessionBean {
     
@@ -968,7 +968,12 @@ public class RSASignSessionBean extends BaseSessionBean {
                 
                 // Store certificate in the database
                 String fingerprint = CertTools.getFingerprintAsString(cert);
-                certificateStore.storeCertificate(admin, cert, data.getUsername(), fingerprint, CertificateData.CERT_ACTIVE, certProfile.getType());
+                String cafingerprint = null;
+                Certificate cacert = ca.getCACertificate();
+                if (cacert instanceof X509Certificate) {
+                    cafingerprint = CertTools.getFingerprintAsString((X509Certificate)cacert);
+                }
+                certificateStore.storeCertificate(admin, cert, data.getUsername(), cafingerprint, CertificateData.CERT_ACTIVE, certProfile.getType());
                 // Store certificate in certificate profiles publishers.
                 IPublisherSessionLocal pub = publishHome.create();
                 if(certProfile.getPublisherList() != null)
