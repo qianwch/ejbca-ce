@@ -37,7 +37,7 @@ fi
 
 cp p12/tomcat.jks $JBOSS_HOME/bin/.keystore
 
-./ca.sh getrootcert tmp/rootca.der
+./ca.sh getrootcert tmp/rootca.der -der
 
 #This command must be run as root
 echo
