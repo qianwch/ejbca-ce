@@ -73,7 +73,7 @@ import se.anatom.ejbca.util.CertTools;
  * For a detailed description of OCSP refer to RFC2560.
  * 
  * @author Thomas Meckel (Ophios GmbH)
- * @version  $Id: OCSPServlet.java,v 1.31.2.1 2004-08-25 16:38:18 anatom Exp $
+ * @version  $Id: OCSPServlet.java,v 1.31.2.2 2004-12-31 14:19:12 anatom Exp $
  */
 public class OCSPServlet extends HttpServlet {
 
@@ -550,9 +550,9 @@ public class OCSPServlet extends HttpServlet {
                 BasicOCSPResp basicresp = signOCSPResponse(basicRes, cacert); 
                 ocspresp = res.generate(OCSPRespGenerator.SIG_REQUIRED, basicRes);
             } catch (Exception e) {
+                m_log.error("Unable to handle OCSP request.", e);
                 if (e instanceof ServletException)
                     throw (ServletException)e;
-                m_log.error("Unable to handle OCSP request.", e);
                 // generate the signed response object
                 BasicOCSPResp basicresp = signOCSPResponse(basicRes, cacert); 
                 ocspresp = res.generate(OCSPRespGenerator.INTERNAL_ERROR, basicRes);
