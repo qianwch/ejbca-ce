@@ -1,6 +1,8 @@
 1.4
 ---
 Fixed bug with case-sensitivity for column names in Sybase.
+Fixed bug when rolling over subCAs without subjectKeyId in cert.
+Fixed bug with using country=CN in DN.
 Added method for easily getting certificates with different keyUsage.
 Better separated and better looking web pages.
 Deployed with EAR-files.
