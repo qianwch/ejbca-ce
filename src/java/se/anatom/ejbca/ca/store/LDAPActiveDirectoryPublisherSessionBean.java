@@ -55,7 +55,7 @@ import org.apache.log4j.*;
  * cACertificate
  * </pre>
  *
- * @version $Id: LDAPActiveDirectoryPublisherSessionBean.java,v 1.12 2003-06-13 16:34:31 anatom Exp $
+ * @version $Id: LDAPActiveDirectoryPublisherSessionBean.java,v 1.12.2.1 2003-09-01 08:11:38 anatom Exp $
  */
 public class LDAPActiveDirectoryPublisherSessionBean
     extends BaseSessionBean {
@@ -119,18 +119,11 @@ public class LDAPActiveDirectoryPublisherSessionBean
         return true;
     } // checkContainerName
 
-    public boolean storeCertificate(
-        Admin admin,
-        byte[] byte_incert,
-        String cafp,
-        int status,
-        int type)
+    public boolean storeCertificate(Admin admin, Certificate incert, String username, String cafp, int status, int type)
         throws RemoteException {
-        Certificate incert = null;
         String dn = null;
         String cn = null;
         try {
-            incert = CertTools.getCertfromByteArray(Base64.decode(byte_incert));
             // Extract the users DN from the cert.
             dn =CertTools.getSubjectDN((X509Certificate)incert);
             cn = CertTools.getPartFromDN(dn, "CN");
