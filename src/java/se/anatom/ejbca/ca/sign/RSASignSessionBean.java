@@ -1,80 +1,19 @@
 package se.anatom.ejbca.ca.sign;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.math.BigInteger;
-import java.rmi.RemoteException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.Provider;
-import java.security.PublicKey;
-import java.security.Security;
-import java.security.cert.Certificate;
-import java.security.cert.X509CRL;
-import java.security.cert.X509Certificate;
-import java.security.interfaces.RSAPublicKey;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Properties;
-import java.util.Vector;
-import java.util.StringTokenizer;
-import javax.ejb.CreateException;
-import javax.ejb.EJBException;
-import javax.ejb.ObjectNotFoundException;
-
-
-import org.bouncycastle.asn1.ASN1EncodableVector;
-import org.bouncycastle.asn1.ASN1Sequence;
-import org.bouncycastle.asn1.DEREncodableVector;
-import org.bouncycastle.asn1.DERIA5String;
-import org.bouncycastle.asn1.DERInputStream;
-import org.bouncycastle.asn1.DERObject;
-import org.bouncycastle.asn1.DERObjectIdentifier;
-import org.bouncycastle.asn1.DERSequence;
-import org.bouncycastle.asn1.DERTaggedObject;
-import org.bouncycastle.asn1.DERUTF8String;
-import org.bouncycastle.asn1.x509.AuthorityKeyIdentifier;
-import org.bouncycastle.asn1.x509.BasicConstraints;
-import org.bouncycastle.asn1.x509.CRLNumber;
-import org.bouncycastle.asn1.x509.CertificatePolicies;
-import org.bouncycastle.asn1.x509.PolicyInformation;
-import org.bouncycastle.asn1.x509.DistributionPoint;
-import org.bouncycastle.asn1.x509.DistributionPointName;
-import org.bouncycastle.asn1.x509.ExtendedKeyUsage;
-import org.bouncycastle.asn1.x509.GeneralName;
-import org.bouncycastle.asn1.x509.GeneralNames;
-import org.bouncycastle.asn1.x509.SubjectKeyIdentifier;
-import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
-import org.bouncycastle.asn1.x509.X509Extensions;
-import org.bouncycastle.asn1.x509.X509Name;
+import org.bouncycastle.asn1.*;
+import org.bouncycastle.asn1.x509.*;
 import org.bouncycastle.jce.PKCS7SignedData;
 import org.bouncycastle.jce.X509KeyUsage;
 import org.bouncycastle.jce.X509V2CRLGenerator;
 import org.bouncycastle.jce.X509V3CertificateGenerator;
-
 import se.anatom.ejbca.BaseSessionBean;
 import se.anatom.ejbca.SecConst;
 import se.anatom.ejbca.ca.auth.IAuthenticationSessionLocal;
 import se.anatom.ejbca.ca.auth.IAuthenticationSessionLocalHome;
 import se.anatom.ejbca.ca.auth.UserAuthData;
 import se.anatom.ejbca.ca.crl.RevokedCertInfo;
-import se.anatom.ejbca.ca.exception.AuthLoginException;
-import se.anatom.ejbca.ca.exception.AuthStatusException;
-import se.anatom.ejbca.ca.exception.IllegalKeyException;
-import se.anatom.ejbca.ca.exception.SignRequestException;
-import se.anatom.ejbca.ca.exception.SignRequestSignatureException;
-import se.anatom.ejbca.ca.store.CertificateData;
-import se.anatom.ejbca.ca.store.ICertificateStoreSessionLocal;
-import se.anatom.ejbca.ca.store.ICertificateStoreSessionLocalHome;
-import se.anatom.ejbca.ca.store.IPublisherSessionLocal;
-import se.anatom.ejbca.ca.store.IPublisherSessionLocalHome;
+import se.anatom.ejbca.ca.exception.*;
+import se.anatom.ejbca.ca.store.*;
 import se.anatom.ejbca.ca.store.certificateprofiles.CertificateProfile;
 import se.anatom.ejbca.log.Admin;
 import se.anatom.ejbca.log.ILogSessionHome;
@@ -82,13 +21,31 @@ import se.anatom.ejbca.log.ILogSessionRemote;
 import se.anatom.ejbca.log.LogEntry;
 import se.anatom.ejbca.protocol.IRequestMessage;
 import se.anatom.ejbca.protocol.IResponseMessage;
+import se.anatom.ejbca.protocol.ScepResponseStatus;
+import se.anatom.ejbca.protocol.ScepFailInfo;
 import se.anatom.ejbca.util.CertTools;
 import se.anatom.ejbca.util.Hex;
+
+import javax.ejb.CreateException;
+import javax.ejb.EJBException;
+import javax.ejb.ObjectNotFoundException;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.math.BigInteger;
+import java.rmi.RemoteException;
+import java.security.*;
+import java.security.cert.Certificate;
+import java.security.cert.X509CRL;
+import java.security.cert.X509Certificate;
+import java.security.interfaces.RSAPublicKey;
+import java.util.*;
 
 /**
  * Creates X509 certificates using RSA keys.
  *
- * @version $Id: RSASignSessionBean.java,v 1.86.2.3 2003-08-13 10:21:24 anatom Exp $
+ * @version $Id: RSASignSessionBean.java,v 1.86.2.4 2003-08-28 14:46:34 rebrabnoj Exp $
  */
 public class RSASignSessionBean extends BaseSessionBean {
     transient X509Certificate caCert;
@@ -116,6 +73,11 @@ public class RSASignSessionBean extends BaseSessionBean {
     private ILogSessionRemote logsession;
 
     /**
+     * Source of good random data
+     */
+    SecureRandom randomSource = null;
+
+    /**
      * Default create for SessionBean without any creation Arguments.
      *
      * @throws CreateException if bean instance can't be created
@@ -137,6 +99,10 @@ public class RSASignSessionBean extends BaseSessionBean {
             ILogSessionHome logsessionhome = (ILogSessionHome) lookup("java:comp/env/ejb/LogSession",
                     ILogSessionHome.class);
             logsession = logsessionhome.create();
+
+            // Get a decent source of random data
+            String  randomAlgorithm = (String) lookup("java:comp/env/randomAlgorithm");
+            randomSource = SecureRandom.getInstance(randomAlgorithm);
 
             // Init the publisher session beans
             int i = 1;
@@ -705,18 +671,9 @@ public class RSASignSessionBean extends BaseSessionBean {
      *
      * @return The newly created response or null.
      *
-     * @throws ObjectNotFoundException if the user does not exist.
-     * @throws AuthStatusException If the users status is incorrect.
-     * @throws AuthLoginException If the password is incorrect.
-     * @throws IllegalKeyException if the public key is of wrong type.
-     * @throws SignRequestException if the provided request is invalid.
-     * @throws SignRequestSignatureException if the provided client certificate was not signed by
-     *         the CA.
      */
     public IResponseMessage createCertificate(Admin admin, IRequestMessage req, int keyUsage,
-        Class responseClass)
-        throws ObjectNotFoundException, AuthStatusException, AuthLoginException, 
-            IllegalKeyException, SignRequestException, SignRequestSignatureException {
+        Class responseClass) {
         debug(">createCertificate(IRequestMessage)");
 
         IResponseMessage ret = null;
@@ -725,19 +682,17 @@ public class RSASignSessionBean extends BaseSessionBean {
             req.setKeyInfo(caCert, signingDevice.getPrivateDecKey());
         }
 
-        String username = req.getUsername();
-        String pwd = req.getPassword();
-
-        if ((username == null) || (pwd == null)) {
-            throw new SignRequestException("No username/password in request!");
-        }
-
-        Certificate cert = createCertificate(admin, username, pwd, req, keyUsage);
-
+        //try {
         try {
             ret = (IResponseMessage) responseClass.newInstance();
+        } catch (InstantiationException e) {
+            //TODO : do something with these exceptions
+            e.printStackTrace();  //To change body of catch statement use Options | File Templates.
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();  //To change body of catch statement use Options | File Templates.
+        }
 
-            if (ret.requireSignKeyInfo()) {
+        if (ret.requireSignKeyInfo()) {
                 ret.setSignKeyInfo(caCert, signingDevice.getPrivateSignKey());
             }
 
@@ -745,8 +700,6 @@ public class RSASignSessionBean extends BaseSessionBean {
                 ret.setEncKeyInfo(caCert, signingDevice.getPrivateDecKey());
             }
 
-            ret.setCertificate(cert);
-            ret.setStatus(IResponseMessage.STATUS_OK);
             if (req.getSenderNonce() != null) {
                 ret.setRecipientNonce(req.getSenderNonce());
             }
@@ -754,28 +707,67 @@ public class RSASignSessionBean extends BaseSessionBean {
                 ret.setTransactionId(req.getTransactionId());
             }
             // Sendernonce is a random number
-            ret.setSenderNonce(Hex.encode("PrimeKey Solutions".getBytes()));
-            // If we have a specified request key info, use it in the reply
-            if (req.getRequestKeyInfo() != null) {
-                ret.setRecipientKeyInfo(req.getRequestKeyInfo());
-            }
-            ret.create();
+            byte[] senderNonce = new byte[16];
+            randomSource.nextBytes(senderNonce);
+            ret.setSenderNonce(Hex.encode(senderNonce));
 
-            // TODO: handle returning errors as response message,
-            // javax.ejb.ObjectNotFoundException and the others thrown...
-        } catch (NoSuchProviderException e) {
-            log.error("Cannot create class for response message: ", e);
-        } catch (InvalidKeyException e) {
-            log.error("Cannot create class for response message: ", e);
-        } catch (IOException e) {
-            log.error("Cannot create class for response message: ", e);
-        } catch (NoSuchAlgorithmException e) {
-            log.error("Cannot create class for response message: ", e);
-        } catch (IllegalAccessException e) {
-            log.error("Cannot create class for response message: ", e);
-        } catch (InstantiationException e) {
-            log.error("Cannot create class for response message: ", e);
-        }
+            String username = req.getUsername();
+            String pwd = req.getPassword();
+
+
+            if ((username == null) || (pwd == null)) {
+            //    throw new SignRequestException("No username/password in request!");
+                log.error("No username/password in request");
+                ret.setFailInfo(ScepFailInfo.BAD_REQUEST);
+                ret.setStatus(ScepResponseStatus.FAILURE);
+            } else {
+
+
+                // If we have a specified request key info, use it in the reply
+                if (req.getRequestKeyInfo() != null) {
+                    ret.setRecipientKeyInfo(req.getRequestKeyInfo());
+                }
+
+                Certificate cert = null;
+                try {
+                    cert = createCertificate(admin, username, pwd, req, keyUsage);
+                } catch (ObjectNotFoundException e) {
+                    log.error("No user for request",e);
+                } catch (AuthStatusException e) {
+                    log.error("User status incorrect,e");
+                } catch (AuthLoginException e) {
+                    log.error("Incorrect challenge password",e);
+                } catch (IllegalKeyException e) {
+                    log.error("Public key is of wrong type",e);
+                } catch (SignRequestException e) {
+                    log.error("Request is invalid",e);
+                } catch (SignRequestSignatureException e) {
+                    log.error("Client certificate was not signed by the CA.");
+                }
+
+                if (cert != null) {
+                    ret.setCertificate(cert);
+                    ret.setStatus(ScepResponseStatus.SUCCESS);
+                } else {
+                    ret.setStatus(ScepResponseStatus.FAILURE);
+                }
+
+            }
+
+            try {
+                ret.create();
+
+                // TODO: handle returning errors as response message,
+                // javax.ejb.ObjectNotFoundException and the others thrown...
+            } catch (NoSuchProviderException e) {
+                log.error("Cannot create class for response message: ", e);
+            } catch (InvalidKeyException e) {
+                log.error("Cannot create class for response message: ", e);
+            } catch (IOException e) {
+                log.error("Cannot create class for response message: ", e);
+            } catch (NoSuchAlgorithmException e) {
+                log.error("Cannot create class for response message: ", e);
+            }
 
         debug("<createCertificate(IRequestMessage)");
 
