@@ -18,7 +18,7 @@ import se.anatom.ejbca.ra.raadmin.IRaAdminSessionRemote;
 /**
  * Export profiles from the databse to XML-files.
  *
- * @version $Id: CaImportProfilesCommand.java,v 1.1 2003-08-20 09:50:11 anatom Exp $
+ * @version $Id: CaImportProfilesCommand.java,v 1.1.2.1 2003-08-20 09:51:12 anatom Exp $
  */
 public class CaImportProfilesCommand extends BaseCaAdminCommand {
     /**
@@ -97,12 +97,12 @@ public class CaImportProfilesCommand extends BaseCaAdminCommand {
                                 // Check if the profiles already exist, cause we donät want to add them if they do
                                 boolean error = false;
                                 if (entityprofile) {
-                                    if (raadminsession.getEndEntityProfileId(administrator, profilename) != SecConst.PROFILE_NO_PROFILE) {
+                                    if (raadminsession.getEndEntityProfileId(administrator, profilename) != SecConst.PROFILE_NO_CERTIFICATEPROFILE) {
                                         System.out.println("Error: Entity profile '"+profilename+"' already exist in database.");
                                         error = true;
                                     }
                                 } else {
-                                    if (certificatesession.getCertificateProfileId(administrator,profilename) != SecConst.PROFILE_NO_PROFILE) {
+                                    if (certificatesession.getCertificateProfileId(administrator,profilename) != SecConst.PROFILE_NO_CERTIFICATEPROFILE) {
                                         System.out.println("Error: Certificate profile '"+profilename+"' already exist in database.");
                                         error = true;
                                     }
