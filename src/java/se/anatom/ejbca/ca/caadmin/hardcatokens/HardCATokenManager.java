@@ -60,11 +60,11 @@ public class HardCATokenManager {
     	try {    		
 			HardCATokenManager.class.getClassLoader().loadClass(classpath).newInstance();		
 		} catch (ClassNotFoundException e) {
-           // Do Nothing
+		    log.info("Class not found: "+classpath); // Do Nothing, just log
 		} catch (InstantiationException e) {
-	       // Do Nothing
+		    log.error("InstantiationException: "+classpath); // Do Nothing, just log
 		} catch (IllegalAccessException e) {
-	      // Do Nothing
+		    log.error("IllegalAccessException: "+classpath); // Do Nothing, just log
 		}    
     }
         
