@@ -17,7 +17,7 @@ import se.anatom.ejbca.ra.raadmin.IRaAdminSessionRemote;
 /**
  * Export profiles from the databse to XML-files.
  *
- * @version $Id: CaExportProfilesCommand.java,v 1.1 2003-08-19 11:51:07 anatom Exp $
+ * @version $Id: CaExportProfilesCommand.java,v 1.1.2.1 2003-08-19 11:58:09 anatom Exp $
  */
 public class CaExportProfilesCommand extends BaseRaAdminCommand {
     /**
@@ -69,7 +69,7 @@ public class CaExportProfilesCommand extends BaseRaAdminCommand {
             for (int i = 0; i < (certprofnames.length); i++) {
                 String profilename = certprofnames[i];
                 int profileid = certificatesession.getCertificateProfileId(administrator, profilename);
-                if (profileid == SecConst.PROFILE_NO_PROFILE) { // Certificate profile not found i database.
+                if (profileid == SecConst.PROFILE_NO_CERTIFICATEPROFILE) { // Certificate profile not found i database.
                     System.out.println("Error : Couldn't find entity profile '"+profilename+"' in database.");
                 } else {
                     CertificateProfile profile = certificatesession.getCertificateProfile(administrator,profileid);
@@ -85,7 +85,7 @@ public class CaExportProfilesCommand extends BaseRaAdminCommand {
             for (int i = 0; i < (endentityprofilenames.length); i++) {
                 String profilename = endentityprofilenames[i];
                 int profileid = raadminsession.getEndEntityProfileId(administrator, profilename);
-                if (profileid == SecConst.PROFILE_NO_PROFILE) { // Entity profile not found i database.
+                if (profileid == SecConst.PROFILE_NO_CERTIFICATEPROFILE) { // Entity profile not found i database.
                     System.out.println("Error : Couldn't find certificate profile '"+profilename+"' in database.");
                 } else {
                     EndEntityProfile profile = raadminsession.getEndEntityProfile(administrator, profileid);

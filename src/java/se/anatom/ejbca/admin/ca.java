@@ -11,7 +11,7 @@ public class ca {
             if (cmd != null) {
                 cmd.execute();
             } else {
-                System.out.println("Usage: CA info | makeroot | getrootcert | makereq | recrep | processreq | init | createcrl | getcrl | rolloverroot | rolloversub | listexpired");
+                System.out.println("Usage: CA info | makeroot | getrootcert | makereq | recrep | processreq | init | createcrl | getcrl | rolloverroot | rolloversub | listexpired | exportprofiles");
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());
