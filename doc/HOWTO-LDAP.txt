@@ -140,7 +140,7 @@ cn=<user>,cn=Users,dc=<domain-component>,dc=<domain-component>.
 For example: cn=Philip Vendil,cn=Users,dc=primekey,dc=se for the domain primekey.se
 
 If your DN is like "cn=Ejbca1,0=MyOrg,c=SE" and your base DN is like
-"DC=Security,DC=Software,DC=MyOrg".
+"DC=security,DC=software,DC=MyOrg".
 The publisher for AD should have base DN like
 "cn=Users,dc=security,dc=software,dc=MyOrg"
 
