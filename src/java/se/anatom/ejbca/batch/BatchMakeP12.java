@@ -41,7 +41,7 @@ import org.apache.log4j.*;
  *
  * This class generates keys and request certificates for all users with status NEW. The result is generated PKCS12-files.
  *
- * @version $Id: BatchMakeP12.java,v 1.5.2.1 2002-01-25 12:14:51 anatom Exp $
+ * @version $Id: BatchMakeP12.java,v 1.5.2.2 2002-01-26 14:30:07 anatom Exp $
  *
  */
 
@@ -57,10 +57,10 @@ public class BatchMakeP12 {
     private ISignSessionHome signhome;
 
     static public Context getInitialContext() throws NamingException{
-        System.out.println(">GetInitialContext");
+        //System.out.println(">GetInitialContext");
         // jndi.properties must exist in classpath
         Context ctx = new javax.naming.InitialContext();
-        System.out.println("<GetInitialContext");
+        //System.out.println("<GetInitialContext");
         return ctx;
     }
     /**
@@ -244,6 +244,8 @@ public class BatchMakeP12 {
                     processUser(data);
                     // If all was OK , set status to GENERATED
                     admin.setUserStatus(data.getUsername(), UserData.STATUS_GENERATED);
+                    // Delete clear text password
+                    admin.setClearTextPassword(data.getUsername(), null);
                     successusers += ":" + data.getUsername();
                     successcount++;
                 } catch (Exception e) {
@@ -283,6 +285,8 @@ public class BatchMakeP12 {
                 processUser(data);
                 // If all was OK , set status to GENERATED
                 admin.setUserStatus(data.getUsername(), UserData.STATUS_GENERATED);
+                // Delete clear text password
+                admin.setClearTextPassword(data.getUsername(), null);
             } catch (Exception e) {
                 // If things went wrong set status to FAILED
                 cat.error("An error happened, setting status to FAILED.");
@@ -326,4 +330,5 @@ public class BatchMakeP12 {
     } // main
 
 } //BatchMakeP12
+
 
