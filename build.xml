@@ -745,11 +745,11 @@ includes="**/*.class,**/*.log,**/.nbattrs,**/filesystem.attributes"/>
 		<!-- Replace every occurence in the files of the Datasource -->
   		<input
 		    message="Type of database :"
-		    validargs="oracle,mssql,mysql,postgres,sapdb,hsqldb,sybase"
+		    validargs="oracle,mssql,mysql,postgres,postgres8,sapdb,hsqldb,sybase"
 		    addproperty="ejbca.DB"
 		  />
   		<input
-		    message="Data source (default java:/DefaultDS):"
+		    message="Data source (default java:/DefaultDS, recommended java:/EjbcaDS):"
 		    addproperty="ejbca.DS"
 		    defaultvalue="java:/DefaultDS"
 		  />
@@ -788,7 +788,7 @@ includes="**/*.class,**/*.log,**/.nbattrs,**/filesystem.attributes"/>
             validargs="mysql"
 		    addproperty="ejbca.DB"
 		  />
-        <!-- validargs="hsql,oracle,mssql,mysql,postgres,sapdb,hsqldb,sybase" -->
+        <!-- validargs="hsql,oracle,mssql,mysql,postgres,postgres8,sapdb,hsqldb,sybase" -->
   		<input
 		    message="Data source (default java:/DefaultDS):"
 		    addproperty="ejbca.DS"
