@@ -51,6 +51,7 @@ rm tmp/rootca.der
 
 export CP=.:./admin.jar
 
+# JBoss 3.0.x
 if [ -f $JBOSS_HOME/server/default/deploy/tomcat4-service.xml ]
 then
 	SERVER_XML=tomcat4-service.xml
@@ -60,23 +61,41 @@ then
 elif [ -f $JBOSS_HOME/server/default/deploy/jbossweb.sar/META-INF/jboss-service.xml ]
 then
 	SERVER_XML=jetty.xml
+# JBoss 3.2.0
 elif [ -f $JBOSS_HOME/server/default/deploy/jbossweb-jetty.sar/META-INF/jboss-service.xml ]
 then
 	SERVER_XML=jetty32.xml
+# JBoss 3.2.2/3.2.3
+elif [ -f $JBOSS_HOME/server/default/deploy/jbossweb-tomcat41.sar/META-INF/jboss-service.xml ]
+then
+	SERVER_XML=tomcat41-jboss32.xml
 else
-	SERVER_XML=not_supported
+    echo !!!!!
+    echo Unhandled version of JBoss, SSL support must be set up manually
+    echo !!!!!
 fi
 
 java -cp $CP se.anatom.ejbca.util.TomcatServiceXMLPasswordReplace src/adminweb/WEB-INF/$SERVER_XML tmp/$SERVER_XML $2
 
-if [ -f $JBOSS_HOME/server/default/deploy/jbossweb.sar/META-INF/jboss-service.xml ]
+if [ -f $JBOSS_HOME/server/default/deploy/tomcat4-service.xml ]
+then
+	cp tmp/$SERVER_XML $JBOSS_HOME/server/default/deploy/$SERVER_XML
+elif [ -f $JBOSS_HOME/server/default/deploy/tomcat41-service.xml ]
+then
+	cp tmp/$SERVER_XML $JBOSS_HOME/server/default/deploy/$SERVER_XML
+elif [ -f $JBOSS_HOME/server/default/deploy/jbossweb.sar/META-INF/jboss-service.xml ]
 then
 	cp tmp/$SERVER_XML $JBOSS_HOME/server/default/deploy/jbossweb.sar/META-INF/jboss-service.xml
 elif [ -f $JBOSS_HOME/server/default/deploy/jbossweb-jetty.sar/META-INF/jboss-service.xml ]
 then
 	cp tmp/$SERVER_XML $JBOSS_HOME/server/default/deploy/jbossweb-jetty.sar/META-INF/jboss-service.xml
+elif [ -f $JBOSS_HOME/server/default/deploy/jbossweb-tomcat41.sar/META-INF/jboss-service.xml ]
+then
+	cp tmp/$SERVER_XML $JBOSS_HOME/server/default/deploy/jbossweb-tomcat41.sar/META-INF/jboss-service.xml
 else
-	cp tmp/$SERVER_XML $JBOSS_HOME/server/default/deploy/$SERVER_XML
+    echo !!!!!
+    echo Unhandled version of JBoss, SSL support must be set up manually
+    echo !!!!!
 fi
 
 if [ -f tmp/$SERVER_XML ]
