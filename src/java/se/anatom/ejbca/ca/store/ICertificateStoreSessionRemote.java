@@ -21,7 +21,7 @@ import se.anatom.ejbca.log.Admin;
  *
  * Remote interface for EJB.
  *
- * @version $Id: ICertificateStoreSessionRemote.java,v 1.14.2.4 2003-10-05 09:25:34 anatom Exp $
+ * @version $Id: ICertificateStoreSessionRemote.java,v 1.14.2.5 2003-10-06 11:44:47 anatom Exp $
  */
 public interface ICertificateStoreSessionRemote extends javax.ejb.EJBObject, IPublisherSessionRemote  {
 
@@ -381,8 +381,7 @@ public interface ICertificateStoreSessionRemote extends javax.ejb.EJBObject, IPu
      *                 If <tt>null</tt> or empty return certificates regardless of
      *                 the issuer.
      *
-     * @return Collection the list of the requested certificates;
-     *                     never <tt>null</tt>
+     * @return Collection Collection of X509Certificate, never <tt>null</tt>
      *
      * @throws RemoteException
      */
