@@ -62,7 +62,7 @@ import se.anatom.ejbca.ra.raadmin.DNFieldExtractor;
  * It replaces all occurrenses of specified variables in the images 
  * with the corresponding userdata.
  *
- * @version $Id: SVGImageManipulator.java,v 1.6 2004-04-16 07:39:00 anatom Exp $
+ * @version $Id: SVGImageManipulator.java,v 1.6.2.1 2005-01-08 21:07:47 primelars Exp $
  */
 public class SVGImageManipulator {
 
@@ -98,22 +98,9 @@ public class SVGImageManipulator {
     /**
      * Constants used for pin and puk codes.     
      */
-    
-    private static final Pattern PIN1 = Pattern.compile("\\$PIN1", Pattern.CASE_INSENSITIVE);
-	private static final Pattern PIN2 = Pattern.compile("\\$PIN2", Pattern.CASE_INSENSITIVE);
-	private static final Pattern PIN3 = Pattern.compile("\\$PIN3", Pattern.CASE_INSENSITIVE);
-	private static final Pattern PIN4 = Pattern.compile("\\$PIN4", Pattern.CASE_INSENSITIVE);
-	private static final Pattern PIN5 = Pattern.compile("\\$PIN5", Pattern.CASE_INSENSITIVE);	
+    private static final Pattern[] PINS;
+	private static final Pattern[] PUKS;
 
-    private static final Pattern[] PINS = {PIN1, PIN2, PIN3, PIN4, PIN5};
-        
-	private static final Pattern PUK1 = Pattern.compile("\\$PUK1", Pattern.CASE_INSENSITIVE);
-	private static final Pattern PUK2 = Pattern.compile("\\$PUK2", Pattern.CASE_INSENSITIVE);
-	private static final Pattern PUK3 = Pattern.compile("\\$PUK3", Pattern.CASE_INSENSITIVE);
-	private static final Pattern PUK4 = Pattern.compile("\\$PUK4", Pattern.CASE_INSENSITIVE);
-	private static final Pattern PUK5 = Pattern.compile("\\$PUK5", Pattern.CASE_INSENSITIVE);	
-
-	private static final Pattern[] PUKS = {PUK1, PUK2, PUK3, PUK4, PUK5};			
     /**
      *  Constants reserved for future use.
      */
@@ -124,6 +111,16 @@ public class SVGImageManipulator {
 	private static final Pattern CUSTOMTEXTROW5 = Pattern.compile("\\$CUSTOMTEXTROW5", Pattern.CASE_INSENSITIVE);
 	private static final Pattern COPYOFSN = Pattern.compile("\\$COPYOFSN", Pattern.CASE_INSENSITIVE);
 	private static final Pattern COPYOFSNWITHOUTPREFIX = Pattern.compile("\\$COPYOFSNWITHOUTPREFIX", Pattern.CASE_INSENSITIVE);
+
+    static {
+        PINS = new Pattern[30];
+        PUKS = new Pattern[PINS.length];
+        for (int i=0; i<PINS.length; i++) {
+            final int pinNr = i+1;
+            PINS[i] = Pattern.compile("\\$PIN"+pinNr, Pattern.CASE_INSENSITIVE);
+            PUKS[i] = Pattern.compile("\\$PUK"+pinNr, Pattern.CASE_INSENSITIVE);
+        }
+    }
 
     /**
      * Constructor for the SVGImageManipulator object
@@ -270,11 +267,11 @@ public class SVGImageManipulator {
 	  text = HARDTOKENSN.matcher(text).replaceAll(hardtokensn);
 	  text = HARDTOKENSNWITHOUTPREFIX.matcher(text).replaceAll(hardtokensnwithoutprefix);
 
-      for(int i=0; i<pincodes.length;i++){
+      for(int i=pincodes.length-1; i>=0; i--){
       	text = PINS[i].matcher(text).replaceAll(pincodes[i]);
       }
 
-	  for(int i=0; i<pukcodes.length;i++){
+	  for(int i=pukcodes.length-1; i>=0; i--){
 		text = PUKS[i].matcher(text).replaceAll(pukcodes[i]);
 	  }
 
