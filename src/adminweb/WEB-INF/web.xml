@@ -6,7 +6,6 @@
 
 <web-app>
   <display-name>Administration web</display-name>
-  <distributable/>
   <servlet>
     <servlet-name>GetCRL</servlet-name>
     <display-name>GetCRLServlet</display-name>
