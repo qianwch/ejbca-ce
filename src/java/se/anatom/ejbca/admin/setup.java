@@ -19,7 +19,7 @@ import org.apache.log4j.PropertyConfigurator;
 /**
  * Implements the setup command line interface
  *
- * @version $Id: setup.java,v 1.2 2004-04-16 07:38:57 anatom Exp $
+ * @version $Id: setup.java,v 1.2.2.1 2004-09-26 10:00:10 anatom Exp $
  */
 public class setup {
     /**
@@ -36,8 +36,7 @@ public class setup {
             if (cmd != null) {
                 cmd.execute();
             } else {
-                System.out.println(
-                    "Usage: SETUP setbaseurl");
+                System.out.println("Usage: SETUP setbaseurl <computername> <applicationpath>");
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());            
