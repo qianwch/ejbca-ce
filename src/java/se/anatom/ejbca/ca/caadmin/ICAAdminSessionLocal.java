@@ -30,7 +30,7 @@ import se.anatom.ejbca.protocol.IResponseMessage;
 
 /** Local interface of CAAdmin sessio bean for EJB. Manages CAs
  *
- * @version $Id: ICAAdminSessionLocal.java,v 1.9 2004-05-10 04:35:10 herrvendil Exp $
+ * @version $Id: ICAAdminSessionLocal.java,v 1.9.2.1 2004-11-13 00:24:36 herrvendil Exp $
  */
 public interface ICAAdminSessionLocal extends javax.ejb.EJBLocalObject {
  
@@ -176,6 +176,7 @@ public interface ICAAdminSessionLocal extends javax.ejb.EJBLocalObject {
   
   /**
    *  Activates an 'Offline' CA Token and sets the CA status to acitve and ready for use again.
+   *  The admin must be authorized to "/ca_functionality/basic_functions/activate_ca" inorder to activate/deactivate.
    * 
    *  @param admin the adomistrator calling the method
    *  @param caid the is of the ca to activate
@@ -189,6 +190,7 @@ public interface ICAAdminSessionLocal extends javax.ejb.EJBLocalObject {
   
   /**
    *  Deactivates an 'active' CA token and sets the CA status to offline.
+   *  The admin must be authorized to "/ca_functionality/basic_functions/activate_ca" inorder to activate/deactivate.
    * 
    *  @param admin the adomistrator calling the method
    *  @param caid the is of the ca to activate. 
