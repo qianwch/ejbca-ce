@@ -32,7 +32,7 @@ import se.anatom.ejbca.log.LogEntry;
  * Stores certificate and CRL in the local database using Certificate and CRL Entity Beans.
  * Uses JNDI name for datasource as defined in env 'Datasource' in ejb-jar.xml.
  *
- * @version $Id: LocalCertificateStoreSessionBean.java,v 1.42.2.8 2003-10-06 11:44:47 anatom Exp $
+ * @version $Id: LocalCertificateStoreSessionBean.java,v 1.42.2.9 2003-11-29 14:34:11 anatom Exp $
  */
 public class LocalCertificateStoreSessionBean extends BaseSessionBean {
 
@@ -366,8 +366,11 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
             {
                 Iterator iter = sernos.iterator();
                 while (iter.hasNext()) {
-                    sb.append(", ");
-                    sb.append(iter.next().toString());
+                    sb.append(", '");
+                    // Make sure this is really a BigInteger passed in as (untrusted param)
+                    BigInteger serno = (BigInteger)iter.next(); 
+                    sb.append(serno.toString());
+                    sb.append("'");
                 }
             }
             /*
@@ -851,8 +854,11 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
             {
                 Iterator iter = sernos.iterator();
                 while (iter.hasNext()) {
-                    sb.append(", ");
-                    sb.append(iter.next().toString());
+                    sb.append(", '");
+                    // Make sure this is really a BigInteger passed in as (untrusted param)
+                    BigInteger serno = (BigInteger)iter.next(); 
+                    sb.append(serno.toString());
+                    sb.append("'");
                 }
             }
             /*
