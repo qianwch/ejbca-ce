@@ -13,24 +13,68 @@
  
 package se.anatom.ejbca.util;
 
-import java.io.*;
-import java.security.*;
-import java.security.cert.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.net.URL;
+import java.security.InvalidKeyException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.SecureRandom;
+import java.security.Security;
+import java.security.SignatureException;
+import java.security.cert.CRLException;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.CertificateParsingException;
+import java.security.cert.X509CRL;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Vector;
 
 import org.apache.log4j.Logger;
-
-import org.bouncycastle.asn1.*;
-import org.bouncycastle.asn1.x509.*;
-import org.bouncycastle.jce.*;
+import org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.asn1.ASN1OctetString;
+import org.bouncycastle.asn1.ASN1Sequence;
+import org.bouncycastle.asn1.ASN1TaggedObject;
+import org.bouncycastle.asn1.DERInputStream;
+import org.bouncycastle.asn1.DERObject;
+import org.bouncycastle.asn1.DERObjectIdentifier;
+import org.bouncycastle.asn1.DEROctetString;
+import org.bouncycastle.asn1.DERSequence;
+import org.bouncycastle.asn1.DERTaggedObject;
+import org.bouncycastle.asn1.DERUTF8String;
+import org.bouncycastle.asn1.x509.AuthorityKeyIdentifier;
+import org.bouncycastle.asn1.x509.BasicConstraints;
+import org.bouncycastle.asn1.x509.PolicyInformation;
+import org.bouncycastle.asn1.x509.SubjectKeyIdentifier;
+import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
+import org.bouncycastle.asn1.x509.X509Extensions;
+import org.bouncycastle.asn1.x509.X509Name;
+import org.bouncycastle.asn1.x509.X509NameTokenizer;
+import org.bouncycastle.jce.X509KeyUsage;
+import org.bouncycastle.jce.X509V3CertificateGenerator;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 
 /**
  * Tools to handle common certificate operations.
  *
- * @version $Id: CertTools.java,v 1.64 2004-06-01 19:38:26 anatom Exp $
+ * @version $Id: CertTools.java,v 1.64.2.1 2004-09-16 18:52:39 anatom Exp $
  */
 public class CertTools {
     private static Logger log = Logger.getLogger(CertTools.class);
@@ -682,15 +726,50 @@ public class CertTools {
                     byte[] altName = (byte[]) listitem.get(1);
                     DERObject oct = (DERObject) (new DERInputStream(new ByteArrayInputStream(altName)).readObject());
                     ASN1Sequence seq = ASN1Sequence.getInstance(oct);
-                    ASN1TaggedObject obj = (ASN1TaggedObject) seq.getObjectAt(1);
-                    DERUTF8String str = DERUTF8String.getInstance(obj.getObject());
-                    return str.getString();
+                    // First in sequence is the object identifier, that we must check
+                    DERObjectIdentifier id = DERObjectIdentifier.getInstance(seq.getObjectAt(0));
+                    if (id.getId().equals(CertTools.UPN_OBJECTID)) {
+                        ASN1TaggedObject obj = (ASN1TaggedObject) seq.getObjectAt(1);
+                        DERUTF8String str = DERUTF8String.getInstance(obj.getObject());
+                        return str.getString();                        
+                    }
                 }
             }
         }
         return null;
     } // getUPNAltName
 
+    /**
+     * Gets the Microsoft specific GUID altName, that is encoded as an octect string.
+     *
+     * @param cert certificate containing the extension
+     * @return String with the hex-encoded GUID byte array
+     */
+    public static String getGuidAltName(X509Certificate cert)
+        throws IOException, CertificateParsingException {
+        Collection altNames = cert.getSubjectAlternativeNames();
+        if (altNames != null) {
+            Iterator i = altNames.iterator();
+            while (i.hasNext()) {
+                List listitem = (List) i.next();
+                Integer no = (Integer) listitem.get(0);
+                if (no.intValue() == 0) {
+                    byte[] altName = (byte[]) listitem.get(1);
+                    DERObject oct = (DERObject) (new DERInputStream(new ByteArrayInputStream(altName)).readObject());
+                    ASN1Sequence seq = ASN1Sequence.getInstance(oct);
+                    // First in sequence is the object identifier, that we must check
+                    DERObjectIdentifier id = DERObjectIdentifier.getInstance(seq.getObjectAt(0));
+                    if (id.getId().equals(CertTools.GUID_OBJECTID)) {
+                        ASN1TaggedObject obj = (ASN1TaggedObject) seq.getObjectAt(1);
+                        ASN1OctetString str = ASN1OctetString.getInstance(obj.getObject());
+                        return Hex.encode(str.getOctets());                        
+                    }
+                }
+            }
+        }
+        return null;
+    } // getGuidAltName
+    
     /**
      * Return the CRL distribution point URL form a certificate.
      */
