@@ -46,7 +46,7 @@ official JBoss documentation.
 First comes the general description and in the end database specific
 configurations are given in sections for the specific databases.
 
-Database configuration files in JBoss (with Tomcat or Jetty) is located in the
+Database configuration files in JBoss is located in the
 <jboss-home>/server/default/deploy.
 
 1. Install and setup the database.
@@ -60,11 +60,7 @@ Database configuration files in JBoss (with Tomcat or Jetty) is located in the
 as a datasource, like  EjbcaDS. Current <database>-ds.xml files can be obtained from
 jboss.org, provided here are snapshots that work for me.
 
-5. If the new database will be you default database for JBoss:
-Edit standardjbosscmp-jdbc.xml. Change the default type-
-mapping to match the chosen database (see below).
-
-6. DONE! Start JBoss. Run tests with 'runtest.sh/cmd'.
+4. DONE! Start JBoss. Run tests with 'runtest.sh/cmd'.
    Use your favorite database graphic editor to look at the beautiful database tables.
 
 MySQL specifics
@@ -81,7 +77,7 @@ and the database username (EJBCA) and password (EJBCA).
 These must be changed to your values.
 The item 'ConnectionURL' must be edited to match your database.
 
-Type mapping:
+Type mapping (just a reference):
 
      <datasource>java:/EjbcaDS</datasource>
      <type-mapping>mySQL</type-mapping>
@@ -105,7 +101,7 @@ and the database username (EJBCA) and password (EJBCA).
 These must be changed to your values.
 The item 'ConnectionURL' must be edited to match your database.
 
-Type mapping:
+Type mapping (just a reference):
 
      <datasource>java:/EjbcaDS</datasource>
      <type-mapping>PostgreSQL 7.2</type-mapping>
@@ -123,7 +119,7 @@ and the database username (EJBCA) and password (EJBCA).
 These must be changed to your values.
 The item 'ConnectionURL' must be edited to match your database.
 
-Type mapping:
+Type mapping (just a reference):
 
      <datasource>java:/EjbcaDS</datasource>
      <type-mapping>Oracle8</type-mapping>
@@ -141,7 +137,7 @@ and the database username (EJBCA) and password (EJBCA).
 These must be changed to your values.
 The item 'ConnectionURL' must be edited to match your database.
 
-Type mapping:
+Type mapping (just a reference):
 
      <datasource>java:/EjbcaDS</datasource>
      <type-mapping>MS SQLSERVER2000</type-mapping>
