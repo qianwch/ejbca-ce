@@ -73,7 +73,7 @@ import se.anatom.ejbca.util.CertTools;
  * For a detailed description of OCSP refer to RFC2560.
  * 
  * @author Thomas Meckel (Ophios GmbH)
- * @version  $Id: OCSPServlet.java,v 1.31 2004-05-19 13:30:49 anatom Exp $
+ * @version  $Id: OCSPServlet.java,v 1.31.2.1 2004-08-25 16:38:18 anatom Exp $
  */
 public class OCSPServlet extends HttpServlet {
 
@@ -209,10 +209,10 @@ public class OCSPServlet extends HttpServlet {
                 try {
                     ASN1Sequence seq = ASN1Sequence.getInstance((ASN1Sequence) new DERInputStream(
                                 new ByteArrayInputStream(oct.getOctets())).readObject());
-                    Enumeration enum = seq.getObjects();
+                    Enumeration en = seq.getObjects();
                     boolean supportsResponseType = false;
-                    while (enum.hasMoreElements()) {
-                        DERObjectIdentifier oid = (DERObjectIdentifier)enum.nextElement();
+                    while (en.hasMoreElements()) {
+                        DERObjectIdentifier oid = (DERObjectIdentifier)en.nextElement();
                         //m_log.debug("Found oid: "+oid.getId());
                         if (oid.equals(id_pkix_ocsp_basic)) {
                             // This is the response type we support, so we are happy! Break the loop.
