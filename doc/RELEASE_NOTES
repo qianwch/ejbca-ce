@@ -7,9 +7,10 @@ All defined administrator privileges must be redefined.
 
 Certificate profiles should be redefined.
 
-Drop tables AdminGroupData, AdminEntityData, AccessRulesData and
-EndEntityProfileData to flush administrator privileges (actually deleting the
-content would be enough but you might as well drop the tables).
+Drop tables GlobalConfigurationData, AdminGroupData, AdminEntityData,
+AccessRulesData and EndEntityProfileData to flush configuration and
+administrator privileges (actually deleting the content would be enough but
+you might as well drop the tables).
 
 EJBCA V2.0B1
 ----------
