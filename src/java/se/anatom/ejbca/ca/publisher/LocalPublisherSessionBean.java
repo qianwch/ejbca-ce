@@ -52,7 +52,7 @@ import se.anatom.ejbca.ra.ExtendedInformation;
  * Stores data used by web server clients.
  * Uses JNDI name for datasource as defined in env 'Datasource' in ejb-jar.xml.
  *
- * @version $Id: LocalPublisherSessionBean.java,v 1.5 2004-05-15 14:53:10 herrvendil Exp $
+ * @version $Id: LocalPublisherSessionBean.java,v 1.5.2.1 2004-09-19 12:53:06 herrvendil Exp $
  */
 public class LocalPublisherSessionBean extends BaseSessionBean  {
 
@@ -455,6 +455,8 @@ public class LocalPublisherSessionBean extends BaseSessionBean  {
 	  Collection result = null;
       boolean superadmin = false;	 
 	  
+      
+      // If superadmin return all available publishers
 	  try {
 	  	superadmin = getAuthorizationSession(admin).isAuthorized(admin,AvailableAccessRules.ROLE_SUPERADMINISTRATOR);
 		result = this.publisherhome.findAll();
@@ -467,12 +469,15 @@ public class LocalPublisherSessionBean extends BaseSessionBean  {
 	  } catch (AuthorizationDeniedException e1) {} 
 	  	catch (FinderException fe){}
 	  
+	  	
+	  // If ca admin return 	
 	  if(!superadmin){	  	  	  	  
         Iterator authorizedcas = this.getAuthorizationSession(admin).getAuthorizedCAIds(admin).iterator();
         while(authorizedcas.hasNext()){
           returnval.addAll(this.getCAAdminSession(admin).getCAInfo(admin,((Integer) authorizedcas.next()).intValue()).getCRLPublishers());	
         }       
 	  }  
+	  	  
 	  return returnval;
 	} // getAuthorizedPublisherIds 
 
