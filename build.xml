@@ -15,6 +15,11 @@
   <property name="apply.build" value="${tmp}/publicweb/apply.war" />
   <property name="applyjar" value="${dist}/apply.war" />
   
+    <property name="status.src" value="${src}/publicweb/status"/>
+    <property name="status.build" value="${tmp}/publicweb/status.war"/>
+    <property name="statusjar" value="${dist}/status.war"/>
+    <property name="status.classpath" value="${ca.classpath} lib/jocsp.jar lib/commons-lang-1.0.jar"/>
+
   <property name="webdist.src" value="${src}/publicweb/webdist" />
   <property name="webdist.build" value="${tmp}/publicweb/webdist.war" />
   <property name="webdistjar" value="${dist}/webdist.war" />
@@ -111,14 +116,14 @@ includes="**/*.class,**/*.log,**/.nbattrs,**/filesystem.attributes"/>
   </target>
 
   <!-- =================================================================== -->
-  <!-- Build ALL                                                           -->
+  <!-- Build ALL                                                                                                                                        -->
   <!-- =================================================================== -->
-  <target name="build" depends="compile, apply.war, webdist.war, ca.jar, log.jar, 
+  <target name="build" depends="compile, apply.war, status.war, webdist.war, ca.jar, log.jar, 
   hardtoken.jar, keyrecovery.jar, ca.ear, canora.ear, ra.jar, adminweb.war, admin.jar, sampleauth.war">
   </target>
 
   <!-- =================================================================== -->
-  <!-- Compile java sources                                                -->
+  <!-- Compile java sources                                                                                                                    -->
   <!-- =================================================================== -->
   <target name="compile" depends="init">
     <!-- Compile the java code from ${javasrc} into ${build} -->
@@ -161,10 +166,33 @@ includes="**/*.class,**/*.log,**/.nbattrs,**/filesystem.attributes"/>
     <!-- Jar the apply.war package together -->
     <jar basedir="${apply.build}" jarfile="${applyjar}"/>    
   </target>
+
+    <!-- =================================================================== -->
+    <!-- Build status part                                                                                                                             -->
+    <!-- =================================================================== -->
+    <target name="status.war" depends="compile">
+        <mkdir dir="${status.build}"/>
+        <copy todir="${status.build}">
+            <fileset dir="${status.src}">
+                <include name="**/*"/>
+            </fileset>
+        </copy>
+        <copy todir="${status.build}/WEB-INF/classes">
+            <fileset dir="${build}">
+                <include name="se/anatom/ejbca/protocol/OCSPServlet.class"/>
+                <exclude name="se/anatom/ejbca/**/*Test*"/>
+            </fileset>
+        </copy>
+        <!-- Jar the apply.war package together -->
+        <jar basedir="${status.build}" jarfile="${statusjar}">
+            <manifest>
+                <attribute name="Class-Path" value="${status.classpath}"/>
+            </manifest>
+        </jar>
+    </target>
   
   <!-- =================================================================== -->
-  <!-- Build sampleauth part                                                   
- -->
+  <!-- Build sampleauth part                                                                                                                    -->
   <!-- =================================================================== -->
   <target name="sampleauth.war" depends="compile">
     <mkdir    dir="${sampleauth.build}"/>
@@ -479,7 +507,7 @@ includes="**/*.class,**/*.log,**/.nbattrs,**/filesystem.attributes"/>
   <!-- =================================================================== -->
   <!-- Build CA-ear                                                        -->
   <!-- =================================================================== -->
-  <target name="ca.ear" depends="apply.war, webdist.war, ca.jar, ra.jar, adminweb.war, log.jar, hardtoken.jar, keyrecovery.jar">
+  <target name="ca.ear" depends="apply.war, status.war, webdist.war, ca.jar, ra.jar, adminweb.war, log.jar, hardtoken.jar, keyrecovery.jar">
     <mkdir dir="${caear.build}"/>
     <copy todir="${caear.earbuild}">
         <fileset dir="${caear.earsrc}"> 
@@ -500,6 +528,7 @@ includes="**/*.class,**/*.log,**/.nbattrs,**/filesystem.attributes"/>
         <fileset dir="${dist}">
                 <include name="webdist.war"/>
                 <include name="apply.war"/>
+                <include name="status.war"/>
                 <include name="ca.jar"/>
                 <include name="ra.jar"/>
                 <include name="log.jar"/>         
@@ -524,7 +553,7 @@ includes="**/*.class,**/*.log,**/.nbattrs,**/filesystem.attributes"/>
   <!-- =================================================================== -->
   <!-- Build CA-ear without web-RA                                         -->
   <!-- =================================================================== -->
-  <target name="canora.ear" depends="apply.war, webdist.war, ca.jar, ra.jar, log.jar">
+  <target name="canora.ear" depends="apply.war, status.war, webdist.war, ca.jar, ra.jar, log.jar">
     <mkdir dir="${caearnora.build}"/>
     <copy todir="${caearnora.earbuild}">
         <fileset dir="${caear.earsrc}"> 
@@ -548,6 +577,7 @@ includes="**/*.class,**/*.log,**/.nbattrs,**/filesystem.attributes"/>
         <fileset dir="${dist}">
                 <include name="webdist.war"/>
                 <include name="apply.war"/>
+                <include name="status.war"/>
                 <include name="ca.jar"/>
                 <include name="log.jar"/>                 
                 <include name="ra.jar"/>

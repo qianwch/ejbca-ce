@@ -13,7 +13,7 @@ import se.anatom.ejbca.log.Admin;
 
 /** Local interface for EJB, unforturnately this must be a copy of the remote interface except that RemoteException is not thrown, see ICertificateStoreSession for docs.
  *
- * @version $Id: ICertificateStoreSessionLocal.java,v 1.15.2.1 2003-08-24 13:41:30 anatom Exp $
+ * @version $Id: ICertificateStoreSessionLocal.java,v 1.15.2.2 2003-09-09 20:10:00 anatom Exp $
  * @see se.anatom.ejbca.ca.store.ICertificateStoreSessionRemote
  */
 public interface ICertificateStoreSessionLocal extends javax.ejb.EJBLocalObject, IPublisherSessionLocal {
@@ -173,6 +173,20 @@ public interface ICertificateStoreSessionLocal extends javax.ejb.EJBLocalObject,
      */
     public String getCertificateProfileName(Admin admin, int id);      
 
+    /**
+     * @see se.anatom.ejbca.ca.store.ICertificateStoreSessionRemote
+     */
+    public Collection findCertificatesByIssuerAndSernos(Admin admin, String issuerDN, Collection sernos);
+
+    /**
+     * @see se.anatom.ejbca.ca.store.ICertificateStoreSessionRemote
+     */
+    public Collection findCertificatesByType(Admin admin, int type, String issuerDN);
+
+    /**
+     * @see se.anatom.ejbca.ca.store.ICertificateStoreSessionRemote
+     */
+    public Collection isRevoked(Admin admin, String issuerDN, Collection sernos);
 
 }
 

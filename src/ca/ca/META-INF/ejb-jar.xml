@@ -666,6 +666,14 @@ END LDAP Publisher -->
      </method>
      <method>
          <ejb-name>CertificateStoreSession</ejb-name>
+         <method-name>findCertificatesByIssuerAndSernos</method-name>
+     </method>
+     <method>
+         <ejb-name>CertificateStoreSession</ejb-name>
+         <method-name>findCertificatesByType</method-name>
+     </method>
+     <method>
+         <ejb-name>CertificateStoreSession</ejb-name>
          <method-name>isRevoked</method-name>
      </method>
      <method>
