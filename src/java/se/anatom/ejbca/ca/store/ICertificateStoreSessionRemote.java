@@ -33,7 +33,7 @@ import se.anatom.ejbca.log.Admin;
  * check for revocation etc. the CertificateStoreSession implements the interface
  * ICertificateStoreSession. Remote interface for EJB.
  *
- * @version $Id: ICertificateStoreSessionRemote.java,v 1.28 2004-04-16 07:38:58 anatom Exp $
+ * @version $Id: ICertificateStoreSessionRemote.java,v 1.28.2.1 2005-02-03 16:48:20 anatom Exp $
  */
 public interface ICertificateStoreSessionRemote extends javax.ejb.EJBObject {
 
@@ -145,7 +145,7 @@ public interface ICertificateStoreSessionRemote extends javax.ejb.EJBObject {
      * @param admin Administrator performing the operation
      * @param username the usernaem of the certificate(s) that will be retrieved
      *
-     * @return Certificate or null if none found.
+     * @return Collection of Certificates (in no specified order) or null if none found.
      *
      * @throws RemoteException if a communication or other error occurs.
      */

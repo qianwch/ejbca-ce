@@ -16,7 +16,7 @@ package se.anatom.ejbca.admin;
 /**
  * Factory for CA Admin Commands.
  *
- * @version $Id: CaAdminCommandFactory.java,v 1.8.2.1 2004-10-31 10:29:06 anatom Exp $
+ * @version $Id: CaAdminCommandFactory.java,v 1.8.2.2 2005-02-03 16:48:18 anatom Exp $
  */
 public class CaAdminCommandFactory {
     /**
@@ -69,6 +69,8 @@ public class CaAdminCommandFactory {
             return new CaImportProfilesCommand(args);
         } else if (args[0].equals("importca")) {
             return new CaImportCACommand(args);
+        } else if (args[0].equals("republish")) {
+            return new CARepublishCommand(args);
         } else {
             return null;
         }

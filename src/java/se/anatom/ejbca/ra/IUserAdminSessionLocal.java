@@ -30,7 +30,7 @@ import se.anatom.ejbca.util.query.Query;
 
 /**
  *
- * @version $Id: IUserAdminSessionLocal.java,v 1.6 2004-04-16 07:38:56 anatom Exp $
+ * @version $Id: IUserAdminSessionLocal.java,v 1.6.2.1 2005-02-03 16:48:20 anatom Exp $
  */
 public interface IUserAdminSessionLocal extends javax.ejb.EJBLocalObject {
 
@@ -109,6 +109,10 @@ public interface IUserAdminSessionLocal extends javax.ejb.EJBLocalObject {
     * @see se.anatom.ejbca.ra.IUserAdminSessionRemote
     */
     public Collection findAllUsersByStatus(Admin admin, int status) throws FinderException;
+    /**
+     * @see se.anatom.ejbca.ra.IUserAdminSessionRemote
+     */
+    public Collection findAllUsersByCaId(Admin admin, int caid) throws FinderException;
 
    /**
     * @see se.anatom.ejbca.ra.IUserAdminSessionRemote

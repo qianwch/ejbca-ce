@@ -65,7 +65,7 @@ import se.anatom.ejbca.util.query.UserMatch;
  * Administrates users in the database using UserData Entity Bean.
  * Uses JNDI name for datasource as defined in env 'Datasource' in ejb-jar.xml.
  *
- * @version $Id: LocalUserAdminSessionBean.java,v 1.77 2004-05-30 17:44:33 herrvendil Exp $
+ * @version $Id: LocalUserAdminSessionBean.java,v 1.77.2.1 2005-02-03 16:48:20 anatom Exp $
  */
 public class LocalUserAdminSessionBean extends BaseSessionBean  {
 
@@ -801,6 +801,25 @@ public class LocalUserAdminSessionBean extends BaseSessionBean  {
         return returnval;         
     }
      
+    /**
+     * Implements IUserAdminSession::findAllUsersByCaId.
+     */
+     public Collection findAllUsersByCaId(Admin admin, int caid) throws FinderException {
+         debug(">findAllUsersByCaId("+caid+")");
+         debug("Looking for users with caid: " + caid);
+         
+         Query query = new Query(Query.TYPE_USERQUERY);
+         query.add(UserMatch.MATCH_WITH_CA, BasicMatch.MATCH_TYPE_EQUALS, Integer.toString(caid));
+         Collection returnval = null;
+         
+         try{
+           returnval = query(admin, query, false, null, null, false);  
+         }catch(IllegalQueryException e){}
+         debug("found "+returnval.size()+" user(s) with caid="+caid);
+         debug("<findAllUsersByCaId("+caid+")");
+         return returnval;         
+     }
+
     /**
     * Implements IUserAdminSession::findAllUsersWithLimit.
     */

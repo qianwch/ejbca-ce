@@ -81,9 +81,9 @@ import se.anatom.ejbca.util.CertTools;
 import se.anatom.ejbca.util.Hex;
 
 /**
- * Creates and isigns certificates.
+ * Creates and signs certificates.
  *
- * @version $Id: RSASignSessionBean.java,v 1.130.2.1 2004-11-04 15:49:26 anatom Exp $
+ * @version $Id: RSASignSessionBean.java,v 1.130.2.2 2005-02-03 16:48:20 anatom Exp $
  */
 public class RSASignSessionBean extends BaseSessionBean {
     

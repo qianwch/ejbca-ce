@@ -13,22 +13,59 @@
  
 package se.anatom.ejbca.admin;
 
-import javax.naming.*;
+import java.rmi.RemoteException;
+
+import javax.ejb.CreateException;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
 
 import org.apache.log4j.Logger;
+
+import se.anatom.ejbca.ca.caadmin.ICAAdminSessionHome;
+import se.anatom.ejbca.ca.caadmin.ICAAdminSessionRemote;
+import se.anatom.ejbca.ca.publisher.IPublisherSessionHome;
+import se.anatom.ejbca.ca.publisher.IPublisherSessionRemote;
+import se.anatom.ejbca.ca.store.ICertificateStoreSessionHome;
+import se.anatom.ejbca.ca.store.ICertificateStoreSessionRemote;
+import se.anatom.ejbca.log.Admin;
+import se.anatom.ejbca.ra.IUserAdminSessionHome;
+import se.anatom.ejbca.ra.IUserAdminSessionRemote;
+import se.anatom.ejbca.ra.raadmin.IRaAdminSessionHome;
+import se.anatom.ejbca.ra.raadmin.IRaAdminSessionRemote;
 
 
 /**
  * Base for all AdminCommands, contains functions for getting initial context and logging
  *
- * @version $Id: BaseAdminCommand.java,v 1.10 2004-04-16 07:38:57 anatom Exp $
+ * @version $Id: BaseAdminCommand.java,v 1.10.2.1 2005-02-03 16:48:18 anatom Exp $
  */
 public abstract class BaseAdminCommand implements IAdminCommand {
     /** Log4j instance for Base */
     private static Logger baseLog = Logger.getLogger(BaseAdminCommand.class);
-
     /** Log4j instance for actual class */
     private Logger log;
+
+    /**
+     * UserAdminSession handle, not static since different object should go to different session
+     * beans concurrently
+     */
+    private IUserAdminSessionRemote cacheAdmin;
+
+    /** Handle to AdminSessionHome */
+    private static IUserAdminSessionHome cacheHome;
+    /** Handle to RaAdminSessionHome */
+    private static IRaAdminSessionHome raadminHomesession;    
+    /** RaAdminSession handle, not static since different object should go to different session beans concurrently */
+    private IRaAdminSessionRemote raadminsession;
+    /** Handle to CAAdminSessionRemote */
+    protected ICAAdminSessionRemote caadminsession = null;
+    /** Handle to CertificateStoreSessionRemote */
+    protected ICertificateStoreSessionRemote certstoresession = null;
+    /** Handle to PublisherSessionRemote */
+    protected IPublisherSessionRemote publishersession = null;
+
+    protected Admin administrator = null;
 
     /** Cached initial context to save JNDI lookups */
     private static InitialContext cacheCtx = null;
@@ -40,10 +77,12 @@ public abstract class BaseAdminCommand implements IAdminCommand {
      * Creates a new instance of BaseAdminCommand
      *
      * @param args command line arguments
+     * @param adminType type of admin Admin.TYPE_RACOMMANDLINE_USER, or Admin.TYPE_CACOMMANDLINE_USER
      */
-    public BaseAdminCommand(String[] args) {
+    public BaseAdminCommand(String[] args, int adminType) {
         log = Logger.getLogger(this.getClass());
         this.args = args;
+        administrator = new Admin(adminType);
     }
 
     /**
@@ -53,14 +92,11 @@ public abstract class BaseAdminCommand implements IAdminCommand {
      */
     protected InitialContext getInitialContext() throws NamingException {
         baseLog.debug(">getInitialContext()");
-
         try {
             if (cacheCtx == null) {
                 cacheCtx = new InitialContext();
             }
-
             baseLog.debug("<getInitialContext()");
-
             return cacheCtx;
         } catch (NamingException e) {
             baseLog.error("Can't get InitialContext", e);
@@ -68,6 +104,89 @@ public abstract class BaseAdminCommand implements IAdminCommand {
         }
     } // getInitialContext
 
+    /** Gets CA admin session
+     *@return ICAAdminSessionRemote
+     */
+    protected ICAAdminSessionRemote getCAAdminSessionRemote() throws Exception{
+        if(caadminsession == null){
+          Context ctx = getInitialContext();
+          ICAAdminSessionHome home = (ICAAdminSessionHome) javax.rmi.PortableRemoteObject.narrow(ctx.lookup("CAAdminSession"), ICAAdminSessionHome.class );            
+          caadminsession = home.create();          
+        } 
+        return caadminsession;
+     } // getCAAdminSessionRemote
+
+    /** Gets certificate store session
+     *@return ICertificateStoreSessionRemote
+     */
+    protected ICertificateStoreSessionRemote getCertificateStoreSession() throws Exception{
+        if(certstoresession == null){
+          Context ctx = getInitialContext();
+          ICertificateStoreSessionHome home = (ICertificateStoreSessionHome) javax.rmi.PortableRemoteObject.narrow(ctx.lookup("CertificateStoreSession"), ICertificateStoreSessionHome.class );            
+          certstoresession = home.create();          
+        } 
+        return certstoresession;
+     } // getCertificateStoreSession
+    
+    /** Gets publisher session
+     *@return ICertificateStoreSessionRemote
+     */
+    protected IPublisherSessionRemote getPublisherSession() throws Exception{
+        if(publishersession == null){
+          Context ctx = getInitialContext();
+          IPublisherSessionHome home = (IPublisherSessionHome) javax.rmi.PortableRemoteObject.narrow(ctx.lookup("PublisherSession"), IPublisherSessionHome.class );            
+          publishersession = home.create();          
+        } 
+        return publishersession;
+     } // getPublisherSession
+
+    /** Gets user admin session
+     *@return IUserAdminSessionRemote
+     */
+    protected IUserAdminSessionRemote getAdminSession()
+        throws CreateException, NamingException, RemoteException {
+        debug(">getAdminSession()");
+        try {
+            if (cacheAdmin == null) {
+                if (cacheHome == null) {
+                    Context jndiContext = getInitialContext();
+                    Object obj1 = jndiContext.lookup("UserAdminSession");
+                    cacheHome = (IUserAdminSessionHome) javax.rmi.PortableRemoteObject.narrow(obj1,
+                            IUserAdminSessionHome.class);
+                }
+                cacheAdmin = cacheHome.create();
+            }
+            debug("<getAdminSession()");
+            return cacheAdmin;
+        } catch (NamingException e) {
+            error("Can't get Admin session", e);
+            throw e;
+        }
+    } // getAdminSession
+    
+    /** Gets ra admin session
+     *@return IRaAdminSessionRemote
+     */
+    protected IRaAdminSessionRemote getRaAdminSession() throws CreateException, NamingException, RemoteException {
+        debug(">getRaAdminSession()");
+        administrator = new Admin(Admin.TYPE_RACOMMANDLINE_USER);
+        try {
+            if( raadminsession == null ) {
+                if (raadminHomesession == null) {
+                    Context jndiContext = getInitialContext();
+                    Object obj1 = jndiContext.lookup("RaAdminSession");
+                    raadminHomesession = (IRaAdminSessionHome) javax.rmi.PortableRemoteObject.narrow(obj1, IRaAdminSessionHome.class);
+                }
+                raadminsession = raadminHomesession.create();
+            }
+            debug("<getRaAdminSession()");
+            return  raadminsession;
+        } catch (NamingException e ) {
+            error("Can't get RaAdmin session", e);
+            throw e;
+        }
+    } // getRaAdminSession    
+    
     /**
      * Logs a message with priority DEBUG
      *

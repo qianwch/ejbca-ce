@@ -33,7 +33,7 @@ import se.anatom.ejbca.util.query.Query;
 /**
  * Interface for User admin session
  *
- * @version $Id: IUserAdminSessionRemote.java,v 1.28 2004-04-16 07:38:56 anatom Exp $
+ * @version $Id: IUserAdminSessionRemote.java,v 1.28.2.1 2005-02-03 16:48:21 anatom Exp $
  */
 public interface IUserAdminSessionRemote extends javax.ejb.EJBObject {
     // Public constants
@@ -202,12 +202,21 @@ public interface IUserAdminSessionRemote extends javax.ejb.EJBObject {
    /**
     * Finds all users with a specified status.
     *
-    * @param status the new status, from 'UserData'.
+    * @param status the status, from 'UserData'.
     * @return Collection of UserAdminData
     * @throws EJBException if a communication or other error occurs.
     * @see se.anatom.ejbca.ra.UserAdminData
     */
     public Collection findAllUsersByStatus(Admin admin, int status) throws FinderException, RemoteException;
+    /**
+     * Finds all users with a specified caid.
+     *
+     * @param statcaid the caid, from 'UserData'.
+     * @return Collection of UserAdminData
+     * @throws EJBException if a communication or other error occurs.
+     * @see se.anatom.ejbca.ra.UserAdminData
+     */
+    public Collection findAllUsersByCaId(Admin admin, int caid) throws FinderException, RemoteException;
 
    /**
     * Finds all users and returns the first MAXIMUM_QUERY_ROWCOUNT.
