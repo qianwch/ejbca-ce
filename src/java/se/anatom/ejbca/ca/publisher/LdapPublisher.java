@@ -29,6 +29,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DERIA5String;
@@ -57,7 +58,7 @@ import com.novell.ldap.LDAPModificationSet;
 /**
  * LdapPublisher is a class handling a publishing to various v3 LDAP catalouges.  
  *
- * @version $Id: LdapPublisher.java,v 1.5.2.6 2004-11-22 13:12:32 primelars Exp $
+ * @version $Id: LdapPublisher.java,v 1.5.2.7 2005-01-25 10:18:27 anatom Exp $
  */
 public class LdapPublisher extends BasePublisher{
 	 	
@@ -1004,13 +1005,17 @@ public class LdapPublisher extends BasePublisher{
       if(usefields instanceof List){
         Collections.sort((List) usefields);
       }
-      Iterator iter = usefields.iterator(); 
+      Iterator iter = usefields.iterator();
+      String dnField = null;
       while(iter.hasNext()){
       	Integer next = (Integer) iter.next();
-      	if(retval.length() == 0)
-      	  retval += getDNField(extractor, next.intValue());
-      	else
-      	  retval += "," + getDNField(extractor, next.intValue());
+      	dnField = getDNField(extractor, next.intValue());
+      	if (StringUtils.isNotEmpty(dnField)) {
+          	if(retval.length() == 0)
+            	  retval += dnField; // first item, don't start with a comma
+            	else
+            	  retval += "," + dnField;      	    
+      	}
       }
       
       retval = retval + "," + this.getBaseDN();
