@@ -25,7 +25,7 @@ import se.anatom.ejbca.util.Hex;
 /**
  * Tools to handle common certificate operations.
  *
- * @version $Id: CertTools.java,v 1.7.4.3 2002-01-26 14:46:21 anatom Exp $
+ * @version $Id: CertTools.java,v 1.7.4.4 2002-01-28 09:14:55 anatom Exp $
  */
 public class CertTools {
 
@@ -405,4 +405,5 @@ public class CertTools {
     } // generateMD5Fingerprint
 
 } // CertTools
+
 

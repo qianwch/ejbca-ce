@@ -10,7 +10,7 @@ import se.anatom.ejbca.ra.UserAdminData;
 
 /**
  *
- * @version $Id: IUserAdminSession.java,v 1.1.1.1.6.2 2002-01-26 14:46:20 anatom Exp $
+ * @version $Id: IUserAdminSession.java,v 1.1.1.1.6.3 2002-01-28 09:14:55 anatom Exp $
  */
 public interface IUserAdminSession {
 
@@ -28,7 +28,7 @@ public interface IUserAdminSession {
     public void addUser(String username, String password, String dn, String email, int type) throws RemoteException;
 
    /**
-    * Deletes a user from the database.
+    * Deletes a user from the database. The users certificates must be revoked BEFORE this method is called.
     *
     * @param username the unique username.
     *
@@ -75,3 +75,4 @@ public interface IUserAdminSession {
     public Collection findAllUsersByStatus(int status) throws RemoteException;
 
 }
+
