@@ -74,7 +74,7 @@ import se.anatom.ejbca.util.KeyTools;
  * </p>
  *
  * @author Original code by Lars Silv?n
- * @version $Id: CertReqServlet.java,v 1.45.2.1 2004-06-22 11:04:12 herrvendil Exp $
+ * @version $Id: CertReqServlet.java,v 1.45.2.2 2004-09-26 08:42:18 anatom Exp $
  */
 public class CertReqServlet extends HttpServlet {
     private static Logger log = Logger.getLogger(CertReqServlet.class);
@@ -235,7 +235,6 @@ public class CertReqServlet extends HttpServlet {
             debug.printMessage(
                 "To generate a certificate a valid username and password must be entered.");
             debug.printDebugInfo();
-
             return;
         } catch (AuthStatusException ase) {
             log.debug("Wrong user status!");
@@ -248,9 +247,7 @@ public class CertReqServlet extends HttpServlet {
                 debug.printMessage(
                     "To generate a certificate for a user the user must have status new, failed or inprocess.");
             }
-
             debug.printDebugInfo();
-
             return;
         } catch (AuthLoginException ale) {
             log.debug("Wrong password for user!");
@@ -258,41 +255,41 @@ public class CertReqServlet extends HttpServlet {
             debug.printMessage(
                 "To generate a certificate a valid username and password must be entered.");
             debug.printDebugInfo();
-
             return;
         } catch (SignRequestException re) {
             log.debug("Invalid request!");
             debug.printMessage("Invalid request!");
             debug.printMessage("Please supply a correct request.");
             debug.printDebugInfo();
-
             return;
         } catch (SignRequestSignatureException se) {
             log.debug("Invalid signature on certificate request!");
             debug.printMessage("Invalid signature on certificate request!");
             debug.printMessage("Please supply a correctly signed request.");
             debug.printDebugInfo();
-
             return;
         } catch (java.lang.ArrayIndexOutOfBoundsException ae) {
             log.debug("Empty or invalid request received.");
             debug.printMessage("Empty or invalid request!");
             debug.printMessage("Please supply a correct request.");
             debug.printDebugInfo();
-
+            return;
+        } catch (se.anatom.ejbca.ca.exception.IllegalKeyException e) {
+            log.debug("Illegal Key received: "+e.getMessage());
+            debug.printMessage("Invalid Key in request: "+e.getMessage());
+            debug.printMessage("Please supply a correct request.");
+            debug.printDebugInfo();
             return;
         } catch (Exception e) {
             log.debug(e);
             debug.print("<h3>parameter name and values: </h3>");
 
             Enumeration paramNames = request.getParameterNames();
-
             while (paramNames.hasMoreElements()) {
                 String name = paramNames.nextElement().toString();
                 String parameter = request.getParameter(name);
                 debug.print("<h4>" + name + ":</h4>" + parameter + "<br>");
             }
-
             debug.takeCareOfException(e);
             debug.printDebugInfo();
         }
