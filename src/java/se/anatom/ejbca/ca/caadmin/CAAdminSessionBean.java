@@ -57,6 +57,7 @@ import se.anatom.ejbca.ca.auth.UserAuthData;
 import se.anatom.ejbca.ca.caadmin.extendedcaservices.ExtendedCAServiceInfo;
 import se.anatom.ejbca.ca.caadmin.extendedcaservices.OCSPCAService;
 import se.anatom.ejbca.ca.caadmin.extendedcaservices.OCSPCAServiceInfo;
+import se.anatom.ejbca.ca.caadmin.hardcatokens.HardCATokenManager;
 import se.anatom.ejbca.ca.crl.ICreateCRLSessionLocal;
 import se.anatom.ejbca.ca.crl.ICreateCRLSessionLocalHome;
 import se.anatom.ejbca.ca.crl.RevokedCertInfo;
@@ -87,7 +88,7 @@ import se.anatom.ejbca.util.KeyTools;
 /**
  * Administrates and manages CAs in EJBCA system.
  *
- * @version $Id: CAAdminSessionBean.java,v 1.25.2.2 2004-11-13 00:24:36 herrvendil Exp $
+ * @version $Id: CAAdminSessionBean.java,v 1.25.2.3 2005-03-30 06:51:42 anatom Exp $
  */
 public class CAAdminSessionBean extends BaseSessionBean {
     
@@ -497,13 +498,13 @@ public class CAAdminSessionBean extends BaseSessionBean {
             getLogSession().log(admin, caid, LogEntry.MODULE_CA,  new java.util.Date(), null, null, LogEntry.EVENT_ERROR_NOTAUTHORIZEDTORESOURCE,"Administrator isn't authorized to remove CA",e);
             throw new AuthorizationDeniedException("Not authorized to remove CA with caid = " + caid);
         }
-        
         // Get CA from database
         try{
             CADataLocal cadata = cadatahome.findByPrimaryKey(new Integer(caid));
             // Remove CA
             cadata.remove();
-            
+            // Remove an eventual CA token from the token registry
+            HardCATokenManager.instance().addCAToken(caid, null);
             getLogSession().log(admin, caid, LogEntry.MODULE_CA,  new java.util.Date(), null, null, LogEntry.EVENT_INFO_CAEDITED,"CA Removed");
         }catch(Exception e) {
             getLogSession().log(admin, caid, LogEntry.MODULE_CA,  new java.util.Date(), null, null, LogEntry.EVENT_ERROR_CAEDITED,"Error when trying to remove CA.",e);
