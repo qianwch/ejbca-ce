@@ -282,7 +282,7 @@ includes="**/*.class,**/*.log,**/.nbattrs,**/filesystem.attributes"/>
                 <include name="se/anatom/ejbca/ra/UserDataLocal.class"/> 
                 <include name="se/anatom/ejbca/ra/UserDataLocalHome.class"/>                                                
                 <include name="se/anatom/ejbca/ra/authorization/I*.class"/>                
-                <include name="se/anatom/ejbca/ca/store/I*.class"/>  
+                <include name="se/anatom/ejbca/ca/store/I*.class"/>
                 <include name="se/anatom/ejbca/log/I*.class"/>
                 <include name="se/anatom/ejbca/log/Admin.class"/>  
                 <include name="se/anatom/ejbca/log/LogEntry.class"/>
@@ -477,7 +477,7 @@ includes="**/*.class,**/*.log,**/.nbattrs,**/filesystem.attributes"/>
                 <include name="se/anatom/ejbca/hardtoken/IHardTokenSessionHome.class"/> 
                 <include name="se/anatom/ejbca/hardtoken/IHardTokenSessionRemote.class"/>     
                 <include name="se/anatom/ejbca/hardtoken/HardTokenIssuer.class"/>   
-                <include name="se/anatom/ejbca/hardtoken/HardTokenIssuerData.class"/>   
+                <include name="se/anatom/ejbca/hardtoken/HardTokenIssuerData.class"/>
                 <include name="se/anatom/ejbca/hardtoken/hardtokentypes/*.class"/>   
                 <include name="se/anatom/ejbca/hardtoken/HardTokenData.class"/>                 
                 <include name="se/anatom/ejbca/hardtoken/UnavailableTokenException.class"/>
@@ -539,6 +539,8 @@ includes="**/*.class,**/*.log,**/.nbattrs,**/filesystem.attributes"/>
             <include name="log4j-1.2.7.jar"/>
             <include name="ldap.jar"/>
             <include name="jocsp.jar"/>
+            <include name="commons-lang-1.0.jar"/>
+            <include name="commons-collections.jar"/>
         </fileset>
     </copy>
   
@@ -586,6 +588,8 @@ includes="**/*.class,**/*.log,**/.nbattrs,**/filesystem.attributes"/>
             <include name="log4j-1.2.7.jar"/>
             <include name="ldap.jar"/>
             <include name="jocsp.jar"/>
+            <include name="commons-lang-1.0.jar"/>
+            <include name="commons-collections.jar"/>
         </fileset>
     </copy>
   
@@ -645,7 +649,9 @@ includes="**/*.class,**/*.log,**/.nbattrs,**/filesystem.attributes"/>
   <!-- Batch generate certificates for users with clear text password and right type -->
   <!-- ============================================================================= -->
   <target name="batch" depends="admin.jar">
-  	<java classname="se.anatom.ejbca.batch.BatchMakeP12" fork="true">
+    <fail message="Environment variable JBOSS_HOME not set."
+          unless="env.JBOSS_HOME"/>
+    <java classname="se.anatom.ejbca.batch.BatchMakeP12" fork="true">
   		 <classpath>
   		 	<pathelement location="${adminjar}"/>
   		 	<fileset dir="${env.JBOSS_HOME}/client" includes="**/*.jar"/>
@@ -658,6 +664,8 @@ includes="**/*.class,**/*.log,**/.nbattrs,**/filesystem.attributes"/>
   <!-- Deploy EJBCA ear to JBoss                                               -->
   <!-- ======================================================================= -->
   <target name="deploy" depends="ca.ear, admin.jar">
+    <fail message="Environment variable JBOSS_HOME not set."
+          unless="env.JBOSS_HOME"/>
 	<copy file="${caear}" tofile="${env.JBOSS_HOME}/server/default/deploy/ejbca-ca.ear" verbose="true"/>
   </target>
 
@@ -665,6 +673,8 @@ includes="**/*.class,**/*.log,**/.nbattrs,**/filesystem.attributes"/>
   <!-- Deploy ear without Admin Web-GUI to JBoss                               -->
   <!-- ======================================================================= -->
   <target name="deploy_nora" depends="canora.ear">
+    <fail message="Environment variable JBOSS_HOME not set."
+          unless="env.JBOSS_HOME"/>
 	<copy file="${caearnora}" tofile="${env.JBOSS_HOME}/server/default/deploy/ejbca-canora.ear" verbose="true"/>
   </target>
   
@@ -673,6 +683,8 @@ includes="**/*.class,**/*.log,**/.nbattrs,**/filesystem.attributes"/>
   <!-- Deploy a keystore to JBOSS                                              -->
   <!-- ======================================================================= -->
   <target name="keystore">
+    <fail message="Environment variable JBOSS_HOME not set."
+          unless="env.JBOSS_HOME"/>
   	<copy file="${keystore}" tofile="${env.JBOSS_HOME}/server/default/conf/${ksname}" verbose="true"/>	
   </target>
 
