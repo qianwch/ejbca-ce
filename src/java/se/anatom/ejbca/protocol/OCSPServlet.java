@@ -36,7 +36,7 @@ import org.apache.log4j.Logger;
  * For a detailed description of OCSP refer to RFC2560.
  * 
  * @author Thomas Meckel (Ophios GmbH)
- * @version  $Id: OCSPServlet.java,v 1.1.2.4 2003-09-25 13:45:15 anatom Exp $
+ * @version  $Id: OCSPServlet.java,v 1.1.2.5 2003-09-27 08:43:43 anatom Exp $
  */
 public class OCSPServlet extends HttpServlet {
 
@@ -427,7 +427,7 @@ public class OCSPServlet extends HttpServlet {
                         res.addSingleResponse(sres);
                     } else {
                         OCSPSingleResponse sr = new OCSPSingleResponse(certId);
-                        if (rci.getReason() > 0) {
+                        if (rci.getReason() != RevokedCertInfo.NOT_REVOKED) {
                             OCSPRevokedInfo ori = new OCSPRevokedInfo();
                             ori.setRevocationTime(rci.getRevocationDate());
                             ori.setRevocationReason(rci.getReason());

@@ -21,7 +21,7 @@ import se.anatom.ejbca.log.Admin;
  *
  * Remote interface for EJB.
  *
- * @version $Id: ICertificateStoreSessionRemote.java,v 1.14.2.2 2003-09-09 20:10:00 anatom Exp $
+ * @version $Id: ICertificateStoreSessionRemote.java,v 1.14.2.3 2003-09-27 08:43:42 anatom Exp $
  */
 public interface ICertificateStoreSessionRemote extends javax.ejb.EJBObject, IPublisherSessionRemote  {
 
@@ -141,7 +141,7 @@ public interface ICertificateStoreSessionRemote extends javax.ejb.EJBObject, IPu
     *
     * @param issuerDN the DN of the issuer.
     * @param serno the serialnumber of the certificate that will be checked
-    * @return null if certificate is NOT revoked, RevokedCertInfo if it IS revoked.
+    * @return RevokedCertInfo with revocation information, with reason RevokedCertInfo.NOT_REVOKED if NOT revoked. Returns null if certificate is not found.
     * @throws RemoteException if a communication or other error occurs.
     */
     public RevokedCertInfo isRevoked(Admin admin, String issuerDN, BigInteger serno) throws RemoteException;
@@ -363,7 +363,7 @@ public interface ICertificateStoreSessionRemote extends javax.ejb.EJBObject, IPu
      * </ol>
      *
      * @param admin
-     * @paran type
+     * @param type
      * @param issuerDN get all certificates issued by a specific issuer.
      *                 If <tt>null</tt> or empty return certificates regardless of
      *                 the issuer.

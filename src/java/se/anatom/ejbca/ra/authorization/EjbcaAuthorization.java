@@ -7,6 +7,7 @@ import javax.ejb.CreateException;
 import java.rmi.RemoteException;
 import javax.rmi.PortableRemoteObject;
 
+import se.anatom.ejbca.ca.crl.RevokedCertInfo;
 import se.anatom.ejbca.ca.store.ICertificateStoreSessionRemote;
 import se.anatom.ejbca.ca.store.ICertificateStoreSessionHome;
 import se.anatom.ejbca.ca.sign.ISignSessionHome;
@@ -22,7 +23,7 @@ import se.anatom.ejbca.ra.GlobalConfiguration;
  *
  * The main metod are isAthorized and authenticate.
  *
- * @version $Id: EjbcaAuthorization.java,v 1.12 2003-03-11 09:47:41 anatom Exp $
+ * @version $Id: EjbcaAuthorization.java,v 1.12.6.1 2003-09-27 08:43:43 anatom Exp $
  */
 public class EjbcaAuthorization extends Object implements java.io.Serializable{
 
@@ -126,13 +127,15 @@ public class EjbcaAuthorization extends Object implements java.io.Serializable{
 
       // Check if certificate is revoked.
         try{
-          if(certificatesession.isRevoked(admin, CertTools.getIssuerDN(certificate),certificate.getSerialNumber()) != null){
-            // Certificate revoked
-            throw new AuthenticationFailedException("Your certificate have been revoked.");
-          }
-         }
-         catch(RemoteException e){
-            throw new AuthenticationFailedException("Your certificate cannot be found in database.");
+            RevokedCertInfo revinfo = certificatesession.isRevoked(admin, CertTools.getIssuerDN(certificate),certificate.getSerialNumber()); 
+            if( (revinfo != null) && (revinfo.getReason() != RevokedCertInfo.NOT_REVOKED) ) {
+                // Certificate revoked
+                throw new AuthenticationFailedException("Your certificate have been revoked.");
+            } else if (revinfo == null) {
+                throw new AuthenticationFailedException("Your certificate cannot be found in database.");
+            }
+         } catch(RemoteException e) {
+             throw new AuthenticationFailedException("Error checking revocation info for certificate.");
          }
 
     }

@@ -19,7 +19,7 @@ import junit.framework.*;
 /**
  * Tests certificate store.
  *
- * @version $Id: TestCertificateData.java,v 1.17.6.1 2003-09-10 10:59:54 anatom Exp $
+ * @version $Id: TestCertificateData.java,v 1.17.6.2 2003-09-27 08:43:43 anatom Exp $
  */
 public class TestCertificateData extends TestCase {
 
@@ -137,14 +137,10 @@ public class TestCertificateData extends TestCase {
             // Revoke all foos certificates
             CertificateDataPK revpk = new CertificateDataPK(fp);
             CertificateData rev = home.findByPrimaryKey(revpk);
-            if (rev.getStatus() != CertificateData.CERT_REVOKED) {
-                rev.setStatus(CertificateData.CERT_REVOKED);
-                rev.setRevocationReason(RevokedCertInfo.REVOKATION_REASON_AFFILIATIONCHANGED);
-                rev.setRevocationDate(revDate);
-                log.debug("Revoked cert "+fp);
-            } else {
-                log.debug("Cert '"+fp+"' already revoked.");
-            }
+            rev.setStatus(CertificateData.CERT_REVOKED);
+            rev.setRevocationReason(RevokedCertInfo.REVOKATION_REASON_AFFILIATIONCHANGED);
+            rev.setRevocationDate(revDate);
+            log.debug("Revoked cert "+fp);
         }
         log.debug("<test03listAndRevoke()");
     }
@@ -190,7 +186,7 @@ public class TestCertificateData extends TestCase {
         log.debug("expiredate="+data3.getExpireDate());
         log.debug("revocationdate="+data3.getRevocationDate());
         log.debug("revocationreason="+data3.getRevocationReason());
-        assertTrue("wrong reason", (data3.getRevocationReason() & RevokedCertInfo.REVOKATION_REASON_KEYCOMPROMISE) == RevokedCertInfo.REVOKATION_REASON_KEYCOMPROMISE);
+        assertTrue("wrong reason", (data3.getRevocationReason() == RevokedCertInfo.REVOKATION_REASON_AFFILIATIONCHANGED));
 
         log.debug("Looking for cert with DN="+CertTools.getSubjectDN(cert));
         ICertificateStoreSessionRemote store = storehome.create();
@@ -272,12 +268,14 @@ public class TestCertificateData extends TestCase {
         log.debug("expiredate="+data3.getExpireDate());
         log.debug("revocationdate="+data3.getRevocationDate());
         log.debug("revocationreason="+data3.getRevocationReason());
-        assertTrue("wrong reason", (data3.getRevocationReason() & RevokedCertInfo.REVOKATION_REASON_KEYCOMPROMISE) == RevokedCertInfo.REVOKATION_REASON_KEYCOMPROMISE);
+        assertTrue("wrong reason", (data3.getRevocationReason() == RevokedCertInfo.REVOKATION_REASON_AFFILIATIONCHANGED));
 
         log.debug("Checking if cert is revoked DN:'"+CertTools.getIssuerDN(cert)+"', serno:'"+cert.getSerialNumber().toString()+"'.");
         ICertificateStoreSessionRemote store = storehome.create();
         RevokedCertInfo revinfo = store.isRevoked(new Admin(Admin.TYPE_INTERNALUSER), CertTools.getIssuerDN(cert), cert.getSerialNumber());
-        assertNotNull("Certificate not revoked, it should be!", revinfo);
+        assertNotNull("Certificate not found, it should be!", revinfo);
+        int reason = revinfo.getReason();
+        assertEquals("Certificate not revoked, it should be!", RevokedCertInfo.REVOKATION_REASON_AFFILIATIONCHANGED, reason);
         assertTrue("Wrong revocationDate!", revinfo.getRevocationDate().getTime() == data3.getRevocationDate());
         assertTrue("Wrong reason!", revinfo.getReason() == data3.getRevocationReason());
         home.remove(pk);

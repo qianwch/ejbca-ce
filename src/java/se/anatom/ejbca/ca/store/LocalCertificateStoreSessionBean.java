@@ -32,7 +32,7 @@ import se.anatom.ejbca.log.LogEntry;
  * Stores certificate and CRL in the local database using Certificate and CRL Entity Beans.
  * Uses JNDI name for datasource as defined in env 'Datasource' in ejb-jar.xml.
  *
- * @version $Id: LocalCertificateStoreSessionBean.java,v 1.42.2.5 2003-09-12 13:30:38 tmeckel Exp $
+ * @version $Id: LocalCertificateStoreSessionBean.java,v 1.42.2.6 2003-09-27 08:43:42 anatom Exp $
  */
 public class LocalCertificateStoreSessionBean extends BaseSessionBean {
 
@@ -608,7 +608,6 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
         try {
             ArrayList vect;
             StringBuffer stmt = new StringBuffer("SELECT DISTINCT fingerprint FROM CertificateData WHERE status = 20 AND ");
-
             stmt.append(" type IN (");
             stmt.append(ctypes.toString());
             stmt.append(')');
@@ -643,11 +642,9 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
                 if (result != null) {
                     result.close();
                 }
-
                 if (ps != null) {
                     ps.close();
                 }
-
                 if (con != null) {
                     con.close();
                 }
@@ -929,8 +926,10 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
                 if (iter.hasNext()) {
                     RevokedCertInfo revinfo = null;
                     CertificateDataLocal data = (CertificateDataLocal)iter.next();
-                    if (data.getStatus() == CertificateData.CERT_REVOKED) {
-                        revinfo = new RevokedCertInfo(serno, new Date(data.getRevocationDate()), data.getRevocationReason());
+                    revinfo = new RevokedCertInfo(serno, new Date(data.getRevocationDate()), data.getRevocationReason());
+                    // Make sure we have it as NOT revoked if it isn't
+                    if (data.getStatus() != CertificateData.CERT_REVOKED) {
+                        revinfo.setReason(RevokedCertInfo.NOT_REVOKED);
                     }
                     debug("<isRevoked() returned "+((data.getStatus() == CertificateData.CERT_REVOKED)?"yes":"no"));
                     return revinfo;

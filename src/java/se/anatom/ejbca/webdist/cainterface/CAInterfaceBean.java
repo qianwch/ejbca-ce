@@ -28,7 +28,7 @@ import se.anatom.ejbca.util.CertTools;
  * A class used as an interface between CA jsp pages and CA ejbca functions.
  *
  * @author  Philip Vendil
- * @version $Id: CAInterfaceBean.java,v 1.14 2003-03-11 09:47:43 anatom Exp $
+ * @version $Id: CAInterfaceBean.java,v 1.14.6.1 2003-09-27 08:43:43 anatom Exp $
  */
 public class CAInterfaceBean   {
 
@@ -64,8 +64,9 @@ public class CAInterfaceBean   {
         for(int i = 0; i < chain.length; i++){
           RevokedInfoView revokedinfo = null;
           RevokedCertInfo revinfo = certificatesession.isRevoked(administrator, CertTools.getIssuerDN((X509Certificate) chain[i]), ((X509Certificate) chain[i]).getSerialNumber());
-          if(revinfo != null)
-            revokedinfo = new RevokedInfoView(revinfo);
+          if ( (revinfo != null) && (revinfo.getReason() != RevokedCertInfo.NOT_REVOKED) ) {
+              revokedinfo = new RevokedInfoView(revinfo);
+          }
           returnval[i] = new CertificateView((X509Certificate) chain[i], revokedinfo,null);
         }
       }
