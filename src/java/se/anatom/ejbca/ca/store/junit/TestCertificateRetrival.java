@@ -295,10 +295,10 @@ public class TestCertificateRetrival extends TestCase  {
                                                           , null);
         assertNotNull("failed to list certs", certfps);
         assertTrue("failed to list certs", certfps.size() >= 2);
-        iter = certfps.iterator();
+        // Iterate over m_certs to see that we found all our certs (we probably found alot more...)
+        iter = m_certs.iterator();
         while (iter.hasNext()) {
-            assertTrue("Unable to find all test certificates."
-                       , m_certs.contains(iter.next()));
+            assertTrue("Unable to find all test certificates.", certfps.contains(iter.next()));
         }
         m_log.debug("<test06CertificatesByIssuer()");    
     }
