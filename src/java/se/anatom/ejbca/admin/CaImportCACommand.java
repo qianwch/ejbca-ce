@@ -22,7 +22,7 @@ import se.anatom.ejbca.util.FileTools;
 /**
  * Imports a PKCS12 file and created a new CA from it.
  *
- * @version $Id: CaImportCACommand.java,v 1.1 2004-10-31 10:28:10 anatom Exp $
+ * @version $Id: CaImportCACommand.java,v 1.1.2.1 2004-10-31 10:29:06 anatom Exp $
  */
 public class CaImportCACommand extends BaseCaAdminCommand {
     /**

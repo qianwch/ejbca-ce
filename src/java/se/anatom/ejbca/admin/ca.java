@@ -19,7 +19,7 @@ import org.apache.log4j.PropertyConfigurator;
 /**
  * Implements the CA command line interface
  *
- * @version $Id: ca.java,v 1.36 2004-04-16 07:38:57 anatom Exp $
+ * @version $Id: ca.java,v 1.36.2.1 2004-10-31 10:29:06 anatom Exp $
  */
 public class ca extends BaseCommand {
     /**
@@ -37,7 +37,7 @@ public class ca extends BaseCommand {
                 cmd.execute();
             } else {
                 System.out.println(
-                    "Usage: CA info | init | listcas | makeroot | getrootcert | makereq | recrep | processreq | createcrl | getcrl | rolloverroot | rolloversub | listexpired | exportprofiles | importprofiles");
+                    "Usage: CA info | init | listcas | makeroot | getrootcert | makereq | recrep | processreq | createcrl | getcrl | rolloverroot | rolloversub | listexpired | exportprofiles | importprofiles | importca");
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());            
