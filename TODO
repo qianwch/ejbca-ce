@@ -1,4 +1,4 @@
-$Id: TODO,v 1.60.2.1 2003-10-05 08:44:57 anatom Exp $
+$Id: TODO,v 1.60.2.2 2003-10-06 06:30:04 anatom Exp $
 
 V 1.x
 -----
@@ -9,6 +9,7 @@ V 2.x
 - Command line to edit/change users.
 - Import utility to get users from external datasources.
 - Better command line tools for batch stuff.
+- Encrypted password in ejb-jar.xml files.
 
 V 3.x
 -----
