@@ -21,7 +21,7 @@ import se.anatom.ejbca.log.Admin;
  *
  * Remote interface for EJB.
  *
- * @version $Id: ICertificateStoreSessionRemote.java,v 1.14.2.3 2003-09-27 08:43:42 anatom Exp $
+ * @version $Id: ICertificateStoreSessionRemote.java,v 1.14.2.4 2003-10-05 09:25:34 anatom Exp $
  */
 public interface ICertificateStoreSessionRemote extends javax.ejb.EJBObject, IPublisherSessionRemote  {
 
@@ -145,6 +145,19 @@ public interface ICertificateStoreSessionRemote extends javax.ejb.EJBObject, IPu
     * @throws RemoteException if a communication or other error occurs.
     */
     public RevokedCertInfo isRevoked(Admin admin, String issuerDN, BigInteger serno) throws RemoteException;
+
+	/**
+	 * The method returns the revocation status for a list or certificate identified
+	 * by the serialnumber.
+	 *
+	 * @param admin
+	 * @param issuer the subjectDN of a CA certificate
+	 * @param sernos a collection of certificate serialnumbers
+	 *
+	 * @return Collection a collection of {@link RevokedCertInfo} objects which
+	 *                    reflect the revocation status of the given certificates.
+	 */
+	public Collection isRevoked(Admin admin, String issuerDN, Collection sernos) throws RemoteException;
 
     /**
     * Lists all revoked certificates, ie status = CERT_REVOKED.
@@ -376,17 +389,5 @@ public interface ICertificateStoreSessionRemote extends javax.ejb.EJBObject, IPu
      public Collection findCertificatesByType(Admin admin, int type, String issuerDN)
         throws RemoteException;
 
-    /**
-     * The method returns the revocation status for a list or certificate identified
-     * by the serialnumber.
-     *
-     * @param admin
-     * @param issuer the subjectDN of a CA certificate
-     * @param sernos a collection of certificate serialnumbers
-     *
-     * @return Collection a collection of {@link RevokedCertInfo} objects which
-     *                    reflect the revocation status of the given certificates.
-     */
-    public Collection isRevoked(Admin admin, String issuerDN, Collection sernos) throws RemoteException;
  
 }
