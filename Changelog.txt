@@ -1,3 +1,9 @@
+3.0.7
+-----
+* [ECA-54] - HardCATokens goes off-line when bean gets passivated
+* [ECA-49] - saving of generated request from CA fails on IE
+
+
 3.0.6
 -----
 * [ECA-40] - defined hardtoken issuer and profiles disapears after some time
