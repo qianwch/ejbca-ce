@@ -36,7 +36,7 @@ import org.apache.log4j.Logger;
  * For a detailed description of OCSP refer to RFC2560.
  * 
  * @author Thomas Meckel (Ophios GmbH)
- * @version  $Id: OCSPServlet.java,v 1.1.2.3 2003-09-25 13:32:57 anatom Exp $
+ * @version  $Id: OCSPServlet.java,v 1.1.2.4 2003-09-25 13:45:15 anatom Exp $
  */
 public class OCSPServlet extends HttpServlet {
 
@@ -477,54 +477,5 @@ public class OCSPServlet extends HttpServlet {
          */
         m_log.debug("<doGet()");
     } // doGet
-
-    /**
-     * Prints debug info back to browser client
-     **/
-    private class Debug {
-        final private ByteArrayOutputStream buffer;
-        final private PrintStream printer;
-        final private HttpServletRequest request;
-        final private HttpServletResponse response;
-        Debug(HttpServletRequest request, HttpServletResponse response){
-            buffer=new ByteArrayOutputStream();
-            printer=new PrintStream(buffer);
-            this.request=request;
-            this.response=response;
-        }
-
-        void printDebugInfo() throws IOException, ServletException {
-            request.setAttribute("ErrorMessage",new String(buffer.toByteArray()));
-            request.getRequestDispatcher("/error.jsp").forward(request, response);
-        }
-
-        void print(Object o) {
-            printer.println(o);
-        }
-        void printMessage(String msg) {
-            print("<p>"+msg);
-        }
-        void printInsertLineBreaks( byte[] bA ) throws Exception {
-            BufferedReader br=new BufferedReader(
-                new InputStreamReader(new ByteArrayInputStream(bA)) );
-            while ( true ){
-                String line=br.readLine();
-                if (line==null)
-                    break;
-                print(line.toString()+"<br>");
-            }
-        }
-        void takeCareOfException(Throwable t ) {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            t.printStackTrace(new PrintStream(baos));
-            print("<h4>Exception:</h4>");
-            try {
-                printInsertLineBreaks( baos.toByteArray() );
-            } catch (Exception e) {
-                e.printStackTrace(printer);
-            }
-            request.setAttribute("Exception", "true");
-        }
-    } // Debug
 
 } // ScepServlet
