@@ -1,3 +1,5 @@
+<%@ page pageEncoding="ISO-8859-1"%>
+
 <HEAD><TITLE>EJBCA Certificate enroll</TITLE></HEAD>
 <BODY bgcolor="#ffffff" link="black" vlink="black" alink="black">
 
@@ -7,7 +9,7 @@
 </center>
 
 <p>
-If you you want to, you can manually install the CA certificate(s) in your browser, otherwise this will be done automatically 
+If you want to, you can manually install the CA certificate(s) in your browser, otherwise this will be done automatically 
 when your certificate is retrieved.
 
 <P>Install CA certificates:
