@@ -19,7 +19,7 @@ import java.util.ArrayList;
  * HardTokenSignCertificateProfile is a class defining the fixed characteristics 
  * of a hard token sign certificate.
  *
- * @version $Id: HardTokenSignCertificateProfile.java,v 1.2.2.1 2004-11-07 16:43:29 herrvendil Exp $
+ * @version $Id: HardTokenSignCertificateProfile.java,v 1.2.2.2 2004-11-08 09:00:45 herrvendil Exp $
  */
 public class HardTokenSignCertificateProfile extends CertificateProfile{
 
@@ -68,8 +68,6 @@ public class HardTokenSignCertificateProfile extends CertificateProfile{
       setUseExtendedKeyUsage(true);
       ArrayList eku = new ArrayList();  
       eku.add(new Integer(EMAILPROTECTION));
-      eku.add(new Integer(TIMESTAMPING));
-      eku.add(new Integer(CODESIGNING));
       setExtendedKeyUsage(eku);
       setExtendedKeyUsageCritical(false);
       
