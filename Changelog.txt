@@ -1,3 +1,7 @@
+3.0.4
+-----
+Fixed integer overflow when setting CRLPeriod longer than 596 hours.
+
 3.0.3
 -----
 Fixed wrong encoding of BasicConstraints when false.
