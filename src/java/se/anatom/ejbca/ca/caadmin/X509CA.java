@@ -15,7 +15,6 @@ package se.anatom.ejbca.ca.caadmin;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -102,7 +101,7 @@ import se.anatom.ejbca.util.StringTools;
  * X509CA is a implementation of a CA and holds data specific for Certificate and CRL generation 
  * according to the X509 standard. 
  *
- * @version $Id: X509CA.java,v 1.27.2.1 2004-06-30 08:41:22 anatom Exp $
+ * @version $Id: X509CA.java,v 1.27.2.2 2004-07-16 20:15:05 anatom Exp $
  */
 public class X509CA extends CA implements Serializable {
 
