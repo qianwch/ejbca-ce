@@ -50,7 +50,7 @@
         </init-param>
         <init-param>
             <param-name>enforceRequestSigning</param-name>
-            <param-value>true</param-value>
+            <param-value>false</param-value>
             <description>
                 If set to true the servlet will enforce OCSP request signing.
             </description>
