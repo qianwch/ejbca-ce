@@ -18,7 +18,7 @@ import java.security.cert.X509Certificate;
  * (resp.requireEncKeyInfo()) { resp.setEncKeyInfo(enccert,enckey) }; resp.create(); byte[]
  * responseMessage = resp.getResponseMessage(); </code>
  *
- * @version $Id: IResponseMessage.java,v 1.4.2.2 2003-08-28 14:48:16 rebrabnoj Exp $
+ * @version $Id: IResponseMessage.java,v 1.4.2.3 2003-09-20 11:35:27 anatom Exp $
  */
 public interface IResponseMessage {
 
@@ -41,28 +41,28 @@ public interface IResponseMessage {
      *
      * @param status status of the response.
      */
-    public void setStatus(ScepResponseStatus status);
+    public void setStatus(ResponseStatus status);
 
     /**
      * Gets the status of the response message.
      *
      * @return status status of the response.
      */
-    public ScepResponseStatus getStatus();
+    public ResponseStatus getStatus();
 
     /**
      * Sets info about reason for failure.
      *
      * @param failInfo reason for failure.
      */
-    public void setFailInfo(ScepFailInfo failInfo);
+    public void setFailInfo(FailInfo failInfo);
 
     /**
      * Gets info about reason for failure.
      *
      * @return failInfo reason for failure.
      */
-    public ScepFailInfo getFailInfo();
+    public FailInfo getFailInfo();
 
     /**
      * Create encrypts and creates signatures as needed to produce a complete response message.  If

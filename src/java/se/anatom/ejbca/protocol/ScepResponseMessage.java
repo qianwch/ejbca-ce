@@ -44,7 +44,7 @@ import se.anatom.ejbca.util.CertTools;
 /**
  * A response message for scep (pkcs7).
  *
- * @version $Id: ScepResponseMessage.java,v 1.4.2.2 2003-08-28 14:48:16 rebrabnoj Exp $
+ * @version $Id: ScepResponseMessage.java,v 1.4.2.3 2003-09-20 11:35:27 anatom Exp $
  */
 public class ScepResponseMessage implements IResponseMessage, Serializable {
     private static Logger log = Logger.getLogger(ScepResponseMessage.class);
@@ -53,10 +53,10 @@ public class ScepResponseMessage implements IResponseMessage, Serializable {
     private byte[] responseMessage = null;
 
     /** status for the response */
-    private ScepResponseStatus status = ScepResponseStatus.SUCCESS;
+    private ResponseStatus status = ResponseStatus.SUCCESS;
 
     /** Possible fail information in the response. Defaults to 'badRequest (2)'. */
-    private ScepFailInfo failInfo = ScepFailInfo.BAD_REQUEST;
+    private FailInfo failInfo = FailInfo.BAD_REQUEST;
 
     /**
      * SenderNonce. This is base64 encoded bytes
@@ -104,7 +104,7 @@ public class ScepResponseMessage implements IResponseMessage, Serializable {
      *
      * @param status status of the response.
      */
-    public void setStatus(ScepResponseStatus status) {
+    public void setStatus(ResponseStatus status) {
         this.status = status;
     }
 
@@ -113,7 +113,7 @@ public class ScepResponseMessage implements IResponseMessage, Serializable {
      *
      * @return status status of the response.
      */
-    public ScepResponseStatus getStatus() {
+    public ResponseStatus getStatus() {
         return status;
     }
 
@@ -122,7 +122,7 @@ public class ScepResponseMessage implements IResponseMessage, Serializable {
      *
      * @param failInfo reason for failure.
      */
-    public void setFailInfo(ScepFailInfo failInfo) {
+    public void setFailInfo(FailInfo failInfo) {
         this.failInfo = failInfo;
     }
 
@@ -131,7 +131,7 @@ public class ScepResponseMessage implements IResponseMessage, Serializable {
      *
      * @return failInfo reason for failure.
      */
-    public ScepFailInfo getFailInfo() {
+    public FailInfo getFailInfo() {
         return failInfo;
     }
 
@@ -158,7 +158,7 @@ public class ScepResponseMessage implements IResponseMessage, Serializable {
 
         try {
 
-            if (status.equals(ScepResponseStatus.SUCCESS)) {
+            if (status.equals(ResponseStatus.SUCCESS)) {
                 log.debug("Creating a STATUS_OK message.");
             } else {
                 log.debug("Creating a STATUS_FAILED message.");
@@ -166,7 +166,7 @@ public class ScepResponseMessage implements IResponseMessage, Serializable {
 
             CMSProcessable msg;
 
-            if (status.equals(ScepResponseStatus.SUCCESS)) {
+            if (status.equals(ResponseStatus.SUCCESS)) {
 
                 CMSEnvelopedDataGenerator edGen = new CMSEnvelopedDataGenerator();
                 // Add the issued certificate to the signed portion of the CMS (as signer, degenerate case)
@@ -252,7 +252,7 @@ public class ScepResponseMessage implements IResponseMessage, Serializable {
             attr = new Attribute(oid, value);
             attributes.put(attr.getAttrType(), attr);
 
-            if (status.equals(ScepResponseStatus.FAILURE)) {
+            if (status.equals(ResponseStatus.FAILURE)) {
                 oid = new DERObjectIdentifier(ScepRequestMessage.id_failInfo);
                 value = new DERSet(new DERPrintableString(failInfo.getValue()));
                 attr = new Attribute(oid, value);

@@ -14,17 +14,17 @@ import java.security.cert.X509Certificate;
 /**
  * A response message consisting of a single X509 Certificate.
  *
- * @version $Id: X509ResponseMessage.java,v 1.5.2.2 2003-08-28 14:48:16 rebrabnoj Exp $
+ * @version $Id: X509ResponseMessage.java,v 1.5.2.3 2003-09-20 11:35:27 anatom Exp $
  */
 public class X509ResponseMessage implements IResponseMessage {
     /** Certificate to be in response message, */
     private Certificate cert = null;
 
     /** status for the response */
-    private ScepResponseStatus status = ScepResponseStatus.SUCCESS;
+    private ResponseStatus status = ResponseStatus.SUCCESS;
 
     /** Possible fail information in the response. Defaults to null. */
-    private ScepFailInfo failInfo = null;
+    private FailInfo failInfo = null;
 
     /**
      * Sets the complete certificate in the response message.
@@ -49,7 +49,7 @@ public class X509ResponseMessage implements IResponseMessage {
      *
      * @param status status of the response.
      */
-    public void setStatus(ScepResponseStatus status) {
+    public void setStatus(ResponseStatus status) {
         this.status = status;
     }
 
@@ -58,7 +58,7 @@ public class X509ResponseMessage implements IResponseMessage {
      *
      * @return status status of the response.
      */
-    public ScepResponseStatus getStatus() {
+    public ResponseStatus getStatus() {
         return status;
     }
 
@@ -67,7 +67,7 @@ public class X509ResponseMessage implements IResponseMessage {
      *
      * @param failInfo reason for failure.
      */
-    public void setFailInfo(ScepFailInfo failInfo) {
+    public void setFailInfo(FailInfo failInfo) {
         this.failInfo = failInfo;
     }
 
@@ -76,7 +76,7 @@ public class X509ResponseMessage implements IResponseMessage {
      *
      * @return failInfo reason for failure.
      */
-    public ScepFailInfo getFailInfo() {
+    public FailInfo getFailInfo() {
         return failInfo;
     }
 

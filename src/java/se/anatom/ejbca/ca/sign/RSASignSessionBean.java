@@ -21,8 +21,8 @@ import se.anatom.ejbca.log.ILogSessionRemote;
 import se.anatom.ejbca.log.LogEntry;
 import se.anatom.ejbca.protocol.IRequestMessage;
 import se.anatom.ejbca.protocol.IResponseMessage;
-import se.anatom.ejbca.protocol.ScepResponseStatus;
-import se.anatom.ejbca.protocol.ScepFailInfo;
+import se.anatom.ejbca.protocol.ResponseStatus;
+import se.anatom.ejbca.protocol.FailInfo;
 import se.anatom.ejbca.util.CertTools;
 import se.anatom.ejbca.util.Hex;
 
@@ -45,7 +45,7 @@ import java.util.*;
 /**
  * Creates X509 certificates using RSA keys.
  *
- * @version $Id: RSASignSessionBean.java,v 1.86.2.5 2003-09-14 19:41:28 anatom Exp $
+ * @version $Id: RSASignSessionBean.java,v 1.86.2.6 2003-09-20 11:35:27 anatom Exp $
  */
 public class RSASignSessionBean extends BaseSessionBean {
     transient X509Certificate caCert;
@@ -720,8 +720,8 @@ public class RSASignSessionBean extends BaseSessionBean {
             if ((username == null) || (pwd == null)) {
             //    throw new SignRequestException("No username/password in request!");
                 log.error("No username/password in request");
-                ret.setFailInfo(ScepFailInfo.BAD_REQUEST);
-                ret.setStatus(ScepResponseStatus.FAILURE);
+                ret.setFailInfo(FailInfo.BAD_REQUEST);
+                ret.setStatus(ResponseStatus.FAILURE);
             } else {
 
 
@@ -749,9 +749,9 @@ public class RSASignSessionBean extends BaseSessionBean {
 
                 if (cert != null) {
                     ret.setCertificate(cert);
-                    ret.setStatus(ScepResponseStatus.SUCCESS);
+                    ret.setStatus(ResponseStatus.SUCCESS);
                 } else {
-                    ret.setStatus(ScepResponseStatus.FAILURE);
+                    ret.setStatus(ResponseStatus.FAILURE);
                 }
 
             }

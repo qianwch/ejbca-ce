@@ -1,7 +1,7 @@
 /**
- * $Header: /home/tomas/Dev/cvs2svn/ejbca-cvsbackup/ejbca/src/java/se/anatom/ejbca/protocol/ScepResponseStatus.java,v 1.1.2.1 2003-08-28 14:48:16 rebrabnoj Exp $
+ * $Header: /home/tomas/Dev/cvs2svn/ejbca-cvsbackup/ejbca/src/java/se/anatom/ejbca/protocol/ResponseStatus.java,v 1.1.2.1 2003-09-20 11:35:27 anatom Exp $
  * $Revision: 1.1.2.1 $
- * $Date: 2003-08-28 14:48:16 $
+ * $Date: 2003-09-20 11:35:27 $
  *
  */
 package se.anatom.ejbca.protocol;
@@ -14,29 +14,29 @@ import java.io.Serializable;
  * @author Jon Barber (jon.barber@acm.org)
  */
 
-public class ScepResponseStatus implements Serializable {
+public class ResponseStatus implements Serializable {
 
     /**
      * Request granted
      */
-    public static final ScepResponseStatus SUCCESS = new ScepResponseStatus(0);
+    public static final ResponseStatus SUCCESS = new ResponseStatus(0);
 
     /**
      * Request rejected
      */
-    public static final ScepResponseStatus FAILURE = new ScepResponseStatus(2);
+    public static final ResponseStatus FAILURE = new ResponseStatus(2);
 
     /**
      * Request pending for approval
      */
-    public static final ScepResponseStatus PENDING = new ScepResponseStatus(3);
+    public static final ResponseStatus PENDING = new ResponseStatus(3);
 
     /**
      * The value actually encoded into the response message as a pkiStatus attribute
      */
     private final int value;
 
-    private ScepResponseStatus(int value) {
+    private ResponseStatus(int value) {
         this.value = value;
     }
 
@@ -51,9 +51,9 @@ public class ScepResponseStatus implements Serializable {
 
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof ScepResponseStatus)) return false;
+        if (!(o instanceof ResponseStatus)) return false;
 
-        final ScepResponseStatus scepResponseStatus = (ScepResponseStatus) o;
+        final ResponseStatus scepResponseStatus = (ResponseStatus) o;
 
         if (value != scepResponseStatus.value) return false;
 
