@@ -15,9 +15,10 @@ To use the default database, HypersonicDB, nothing should be done, just install
 JBoss and run. Read this HOWTO if you want to replace the default database with
 another.
 
-When using another database as the default database, HypersoniqDB, should be
-removed completely.
-The file server/default/deploy/hsqldb-ds.xml should be removed.
+Unless you are adventurous and know what you're doing, it is recommended to define
+another datasource for ejbca and not reconfigure DefaultDS with another database
+as you run the risk to jump into mapping bugs in the JBoss configuration and mess
+up your server default configuration.
 
 NOW ON TO THE HOWTO!
 
@@ -43,8 +44,7 @@ The description given here is for JBoss 3.x. Consider consulting the
 official JBoss documentation.
 
 First comes the general description and in the end database specific
-configurations
-are given in sections for the specific databases.
+configurations are given in sections for the specific databases.
 
 Database configuration files in JBoss (with Tomcat or Jetty) is located in the
 <jboss-home>/server/default/deploy.
@@ -57,11 +57,8 @@ Database configuration files in JBoss (with Tomcat or Jetty) is located in the
 
 3. Copy the proper <database>-ds.xml file to <jboss-home>
 /server/default/deploy. The JDBC-driver must be inluded and the database set up
-as DefaultDS. Current <database>-ds.xml files can be obtained from
+as a datasource, like  EjbcaDS. Current <database>-ds.xml files can be obtained from
 jboss.org, provided here are snapshots that work for me.
-
-4. Remove the standard database, hsqldb-ds.xml, from <jboss-home>
-/server/default/deploy (if you will not use this as well).
 
 5. If the new database will be you default database for JBoss:
 Edit standardjbosscmp-jdbc.xml. Change the default type-
@@ -86,7 +83,7 @@ The item 'ConnectionURL' must be edited to match your database.
 
 Type mapping:
 
-     <datasource>java:/DefaultDS</datasource>
+     <datasource>java:/EjbcaDS</datasource>
      <type-mapping>mySQL</type-mapping>
 
 PostgreSQL specifics
@@ -110,7 +107,7 @@ The item 'ConnectionURL' must be edited to match your database.
 
 Type mapping:
 
-     <datasource>java:/DefaultDS</datasource>
+     <datasource>java:/EjbcaDS</datasource>
      <type-mapping>PostgreSQL 7.2</type-mapping>
 
 Oracle specifics
@@ -128,7 +125,7 @@ The item 'ConnectionURL' must be edited to match your database.
 
 Type mapping:
 
-     <datasource>java:/DefaultDS</datasource>
+     <datasource>java:/EjbcaDS</datasource>
      <type-mapping>Oracle8</type-mapping>
 
 MS-SQL specifics
@@ -146,7 +143,7 @@ The item 'ConnectionURL' must be edited to match your database.
 
 Type mapping:
 
-     <datasource>java:/DefaultDS</datasource>
+     <datasource>java:/EjbcaDS</datasource>
      <type-mapping>MS SQLSERVER2000</type-mapping>
 
 
