@@ -65,7 +65,7 @@ import se.anatom.ejbca.util.query.UserMatch;
  * Administrates users in the database using UserData Entity Bean.
  * Uses JNDI name for datasource as defined in env 'Datasource' in ejb-jar.xml.
  *
- * @version $Id: LocalUserAdminSessionBean.java,v 1.77.2.1 2005-02-03 16:48:20 anatom Exp $
+ * @version $Id: LocalUserAdminSessionBean.java,v 1.77.2.2 2005-02-04 16:28:26 anatom Exp $
  */
 public class LocalUserAdminSessionBean extends BaseSessionBean  {
 
@@ -1166,28 +1166,31 @@ public class LocalUserAdminSessionBean extends BaseSessionBean  {
    } // makeType
 
    private void sendNotification(Admin admin, NotificationCreator notificationcreator, String username, String password, String dn, String subjectaltname, String email, int caid){
-     try {
-       if(email== null)
-         throw new Exception("Notification cannot be sent to user where email field is null");
-       javax.mail.Session mailSession = (javax.mail.Session) new InitialContext().lookup( "java:comp/env/mail/DefaultMail" );
-       javax.mail.Message msg = new MimeMessage( mailSession );
-       msg.setFrom( new InternetAddress( notificationcreator.getSender()) );
-       msg.setRecipients( javax.mail.Message.RecipientType.TO, InternetAddress.parse( email, false ) );
-       msg.setSubject( notificationcreator.getSubject() );
-       msg.setContent( notificationcreator.getMessage(username, password, dn, subjectaltname, email), "text/plain" );
-       msg.setHeader( "X-Mailer", "JavaMailer" );
-       msg.setSentDate( new java.util.Date() );
-       Transport.send( msg );
-       logsession.log(admin, caid, LogEntry.MODULE_RA, new java.util.Date(),username, null, LogEntry.EVENT_INFO_NOTIFICATION,"Notification to " + email + " sent successfully.");
-     }
-     catch ( Exception e )
-     {
-       try{
-         logsession.log(admin, caid, LogEntry.MODULE_RA, new java.util.Date(),username, null, LogEntry.EVENT_ERROR_NOTIFICATION, "Error when sending notification to " + email );
-       }catch(Exception f){
-          throw new EJBException(f);
+       debug(">sendNotification: user="+username+", email="+email);
+       try {
+           if(email== null)
+               throw new Exception("Notification cannot be sent to user where email field is null");
+           javax.mail.Session mailSession = (javax.mail.Session) new InitialContext().lookup( "java:comp/env/mail/DefaultMail" );
+           javax.mail.Message msg = new MimeMessage( mailSession );
+           msg.setFrom( new InternetAddress( notificationcreator.getSender()) );
+           msg.setRecipients( javax.mail.Message.RecipientType.TO, InternetAddress.parse( email, false ) );
+           msg.setSubject( notificationcreator.getSubject() );
+           msg.setContent( notificationcreator.getMessage(username, password, dn, subjectaltname, email), "text/plain" );
+           msg.setHeader( "X-Mailer", "JavaMailer" );
+           msg.setSentDate( new java.util.Date() );
+           Transport.send( msg );
+           logsession.log(admin, caid, LogEntry.MODULE_RA, new java.util.Date(),username, null, LogEntry.EVENT_INFO_NOTIFICATION,"Notification to " + email + " sent successfully.");
        }
-     }
+       catch ( Exception e )
+       {
+           error("Error when sending notification to " + email, e);
+           try{
+               logsession.log(admin, caid, LogEntry.MODULE_RA, new java.util.Date(),username, null, LogEntry.EVENT_ERROR_NOTIFICATION, "Error when sending notification to " + email );
+           }catch(Exception f){
+               throw new EJBException(f);
+           }
+       }
+       debug("<sendNotification: user="+username+", email="+email);
    } // sendNotification
    
    /**
@@ -1197,7 +1200,6 @@ public class LocalUserAdminSessionBean extends BaseSessionBean  {
     */
    public boolean existsUser(Admin admin, String username){
       boolean returnval = true;
-      
       try{
 		home.findByPrimaryKey(new UserDataPK(username));	
       }catch(FinderException fe){
