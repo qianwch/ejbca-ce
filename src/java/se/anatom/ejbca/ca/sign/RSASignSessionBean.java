@@ -45,7 +45,7 @@ import java.util.*;
 /**
  * Creates X509 certificates using RSA keys.
  *
- * @version $Id: RSASignSessionBean.java,v 1.86.2.4 2003-08-28 14:46:34 rebrabnoj Exp $
+ * @version $Id: RSASignSessionBean.java,v 1.86.2.5 2003-09-14 19:41:28 anatom Exp $
  */
 public class RSASignSessionBean extends BaseSessionBean {
     transient X509Certificate caCert;
@@ -687,9 +687,11 @@ public class RSASignSessionBean extends BaseSessionBean {
             ret = (IResponseMessage) responseClass.newInstance();
         } catch (InstantiationException e) {
             //TODO : do something with these exceptions
-            e.printStackTrace();  //To change body of catch statement use Options | File Templates.
+            log.error("Error creating response message",e);
+            return null;
         } catch (IllegalAccessException e) {
-            e.printStackTrace();  //To change body of catch statement use Options | File Templates.
+            log.error("Error creating response message",e);
+            return null;
         }
 
         if (ret.requireSignKeyInfo()) {
