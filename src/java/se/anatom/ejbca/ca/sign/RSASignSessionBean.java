@@ -1,5 +1,35 @@
 package se.anatom.ejbca.ca.sign;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.math.BigInteger;
+import java.rmi.RemoteException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.Provider;
+import java.security.PublicKey;
+import java.security.Security;
+import java.security.cert.Certificate;
+import java.security.cert.X509CRL;
+import java.security.cert.X509Certificate;
+import java.security.interfaces.RSAPublicKey;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.Properties;
+import java.util.Vector;
+import java.util.StringTokenizer;
+import javax.ejb.CreateException;
+import javax.ejb.EJBException;
+import javax.ejb.ObjectNotFoundException;
+
+
 import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DEREncodableVector;
@@ -14,6 +44,7 @@ import org.bouncycastle.asn1.x509.AuthorityKeyIdentifier;
 import org.bouncycastle.asn1.x509.BasicConstraints;
 import org.bouncycastle.asn1.x509.CRLNumber;
 import org.bouncycastle.asn1.x509.CertificatePolicies;
+import org.bouncycastle.asn1.x509.PolicyInformation;
 import org.bouncycastle.asn1.x509.DistributionPoint;
 import org.bouncycastle.asn1.x509.DistributionPointName;
 import org.bouncycastle.asn1.x509.ExtendedKeyUsage;
@@ -23,7 +54,6 @@ import org.bouncycastle.asn1.x509.SubjectKeyIdentifier;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.asn1.x509.X509Extensions;
 import org.bouncycastle.asn1.x509.X509Name;
-
 import org.bouncycastle.jce.PKCS7SignedData;
 import org.bouncycastle.jce.X509KeyUsage;
 import org.bouncycastle.jce.X509V2CRLGenerator;
@@ -55,44 +85,10 @@ import se.anatom.ejbca.protocol.IResponseMessage;
 import se.anatom.ejbca.util.CertTools;
 import se.anatom.ejbca.util.Hex;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-
-import java.math.BigInteger;
-
-import java.rmi.RemoteException;
-
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.Provider;
-import java.security.PublicKey;
-import java.security.Security;
-import java.security.cert.Certificate;
-import java.security.cert.X509CRL;
-import java.security.cert.X509Certificate;
-import java.security.interfaces.RSAPublicKey;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Properties;
-import java.util.Vector;
-
-import javax.ejb.CreateException;
-import javax.ejb.EJBException;
-import javax.ejb.ObjectNotFoundException;
-
-
 /**
  * Creates X509 certificates using RSA keys.
  *
- * @version $Id: RSASignSessionBean.java,v 1.86.2.1 2003-07-24 08:06:11 anatom Exp $
+ * @version $Id: RSASignSessionBean.java,v 1.86.2.2 2003-07-24 15:18:32 anatom Exp $
  */
 public class RSASignSessionBean extends BaseSessionBean {
     transient X509Certificate caCert;
@@ -1075,20 +1071,28 @@ public class RSASignSessionBean extends BaseSessionBean {
 
         // Certificate Policies
         if (certProfile.getUseCertificatePolicies() == true) {
-            CertificatePolicies cp = new CertificatePolicies(certProfile.getCertificatePolicyId());
+            PolicyInformation pi = new PolicyInformation(new DERObjectIdentifier(certProfile.getCertificatePolicyId()));
+            DERSequence seq = new DERSequence(pi);
             certgen.addExtension(X509Extensions.CertificatePolicies.getId(),
-                certProfile.getCertificatePoliciesCritical(), cp);
+                certProfile.getCertificatePoliciesCritical(), seq);
         }
 
         // CRL Distribution point URI
         if (certProfile.getUseCRLDistributionPoint() == true) {
-            GeneralName gn = new GeneralName(new DERIA5String(
-                        certProfile.getCRLDistributionPointURI()), 6);
-            GeneralNames gns = new GeneralNames(new DERSequence(gn));
-            DistributionPointName dpn = new DistributionPointName(0, gns);
-            DistributionPoint distp = new DistributionPoint(dpn, null, null);
-            certgen.addExtension(X509Extensions.CRLDistributionPoints.getId(),
-                certProfile.getCRLDistributionPointCritical(), new DERSequence(distp));
+            StringTokenizer tokenizer = new StringTokenizer(certProfile.getCRLDistributionPointURI(), ";", false);
+            DEREncodableVector vec = new DEREncodableVector();
+            while (tokenizer.hasMoreTokens()) {
+                GeneralName gn = new GeneralName(new DERIA5String(
+                            tokenizer.nextToken()), 6);
+                GeneralNames gns = new GeneralNames(new DERSequence(gn));
+                DistributionPointName dpn = new DistributionPointName(0, gns);
+                DistributionPoint distp = new DistributionPoint(dpn, null, null);
+                vec.add(distp);
+            }
+            if (vec.size() > 0) {
+                certgen.addExtension(X509Extensions.CRLDistributionPoints.getId(),
+                    certProfile.getCRLDistributionPointCritical(), new DERSequence(vec));
+            }
         }
 
         X509Certificate cert = certgen.generateX509Certificate(signingDevice.getPrivateSignKey(),
