@@ -30,7 +30,7 @@ import java.security.cert.X509Certificate;
 /**
  * Class to handle PKCS10 request messages sent to the CA.
  *
- * @version $Id: PKCS10RequestMessage.java,v 1.14.2.1 2003-07-24 08:06:11 anatom Exp $
+ * @version $Id: PKCS10RequestMessage.java,v 1.14.2.2 2003-08-26 13:08:27 rebrabnoj Exp $
  */
 public class PKCS10RequestMessage implements IRequestMessage, Serializable {
     private static Logger log = Logger.getLogger(PKCS10RequestMessage.class);
@@ -131,23 +131,31 @@ public class PKCS10RequestMessage implements IRequestMessage, Serializable {
         CertificationRequestInfo info = pkcs10.getCertificationRequestInfo();
         AttributeTable attributes = new AttributeTable(info.getAttributes());
         Attribute attr = attributes.get(PKCSObjectIdentifiers.pkcs_9_at_challengePassword);
-        ASN1Set values = attr.getAttrValues();
 
-        if (values.size() > 0) {
-            DERString str = null;
+        if (attr == null) {
 
-            try {
-                str = DERPrintableString.getInstance((values.getObjectAt(0)));
-            } catch (IllegalArgumentException ie) {
-                // This was not printable string, should be utf8string then according to pkcs#9 v2.0
-                str = DERUTF8String.getInstance((values.getObjectAt(0)));
+            log.warn("No challenge password present in request");
+
+        } else {
+
+            ASN1Set values = attr.getAttrValues();
+
+            if (values.size() > 0) {
+                DERString str = null;
+
+                try {
+                    str = DERPrintableString.getInstance((values.getObjectAt(0)));
+                } catch (IllegalArgumentException ie) {
+                    // This was not printable string, should be utf8string then according to pkcs#9 v2.0
+                    str = DERUTF8String.getInstance((values.getObjectAt(0)));
+                }
+
+                if (str != null) {
+                    ret = str.getString();
+                }
             }
 
-            if (str != null) {
-                ret = str.getString();
-            }
         }
-
         return ret;
     }
 
