@@ -30,6 +30,7 @@ Use forward order like this:
 or
 'cn=Mike Jackson,o=bigcorp,c=se' if using the o,c model.
 
+An example image of an LDAP structure can be seen in HOWTO-LDAP-tree.png.
 
 CONFIGURE LDAP PUBLISHERS
 =========================
