@@ -30,7 +30,7 @@ import se.anatom.ejbca.SecConst;
  * Stores data used by web server clients.
  * Uses JNDI name for datasource as defined in env 'Datasource' in ejb-jar.xml.
  *
- * @version $Id: LocalRaAdminSessionBean.java,v 1.22 2003-02-28 09:32:17 koen_serry Exp $
+ * @version $Id: LocalRaAdminSessionBean.java,v 1.22.2.1 2003-03-25 14:14:03 herrvendil Exp $
  */
 public class LocalRaAdminSessionBean extends BaseSessionBean  {
 
@@ -78,7 +78,7 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
             adminpreferenceshome.create(DEFAULTUSERPREFERENCE,new AdminPreference());
         }
 
-        try{
+        try{           
           profiledatahome.findByProfileName(EMPTY_ENDENTITYPROFILE);
         }catch(FinderException e){
             profiledatahome.create(new Integer(EMPTY_ENDENTITYPROFILEID),EMPTY_ENDENTITYPROFILE,new EndEntityProfile(true));
