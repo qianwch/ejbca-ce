@@ -44,7 +44,7 @@ import se.anatom.ejbca.util.CertTools;
 /**
  * A response message for scep (pkcs7).
  *
- * @version $Id: ScepResponseMessage.java,v 1.4.2.1 2003-07-24 08:06:11 anatom Exp $
+ * @version $Id: ScepResponseMessage.java,v 1.4.2.2 2003-08-28 14:48:16 rebrabnoj Exp $
  */
 public class ScepResponseMessage implements IResponseMessage, Serializable {
     private static Logger log = Logger.getLogger(ScepResponseMessage.class);
@@ -53,10 +53,10 @@ public class ScepResponseMessage implements IResponseMessage, Serializable {
     private byte[] responseMessage = null;
 
     /** status for the response */
-    private int status = 0;
+    private ScepResponseStatus status = ScepResponseStatus.SUCCESS;
 
     /** Possible fail information in the response. Defaults to 'badRequest (2)'. */
-    private String failInfo = "2";
+    private ScepFailInfo failInfo = ScepFailInfo.BAD_REQUEST;
 
     /**
      * SenderNonce. This is base64 encoded bytes
@@ -104,7 +104,7 @@ public class ScepResponseMessage implements IResponseMessage, Serializable {
      *
      * @param status status of the response.
      */
-    public void setStatus(int status) {
+    public void setStatus(ScepResponseStatus status) {
         this.status = status;
     }
 
@@ -113,7 +113,7 @@ public class ScepResponseMessage implements IResponseMessage, Serializable {
      *
      * @return status status of the response.
      */
-    public int getStatus() {
+    public ScepResponseStatus getStatus() {
         return status;
     }
 
@@ -122,7 +122,7 @@ public class ScepResponseMessage implements IResponseMessage, Serializable {
      *
      * @param failInfo reason for failure.
      */
-    public void setFailInfo(String failInfo) {
+    public void setFailInfo(ScepFailInfo failInfo) {
         this.failInfo = failInfo;
     }
 
@@ -131,7 +131,7 @@ public class ScepResponseMessage implements IResponseMessage, Serializable {
      *
      * @return failInfo reason for failure.
      */
-    public String getFailInfo() {
+    public ScepFailInfo getFailInfo() {
         return failInfo;
     }
 
@@ -149,40 +149,45 @@ public class ScepResponseMessage implements IResponseMessage, Serializable {
      * @throws NoSuchAlgorithmException if the signature on the request is done with an unhandled
      *         algorithm.
      *
-     * @see #setSignKeyInfo()
-     * @see #setEncKeyInfo()
+     * @see #setSignKeyInfo
+     * @see #setEncKeyInfo
      */
     public boolean create()
         throws IOException, InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException {
         boolean ret = false;
 
         try {
-            // Add the issued certificate to the signed portion of the CMS (as signer, degenerate case)
-            ArrayList certList = new ArrayList();
 
-            if (status == IResponseMessage.STATUS_OK) {
-                certList.add(cert);
+            if (status.equals(ScepResponseStatus.SUCCESS)) {
                 log.debug("Creating a STATUS_OK message.");
             } else {
                 log.debug("Creating a STATUS_FAILED message.");
             }
 
-            certList.add(signCert);
-            CertStore certs = CertStore.getInstance("Collection",
-                    new CollectionCertStoreParameters(certList), "BC");
+            CMSProcessable msg;
 
-            // Create the signed CMS message to be contained inside the envelope
-            CMSProcessable msg = new CMSProcessableByteArray("PrimeKey".getBytes());
-            CMSSignedDataGenerator gen = new CMSSignedDataGenerator();
-            gen.addSigner(signKey, signCert, CMSSignedDataGenerator.DIGEST_SHA1);
-            gen.addCertificatesAndCRLs(certs);
+            if (status.equals(ScepResponseStatus.SUCCESS)) {
 
-            CMSSignedData s = gen.generate(msg, true, "BC");
+                CMSEnvelopedDataGenerator edGen = new CMSEnvelopedDataGenerator();
+                // Add the issued certificate to the signed portion of the CMS (as signer, degenerate case)
+                ArrayList certList = new ArrayList();
 
-            // Envelope the CMS message
-            CMSEnvelopedDataGenerator edGen = new CMSEnvelopedDataGenerator();
+                certList.add(cert);
 
-            if (status == IResponseMessage.STATUS_OK) {
+                certList.add(signCert);
+                CertStore certs = CertStore.getInstance("Collection",
+                        new CollectionCertStoreParameters(certList), "BC");
+
+                // Create the signed CMS message to be contained inside the envelope
+                msg = new CMSProcessableByteArray("PrimeKey".getBytes());
+                CMSSignedDataGenerator gen = new CMSSignedDataGenerator();
+                gen.addSigner(signKey, signCert, CMSSignedDataGenerator.DIGEST_SHA1);
+                gen.addCertificatesAndCRLs(certs);
+
+                CMSSignedData s = gen.generate(msg, true, "BC");
+
+                // Envelope the CMS message
+
                 if (recipientKeyInfo != null) {
                     try {
                     X509Certificate rec = CertTools.getCertfromByteArray(recipientKeyInfo);
@@ -193,15 +198,20 @@ public class ScepResponseMessage implements IResponseMessage, Serializable {
                 } else {
                     edGen.addKeyTransRecipient((X509Certificate) cert);
                 }
+
+
+                CMSEnvelopedData ed = edGen.generate(new CMSProcessableByteArray(s.getEncoded()),
+                                    SMIMECapability.dES_CBC.getId(), "BC");
+
+                log.debug("Signed data is " + ed.getEncoded().length +" bytes long");
+
+                msg = new CMSProcessableByteArray(ed.getEncoded());
+            } else {
+                //TODO : Create an empty message here - causes problems for now
+                msg = new CMSProcessableByteArray(new byte[]{0});
             }
 
-            //CMSEnvelopedData ed = edGen.generate(new CMSProcessableByteArray(s.getEncoded()),
-              //      CMSEnvelopedDataGenerator.DES_EDE3_CBC, "BC");
-            CMSEnvelopedData ed = edGen.generate(new CMSProcessableByteArray(s.getEncoded()),
-                    SMIMECapability.dES_CBC.getId(), "BC");
-
             // Create the outermost signed data
-            msg = new CMSProcessableByteArray(ed.getEncoded());
 
             CMSSignedDataGenerator gen1 = new CMSSignedDataGenerator();
 
@@ -237,20 +247,14 @@ public class ScepResponseMessage implements IResponseMessage, Serializable {
             // status
             oid = new DERObjectIdentifier(ScepRequestMessage.id_pkiStatus);
 
-            if (status == IResponseMessage.STATUS_OK) {
-                //value = new DERSet(new DERPrintableString("SUCCESS"));
-                value = new DERSet(new DERPrintableString("0"));
-            } else {
-                //value = new DERSet(new DERPrintableString("FAILURE"));
-                value = new DERSet(new DERPrintableString("2"));
-            }
+            value = new DERSet(new DERPrintableString(status.getValue()));
 
             attr = new Attribute(oid, value);
             attributes.put(attr.getAttrType(), attr);
 
-            if (status == IResponseMessage.STATUS_FAILED) {
+            if (status.equals(ScepResponseStatus.FAILURE)) {
                 oid = new DERObjectIdentifier(ScepRequestMessage.id_failInfo);
-                value = new DERSet(new DERPrintableString(failInfo));
+                value = new DERSet(new DERPrintableString(failInfo.getValue()));
                 attr = new Attribute(oid, value);
                 attributes.put(attr.getAttrType(), attr);
             }
@@ -370,7 +374,7 @@ public class ScepResponseMessage implements IResponseMessage, Serializable {
     /**
      * Sets recipient key info, key id or similar. This is the requestors self-signed cert from the request message.
      *
-     * @param recipient key info
+     * @param recipientKeyInfo key info
      */
     public void setRecipientKeyInfo(byte[] recipientKeyInfo) {
         this.recipientKeyInfo = recipientKeyInfo;

@@ -14,17 +14,17 @@ import java.security.cert.X509Certificate;
 /**
  * A response message consisting of a single X509 Certificate.
  *
- * @version $Id: X509ResponseMessage.java,v 1.5.2.1 2003-07-24 08:06:11 anatom Exp $
+ * @version $Id: X509ResponseMessage.java,v 1.5.2.2 2003-08-28 14:48:16 rebrabnoj Exp $
  */
 public class X509ResponseMessage implements IResponseMessage {
     /** Certificate to be in response message, */
     private Certificate cert = null;
 
     /** status for the response */
-    private int status = 0;
+    private ScepResponseStatus status = ScepResponseStatus.SUCCESS;
 
     /** Possible fail information in the response. Defaults to null. */
-    private String failInfo = null;
+    private ScepFailInfo failInfo = null;
 
     /**
      * Sets the complete certificate in the response message.
@@ -49,7 +49,7 @@ public class X509ResponseMessage implements IResponseMessage {
      *
      * @param status status of the response.
      */
-    public void setStatus(int status) {
+    public void setStatus(ScepResponseStatus status) {
         this.status = status;
     }
 
@@ -58,7 +58,7 @@ public class X509ResponseMessage implements IResponseMessage {
      *
      * @return status status of the response.
      */
-    public int getStatus() {
+    public ScepResponseStatus getStatus() {
         return status;
     }
 
@@ -67,7 +67,7 @@ public class X509ResponseMessage implements IResponseMessage {
      *
      * @param failInfo reason for failure.
      */
-    public void setFailInfo(String failInfo) {
+    public void setFailInfo(ScepFailInfo failInfo) {
         this.failInfo = failInfo;
     }
 
@@ -76,7 +76,7 @@ public class X509ResponseMessage implements IResponseMessage {
      *
      * @return failInfo reason for failure.
      */
-    public String getFailInfo() {
+    public ScepFailInfo getFailInfo() {
         return failInfo;
     }
 
@@ -94,8 +94,8 @@ public class X509ResponseMessage implements IResponseMessage {
      * @throws NoSuchAlgorithmException if the signature on the request is done with an unhandled
      *         algorithm.
      *
-     * @see #setSignKeyInfo()
-     * @see #setEncKeyInfo()
+     * @see #setSignKeyInfo
+     * @see #setEncKeyInfo
      */
     public boolean create()
         throws IOException, InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException {
@@ -173,7 +173,7 @@ public class X509ResponseMessage implements IResponseMessage {
     /**
      * Sets recipient key info, key id or similar. This is usually the request key info from the request message.
      *
-     * @param recipient key info
+     * @param recipientKeyInfo key info
      */
     public void setRecipientKeyInfo(byte[] recipientKeyInfo) {
     }

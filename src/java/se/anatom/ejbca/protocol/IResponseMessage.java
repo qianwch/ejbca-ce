@@ -18,11 +18,9 @@ import java.security.cert.X509Certificate;
  * (resp.requireEncKeyInfo()) { resp.setEncKeyInfo(enccert,enckey) }; resp.create(); byte[]
  * responseMessage = resp.getResponseMessage(); </code>
  *
- * @version $Id: IResponseMessage.java,v 1.4.2.1 2003-07-24 08:06:11 anatom Exp $
+ * @version $Id: IResponseMessage.java,v 1.4.2.2 2003-08-28 14:48:16 rebrabnoj Exp $
  */
 public interface IResponseMessage {
-    public final int STATUS_OK = 0;
-    public final int STATUS_FAILED = 1;
 
     /**
      * Sets the complete certificate in the response message.
@@ -43,28 +41,28 @@ public interface IResponseMessage {
      *
      * @param status status of the response.
      */
-    public void setStatus(int status);
+    public void setStatus(ScepResponseStatus status);
 
     /**
      * Gets the status of the response message.
      *
      * @return status status of the response.
      */
-    public int getStatus();
+    public ScepResponseStatus getStatus();
 
     /**
      * Sets info about reason for failure.
      *
      * @param failInfo reason for failure.
      */
-    public void setFailInfo(String failInfo);
+    public void setFailInfo(ScepFailInfo failInfo);
 
     /**
      * Gets info about reason for failure.
      *
      * @return failInfo reason for failure.
      */
-    public String getFailInfo();
+    public ScepFailInfo getFailInfo();
 
     /**
      * Create encrypts and creates signatures as needed to produce a complete response message.  If
@@ -80,8 +78,8 @@ public interface IResponseMessage {
      * @throws NoSuchAlgorithmException if the signature on the request is done with an unhandled
      *         algorithm.
      *
-     * @see #setSignKeyInfo()
-     * @see #setEncKeyInfo()
+     * @see #setSignKeyInfo
+     * @see #setEncKeyInfo
      */
     public boolean create()
         throws IOException, InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException;
@@ -148,7 +146,7 @@ public interface IResponseMessage {
     /**
      * Sets recipient key info, key id or similar. This is usually the request key info from the request message.
      *
-     * @param recipient key info
+     * @param recipientKeyInfo key info
      */
     public void setRecipientKeyInfo(byte[] recipientKeyInfo);
 }
