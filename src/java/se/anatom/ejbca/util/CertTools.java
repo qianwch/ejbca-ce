@@ -74,7 +74,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 /**
  * Tools to handle common certificate operations.
  *
- * @version $Id: CertTools.java,v 1.64.2.5 2004-11-04 21:23:18 anatom Exp $
+ * @version $Id: CertTools.java,v 1.64.2.6 2004-11-05 08:31:06 anatom Exp $
  */
 public class CertTools {
     private static Logger log = Logger.getLogger(CertTools.class);
@@ -232,9 +232,9 @@ public class CertTools {
      */
     public static String stringToBCDNString(String dn) {
         //log.debug(">stringToBcDNString: "+dn);
-    	//if (isDNReversed(dn)) {
-    	//	dn = reverseDN(dn);
-    	//}
+    	if (isDNReversed(dn)) {
+    		dn = reverseDN(dn);
+    	}
         String ret = stringToBcX509Name(dn).toString();
         //log.debug("<stringToBcDNString: "+ret);
         return ret;
@@ -272,7 +272,7 @@ public class CertTools {
         String ret = null;
         if (dn != null) {
             String o;
-            X509NameTokenizer xt = new X509NameTokenizer(dn);
+            BasicX509NameTokenizer xt = new BasicX509NameTokenizer(dn);
             StringBuffer buf = new StringBuffer();
             boolean first = true;
             while (xt.hasMoreTokens()) {
@@ -991,5 +991,87 @@ public class CertTools {
 
         return null;
     } // generateMD5Fingerprint
-    
+
+    /**
+     * class for breaking up an X500 Name into it's component tokens, ala
+     * java.util.StringTokenizer. Taken from BouncyCastle, but does NOT
+     * use or consider escaped characters. Used for reversing DNs without unescaping.
+     */
+    private static class BasicX509NameTokenizer
+    {
+        private String          oid;
+        private int             index;
+        private StringBuffer    buf = new StringBuffer();
+
+        public BasicX509NameTokenizer(
+            String oid)
+        {
+            this.oid = oid;
+            this.index = -1;
+        }
+
+        public boolean hasMoreTokens()
+        {
+            return (index != oid.length());
+        }
+
+        public String nextToken()
+        {
+            if (index == oid.length())
+            {
+                return null;
+            }
+
+            int     end = index + 1;
+            boolean quoted = false;
+            boolean escaped = false;
+
+            buf.setLength(0);
+
+            while (end != oid.length())
+            {
+                char    c = oid.charAt(end);
+                
+                if (c == '"')
+                {
+                    if (!escaped)
+                    {
+                        buf.append(c);
+                        quoted = !quoted;
+                    }
+                    else
+                    {
+                        buf.append(c);
+                    }
+                    escaped = false;
+                }
+                else
+                { 
+                    if (escaped || quoted)
+                    {
+                        buf.append(c);
+                        escaped = false;
+                    }
+                    else if (c == '\\')
+                    {
+                        buf.append(c);
+                        escaped = true;
+                    }
+                    else if ( (c == ',') && (!escaped) )
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        buf.append(c);
+                    }
+                }
+                end++;
+            }
+
+            index = end;
+            return buf.toString().trim();
+        }
+    }
+
 } // CertTools

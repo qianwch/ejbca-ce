@@ -28,7 +28,7 @@ import se.anatom.ejbca.util.StringTools;
 /**
  * Tests the CertTools class .
  *
- * @version $Id: TestCertTools.java,v 1.23.2.3 2004-11-04 21:20:06 anatom Exp $
+ * @version $Id: TestCertTools.java,v 1.23.2.4 2004-11-05 08:31:07 anatom Exp $
  */
 public class TestCertTools extends TestCase {
     private static Logger log = Logger.getLogger(TestCertTools.class);
@@ -229,14 +229,14 @@ public class TestCertTools extends TestCase {
         String dn18 = "cn=jean,cn=EJBCA,dc=home,dc=jean";
         assertEquals(CertTools.stringToBCDNString(dn18), "CN=jean,CN=EJBCA,DC=home,DC=jean");
 
-        String dn19 = "C=SE, dc=dc1,DC=DC2,O=EJBCA, O=oo, cn=foo, cn=bar";
+        String dn19 = "cn=bar, cn=foo,o=oo, O=EJBCA,DC=DC2, dc=dc1, C=SE";
         assertEquals(CertTools.stringToBCDNString(dn19), "CN=bar,CN=foo,O=oo,O=EJBCA,DC=DC2,DC=dc1,C=SE");
 
-        String dn20 = " C=SE,CN=\"foo, OU=bar\",  O=baz\\\\\\, quux  ";
+        String dn20 = " CN=\"foo, OU=bar\",  O=baz\\\\\\, quux,C=SE ";
         // BC always escapes with backslash, it doesn't use quotes.
         assertEquals(CertTools.stringToBCDNString(dn20), "CN=foo\\, OU=bar,O=baz\\\\\\, quux,C=SE");
         
-        String dn21 = "C=SE,O=Foo\\, Inc, OU=Foo\\, Dep, CN=Foo\\'";
+        String dn21 = "CN=Foo\\', OU=Foo\\, Dep,O=Foo\\, Inc,C=SE ";
         String bcdn21 = CertTools.stringToBCDNString(dn21);
         assertEquals(bcdn21, "CN=Foo\',OU=Foo\\, Dep,O=Foo\\, Inc,C=SE");        
         assertEquals(StringTools.strip(bcdn21), "CN=Foo/,OU=Foo\\, Dep,O=Foo\\, Inc,C=SE");        
@@ -395,6 +395,17 @@ public class TestCertTools extends TestCase {
       log.debug("dn1: " + dn1);
       log.debug("bcdn1: " + bcdn1);
       assertEquals("CN=Tomas G,OU=users,OU=orgunit,DC=se,DC=bigcorp,DC=com", bcdn1);
+
+      String dn19 = "C=SE, dc=dc1,DC=DC2,O=EJBCA, O=oo, cn=foo, cn=bar";
+      assertEquals("CN=bar,CN=foo,O=oo,O=EJBCA,DC=DC2,DC=dc1,C=SE", CertTools.stringToBCDNString(dn19));
+      String dn20 = " C=SE,CN=\"foo, OU=bar\",  O=baz\\\\\\, quux  ";
+      // BC always escapes with backslash, it doesn't use quotes.
+      assertEquals("CN=foo\\, OU=bar,O=baz\\\\\\, quux,C=SE", CertTools.stringToBCDNString(dn20));
+
+      String dn21 = "C=SE,O=Foo\\, Inc, OU=Foo\\, Dep, CN=Foo\\'";
+      String bcdn21 = CertTools.stringToBCDNString(dn21);
+      assertEquals("CN=Foo\',OU=Foo\\, Dep,O=Foo\\, Inc,C=SE", bcdn21);        
+      assertEquals("CN=Foo/,OU=Foo\\, Dep,O=Foo\\, Inc,C=SE", StringTools.strip(bcdn21));        
       log.debug("<test10TestMultipleReversed()");
   }
 
