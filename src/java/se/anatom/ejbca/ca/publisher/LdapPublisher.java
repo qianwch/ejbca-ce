@@ -57,7 +57,7 @@ import com.novell.ldap.LDAPModificationSet;
 /**
  * LdapPublisher is a class handling a publishing to various v3 LDAP catalouges.  
  *
- * @version $Id: LdapPublisher.java,v 1.5.2.4 2004-09-08 07:36:03 anatom Exp $
+ * @version $Id: LdapPublisher.java,v 1.5.2.5 2004-11-01 04:12:15 herrvendil Exp $
  */
 public class LdapPublisher extends BasePublisher{
 	 	
@@ -229,7 +229,7 @@ public class LdapPublisher extends BasePublisher{
                 modSet = getModificationSet(oldEntry, certdn, true, true);
             } else {
                 objectclass = getUserObjectClass(); // just used for logging
-                attributeSet = getAttributeSet(getUserObjectClass(), certdn, true, true);
+                attributeSet = getAttributeSet(incert, getUserObjectClass(), certdn, true, true, password, extendedinformation);
             }
 
             if (email != null) {
@@ -243,6 +243,7 @@ public class LdapPublisher extends BasePublisher{
             }
 
             try {
+            	attribute = getUserCertAttribute();
                 LDAPAttribute certAttr = new LDAPAttribute(getUserCertAttribute(), incert.getEncoded());
                 if (oldEntry != null) {
                     modSet.add(LDAPModification.REPLACE, certAttr);                    
@@ -260,7 +261,7 @@ public class LdapPublisher extends BasePublisher{
                 modSet = getModificationSet(oldEntry, certdn, false, false);
             } else {
                 objectclass = getCAObjectClass(); // just used for logging
-                attributeSet = getAttributeSet(getCAObjectClass(), certdn, true, false);
+                attributeSet = getAttributeSet(incert, getCAObjectClass(), certdn, true, false, password, extendedinformation);
             }
             try {
                 attribute = getCACertAttribute();
@@ -296,11 +297,11 @@ public class LdapPublisher extends BasePublisher{
                 log.info("\nModified object: " + dn + " successfully.");  
             } else {
                 if(this.getCreateNonExisingUsers()){     
-                  if (oldEntry == null) {
+                  if (oldEntry == null) {                  	
                     newEntry = new LDAPEntry(dn, attributeSet);
+                    lc.add(newEntry);
+                    log.info("\nAdded object: " + dn + " successfully.");
                   }
-                  lc.add(newEntry);
-                  log.info("\nAdded object: " + dn + " successfully.");
                 }  
             }
             // disconnect with the server
@@ -366,7 +367,7 @@ public class LdapPublisher extends BasePublisher{
         if (oldEntry != null) {
             modSet = getModificationSet(oldEntry, crldn, false, false);
         } else {
-            attributeSet = getAttributeSet(this.getCAObjectClass(), crldn, true, false);
+            attributeSet = getAttributeSet(null, this.getCAObjectClass(), crldn, true, false, null,null);
         }
 
         try {
@@ -773,11 +774,14 @@ public class LdapPublisher extends BasePublisher{
      * @param objectclass the objectclass the attribute set should be of.
      * @param dn dn of the LDAP entry.
      * @param extra if we should add extra attributes except the objectclass to the attributeset.
-     * @param pserson true if this is a person-entry, false if it is a CA.
+     * @param person true if this is a person-entry, false if it is a CA.
+     * @param password, currently only used for the AD publisher
+     * @param extendedinformation, for future use...
      *
      * @return LDAPAtributeSet created...
      */
-    protected LDAPAttributeSet getAttributeSet(String objectclass, String dn, boolean extra, boolean person) {
+    protected LDAPAttributeSet getAttributeSet(Certificate cert, String objectclass, String dn, boolean extra, boolean person,
+    		                                   String password, ExtendedInformation extendedinformation) {
     	log.debug(">getAttributeSet()");
         LDAPAttributeSet attributeSet = new LDAPAttributeSet();
         LDAPAttribute attr = new LDAPAttribute("objectclass");
