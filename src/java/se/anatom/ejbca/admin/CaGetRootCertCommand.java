@@ -11,7 +11,7 @@ import se.anatom.ejbca.util.CertTools;
 
 /** Export root CA certificate.
  *
- * @version $Id: CaGetRootCertCommand.java,v 1.2.8.1 2003-09-07 09:51:11 anatom Exp $
+ * @version $Id: CaGetRootCertCommand.java,v 1.2.8.2 2003-10-11 14:32:57 anatom Exp $
  */
 public class CaGetRootCertCommand extends BaseCaAdminCommand {
 
@@ -23,14 +23,14 @@ public class CaGetRootCertCommand extends BaseCaAdminCommand {
     public void execute() throws IllegalAdminCommandException, ErrorAdminCommandException {
         if (args.length < 2) {
             String msg = "Save root CA certificates (PEM- or DER-format) to file.\n";
-            msg += "Usage: CA rootcert <filename> <-der>";
+            msg += "Usage: CA getrootcert <filename> <-der>";
             throw new IllegalAdminCommandException(msg);
         }
         String filename = args[1];
         boolean pem = true;
         if (args.length > 2) {
             if (("-der").equals(args[2])) {
-                pem = true;
+                pem = false;
             }
         }
         
