@@ -32,7 +32,7 @@ import se.anatom.ejbca.log.LogEntry;
  * Stores certificate and CRL in the local database using Certificate and CRL Entity Beans.
  * Uses JNDI name for datasource as defined in env 'Datasource' in ejb-jar.xml.
  *
- * @version $Id: LocalCertificateStoreSessionBean.java,v 1.42.2.3 2003-09-10 09:36:27 anatom Exp $
+ * @version $Id: LocalCertificateStoreSessionBean.java,v 1.42.2.4 2003-09-11 06:55:40 anatom Exp $
  */
 public class LocalCertificateStoreSessionBean extends BaseSessionBean {
 
@@ -867,7 +867,7 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
              */
             sb.delete(0, ", ".length());
             con = getConnection();
-            ps = con.prepareStatement("SELECT DISTINCT serialNumber, revocationDate, revocationReason"
+            ps = con.prepareStatement("SELECT DISTINCT serialNumber, revocationDate, revocationReason, status"
                                       + " FROM CertificateData WHERE"
                                       + " issuerDN = '" + dn + "'"
                                       + " AND serialNumber IN (" + sb.toString() + ")");
@@ -875,9 +875,12 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
 
             vect = new ArrayList();
             while (result.next()) {
-                vect.add(new RevokedCertInfo(new BigInteger(result.getBytes(1))
-                                             , new Date(result.getLong(2))
-                                             , result.getInt(3)));
+                RevokedCertInfo info = new RevokedCertInfo(new BigInteger(result.getBytes(1)), new Date(result.getLong(2)), result.getInt(3));
+                // Backwards compatibility, handle databases that did not have NOT_REVOKED
+                if (result.getInt(4) != CertificateData.CERT_REVOKED) {
+                    info.setReason(RevokedCertInfo.NOT_REVOKED);
+                }
+                vect.add(info);
             }
 
         } catch (Exception e) {

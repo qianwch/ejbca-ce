@@ -345,13 +345,12 @@ public class TestCertificateRetrival extends TestCase  {
 
         assertNotNull("Unable to retrive certificate revocation status.", revstats);
         assertEquals("Method 'isRevoked' does not return status for ALL certificates."
-                     , revstats.size()
-                     , 2);
+                     , revstats.size(), 2);
 
         Iterator iter = revstats.iterator();
         while (iter.hasNext()) {
             RevokedCertInfo rci = (RevokedCertInfo)iter.next();
-            m_log.error("Certificate revocation information:\n"
+            m_log.info("Certificate revocation information:\n"
                         + "   Serialnumber      : " + rci.getUserCertificate().toString() + "\n"
                         + "   Revocation date   : " + rci.getRevocationDate().toString()  + "\n"
                         + "   Revocation reason : " + rci.getReason() + "\n");
