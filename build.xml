@@ -612,6 +612,7 @@ includes="**/*.class,**/*.log,**/.nbattrs,**/filesystem.attributes"/>
                 <include name="se/anatom/ejbca/ca/caadmin/extendedcaservices/ExtendedCAServiceNotActiveException.class"/>
                 <include name="se/anatom/ejbca/ca/caadmin/extendedcaservices/OCSPCAServiceInfo.class"/>
                 <include name="se/anatom/ejbca/ca/caadmin/extendedcaservices/ExtendedCAServiceInfo.class"/>
+        	    <include name="se/anatom/ejbca/webdist/webconfiguration/LanguageProperties.class"/>
                 <include name="se/anatom/ejbca/upgrade/*.class"/>
                 <exclude name="se/anatom/ejbca/**/*Test*"/> 
        </fileset>
