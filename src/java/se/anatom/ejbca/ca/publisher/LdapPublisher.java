@@ -57,7 +57,7 @@ import com.novell.ldap.LDAPModificationSet;
 /**
  * LdapPublisher is a class handling a publishing to various v3 LDAP catalouges.  
  *
- * @version $Id: LdapPublisher.java,v 1.5.2.1 2004-08-24 08:07:01 anatom Exp $
+ * @version $Id: LdapPublisher.java,v 1.5.2.2 2004-08-25 08:45:20 anatom Exp $
  */
 public class LdapPublisher extends BasePublisher{
 	 	
@@ -226,12 +226,12 @@ public class LdapPublisher extends BasePublisher{
 
             if (oldEntry != null) {
                 // TODO: Are we the correct type objectclass?
-                modSet = getModificationSet(oldEntry, certdn, false, true);
+                modSet = getModificationSet(oldEntry, certdn, true, true);
             } else {
                 objectclass = getUserObjectClass(); // just used for logging
+                attributeSet = getAttributeSet(getUserObjectClass(), certdn, true, true);
             }
 
-            attributeSet = getAttributeSet(getUserObjectClass(), certdn, true, true);
             if (email != null) {
             	//log.debug("Adding email attribute: "+email);
                 LDAPAttribute mailAttr = new LDAPAttribute("mail", email);
@@ -260,8 +260,8 @@ public class LdapPublisher extends BasePublisher{
                 modSet = getModificationSet(oldEntry, certdn, false, false);
             } else {
                 objectclass = getCAObjectClass(); // just used for logging
+                attributeSet = getAttributeSet(getCAObjectClass(), certdn, true, false);
             }
-            attributeSet = getAttributeSet(getCAObjectClass(), certdn, true, false);
             try {
                 attribute = getCACertAttribute();
                 LDAPAttribute certAttr = new LDAPAttribute(getCACertAttribute(), incert.getEncoded());
@@ -778,6 +778,7 @@ public class LdapPublisher extends BasePublisher{
      * @return LDAPAtributeSet created...
      */
     protected LDAPAttributeSet getAttributeSet(String objectclass, String dn, boolean extra, boolean person) {
+    	log.debug(">getAttributeSet()");
         LDAPAttributeSet attributeSet = new LDAPAttributeSet();
         LDAPAttribute attr = new LDAPAttribute("objectclass");
         // The full LDAP object tree is divided with ; in the objectclass
@@ -846,11 +847,24 @@ public class LdapPublisher extends BasePublisher{
             if (ou != null) {
                 attributeSet.add(new LDAPAttribute("ou", ou));
             }
+            String o = CertTools.getPartFromDN(dn, "O");
+            if (o != null) {
+                attributeSet.add(new LDAPAttribute("o", o));
+            }
             String uid = CertTools.getPartFromDN(dn, "uid");
             if (uid != null) {
                 attributeSet.add(new LDAPAttribute("uid", uid));
             }        
+            String initials = CertTools.getPartFromDN(dn, "initials");
+            if (initials != null) {
+                attributeSet.add(new LDAPAttribute("initials", initials));
+            }        
+            String title = CertTools.getPartFromDN(dn, "T");
+            if (title != null) {
+                attributeSet.add(new LDAPAttribute("title", title));
+            }        
         }
+    	log.debug("<getAttributeSet()");
         return attributeSet;
     } // getAttributeSet
 	
@@ -867,6 +881,7 @@ public class LdapPublisher extends BasePublisher{
      * @return LDAPModificationSet created...
      */
     protected LDAPModificationSet getModificationSet(LDAPEntry oldEntry, String dn, boolean extra, boolean person) {
+    	log.debug(">getModificationSet()");
         LDAPModificationSet modSet = new LDAPModificationSet();
 
         if (extra) {
@@ -920,11 +935,24 @@ public class LdapPublisher extends BasePublisher{
             if (ou != null) {
                 modSet.add(LDAPModification.REPLACE, new LDAPAttribute("ou", ou));
             }
+            String o = CertTools.getPartFromDN(dn, "O");
+            if (o != null) {
+            	modSet.add(LDAPModification.REPLACE, new LDAPAttribute("o", o));
+            }
             String uid = CertTools.getPartFromDN(dn, "uid");
             if (uid != null) {
                 modSet.add(LDAPModification.REPLACE, new LDAPAttribute("uid", uid));
             }
+            String initials = CertTools.getPartFromDN(dn, "initials");
+            if (initials != null) {
+            	modSet.add(LDAPModification.REPLACE, new LDAPAttribute("initials", initials));
+            }        
+            String title = CertTools.getPartFromDN(dn, "T");
+            if (title != null) {
+            	modSet.add(LDAPModification.REPLACE, new LDAPAttribute("title", title));
+            }        
         }
+    	log.debug("<getModificationSet()");
         return modSet;
     } // getModificationSet
     
