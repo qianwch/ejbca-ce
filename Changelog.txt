@@ -1,6 +1,10 @@
+3.0.1
+-----
+Fixed warning in SSL deployment with JBoss 3.2.4.
+
 3.0
 ---
-Added unstructuredname, unstructuredaddress and GUID to subjectdn and alternative name
+Added unstructuredname, unstructuredaddress to subjectdn.
 Cleaned system.out debug logs.
 Digital signature in default key usage to make ocsp work out of the box.
 Added support for iPAddress alternative name.
