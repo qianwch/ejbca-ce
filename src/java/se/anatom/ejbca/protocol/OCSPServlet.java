@@ -27,6 +27,7 @@ import se.anatom.ejbca.ca.store.ICertificateStoreSessionHome;
 import se.anatom.ejbca.ca.store.ICertificateStoreSessionRemote;
 import se.anatom.ejbca.log.Admin;
 import se.anatom.ejbca.util.Hex;
+import se.anatom.ejbca.util.CertTools;
 
 import org.apache.log4j.Logger;
 
@@ -35,7 +36,7 @@ import org.apache.log4j.Logger;
  * For a detailed description of OCSP refer to RFC2560.
  * 
  * @author Thomas Meckel (Ophios GmbH)
- * @version  $Id: OCSPServlet.java,v 1.1.2.2 2003-09-09 20:12:53 anatom Exp $
+ * @version  $Id: OCSPServlet.java,v 1.1.2.3 2003-09-25 13:32:57 anatom Exp $
  */
 public class OCSPServlet extends HttpServlet {
 
@@ -111,7 +112,7 @@ public class OCSPServlet extends HttpServlet {
                             + subject
                             + "'");
             }
-            if (subject.equalsIgnoreCase(certs[i].getSubjectDN().getName())) {
+            if (subject.equalsIgnoreCase(CertTools.stringToBCDNString(certs[i].getSubjectDN().getName()))) {
                 return i;
             }
         }
@@ -138,7 +139,7 @@ public class OCSPServlet extends HttpServlet {
 
             {
                 File cwd = new File(".");
-                m_log.error("OCSPServlet current working directory : '"
+                m_log.info("OCSPServlet current working directory : '"
                             + cwd.getAbsolutePath()
                             + "'");
             }
@@ -240,6 +241,8 @@ public class OCSPServlet extends HttpServlet {
                 m_log.error(msg);
                 throw new ServletException(msg);
             }
+            // Normalize DN in initparam
+            initparam = CertTools.stringToBCDNString(initparam);
             m_responderIdx = findCertificateIndexBySubject(m_signcerts, initparam);
             if (m_responderIdx < 0) {
                 final String msg = "Unable to find certificate for given responderID.";

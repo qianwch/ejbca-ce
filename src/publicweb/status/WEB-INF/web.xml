@@ -57,7 +57,7 @@
         </init-param>
         <init-param>
             <param-name>responderID</param-name>
-            <param-value>CN=FooBar User, O=Anatom, ST=Some-State, C=SE</param-value>
+            <param-value>CN=TestCA,O=AnaTom,C=SE</param-value>
             <description>
                 Specifies the subject of a certificate which is used to
                 identifiy the responder which gerated the OCSP response.

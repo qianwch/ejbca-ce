@@ -15,11 +15,6 @@
   <property name="apply.build" value="${tmp}/publicweb/apply.war" />
   <property name="applyjar" value="${dist}/apply.war" />
   
-    <property name="status.src" value="${src}/publicweb/status"/>
-    <property name="status.build" value="${tmp}/publicweb/status.war"/>
-    <property name="statusjar" value="${dist}/status.war"/>
-    <property name="status.classpath" value="${ca.classpath} lib/jocsp.jar lib/commons-lang-1.0.jar"/>
-
   <property name="webdist.src" value="${src}/publicweb/webdist" />
   <property name="webdist.build" value="${tmp}/publicweb/webdist.war" />
   <property name="webdistjar" value="${dist}/webdist.war" />
@@ -32,6 +27,11 @@
   <property name="ca.build" value="${tmp}/ca/ca.jar" />
   <property name="cajar" value="${dist}/ca.jar" />
   <property name="ca.classpath" value="lib/bcmail-jdk14-119.jar lib/bcprov-jdk14-119.jar lib/log4j-1.2.7.jar lib/ldap.jar"/>
+
+  <property name="status.src" value="${src}/publicweb/status"/>
+  <property name="status.build" value="${tmp}/publicweb/status.war"/>
+  <property name="statusjar" value="${dist}/status.war"/>
+  <property name="status.classpath" value="${ca.classpath} lib/jocsp.jar lib/commons-lang-1.0.jar"/>
 
   <property name="log.src" value="${src}/log" />
   <property name="log.build" value="${tmp}/log.jar" />
@@ -82,11 +82,6 @@
   <property name="ksname" value="server.p12"/>
   <property name="keystore" value="src/ca/ca/keyStore/${ksname}"/>
   
-  <!-- libs to be copied to Jboss lib directory -->
-  <property name="lib.bcmail" value="${lib}/bcmail-jdk14-119.jar"/>
-  <property name="lib.jce" value="${lib}/bcprov-jdk14-119.jar"/>
-  <property name="lib.ldap" value="${lib}/ldap.jar"/>
-
   <!-- =================================================================== -->
   <!-- Create the time stamp and build directory -->
   <!-- =================================================================== -->
@@ -543,6 +538,7 @@ includes="**/*.class,**/*.log,**/.nbattrs,**/filesystem.attributes"/>
             <include name="bcprov-jdk14-119.jar"/>
             <include name="log4j-1.2.7.jar"/>
             <include name="ldap.jar"/>
+            <include name="jocsp.jar"/>
         </fileset>
     </copy>
   
@@ -589,6 +585,7 @@ includes="**/*.class,**/*.log,**/.nbattrs,**/filesystem.attributes"/>
             <include name="bcprov-jdk14-119.jar"/>
             <include name="log4j-1.2.7.jar"/>
             <include name="ldap.jar"/>
+            <include name="jocsp.jar"/>
         </fileset>
     </copy>
   
