@@ -74,7 +74,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 /**
  * Tools to handle common certificate operations.
  *
- * @version $Id: CertTools.java,v 1.64.2.3 2004-11-04 20:42:40 anatom Exp $
+ * @version $Id: CertTools.java,v 1.64.2.4 2004-11-04 21:20:01 anatom Exp $
  */
 public class CertTools {
     private static Logger log = Logger.getLogger(CertTools.class);
@@ -169,12 +169,10 @@ public class CertTools {
         ArrayList oldordering = new ArrayList();
         ArrayList oldvalues = new ArrayList();
         X509NameTokenizer xt = new X509NameTokenizer(dn);
-
         while (xt.hasMoreTokens()) {
             // This is a pair (CN=xx)
             String pair = xt.nextToken();
             int ix = pair.indexOf("=");
-
             if (ix != -1) {
                 // make lower case so we can easily compare later
                 oldordering.add(pair.substring(0, ix).toLowerCase());
@@ -189,19 +187,15 @@ public class CertTools {
         Vector ordering = new Vector();
         Vector values = new Vector();
         int index = -1;
-
         for (int i = 0; i < dNObjects.length; i++) {
             //log.debug("Looking for "+dNObjects[i]);
             String object = dNObjects[i];
-
             while ((index = oldordering.indexOf(object)) != -1) {
                 //log.debug("Found 1 "+object+" at index " + index);
                 DERObjectIdentifier oid = getOid(object);
-
                 if (oid != null) {
                     //log.debug("Added "+object+", "+oldvalues.elementAt(index));
                     ordering.add(oid);
-
                     // remove from the old vectors, so we start clean the next round
                     values.add(oldvalues.remove(index));
                     oldordering.remove(index);
@@ -238,6 +232,9 @@ public class CertTools {
      */
     public static String stringToBCDNString(String dn) {
         //log.debug(">stringToBcDNString: "+dn);
+    	//if (isDNReversed(dn)) {
+    	//	dn = reverseDN(dn);
+    	//}
         String ret = stringToBcX509Name(dn).toString();
         //log.debug("<stringToBcDNString: "+ret);
         return ret;
@@ -254,15 +251,11 @@ public class CertTools {
      */
     public static String getEmailFromDN(String dn) {
         log.debug(">getEmailFromDN(" + dn + ")");
-
         String email = null;
-
         for (int i = 0; (i < EMAILIDS.length) && (email == null); i++) {
             email = getPartFromDN(dn, EMAILIDS[i]);
         }
-
         log.debug("<getEmailFromDN(" + dn + "): " + email);
-
         return email;
     }
 
@@ -284,9 +277,9 @@ public class CertTools {
             boolean first = true;
             while (xt.hasMoreTokens()) {
                 o = xt.nextToken();
-                log.debug("token: "+o);
+                //log.debug("token: "+o);
                 if (!first) {
-                	buf.insert(0,",");
+                	buf.insert(0,"=");
                 } else {
                     first = false;                	
                 }
@@ -302,39 +295,48 @@ public class CertTools {
     } //reverseDN
 
     /**
-     * Takes a DN and reverses it completely so the first attribute ends up last. 
-     * C=SE,O=Foo,CN=Bar becomes CN=Bar,O=Foo,C=SE.
+     * Tries to determine if a DN is in reversed form. It does this by taking the last attribute 
+     * and the first attribute. If the last attribute comes before the first in the forwardDNOrder array
+     * the DN is assumed to be in reversed order.
      *
-     * @param dn String containing DN to be reversed, The DN string has the format "C=SE, O=xx, OU=yy, CN=zz".
+     * @param dn String containing DN to be checked, The DN string has the format "C=SE, O=xx, OU=yy, CN=zz".
      *
-     * @return String containing reversed DN
+     * @return true if the DN is believed to be in reversed order, false otherwise
      */
     public static boolean isDNReversed(String dn) {
-        log.debug(">isDNReversed: dn: " + dn);
+        //log.debug(">isDNReversed: dn: " + dn);
         boolean ret = false;
         if (dn != null) {
-            String o;
+            String first = null;
+            String last = null;
             X509NameTokenizer xt = new X509NameTokenizer(dn);
-            StringBuffer buf = new StringBuffer();
-            boolean first = true;
-            while (xt.hasMoreTokens()) {
-                o = xt.nextToken();
-                log.debug("token: "+o);
-                if (!first) {
-                	buf.insert(0,",");
-                } else {
-                    first = false;                	
-                }
-                buf.insert(0,o);
+            if (xt.hasMoreTokens()) {
+            	first = xt.nextToken();
             }
-            if (buf.length() > 0) {
-            	ret = buf.toString();
+            while (xt.hasMoreTokens()) {
+                last = xt.nextToken();
+            }
+            if ( (first != null) && (last != null) ) {
+            	first = first.substring(0,first.indexOf('='));
+            	last = last.substring(0,last.indexOf('='));
+            	int firsti = 0, lasti = 0;
+            	for (int i = 0; i < dNObjectsForward.length; i++) {
+            		if (first.toLowerCase().equals(dNObjectsForward[i])) {
+            			firsti = i;
+            		}
+            		if (last.toLowerCase().equals(dNObjectsForward[i])) {
+            			lasti = i;
+            		}
+            	}
+            	if (lasti < firsti) {
+            		ret = true;
+            	}
+            	
             }
         }
-        
-        log.debug("<isDNReversed: " + ret);
+        //log.debug("<isDNReversed: " + ret);
         return ret;
-    } //reverseDN
+    } //isDNReversed
 
     /**
      * Gets a specified part of a DN. Specifically the first occurrence it the DN contains several

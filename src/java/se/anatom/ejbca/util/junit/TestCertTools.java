@@ -28,7 +28,7 @@ import se.anatom.ejbca.util.StringTools;
 /**
  * Tests the CertTools class .
  *
- * @version $Id: TestCertTools.java,v 1.23.2.2 2004-11-04 20:42:48 anatom Exp $
+ * @version $Id: TestCertTools.java,v 1.23.2.3 2004-11-04 21:20:06 anatom Exp $
  */
 public class TestCertTools extends TestCase {
     private static Logger log = Logger.getLogger(TestCertTools.class);
@@ -230,7 +230,7 @@ public class TestCertTools extends TestCase {
         assertEquals(CertTools.stringToBCDNString(dn18), "CN=jean,CN=EJBCA,DC=home,DC=jean");
 
         String dn19 = "C=SE, dc=dc1,DC=DC2,O=EJBCA, O=oo, cn=foo, cn=bar";
-        assertEquals(CertTools.stringToBCDNString(dn19), "CN=foo,CN=bar,O=EJBCA,O=oo,DC=dc1,DC=DC2,C=SE");
+        assertEquals(CertTools.stringToBCDNString(dn19), "CN=bar,CN=foo,O=oo,O=EJBCA,DC=DC2,DC=dc1,C=SE");
 
         String dn20 = " C=SE,CN=\"foo, OU=bar\",  O=baz\\\\\\, quux  ";
         // BC always escapes with backslash, it doesn't use quotes.
@@ -371,10 +371,16 @@ public class TestCertTools extends TestCase {
       log.debug(">test09TestReverse()");
       // We try to examine the that we handle modern dc components for ldap correctly
       String dn1 = "dc=com,dc=bigcorp,dc=se,ou=orgunit,ou=users,cn=Tomas G";
+      String dn2 = "cn=Tomas G,ou=users,ou=orgunit,dc=se,dc=bigcorp,dc=com";
+      assertTrue(CertTools.isDNReversed(dn1));
+      assertTrue(!CertTools.isDNReversed(dn2));
+      assertTrue(CertTools.isDNReversed("C=SE,CN=Foo"));
+      assertTrue(!CertTools.isDNReversed("CN=Foo,O=FooO"));
       String revdn1 = CertTools.reverseDN(dn1);
       log.debug("dn1: " + dn1);
       log.debug("revdn1: " + revdn1);
-      assertEquals("cn=Tomas G,ou=users,ou=orgunit,dc=se,dc=bigcorp,dc=com", revdn1);
+      assertEquals(dn2, revdn1);
+      
       log.debug("<test09TestReverse()");
   }
    /** Tests the handling of DC components
