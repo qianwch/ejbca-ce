@@ -156,12 +156,14 @@
              }
 
              value = request.getParameter(TEXTFIELD_EMAIL);
-             if(value !=null){
+             if(value == null || value.trim().equals("")){
+               newuser.setEmail("");                   
+             }else{
                value=value.trim(); 
                if(!value.equals("")){
                  String emaildomain = request.getParameter(TEXTFIELD_EMAILDOMAIN);
                  if(emaildomain !=null){
-                   emaildomain=emaildomain.trim(); 
+                   emaildomain=emaildomain.trim();
                    if(!emaildomain.equals("")){
                      newuser.setEmail(value + "@" + emaildomain);            
                    }
@@ -169,6 +171,7 @@
 
                  emaildomain = request.getParameter(SELECT_EMAILDOMAIN);
                  if(emaildomain !=null){
+                   emaildomain=emaildomain.trim();
                    if(!emaildomain.equals("")){
                      newuser.setEmail(value + "@" + emaildomain);                   
                    }
@@ -855,7 +858,7 @@ function checkUseInBatch(){
          if(profile.getUse(EndEntityProfile.EMAIL,0)){ 
            String emailname = "";
            String emaildomain = "";
-           if(userdata.getEmail() != null){
+           if(userdata.getEmail() != null && !userdata.getEmail().equals("")){
              emailname   = userdata.getEmail().substring(0,userdata.getEmail().indexOf('@'));
              emaildomain = userdata.getEmail().substring(userdata.getEmail().indexOf('@')+1);
            }
