@@ -38,7 +38,7 @@ import org.bouncycastle.asn1.*;
 /**
  * Creates X509 certificates using RSA keys.
  *
- * @version $Id: RSASignSessionBean.java,v 1.10.2.2 2002-01-26 14:30:07 anatom Exp $
+ * @version $Id: RSASignSessionBean.java,v 1.10.2.3 2002-01-26 14:46:20 anatom Exp $
  */
 public class RSASignSessionBean extends BaseSessionBean implements ISignSession {
 
@@ -561,5 +561,4 @@ public class RSASignSessionBean extends BaseSessionBean implements ISignSession 
     } // makeBCCRL
 
 } //RSASignSessionBean
-
 

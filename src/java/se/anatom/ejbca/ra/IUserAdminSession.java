@@ -10,7 +10,7 @@ import se.anatom.ejbca.ra.UserAdminData;
 
 /**
  *
- * @version $Id: IUserAdminSession.java,v 1.1.1.1.6.1 2002-01-26 14:30:07 anatom Exp $
+ * @version $Id: IUserAdminSession.java,v 1.1.1.1.6.2 2002-01-26 14:46:20 anatom Exp $
  */
 public interface IUserAdminSession {
 
@@ -75,4 +75,3 @@ public interface IUserAdminSession {
     public Collection findAllUsersByStatus(int status) throws RemoteException;
 
 }
-
