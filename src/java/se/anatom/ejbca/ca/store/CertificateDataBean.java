@@ -32,7 +32,7 @@ import se.anatom.ejbca.ca.crl.RevokedCertInfo;
  * Username (username)
  * </pre>
  *
- * @version $Id: CertificateDataBean.java,v 1.18 2003-03-11 09:47:40 anatom Exp $
+ * @version $Id: CertificateDataBean.java,v 1.18.6.1 2003-09-10 10:59:47 anatom Exp $
  */
 public abstract class CertificateDataBean extends BaseEntityBean{
 
@@ -124,14 +124,18 @@ public abstract class CertificateDataBean extends BaseEntityBean{
         setSubjectDN(CertTools.stringToBCDNString(dn));
     }
     public void setExpireDate(Date expireDate) {
-        if (expireDate == null)
+        if (expireDate == null) {
             setExpireDate(-1L);
-        setExpireDate(expireDate.getTime());
+        } else {
+            setExpireDate(expireDate.getTime());
+        }
     }
     public void setRevocationDate(Date revocationDate) {
-        if (revocationDate == null)
+        if (revocationDate == null) {
             setRevocationDate(-1L);
-        setRevocationDate(revocationDate.getTime());
+        } else {
+            setRevocationDate(revocationDate.getTime());
+        }
     }
 
     //

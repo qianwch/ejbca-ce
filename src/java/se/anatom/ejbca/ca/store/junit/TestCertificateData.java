@@ -19,7 +19,7 @@ import junit.framework.*;
 /**
  * Tests certificate store.
  *
- * @version $Id: TestCertificateData.java,v 1.17 2003-03-18 16:27:43 anatom Exp $
+ * @version $Id: TestCertificateData.java,v 1.17.6.1 2003-09-10 10:59:54 anatom Exp $
  */
 public class TestCertificateData extends TestCase {
 
@@ -42,6 +42,7 @@ public class TestCertificateData extends TestCase {
     private static CertificateDataHome home;
     private static ICertificateStoreSessionHome storehome;
     private static X509Certificate cert;
+    private static long revDate;
 
     public TestCertificateData(String name) {
         super(name);
@@ -128,6 +129,7 @@ public class TestCertificateData extends TestCase {
         assertTrue("something weird with size, all < foos", size >= certfps.size());
         log.debug("List certs for foo: "+certfps.size());
         Iterator iter = certfps.iterator();
+        revDate = new Date().getTime();
         while (iter.hasNext()) {
             X509Certificate  cert = (X509Certificate)iter.next();
             String fp = CertTools.getFingerprintAsString(cert);
@@ -138,7 +140,7 @@ public class TestCertificateData extends TestCase {
             if (rev.getStatus() != CertificateData.CERT_REVOKED) {
                 rev.setStatus(CertificateData.CERT_REVOKED);
                 rev.setRevocationReason(RevokedCertInfo.REVOKATION_REASON_AFFILIATIONCHANGED);
-                rev.setRevocationDate(new Date());
+                rev.setRevocationDate(revDate);
                 log.debug("Revoked cert "+fp);
             } else {
                 log.debug("Cert '"+fp+"' already revoked.");
@@ -160,6 +162,10 @@ public class TestCertificateData extends TestCase {
             String fp = CertTools.getFingerprintAsString(cert);
             CertificateDataPK revpk = new CertificateDataPK(fp);
             CertificateData rev = home.findByPrimaryKey(revpk);
+            long date = rev.getRevocationDate();
+            String date1 = new Date(date).toString();
+            String date2 = new Date(revDate).toString();
+            assertEquals("Revocation date is not as expected: ",date2,date1);
             assertTrue(rev.getStatus() == CertificateData.CERT_REVOKED);
         }
         log.debug("<test04CheckRevoked()");
