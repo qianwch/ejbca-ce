@@ -1,34 +1,25 @@
 package se.anatom.ejbca.protocol;
 
-import com.ophios.ocsp.*;
-import com.ophios.ocsp.extensions.*;
-import com.ophios.x509.X509Extension;
-
 import java.io.*;
 
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.security.SignatureException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
-import java.util.Hashtable;
 import java.util.Iterator;
 
 import javax.naming.InitialContext;
-
 import javax.rmi.PortableRemoteObject;
-
 import javax.servlet.*;
 import javax.servlet.http.*;
 
-import org.apache.commons.collections.MultiHashMap;
-import org.apache.log4j.Logger;
+import com.ophios.ocsp.*;
+import com.ophios.ocsp.extensions.*;
+import com.ophios.x509.X509Extension;
 
 import se.anatom.ejbca.SecConst;
 import se.anatom.ejbca.ca.crl.RevokedCertInfo;
@@ -37,12 +28,14 @@ import se.anatom.ejbca.ca.store.ICertificateStoreSessionRemote;
 import se.anatom.ejbca.log.Admin;
 import se.anatom.ejbca.util.Hex;
 
+import org.apache.log4j.Logger;
+
 /** 
  * Servlet implementing server side of the Online Certificate Status Protocol (OCSP)
  * For a detailed description of OCSP refer to RFC2560.
  * 
  * @author Thomas Meckel (Ophios GmbH)
- * @version  $Id: OCSPServlet.java,v 1.1.2.1 2003-09-09 20:10:00 anatom Exp $
+ * @version  $Id: OCSPServlet.java,v 1.1.2.2 2003-09-09 20:12:53 anatom Exp $
  */
 public class OCSPServlet extends HttpServlet {
 
