@@ -17,7 +17,7 @@ import org.apache.log4j.Logger;
 /**
  * Tools to handle common certificate operations.
  *
- * @version $Id: CertTools.java,v 1.37.4.1 2003-09-07 09:51:11 anatom Exp $
+ * @version $Id: CertTools.java,v 1.37.4.2 2003-09-23 20:17:21 anatom Exp $
  */
 public class CertTools {
 
@@ -527,9 +527,8 @@ public class CertTools {
         byte[] extvalue = cert.getExtensionValue("2.5.29.14");
         if (extvalue == null)
             return null;
-
-        DEROctetString oct = (DEROctetString)(new DERInputStream(new ByteArrayInputStream(extvalue)).readObject());
-        SubjectKeyIdentifier keyId = new SubjectKeyIdentifier(oct);
+        ASN1OctetString str = ASN1OctetString.getInstance(new DERInputStream(new ByteArrayInputStream(extvalue)).readObject());
+        SubjectKeyIdentifier keyId = SubjectKeyIdentifier.getInstance(new DERInputStream(new ByteArrayInputStream(str.getOctets())).readObject());
         return keyId.getKeyIdentifier();
     } // getSubjectKeyId
 

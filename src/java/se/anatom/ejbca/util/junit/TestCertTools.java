@@ -10,7 +10,7 @@ import junit.framework.*;
 /**
  * Tests the CertTools class .
  *
- * @version $Id: TestCertTools.java,v 1.9 2003-04-03 14:59:26 anatom Exp $
+ * @version $Id: TestCertTools.java,v 1.9.4.1 2003-09-23 20:17:21 anatom Exp $
  */
 public class TestCertTools extends TestCase {
 
@@ -187,6 +187,24 @@ public class TestCertTools extends TestCase {
         log.debug("bcdn1: "+bcdn1);
         assertEquals(bcdn1, "CN=CommonName,SN=SerialNumber,GIVENNAME=GivenName,INITIALS=Initials,SURNAME=SurName,OU=OrgUnit,O=Org,C=SE");
         log.debug("<test04DNComponents()");
+    }
+    /** Tests some of the other methods of CertTools
+     *
+     * @throws Exception if error...
+     */
+    public void test06CertOps() throws Exception {
+        log.debug(">test06CertOps()");
+        X509Certificate cert = CertTools.getCertfromByteArray(testcert);
+        assertEquals("Wrong issuerDN",CertTools.getIssuerDN(cert),CertTools.stringToBCDNString("CN=TestCA,O=AnaTom,C=SE"));
+        assertEquals("Wrong subjectDN",CertTools.getSubjectDN(cert),CertTools.stringToBCDNString("CN=upn,O=Foo,C=SE"));
+        assertEquals("Wrong subject key id", new String(Hex.encode(CertTools.getSubjectKeyId(cert))),"6AB7CB5D0A93AD697C4AC901E9752BE84D819922".toLowerCase());
+        assertEquals("Wrong authority key id", new String(Hex.encode(CertTools.getAuthorityKeyId(cert))),"637BF476A854248EA574A57744A6F45E0F579251".toLowerCase());
+        assertEquals("Wrong upn alt name", "foo@foo", CertTools.getUPNAltName(cert));
+//        System.out.println(cert);
+//        FileOutputStream fos = new FileOutputStream("foo.cert");
+//        fos.write(cert.getEncoded());
+//        fos.close();
+        log.debug("<test06CertOps()");
     }
 
 }
