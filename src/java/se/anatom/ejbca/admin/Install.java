@@ -15,17 +15,17 @@ package se.anatom.ejbca.admin;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.Properties;
 import java.util.regex.Pattern;
 
 import org.ietf.ldap.LDAPDN;
 
 import se.anatom.ejbca.util.passgen.PasswordGeneratorFactory;
+import se.anatom.ejbca.webdist.webconfiguration.LanguageProperties;
 
 /** Class used as an install script of ejbca
  * 
  * @author philip
- * @version $Id: Install.java,v 1.14 2004-05-13 15:33:59 herrvendil Exp $
+ * @version $Id: Install.java,v 1.14.2.1 2005-01-16 18:51:33 anatom Exp $
  *
  * The main porpose of this program is to provide easy installment of EJBCA.
  */
@@ -64,7 +64,7 @@ public class Install extends BaseCommand {
 	private Pattern nondigitordot = Pattern.compile("[^0-9\\.]");
 	private Pattern notcomputername = Pattern.compile("[^0-9a-zA-z\\-\\.]");
 	private Pattern nonword = Pattern.compile("\\W");
-	private Properties text; 
+	private LanguageProperties text; 
 	
 	private BufferedReader reader = null;
 	
@@ -73,7 +73,7 @@ public class Install extends BaseCommand {
         super();
 		reader = new BufferedReader(new InputStreamReader(System.in));
 		
-		text = new Properties();
+		text = new LanguageProperties();
 		text.load(this.getClass().getResourceAsStream("/" + "install." + language.toLowerCase() + ".properties"));
 						   
 		if(osstring.equalsIgnoreCase("unix")){
