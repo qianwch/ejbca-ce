@@ -1,3 +1,7 @@
+2.1.2
+-----
+LDAP schema now correctly follows RFC 2256 and works with OpenLDAP 2.2. 
+
 2.1.1
 -----
 Improved error handing for batch generation.
