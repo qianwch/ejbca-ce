@@ -1,4 +1,35 @@
 
+LDAP Naming
+===========
+
+The dc component support is mandated by all of the X.509 RFCs now.
+For example, if I have this directory:
+
+dc=bigcorp,dc=com
+	|
+	+-dc=fi
+	|
+	|
+	+-dc=se
+		|
+		+-ou=users
+			|
+			+-cn=Mike Jackson
+
+The most understandable method is taking the subject name in
+forward order, like:
+cn=Mike Jackson,ou=users,dc=se,dc=bigcorp,dc=com
+
+If the DN is ordered like this it should be published to the correct object in the tree. 
+
+If the DN os ordered reverse, like:
+dc=bigcorp,dc=com,dc=se,ou=users,cn=Mike Jackson
+EJBCA will reorder it incorrectly to forward order, so the publishing will be wrong.
+
+Therefore...
+USER FORWARD ORDER LIKE THIS:
+cn=Mike Jackson,ou=users,dc=se,dc=bigcorp,dc=com
+
 CONFIGURING LDAP PUBLISHERS
 ===========================
 
@@ -101,14 +132,6 @@ publisher by the CA. Default 'certificateRevocationList;binary'
 
 - aRLAttribute is the attribute name, in the cAObjectClass, for ARLs (CA CRLs) 
 publisher by the CA. Default 'authorityRevocationList;binary'
-
-Setting up certificate profiles
--------------------------------
-To publish in LDAP you must create a Certificate profile in EJBCA that publishes 
-to LDAP. If the above is configured, the will be a section for 'Publishers' available
-when creating/editing a certificate profile. Choose this, and then when adding 
-end-entities, make sure they use the new certificate profile and voila, the certs will 
-be published.
 
 Configure OpenLDAP
 ------------------

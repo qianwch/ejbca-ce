@@ -74,7 +74,7 @@ import com.novell.ldap.LDAPModificationSet;
  * </pre>
  * </p>
  *
- * @version $Id: LDAPPublisherSessionBean.java,v 1.21.2.1 2004-01-27 14:48:03 anatom Exp $
+ * @version $Id: LDAPPublisherSessionBean.java,v 1.21.2.2 2004-01-28 13:23:09 anatom Exp $
  */
 public class LDAPPublisherSessionBean extends BaseSessionBean {
 
@@ -510,12 +510,12 @@ public class LDAPPublisherSessionBean extends BaseSessionBean {
             if (person) {
                 if ( (sn == null) && (cn != null) ) {
                     // Take surname to be the last part of the cn
-                    int index = cn.indexOf(' ');
+                    int index = cn.lastIndexOf(' ');
                     if (index <=0) {
                         // If there is no natural sn, use cn since sn is required
                         sn = cn;
                     } else {
-                        if (index < cn.length()) sn = cn.substring(index);
+                        if (index < cn.length()) sn = cn.substring(index+1);
                     }
                 }
             }
@@ -579,12 +579,12 @@ public class LDAPPublisherSessionBean extends BaseSessionBean {
             if (person) {
                 if ( (sn == null) && (cn != null) ) {
                     // Take surname to be the last part of the cn
-                    int index = cn.indexOf(' ');
+                    int index = cn.lastIndexOf(' ');
                     if (index <=0) {
                         // If there is no natural sn, use cn since sn is required
                         sn = cn;
                     } else {
-                        if (index < cn.length()) sn = cn.substring(index);
+                        if (index < cn.length()) sn = cn.substring(index+1);
                     }
                 }
             }
