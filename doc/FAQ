@@ -1,6 +1,14 @@
 EJBCA FAQ
 =========
-$Id: FAQ,v 1.23 2004-05-28 06:41:49 anatom Exp $
+$Id: FAQ,v 1.23.2.1 2004-08-05 06:36:28 anatom Exp $
+
+---------
+Q : Installation hangs and the https server will not work.
+
+A : Perhaps $JBOSS_HOME/bin/tomcat.jks must be executable. All scripts in EJBCA 
+home directory must be executable, run 'chmod u+x *.sh'. Make sure you run the 
+installation of ejbca as a user with enough privileges to write in JBOSS_HOME, 
+preferably the same user as is used to run the JBoss server.
 
 ---------
 Q : After upgrading the version of Java, the Admin GUI no longer works.
