@@ -27,7 +27,7 @@ import se.anatom.ejbca.SecConst;
  * Stores data used by web server clients.
  * Uses JNDI name for datasource as defined in env 'Datasource' in ejb-jar.xml.
  *
- * @version $Id: LocalRaAdminSessionBean.java,v 1.25.4.1 2003-08-24 13:41:30 anatom Exp $
+ * @version $Id: LocalRaAdminSessionBean.java,v 1.25.4.2 2003-10-12 13:31:07 anatom Exp $
  */
 public class LocalRaAdminSessionBean extends BaseSessionBean  {
 
@@ -394,10 +394,12 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
      */
     public EndEntityProfile getEndEntityProfile(Admin admin, String profilename){
        EndEntityProfile returnval=null;
-       try{
-         returnval = (profiledatahome.findByProfileName(profilename)).getProfile();
+       try {
+           if (profilename != null) {
+               returnval = (profiledatahome.findByProfileName(profilename)).getProfile();
+           }
        }catch(FinderException e){
-         throw new EJBException(e);
+           // Ignore so we'll return null
        }
        return returnval;
     } //  getEndEntityProfile
@@ -408,10 +410,11 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
     public EndEntityProfile getEndEntityProfile(Admin admin, int id){
        EndEntityProfile returnval=null;
        try{
-         if(id!=0)
-           returnval = (profiledatahome.findByPrimaryKey(new Integer(id))).getProfile();
+         if(id!=0) {
+             returnval = (profiledatahome.findByPrimaryKey(new Integer(id))).getProfile();
+         } 
        }catch(FinderException e){
-         throw new EJBException(e);
+           // Ignore so we'll return null
        }
        return returnval;
     } // getEndEntityrofile
