@@ -34,7 +34,7 @@ import junit.framework.*;
 /**
  * Tests signing session.
  *
- * @version $Id: TestSignSession.java,v 1.22 2003-06-19 10:21:25 anatom Exp $
+ * @version $Id: TestSignSession.java,v 1.22.2.1 2003-09-16 10:49:03 anatom Exp $
  */
 public class TestSignSession extends TestCase {
 
@@ -325,6 +325,7 @@ public class TestSignSession extends TestCase {
         log.debug("<test07DSAKey()");
     }
 
+/*
     public void test08SwedeChars() throws Exception {
         log.debug(">test08SwedeChars()");
         // Make user that we know...
@@ -360,6 +361,7 @@ public class TestSignSession extends TestCase {
         //fos.close();
         log.debug("<test08SwedeChars()");
     }
+*/
 /*
     public void test07TestOpenScep() throws Exception {
         log.debug(">test07TestOpenScep()");
