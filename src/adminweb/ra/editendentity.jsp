@@ -603,11 +603,10 @@ function checkallfields(){
     <%        }
              }
             }
-           }
-         }
-         else{ %>
-      document.edituser.<%= CHECKBOX_SUBJECTALTNAME+i %>.disabled = false;          
-     <%  }
+           }else{ %>
+           document.edituser.<%= CHECKBOX_SUBJECTALTNAME+i %>.disabled = false;          
+     <%    }
+         }                   
        }
        if(profile.getUse(EndEntityProfile.EMAIL,0)){ %>
     if(!checkfieldforlegalemailcharswithoutat("document.edituser.<%=TEXTFIELD_EMAIL%>","<%= ejbcawebbean.getText("ONLYEMAILCHARSNOAT") %>"))
@@ -921,7 +920,7 @@ function checkUseInBatch(){
             }
             else{ %>
               <%= ejbcawebbean.getText("USESEMAILFIELDDATA") + " :"%>&nbsp;
-        <input type="checkbox" name="<%=CHECKBOX_SUBJECTDN + i%>" value="<%=CHECKBOX_VALUE %>" tabindex="<%=tabindex++%>" <% if(!userdata.getSubjectDNField(profile.profileFieldIdToUserFieldIdMapper(fielddata[EndEntityProfile.FIELDTYPE]),fielddata[EndEntityProfile.NUMBER]).equals(""))
+        <input type="checkbox" name="<%=CHECKBOX_SUBJECTDN + i%>" value="<%=CHECKBOX_VALUE %>" tabindex="<%=tabindex++%>" <% if(!userdata.getSubjectDNField(profile.profileFieldIdToUserFieldIdMapper(fielddata[EndEntityProfile.FIELDTYPE]),fielddata[EndEntityProfile.NUMBER]).equals("") || profile.isRequired(fielddata[EndEntityProfile.FIELDTYPE],fielddata[EndEntityProfile.NUMBER]))
                                                                                                                  out.write(" CHECKED "); 
                                                                                                                if(profile.isRequired(fielddata[EndEntityProfile.FIELDTYPE],fielddata[EndEntityProfile.NUMBER]))
                                                                                                                  out.write(" disabled='true' "); 
@@ -969,7 +968,9 @@ function checkUseInBatch(){
             }
             else{ %>
               <%= ejbcawebbean.getText("USESEMAILFIELDDATA")+ " :"%>&nbsp;
-        <input type="checkbox" name="<%=CHECKBOX_SUBJECTALTNAME + i%>" value="<%=CHECKBOX_VALUE %>" tabindex="<%=tabindex++%>" <% if(!userdata.getSubjectAltNameField(profile.profileFieldIdToUserFieldIdMapper(fielddata[EndEntityProfile.FIELDTYPE]),fielddata[EndEntityProfile.NUMBER]).equals(""))
+        <input type="checkbox" name="<%=CHECKBOX_SUBJECTALTNAME + i%>" value="<%=CHECKBOX_VALUE %>" tabindex="<%=tabindex++%>" 
+          <% if(profile.isRequired(fielddata[EndEntityProfile.FIELDTYPE],fielddata[EndEntityProfile.NUMBER])) out.write(" disabled='true' ");     
+             if(!userdata.getSubjectAltNameField(profile.profileFieldIdToUserFieldIdMapper(fielddata[EndEntityProfile.FIELDTYPE]),fielddata[EndEntityProfile.NUMBER]).equals("") || profile.isRequired(fielddata[EndEntityProfile.FIELDTYPE],fielddata[EndEntityProfile.NUMBER]))
                                                                                                                  out.write(" CHECKED ");
                                                                                                              %>>
          <% } %>  
