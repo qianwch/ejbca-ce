@@ -1,3 +1,5 @@
+<%@ page pageEncoding="ISO-8859-1"%>
+
 <html>
 <title>EJBCA Certificate Enroll Error</title>
 <body>

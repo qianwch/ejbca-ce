@@ -1,4 +1,4 @@
-
+<%@ page pageEncoding="ISO-8859-1"%>
 
 <HEAD>
 <TITLE>EJBCA IE Certificate Enroll</TITLE>

@@ -1,5 +1,5 @@
-<%@page contentType="text/html"%>
 <%@ page language="Java" import="javax.naming.*,javax.rmi.*,java.util.*,java.security.cert.*,se.anatom.ejbca.ca.sign.*, se.anatom.ejbca.log.Admin"%>
+<%@ page pageEncoding="ISO-8859-1"%>
 
 <HTML>
 <HEAD>
