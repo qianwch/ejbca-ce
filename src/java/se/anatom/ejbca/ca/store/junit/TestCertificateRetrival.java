@@ -352,7 +352,7 @@ public class TestCertificateRetrival extends TestCase  {
         Iterator iter = revstats.iterator();
         while (iter.hasNext()) {
             RevokedCertInfo rci = (RevokedCertInfo)iter.next();
-            m_log.info("Certificate revocation information:\n"
+            m_log.debug("Certificate revocation information:\n"
                         + "   Serialnumber      : " + rci.getUserCertificate().toString() + "\n"
                         + "   Revocation date   : " + rci.getRevocationDate().toString()  + "\n"
                         + "   Revocation reason : " + rci.getReason() + "\n");
