@@ -27,7 +27,7 @@ import org.apache.log4j.Logger;
 /**
  * Tools to handle common key and keystore operations.
  *
- * @version $Id: KeyTools.java,v 1.17.2.1 2003-08-23 08:54:10 anatom Exp $
+ * @version $Id: KeyTools.java,v 1.17.2.2 2003-09-07 09:51:11 anatom Exp $
  */
 public class KeyTools {
 
@@ -85,6 +85,30 @@ public class KeyTools {
      * @param alias the alias used for the key entry
      * @param privKey RSA private key
      * @param cert user certificate
+     * @param cacert Collection of X509Certificate, or null if only one cert in chain, in that case use 'cert'.
+     * @param username user's username
+     * @param password user's password
+     * @return KeyStore containing PKCS12-keystore
+     * @exception Exception if input parameters are not OK or certificate generation fails
+     */
+    static public KeyStore createP12(String alias, PrivateKey privKey, X509Certificate cert, Collection cacerts)
+    throws Exception {
+        Certificate[] chain;
+        if (cacerts == null)
+            chain = null;
+        else {
+            chain = new Certificate[cacerts.size()];
+            chain = (Certificate[])cacerts.toArray(chain);
+        }
+        return createP12(alias, privKey, cert, chain);
+    } // createP12
+
+    /**
+     * Creates PKCS12-file that can be imported in IE or Netscape.
+     * The alias for the private key is set to 'privateKey' and the private key password is null.
+     * @param alias the alias used for the key entry
+     * @param privKey RSA private key
+     * @param cert user certificate
      * @param cachain CA-certificate chain or null if only one cert in chain, in that case use 'cert'.
      * @param username user's username
      * @param password user's password
@@ -95,8 +119,7 @@ public class KeyTools {
     throws Exception {
         log.debug(">createP12: alias=" + alias + ", privKey, cert=" + CertTools.getSubjectDN(cert) + ", cachain.length=" + (cachain == null ? 0 : cachain.length) );
 
-        // TODO: support more than two levels of CAs
-        // Certificate chain, only max two levels deep unforturnately
+        // Certificate chain
         if (cert == null)
             throw new IllegalArgumentException("Parameter cert cannot be null.");
         int len = 1;
@@ -112,7 +135,6 @@ public class KeyTools {
                  chain[i+1] = tmpcert;
             }
 
-
         if (chain.length > 1) {
             for (int i=1;i<chain.length;i++) {
                 X509Certificate cacert  = (X509Certificate)cf.generateCertificate(new ByteArrayInputStream(chain[i].getEncoded()));
@@ -120,14 +142,15 @@ public class KeyTools {
                 PKCS12BagAttributeCarrier   caBagAttr = (PKCS12BagAttributeCarrier)chain[i];
                 // We constuct a friendly name for the CA, and try with some parts from the DN if they exist.
                 String cafriendly = CertTools.getPartFromDN(CertTools.getSubjectDN(cacert), "CN");
+                // On the ones below we +i to make it unique, O might not be otherwise
                 if (cafriendly == null) {
-                    cafriendly = CertTools.getPartFromDN(CertTools.getSubjectDN(cacert), "O");
+                    cafriendly = CertTools.getPartFromDN(CertTools.getSubjectDN(cacert), "O")+i;
                 }
                 if (cafriendly == null) {
-                    cafriendly = CertTools.getPartFromDN(CertTools.getSubjectDN(cacert), "OU");
+                    cafriendly = CertTools.getPartFromDN(CertTools.getSubjectDN(cacert), "OU")+i;
                 }
                 if (cafriendly == null) {
-                    cafriendly = "CA_unknown";
+                    cafriendly = "CA_unknown"+i;
                 }
                 caBagAttr.setBagAttribute(PKCSObjectIdentifiers.pkcs_9_at_friendlyName, new DERBMPString(cafriendly));
             }
@@ -173,8 +196,7 @@ public class KeyTools {
         log.debug(">createJKS: alias=" + alias + ", privKey, cert=" + CertTools.getSubjectDN(cert) + ", cachain.length=" + (cachain == null ? 0 : cachain.length) );
 
         String caAlias="cacert";
-        // TODO: support more than two levels of CAs
-        // Certificate chain, only max two levels deep unforturnately.
+        // Certificate chain
         if (cert == null)
             throw new IllegalArgumentException("Parameter cert cannot be null.");
         int len = 1;
