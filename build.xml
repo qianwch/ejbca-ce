@@ -178,7 +178,7 @@ includes="**/*.class,**/*.log,**/.nbattrs,**/filesystem.attributes"/>
                 <exclude name="se/anatom/ejbca/**/*Test*"/>
             </fileset>
         </copy>
-        <!-- Jar the apply.war package together -->
+        <!-- Jar the status.war package together -->
         <jar basedir="${status.build}" jarfile="${statusjar}">
             <manifest>
                 <attribute name="Class-Path" value="${status.classpath}"/>
