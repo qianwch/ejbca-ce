@@ -49,7 +49,7 @@ import se.anatom.ejbca.webdist.webconfiguration.EjbcaWebBean;
  * <ul>
  * <li>crl - gets the latest CRL.
  *
- * @version $Id: CACertReqServlet.java,v 1.2 2004-04-16 07:38:59 anatom Exp $
+ * @version $Id: CACertReqServlet.java,v 1.2.2.1 2005-03-04 15:57:15 anatom Exp $
  */
 public class CACertReqServlet extends HttpServlet {
 
@@ -151,14 +151,20 @@ public class CACertReqServlet extends HttpServlet {
 				ByteArrayOutputStream bOut = new ByteArrayOutputStream();
 				DEROutputStream dOut = new DEROutputStream(bOut);
 				dOut.writeObject(pkcs10request);
-				dOut.close();
-												          
-												          
+				dOut.close();					          					          
 				byte[] b64certreq = se.anatom.ejbca.util.Base64.encode(bOut.toByteArray());
 				String out = "-----BEGIN CERTIFICATE REQUEST-----\n";
 				out += new String(b64certreq);
 				out += "\n-----END CERTIFICATE REQUEST-----\n";      				
                 
+                if (res.containsHeader("Pragma")) {
+                    log.debug("Removing Pragma header to avoid caching issues in IE");
+                    res.setHeader("Pragma",null);
+                }
+                if (res.containsHeader("Cache-Control")) {
+                    log.debug("Removing Cache-Control header to avoid caching issues in IE");
+                    res.setHeader("Cache-Control",null);
+                }
                 String filename = "pkcs10certificaterequest.pem";
                 res.setHeader("Content-disposition", "attachment; filename=" +  filename);
                 res.setContentType("application/octet-stream");
