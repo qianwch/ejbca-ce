@@ -185,5 +185,5 @@ And using the command:
 ldapadd -x -D "cn=Admin,o=AnaTom,c=SE" -W -f org.ldif
 
 Check what you have in the LDAP by:
-/usr/local/bin/ldapsearch -x -b 'o=AnaTom,c=SE' '(objectclass=*)'
+ldapsearch -x -b 'o=AnaTom,c=SE' '(objectclass=*)'
 
