@@ -1,4 +1,4 @@
-$Id: README,v 1.150.2.13 2004-11-18 08:23:06 anatom Exp $
+$Id: README,v 1.150.2.14 2004-12-31 14:26:37 anatom Exp $
 
 This software is OSI Certified Open Source Software.
 OSI Certified is a certification mark of the Open Source
@@ -366,7 +366,7 @@ Sample crontab to be installed with 'crontab -e':
 SHELL=/bin/sh
 PATH=
 /usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-CLASSPATH=$CLASSPATH;/root/ejbca;/root/ejbca/admin.jar
+CLASSPATH=$CLASSPATH:/root/ejbca:/root/ejbca/admin.jar
 JBOSS_HOME=/usr/local/jboss
 # m h dom mon dow command
 00 0    * * *   cd /root/ejbca;./ca.sh createcrl
