@@ -37,7 +37,7 @@ import se.anatom.ejbca.util.StringTools;
  *  data (Data saved concerning the hard token)
  * </pre>
  *
- * @version $Id: HardTokenDataBean.java,v 1.10 2004-04-16 07:38:56 anatom Exp $
+ * @version $Id: HardTokenDataBean.java,v 1.10.2.1 2004-09-28 16:20:22 anatom Exp $
  */
 public abstract class HardTokenDataBean extends BaseEntityBean {
 

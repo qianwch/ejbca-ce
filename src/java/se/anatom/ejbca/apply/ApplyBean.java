@@ -39,7 +39,7 @@ import javax.servlet.http.HttpServletRequest;
  * A class used as an interface between Apply jsp pages and ejbca functions.
  *
  * @author Philip Vendil
- * @version $Id: ApplyBean.java,v 1.8 2004-04-16 07:38:58 anatom Exp $
+ * @version $Id: ApplyBean.java,v 1.8.2.1 2004-09-28 16:17:05 anatom Exp $
  */
 public class ApplyBean {
     /**

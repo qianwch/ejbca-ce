@@ -23,7 +23,7 @@ import se.anatom.ejbca.hardtoken.hardtokentypes.HardToken;
 /**
  * For docs, see HardTokenDataBean
  *
- * @version $Id: HardTokenDataLocalHome.java,v 1.5 2004-04-16 07:38:56 anatom Exp $
+ * @version $Id: HardTokenDataLocalHome.java,v 1.5.2.1 2004-09-28 16:20:21 anatom Exp $
  **/
 
 public interface HardTokenDataLocalHome extends javax.ejb.EJBLocalHome {

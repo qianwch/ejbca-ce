@@ -59,7 +59,7 @@ import se.anatom.ejbca.util.CertTools;
  * Stores data used by web server clients.
  * Uses JNDI name for datasource as defined in env 'Datasource' in ejb-jar.xml.
  *
- * @version $Id: LocalHardTokenSessionBean.java,v 1.28 2004-05-19 07:00:46 anatom Exp $
+ * @version $Id: LocalHardTokenSessionBean.java,v 1.28.2.1 2004-09-28 16:20:21 anatom Exp $
  */
 public class LocalHardTokenSessionBean extends BaseSessionBean  {
 

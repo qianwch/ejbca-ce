@@ -17,7 +17,7 @@ package se.anatom.ejbca.hardtoken;
 /**
  * For docs, see HardTokenCertificateMapBean
  *
- * @version $Id: HardTokenCertificateMapLocal.java,v 1.6 2004-04-16 07:38:56 anatom Exp $
+ * @version $Id: HardTokenCertificateMapLocal.java,v 1.6.2.1 2004-09-28 16:20:21 anatom Exp $
  **/
 
 public interface HardTokenCertificateMapLocal extends javax.ejb.EJBLocalObject {

@@ -38,7 +38,7 @@ import se.anatom.ejbca.ra.UserDataLocalHome;
 /**
  * Remote interface for bean used by hardtoken batchprograms to retrieve users to generate from EJBCA RA.
  *
- * @version $Id: LocalEjbcaHardTokenBatchJobSessionBean.java,v 1.17 2004-05-19 07:00:59 anatom Exp $
+ * @version $Id: LocalEjbcaHardTokenBatchJobSessionBean.java,v 1.17.2.1 2004-09-28 16:20:22 anatom Exp $
  */
 public class LocalEjbcaHardTokenBatchJobSessionBean extends BaseSessionBean  {
 

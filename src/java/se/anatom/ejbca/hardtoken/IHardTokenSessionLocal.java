@@ -25,7 +25,7 @@ import se.anatom.ejbca.ra.UserAdminData;
 
 /** Local interface for EJB, unforturnately this must be a copy of the remote interface except that RemoteException is not thrown, see ICertificateStoreSession for docs.
  *
- * @version $Id: IHardTokenSessionLocal.java,v 1.8 2004-04-16 07:38:56 anatom Exp $
+ * @version $Id: IHardTokenSessionLocal.java,v 1.8.2.1 2004-09-28 16:20:22 anatom Exp $
  * @see se.anatom.ejbca.hardtoken.IHardTokenSessionRemote
  */
 

@@ -24,7 +24,7 @@ import se.anatom.ejbca.util.StringTools;
  *  server and clients.
  *
  * @author  TomSelleck
- * @version $Id: HardTokenData.java,v 1.7 2004-04-16 07:38:56 anatom Exp $
+ * @version $Id: HardTokenData.java,v 1.7.2.1 2004-09-28 16:20:22 anatom Exp $
  */
 
 public class HardTokenData implements java.io.Serializable {

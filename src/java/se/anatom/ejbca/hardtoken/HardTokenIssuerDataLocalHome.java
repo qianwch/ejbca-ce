@@ -21,7 +21,7 @@ import javax.ejb.FinderException;
 /**
  * For docs, see HardTokenIssuerDataBean
  *
- * @version $Id: HardTokenIssuerDataLocalHome.java,v 1.7 2004-04-16 07:38:56 anatom Exp $
+ * @version $Id: HardTokenIssuerDataLocalHome.java,v 1.7.2.1 2004-09-28 16:20:22 anatom Exp $
  **/
 public interface HardTokenIssuerDataLocalHome extends javax.ejb.EJBLocalHome {
 

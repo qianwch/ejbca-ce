@@ -29,7 +29,7 @@ import se.anatom.ejbca.util.UpgradeableDataHashMap;
  * it isn't back compatible with the old version.
  *
  * @author  TomSelleck
- * @version $Id: HardTokenIssuer.java,v 1.7 2004-04-16 07:38:56 anatom Exp $
+ * @version $Id: HardTokenIssuer.java,v 1.7.2.1 2004-09-28 16:20:22 anatom Exp $
  */
 public  class HardTokenIssuer extends UpgradeableDataHashMap implements Serializable, Cloneable {
 
