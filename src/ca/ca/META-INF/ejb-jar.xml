@@ -137,6 +137,22 @@
         <local>se.anatom.ejbca.log.ILogSessionLocal</local>
         <ejb-link>LogSession</ejb-link>
      </ejb-local-ref>
+     <ejb-local-ref>
+        <description>The RA Admin session bean</description>
+        <ejb-ref-name>ejb/RaAdminSessionLocal</ejb-ref-name>
+        <ejb-ref-type>Session</ejb-ref-type>
+        <local-home>se.anatom.ejbca.ra.raadmin.IRaAdminSessionLocalHome</local-home>
+        <local>se.anatom.ejbca.ra.raadmin.IRaAdminSessionLocal</local>
+        <ejb-link>RaAdminSession</ejb-link>
+     </ejb-local-ref>
+     <ejb-local-ref>
+        <description>The Key Recovery Session Bean</description>
+        <ejb-ref-name>ejb/KeyRecoverySessionLocal</ejb-ref-name>
+        <ejb-ref-type>Session</ejb-ref-type>
+        <local-home>se.anatom.ejbca.keyrecovery.IKeyRecoverySessionLocalHome</local-home>
+        <local>se.anatom.ejbca.keyrecovery.IKeyRecoverySessionLocal</local>
+        <ejb-link>KeyRecoverySession</ejb-link>
+     </ejb-local-ref>     
 
      <security-identity>
         <description></description>

@@ -22,6 +22,8 @@ import javax.ejb.ObjectNotFoundException;
 import se.anatom.ejbca.BaseSessionBean;
 import se.anatom.ejbca.ca.exception.AuthLoginException;
 import se.anatom.ejbca.ca.exception.AuthStatusException;
+import se.anatom.ejbca.keyrecovery.IKeyRecoverySessionLocal;
+import se.anatom.ejbca.keyrecovery.IKeyRecoverySessionLocalHome;
 import se.anatom.ejbca.log.Admin;
 import se.anatom.ejbca.log.ILogSessionLocal;
 import se.anatom.ejbca.log.ILogSessionLocalHome;
@@ -29,19 +31,28 @@ import se.anatom.ejbca.log.LogEntry;
 import se.anatom.ejbca.ra.UserDataLocal;
 import se.anatom.ejbca.ra.UserDataLocalHome;
 import se.anatom.ejbca.ra.UserDataPK;
+import se.anatom.ejbca.ra.raadmin.IRaAdminSessionLocal;
+import se.anatom.ejbca.ra.raadmin.IRaAdminSessionLocalHome;
 
 
 /**
  * Authenticates users towards a user database.
  *
- * @version $Id: LocalAuthenticationSessionBean.java,v 1.26 2004-05-13 15:34:40 herrvendil Exp $
+ * @version $Id: LocalAuthenticationSessionBean.java,v 1.26.2.1 2005-03-31 14:34:04 herrvendil Exp $
  */
 public class LocalAuthenticationSessionBean extends BaseSessionBean {
     /** home interface to user entity bean */
     private UserDataLocalHome userHome = null;
 
-    /** The remote interface of the log session bean */
+    /** The local interface of the log session bean */
     private ILogSessionLocal logsession;
+    
+    /** The local interface of the keyrecovery session bean */
+    private IKeyRecoverySessionLocal keyrecoverysession = null;
+    
+    /** boolean indicating if keyrecovery should be used. */
+    private boolean usekeyrecovery = true;
+    
 
     /**
      * Default create for SessionBean without any creation Arguments.
@@ -62,6 +73,33 @@ public class LocalAuthenticationSessionBean extends BaseSessionBean {
         }
 
         debug("<ejbCreate()");
+    }
+    
+    /**
+     * Method returning the keyrecovery session if key recovery is configured in the globalconfiguration
+     * else null is returned. 
+     * 
+     * @param admin
+     * @return
+     */
+    private IKeyRecoverySessionLocal getKeyRecoverySession(Admin admin){
+    	if(usekeyrecovery && keyrecoverysession == null){
+    		try{
+              IRaAdminSessionLocalHome raadminhome = (IRaAdminSessionLocalHome) lookup("java:comp/env/ejb/RaAdminSessionLocal", IRaAdminSessionLocalHome.class);                            
+              IRaAdminSessionLocal raadmin = raadminhome.create();        
+              usekeyrecovery = (raadmin.loadGlobalConfiguration(admin)).getEnableKeyRecovery();
+
+              if(usekeyrecovery){
+                IKeyRecoverySessionLocalHome keyrecoveryhome = (IKeyRecoverySessionLocalHome) lookup("java:comp/env/ejb/KeyRecoverySessionLocal", IKeyRecoverySessionLocalHome.class);
+                keyrecoverysession = keyrecoveryhome.create();
+              }
+    		}catch(Exception e){
+    			  e.printStackTrace();
+    	          throw new EJBException(e);
+            }
+    	}
+    	
+    	return keyrecoverysession;
     }
 
     /**
@@ -131,6 +169,12 @@ public class LocalAuthenticationSessionBean extends BaseSessionBean {
             UserDataLocal data = userHome.findByPrimaryKey(pk);
             data.setStatus(UserDataLocal.STATUS_GENERATED);
             data.setTimeModified((new Date()).getTime());
+            
+            // Reset key recoveryflag if keyrecovery is used.
+            if(this.getKeyRecoverySession(admin) != null){            	
+              getKeyRecoverySession(admin).unmarkUser(admin,username);
+            }
+            
             logsession.log(admin, data.getCAId(), LogEntry.MODULE_CA, new java.util.Date(),username, null, LogEntry.EVENT_INFO_CHANGEDENDENTITY,"Changed status to STATUS_GENERATED.");
             debug("<finishUser("+username+", hiddenpwd)");
         } catch (ObjectNotFoundException oe) {            
