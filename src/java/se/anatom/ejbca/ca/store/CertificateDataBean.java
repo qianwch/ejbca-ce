@@ -32,7 +32,7 @@ import se.anatom.ejbca.ca.crl.RevokedCertInfo;
  * Username (username)
  * </pre>
  *
- * @version $Id: CertificateDataBean.java,v 1.18.6.2 2003-09-11 06:55:40 anatom Exp $
+ * @version $Id: CertificateDataBean.java,v 1.18.6.3 2004-06-03 19:03:02 anatom Exp $
  */
 public abstract class CertificateDataBean extends BaseEntityBean{
 
@@ -113,9 +113,7 @@ public abstract class CertificateDataBean extends BaseEntityBean{
             setSerialNumber(tmpcert.getSerialNumber().toString());
         } catch (CertificateEncodingException cee) {
             log.error("Can't extract DER encoded certificate information.", cee);
-        } catch (CertificateException ce) {
-            log.error("Can't get information from cert.", ce);
-        }
+        } 
     }
     public void setIssuer(String dn) {
         setIssuerDN(CertTools.stringToBCDNString(dn));

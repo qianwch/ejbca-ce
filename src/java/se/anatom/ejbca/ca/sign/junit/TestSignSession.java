@@ -16,8 +16,6 @@ import javax.ejb.DuplicateKeyException;
 
 import se.anatom.ejbca.ca.exception.IllegalKeyException;
 import se.anatom.ejbca.protocol.PKCS10RequestMessage;
-import se.anatom.ejbca.protocol.ScepRequestMessage;
-import se.anatom.ejbca.protocol.IResponseMessage;
 import se.anatom.ejbca.ra.*;
 import se.anatom.ejbca.ca.sign.*;
 import se.anatom.ejbca.util.*;
@@ -34,7 +32,7 @@ import junit.framework.*;
 /**
  * Tests signing session.
  *
- * @version $Id: TestSignSession.java,v 1.22.2.2 2003-09-23 19:37:42 anatom Exp $
+ * @version $Id: TestSignSession.java,v 1.22.2.3 2004-06-03 19:02:27 anatom Exp $
  */
 public class TestSignSession extends TestCase {
 
