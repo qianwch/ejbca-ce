@@ -1,4 +1,4 @@
-$Id: README,v 1.150.2.16 2005-01-25 17:08:14 anatom Exp $
+$Id: README,v 1.150.2.17 2005-02-01 08:49:18 anatom Exp $
 
 This software is OSI Certified Open Source Software.
 OSI Certified is a certification mark of the Open Source
@@ -137,6 +137,9 @@ released we can not create scripts that updates the database if some tables chan
 upgrades much much harder.
 
 FOR THE IMPATIENT:
+
+(0. To create your own secure master password, change the variable 'keyStorePass' in src/ca/ca/META-INF/ejb-jar.xml 
+from the default value foo123. DO NOT forget this password, if you need to re-install the software sometime)
 
 1. Build and deploy everything with 'ant deploy'.
 2. Start JBoss, ejbca-ca.ear should be deployed.
