@@ -42,6 +42,7 @@ public class HardCATokenManager {
      * @return true when finished initializing.
      */
 	private static boolean init(){
+        loadClass("se.anatom.ejbca.ca.caadmin.hardcatokens.StaticRegistering");
         loadClass("se.anatom.ejbca.ca.caadmin.hardcatokens.DummyHardCAToken");
         loadClass("se.anatom.ejbca.ca.caadmin.hardcatokens.HardCATokenSample");
     	return true;
