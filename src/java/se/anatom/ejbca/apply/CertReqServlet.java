@@ -74,7 +74,7 @@ import se.anatom.ejbca.util.KeyTools;
  * </p>
  *
  * @author Original code by Lars Silv?n
- * @version $Id: CertReqServlet.java,v 1.45 2004-05-31 14:29:06 anatom Exp $
+ * @version $Id: CertReqServlet.java,v 1.45.2.1 2004-06-22 11:04:12 herrvendil Exp $
  */
 public class CertReqServlet extends HttpServlet {
     private static Logger log = Logger.getLogger(CertReqServlet.class);
@@ -198,7 +198,7 @@ public class CertReqServlet extends HttpServlet {
             }
             if(tokentype == SecConst.TOKEN_SOFT_BROWSERGEN){
 
-              // first check if it is a netcsape request,
+              // first check if it is a netscape request,
               if (request.getParameter("keygen") != null) {
                   byte[] reqBytes=request.getParameter("keygen").getBytes();
                   log.debug("Received NS request:"+new String(reqBytes));
@@ -222,7 +222,10 @@ public class CertReqServlet extends HttpServlet {
                   byte[] reqBytes=request.getParameter("pkcs10req").getBytes();
                   if (reqBytes != null) {
                       byte[] b64cert=helper.pkcs10CertRequest(signsession, reqBytes, username, password, resulttype);
-                    RequestHelper.sendNewB64Cert(b64cert, response, RequestHelper.BEGIN_PKCS7_WITH_NL, RequestHelper.END_PKCS7_WITH_NL);
+                    if(resulttype == RequestHelper.ENCODED_PKCS7)  
+                      RequestHelper.sendNewB64Cert(b64cert, response, RequestHelper.BEGIN_PKCS7_WITH_NL, RequestHelper.END_PKCS7_WITH_NL);
+                    if(resulttype == RequestHelper.ENCODED_CERTIFICATE)
+                      RequestHelper.sendNewB64Cert(b64cert, response, RequestHelper.BEGIN_CERTIFICATE_WITH_NL, RequestHelper.END_CERTIFICATE_WITH_NL);	
                   }
               }
             }
