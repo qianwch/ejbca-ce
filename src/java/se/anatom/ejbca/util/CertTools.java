@@ -74,7 +74,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 /**
  * Tools to handle common certificate operations.
  *
- * @version $Id: CertTools.java,v 1.64.2.2 2004-10-20 12:21:02 anatom Exp $
+ * @version $Id: CertTools.java,v 1.64.2.3 2004-11-04 20:42:40 anatom Exp $
  */
 public class CertTools {
     private static Logger log = Logger.getLogger(CertTools.class);
@@ -267,6 +267,76 @@ public class CertTools {
     }
 
     /**
+     * Takes a DN and reverses it completely so the first attribute ends up last. 
+     * C=SE,O=Foo,CN=Bar becomes CN=Bar,O=Foo,C=SE.
+     *
+     * @param dn String containing DN to be reversed, The DN string has the format "C=SE, O=xx, OU=yy, CN=zz".
+     *
+     * @return String containing reversed DN
+     */
+    public static String reverseDN(String dn) {
+        log.debug(">reverseDN: dn: " + dn);
+        String ret = null;
+        if (dn != null) {
+            String o;
+            X509NameTokenizer xt = new X509NameTokenizer(dn);
+            StringBuffer buf = new StringBuffer();
+            boolean first = true;
+            while (xt.hasMoreTokens()) {
+                o = xt.nextToken();
+                log.debug("token: "+o);
+                if (!first) {
+                	buf.insert(0,",");
+                } else {
+                    first = false;                	
+                }
+                buf.insert(0,o);
+            }
+            if (buf.length() > 0) {
+            	ret = buf.toString();
+            }
+        }
+        
+        log.debug("<reverseDN: resulting DN=" + ret);
+        return ret;
+    } //reverseDN
+
+    /**
+     * Takes a DN and reverses it completely so the first attribute ends up last. 
+     * C=SE,O=Foo,CN=Bar becomes CN=Bar,O=Foo,C=SE.
+     *
+     * @param dn String containing DN to be reversed, The DN string has the format "C=SE, O=xx, OU=yy, CN=zz".
+     *
+     * @return String containing reversed DN
+     */
+    public static boolean isDNReversed(String dn) {
+        log.debug(">isDNReversed: dn: " + dn);
+        boolean ret = false;
+        if (dn != null) {
+            String o;
+            X509NameTokenizer xt = new X509NameTokenizer(dn);
+            StringBuffer buf = new StringBuffer();
+            boolean first = true;
+            while (xt.hasMoreTokens()) {
+                o = xt.nextToken();
+                log.debug("token: "+o);
+                if (!first) {
+                	buf.insert(0,",");
+                } else {
+                    first = false;                	
+                }
+                buf.insert(0,o);
+            }
+            if (buf.length() > 0) {
+            	ret = buf.toString();
+            }
+        }
+        
+        log.debug("<isDNReversed: " + ret);
+        return ret;
+    } //reverseDN
+
+    /**
      * Gets a specified part of a DN. Specifically the first occurrence it the DN contains several
      * instances of a part (i.e. cn=x, cn=y returns x).
      *
@@ -277,30 +347,22 @@ public class CertTools {
      */
     public static String getPartFromDN(String dn, String dnpart) {
         log.debug(">getPartFromDN: dn:'" + dn + "', dnpart=" + dnpart);
-
         String part = null;
-
         if ((dn != null) && (dnpart != null)) {
             String o;
             dnpart += "="; // we search for 'CN=' etc.
-
             X509NameTokenizer xt = new X509NameTokenizer(dn);
-
             while (xt.hasMoreTokens()) {
                 o = xt.nextToken();
-
                 //log.debug("checking: "+o.substring(0,dnpart.length()));
                 if ((o.length() > dnpart.length()) &&
                         o.substring(0, dnpart.length()).equalsIgnoreCase(dnpart)) {
                     part = o.substring(dnpart.length());
-
                     break;
                 }
             }
         }
-
         log.debug("<getpartFromDN: resulting DN part=" + part);
-
         return part;
     } //getPartFromDN
 

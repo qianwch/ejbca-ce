@@ -28,7 +28,7 @@ import se.anatom.ejbca.util.StringTools;
 /**
  * Tests the CertTools class .
  *
- * @version $Id: TestCertTools.java,v 1.23.2.1 2004-09-16 18:52:49 anatom Exp $
+ * @version $Id: TestCertTools.java,v 1.23.2.2 2004-11-04 20:42:48 anatom Exp $
  */
 public class TestCertTools extends TestCase {
     private static Logger log = Logger.getLogger(TestCertTools.class);
@@ -363,5 +363,33 @@ public class TestCertTools extends TestCase {
        assertEquals("1.2.840.113549.1.9.8=foo.bar.se,1.2.840.113549.1.9.2=10.1.1.2,CN=test,O=PrimeKey,C=SE", bcdn1);
        log.debug("<test08TestUnstructured()");
    }
+   /** Tests the reversing of a DN
+   *
+   * @throws Exception if error...
+   */
+  public void test09TestReverse() throws Exception {
+      log.debug(">test09TestReverse()");
+      // We try to examine the that we handle modern dc components for ldap correctly
+      String dn1 = "dc=com,dc=bigcorp,dc=se,ou=orgunit,ou=users,cn=Tomas G";
+      String revdn1 = CertTools.reverseDN(dn1);
+      log.debug("dn1: " + dn1);
+      log.debug("revdn1: " + revdn1);
+      assertEquals("cn=Tomas G,ou=users,ou=orgunit,dc=se,dc=bigcorp,dc=com", revdn1);
+      log.debug("<test09TestReverse()");
+  }
+   /** Tests the handling of DC components
+   *
+   * @throws Exception if error...
+   */
+  public void test10TestMultipleReversed() throws Exception {
+      log.debug(">test10TestMultipleReversed()");
+      // We try to examine the that we handle modern dc components for ldap correctly
+      String dn1 = "dc=com,dc=bigcorp,dc=se,ou=orgunit,ou=users,cn=Tomas G";
+      String bcdn1 = CertTools.stringToBCDNString(dn1);
+      log.debug("dn1: " + dn1);
+      log.debug("bcdn1: " + bcdn1);
+      assertEquals("CN=Tomas G,OU=users,OU=orgunit,DC=se,DC=bigcorp,DC=com", bcdn1);
+      log.debug("<test10TestMultipleReversed()");
+  }
 
 }
