@@ -1,4 +1,4 @@
-$Id: README,v 1.150 2004-06-02 06:20:17 anatom Exp $
+$Id: README,v 1.150.2.1 2004-06-22 06:36:04 anatom Exp $
 
 This software is OSI Certified Open Source Software.
 OSI Certified is a certification mark of the Open Source
@@ -512,20 +512,12 @@ with <your DS> something like java:/DefaultDS
 
 Configuring Publishers (LDAP)
 -----------------------------
-To publish certificates and CRLs in an LDAP directory, uncomment
-the section
-for the session bean 'PublisherSession1' in 'ca/ca/META-INF/ejb-
-jar.xml', and
-also the section for method permissions for the same session
-bean. This will
-configure an LDAPPublisherSession so be deployed and when
-certificates and CRLs
-are created. Don't formget to edit parameters to
-'PublisherSession1' to match
-your LDAP server.
-Additional Publishers can be configured by adding new session
-beans called
-'PublisherSession2', 'PublisherSession3', etc to ejb-jar.xml.
+To publish certificates and CRLs in an LDAP directory, configure Publishers 
+in the adminGUI.
+
+When configuring Active Directory LDAP, Bind DN for the users are usually, 
+cn=<user>,cn=Users,dc=<domain-component>,dc=<domain-component>. 
+For example: cn=Philip Vendil,cn=Users,dc=primekey,dc=se
 
 Batch creation of certificates
 ------------------------------
