@@ -2,7 +2,7 @@
     contributed by <surd0007(at)yahoo.com.cn>
  
 (This install guide is a complement to the guide present in README).
-$Id: INSTALL-guide.txt,v 1.1 2003-09-16 07:59:04 anatom Exp $
+$Id: INSTALL-guide.txt,v 1.1.2.1 2003-10-12 13:57:21 anatom Exp $
 
  
  Softwares needed:
