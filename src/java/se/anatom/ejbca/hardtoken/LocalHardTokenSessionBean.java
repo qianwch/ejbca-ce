@@ -40,6 +40,7 @@ import se.anatom.ejbca.BasePropertyDataLocalHome;
 import se.anatom.ejbca.BaseSessionBean;
 import se.anatom.ejbca.SecConst;
 import se.anatom.ejbca.authorization.AuthorizationDeniedException;
+import se.anatom.ejbca.authorization.AvailableAccessRules;
 import se.anatom.ejbca.authorization.IAuthorizationSessionLocal;
 import se.anatom.ejbca.authorization.IAuthorizationSessionLocalHome;
 import se.anatom.ejbca.ca.store.ICertificateStoreSessionLocal;
@@ -59,7 +60,7 @@ import se.anatom.ejbca.util.CertTools;
  * Stores data used by web server clients.
  * Uses JNDI name for datasource as defined in env 'Datasource' in ejb-jar.xml.
  *
- * @version $Id: LocalHardTokenSessionBean.java,v 1.28.2.1 2004-09-28 16:20:21 anatom Exp $
+ * @version $Id: LocalHardTokenSessionBean.java,v 1.28.2.2 2005-02-17 19:35:48 herrvendil Exp $
  */
 public class LocalHardTokenSessionBean extends BaseSessionBean  {
 
@@ -357,7 +358,7 @@ public class LocalHardTokenSessionBean extends BaseSessionBean  {
 		  HardTokenProfile profile = next.getHardTokenProfile();
 		  
 		  if(profile instanceof EIDProfile){		  	
-		  	if(authorizedcertprofiles.containsAll(((EIDProfile) profile).getAllCertificateProfileIds())){
+		  	if(isSuperAdmin(admin) || authorizedcertprofiles.containsAll(((EIDProfile) profile).getAllCertificateProfileIds())){
 		  	  returnval.add(next.getId());			  	   
 		  	}		  	
 		  }else{
@@ -644,7 +645,7 @@ public class LocalHardTokenSessionBean extends BaseSessionBean  {
           Iterator i = result.iterator();
           while(i.hasNext()){
             htih = (HardTokenIssuerDataLocal) i.next();
-            if(authorizedhardtokenprofiles.containsAll(htih.getHardTokenIssuer().getAvailableHardTokenProfiles()))
+            if(isSuperAdmin(admin) || authorizedhardtokenprofiles.containsAll(htih.getHardTokenIssuer().getAvailableHardTokenProfiles()))
               returnval.add(new HardTokenIssuerData(htih.getId().intValue(), htih.getAlias(), htih.getAdminGroupId(), htih.getHardTokenIssuer()));
           }
         }
@@ -667,13 +668,14 @@ public class LocalHardTokenSessionBean extends BaseSessionBean  {
       Collection result = null;
       Collection authorizedhardtokenprofiles = this.getAuthorizedHardTokenProfileIds(admin);
       HardTokenIssuerDataLocal htih = null;
+            
       try{
         result = hardtokenissuerhome.findAll();
         if(result.size()>0){
           Iterator i = result.iterator();
           while(i.hasNext()){
             htih = (HardTokenIssuerDataLocal) i.next();
-            if(authorizedhardtokenprofiles.containsAll(htih.getHardTokenIssuer().getAvailableHardTokenProfiles()))
+            if(isSuperAdmin(admin) || authorizedhardtokenprofiles.containsAll(htih.getHardTokenIssuer().getAvailableHardTokenProfiles()))
               returnval.add(htih.getAlias());
           }
         }
@@ -695,13 +697,15 @@ public class LocalHardTokenSessionBean extends BaseSessionBean  {
       Collection authorizedhardtokenprofiles = this.getAuthorizedHardTokenProfileIds(admin);
       TreeMap returnval = new TreeMap();
       Collection result = null;
+      
+      
       try{
         result = hardtokenissuerhome.findAll();
         if(result.size()>0){
           Iterator i = result.iterator();
           while(i.hasNext()){
             HardTokenIssuerDataLocal htih = (HardTokenIssuerDataLocal) i.next();
-            if(authorizedhardtokenprofiles.containsAll(htih.getHardTokenIssuer().getAvailableHardTokenProfiles()))
+            if(isSuperAdmin(admin) || authorizedhardtokenprofiles.containsAll(htih.getHardTokenIssuer().getAvailableHardTokenProfiles()))
               returnval.put(htih.getAlias(), new HardTokenIssuerData(htih.getId().intValue(), htih.getAlias(), htih.getAdminGroupId(), htih.getHardTokenIssuer()));
           }
         }
@@ -1322,5 +1326,20 @@ public class LocalHardTokenSessionBean extends BaseSessionBean  {
       return new Integer(id);
     } // findFreeHardTokenIssuerId
 
-
+    /**
+     * Checks if admin is superadministrator
+     * 
+     * @param admin
+     * @return true if superadmin
+     */
+    
+    private boolean isSuperAdmin(Admin admin){
+    	boolean superadmin = false;
+        try {
+        	superadmin = this.getAuthorizationSession(admin).isAuthorizedNoLog(admin, AvailableAccessRules.ROLE_SUPERADMINISTRATOR);
+        } catch (AuthorizationDeniedException e1) {	}
+        
+        return superadmin;
+    }
+    
 } // LocalHardTokenSessionBean
