@@ -32,7 +32,7 @@ import se.anatom.ejbca.log.LogEntry;
  * Stores certificate and CRL in the local database using Certificate and CRL Entity Beans.
  * Uses JNDI name for datasource as defined in env 'Datasource' in ejb-jar.xml.
  *
- * @version $Id: LocalCertificateStoreSessionBean.java,v 1.42.2.2 2003-09-09 20:10:00 anatom Exp $
+ * @version $Id: LocalCertificateStoreSessionBean.java,v 1.42.2.3 2003-09-10 09:36:27 anatom Exp $
  */
 public class LocalCertificateStoreSessionBean extends BaseSessionBean {
 
@@ -669,6 +669,7 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
             debug("<findCertificateByFingerprint()");
             return ret;
         } catch (Exception fe) {
+            log.error("Error finding certificate with fp: "+fingerprint);
             throw new EJBException(fe);
         }
     } // findCertificateByFingerprint
