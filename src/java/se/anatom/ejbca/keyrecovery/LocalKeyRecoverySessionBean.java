@@ -27,7 +27,7 @@ import se.anatom.ejbca.ca.sign.ISignSessionLocalHome;
  * Stores key recovery data.
  * Uses JNDI name for datasource as defined in env 'Datasource' in ejb-jar.xml.
  *
- * @version $Id: LocalKeyRecoverySessionBean.java,v 1.4 2003-03-11 09:47:41 anatom Exp $
+ * @version $Id: LocalKeyRecoverySessionBean.java,v 1.4.6.1 2003-12-26 11:51:51 anatom Exp $
  */
 public class LocalKeyRecoverySessionBean extends BaseSessionBean  {
 
@@ -385,8 +385,7 @@ public class LocalKeyRecoverySessionBean extends BaseSessionBean  {
        }catch(Exception e){
          throw new EJBException(e);
        }
-      System.out.println("<isUserMarked("+returnval +")");
-       debug("<isUserMarked()");
+       debug("<isUserMarked("+returnval +")");
        return returnval;
     } // isUserMarked
 
