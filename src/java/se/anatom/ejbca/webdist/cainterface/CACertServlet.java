@@ -50,7 +50,7 @@ import se.anatom.ejbca.webdist.webconfiguration.EjbcaWebBean;
  * cacert, nscacert and iecacert also takes optional parameter level=<int 1,2,...>, where the level is
  * which ca certificate in a hierachy should be returned. 0=root (default), 1=sub to root etc.
  *
- * @version $Id: CACertServlet.java,v 1.19 2004-04-16 07:38:59 anatom Exp $
+ * @version $Id: CACertServlet.java,v 1.19.2.1 2005-02-09 08:26:25 anatom Exp $
  *
  */
 public class CACertServlet extends HttpServlet {
@@ -68,13 +68,11 @@ public class CACertServlet extends HttpServlet {
     private ISignSessionHome signhome = null;
 
     public void init(ServletConfig config) throws ServletException {
-    super.init(config);
-       try {
-
+        super.init(config);
+        try {
             // Get EJB context and home interfaces
-            InitialContext ctx = new InitialContext();
-
-		signhome = (ISignSessionHome) PortableRemoteObject.narrow(ctx.lookup("RSASignSession"), ISignSessionHome.class );
+            InitialContext ctx = new InitialContext();            
+            signhome = (ISignSessionHome) PortableRemoteObject.narrow(ctx.lookup("RSASignSession"), ISignSessionHome.class );
         } catch( Exception e ) {
             throw new ServletException(e);
         }
@@ -138,6 +136,14 @@ public class CACertServlet extends HttpServlet {
                 }
                 X509Certificate cacert = (X509Certificate)chain[level];
                 byte[] enccert = cacert.getEncoded();
+                if (res.containsHeader("Pragma")) {
+                    log.debug("Removing Pragma header to avoid caching issues in IE");
+                    res.setHeader("Pragma",null);
+                }
+                if (res.containsHeader("Cache-Control")) {
+                    log.debug("Removing Cache-Control header to avoid caching issues in IE");
+                    res.setHeader("Cache-Control",null);
+                }
                 if (command.equalsIgnoreCase(COMMAND_NSCACERT)) {
                     res.setContentType("application/x-x509-ca-cert");
                     res.setContentLength(enccert.length);
