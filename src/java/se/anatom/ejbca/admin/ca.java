@@ -222,7 +222,7 @@ public class ca {
                 sign.initSign(privKey);
                 sign.update("foooooooooooooooo".getBytes());
                 byte[] signature = sign.sign();
-                sign.initVerify(cert);
+                sign.initVerify(cert.getPublicKey());
                 sign.update("foooooooooooooooo".getBytes());
                 if (sign.verify(signature) == false) {
                     System.out.println("Public key in received certificate does not match private key.");
@@ -352,7 +352,7 @@ public class ca {
      * Creates the CertificateStore and Publishers so they are available.
      */
     static private void initCertificateStore() throws RemoteException {
-        System.out.println(">initCertificateStore()");
+        //System.out.println(">initCertificateStore()");
         Context context = null;
         try {
             context = getInitialContext();
@@ -393,7 +393,7 @@ public class ca {
                 ce.printStackTrace();
             }
         }
-        System.out.println("<initCertificateStore()");
+        //System.out.println("<initCertificateStore()");
     } // initCertificateStore
     
 } //ca
