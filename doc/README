@@ -1,4 +1,4 @@
-$Id: README,v 1.150.2.10 2004-11-02 08:29:32 anatom Exp $
+$Id: README,v 1.150.2.11 2004-11-04 15:49:36 anatom Exp $
 
 This software is OSI Certified Open Source Software.
 OSI Certified is a certification mark of the Open Source
@@ -126,6 +126,7 @@ In a production environment you should use something like the following structur
 This CA is only used to issue the initial superadmin certificate. Not published in LDAP.
 2. Once installed, create all your REAL CAs using the admin-GUI. Now you can use the certificate 
 profiles etc that you like. These certificates can be published in LDAP.
+See HOWTO-multiplecas.txt for a detailed configuration guide.
 
 FOR THE IMPATIENT:
 
@@ -147,9 +148,6 @@ Runtest will create and revoke some testcertificates, so after
 runtest your CRLs will be populated with a few entries.
 'runtest.sh/cmd should not be run on a production system, only
 to test the installation.
-
-It is also possible to deploy EJBCA without the Web admin GUI, 
-use 'ant deploy_nora'. This applies to versons < 3.0 only.
 
 FOR THE OTHERS:
 
@@ -206,20 +204,19 @@ setuserstatus
  run 'ra.sh/cmd
  setuserstatus'.
  
-Converting OpenSSL CA:
+Converting an OpenSSL CA
+------------------------
 You can convert a PEM-style CA key to a PKCS12file that can be imported in EJBCA.
 openssl pkcs12 -export -out server1.p12 -inkey cakey.pem -in ca.pem -name privateKey
-(note improt of pkcs12 files is not supported in ejbca 3.0)
 
-Deploy
-======
+You can import the CA with the command 'ca importca'.
+
+Re-Deploy
+=========
 After configuration, if you have edited the xml configuration
 files manually, please run "ant deploy" to rebuild jars and wars and deploy them. 
 If you are using a deployment tool, this may not be needed, consult your 
 documentation for the tool.
-
-If you want to deploy EJBCA without the Web admini GUI use the command 
-'ant deploy_nora' instead.
 
 Run
 ===
