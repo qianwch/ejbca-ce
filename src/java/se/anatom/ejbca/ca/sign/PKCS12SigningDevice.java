@@ -16,7 +16,7 @@ import se.anatom.ejbca.util.KeyTools;
 
 /** Implements a singleton signing device using PKCS12 keystore.
  *
- * @version $Id: PKCS12SigningDevice.java,v 1.8 2003-03-11 09:47:40 anatom Exp $
+ * @version $Id: PKCS12SigningDevice.java,v 1.8.6.1 2003-09-07 16:31:08 anatom Exp $
  */
 public class PKCS12SigningDevice implements ISigningDevice{
 
@@ -26,7 +26,7 @@ public class PKCS12SigningDevice implements ISigningDevice{
     private PrivateKey privateKey;
     private X509Certificate rootCert;
     private X509Certificate caCert;
-
+    Certificate[] certchain;
 
    /**
     * A handle to the unique Singleton instance.
@@ -68,12 +68,13 @@ public class PKCS12SigningDevice implements ISigningDevice{
             log.error("Cannot load key with alias '"+privateKeyAlias+"' from keystore '"+keyStoreFile+"'");
             throw new Exception("Cannot load key with alias '"+privateKeyAlias+"' from keystore '"+keyStoreFile+"'");
         }
-        Certificate[] certchain = KeyTools.getCertChain(keyStore, privateKeyAlias);
+        // Get the whole certchain from the key store
+        certchain = KeyTools.getCertChain(keyStore, privateKeyAlias);
         if (certchain.length < 1) {
             log.error("Cannot load certificate chain with alias '"+privateKeyAlias+"' from keystore '"+keyStoreFile+"'");
             throw new Exception("Cannot load certificate chain with alias '"+privateKeyAlias+"' from keystore '"+keyStoreFile+"'");
         }
-        // We only support a ca hierarchy with depth 2.
+        // CA certificate is the first in the chain.
         caCert = (X509Certificate)certchain[0];
         log.debug("cacertIssuer: " + CertTools.getIssuerDN(caCert));
         log.debug("cacertSubject: " + CertTools.getSubjectDN(caCert));
@@ -105,17 +106,8 @@ public class PKCS12SigningDevice implements ISigningDevice{
     */
     public Certificate[] getCertificateChain() {
         log.debug(">getCertificateChain()");
-        // TODO: should support more than 2 levels of CAs
-        Certificate[] chain;
-        if (CertTools.isSelfSigned(caCert)) {
-            chain = new Certificate[1];
-        } else {
-            chain = new Certificate[2];
-            chain[1] = rootCert;
-        }
-        chain[0] = caCert;
         log.debug("<getCertificateChain()");
-        return chain;
+        return certchain;
     }
 
    /** Returns the private key (if possible) used for signature creation.
