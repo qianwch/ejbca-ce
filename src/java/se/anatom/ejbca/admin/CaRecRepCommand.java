@@ -8,6 +8,8 @@ import java.security.cert.X509Certificate;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.Signature;
+import java.util.ArrayList;
+import java.util.Enumeration;
 
 import se.anatom.ejbca.util.CertTools;
 import se.anatom.ejbca.util.FileTools;
@@ -15,7 +17,7 @@ import se.anatom.ejbca.util.KeyTools;
 
 /** eceive certificate reply as result of certificate request.
  *
- * @version $Id: CaRecRepCommand.java,v 1.4 2003-03-11 09:47:36 anatom Exp $
+ * @version $Id: CaRecRepCommand.java,v 1.4.6.1 2003-09-07 10:20:50 anatom Exp $
  */
 public class CaRecRepCommand extends BaseCaAdminCommand {
 
@@ -28,7 +30,7 @@ public class CaRecRepCommand extends BaseCaAdminCommand {
         try {
             if (args.length < 4) {
                 System.out.println("Usage: CA recrep <certificate-file> <keystore-file> <storepassword>");
-                System.out.println("Used to receive certificates which has been produced as result of sending a certificate request to a RootCA.");
+                System.out.println("Used to receive certificates which has been produced as result of sending a certificate request to a CA.");
                 return;
             }
             String certfile = args[1];
@@ -39,42 +41,23 @@ public class CaRecRepCommand extends BaseCaAdminCommand {
             System.out.println("Cert reply file: "+certfile);
             System.out.println("Storing KeyStore in: "+ksfile);
             System.out.println("Protected with storepassword: "+storepwd);
-
+            
+            String privAlias = "privateKey";
             X509Certificate cert = CertTools.getCertfromByteArray(FileTools.readFiletoBuffer(certfile));
-            X509Certificate rootcert = null;
             KeyStore store = KeyStore.getInstance("PKCS12", "BC");
             FileInputStream fis = new FileInputStream(ksfile);
             store.load(fis, storepwd.toCharArray());
-            Certificate[] certchain = store.getCertificateChain("privateKey");
+            Certificate[] certchain = store.getCertificateChain(privAlias);
             System.out.println("Loaded certificate chain with length "+ certchain.length+" with alias 'privateKey'.");
-            if (certchain.length > 1) {
-                // We have whole chain at once
-                if (!CertTools.isSelfSigned((X509Certificate)certchain[1])) {
-                    System.out.println("Last certificate in chain with alias 'privateKey' in keystore '"+ksfile +"' is not root certificate (selfsigned)");
-                    System.out.println("Reply NOT received!");
-                    return;
-                }
-                if (certchain.length > 2) {
-                    System.out.println("Certificate chain length is larger than 2, only 2 is supported.");
-                    System.out.println("Reply NOT received!");
-                    return;
-                }
-                rootcert = (X509Certificate)certchain[1];
-            } else {
-                String ialias = CertTools.getPartFromDN(CertTools.getIssuerDN(cert), "CN");
-                Certificate[] chain1 = store.getCertificateChain(ialias);
-                System.out.println("Loaded certificate chain with length "+ chain1.length+" with alias '"+ialias+"'.");
-                if (chain1.length == 0) {
-                    System.out.println("No CA-certificate found!");
-                    System.out.println("Reply NOT received!");
-                    return;
-                }
-                if (!CertTools.isSelfSigned((X509Certificate)chain1[0])) {
-                    System.out.println("Certificate in chain with alias '"+ialias+"' in keystore '"+ksfile +"' is not root certificate (selfsigned)");
-                    System.out.println("Reply NOT received!");
-                    return;
-                }
-                rootcert = (X509Certificate)chain1[0];
+            if (certchain.length == 0) {
+                System.out.println("No certificate in chain with alias 'privateKey' in keystore '"+ksfile +"'");
+                System.out.println("Reply NOT received!");
+                return;                
+            }
+            if (!CertTools.isSelfSigned((X509Certificate)certchain[0])) {
+                System.out.println("Certificate in chain with alias 'privateKey' in keystore '"+ksfile +"' is not selfsigned");
+                System.out.println("Reply NOT received!");
+                return;
             }
             PrivateKey privKey = (PrivateKey)store.getKey("privateKey", null);
             // check if the private and public keys match
@@ -89,9 +72,18 @@ public class CaRecRepCommand extends BaseCaAdminCommand {
                 System.out.println("Reply NOT received!");
                 return;
             }
-
+            // Get the certificate chain
+            Enumeration aliases = store.aliases();
+            ArrayList cacerts = new ArrayList();
+            while (aliases.hasMoreElements()) {
+                String alias = (String)aliases.nextElement();
+                if (!privAlias.equals(alias)) {
+                    Certificate cacert = store.getCertificate(alias);
+                    cacerts.add(cacert);
+                }
+            }
             // Create new keyStore
-            KeyStore ks = KeyTools.createP12("privateKey", privKey, cert, rootcert);
+            KeyStore ks = KeyTools.createP12("privateKey", privKey, cert, cacerts);
             FileOutputStream os = new FileOutputStream(ksfile);
             ks.store(os, storepwd.toCharArray());
             System.out.println("Keystore '"+ksfile+"' generated successfully.");
