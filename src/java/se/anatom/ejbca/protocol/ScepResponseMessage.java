@@ -44,7 +44,7 @@ import se.anatom.ejbca.util.CertTools;
 /**
  * A response message for scep (pkcs7).
  *
- * @version $Id: ScepResponseMessage.java,v 1.4.2.3 2003-09-20 11:35:27 anatom Exp $
+ * @version $Id: ScepResponseMessage.java,v 1.4.2.4 2003-10-08 09:24:46 anatom Exp $
  */
 public class ScepResponseMessage implements IResponseMessage, Serializable {
     private static Logger log = Logger.getLogger(ScepResponseMessage.class);
@@ -246,14 +246,13 @@ public class ScepResponseMessage implements IResponseMessage, Serializable {
 
             // status
             oid = new DERObjectIdentifier(ScepRequestMessage.id_pkiStatus);
-
             value = new DERSet(new DERPrintableString(status.getValue()));
-
             attr = new Attribute(oid, value);
             attributes.put(attr.getAttrType(), attr);
 
             if (status.equals(ResponseStatus.FAILURE)) {
                 oid = new DERObjectIdentifier(ScepRequestMessage.id_failInfo);
+                log.debug("Added failInfo: "+failInfo.getValue());
                 value = new DERSet(new DERPrintableString(failInfo.getValue()));
                 attr = new Attribute(oid, value);
                 attributes.put(attr.getAttrType(), attr);
