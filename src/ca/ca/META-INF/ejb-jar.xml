@@ -1017,6 +1017,10 @@
          <ejb-name>PublisherSession</ejb-name>
          <method-name>getPublisherName</method-name>
      </method>
+     <method>
+         <ejb-name>CAData</ejb-name>
+         <method-name>*</method-name>
+     </method>
 
    <trans-attribute>Supports</trans-attribute>
    </container-transaction>

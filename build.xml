@@ -249,6 +249,9 @@ includes="**/*.class,**/*.log,**/.nbattrs,**/filesystem.attributes"/>
                 <include name="se/anatom/ejbca/**/*.class"/>
                 <exclude name="se/anatom/ejbca/**/*Test*"/>
         </fileset>
+        <fileset dir="${adminweb.src}"> 
+          <include name="languages/*.properties"/>
+        </fileset>
         <fileset dir="${src}">
                 <include name="upgrade/**/*.sql"/>
         </fileset>
