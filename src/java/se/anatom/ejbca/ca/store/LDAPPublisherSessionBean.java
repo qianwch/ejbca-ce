@@ -74,7 +74,7 @@ import com.novell.ldap.LDAPModificationSet;
  * </pre>
  * </p>
  *
- * @version $Id: LDAPPublisherSessionBean.java,v 1.21.2.2 2004-01-28 13:23:09 anatom Exp $
+ * @version $Id: LDAPPublisherSessionBean.java,v 1.21.2.3 2004-01-31 11:32:35 anatom Exp $
  */
 public class LDAPPublisherSessionBean extends BaseSessionBean {
 
@@ -551,6 +551,10 @@ public class LDAPPublisherSessionBean extends BaseSessionBean {
             if (ou != null) {
                 attributeSet.add(new LDAPAttribute("ou", ou));
             }
+            String uid = CertTools.getPartFromDN(dn, "uid");
+            if (uid != null) {
+                attributeSet.add(new LDAPAttribute("uid", uid));
+            }
         }
         return attributeSet;
     } // getAttributeSet
@@ -619,6 +623,10 @@ public class LDAPPublisherSessionBean extends BaseSessionBean {
             String ou = CertTools.getPartFromDN(dn, "OU");
             if (ou != null) {
                 modSet.add(LDAPModification.REPLACE, new LDAPAttribute("ou", ou));
+            }
+            String uid = CertTools.getPartFromDN(dn, "uid");
+            if (uid != null) {
+                modSet.add(LDAPModification.REPLACE, new LDAPAttribute("uid", uid));
             }
         }
         return modSet;
