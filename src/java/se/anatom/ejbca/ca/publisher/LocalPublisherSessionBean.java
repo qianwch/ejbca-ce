@@ -52,7 +52,7 @@ import se.anatom.ejbca.ra.ExtendedInformation;
  * Stores data used by web server clients.
  * Uses JNDI name for datasource as defined in env 'Datasource' in ejb-jar.xml.
  *
- * @version $Id: LocalPublisherSessionBean.java,v 1.5.2.1 2004-09-19 12:53:06 herrvendil Exp $
+ * @version $Id: LocalPublisherSessionBean.java,v 1.5.2.2 2005-03-13 12:56:08 anatom Exp $
  */
 public class LocalPublisherSessionBean extends BaseSessionBean  {
 
@@ -204,7 +204,7 @@ public class LocalPublisherSessionBean extends BaseSessionBean  {
           returnval &= pdl.getPublisher().storeCRL(admin,incrl,cafp,number);
           getLogSession().log(admin, admin.getCAId(), LogEntry.MODULE_CA, new java.util.Date(), null,
                         null, LogEntry.EVENT_INFO_STORECRL,
-                        "Publisher CLR successfully to publisher " + pdl.getName() +".");        	
+                        "Published CRL successfully to publisher " + pdl.getName() +".");        	
           }catch(PublisherException pe){
         	getLogSession().log(admin, admin.getCAId(), LogEntry.MODULE_CA, new java.util.Date(), null, null,
         			LogEntry.EVENT_ERROR_STORECRL, "Error when publishing CRL to " + pdl.getName() + " : " + pe.getMessage());
