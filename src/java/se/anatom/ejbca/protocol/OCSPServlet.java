@@ -8,7 +8,6 @@ import java.security.PrivateKey;
 import java.security.SignatureException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -38,7 +37,7 @@ import com.ophios.asn1.ASN1DataFormatException;
  * For a detailed description of OCSP refer to RFC2560.
  * 
  * @author Thomas Meckel (Ophios GmbH)
- * @version  $Id: OCSPServlet.java,v 1.1.2.7 2003-10-04 13:54:04 tmeckel Exp $
+ * @version  $Id: OCSPServlet.java,v 1.1.2.8 2004-01-06 12:18:57 anatom Exp $
  */
 public class OCSPServlet extends HttpServlet {
 
@@ -455,6 +454,7 @@ public class OCSPServlet extends HttpServlet {
                                        , e);
         }
         try {
+            response.setContentType("application/ocsp-response");
             res.serializeTo(response.getOutputStream());
         } catch (ASN1DataFormatException e) {
             throw new ServletException("Unable to serialize OCSP response."
