@@ -40,6 +40,7 @@ Key length
               <%=availablekeylengths[i]%> bits
            </option>
            <% } %>
+           </SELECT>
      
 <INPUT type="submit" value="OK">
 
