@@ -446,7 +446,7 @@
      </method>
      <method>
          <ejb-name>RSASignSession</ejb-name>
-         <method-name>createCRL</method-name>
+         <method-name>*</method-name>
      </method>
      <method>
          <ejb-name>CreateCRLSession</ejb-name>
