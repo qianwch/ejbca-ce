@@ -8,7 +8,7 @@
         <servlet-class>se.anatom.ejbca.protocol.OCSPServlet</servlet-class>
         <init-param>
             <param-name>keyStore</param-name>
-            <param-value>../server/default/conf/ocsp.p12</param-value>
+            <param-value>../server/default/conf/server.p12</param-value>
             <description>Location of a keystore with the private key and 
                          the corresponding certificate which are used to sign
                          OCSP response messages.
@@ -25,26 +25,26 @@
         </init-param>
         <init-param>
             <param-name>keyStorePass</param-name>
-            <param-value>ntisshit</param-value>
+            <param-value>foo123</param-value>
             <description>Password for OCSP keystore.</description>
         </init-param>
         <init-param>
             <param-name>privateKeyAlias</param-name>
-            <param-value>ocspsigning</param-value>
+            <param-value>privateKey</param-value>
             <description>Alias used in the keystore to identify the 
                          OCSP private key.
             </description>
         </init-param>
         <init-param>
             <param-name>privateKeyPass</param-name>
-            <param-value>ntisshit</param-value>
+            <param-value>foo123</param-value>
             <description>
                 Password for private key. If not used specify keyword 'null'.
             </description>
         </init-param>
         <init-param>
             <param-name>certificateAlias</param-name>
-            <param-value>ocspsigning</param-value>
+            <param-value>privateKey</param-value>
             <description>Alias used in the keystore to identify the 
                          OCSP signing certificate</description>
         </init-param>
