@@ -58,7 +58,7 @@ import se.anatom.ejbca.util.FileTools;
  * relative.<br>
  *
  * @author Original code by Lars Silv?n
- * @version $Id: CertReqServlet.java,v 1.7.6.3 2002-01-28 09:14:54 anatom Exp $
+ * @version $Id: CertReqServlet.java,v 1.7.6.4 2002-01-30 11:20:04 anatom Exp $
  */
 public class CertReqServlet extends HttpServlet {
 
@@ -454,5 +454,4 @@ public class CertReqServlet extends HttpServlet {
     } //ieCertRequest
     
 } // CertReqServlet
-
 
