@@ -88,7 +88,7 @@ import se.anatom.ejbca.util.Hex;
 /**
  * Creates X509 certificates using RSA keys.
  *
- * @version $Id: RSASignSessionBean.java,v 1.86.2.2 2003-07-24 15:18:32 anatom Exp $
+ * @version $Id: RSASignSessionBean.java,v 1.86.2.3 2003-08-13 10:21:24 anatom Exp $
  */
 public class RSASignSessionBean extends BaseSessionBean {
     transient X509Certificate caCert;
@@ -1099,9 +1099,12 @@ public class RSASignSessionBean extends BaseSessionBean {
                 signingDevice.getProvider());
         debug("<makeBCCertificate()");
 
-        FileOutputStream os = new FileOutputStream("\\foo.crt");
-        os.write(cert.getEncoded());
-        os.close();
+        /*
+        if (log.isDebugEnabled()) {
+            FileOutputStream os = new FileOutputStream("\\foo.crt");
+            os.write(cert.getEncoded());
+            os.close();
+        } */
 
         return (X509Certificate) cert;
     }
