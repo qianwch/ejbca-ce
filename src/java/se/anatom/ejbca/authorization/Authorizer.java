@@ -37,7 +37,7 @@ import se.anatom.ejbca.util.CertTools;
  *
  * The main metod are isAthorized and authenticate.
  *
- * @version $Id: Authorizer.java,v 1.8 2004-05-19 07:00:46 anatom Exp $
+ * @version $Id: Authorizer.java,v 1.8.2.1 2004-08-06 07:09:25 anatom Exp $
  */
 public class Authorizer extends Object implements java.io.Serializable{
 
@@ -129,9 +129,9 @@ public class Authorizer extends Object implements java.io.Serializable{
 	   
 	   if(!authorizationproxy.isGroupAuthorized(admininformation, pk, resource)){
 		 if(!admininformation.isSpecialUser())
-		   logsession.log(admin, admininformation.getX509Certificate(), module,   new java.util.Date(),null, null, LogEntry.EVENT_ERROR_NOTAUTHORIZEDTORESOURCE,"Adminstrator group authorized to resource : " + resource);
+		   logsession.log(admin, admininformation.getX509Certificate(), module,   new java.util.Date(),null, null, LogEntry.EVENT_ERROR_NOTAUTHORIZEDTORESOURCE,"Adminstrator group not authorized to resource : " + resource);
 		 else
-		   logsession.log(admin, ILogSessionLocal.INTERNALCAID, module,   new java.util.Date(),null, null, LogEntry.EVENT_ERROR_NOTAUTHORIZEDTORESOURCE,"Adminstrator group authorized to resource : " + resource);  
+		   logsession.log(admin, ILogSessionLocal.INTERNALCAID, module,   new java.util.Date(),null, null, LogEntry.EVENT_ERROR_NOTAUTHORIZEDTORESOURCE,"Adminstrator group not authorized to resource : " + resource);  
 		 throw  new AuthorizationDeniedException("Administrator group not authorized to resource : " + resource);
 	   }
 	   if(!admininformation.isSpecialUser())
