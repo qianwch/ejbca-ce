@@ -1,0 +1,202 @@
+OCSP Interoperability Test
+==========================
+
+Results:
+--------
+1 [main] INFO com.baltimore.tests.TestGenerateOCSPCertID  - Test certificate SubjectID : 'CN=FooBar User,O=Anatom,ST=Some-State,C=SE'
+38 [main] INFO com.baltimore.tests.TestGenerateOCSPCertID  - Issuer certificate SubjectID : 'CN=Subordinate CA,O=Anatom,ST=Some-State,C=SE'
+107 [main] INFO com.baltimore.tests.TestGenerateOCSPCertID  - Baltimore: Issuer key hash : 3209eeb57e9019c8eaaaf71590a8526abd9e9312
+107 [main] INFO com.baltimore.tests.TestGenerateOCSPCertID  - Baltimore: Issuer name hash : 6bf94f82d374e8a47ad1d27b6443f8834013dfde
+634 [main] INFO com.baltimore.tests.TestGenerateOCSPCertID  - Bouncycastle: Issuer key hash : 3209eeb57e9019c8eaaaf71590a8526abd9e9312
+634 [main] INFO com.baltimore.tests.TestGenerateOCSPCertID  - Bouncycastle: Issuer name hash : 72012854198c88d60c2fdcb6c77f676d6763fdff
+636 [main] INFO com.baltimore.tests.TestGenerateOCSPCertID  - Bouncycastle: SubjectID : C=SE,ST=Some-State,O=Anatom,CN=Subordinate CA
+636 [main] INFO com.baltimore.tests.TestGenerateOCSPCertID  - JCE: SubjectID : CN=Subordinate CA,O=Anatom,ST=Some-State,C=SE
+719 [main] INFO com.baltimore.tests.TestGenerateOCSPCertID  - Ophios: Issuer key hash : 3209eeb57e9019c8eaaaf71590a8526abd9e9312
+719 [main] INFO com.baltimore.tests.TestGenerateOCSPCertID  - Ophios: Issuer name hash : 6bf94f82d374e8a47ad1d27b6443f8834013dfde
+1190 [main] INFO com.baltimore.tests.TestGenerateOCSPCertID  - IAIK 3.0: Issuer key hash : 3209eeb57e9019c8eaaaf71590a8526abd9e9312
+1191 [main] INFO com.baltimore.tests.TestGenerateOCSPCertID  - IAIK 3.0: Issuer name hash : 6bf94f82d374e8a47ad1d27b6443f8834013dfde
+
+OpenSSL 0.9.7b:
+OCSP Request Data:
+    Version: 1 (0x0)
+    Requestor List:
+        Certificate ID:
+          Hash Algorithm: sha1
+          Issuer Name Hash: 6BF94F82D374E8A47AD1D27B6443F8834013DFDE
+          Issuer Key Hash: BB997E0AB58DBD77520B3633F1A0F3065E54C314
+          Serial Number: 01
+    Request Extensions:
+        OCSP Nonce:
+            9E2CEE8064E536D0F95ABE62778F1EB1
+
+Remarks [11/09/2003]:
+---------------------
+The problem with BC is fixed while changing the following code in CertificatID#ctor
+
+        	/*
+             * tmeckel: invalid method 'getIssuerX509Principal' used; must be
+                        'getSubjectX509Principal'
+            X509Principal issuerName = PrincipalUtil.getIssuerX509Principal(issuerCert);
+             */
+            X509Principal issuerName = PrincipalUtil.getSubjectX509Principal(issuerCert);
+            digest.update(issuerName.getEncoded());
+
+0 [main] INFO com.baltimore.tests.TestGenerateOCSPCertID  - Test certificate SubjectID : 'CN=FooBar User,O=Anatom,ST=Some-State,C=SE'
+37 [main] INFO com.baltimore.tests.TestGenerateOCSPCertID  - Issuer certificate SubjectID : 'CN=Subordinate CA,O=Anatom,ST=Some-State,C=SE'
+87 [main] INFO com.baltimore.tests.TestGenerateOCSPCertID  - Baltimore: Issuer key hash : 3209eeb57e9019c8eaaaf71590a8526abd9e9312
+88 [main] INFO com.baltimore.tests.TestGenerateOCSPCertID  - Baltimore: Issuer name hash : 6bf94f82d374e8a47ad1d27b6443f8834013dfde
+393 [main] INFO com.baltimore.tests.TestGenerateOCSPCertID  - Bouncycastle: Issuer key hash : 3209eeb57e9019c8eaaaf71590a8526abd9e9312
+393 [main] INFO com.baltimore.tests.TestGenerateOCSPCertID  - Bouncycastle: Issuer name hash : 6bf94f82d374e8a47ad1d27b6443f8834013dfde
+395 [main] INFO com.baltimore.tests.TestGenerateOCSPCertID  - Bouncycastle: SubjectID (Baltimore) : C=SE,ST=Some-State,O=Anatom,CN=Subordinate CA
+404 [main] INFO com.baltimore.tests.TestGenerateOCSPCertID  - Bouncycastle: SubjectID from JCE : C=SE,ST=Some-State,O=Anatom,CN=Subordinate CA
+404 [main] INFO com.baltimore.tests.TestGenerateOCSPCertID  - JCE: SubjectID (Baltimore) : CN=Subordinate CA,O=Anatom,ST=Some-State,C=SE
+405 [main] INFO com.baltimore.tests.TestGenerateOCSPCertID  - JCE: SubjectID : CN=Subordinate CA, O=Anatom, ST=Some-State, C=SE
+473 [main] INFO com.baltimore.tests.TestGenerateOCSPCertID  - Ophios: Issuer key hash : 3209eeb57e9019c8eaaaf71590a8526abd9e9312
+473 [main] INFO com.baltimore.tests.TestGenerateOCSPCertID  - Ophios: Issuer name hash : 6bf94f82d374e8a47ad1d27b6443f8834013dfde
+898 [main] INFO com.baltimore.tests.TestGenerateOCSPCertID  - IAIK 3.0: Issuer key hash : 3209eeb57e9019c8eaaaf71590a8526abd9e9312
+899 [main] INFO com.baltimore.tests.TestGenerateOCSPCertID  - IAIK 3.0: Issuer name hash : 6bf94f82d374e8a47ad1d27b6443f8834013dfde
+
+Source:
+-------
+
+package com.baltimore.tests;
+
+import com.baltimore.jcrypto.asn1.*;
+import com.baltimore.jcrypto.pkcs.AlgorithmIdentifier;
+import com.baltimore.jcrypto.provider.JCRYPTO;
+import com.baltimore.jpkiplus.ocsp.CertID;
+import com.baltimore.jpkiplus.x509.*;
+
+import com.ophios.ocsp.OCSPCertificateHash;
+
+import java.io.StringBufferInputStream;
+
+import java.security.Security;
+import java.security.cert.X509Certificate;
+
+import org.apache.log4j.*;
+
+import org.bouncycastle.jce.PrincipalUtil;
+import org.bouncycastle.jce.X509Principal;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.ocsp.CertificateID;
+import iaik.asn1.ObjectID;
+import iaik.asn1.structures.AlgorithmID;
+
+public class TestGenerateOCSPCertID  {
+    private static Logger m_log = Logger.getLogger(TestGenerateOCSPCertID.class);
+    
+    private static String testcert = "-----BEGIN CERTIFICATE-----\n"
+                                     + "MIICBDCCAW0CAQEwDQYJKoZIhvcNAQEEBQAwTDELMAkGA1UEBhMCU0UxEzARBgNV\n"
+                                     + "BAgTClNvbWUtU3RhdGUxDzANBgNVBAoTBkFuYXRvbTEXMBUGA1UEAxMOU3Vib3Jk\n"
+                                     + "aW5hdGUgQ0EwHhcNMDMwODI1MDkzMDQxWhcNMDMwOTI0MDkzMDQxWjBJMQswCQYD\n"
+                                     + "VQQGEwJTRTETMBEGA1UECBMKU29tZS1TdGF0ZTEPMA0GA1UEChMGQW5hdG9tMRQw\n"
+                                     + "EgYDVQQDEwtGb29CYXIgVXNlcjCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEA\n"
+                                     + "xPpmVYVBzlGJxUfZa6IsHsk+HrMTbHWr/EUkiZIam95t+0SIFZHUers2PIv+GWVp\n"
+                                     + "TmH/FTXNWVWw+W6bFlb17rfbatAkVfAYuBGRh+nUS/CPTPNw1jDeCuZRweD+DCNr\n"
+                                     + "icx/svv0Hi/9scUqrADwtO2O7oBy7Lb/Vfa6BOnBdiECAwEAATANBgkqhkiG9w0B\n"
+                                     + "AQQFAAOBgQBxtAMbx0Hj0bWpi38euEV8wBkrQe4ijewypeql/FPRTgBjBx1b0B7r\n"
+                                     + "vO7f5QsYyw00FYGitBa03gyOrjnew/ewp33+VNP6c+Q6Rxpby+ltCyhBKXsQpKn3\n"
+                                     + "qy0rclhwsS7teP7+SKm4N+RSC4eYh5bib1G8Io1xo1PfjXxJMfKwwA==\n"
+                                     + "-----END CERTIFICATE-----";
+
+    public static String issuercert = "-----BEGIN CERTIFICATE-----\n"
+                                      + "MIIB/zCCAWgCAQEwDQYJKoZIhvcNAQEEBQAwRDELMAkGA1UEBhMCU0UxEzARBgNV\n"
+                                      + "BAgTClNvbWUtU3RhdGUxDzANBgNVBAoTBkFuYXRvbTEPMA0GA1UEAxMGVGVzdENB\n"
+                                      + "MB4XDTAzMDgyMTE3MzUwN1oXDTAzMDkyMDE3MzUwN1owTDELMAkGA1UEBhMCU0Ux\n"
+                                      + "EzARBgNVBAgTClNvbWUtU3RhdGUxDzANBgNVBAoTBkFuYXRvbTEXMBUGA1UEAxMO\n"
+                                      + "U3Vib3JkaW5hdGUgQ0EwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBALATItEt\n"
+                                      + "JrFmMswJRBxwhc8T8MXGrTGmovLCRIYmgX/0cklcK0pM7pDl63cX9Ps+3OsX90Ys\n"
+                                      + "d3v0YWVEULi3YThRnH3HJgB4W4QoALuBhcewzgpLePPhzyhn/YOqRIT/yY0tspCN\n"
+                                      + "AMLdu+Iqn/j20sFwva1NyLoA6sH28o/Jmf5zAgMBAAEwDQYJKoZIhvcNAQEEBQAD\n"
+                                      + "gYEAjjva3BGkoRS+C/REPhjClAPZO+xqj711CuRbmDrq8h/2Ef2nBfCnc6b+09H4\n"
+                                      + "jvVF4KbjHgrl8CT9j0YDxtlG19rDZcWe+9Xl3odHqbubFGAvIpljsoPYipJxUlTi\n"
+                                      + "6VVteg/JuBQa42zX11b5zFrOJlaQjJMSXc19MNXbjCuN8LY=\n"
+                                      + "-----END CERTIFICATE-----";
+
+    private static AlgorithmIdentifier generateAlgId(String oid) 
+        throws ASN1Exception
+    {
+        /*
+         *   AlgorithmIdentifier  ::=  SEQUENCE  {
+         *       algorithm               OBJECT IDENTIFIER,
+         *       parameters              ANY DEFINED BY algorithm OPTIONAL  }
+         */
+        if (null == oid || oid.length() <= 0) {
+            throw new IllegalArgumentException();
+        }
+
+        ASN1Sequence seq = new ASN1Sequence();
+        seq.addComponent(new ASN1ObjectIdentifier(oid));
+        return new AlgorithmIdentifier(seq);
+    }
+
+    public static void main(String[] args) 
+    {
+        BasicConfigurator.configure();
+        m_log.setLevel(Level.DEBUG);
+        try {
+
+            Security.addProvider(new JCRYPTO());
+            Security.addProvider(new BouncyCastleProvider());
+            byte [] keyhash;
+            byte [] namehash;
+            X509CertificateFactoryImpl certfac = new X509CertificateFactoryImpl();
+            JCRYPTO_X509Certificate cert = 
+                (JCRYPTO_X509Certificate)certfac.engineGenerateCertificate(new StringBufferInputStream(testcert));
+            m_log.info("Test certificate SubjectID : '" 
+                       + cert.getSubjectDN().getName()
+                       + "'");
+            JCRYPTO_X509Certificate issuer = 
+                (JCRYPTO_X509Certificate)certfac.engineGenerateCertificate(new StringBufferInputStream(issuercert));
+            m_log.info("Issuer certificate SubjectID : '" 
+                       + issuer.getSubjectDN().getName()
+                       + "'");
+            
+            AlgorithmIdentifier algId = generateAlgId("1.3.14.3.2.26");
+            CertID certid = new CertID(cert, issuer, algId);
+            keyhash = certid.getIssuerKeyHash();
+            namehash = certid.getIssuerNameHash();
+            m_log.info("Baltimore: Issuer key hash : " + Hex.encode(keyhash));
+            m_log.info("Baltimore: Issuer name hash : " + Hex.encode(namehash));
+
+            CertificateID bccertid = new CertificateID("1.3.14.3.2.26", issuer, cert.getSerialNumber());
+            keyhash = bccertid.getIssuerKeyHash();
+            namehash = bccertid.getIssuerNameHash();
+            m_log.info("Bouncycastle: Issuer key hash : " + Hex.encode(keyhash));
+            m_log.info("Bouncycastle: Issuer name hash : " + Hex.encode(namehash));
+
+            X509Principal issuerName = PrincipalUtil.getIssuerX509Principal(cert);
+            m_log.info("Bouncycastle: SubjectID : " + issuerName.getName());
+            m_log.info("JCE: SubjectID : " + cert.getIssuerDN().getName());
+
+            OCSPCertificateHash certhash = new OCSPCertificateHash(issuer, "1.3.14.3.2.26");
+            keyhash = certhash.getIssuerKeyHash();
+            namehash = certhash.getIssuerNameHash();
+            m_log.info("Ophios: Issuer key hash : " + Hex.encode(keyhash));
+            m_log.info("Ophios: Issuer name hash : " + Hex.encode(namehash));
+
+            ObjectID oid = new ObjectID("1.3.14.3.2.26");
+            AlgorithmID algid = new AlgorithmID(oid);
+            iaik.x509.X509Certificate iaik_issuer = 
+                new iaik.x509.X509Certificate(new StringBufferInputStream(issuercert));
+            iaik.x509.X509Certificate iaik_cert = 
+                new iaik.x509.X509Certificate(new StringBufferInputStream(testcert));
+
+            iaik.x509.ocsp.CertID iaik_certid = 
+                new iaik.x509.ocsp.CertID(algid
+                                          , iaik_issuer
+                                          , iaik_cert);
+            keyhash = iaik_certid.getIssuerKeyHash();
+            namehash = iaik_certid.getIssuerNameHash();
+            m_log.info("IAIK 3.0: Issuer key hash : " + Hex.encode(keyhash));
+            m_log.info("IAIK 3.0: Issuer name hash : " + Hex.encode(namehash));
+            
+            
+        } catch (Throwable e) {
+            m_log.error("Exception caught in main() method", e);
+        }
+    }
+    
+}
+
