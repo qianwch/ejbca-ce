@@ -31,13 +31,14 @@ import se.anatom.ejbca.util.Hex;
 import se.anatom.ejbca.util.CertTools;
 
 import org.apache.log4j.Logger;
+import com.ophios.asn1.ASN1DataFormatException;
 
 /** 
  * Servlet implementing server side of the Online Certificate Status Protocol (OCSP)
  * For a detailed description of OCSP refer to RFC2560.
  * 
  * @author Thomas Meckel (Ophios GmbH)
- * @version  $Id: OCSPServlet.java,v 1.1.2.6 2003-09-27 18:32:20 tmeckel Exp $
+ * @version  $Id: OCSPServlet.java,v 1.1.2.7 2003-10-04 13:54:04 tmeckel Exp $
  */
 public class OCSPServlet extends HttpServlet {
 
@@ -349,10 +350,10 @@ public class OCSPServlet extends HttpServlet {
              * to the CA if not send back a 'unauthorized'
              * response
              */
-            //res.setStatus(OCSPResponse.UNAUTHORIZED);
+            //throw new OCSPUnauthorizedException()
             if (req.singleRequestCount() <= 0) {
                 m_log.error("The OCSP request does not contain any simpleRequest entities.");
-                res.setStatus(OCSPResponse.MALFORMED_REQUEST);                
+                throw new OCSPMalformedRequestException();
             } else {
                 Enumeration sreqs = req.singleRequests();
                 while (sreqs.hasMoreElements()) {
@@ -378,33 +379,58 @@ public class OCSPServlet extends HttpServlet {
                         continue;                    
                     }
 
+                    /*
+                     * Implement logic according to
+                     * chapter 2.7 in RFC2560
+                     * 
+                     * 2.7  CA Key Compromise
+                     *    If an OCSP responder knows that a particular CA's private key has
+                     *    been compromised, it MAY return the revoked state for all
+                     *    certificates issued by that CA.
+                     */
                     rci = m_cssr.isRevoked(m_adm
-                                           , cacert.getSubjectDN().getName()
-                                           , certId.getCertificateSerial());
+                                           , cacert.getIssuerDN().getName()
+                                           , cacert.getSerialNumber());
+                    if (null != rci 
+                        && rci.getReason() == RevokedCertInfo.NOT_REVOKED) {
+                        rci = null;
+                    }
                     if (null == rci) {
-                        m_log.info("Unable to find revocation information for certificate with serial '"
-                                   + certId.getCertificateSerial() + "'"
-                                   + " from issuer '" + cacert.getSubjectDN().getName() + "'");
-                        OCSPSingleResponse sres = new OCSPSingleResponse(certId);
-                        sres.setCertStatus(OCSPSingleResponse.CERTSTATUS_UNKNOWN);
-                        res.addSingleResponse(sres);
-                    } else {
-                        OCSPSingleResponse sr = new OCSPSingleResponse(certId);
-                        if (rci.getReason() != RevokedCertInfo.NOT_REVOKED) {
-                            OCSPRevokedInfo ori = new OCSPRevokedInfo();
-                            ori.setRevocationTime(rci.getRevocationDate());
-                            ori.setRevocationReason(rci.getReason());
-                            sr.setCertStatus(OCSPSingleResponse.CERTSTATUS_REVOKED);                        
-                            sr.setRevocationInfo(ori);
-                        } else {
-                            sr.setCertStatus(OCSPSingleResponse.CERTSTATUS_GOOD);
-                        }
-                        if (m_log.isDebugEnabled()) {
-                            m_log.info("Adding status information for certificate with serial '"
+                        rci = m_cssr.isRevoked(m_adm
+                                               , cacert.getSubjectDN().getName()
+                                               , certId.getCertificateSerial());
+                        if (null == rci) {
+                            m_log.info("Unable to find revocation information for certificate with serial '"
                                        + certId.getCertificateSerial() + "'"
                                        + " from issuer '" + cacert.getSubjectDN().getName() + "'");
+                            OCSPSingleResponse sres = new OCSPSingleResponse(certId);
+                            sres.setCertStatus(OCSPSingleResponse.CERTSTATUS_UNKNOWN);
+                            res.addSingleResponse(sres);
+                        } else {
+                            OCSPSingleResponse sr = new OCSPSingleResponse(certId);
+                            if (rci.getReason() != RevokedCertInfo.NOT_REVOKED) {
+                                OCSPRevokedInfo ori = new OCSPRevokedInfo();
+                                ori.setRevocationTime(rci.getRevocationDate());
+                                ori.setRevocationReason(rci.getReason());
+                                sr.setCertStatus(OCSPSingleResponse.CERTSTATUS_REVOKED);                        
+                                sr.setRevocationInfo(ori);
+                            } else {
+                                sr.setCertStatus(OCSPSingleResponse.CERTSTATUS_GOOD);
+                            }
+                            if (m_log.isDebugEnabled()) {
+                                m_log.info("Adding status information for certificate with serial '"
+                                           + certId.getCertificateSerial() + "'"
+                                           + " from issuer '" + cacert.getSubjectDN().getName() + "'");
+                            }
+                            res.addSingleResponse(sr);
                         }
-                        res.addSingleResponse(sr);
+                    } else {
+                        OCSPSingleResponse sr = new OCSPSingleResponse(certId);
+                        OCSPRevokedInfo ori = new OCSPRevokedInfo();
+                        ori.setRevocationTime(rci.getRevocationDate());
+                        ori.setRevocationReason(rci.getReason());
+                        sr.setCertStatus(OCSPSingleResponse.CERTSTATUS_REVOKED); 
+                        sr.setRevocationInfo(ori);                        
                     }
                 }
                 res.setStatus(OCSPResponse.SUCCESSFUL);
@@ -413,8 +439,7 @@ public class OCSPServlet extends HttpServlet {
             m_log.info("OCSPException caught : " 
                        + e.getClass().getName()
                        + " ;Status = "
-                       + e.getStatus()
-                       , e);
+                       + e.getStatus());
             res = (OCSPBasicResponse)createOCSPResponse(req);
             res.setStatus(e.getStatus());
         } catch (Exception e) {
@@ -429,7 +454,12 @@ public class OCSPServlet extends HttpServlet {
             throw new ServletException("Unable to sign OCSP response."
                                        , e);
         }
-        res.serializeTo(response.getOutputStream());
+        try {
+            res.serializeTo(response.getOutputStream());
+        } catch (ASN1DataFormatException e) {
+            throw new ServletException("Unable to serialize OCSP response."
+                                       , e);
+        }
         m_log.debug("<doPost()");
     } //doPost
 
