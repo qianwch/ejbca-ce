@@ -1,6 +1,6 @@
 2.1.3
 -----
-Fixed a bux when applying with IE, wrong csp could be used.
+Fixed a bug when applying with IE, wrong csp could be used.
 
 2.1.2
 -----
