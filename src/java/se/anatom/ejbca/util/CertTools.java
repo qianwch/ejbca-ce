@@ -17,7 +17,7 @@ import org.apache.log4j.Logger;
 /**
  * Tools to handle common certificate operations.
  *
- * @version $Id: CertTools.java,v 1.37.4.2 2003-09-23 20:17:21 anatom Exp $
+ * @version $Id: CertTools.java,v 1.37.4.3 2003-09-24 08:10:12 anatom Exp $
  */
 public class CertTools {
 
@@ -547,17 +547,19 @@ public class CertTools {
      */
     public static String getUPNAltName(X509Certificate cert) throws IOException, CertificateParsingException {
         Collection altNames = cert.getSubjectAlternativeNames();
-        Iterator i = altNames.iterator();
-        while (i.hasNext()) {
-            List listitem = (List)i.next();
-            Integer no = (Integer)listitem.get(0);
-            if ( no.intValue()== 0) {
-                byte[] altName = (byte[])listitem.get(1);
-                DERObject oct = (DERObject)(new DERInputStream(new ByteArrayInputStream(altName)).readObject());
-                ASN1Sequence seq = ASN1Sequence.getInstance(oct);
-                ASN1TaggedObject obj = (ASN1TaggedObject)seq.getObjectAt(1);
-                DERUTF8String str = DERUTF8String.getInstance(obj.getObject());
-                return str.getString();
+        if (altNames != null) {
+            Iterator i = altNames.iterator();
+            while (i.hasNext()) {
+                List listitem = (List)i.next();
+                Integer no = (Integer)listitem.get(0);
+                if ( no.intValue()== 0) {
+                    byte[] altName = (byte[])listitem.get(1);
+                    DERObject oct = (DERObject)(new DERInputStream(new ByteArrayInputStream(altName)).readObject());
+                    ASN1Sequence seq = ASN1Sequence.getInstance(oct);
+                    ASN1TaggedObject obj = (ASN1TaggedObject)seq.getObjectAt(1);
+                    DERUTF8String str = DERUTF8String.getInstance(obj.getObject());
+                    return str.getString();
+                }
             }
         }
         return null;
