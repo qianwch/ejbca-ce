@@ -1,6 +1,14 @@
 EJBCA FAQ
 =========
-$Id: FAQ,v 1.23.2.3 2004-11-09 15:32:43 anatom Exp $
+$Id: FAQ,v 1.23.2.4 2005-01-08 16:19:56 anatom Exp $
+
+---------
+Q : When starting JBoss after deployment I get errors like: 'EjbcaDS not bound'
+
+A : You probably did a 'and replaceDS' and entered 'EjbcaDS' instead of 'java:/EjbcaDS'.
+You must search manually in all XML files and replace 'EjbcaDS' with 'java:/EjbcaDS', 
+or perhaps easier and safer, restore the original XML files from the zip file and do 
+'ant replaceDS' again, this time entering 'java:/EjbcaDS'
 
 ---------
 Q : I want to add my own static pages under http://<myhost>:8080/ejbca/
