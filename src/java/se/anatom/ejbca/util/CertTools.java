@@ -25,7 +25,7 @@ import se.anatom.ejbca.util.Hex;
 /**
  * Tools to handle common certificate operations.
  *
- * @version $Id: CertTools.java,v 1.10.2.1 2002-08-02 09:26:28 anatom Exp $
+ * @version $Id: CertTools.java,v 1.10.2.2 2002-08-22 15:39:04 anatom Exp $
  */
 public class CertTools {
 
@@ -155,9 +155,11 @@ public class CertTools {
         while (st.hasMoreTokens()) {
             o = st.nextToken();
             cat.debug("checking: "+o.trim().substring(0,dnpart.length()));
-            if (o.trim().substring(0,dnpart.length()).equalsIgnoreCase(dnpart)) {
-                part = o.trim().substring(dnpart.length());
-                break;
+            if (o.length() > dnpart.length()) {
+                if (o.trim().substring(0,dnpart.length()).equalsIgnoreCase(dnpart)) {
+                    part = o.trim().substring(dnpart.length());
+                    break;
+                }
             }
         }
         cat.debug("<getpartFromDN: resulting DN part="+part);
