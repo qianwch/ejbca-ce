@@ -74,7 +74,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 /**
  * Tools to handle common certificate operations.
  *
- * @version $Id: CertTools.java,v 1.64.2.4 2004-11-04 21:20:01 anatom Exp $
+ * @version $Id: CertTools.java,v 1.64.2.5 2004-11-04 21:23:18 anatom Exp $
  */
 public class CertTools {
     private static Logger log = Logger.getLogger(CertTools.class);
@@ -279,7 +279,7 @@ public class CertTools {
                 o = xt.nextToken();
                 //log.debug("token: "+o);
                 if (!first) {
-                	buf.insert(0,"=");
+                	buf.insert(0,",");
                 } else {
                     first = false;                	
                 }
