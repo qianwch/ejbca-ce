@@ -1,3 +1,8 @@
+3.0.6
+-----
+* [ECA-40] - defined hardtoken issuer and profiles disapears after some time
+* [ECA-42] - <enterpris-beans> tag missing in xml fil
+
 3.0.5
 -----
 Added support for activation of hardcatokens in View CA Info page.

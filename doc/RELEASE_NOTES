@@ -1,3 +1,11 @@
+EJBCA V3.0.6
+------------
+This is a plugin-upgrade from 3.0.4. 
+Apply patch, build and redeploy.
+
+If you are using the hard token stuff on MySQL (which you probably aren't or you would have noticed 
+this bug), you should drop the table HardTokenData and restart JBoss to recreate the table.
+
 EJBCA V3.0.5
 ------------
 
