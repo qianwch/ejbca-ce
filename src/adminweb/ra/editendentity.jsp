@@ -970,9 +970,7 @@ function checkUseInBatch(){
             else{ %>
               <%= ejbcawebbean.getText("USESEMAILFIELDDATA")+ " :"%>&nbsp;
         <input type="checkbox" name="<%=CHECKBOX_SUBJECTALTNAME + i%>" value="<%=CHECKBOX_VALUE %>" tabindex="<%=tabindex++%>" <% if(!userdata.getSubjectAltNameField(profile.profileFieldIdToUserFieldIdMapper(fielddata[EndEntityProfile.FIELDTYPE]),fielddata[EndEntityProfile.NUMBER]).equals(""))
-                                                                                                                 out.write(" CHECKED "); 
-                                                                                                               if(profile.isRequired(fielddata[EndEntityProfile.FIELDTYPE],fielddata[EndEntityProfile.NUMBER]))
-                                                                                                                 out.write(" disabled='true' "); 
+                                                                                                                 out.write(" CHECKED ");
                                                                                                              %>>
          <% } %>  
         </td>
