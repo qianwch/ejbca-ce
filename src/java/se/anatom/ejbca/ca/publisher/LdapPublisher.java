@@ -57,7 +57,7 @@ import com.novell.ldap.LDAPModificationSet;
 /**
  * LdapPublisher is a class handling a publishing to various v3 LDAP catalouges.  
  *
- * @version $Id: LdapPublisher.java,v 1.5.2.5 2004-11-01 04:12:15 herrvendil Exp $
+ * @version $Id: LdapPublisher.java,v 1.5.2.6 2004-11-22 13:12:32 primelars Exp $
  */
 public class LdapPublisher extends BasePublisher{
 	 	
@@ -143,9 +143,9 @@ public class LdapPublisher extends BasePublisher{
         int ldapVersion = LDAPConnection.LDAP_V3;
         LDAPConnection lc = null;
         if(getUseSSL()){
-          lc = new LDAPConnection(new LDAPJSSESecureSocketFactory());
+            lc = new LDAPConnection(new LDAPJSSESecureSocketFactory());
         }else{
-          lc = new LDAPConnection();        
+            lc = new LDAPConnection();        
         }
         String dn = null;
         String certdn = null;
@@ -203,8 +203,6 @@ public class LdapPublisher extends BasePublisher{
             lc.bind(ldapVersion, getLoginDN(), getLoginPassword());
             // try to read the old object
             oldEntry = lc.read(dn);
-            // disconnect with the server
-            lc.disconnect();
         } catch (LDAPException e) {
             if (e.getLDAPResultCode() == LDAPException.NO_SUCH_OBJECT) {
                 log.debug("No old entry exist for '" + dn + "'.");
@@ -212,6 +210,13 @@ public class LdapPublisher extends BasePublisher{
             } else {
                 log.error("Error binding to and reading from LDAP server: ", e);
                 throw new PublisherException("Error binding to and reading from LDAP server.");                                
+            }
+        } finally {
+            // disconnect with the server
+            try {
+                lc.disconnect();
+            } catch (LDAPException e) {
+                log.error("LDAP disconnection failed: " + e.getMessage());
             }
         }
 
@@ -304,11 +309,16 @@ public class LdapPublisher extends BasePublisher{
                   }
                 }  
             }
-            // disconnect with the server
-            lc.disconnect();
         } catch (LDAPException e) {
             log.error("Error storing certificate (" + attribute + ") in LDAP (" + objectclass + "): ", e);  
             throw new PublisherException("Error storing certificate (" + attribute + ") in LDAP (" + objectclass + ").");            
+        } finally {
+            // disconnect with the server
+            try {
+                lc.disconnect();
+            } catch (LDAPException e) {
+                log.error("LDAP disconnection failed: " + e.getMessage());
+            }
         }
         log.debug("<storeCertificate()");
         return true;
@@ -348,15 +358,19 @@ public class LdapPublisher extends BasePublisher{
             lc.bind(ldapVersion, getLoginDN(), getLoginPassword());
             // try to read the old object
             oldEntry = lc.read(dn);
-            
-            // disconnect with the server
-            lc.disconnect();
         } catch (LDAPException e) {
             if (e.getLDAPResultCode() == LDAPException.NO_SUCH_OBJECT) {
                 log.debug("No old entry exist for '" + dn + "'.");
             } else {
                 log.error("Error binding to and reading from LDAP server: ", e);
                 throw new PublisherException("Error binding to and reading from LDAP server.");                
+            }
+        } finally {
+            // disconnect with the server
+            try {
+                lc.disconnect();
+            } catch (LDAPException e) {
+                log.error("LDAP disconnection failed: " + e.getMessage());
             }
         }
 
@@ -400,11 +414,16 @@ public class LdapPublisher extends BasePublisher{
                 lc.add(newEntry);
                 log.debug("\nAdded object: " + dn + " successfully.");                
             }
-            // disconnect with the server
-            lc.disconnect();
         } catch (LDAPException e) {
             log.error("Error storing CRL (" + getCRLAttribute() + ") in LDAP (" + getCAObjectClass() + "): ", e);
             throw new PublisherException("Error storing CRL (" + getCRLAttribute() + ") in LDAP (" + getCAObjectClass() + "): ");                        
+        } finally {
+            // disconnect with the server
+            try {
+                lc.disconnect();
+            } catch (LDAPException e) {
+                log.error("LDAP disconnection failed: " + e.getMessage());
+            }
         }
         return true;
     }
@@ -446,8 +465,6 @@ public class LdapPublisher extends BasePublisher{
             lc.bind(ldapVersion, getLoginDN(), getLoginPassword());
             // try to read the old object
             oldEntry = lc.read(dn);
-            // disconnect with the server
-            lc.disconnect();
         } catch (LDAPException e) {
             if (e.getLDAPResultCode() == LDAPException.NO_SUCH_OBJECT) {
                 log.debug("No old entry exist for '" + dn + "'.");
@@ -455,6 +472,13 @@ public class LdapPublisher extends BasePublisher{
             } else {
                 log.error("Error binding to and reading from LDAP server: ", e);
                 throw new PublisherException("Error binding to and reading from LDAP server.");                                
+            }
+        } finally {
+            // disconnect with the server
+            try {
+                lc.disconnect();
+            } catch (LDAPException e) {
+                log.error("LDAP disconnection failed: " + e.getMessage());
             }
         }
 
@@ -495,11 +519,16 @@ public class LdapPublisher extends BasePublisher{
                 lc.modify(dn, modSet);
                 log.debug("\nRemoved certificate : " + dn + " successfully.");  
             }               
-            // disconnect with the server
-            lc.disconnect();
         } catch (LDAPException e) {
             log.error("Error when removing certificate from LDAP (" + dn + "): ", e);  
             throw new PublisherException("Error when removing certificate from LDAP (" + dn + ")");            
+        } finally {
+            // disconnect with the server
+            try {
+                lc.disconnect();
+            } catch (LDAPException e) {
+                log.error("LDAP disconnection failed: " + e.getMessage());
+            }
         }
         log.debug("<revokeCertificate()");
 	}
@@ -524,8 +553,6 @@ public class LdapPublisher extends BasePublisher{
             lc.bind(ldapVersion, getLoginDN(), getLoginPassword());
             // try to read the old object
             entry = lc.read(getBaseDN());
-            // disconnect with the server
-            lc.disconnect();
             
             log.debug("Entry" + entry.toString());
             
@@ -537,6 +564,13 @@ public class LdapPublisher extends BasePublisher{
                 throw new PublisherConnectionException("Error binding to and reading from LDAP server: " + e.getMessage());
               else
                 throw new PublisherConnectionException("Error binding to and reading from LDAP server. ");                            
+        } finally {
+            // disconnect with the server
+            try {
+                lc.disconnect();
+            } catch (LDAPException e) {
+                log.error("LDAP disconnection failed: " + e.getMessage());
+            }
         }
 	} 
 
