@@ -15,22 +15,6 @@
             <sql-type>IMAGE</sql-type>
         </cmp-field>
     </entity>
-    <entity>
-        <ejb-name>HardTokenIssuerData</ejb-name>
-        <cmp-field>
-            <field-name>data</field-name>
-            <jdbc-type>LONGVARCHAR</jdbc-type>
-            <sql-type>IMAGE</sql-type>
-        </cmp-field>
-    </entity>
-    <entity>
-        <ejb-name>HardTokenData</ejb-name>
-        <cmp-field>
-            <field-name>data</field-name>
-            <jdbc-type>LONGVARCHAR</jdbc-type>
-            <sql-type>IMAGE</sql-type>
-        </cmp-field>
-    </entity>
 </enterprise-beans>    
 
 </jbosscmp-jdbc>
