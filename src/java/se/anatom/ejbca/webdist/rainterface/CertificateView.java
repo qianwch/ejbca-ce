@@ -39,7 +39,7 @@ import se.anatom.ejbca.util.Hex;
  * by JSP pages.
  *
  * @author  Philip Vendil
- * @version $Id: CertificateView.java,v 1.16 2004-04-16 07:38:55 anatom Exp $
+ * @version $Id: CertificateView.java,v 1.16.2.1 2004-09-14 23:03:42 herrvendil Exp $
  */
 public class CertificateView {
 
@@ -283,9 +283,18 @@ public class CertificateView {
               	  try{              	  
                     upn = CertTools.getUPNAltName(certificate);
               	  }catch(IOException e){}  
-                  if(upn != null)
+                  if(upn != null){
 				    subjectaltnamestring += "UPN=" + upn;
-                                  	  
+                  }else{
+                  	String guid = null;
+                  	/*try{              	  
+                  	 guid = CertTools.get .getUPNAltName(certificate); TODO
+                  	 }catch(IOException e){}  
+                  	 if(guid != null)
+                  	 subjectaltnamestring += "GUID=" + guid;
+                  	 */                  	
+                  }
+                                
               	  break;
               	case SUBALTNAME_RFC822NAME: 
 				  subjectaltnamestring += "RFC822NAME=" + (String) next.get(1);  
@@ -303,7 +312,7 @@ public class CertificateView {
 				  subjectaltnamestring += "URI=" + (String) next.get(1);
 				  break;
 				case SUBALTNAME_IPADDRESS:
-                  //TODO implement IPADDRESS
+				  subjectaltnamestring += "IPADDRESS=" + (String) next.get(1);
 				  break;
 				case SUBALTNAME_REGISTREDID:
                   //TODO implement REGISTREDID
