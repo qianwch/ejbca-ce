@@ -130,8 +130,8 @@
         <local>se.anatom.ejbca.ca.auth.IAuthenticationSessionLocal</local>
         <ejb-link>AuthenticationSession</ejb-link>
      </ejb-local-ref>
-<!-- Uncomment to use LDAP publisher
-     <ejb-local-ref>
+<!-- Uncomment to use LDAP publisher -->
+<!--     <ejb-local-ref>
         <description>
                 Publishers are configured to store certificates and CRLs in addiotional places
                 from the main database. Publishers runs as local beans.
@@ -141,8 +141,8 @@
         <local-home>se.anatom.ejbca.ca.store.IPublisherSessionLocalHome</local-home>
         <local>se.anatom.ejbca.ca.store.IPublisherSessionLocal</local>
         <ejb-link>PublisherSession1</ejb-link>
-     </ejb-local-ref>
-END LDAP Publisher -->
+     </ejb-local-ref> -->
+<!-- END LDAP Publisher -->
     <security-identity>
         <description></description>
         <run-as>
@@ -330,8 +330,8 @@ END LDAP Publisher -->
 
    </session>
 
-<!-- Uncomment to use LDAP publisher
-   <session>
+<!-- Uncomment to use LDAP publisher -->
+<!--   <session>
      <ejb-name>PublisherSession1</ejb-name>
      <home>se.anatom.ejbca.ca.store.IPublisherSessionHome</home>
      <remote>se.anatom.ejbca.ca.store.IPublisherSessionRemote</remote>
@@ -375,13 +375,13 @@ END LDAP Publisher -->
         <description>objectclass for storing user entries.</description>
         <env-entry-name>userObjectclass</env-entry-name>
         <env-entry-type>java.lang.String</env-entry-type>
-        <env-entry-value>inetOrgPerson</env-entry-value>
+        <env-entry-value>top;person;organizationalPerson;inetOrgPerson</env-entry-value>
      </env-entry>
      <env-entry>
         <description>objectclass for storing CA entries.</description>
         <env-entry-name>cAObjectclass</env-entry-name>
         <env-entry-type>java.lang.String</env-entry-type>
-        <env-entry-value>certificationAuthority</env-entry-value>
+        <env-entry-value>top;applicationProcess;certificationAuthority</env-entry-value>
      </env-entry>
      <env-entry>
         <description>attribute for storing user certificates.</description>
@@ -401,6 +401,12 @@ END LDAP Publisher -->
         <env-entry-type>java.lang.String</env-entry-type>
         <env-entry-value>certificateRevocationList;binary</env-entry-value>
      </env-entry>
+     <env-entry>
+        <description>attribute for storing ARLs.</description>
+        <env-entry-name>aRLAttribute</env-entry-name>
+        <env-entry-type>java.lang.String</env-entry-type>
+        <env-entry-value>authorityRevocationList;binary</env-entry-value>
+     </env-entry>
      <ejb-ref>
         <description>The Log session bean</description>
         <ejb-ref-name>ejb/LogSession</ejb-ref-name>
@@ -409,8 +415,8 @@ END LDAP Publisher -->
         <remote>se.anatom.ejbca.log.ILogSessionRemote</remote>
         <ejb-link>LogSession</ejb-link>
      </ejb-ref>
-   </session>
-END LDAP Publisher -->
+   </session> -->
+<!-- END LDAP Publisher -->
 
    <entity>
       <description>
@@ -625,12 +631,12 @@ END LDAP Publisher -->
          <method-name>*</method-name>
      </method>
 
-<!-- Uncomment to use LDAP publisher
-     <method>
+<!-- Uncomment to use LDAP publisher -->
+<!--     <method>
          <ejb-name>PublisherSession1</ejb-name>
          <method-name>*</method-name>
-     </method>
-END LDAP Publisher -->
+     </method> -->
+<!-- END LDAP Publisher -->
 
      <method>
          <ejb-name>CertificateStoreSession</ejb-name>
@@ -751,12 +757,12 @@ END LDAP Publisher -->
          <method-intf>Remote</method-intf>
          <method-name>*</method-name>
      </method>
-<!-- Uncomment to use LDAP publisher
-     <method>
+<!-- Uncomment to use LDAP publisher -->
+<!--     <method>
          <ejb-name>PublisherSession1</ejb-name>
          <method-name>*</method-name>
-     </method>
-END LDAP Publisher -->
+     </method> -->
+<!-- END LDAP Publisher -->
 
    <trans-attribute>Required</trans-attribute>
    </container-transaction>
