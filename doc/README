@@ -1,4 +1,4 @@
-$Id: README,v 1.150.2.5 2004-09-08 20:13:45 anatom Exp $
+$Id: README,v 1.150.2.6 2004-09-13 07:55:34 anatom Exp $
 
 This software is OSI Certified Open Source Software.
 OSI Certified is a certification mark of the Open Source
@@ -772,10 +772,10 @@ should be the CA-name as defined when creating the CA in EJBCA. For example 'vpn
 no O or C should be in the certificate.
 - Certificates used for PIX must include the DN component unstructuredName (fqdn) and could also include unstructuredAddress (ip).
 - Certificates used for PIX must include the SubjectAltName dNSName beeing the fqdn of the pix, eg <name>.<domain>, 
-iPAddress can also be useful. If unstructuredAddress is used iPAddress should be used.
+iPAddress can also be useful. If unstructuredAddress is used iPAddress should be used (but I don't think you should use ip).
 - Cisco does not support use of the 'Domain Component', DC, attribute in DNs, don't use it.
-- The PIX user should have a DN like "unstructuredName=pix.primekey.se/unstructuredAddress=192.168.1.33, CN=pix.primekey.se", 
-KeyUsage "Digital Signature, Key Encipherment", SubjectAltName "DNS:pix.primekey.se, IP Address:192.168.1.33".
+- The PIX user should have a DN like "unstructuredName=pix.primekey.se, CN=pix.primekey.se", 
+KeyUsage "Digital Signature, Key Encipherment", SubjectAltName "DNS:pix.primekey.se".
 - When the VPN-client (above) connects to the PIX, the 'ou' part of the clients DN must match a Vpngroup you have specified, 
 otherwise the connection will fail.
 
@@ -785,14 +785,25 @@ Otherwise, the CA may reject or allow certificates based on an incorrect timesta
 Cisco's PKI protocol uses the clock to make sure that a CRL is not expired.
 Set timezone first, then set time, then check time with 'show clock'.
 
-ca identity pixca 10.1.1.2:/ejbca/publicweb/apply/scep/pkiclient.exe
+The enrollment steps should be something like:
+ca identity pixca <ca-ip>:/ejbca/publicweb/apply/scep/pkiclient.exe
 ca configure pixca ca 1 0 crloptional
 ca authenticate pixca
 <wait>
 show ca certificate
+ca save all
 wr mem
+ca crl request pixca
+<wait>
+show ca crl
 ca enroll pixca foo123
 <wait>
+
+Unforturnately this gives the following error for me:
+CRYPTO_CA: error = 293: failed to verify
+or sometimes:
+CRYPTO_CA: error = 266: failed to verify 
+If someone has any ideas what this means, don't hesitate to let us know.
 
 OCSP
 =====
