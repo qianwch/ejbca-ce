@@ -34,7 +34,7 @@ import junit.framework.*;
 /**
  * Tests signing session.
  *
- * @version $Id: TestSignSession.java,v 1.22.2.1 2003-09-16 10:49:03 anatom Exp $
+ * @version $Id: TestSignSession.java,v 1.22.2.2 2003-09-23 19:37:42 anatom Exp $
  */
 public class TestSignSession extends TestCase {
 
@@ -325,7 +325,7 @@ public class TestSignSession extends TestCase {
         log.debug("<test07DSAKey()");
     }
 
-/*
+
     public void test08SwedeChars() throws Exception {
         log.debug(">test08SwedeChars()");
         // Make user that we know...
@@ -353,7 +353,7 @@ public class TestSignSession extends TestCase {
         keys = genKeys();
         // user that we know exists...
         X509Certificate cert = (X509Certificate)remote.createCertificate(new Admin(Admin.TYPE_INTERNALUSER), "swede", "foo123", keys.getPublic());
-        assertNotNull("Misslyckades skapa cert", cert);
+        assertNotNull("Failed to create certificate", cert);
         log.debug("Cert="+cert.toString());
         assertEquals("Wrong DN med swedechars", CertTools.getSubjectDN(cert), CertTools.stringToBCDNString("C=SE, O=ÅÄÖ, CN=åäö"));
         //FileOutputStream fos = new FileOutputStream("swedecert.crt");
@@ -361,10 +361,10 @@ public class TestSignSession extends TestCase {
         //fos.close();
         log.debug("<test08SwedeChars()");
     }
-*/
+
 /*
-    public void test07TestOpenScep() throws Exception {
-        log.debug(">test07TestOpenScep()");
+    public void test09TestOpenScep() throws Exception {
+        log.debug(">test09TestOpenScep()");
         UserDataPK pk = new UserDataPK("foo");
         UserDataRemote data = userhome.findByPrimaryKey(pk);
         data.setStatus(UserDataRemote.STATUS_NEW);
@@ -374,7 +374,7 @@ public class TestSignSession extends TestCase {
         byte[] msg = resp.getResponseMessage();
         log.debug("Message: "+new String(Base64.encode(msg,true)));
         assertNotNull("Failed to get encoded response message", msg);
-        log.debug("<test07TestOpenScep()");
+        log.debug("<test09TestOpenScep()");
     }
 */
 }
