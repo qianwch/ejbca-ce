@@ -23,7 +23,7 @@ import se.anatom.ejbca.ra.GlobalConfiguration;
  *
  * The main metod are isAthorized and authenticate.
  *
- * @version $Id: EjbcaAuthorization.java,v 1.12.6.1 2003-09-27 08:43:43 anatom Exp $
+ * @version $Id: EjbcaAuthorization.java,v 1.12.6.2 2003-09-27 09:07:24 anatom Exp $
  */
 public class EjbcaAuthorization extends Object implements java.io.Serializable{
 
@@ -128,11 +128,12 @@ public class EjbcaAuthorization extends Object implements java.io.Serializable{
       // Check if certificate is revoked.
         try{
             RevokedCertInfo revinfo = certificatesession.isRevoked(admin, CertTools.getIssuerDN(certificate),certificate.getSerialNumber()); 
-            if( (revinfo != null) && (revinfo.getReason() != RevokedCertInfo.NOT_REVOKED) ) {
+            if (revinfo == null) {
+                // Certificate missing
+                throw new AuthenticationFailedException("Your certificate cannot be found in database.");
+            } else if (revinfo.getReason() != RevokedCertInfo.NOT_REVOKED) {
                 // Certificate revoked
                 throw new AuthenticationFailedException("Your certificate have been revoked.");
-            } else if (revinfo == null) {
-                throw new AuthenticationFailedException("Your certificate cannot be found in database.");
             }
          } catch(RemoteException e) {
              throw new AuthenticationFailedException("Error checking revocation info for certificate.");

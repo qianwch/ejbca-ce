@@ -32,7 +32,7 @@ import se.anatom.ejbca.log.LogEntry;
  * Stores certificate and CRL in the local database using Certificate and CRL Entity Beans.
  * Uses JNDI name for datasource as defined in env 'Datasource' in ejb-jar.xml.
  *
- * @version $Id: LocalCertificateStoreSessionBean.java,v 1.42.2.6 2003-09-27 08:43:42 anatom Exp $
+ * @version $Id: LocalCertificateStoreSessionBean.java,v 1.42.2.7 2003-09-27 09:07:08 anatom Exp $
  */
 public class LocalCertificateStoreSessionBean extends BaseSessionBean {
 
@@ -917,7 +917,6 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
         debug("Looking for cert with (transformed)DN: " + dn);
         try{
             Collection coll = certHome.findByIssuerDNSerialNumber(dn, serno.toString());
-            Certificate ret = null;
             if (coll != null) {
                 if (coll.size() > 1)
                   logsession.log(admin, LogEntry.MODULE_CA, new java.util.Date(), null, null, LogEntry.EVENT_ERROR_DATABASE,"Error in database, more than one certificate has the same Issuer : " + issuerDN + " and serialnumber "
