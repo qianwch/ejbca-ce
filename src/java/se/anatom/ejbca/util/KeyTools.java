@@ -27,7 +27,7 @@ import org.apache.log4j.Logger;
 /**
  * Tools to handle common key and keystore operations.
  *
- * @version $Id: KeyTools.java,v 1.17 2003-06-11 13:38:46 anatom Exp $
+ * @version $Id: KeyTools.java,v 1.17.2.1 2003-08-23 08:54:10 anatom Exp $
  */
 public class KeyTools {
 
@@ -118,7 +118,17 @@ public class KeyTools {
                 X509Certificate cacert  = (X509Certificate)cf.generateCertificate(new ByteArrayInputStream(chain[i].getEncoded()));
                 // Set attributes on CA-cert
                 PKCS12BagAttributeCarrier   caBagAttr = (PKCS12BagAttributeCarrier)chain[i];
+                // We constuct a friendly name for the CA, and try with some parts from the DN if they exist.
                 String cafriendly = CertTools.getPartFromDN(CertTools.getSubjectDN(cacert), "CN");
+                if (cafriendly == null) {
+                    cafriendly = CertTools.getPartFromDN(CertTools.getSubjectDN(cacert), "O");
+                }
+                if (cafriendly == null) {
+                    cafriendly = CertTools.getPartFromDN(CertTools.getSubjectDN(cacert), "OU");
+                }
+                if (cafriendly == null) {
+                    cafriendly = "CA_unknown";
+                }
                 caBagAttr.setBagAttribute(PKCSObjectIdentifiers.pkcs_9_at_friendlyName, new DERBMPString(cafriendly));
             }
         }
