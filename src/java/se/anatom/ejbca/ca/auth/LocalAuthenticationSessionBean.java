@@ -20,7 +20,7 @@ import se.anatom.ejbca.log.LogEntry;
 /**
  * Authenticates users towards a user database.
  *
- * @version $Id: LocalAuthenticationSessionBean.java,v 1.19 2003-02-12 13:21:35 herrvendil Exp $
+ * @version $Id: LocalAuthenticationSessionBean.java,v 1.19.6.1 2003-10-08 10:39:29 anatom Exp $
  */
 public class LocalAuthenticationSessionBean extends BaseSessionBean {
 
@@ -100,6 +100,7 @@ public class LocalAuthenticationSessionBean extends BaseSessionBean {
         } catch (AuthLoginException le) {
             throw le;
         } catch (Exception e) {
+            error("Unexpected error in authenticateUser(): ", e);
             throw new EJBException(e.toString());
         }
     } //authenticateUser
@@ -126,6 +127,7 @@ public class LocalAuthenticationSessionBean extends BaseSessionBean {
             }
             throw oe;
         } catch (Exception e) {
+            error("Unexpected error in finnishUser(): ", e);
             throw new EJBException(e.toString());
         }
     } //finishUser
