@@ -31,7 +31,7 @@
   <property name="status.src" value="${src}/publicweb/status"/>
   <property name="status.build" value="${tmp}/publicweb/status.war"/>
   <property name="statusjar" value="${dist}/status.war"/>
-  <property name="status.classpath" value="${ca.classpath} lib/jocsp.jar lib/commons-lang-1.0.jar"/>
+  <property name="status.classpath" value="${ca.classpath} lib/jocsp.jar lib/commons-lang-1.0.jar lib/commons-collections.jar"/>
 
   <property name="log.src" value="${src}/log" />
   <property name="log.build" value="${tmp}/log.jar" />
