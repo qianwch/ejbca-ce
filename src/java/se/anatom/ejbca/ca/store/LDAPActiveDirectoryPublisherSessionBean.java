@@ -55,7 +55,7 @@ import org.apache.log4j.*;
  * cACertificate
  * </pre>
  *
- * @version $Id: LDAPActiveDirectoryPublisherSessionBean.java,v 1.12.2.1 2003-09-01 08:11:38 anatom Exp $
+ * @version $Id: LDAPActiveDirectoryPublisherSessionBean.java,v 1.12.2.2 2003-09-04 06:42:27 anatom Exp $
  */
 public class LDAPActiveDirectoryPublisherSessionBean
     extends BaseSessionBean {
@@ -311,7 +311,7 @@ public class LDAPActiveDirectoryPublisherSessionBean
                         InitialContext stctx = new InitialContext();
                         storeHome =
                             (ICertificateStoreSessionHome) javax.rmi.PortableRemoteObject.narrow(
-                                stctx.lookup("se/anatom/ejbca/ca/store/ICertificateStoreSessionRemote"),
+                                stctx.lookup("CertificateStoreSession"),
                                 ICertificateStoreSessionHome.class);
 
                     } catch (NamingException exc) {
@@ -416,7 +416,7 @@ public class LDAPActiveDirectoryPublisherSessionBean
                 InitialContext stctx = new InitialContext();
                 signHome =
                     (ISignSessionHome) javax.rmi.PortableRemoteObject.narrow(
-                        stctx.lookup("se/anatom/ejbca/ca/sign/ISignSessionRemote"),
+                        stctx.lookup("RSASignSession"),
                         ISignSessionHome.class);
 
             } catch (NamingException exc) {
