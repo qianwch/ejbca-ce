@@ -25,7 +25,7 @@ import se.anatom.ejbca.util.Hex;
 /**
  * Tools to handle common certificate operations.
  *
- * @version $Id: CertTools.java,v 1.10 2002-03-25 10:09:11 anatom Exp $
+ * @version $Id: CertTools.java,v 1.10.2.1 2002-08-02 09:26:28 anatom Exp $
  */
 public class CertTools {
 
@@ -41,7 +41,7 @@ public class CertTools {
      * <pre>
      * CN, SN, OU, O, L, ST, DC, C
      *
-     * @param dn String containing DN that will be transformed into X509Name, The DN string has the format 
+     * @param dn String containing DN that will be transformed into X509Name, The DN string has the format
 "CN=zz,OU=yy,O=foo,C=SE". Unknown OIDs in the string will be silently dropped.
      * @return X509Name
      *
@@ -108,14 +108,14 @@ public class CertTools {
         order.add(X509Name.DC);
         order.add(X509Name.C);
         order.retainAll(coll);
-        
+
         cat.debug(order.toString());
         cat.debug(dntable.toString());
-        
+
         cat.debug("<stringToBcX509Name");
         return new X509Name(order, dntable);
     }
-    
+
     /**
      * Every DN-string should look the same.
      * Creates a name string ordered and looking like we want it...
@@ -139,7 +139,8 @@ public class CertTools {
 
 
     /**
-     * Gets a specified part of a DN.
+     * Gets a specified part of a DN. Specifically the first occurrence it the DN contains several
+     * instances of a part (i.e. cn=x, cn=y returns x).
      *
      * @param dn String containing DN, The DN string has the format "C=SE, O=xx, OU=yy, CN=zz".
      * @param dnpart String specifying which part of the DN to get, should be "CN" or "OU" etc.
@@ -149,16 +150,19 @@ public class CertTools {
         cat.debug(">getPartFromDN: dn:'" + dn+"', dnpart="+dnpart);
         String trimmeddn = dn.trim();
         String part = null, o = null;
-        StringTokenizer st = new StringTokenizer(trimmeddn, ",=");
+        dnpart += "="; // we search for 'CN=' etc.
+        StringTokenizer st = new StringTokenizer(trimmeddn, ",");
         while (st.hasMoreTokens()) {
             o = st.nextToken();
-            if (o.trim().equalsIgnoreCase(dnpart)) {
-                part = st.nextToken();
+            cat.debug("checking: "+o.trim().substring(0,dnpart.length()));
+            if (o.trim().substring(0,dnpart.length()).equalsIgnoreCase(dnpart)) {
+                part = o.trim().substring(dnpart.length());
+                break;
             }
         }
         cat.debug("<getpartFromDN: resulting DN part="+part);
         return part;
-    } //getCNFromDN
+    } //getPartFromDN
 
 
     /**
@@ -311,7 +315,7 @@ public class CertTools {
             }
         } catch (IOException e) {// do nothing
         }
-            
+
         X509Certificate selfcert = certgen.generateX509Certificate(privKey);
         return selfcert;
     } //genselfCert
@@ -320,22 +324,22 @@ public class CertTools {
         byte[] extvalue = cert.getExtensionValue("2.5.29.35");
         if (extvalue == null)
             return null;
-        
+
         DEROctetString oct = (DEROctetString)(new DERInputStream(new ByteArrayInputStream(extvalue)).readObject());
         AuthorityKeyIdentifier keyId = new AuthorityKeyIdentifier((DERConstructedSequence)new DERInputStream(new ByteArrayInputStream(oct.getOctets())).readObject());
         return keyId.getKeyIdentifier();
     } // getAuthorityKeyId
-    
+
     public static byte[] getSubjectKeyId(X509Certificate cert) throws IOException {
         byte[] extvalue = cert.getExtensionValue("2.5.29.14");
         if (extvalue == null)
             return null;
-        
+
         DEROctetString oct = (DEROctetString)(new DERInputStream(new ByteArrayInputStream(extvalue)).readObject());
         SubjectKeyIdentifier keyId = new SubjectKeyIdentifier(oct);
         return keyId.getKeyIdentifier();
     } // getSubjectKeyId
-    
+
     /**
       * Generate SHA1 fingerprint in string representation.
       *
