@@ -1,6 +1,8 @@
 2.1b1
 -----
 Initial SCEP support.
+Support for multiple CDPs separated by ';'
+Removed unnneded debug output of cert during creation
 
 2.0.1
 -----
