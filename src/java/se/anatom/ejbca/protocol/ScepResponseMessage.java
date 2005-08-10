@@ -52,7 +52,7 @@ import java.util.Hashtable;
 /**
  * A response message for scep (pkcs7).
  *
- * @version $Id: ScepResponseMessage.java,v 1.23 2004-11-20 22:54:28 sbailliez Exp $
+ * @version $Id: ScepResponseMessage.java,v 1.23.2.1 2005-08-10 13:38:05 anatom Exp $
  */
 public class ScepResponseMessage implements IResponseMessage, Serializable {
     static final long serialVersionUID = 2016710353393853878L;
@@ -199,7 +199,8 @@ public class ScepResponseMessage implements IResponseMessage, Serializable {
                 } else if (cert != null) {
                     log.debug("Adding certificates to response message");
                     certList.add(cert);
-                    certList.add(signCert);
+                    // Don't add the CA cert, it's optional and I bet it may confuse some apps
+                    // certList.add(signCert);
                 }
                 CertStore certs = CertStore.getInstance("Collection",
                         new CollectionCertStoreParameters(certList), "BC");
