@@ -59,7 +59,7 @@ import se.anatom.ejbca.ra.raadmin.DNFieldExtractor;
  * It replaces all occurrenses of specified variables in the images 
  * with the corresponding userdata.
  *
- * @version $Id: SVGImageManipulator.java,v 1.12.2.1 2005-06-28 13:04:02 herrvendil Exp $
+ * @version $Id: SVGImageManipulator.java,v 1.12.2.2 2005-08-29 09:28:41 primelars Exp $
  */
 public class SVGImageManipulator {
 	/**
@@ -71,7 +71,8 @@ public class SVGImageManipulator {
      * Availabe vairables used to replace text in a printlayout
      * Variable text are case-insensitive.
      */
-    private static final Pattern USERNAME = Pattern.compile("\\$USERNAME", Pattern.CASE_INSENSITIVE);    
+    private static final Pattern USERNAME = Pattern.compile("\\$USERNAME", Pattern.CASE_INSENSITIVE);
+    private static final Pattern UID      = Pattern.compile("\\$UID", Pattern.CASE_INSENSITIVE);
     private static final Pattern CN       = Pattern.compile("\\$CN", Pattern.CASE_INSENSITIVE);
     private static final Pattern SN       = Pattern.compile("\\$SN", Pattern.CASE_INSENSITIVE);    
     private static final Pattern GIVENNAME= Pattern.compile("\\$GIVENNAME", Pattern.CASE_INSENSITIVE);
@@ -252,6 +253,7 @@ public class SVGImageManipulator {
  
  
   	  text = USERNAME.matcher(text).replaceAll(userdata.getUsername());	  
+  	  text = UID.matcher(text).replaceAll(dnfields.getField(DNFieldExtractor.UID, 0));
       text = CN.matcher(text).replaceAll(dnfields.getField(DNFieldExtractor.CN, 0));
 	  text = OU.matcher(text).replaceAll(dnfields.getField(DNFieldExtractor.OU, 0));
 	  text = O.matcher(text).replaceAll(dnfields.getField(DNFieldExtractor.O, 0));
