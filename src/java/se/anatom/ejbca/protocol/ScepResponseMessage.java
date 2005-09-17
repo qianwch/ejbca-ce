@@ -52,7 +52,7 @@ import java.util.Hashtable;
 /**
  * A response message for scep (pkcs7).
  *
- * @version $Id: ScepResponseMessage.java,v 1.23.2.2 2005-08-11 09:05:14 anatom Exp $
+ * @version $Id: ScepResponseMessage.java,v 1.23.2.3 2005-09-17 15:13:39 anatom Exp $
  */
 public class ScepResponseMessage implements IResponseMessage, Serializable {
     static final long serialVersionUID = 2016710353393853878L;
@@ -92,6 +92,8 @@ public class ScepResponseMessage implements IResponseMessage, Serializable {
     private transient X509Certificate signCert = null;
     private transient PrivateKey signKey = null;
 
+    /** Default digest algorithm for SCEP response message, can be overridden */
+    private transient String digestAlg = CMSSignedDataGenerator.DIGEST_MD5;
     /**
      * Sets the complete certificate in the response message.
      *
@@ -200,17 +202,16 @@ public class ScepResponseMessage implements IResponseMessage, Serializable {
                     log.debug("Adding certificates to response message");
                     certList.add(cert);
                     // Add the CA cert, it's optional but Cisco VPN client complains if it isn't there
-                    certList.add(signCert);
+                    //certList.add(signCert);
                 }
                 CertStore certs = CertStore.getInstance("Collection",
                         new CollectionCertStoreParameters(certList), "BC");
 
                 // Create the signed CMS message to be contained inside the envelope
-                msg = new CMSProcessableByteArray("PrimeKey".getBytes());
+                // this message does not contain any message, and no signerInfo
                 CMSSignedDataGenerator gen = new CMSSignedDataGenerator();
-                gen.addSigner(signKey, signCert, CMSSignedDataGenerator.DIGEST_SHA1);
                 gen.addCertificatesAndCRLs(certs);
-                s = gen.generate(msg, true, "BC");
+                s = gen.generate(null, false, "BC");
 
                 // Envelope the CMS message
                 if (recipientKeyInfo != null) {
@@ -313,7 +314,7 @@ public class ScepResponseMessage implements IResponseMessage, Serializable {
             }
 
             // Add our signer info and sign the message
-            gen1.addSigner(signKey, signCert, CMSSignedDataGenerator.DIGEST_SHA1,
+            gen1.addSigner(signKey, signCert, digestAlg,
                     new AttributeTable(attributes), null);
             signedData = gen1.generate(msg, true, "BC");
             responseMessage = signedData.getEncoded();
@@ -412,6 +413,12 @@ public class ScepResponseMessage implements IResponseMessage, Serializable {
      */
     public void setRecipientKeyInfo(byte[] recipientKeyInfo) {
         this.recipientKeyInfo = recipientKeyInfo;
+    }
+
+    /** @see se.anatom.ejca.protocol.IResponseMessage
+     */
+    public void setPreferredDigestAlg(String digest) {
+    	this.digestAlg = digest;
     }
 
 }
