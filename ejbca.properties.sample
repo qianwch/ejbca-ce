@@ -1,5 +1,5 @@
 #
-# $Id: ejbca.properties.sample,v 1.21.2.1 2005-10-06 19:08:56 anatom Exp $
+# $Id: ejbca.properties.sample,v 1.21.2.2 2005-10-06 19:52:29 anatom Exp $
 #
 # This is a sample file to override properties used
 # during development (or deployment) of EJBCA
@@ -184,12 +184,13 @@ httpsserver.dn=CN=localhost,O=EJBCA Sample,C=SE
 #mail.user=ejbca_user
 #mail.password=primekey
 
-# POP3 and SMTP servers.
+# SMTP server for sending mail.
 # Default: localhost
-#mail.pop3.host=localhost
 #mail.smtp.host=localhost
-#mail.pop3.host=pop3.domain.com
-#mail.smtp.host=smtp.domain.com
+
+# Use SMTP authentication if you smtp host requires it
+# Default: false
+#mail.smtp.auth=false
 
 # Email address used to send emails.
 # Default: ejbca-donotreply@domain.com
