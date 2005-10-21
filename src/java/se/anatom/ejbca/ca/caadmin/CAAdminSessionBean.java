@@ -82,7 +82,7 @@ import se.anatom.ejbca.util.KeyTools;
 /**
  * Administrates and manages CAs in EJBCA system.
  *
- * @version $Id: CAAdminSessionBean.java,v 1.42.2.1 2005-07-01 10:04:19 anatom Exp $
+ * @version $Id: CAAdminSessionBean.java,v 1.42.2.2 2005-10-21 07:02:58 anatom Exp $
  *
  * @ejb.bean description="Session bean handling core CA function,signing certificates"
  *   display-name="CAAdminSB"
@@ -714,7 +714,7 @@ public class CAAdminSessionBean extends BaseSessionBean {
                      */
                     
                     PKCS10CertificationRequest req = new PKCS10CertificationRequest("SHA1WithRSA",
-                            CertTools.stringToBcX509Name(ca.getSubjectDN()), ca.getCAToken().getPublicKey(SecConst.CAKEYPURPOSE_CERTSIGN), attributes, ca.getCAToken().getPrivateKey(SecConst.CAKEYPURPOSE_CERTSIGN));
+                            CertTools.stringToBcX509Name(ca.getSubjectDN()), ca.getCAToken().getPublicKey(SecConst.CAKEYPURPOSE_CERTSIGN), attributes, ca.getCAToken().getPrivateKey(SecConst.CAKEYPURPOSE_CERTSIGN), ca.getCAToken().getProvider());
                     
                     // create PKCS10RequestMessage
                     returnval = new PKCS10RequestMessage(req);
