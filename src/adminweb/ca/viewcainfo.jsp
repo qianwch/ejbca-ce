@@ -2,7 +2,7 @@
 <%@page errorPage="/errorpage.jsp"  import="se.anatom.ejbca.webdist.webconfiguration.EjbcaWebBean, se.anatom.ejbca.ra.raadmin.GlobalConfiguration, 
                  se.anatom.ejbca.webdist.cainterface.CAInfoView, se.anatom.ejbca.util.CertTools, se.anatom.ejbca.webdist.cainterface.CAInterfaceBean, se.anatom.ejbca.SecConst,
                  se.anatom.ejbca.authorization.AuthorizationDeniedException,
-                 javax.ejb.CreateException, java.rmi.RemoteException" %>
+                 javax.ejb.CreateException, java.rmi.RemoteException, java.security.cert.X509Certificate" %>
 
 <html>
 <jsp:useBean id="ejbcawebbean" scope="session" class="se.anatom.ejbca.webdist.webconfiguration.EjbcaWebBean" />
