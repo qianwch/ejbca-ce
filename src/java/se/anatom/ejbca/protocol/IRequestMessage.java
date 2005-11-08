@@ -26,7 +26,7 @@ import java.security.cert.X509Certificate;
  * Base interface for request messages sent to the CA. Implementors of this interface must also
  * implement Serializable if they are to be sent to any EJB bussiness methods.
  *
- * @version $Id: IRequestMessage.java,v 1.15.2.2 2005-09-27 18:19:06 anatom Exp $
+ * @version $Id: IRequestMessage.java,v 1.15.2.3 2005-11-08 19:03:29 anatom Exp $
  */
 public interface IRequestMessage {
     /**
@@ -160,4 +160,13 @@ public interface IRequestMessage {
      * @return oid of digest algorithm ex CMSSignedDataGenerator.MD5, SHA1, SHA256 etc
      */
     public String getPreferredDigestAlg(); 
+    
+    
+    /** If the CA certificate should be included in the reponse or not, default to true = yes.
+     * Not applicable for all request/response types.
+     * 
+     * @return true or false
+     */
+    public boolean includeCACert();
+
 }
