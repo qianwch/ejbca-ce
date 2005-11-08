@@ -74,7 +74,7 @@ import org.bouncycastle.x509.X509V3CertificateGenerator;
 /**
  * Tools to handle common certificate operations.
  *
- * @version $Id: CertTools.java,v 1.76.2.2 2005-08-02 11:38:10 anatom Exp $
+ * @version $Id: CertTools.java,v 1.76.2.3 2005-11-08 08:19:07 anatom Exp $
  */
 public class CertTools {
     private static Logger log = Logger.getLogger(CertTools.class);
@@ -251,6 +251,32 @@ public class CertTools {
         return ret;
     }
 
+    /**
+     * Search for e-mail address, first in SubjectAltName (as in PKIX
+     * recomandation) then in subject DN.
+     * Marco Ferrante, (c) 2005 CSITA - University of Genoa (Italy)
+     * 
+     * @param certificate
+     * @return subject email or null if not present in certificate
+     * @throws java.lang.Exception
+     */
+    public static String getEMailAddress(X509Certificate certificate) throws Exception {
+        log.debug("Searching for EMail Address in SubjectAltName");
+        if (certificate.getSubjectAlternativeNames() != null) {
+            java.util.Collection altNames = certificate.getSubjectAlternativeNames();
+            Iterator iter = altNames.iterator();
+            while (iter.hasNext()) {
+                java.util.List item = (java.util.List)iter.next();
+                Integer type = (Integer)item.get(0);
+                if (type.intValue() == 1) {
+                    return (String)item.get(1);
+                }
+            }
+        }
+        log.debug("Searching for EMail Address in Subject DN");
+        return CertTools.getEmailFromDN(certificate.getSubjectDN().getName());
+    }
+    
     /**
      * Convenience method for getting an email address from a DN. Uses {@link
      * getPartFromDN(String,String)} internally, and searches for {@link EMAIL}, {@link EMAIL1},
@@ -965,31 +991,6 @@ public class CertTools {
         return result;            
     }
 
-	/**
-	 * Search for e-mail address, first in SubjectAltName (as in PKIX
-	 * recomandation) then in subject DN.
-	 * Marco Ferrante, (c) 2005 CSITA - University of Genoa (Italy)
-	 * 
-	 * @param certificate
-	 * @return subject email or null if not present in certificate
-	 * @throws java.lang.Exception
-	 */
-	public static String getEMailAddress(X509Certificate certificate) throws Exception {
-		log.debug("Searching for EMail Address in SubjectAltName");
-		if (certificate.getSubjectAlternativeNames() != null) {
-			java.util.Collection altNames = certificate.getSubjectAlternativeNames();
-			for (java.util.Iterator i = altNames.iterator(); i.hasNext(); ) {
-				java.util.List item = (java.util.List)altNames.iterator().next();
-				Integer type = (Integer)item.get(0);
-				if (type.intValue() == 1) {
-					return (String)item.get(1);
-				}
-			}
-		}
-		log.debug("Searching for EMail Address in Subject DN");
-		return CertTools.getEmailFromDN(certificate.getSubjectDN().getName());
-	}
-	
 	/**
 	 * Check the certificate with CA certificate.
 	 *
