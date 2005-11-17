@@ -16,13 +16,14 @@ package se.anatom.ejbca.util;
 import java.security.cert.X509Certificate;
 
 import junit.framework.TestCase;
+
 import org.apache.log4j.Logger;
 
 
 /**
  * Tests the CertTools class .
  *
- * @version $Id: TestCertTools.java,v 1.6.2.4 2005-11-08 08:24:12 anatom Exp $
+ * @version $Id: TestCertTools.java,v 1.6.2.5 2005-11-17 20:42:01 herrvendil Exp $
  */
 public class TestCertTools extends TestCase {
     private static Logger log = Logger.getLogger(TestCertTools.class);
@@ -80,7 +81,7 @@ public class TestCertTools extends TestCase {
              +"8Xyj2tZEJKjLgAW6qJ3ye81pEVKHgMmapWTQU2uI1qyEPYxoT9WkQtSObGI1wCqO"
              +"YmKglnd5BIUBPO9LOryyHlSRTID5z0UgDlrTAaNYuN8QOYF+DZEQxm4bSXTDooGX"
              +"rHjSjn/7Urb31CXWAxq0Zhk3fg==").getBytes());
-
+    
     /**
      * Creates a new TestCertTools object.
      *
@@ -457,10 +458,16 @@ public class TestCertTools extends TestCase {
       String dn4 = "dc=com,dc=bigcorp,dc=se,ou=orgunit,ou=users,cn=Tomas G,CN=Bagare";
       String newdn4 = CertTools.insertCNPostfix(dn4,cnpostfix1); 
       assertEquals("dc=com,dc=bigcorp,dc=se,ou=orgunit,ou=users,cn=Tomas G (VPN),CN=Bagare", newdn4);
+
+      // Test case with two CNs in reversed DN 
+      String dn5 = "UID=tomas,CN=tomas,OU=users,OU=orgunit,DC=se,DC=bigcorp,DC=com";
+      String cnpostfix5 = " (VPN)";      
+      String newdn5 = CertTools.insertCNPostfix(dn5,cnpostfix5);
+      assertEquals("UID=tomas,CN=tomas (VPN),OU=users,OU=orgunit,DC=se,DC=bigcorp,DC=com", newdn5);
       
       log.debug("<test11TestInsertCNPostfix()");
   }
-    
+  
   /**
    */
   public void test12GetPartsFromDN() throws Exception {
