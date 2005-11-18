@@ -14,12 +14,7 @@
 package se.anatom.ejbca.hardtoken.hardtokenprofiles;
 
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-
-import javax.ejb.EJBException;
 
 import se.anatom.ejbca.SecConst;
 
@@ -27,7 +22,7 @@ import se.anatom.ejbca.SecConst;
 /**
  * EnhancedEIDProfile with three certificates and key recovery functionallity
  * 
- * @version $Id: EnhancedEIDProfile.java,v 1.9.2.1 2005-11-17 20:41:41 herrvendil Exp $
+ * @version $Id: EnhancedEIDProfile.java,v 1.9.2.2 2005-11-18 12:15:41 anatom Exp $
  */
 public class EnhancedEIDProfile extends EIDProfile {
 						

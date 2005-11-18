@@ -15,8 +15,6 @@ package se.anatom.ejbca.hardtoken.hardtokenprofiles;
 
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 
 import se.anatom.ejbca.SecConst;
 
@@ -24,7 +22,7 @@ import se.anatom.ejbca.SecConst;
 /**
  * Hard token profile with a goal to fulfill Swedish EID standard.
  * 
- * @version $Id: SwedishEIDProfile.java,v 1.7.2.1 2005-11-17 20:41:41 herrvendil Exp $
+ * @version $Id: SwedishEIDProfile.java,v 1.7.2.2 2005-11-18 12:15:41 anatom Exp $
  */
 public class SwedishEIDProfile extends EIDProfile {
 		
