@@ -27,7 +27,8 @@ import org.bouncycastle.asn1.x509.X509Extension;
 import org.bouncycastle.asn1.x509.X509Extensions;
 import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.cms.CMSSignedDataGenerator;
-import org.bouncycastle.jce.PKCS10CertificationRequest;
+
+import se.anatom.ejbca.common.ExtendedPKCS10CertificationRequest;
 import se.anatom.ejbca.util.CertTools;
 
 import java.io.Serializable;
@@ -44,7 +45,7 @@ import java.security.cert.X509Certificate;
 /**
  * Class to handle PKCS10 request messages sent to the CA.
  *
- * @version $Id: PKCS10RequestMessage.java,v 1.28.2.6 2005-11-08 19:03:29 anatom Exp $
+ * @version $Id: PKCS10RequestMessage.java,v 1.28.2.7 2005-11-24 21:17:17 herrvendil Exp $
  */
 public class PKCS10RequestMessage implements IRequestMessage, Serializable {
     static final long serialVersionUID = 3597275157018205136L;
@@ -67,7 +68,7 @@ public class PKCS10RequestMessage implements IRequestMessage, Serializable {
     private transient String preferredDigestAlg = CMSSignedDataGenerator.DIGEST_SHA1;
 
     /** The pkcs10 request message, not serialized. */
-    protected transient PKCS10CertificationRequest pkcs10 = null;
+    protected transient ExtendedPKCS10CertificationRequest pkcs10 = null;
 
     /** Type of error */
     private int error = 0;
@@ -103,15 +104,15 @@ public class PKCS10RequestMessage implements IRequestMessage, Serializable {
      *
      * @param p10 the PKCS#10 request
      */
-    public PKCS10RequestMessage(PKCS10CertificationRequest p10) {
-        log.debug(">PKCS10RequestMessage(PKCS10CertificationRequest)");
+    public PKCS10RequestMessage(ExtendedPKCS10CertificationRequest p10) {
+        log.debug(">PKCS10RequestMessage(ExtendedPKCS10CertificationRequest)");
         p10msg = p10.getEncoded();
         pkcs10 = p10;
-        log.debug("<PKCS10RequestMessage(PKCS10CertificationRequest)");
+        log.debug("<PKCS10RequestMessage(ExtendedPKCS10CertificationRequest)");
     }
 
     private void init() {
-        pkcs10 = new PKCS10CertificationRequest(p10msg);
+        pkcs10 = new ExtendedPKCS10CertificationRequest(p10msg);
     }
 
     /**
@@ -317,7 +318,7 @@ public class PKCS10RequestMessage implements IRequestMessage, Serializable {
      *
      * @return the request object
      */
-    public PKCS10CertificationRequest getCertificationRequest() {
+    public ExtendedPKCS10CertificationRequest getCertificationRequest() {
         try {
             if (pkcs10 == null) {
                 init();
