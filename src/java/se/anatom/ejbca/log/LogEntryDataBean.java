@@ -46,8 +46,6 @@ import java.util.Date;
  *   schema="LogEntryDataBean"
  *   primkey-field="id"
  *
- * @ejb.permission role-name="InternalUser"
- *
  * @ejb.pk
  *   generate="false"
  *   class="java.lang.Integer"

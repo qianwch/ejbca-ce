@@ -40,8 +40,6 @@ import se.anatom.ejbca.BaseEntityBean;
  *   transaction-type="Container"
  *   schema="AccessRulesDataBean"
  *
- * @ejb.permission role-name="InternalUser"
- *
  * @ejb.pk
  *   generate="false"
  *   class="se.anatom.ejbca.authorization.AccessRulesPK"
@@ -58,7 +56,6 @@ import se.anatom.ejbca.BaseEntityBean;
  *   local-extends="javax.ejb.EJBLocalObject"
  *   local-class="se.anatom.ejbca.authorization.AccessRulesDataLocal"
  *
- * @todo Write migration script
  */
 public abstract class AccessRulesDataBean extends BaseEntityBean
 {
@@ -66,8 +63,8 @@ public abstract class AccessRulesDataBean extends BaseEntityBean
      * @ejb.persistence column-name="pK"
      * @ejb.pk-field
      */
-    public abstract int getPK();
-    public abstract void setPK(int PK);
+    public abstract int getPrimKey();
+    public abstract void setPrimKey(int primKey);
 
 	/**
 	 * @ejb.persistence
@@ -105,7 +102,7 @@ public abstract class AccessRulesDataBean extends BaseEntityBean
 	 */
     public AccessRulesPK ejbCreate(String admingroupname, int caid, String accessrule, int rule, boolean isrecursive) throws CreateException {
         AccessRulesPK ret = new AccessRulesPK(admingroupname, caid, new AccessRule(accessrule, rule, isrecursive));
-        setPK(ret.PK);
+        setPrimKey(ret.primKey);
         setAccessRule(accessrule);
         setRule(rule);
         setIsRecursive(isrecursive);

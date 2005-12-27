@@ -53,8 +53,6 @@ import se.anatom.ejbca.util.query.Query;
  *   type="Stateless"
  *   transaction-type="Container"
  *
- * @ejb.permission role-name="InternalUser"
- *
  * @ejb.env-entry
  * name="DataSource"
  * type="java.lang.String"
