@@ -59,7 +59,7 @@ import se.anatom.ejbca.ra.raadmin.DNFieldExtractor;
  * It replaces all occurrenses of specified variables in the images 
  * with the corresponding userdata.
  *
- * @version $Id: SVGImageManipulator.java,v 1.12.2.3 2005-10-28 20:10:34 primelars Exp $
+ * @version $Id: SVGImageManipulator.java,v 1.12.2.4 2005-12-29 13:43:48 primelars Exp $
  */
 public class SVGImageManipulator {
 	/**
@@ -206,7 +206,7 @@ public class SVGImageManipulator {
 	 
 	  t.transcode(input, output);
 
-	  t.addTranscodingHint(PrintTranscoder. KEY_SCALE_TO_PAGE, new Boolean(false));
+	  t.addTranscodingHint(PrintTranscoder.KEY_SCALE_TO_PAGE, new Boolean(true));
 	         	  	  	   	 
       // Reuse original document
       svgdoc = (SVGOMDocument) originaldokument;
