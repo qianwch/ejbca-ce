@@ -38,7 +38,7 @@ import se.anatom.ejbca.util.CertTools;
  * nextUpdate (nextUpdate)
  * </pre>
  *
- * @version $Id: CRLDataBean.java,v 1.25.2.1 2005-12-27 16:16:00 anatom Exp $
+ * @version $Id: CRLDataBean.java,v 1.25.2.2 2005-12-29 13:50:38 anatom Exp $
  *
  * @ejb.bean description="This enterprise bean entity represents a CRL with accompanying data"
  * display-name="CRLDataEB"
@@ -56,6 +56,8 @@ import se.anatom.ejbca.util.CertTools;
  * extends="java.lang.Object"
  * implements="java.io.Serializable"
  *
+ * @ejb.persistence table-name = "CRLData"
+
  * @ejb.home
  * generate="local"
  * local-extends="javax.ejb.EJBLocalHome"

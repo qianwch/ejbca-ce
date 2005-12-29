@@ -34,7 +34,7 @@ import java.math.BigInteger;
  *  keypair
  * </pre>
  *
- * @version $Id: KeyRecoveryDataBean.java,v 1.20.2.1 2005-12-27 16:16:01 anatom Exp $
+ * @version $Id: KeyRecoveryDataBean.java,v 1.20.2.2 2005-12-29 13:50:40 anatom Exp $
  *
  * @ejb.bean
  *   description="Stores key recovery data"
@@ -53,6 +53,8 @@ import java.math.BigInteger;
  *   extends="java.lang.Object"
  *   implements="java.io.Serializable"
  *
+ * @ejb.persistence table-name = "KeyRecoveryData"
+ * 
  * @ejb.home
  *   generate="local"
  *   local-extends="javax.ejb.EJBLocalHome"

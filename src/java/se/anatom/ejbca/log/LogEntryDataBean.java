@@ -50,6 +50,8 @@ import java.util.Date;
  *   generate="false"
  *   class="java.lang.Integer"
  *
+ * @ejb.persistence table-name = "LogEntryData"
+ * 
  * @ejb.home
  *   generate="local"
  *   local-extends="javax.ejb.EJBLocalHome"
