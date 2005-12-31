@@ -48,6 +48,8 @@ import se.anatom.ejbca.BaseEntityBean;
  *
  * @ejb.persistence table-name = "AccessRulesData"
  * 
+ * @ejb.transaction type="Supports"
+ * 
  * @ejb.home
  *   generate="local"
  *   local-extends="javax.ejb.EJBLocalHome"
