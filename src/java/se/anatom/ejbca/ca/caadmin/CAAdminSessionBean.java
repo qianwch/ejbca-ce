@@ -82,7 +82,7 @@ import se.anatom.ejbca.util.KeyTools;
 /**
  * Administrates and manages CAs in EJBCA system.
  *
- * @version $Id: CAAdminSessionBean.java,v 1.42.2.5 2006-01-02 08:43:02 anatom Exp $
+ * @version $Id: CAAdminSessionBean.java,v 1.42.2.6 2006-01-02 15:21:05 anatom Exp $
  *
  * @ejb.bean description="Session bean handling core CA function,signing certificates"
  *   display-name="CAAdminSB"
@@ -94,6 +94,8 @@ import se.anatom.ejbca.util.KeyTools;
  *   transaction-type="Container"
  *
  * @ejb.transaction type="Required"
+ * 
+ * @weblogic.enable-call-by-reference True
  *
  * @ejb.env-entry description="Used internally to keystores in database"
  *   name="keyStorePass"
@@ -656,18 +658,19 @@ public class CAAdminSessionBean extends BaseSessionBean {
      * @ejb.interface-method
      */
     public Collection getAvailableCAs(Admin admin){
-		ArrayList returnval = new ArrayList();
-		try{
-			Collection result = cadatahome.findAll();
-			Iterator iter = result.iterator();
-			while(iter.hasNext()){
-				CADataLocal cadata = (CADataLocal) iter.next();
-				if(cadata.getStatus() != SecConst.CA_WAITING_CERTIFICATE_RESPONSE && cadata.getStatus() != SecConst.CA_EXTERNAL)
-				  returnval.add(cadata.getCaId());
-			}
-		}catch(javax.ejb.FinderException fe){}
-
-		return returnval;
+        ArrayList returnval = new ArrayList();
+        try{
+            Collection result = cadatahome.findAll();
+            Iterator iter = result.iterator();
+            while(iter.hasNext()){
+                CADataLocal cadata = (CADataLocal) iter.next();
+                if(cadata.getStatus() != SecConst.CA_WAITING_CERTIFICATE_RESPONSE && cadata.getStatus() != SecConst.CA_EXTERNAL)
+                    returnval.add(cadata.getCaId());
+            }
+        }catch(javax.ejb.FinderException fe) {
+            log.error("Error listing all CAs: ", fe);
+        }        
+        return returnval;
     }
 
 

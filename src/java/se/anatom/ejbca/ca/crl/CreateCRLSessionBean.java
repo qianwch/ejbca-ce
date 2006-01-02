@@ -51,7 +51,7 @@ import se.anatom.ejbca.util.CertTools;
  * Generates a new CRL by looking in the database for revoked certificates and
  * generating a CRL.
  *
- * @version $Id: CreateCRLSessionBean.java,v 1.29.2.1 2005-12-27 16:16:01 anatom Exp $
+ * @version $Id: CreateCRLSessionBean.java,v 1.29.2.2 2006-01-02 15:21:05 anatom Exp $
  * @ejb.bean
  *   description="Session bean handling hard token data, both about hard tokens and hard token issuers."
  *   display-name="CreateCRLSB"
@@ -63,6 +63,8 @@ import se.anatom.ejbca.util.CertTools;
  *   transaction-type="Container"
  *
  * @ejb.transaction type="Required"
+ *
+ * @weblogic.enable-call-by-reference True
  *
  * @ejb.ejb-external-ref
  *   description="The log session bean"

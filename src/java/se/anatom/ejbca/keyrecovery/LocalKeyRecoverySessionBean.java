@@ -40,7 +40,7 @@ import se.anatom.ejbca.util.CertTools;
  * Stores key recovery data. Uses JNDI name for datasource as defined in env 'Datasource' in
  * ejb-jar.xml.
  *
- * @version $Id: LocalKeyRecoverySessionBean.java,v 1.32.2.1 2005-12-27 16:16:01 anatom Exp $
+ * @version $Id: LocalKeyRecoverySessionBean.java,v 1.32.2.2 2006-01-02 15:21:05 anatom Exp $
  *
  * @ejb.bean
  *   display-name="Stores key recovery data"
@@ -52,6 +52,8 @@ import se.anatom.ejbca.util.CertTools;
  *   transaction-type="Container"
  *
  * @ejb.transaction type="Required"
+ *
+ * @weblogic.enable-call-by-reference True
  *
  * @ejb.env-entry description="JDBC datasource to be used"
  * name="DataSource"
