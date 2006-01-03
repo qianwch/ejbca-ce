@@ -172,6 +172,10 @@ public abstract class LogEntryDataBean extends BaseEntityBean {
     public abstract void setEvent(int event);
 
     /**
+     * If you are using Weblogic and Oracle add:
+     * column-name="comment_"
+     * to the end of the ejb persistense line.
+     * 
      * @ejb.persistence
      * @ejb.interface-method view-type="local"
      */
