@@ -37,7 +37,7 @@ import se.anatom.ejbca.util.ServiceLocator;
  * Admin entities
  * </pre>
  *
- * @version $Id: AdminGroupDataBean.java,v 1.19.2.4 2005-12-31 14:33:19 anatom Exp $
+ * @version $Id: AdminGroupDataBean.java,v 1.19.2.5 2006-01-03 13:15:32 anatom Exp $
  *
  * @ejb.bean
  *   description="This enterprise bean entity represents an authorization usergroup"
@@ -69,12 +69,12 @@ import se.anatom.ejbca.util.ServiceLocator;
  * @ejb.finder
  *   description="findByGroupNameAndCAId"
  *   signature="se.anatom.ejbca.authorization.AdminGroupDataLocal findByGroupNameAndCAId(java.lang.String name,  int id)"
- *   query="SELECT DISTINCT OBJECT(a) from AdminGroupDataBean a WHERE a.adminGroupName=?1 AND a.caId=?2"
+ *   query="SELECT OBJECT(a) from AdminGroupDataBean a WHERE a.adminGroupName=?1 AND a.caId=?2"
  *
  * @ejb.finder
  *   description="findAll"
  *   signature="java.util.Collection findAll()"
- *   query="SELECT DISTINCT OBJECT(a) from AdminGroupDataBean a"
+ *   query="SELECT OBJECT(a) from AdminGroupDataBean a"
  *
  * @ejb.ejb-external-ref
  *   description=""

@@ -28,7 +28,7 @@ import se.anatom.ejbca.BaseEntityBean;
  * GlobalConfiguration
  * </pre>
  *
- * @version $Id: GlobalConfigurationDataBean.java,v 1.6.2.2 2005-12-31 14:33:19 anatom Exp $
+ * @version $Id: GlobalConfigurationDataBean.java,v 1.6.2.3 2006-01-03 13:15:34 anatom Exp $
  *
  * @ejb.bean description="This enterprise bean entity represents global configuration of ra administration"
  * display-name="GlobalConfigurationDataEB"
@@ -60,7 +60,7 @@ import se.anatom.ejbca.BaseEntityBean;
  * @ejb.finder
  *   description="findByConfigurationId"
  *   signature="se.anatom.ejbca.ra.raadmin.GlobalConfigurationDataLocal findByConfigurationId(java.lang.String id)"
- *   query="SELECT DISTINCT OBJECT(a) from GlobalConfigurationDataBean a WHERE a.configurationId=?1"
+ *   query="SELECT OBJECT(a) from GlobalConfigurationDataBean a WHERE a.configurationId=?1"
  *
  */
 public abstract class GlobalConfigurationDataBean extends BaseEntityBean {
