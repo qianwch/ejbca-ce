@@ -4,6 +4,9 @@ CONFIGURING Weblogic
 
 Note: EJBCA should work fine with Weblogic 7.x/8.x
 
+0. Edit ejbca.properties, it's important to at least set up the database parameters.
+Make special not to 'datasource.jndi-name' which is specific for Weblogic.
+
 1. In the database configured for DefaultPool and DefaultDS in Weblogic, create
 tables if weblogic does not do it automagically. 
 - You can do an 'ant bootstrap' to JBoss if you want JBoss to create the tables for you.
