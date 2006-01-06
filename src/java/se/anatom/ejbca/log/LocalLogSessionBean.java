@@ -58,7 +58,7 @@ import se.anatom.ejbca.util.query.Query;
  * @ejb.env-entry
  * name="DataSource"
  * type="java.lang.String"
- * value="${datasource.jndi-name}"
+ * value="${datasource.jndi-name-prefix}${datasource.jndi-name}"
  *
  * @ejb.env-entry
  *   description="String representing the log device factories to be used. The different device classes should be separated with semicolons (;)."
