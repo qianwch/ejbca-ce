@@ -26,7 +26,7 @@ import se.anatom.ejbca.util.query.Query;
 /**
  * Tests the log modules entity and session beans.
  *
- * @version $Id: TestLog.java,v 1.2 2005-02-11 13:12:28 anatom Exp $
+ * @version $Id: TestLog.java,v 1.2.2.1 2006-01-26 13:03:49 anatom Exp $
  */
 public class TestLog extends TestCase {
     private static Logger log = Logger.getLogger(TestLog.class);
@@ -118,9 +118,9 @@ public class TestLog extends TestCase {
         boolean found = false;
         while (iter.hasNext()) {
             LogEntry entry = (LogEntry) iter.next();
-            if (entry.getComment().equals("Test")) {
+            if ( (entry.getComment() != null) && (entry.getComment().equals("Test")) ) {
                 found = true;
-            }
+            }                
         }
 
         assertTrue("Couldn't retrieve correct log data from database.", found);
