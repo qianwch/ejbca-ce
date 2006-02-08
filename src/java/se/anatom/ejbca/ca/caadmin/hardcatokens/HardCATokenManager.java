@@ -26,7 +26,7 @@ import se.anatom.ejbca.ca.caadmin.CAToken;
  * Each HardCaToken plug-in should register itself by using the method register.
  * The CA keeps a registry of CA tokens created here.
  * 
- * @version $Id: HardCATokenManager.java,v 1.13.2.1 2005-11-11 08:55:02 anatom Exp $
+ * @version $Id: HardCATokenManager.java,v 1.13.2.2 2006-02-08 13:22:27 anatom Exp $
  * 
  */
 public class HardCATokenManager {
@@ -49,6 +49,7 @@ public class HardCATokenManager {
      */
     static {
         HardCATokenManager.instance().addAvailableHardCAToken("se.anatom.ejbca.ca.caadmin.hardcatokens.NFastCAToken", "NFastCAToken", false, true);
+        HardCATokenManager.instance().addAvailableHardCAToken("se.primeKey.caToken.nFast.NFastCAToken", "OldNFastCAToken", false, true);
 		HardCATokenManager.instance().addAvailableHardCAToken("se.primeKey.caToken.card.PrimeCAToken", "PrimeCAToken", false, true);
 		HardCATokenManager.instance().addAvailableHardCAToken("se.anatom.ejbca.ca.caadmin.hardcatokens.DummyHardCAToken", "DummyHardCAToken", false, false);
 		HardCATokenManager.instance().addAvailableHardCAToken("se.anatom.ejbca.ca.caadmin.hardcatokens.HardCATokenSample", "HardCATokenSample", false, false);
