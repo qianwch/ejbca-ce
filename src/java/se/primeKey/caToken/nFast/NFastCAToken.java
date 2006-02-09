@@ -38,7 +38,7 @@ import se.anatom.ejbca.ca.exception.CATokenOfflineException;
  * and the development was sponsored by Linagora (www.linagora.com).
  * 
  * @author Lars Silvén
- * @version $Id: NFastCAToken.java,v 1.1.2.3 2006-02-09 12:37:26 anatom Exp $
+ * @version $Id: NFastCAToken.java,v 1.1.2.4 2006-02-09 12:40:16 anatom Exp $
  */
 public class NFastCAToken implements IHardCAToken {
 
@@ -65,7 +65,7 @@ public class NFastCAToken implements IHardCAToken {
 
     public void init(Properties properties, String signaturealgorithm) {
         if (log.isDebugEnabled()) {
-            log.debug("Properties: "+properties.toString());
+            log.debug("Properties: "+properties != null ? properties.toString() : "null");
             log.debug("Signaturealg: "+signaturealgorithm);
         }
         keyStrings = new KeyStrings(properties);
