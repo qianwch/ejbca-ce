@@ -1,13 +1,24 @@
-$Id: UPGRADE,v 1.11 2005-06-17 08:07:04 anatom Exp $
+$Id: UPGRADE,v 1.11.2.1 2006-02-12 08:42:40 anatom Exp $
 
 UPGRADE
 =======
 
 This document describes proceedures needed to upgrade from one 
 version of EJBCA to a new version.
-Upgrades within a major version, from 2.0 to 2.0.1 for example, are 
+Upgrades within a major version, from 3.1 to 3.1.1 for example, are 
 usually plug-in upgrades and can be made simply by deploying the new 
 software. See doc/RELEASE_NOTES for info about such upgrades.
+
+From EJBCA 3.1.x to EJBCA 3.1.x
+-------------------------------
+See release notes for details between certain versions. 
+Normally upgrades within a major release are plug-in upgrades.
+
+Otherwise simply keep/copy ejbca.properties from the earlier installation.
+Merge changes from ejbca.properties.sample into your ejbca.properties, 
+specially datasource.jndi-name and datasource.jndi-name-prefix if you changed them from the default values.
+Copy the directory 'p12' from the earlier installation and 'ant deploy' 
+(or deploywithjbossservice) this new one.
 
 From EJBCA 3.0.x to EJBCA 3.1
 -----------------------------
