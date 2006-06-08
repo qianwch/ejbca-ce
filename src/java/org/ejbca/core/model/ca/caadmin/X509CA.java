@@ -110,7 +110,7 @@ import org.ejbca.util.CertTools;
  * X509CA is a implementation of a CA and holds data specific for Certificate and CRL generation 
  * according to the X509 standard. 
  *
- * @version $Id: X509CA.java,v 1.5 2006-01-31 15:08:17 anatom Exp $
+ * @version $Id: X509CA.java,v 1.5.2.1 2006-06-08 19:10:12 anatom Exp $
  */
 public class X509CA extends CA implements Serializable {
 
@@ -232,7 +232,7 @@ public class X509CA extends CA implements Serializable {
         // First verify that we signed this certificate
         try {
             if (cert != null)
-                cert.verify(getCAToken().getPublicKey(SecConst.CAKEYPURPOSE_CERTSIGN), getCAToken().getProvider());
+                cert.verify(getCAToken().getPublicKey(SecConst.CAKEYPURPOSE_CERTSIGN));
         } catch (Exception e) {
             throw new SignRequestSignatureException("Cannot verify certificate in createPKCS7(), did I sign this?");
         }
