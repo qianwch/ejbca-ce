@@ -494,7 +494,7 @@ public class LocalPublisherSessionBean extends BaseSessionBean {
         boolean superadmin = false;
         // If superadmin return all available publishers
         try {
-            superadmin = getAuthorizationSession().isAuthorized(admin, AvailableAccessRules.ROLE_SUPERADMINISTRATOR);
+            superadmin = getAuthorizationSession().isAuthorizedNoLog(admin, AvailableAccessRules.ROLE_SUPERADMINISTRATOR);
             result = this.publisherhome.findAll();
             Iterator i = result.iterator();
             while (i.hasNext()) {
