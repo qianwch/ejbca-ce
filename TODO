@@ -1,0 +1,31 @@
+$Id: TODO,v 1.2 2001-12-04 09:43:47 anatom Exp $
+
+V 1.0
+-----
+
+- NONE
+
+V 2.0
+-----
+- Make real sample code for POSTing request with HTTP/s to CA.
+- Look into using ant for command line commands, i.e. 'ant -f runtime.xml ca <args>'
+- Return PKCS7 response to IE/Mozilla, response is PKCS7 with whole chain. ca.crt is also pkcs7 with whole chain.
+- Add administration interface web-GUI (through servlets/JSP).
+- Remote secure administration through browser CA-admin and RA-admin.
+- EJB best practices, performance meshurments ant optimization.
+- Add Configuration through database so changes can be made on-the-fly.
+- Invent strategy for handling multiple instances of CAs on the same app-server.
+- Strategy for handling certificate issuance if notAfter is beyond CAs notAfter.
+- Add support for deeper hierarchies than 2 levels of CAs (today only root and CA).
+- Add links to LDAP for storage and retrieval of certs (use in addition/instead of local db). See OpenLDAP.
+- Make RA for large scale deployment, different orgunits for different admins. Secure remote RA, RA authenticates requests.
+- Complete implementation of createCertificate() method in SignSessionBean.
+- Try 'real' databases (MySQL, PostgreSQL) with jboss.
+- Run on other appservers, ie Weblogic, Websphere etc.
+- Add smart card support (PKCS15) in CA for protection of private key.
+- Update to EJB 2.0 spec (when JBoss is ready).
+- Make CA/RA for off-line authorization of requests for high security environments.
+- RA with self registration for end-entities, RA approves registration.
+- RA function to generate keystore for user.
+- Keystore in other formats, PKCS8/PEM.
+- Describe SSL-setup in server.
