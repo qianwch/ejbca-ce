@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
@@ -73,8 +74,10 @@ import org.bouncycastle.asn1.x509.GeneralNames;
 import org.bouncycastle.asn1.x509.PolicyInformation;
 import org.bouncycastle.asn1.x509.SubjectKeyIdentifier;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
+import org.bouncycastle.asn1.x509.X509DefaultEntryConverter;
 import org.bouncycastle.asn1.x509.X509Extensions;
 import org.bouncycastle.asn1.x509.X509Name;
+import org.bouncycastle.asn1.x509.X509NameEntryConverter;
 import org.bouncycastle.asn1.x509.X509NameTokenizer;
 import org.bouncycastle.asn1.x509.X509ObjectIdentifiers;
 import org.bouncycastle.asn1.x509.qualified.ETSIQCObjectIdentifiers;
@@ -91,7 +94,7 @@ import org.bouncycastle.x509.X509V3CertificateGenerator;
 /**
  * Tools to handle common certificate operations.
  *
- * @version $Id: CertTools.java,v 1.5 2006-02-08 20:22:33 anatom Exp $
+ * @version $Id: CertTools.java,v 1.5.4.1 2006-09-15 15:15:33 anatom Exp $
  */
 public class CertTools {
     private static Logger log = Logger.getLogger(CertTools.class);
@@ -174,85 +177,86 @@ public class CertTools {
         return (DERObjectIdentifier) oids.get(o.toLowerCase());
     } // getOid
 
-    /**
-     * Creates a (Bouncycastle) X509Name object from a string with a DN. Known OID (with order)
-     * are: <code> EmailAddress, UID, CN, SN (SerialNumber), GivenName, Initials, SurName, T, OU,
-     * O, L, ST, DC, C </code>
-     * To change order edit 'dnObjects' in this source file.
-     * Important NOT to mess with the ordering within this class, since cert vierification 
-     * on some clients (IE :-() might depend on order.
-     *
-     * @param dn String containing DN that will be transformed into X509Name, The DN string has the
-     *        format "CN=zz,OU=yy,O=foo,C=SE". Unknown OIDs in the string will be silently
-     *        dropped.
-     *
+    /** See stringToBcX509Name(String, X509NameEntryConverter), this method uses the default BC converter (X509DefaultEntryConverter)
+     * @see #stringToBcX509Name(String, X509NameEntryConverter)
+     * @param dn
+     * @param dn
+     *          String containing DN that will be transformed into X509Name, The
+     *          DN string has the format "CN=zz,OU=yy,O=foo,C=SE". Unknown OIDs in
+     *          the string will be added to the end positions of OID array.
+     * 
      * @return X509Name or null if input is null
      */
     public static X509Name stringToBcX509Name(String dn) {
-        //log.debug(">stringToBcX509Name: " + dn);
-        if (dn == null) return null;
-        // first make two vectors, one with all the C, O, OU etc specifying
-        // the order and one holding the actual values
-        ArrayList oldordering = new ArrayList();
-        ArrayList oldvalues = new ArrayList();
-        X509NameTokenizer xt = new X509NameTokenizer(dn);
+    	X509NameEntryConverter converter = new X509DefaultEntryConverter();
+    	return stringToBcX509Name(dn, converter);
+    	
+    	
+    }
+    /**
+     * Creates a (Bouncycastle) X509Name object from a string with a DN. Known OID
+     * (with order) are:
+     * <code> EmailAddress, UID, CN, SN (SerialNumber), GivenName, Initials, SurName, T, OU,
+     * O, L, ST, DC, C </code>
+     * To change order edit 'dnObjects' in this source file. Important NOT to mess
+     * with the ordering within this class, since cert vierification on some
+     * clients (IE :-() might depend on order.
+     * 
+     * @param dn
+     *          String containing DN that will be transformed into X509Name, The
+     *          DN string has the format "CN=zz,OU=yy,O=foo,C=SE". Unknown OIDs in
+     *          the string will be added to the end positions of OID array.
+     * @param converter BC converter for DirectoryStrings, that determines which encoding is chosen
+     * @return X509Name or null if input is null
+     */
+    public static X509Name stringToBcX509Name(String dn, X509NameEntryConverter converter) {
 
-        while (xt.hasMoreTokens()) {
-            // This is a pair (CN=xx)
-            String pair = xt.nextToken();
-            int ix = pair.indexOf("=");
+      // log.debug(">stringToBcX509Name: " + dn);
+      if (dn == null)
+        return null;
 
-            if (ix != -1) {
-                // make lower case so we can easily compare later
-                oldordering.add(pair.substring(0, ix).toLowerCase());
-                oldvalues.add(pair.substring(ix + 1));
-            } else {
-                // Huh, what's this?
-            }
+      Vector defaultOrdering = new Vector();
+      Vector values = new Vector();
+      X509NameTokenizer xt = new X509NameTokenizer(dn);
+
+      while (xt.hasMoreTokens()) {
+        // This is a pair (CN=xx)
+        String pair = xt.nextToken();
+        int ix = pair.indexOf("=");
+
+        if (ix != -1) {
+          String key = pair.substring(0, ix).toLowerCase();
+          String val = pair.substring(ix + 1);
+
+          // -- First search the OID by name in declared OID's
+          DERObjectIdentifier oid = getOid(key);
+
+          try {
+              // -- If isn't declared, we try to create it
+              if (oid == null) {
+                oid = new DERObjectIdentifier(key);
+              }
+              defaultOrdering.add(oid);
+              values.add(val);              
+          } catch (IllegalArgumentException e) {
+              // If it is not an OID we will ignore it
+              log.warn("Unknown DN component ignored and silently dropped: " + oid);
+          }
+
+        } else {
+            log.warn("Huh, what's this? DN: " + dn+" PAIR: "+pair);
         }
+      }
 
-        // Now in the specified order, move from oldordering to newordering,
-        // reshuffling as we go along
-        Vector ordering = new Vector();
-        Vector values = new Vector();
-        int index = -1;
+      X509Name x509Name = new X509Name(defaultOrdering, values, converter);
 
-        for (int i = 0; i < dNObjects.length; i++) {
-            //log.debug("Looking for "+dNObjects[i]);
-            String object = dNObjects[i];
+      //-- Reorder fields
+      X509Name orderedX509Name = getOrderedX509Name(x509Name, getDefaultX509FieldOrder(), converter);
 
-            while ((index = oldordering.indexOf(object)) != -1) {
-                //log.debug("Found 1 "+object+" at index " + index);
-                DERObjectIdentifier oid = getOid(object);
-
-                if (oid != null) {
-                    //log.debug("Added "+object+", "+oldvalues.elementAt(index));
-                    ordering.add(oid);
-
-                    // remove from the old vectors, so we start clean the next round
-                    values.add(oldvalues.remove(index));
-                    oldordering.remove(index);
-                    index = -1;
-                }
-            }
-        }
-
-        /*
-        if (log.isDebugEnabled()) {
-            Iterator i1 = ordering.iterator();
-            Iterator i2 = values.iterator();
-            log.debug("Order: ");
-            while (i1.hasNext()) {
-                log.debug(((DERObjectIdentifier)i1.next()).getId());
-            }
-            log.debug("Values: ");
-            while (i2.hasNext()) {
-                log.debug((String)i2.next());
-            }
-        } */
-
-        //log.debug("<stringToBcX509Name");
-        return new X509Name(ordering, values);
+      log.debug("<stringToBcX509Name");
+      return orderedX509Name;
+      
+      
     } // stringToBcX509Name
 
     /**
@@ -1649,4 +1653,119 @@ public class CertTools {
         }
         return ret;
     }
+
+    /**
+     * Obtains a Vector with the DERObjectIdentifiers for 
+     * dNObjects names.
+     * 
+     * @return Vector with DERObjectIdentifiers defining the known order we require
+     */
+    private static Vector getDefaultX509FieldOrder(){
+      Vector fieldOrder = new Vector();
+      for (int i = 0; i < dNObjects.length; i++) {
+          fieldOrder.add(getOid(dNObjects[i]));
+      }
+      return fieldOrder;
+    }
+    
+    /**
+     * Obtain a X509Name reordered, if some fields from original X509Name 
+     * doesn't appear in "ordering" parameter, they will be added at end 
+     * in the original order.
+     *   
+     * @param x509Name the X509Name that is unordered 
+     * @param ordering Vector of DERObjectIdentifier defining the desired order of components
+     * @return X509Name with ordered conmponents according to the orcering vector
+     */
+    private static X509Name getOrderedX509Name( X509Name x509Name, Vector ordering, X509NameEntryConverter converter ){
+        
+        //-- Null prevent
+        if ( ordering == null ){ ordering = new Vector(); }
+        
+        //-- New order for the X509 Fields
+        Vector newOrdering  = new Vector();
+        Vector newValues    = new Vector();
+        
+        Hashtable ht = new Hashtable();
+        Iterator it = ordering.iterator();
+        
+        //-- Add ordered fields
+        while( it.hasNext() ){
+            DERObjectIdentifier oid = (DERObjectIdentifier) it.next();
+            
+            if ( !ht.containsKey(oid) ){
+                Vector valueList = getX509NameFields(x509Name, oid);
+                //-- Only add the OID if has not null value
+                if ( valueList != null ){
+                    Iterator itVals = valueList.iterator();
+                    while( itVals.hasNext() ){
+                        Object value = itVals.next();
+                        ht.put(oid, value);
+                        newOrdering.add(oid);
+                        newValues.add(value);
+                    }
+                }
+            } // if ht.containsKey
+        } // while it.hasNext
+        
+        Vector allOids    = x509Name.getOIDs();
+        
+        //-- Add unespected fields to the end
+        for ( int i=0; i<allOids.size(); i++ ) {
+            
+            DERObjectIdentifier oid = (DERObjectIdentifier) allOids.get(i);
+            
+            
+            if ( !ht.containsKey(oid) ){
+                Vector valueList = getX509NameFields(x509Name, oid);
+                
+                //-- Only add the OID if has not null value
+                if ( valueList != null ){
+                    Iterator itVals = valueList.iterator();
+                    
+                    while( itVals.hasNext() ){
+                        Object value = itVals.next();
+                        ht.put(oid, value);
+                        newOrdering.add(oid);
+                        newValues.add(value);
+                        log.debug("added --> " + oid + " val: " + value);
+                    }
+                }
+            } 
+        } 
+        
+        //-- Create X509Name with the ordered fields
+        X509Name orderedName = new X509Name(newOrdering, newValues, converter);
+        
+        return orderedName;
+    }
+    
+    
+    /**
+     * Obtain the values for a DN field from X509Name, or null in case
+     * of the field does not exist.
+     * 
+     * @param name
+     * @param id
+     * @return
+     */
+    private static Vector getX509NameFields( X509Name name, DERObjectIdentifier id ){
+      
+      Vector oids = name.getOIDs();
+      Vector values = name.getValues();
+      Vector vRet = null;
+      
+      for ( int i=0; i<oids.size(); i++ ){
+        
+        if ( id.equals(oids.elementAt(i)) ){
+          if ( vRet == null ){ vRet = new Vector(); }
+          vRet.add(values.get(i));
+        }
+        
+      }
+      
+      return vRet;
+      
+    }
+    
 } // CertTools
