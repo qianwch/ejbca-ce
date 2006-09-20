@@ -112,7 +112,7 @@ import org.ejbca.util.cert.UTF8EntryConverter;
  * X509CA is a implementation of a CA and holds data specific for Certificate and CRL generation 
  * according to the X509 standard. 
  *
- * @version $Id: X509CA.java,v 1.5.2.1.2.1 2006-09-15 15:15:33 anatom Exp $
+ * @version $Id: X509CA.java,v 1.5.2.1.2.2 2006-09-20 13:36:55 anatom Exp $
  */
 public class X509CA extends CA implements Serializable {
 
@@ -314,7 +314,7 @@ public class X509CA extends CA implements Serializable {
         X509Certificate cacert = (X509Certificate)getCACertificate();
         if (cacert == null) {
         	// This will be an initial root CA, since no CA-certificate exists
-            X509Name caname = CertTools.stringToBcX509Name(getSubjectDN());
+            X509Name caname = CertTools.stringToBcX509Name(getSubjectDN(), converter);
             certgen.setIssuerDN(caname);
         } else {
             certgen.setIssuerDN(cacert.getSubjectX500Principal());        	
