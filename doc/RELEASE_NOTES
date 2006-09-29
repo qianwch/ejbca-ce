@@ -1,3 +1,10 @@
+EJBCA 3.3.1
+-----------
+This is a minor release with some bugfixes, most notably for Luna HSM.
+Read the changelog for details.
+
+This is a plug-in upgrade from 3.3.0. See UPGRADE for the simple instructions.
+
 EJBCA 3.3.0
 -----------
 This is a major release with new features, improvements and bugfixes.
