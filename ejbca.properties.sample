@@ -1,5 +1,5 @@
 #
-# $Id: ejbca.properties.sample,v 1.64 2006-08-26 13:39:50 anatom Exp $
+# $Id: ejbca.properties.sample,v 1.64.2.1 2006-10-05 11:26:52 anatom Exp $
 #
 # This is a sample file to override properties used
 # during development (or deployment) of EJBCA
@@ -108,6 +108,12 @@ httpsserver.dn=CN=localhost,O=EJBCA Sample,C=SE
 # Default content encoding used to display JSP pages, for example ISO-8859-1, UTF-8 or GBK.
 # Default: ISO-8859-1
 #web.contentencoding=ISO-8859-1
+
+# Specifies the JSF implementation used by the application server EJBCA is deployed on.
+# Possible values are: myfaces
+#
+# Default: myfaces
+#web.jsfimpl=myfaces
 
 # ------------- Approval configuration ------------------------
 # Settings working as default values in the approval functionality
