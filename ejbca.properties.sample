@@ -1,5 +1,5 @@
 #
-# $Id: ejbca.properties.sample,v 1.64.2.2 2006-10-06 08:46:30 anatom Exp $
+# $Id: ejbca.properties.sample,v 1.64.2.3 2006-10-06 11:33:19 anatom Exp $
 #
 # This is a sample file to override properties used
 # during development (or deployment) of EJBCA
@@ -113,6 +113,7 @@ httpsserver.dn=CN=localhost,O=EJBCA Sample,C=SE
 # Possible values are: myfaces, nojsf
 # Using nojsf means that the admin-GUI will be limited with some functions not working. 
 # It can however be useful if there are problems with your application server and JSF/MyFaces.
+# Use nojsf for JBoss < 4.0.3
 #
 # Default: myfaces
 #web.jsfimpl=myfaces
