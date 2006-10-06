@@ -1,5 +1,5 @@
 #
-# $Id: ejbca.properties.sample,v 1.64.2.1 2006-10-05 11:26:52 anatom Exp $
+# $Id: ejbca.properties.sample,v 1.64.2.2 2006-10-06 08:46:30 anatom Exp $
 #
 # This is a sample file to override properties used
 # during development (or deployment) of EJBCA
@@ -110,7 +110,9 @@ httpsserver.dn=CN=localhost,O=EJBCA Sample,C=SE
 #web.contentencoding=ISO-8859-1
 
 # Specifies the JSF implementation used by the application server EJBCA is deployed on.
-# Possible values are: myfaces
+# Possible values are: myfaces, nojsf
+# Using nojsf means that the admin-GUI will be limited with some functions not working. 
+# It can however be useful if there are problems with your application server and JSF/MyFaces.
 #
 # Default: myfaces
 #web.jsfimpl=myfaces
