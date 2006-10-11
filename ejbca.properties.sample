@@ -1,5 +1,5 @@
 #
-# $Id: ejbca.properties.sample,v 1.64.2.3 2006-10-06 11:33:19 anatom Exp $
+# $Id: ejbca.properties.sample,v 1.64.2.4 2006-10-11 13:35:21 anatom Exp $
 #
 # This is a sample file to override properties used
 # during development (or deployment) of EJBCA
@@ -149,6 +149,7 @@ httpsserver.dn=CN=localhost,O=EJBCA Sample,C=SE
 
 # Weblogic in combination with Oracle requires special handling of LONG/BLOB columns
 # If, and only if, you are using Weblogic and Oracle, uncomment the row below.
+# Use OracleBlob in Weblogic 8.x and Blob in Weblogic 9.x
 # default: 
 #weblogic-oracle-columntype=@weblogic.dbms-column-type OracleBlob
 
