@@ -187,6 +187,11 @@
     <property name="protection.keyref" value="key1" />
     <property name="protection.key" value="foo123" />
     <property name="protection.keytype" value="SOFT_HMAC" />
+
+	<!-- Special handling of oracle reserved words -->
+	<condition property="database.comment.column" value="comment_" else="comment" >
+        <equals arg1="${database.name}" arg2="oracle"/>
+    </condition>
     
     <!-- =================================================================== -->
     <!-- Build ALL                                                           -->
@@ -464,6 +469,7 @@ protection.certprotect=${protection.certprotect}
 		    	<replacestring from="@EJBCA@" to="${app.name.cap}"/>
 		    	<replacestring from="@weblogic.ora.columntyp@" to="${weblogic-oracle-columntype}"/>
 				<replacestring from="@page.encoding@" to="${web.contentencoding}"/>
+				<replacestring from="@database.comment.column@" to="${database.comment.column}"/>
 			</tokenfilter>
 			</filterchain>
 	    </copy>

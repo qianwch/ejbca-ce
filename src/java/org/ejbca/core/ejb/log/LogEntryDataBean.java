@@ -72,7 +72,7 @@ import java.util.Date;
  * @jonas.jdbc-mapping
  *   jndi-name="${datasource.jndi-name}"
  *   
- * @version $Id: LogEntryDataBean.java,v 1.3 2006-08-05 09:59:37 anatom Exp $
+ * @version $Id: LogEntryDataBean.java,v 1.3.2.1 2006-10-11 13:22:32 anatom Exp $
  */
 public abstract class LogEntryDataBean extends BaseEntityBean {
 
@@ -180,13 +180,13 @@ public abstract class LogEntryDataBean extends BaseEntityBean {
      * column-name="comment_"
      * to the end of the ejb persistense line.
      * 
-     * @ejb.persistence
+     * The column-name is normally comment, but comment_ for oracle.
+     * @ejb.persistence column-name="@database.comment.column@"
      * @ejb.interface-method view-type="local"
      */
     public abstract String getComment();
 
     /**
-     * @ejb.persistence
      */
     public abstract void setComment(String comment);
 
