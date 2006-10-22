@@ -4,7 +4,7 @@
 	<classpathentry kind="src" path="tmp/bin/gensrc"/>
 	<classpathentry kind="src" path="src/test"/>
 	<classpathentry kind="lib" path="lib/ldap.jar"/>
-	<classpathentry kind="lib" path="lib/log4j-1.2.7.jar"/>
+	<classpathentry kind="lib" path="lib/log4j.jar"/>
 	<classpathentry kind="lib" path="lib/ext/jstl.jar"/>
 	<classpathentry kind="lib" path="lib/ext/myfaces-api.jar"/>
 	<classpathentry kind="lib" path="lib/ext/myfaces-impl.jar"/>
