@@ -91,8 +91,8 @@
     <property name="logsigning.build" value="${tmp}/${logsigning.name}" />  
     <property name="logsigningjar" value="${dist.dir}/${logsigning.name}" />
 
-    <property name="jar.extclasspath" value="lib/bcmail-jdk${java.ver}.jar lib/bcprov-jdk${java.ver}.jar lib/log4j-1.2.7.jar lib/ldap.jar lib/commons-lang-2.0.jar lib/commons-collections.jar lib/commons-fileupload-1.0.jar"/>
-    <property name="jar.ocspclientclasspath" value="lib/bcprov-jdk${java.ver}.jar lib/log4j-1.2.7.jar ./"/>
+    <property name="jar.extclasspath" value="lib/bcmail-jdk${java.ver}.jar lib/bcprov-jdk${java.ver}.jar lib/log4j.jar lib/ldap.jar lib/commons-lang-2.0.jar lib/commons-collections.jar lib/commons-fileupload-1.0.jar"/>
+    <property name="jar.ocspclientclasspath" value="lib/bcprov-jdk${java.ver}.jar lib/log4j.jar ./"/>
 
     <path id="ext.classpath">
         <fileset dir="lib/ext" includes="*.jar" />
@@ -747,7 +747,7 @@ protection.certprotect=${protection.certprotect}
             <fileset dir=".">
                 <include name="${lib}/bcmail-jdk${java.ver}.jar" />
                 <include name="${lib}/bcprov-jdk${java.ver}.jar" />
-                <include name="${lib}/log4j-1.2.7.jar" />
+                <include name="${lib}/log4j.jar" />
                 <include name="${lib}/ldap.jar" />
                 <include name="${lib}/commons-lang-2.0.jar" />
                 <include name="${lib}/commons-collections.jar" />
@@ -768,7 +768,7 @@ protection.certprotect=${protection.certprotect}
             <fileset dir=".">
                 <include name="${lib}/bcmail-jdk${java.ver}.jar" />
                 <include name="${lib}/bcprov-jdk${java.ver}.jar" />
-                <include name="${lib}/log4j-1.2.7.jar" />
+                <include name="${lib}/log4j.jar" />
                 <include name="${lib}/ldap.jar" />
                 <include name="${lib}/commons-lang-2.0.jar" />
                 <include name="${lib}/commons-collections.jar" />
