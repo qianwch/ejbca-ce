@@ -129,6 +129,7 @@
     </path>
 
     <!-- those are the default values used within JBoss for easy startup -->
+    <property name="ca.name" value="AdminCA1"/>
     <property name="ca.keystorepass" value="foo123"/>
     <property name="ca.ocspkeystorepass" value="foo123"/>
     <property name="ocsp.defaultresponder" value="CN=AdminCA1,O=${app.name.cap} Sample,C=SE"/>
