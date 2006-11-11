@@ -39,7 +39,7 @@ import org.ejbca.util.CertTools;
 /**
  * Tests the hard token related entity beans.
  *
- * @version $Id: TestHardToken.java,v 1.5.4.1 2006-11-11 10:21:40 herrvendil Exp $
+ * @version $Id: TestHardToken.java,v 1.5.4.2 2006-11-11 11:54:32 herrvendil Exp $
  */
 public class TestHardToken extends TestCase {
     private static Logger log = Logger.getLogger(TestHardToken.class);
@@ -136,7 +136,7 @@ public class TestHardToken extends TestCase {
             
             TurkishEIDHardToken token2 = new TurkishEIDHardToken("1234",  "123456", 1);
 
-            cacheAdmin.addHardToken(admin, "2345", "TESTUSER", "CN=TEST", SecConst.TOKEN_TURKISHEID, token, certs, null);
+            cacheAdmin.addHardToken(admin, "2345", "TESTUSER", "CN=TEST", SecConst.TOKEN_TURKISHEID, token2, certs, null);
 
             ret = true;
         } catch (HardTokenExistsException pee) {
@@ -204,7 +204,7 @@ public class TestHardToken extends TestCase {
         boolean ret = false;
         try {
             cacheAdmin.removeHardToken(admin, "1234");
-            //cacheAdmin.removeHardToken(admin, "2345");
+            cacheAdmin.removeHardToken(admin, "2345");
 
             ret = true;
         } catch (Exception pee) {
