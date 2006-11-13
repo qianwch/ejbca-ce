@@ -27,6 +27,7 @@ import javax.ejb.CreateException;
 import javax.ejb.EJBException;
 import javax.ejb.FinderException;
 
+import org.apache.commons.lang.StringUtils;
 import org.ejbca.core.ejb.BaseSessionBean;
 import org.ejbca.core.ejb.JNDINames;
 import org.ejbca.core.ejb.ServiceLocator;
@@ -56,7 +57,7 @@ import org.ejbca.util.JDBCUtil;
  * Stores data used by web server clients.
  * Uses JNDI name for datasource as defined in env 'Datasource' in ejb-jar.xml.
  *
- * @version $Id: LocalAuthorizationSessionBean.java,v 1.2.2.1 2006-09-27 07:12:55 anatom Exp $
+ * @version $Id: LocalAuthorizationSessionBean.java,v 1.2.2.2 2006-11-13 09:06:22 anatom Exp $
  *
  * @ejb.bean
  *   description="Session bean handling interface with ra authorization"
@@ -216,7 +217,11 @@ public class LocalAuthorizationSessionBean extends BaseSessionBean {
         ServiceLocator locator = ServiceLocator.getInstance();
         admingrouphome = (AdminGroupDataLocalHome) locator.getLocalHome(AdminGroupDataLocalHome.COMP_NAME);
         authorizationtreeupdatehome = (AuthorizationTreeUpdateDataLocalHome) locator.getLocalHome(AuthorizationTreeUpdateDataLocalHome.COMP_NAME);
-        customaccessrules = locator.getString("java:comp/env/CustomAvailableAccessRules").split(";");
+        String customrules = locator.getString("java:comp/env/CustomAvailableAccessRules");
+        if (customrules == null) {
+        	customrules = "";
+        } 
+        customaccessrules = StringUtils.split(customrules, ';');
 
         try {
             authorizer = new Authorizer(getAdminGroups(), admingrouphome,
