@@ -1,3 +1,10 @@
+EJBCA 3.3.2
+-----------
+This is a minor release with some bugfixes, most notably for oracle and weblogic.
+Read the changelog for details.
+
+This is a plug-in upgrade from 3.3.x. See UPGRADE for the simple instructions.
+
 EJBCA 3.3.1
 -----------
 This is a minor release with some bugfixes, most notably for Luna HSM.
