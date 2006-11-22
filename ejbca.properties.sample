@@ -1,5 +1,5 @@
 #
-# $Id: ejbca.properties.sample,v 1.64.2.4 2006-10-11 13:35:21 anatom Exp $
+# $Id: ejbca.properties.sample,v 1.64.2.5 2006-11-22 08:54:37 herrvendil Exp $
 #
 # This is a sample file to override properties used
 # during development (or deployment) of EJBCA
@@ -414,4 +414,4 @@ ocsp.keys.cardPassword=6231
 
 # Parameter specifying IP addresses authorized to access the healthcheck
 # servlet. Use ';' for between multiple IPs. 
-#ocsphealthcheckg.authorizedips=127.0.0.1
+#ocsphealthcheck.authorizedips=127.0.0.1
