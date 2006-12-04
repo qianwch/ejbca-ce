@@ -21,6 +21,7 @@ import java.util.Properties;
 
 import javax.ejb.CreateException;
 import javax.ejb.DuplicateKeyException;
+import javax.ejb.FinderException;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -65,7 +66,7 @@ import com.novosec.pkix.asn1.cmp.PKIHeader;
 /**
  * Message handler for certificate request messages in the CRMF format
  * @author tomas
- * @version $Id: CrmfMessageHandler.java,v 1.13 2006-10-23 12:01:33 anatom Exp $
+ * @version $Id: CrmfMessageHandler.java,v 1.13.2.1 2006-12-04 13:05:42 anatom Exp $
  */
 public class CrmfMessageHandler implements ICmpMessageHandler {
 	
@@ -199,11 +200,26 @@ public class CrmfMessageHandler implements ICmpMessageHandler {
 								String username = gen.generateUsername(dn);
 								IPasswordGenerator pwdgen = PasswordGeneratorFactory.getInstance(PasswordGeneratorFactory.PASSWORDTYPE_ALLPRINTABLE);
 								String pwd = pwdgen.getNewPassword(12, 12);
+								UserDataVO user = null;
 								try {
-									usersession.addUser(admin, username, pwd, dn, null, null, false, eeProfileId, certProfileId, SecConst.USER_ENDUSER, SecConst.TOKEN_SOFT_BROWSERGEN, 0, caId);
-								} catch (DuplicateKeyException e) {
+									user = usersession.findUser(admin, username);
+								} catch (FinderException e) {
+									// User can not be found, leave user as null
+								}
+								if (user == null) {
+									try {
+										log.debug("Creating new user.");
+										usersession.addUser(admin, username, pwd, dn, null, null, false, eeProfileId, certProfileId, SecConst.USER_ENDUSER, SecConst.TOKEN_SOFT_BROWSERGEN, 0, caId);																					
+									} catch (DuplicateKeyException e) {
+										// This was veery strange, we didn't find it before, but now it exists?
+										log.error("Could not add user '"+username+"', although it did not exists a blink of an eye ago! Will update instead.");
+										// If the user already exists, we will change him instead and go for that
+										usersession.changeUser(admin, username, pwd, dn, null, null, false, eeProfileId, certProfileId, SecConst.USER_ENDUSER, SecConst.TOKEN_SOFT_BROWSERGEN, 0, UserDataConstants.STATUS_NEW, caId);										
+									}
+								} else {
 									// If the user already exists, we will change him instead and go for that
-									usersession.changeUser(admin, username, pwd, dn, null, null, false, eeProfileId, certProfileId, SecConst.USER_ENDUSER, SecConst.TOKEN_SOFT_BROWSERGEN, 0, UserDataConstants.STATUS_NEW, caId);
+									log.debug("User already exists, so we will update instead.");
+									usersession.changeUser(admin, username, pwd, dn, null, null, false, eeProfileId, certProfileId, SecConst.USER_ENDUSER, SecConst.TOKEN_SOFT_BROWSERGEN, 0, UserDataConstants.STATUS_NEW, caId);										
 								}
 								crmfreq.setUsername(username);
 								crmfreq.setPassword(pwd);
