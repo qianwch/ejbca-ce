@@ -48,7 +48,7 @@ import com.novell.ldap.LDAPModification;
 /**
  * LdapPublisher is a class handling a publishing to various v3 LDAP catalouges.  
  *
- * @version $Id: LdapPublisher.java,v 1.14.2.2 2006-12-08 11:11:28 anatom Exp $
+ * @version $Id: LdapPublisher.java,v 1.14.2.3 2006-12-21 15:39:37 anatom Exp $
  */
 public class LdapPublisher extends BasePublisher {
 	 	
@@ -56,7 +56,7 @@ public class LdapPublisher extends BasePublisher {
 	
 	protected static byte[] fakecrl = null;
 	
-	public static final float LATEST_VERSION = 4;
+	public static final float LATEST_VERSION = 5;
 	
 	public static final int TYPE_LDAPPUBLISHER = 2;
 		
@@ -89,6 +89,7 @@ public class LdapPublisher extends BasePublisher {
     protected static final String USEFIELDINLDAPDN         = "usefieldsinldapdn";
     protected static final String ADDMULTIPLECERTIFICATES  = "addmultiplecertificates";
     protected static final String REMOVEREVOKED            = "removerevoked";    
+    protected static final String REMOVEUSERONCERTREVOKE  = "removeusersoncertrevoke";    
     
     public LdapPublisher(){
     	super();
@@ -112,6 +113,7 @@ public class LdapPublisher extends BasePublisher {
         // By default use only one certificate for each user
         setAddMultipleCertificates(false);
         setRemoveRevokedCertificates(true);
+        setRemoveUsersWhenCertRevoked(false);
         
         if(fakecrl == null){          
 		  try {
@@ -371,10 +373,14 @@ public class LdapPublisher extends BasePublisher {
 	public void revokeCertificate(Admin admin, Certificate cert, int reason) throws PublisherException{
         log.debug(">revokeCertificate()");
         // Check first if we should do anything then revoking
-        if ( getRemoveRevokedCertificates() != true ){
-            log.debug("The configuration for the publisher '" + getDescription() + "' does not allow removing of certificates.");
+        boolean removecert = getRemoveRevokedCertificates();
+        boolean removeuser = getRemoveUsersWhenCertRevoked();
+        if ( (!removecert) && (!removeuser) ) {
+            log.debug("The configuration for the publisher '" + getDescription() + "' does not allow removing of certificates or users.");
             return;
         }
+        if (removecert) log.debug("Removing user certificate from ldap");
+        if (removeuser) log.debug("Removing user entry from ldap");
 
         int ldapVersion = LDAPConnection.LDAP_V3;
         LDAPConnection lc = createLdapConnection();
@@ -398,16 +404,18 @@ public class LdapPublisher extends BasePublisher {
         if (((X509Certificate) cert).getBasicConstraints() == -1) {
             log.debug("Removing end user certificate from " + getHostname());
 
-            if (oldEntry != null) {            	
-                // Don't try to remove the cert if there does not exist any
-                LDAPAttribute oldAttr = oldEntry.getAttribute(getUserCertAttribute());
-                if (oldAttr != null) {
-                    modSet = getModificationSet(oldEntry, certdn, false, true);
-                    LDAPAttribute attr = new LDAPAttribute(getUserCertAttribute());
-                    modSet.add(new LDAPModification(LDAPModification.DELETE, attr));                    
-                } else {
-                    log.info("Trying to remove certificate from LDAP, but no certificate attribute exists in the entry.");
-                }
+            if (oldEntry != null) {   
+            	if (removecert) {
+                    // Don't try to remove the cert if there does not exist any
+                    LDAPAttribute oldAttr = oldEntry.getAttribute(getUserCertAttribute());
+                    if (oldAttr != null) {
+                        modSet = getModificationSet(oldEntry, certdn, false, true);
+                        LDAPAttribute attr = new LDAPAttribute(getUserCertAttribute());
+                        modSet.add(new LDAPModification(LDAPModification.DELETE, attr));                    
+                    } else {
+                        log.info("Trying to remove certificate from LDAP, but no certificate attribute exists in the entry.");
+                    }            		
+            	}
             }else{
                 log.error("LDAP ERROR: Entry holding certificate doesn't exist in LDAP");            
                 throw new PublisherException("Certificate doesn't exist in LDAP");            
@@ -432,9 +440,14 @@ public class LdapPublisher extends BasePublisher {
             lc.bind(ldapVersion, getLoginDN(), getLoginPassword().getBytes("UTF8"));            
             // Add or modify the entry
             if (oldEntry != null && modSet != null && getModifyExistingUsers()) {
-                LDAPModification[] mods = new LDAPModification[modSet.size()]; 
-                mods = (LDAPModification[])modSet.toArray(mods);
-                lc.modify(dn, mods);
+            	if (removecert) {
+                    LDAPModification[] mods = new LDAPModification[modSet.size()]; 
+                    mods = (LDAPModification[])modSet.toArray(mods);
+                    lc.modify(dn, mods);            		
+            	}
+            	if (removeuser) {
+            		lc.delete(dn);
+            	}
                 log.info("LDAP REVOKE: Removed certificate: " + dn + " successfully.");  
             }               
         } catch (LDAPException e) {
@@ -790,6 +803,17 @@ public class LdapPublisher extends BasePublisher {
         return removerevoked;
     }
     
+    public void setRemoveUsersWhenCertRevoked( boolean removeuser ){
+        data.put(REMOVEUSERONCERTREVOKE, Boolean.valueOf(removeuser));  
+    }
+    
+    public boolean getRemoveUsersWhenCertRevoked(){
+        boolean removeuser = false; //-- default value
+        if ( data.get(REMOVEUSERONCERTREVOKE) != null ) {
+        	removeuser = ((Boolean)data.get(REMOVEUSERONCERTREVOKE)).booleanValue();
+        }
+        return removeuser;
+    }
 
 	
     // Private methods
@@ -1120,6 +1144,9 @@ public class LdapPublisher extends BasePublisher {
             }
             if(data.get(REMOVEREVOKED) == null) {
                 setRemoveRevokedCertificates(true);                
+            }
+            if(data.get(REMOVEUSERONCERTREVOKE) == null) {
+                setRemoveUsersWhenCertRevoked(false);                
             }
             data.put(VERSION, new Float(LATEST_VERSION));
         }
