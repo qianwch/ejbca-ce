@@ -135,10 +135,10 @@ Glassfish
 
 This is only starter instruction to help you get started as a developer, EJBCA does not work on Glassfish yet.
 
-Currently EJBCA support the MySQL database on Glassfish.
+Currently EJBCA supports the MySQL 5.0 database on Glassfish.
 
 - Set the envorinment variable APPSRV_HOME to the directory where Glassfish is installed. For example APPSRV_HOME=/home/sun/glassfish.
-  The variable must be available when working with EJBCA.
+  The variable must be available when working with EJBCA. 
   
 - Create a database and a database user with privileges.
 
@@ -149,25 +149,25 @@ Currently EJBCA support the MySQL database on Glassfish.
   
 - Start the application server: asadmin start-domain
 
-- Create a datasource called EjbcaDS, in the admin console this is done in Resources->JDBC->JDBC Resources.
-    Use the pool DerbyPool, or connect to another database pool you have created.
+- Create a connection pool for your database.
+- Create a datasource called jdbc/EjbcaDS, in the admin console this is done in Resources->JDBC->JDBC Resources.
+    Use the connection pool you just created.
 
     When adding for example a MySQL Pool use values: Name=MysqlPool, Type=javax.sql.DataSource, Vendor=mysql. 
     It seems almost random which properties are pre-created on the next page...
-
-- Start the database (if using Derby): asadmin start-database
 
 - Configure ejbca: 
     in conf/ejbca.properties you should at least set appserver.type, appserver.home and logging.log4j.config
     in conf/database.properties you should at least set datasource.jndi-name-prefix, and the database settings for your chosen database.
     in conf/web.properties you should set 'web.jsfimpl=nojsf'
+    in conf/web.properties you should set 'ejbcaws.enabled=false', this must be done until we have fixed JaxWS configuration for glassfish.
+    in conf/xkms.properties you should set 'xkms.enabled=false', this must be done until we have fixed JaxWS configuration for glassfish.
     
 - Build ejbca:
     ant
     
 - Deploy ejbca.ear using: 
-    ./asadmin deploy --dbvendorname=mysql ../../ejbca/dist/ejbca.ear
-    Mysql is changed for the database you are using, see glassfish documentation.
+    ./asadmin deploy ../../ejbca/dist/ejbca.ear
     The relative path to ejbca.ear depends on where you installed ejbca and glassfish.
     
 - Install ejbca:
