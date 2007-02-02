@@ -102,7 +102,7 @@ import org.ejbca.util.KeyTools;
 /**
  * Administrates and manages CAs in EJBCA system.
  *
- * @version $Id: CAAdminSessionBean.java,v 1.42.2.1 2007-02-02 08:56:58 anatom Exp $
+ * @version $Id: CAAdminSessionBean.java,v 1.42.2.2 2007-02-02 18:12:26 anatom Exp $
  *
  * @ejb.bean description="Session bean handling core CA function,signing certificates"
  *   display-name="CAAdminSB"
@@ -693,7 +693,7 @@ public class CAAdminSessionBean extends BaseSessionBean {
             cainfo = cadata.getCA().getCAInfo();
         } catch(javax.ejb.FinderException fe) {
             // ignore
-            log.debug("Can nog find CA with id: "+caid);
+            log.debug("Can not find CA with id: '"+caid+"'");
         } catch(Exception e){
     		String msg = intres.getLocalizedMessage("caadmin.errorgetcainfo", new Integer(caid));            	
             log.error(msg, e);
