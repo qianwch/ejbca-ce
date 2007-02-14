@@ -25,6 +25,7 @@ fi
 NFAST_JARS=$NFAST_HOME/java/classes
 
 CLASSES=$EJBCA_HOME/lib/bcprov-jdk15.jar
+CLASSES=$CLASSES:$EJBCA_HOME/lib/bcmail-jdk15.jar
 CLASSES=$CLASSES:$EJBCA_HOME/tmp/bin/classes
 # use this instead if you want build from eclipse
 #CLASSES=$CLASSES:$EJBCA_HOME/out/classes
@@ -36,7 +37,7 @@ do
 done
 
 # Prepare arguments
-args="$0 $1"
+args="`basename $0` $1"
 shift
 args="$args com.ncipher.provider.km.nCipherKM nCipher.sworld $@"
 
