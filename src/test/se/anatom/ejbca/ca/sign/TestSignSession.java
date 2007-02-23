@@ -67,7 +67,7 @@ import org.ejbca.util.dn.DnComponents;
 /**
  * Tests signing session.
  *
- * @version $Id: TestSignSession.java,v 1.25 2006-12-04 09:07:19 anatom Exp $
+ * @version $Id: TestSignSession.java,v 1.25.2.1 2007-02-23 15:44:38 anatom Exp $
  */
 public class TestSignSession extends TestCase {
     static byte[] keytoolp10 = Base64.decode(("MIIBbDCB1gIBADAtMQ0wCwYDVQQDEwRUZXN0MQ8wDQYDVQQKEwZBbmFUb20xCzAJBgNVBAYTAlNF" +
@@ -498,12 +498,10 @@ public class TestSignSession extends TestCase {
         // Make user that we know...
         boolean userExists = false;
         try {
-            usersession.addUser(admin,"swede","foo123","C=SE, O=ÅÄÖ, CN=åäö",null,"swede@anatom.se",false,SecConst.EMPTY_ENDENTITYPROFILE,SecConst.CERTPROFILE_FIXED_ENDUSER,SecConst.USER_ENDUSER,SecConst.TOKEN_SOFT_PEM,0,rsacaid);
-            log.debug("created user: swede, foo123, C=SE, O=ÅÄÖ, CN=åäö");
+            usersession.addUser(admin,"swede","foo123","C=SE, O=ï¿½ï¿½ï¿½, CN=ï¿½ï¿½ï¿½",null,"swede@anatom.se",false,SecConst.EMPTY_ENDENTITYPROFILE,SecConst.CERTPROFILE_FIXED_ENDUSER,SecConst.USER_ENDUSER,SecConst.TOKEN_SOFT_PEM,0,rsacaid);
+            log.debug("created user: swede, foo123, C=SE, O=ï¿½ï¿½ï¿½, CN=ï¿½ï¿½ï¿½");
         } catch (RemoteException re) {
-            if (re.detail instanceof DuplicateKeyException) {
-                userExists = true;
-            }
+        	userExists = true;
         } catch (DuplicateKeyException dke) {
             userExists = true;
         }
@@ -519,7 +517,7 @@ public class TestSignSession extends TestCase {
         assertNotNull("Failed to create certificate", cert);
         log.debug("Cert=" + cert.toString());
         assertEquals("Wrong DN med swedechars", CertTools.getSubjectDN(cert),
-                CertTools.stringToBCDNString("C=SE, O=ÅÄÖ, CN=åäö"));
+                CertTools.stringToBCDNString("C=SE, O=ï¿½ï¿½ï¿½, CN=ï¿½ï¿½ï¿½"));
         //FileOutputStream fos = new FileOutputStream("swedecert.crt");
         //fos.write(cert.getEncoded());
         //fos.close();
