@@ -13,9 +13,6 @@
 package org.ejbca.core.model.services.workers;
 
 import javax.ejb.CreateException;
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
 
 import org.apache.log4j.Logger;
 import org.ejbca.core.ejb.ca.crl.ICreateCRLSessionLocal;
@@ -29,7 +26,7 @@ import org.ejbca.core.model.services.ServiceExecutionFailedException;
  * This is a replacement of the old jboss service.
  * 
  * @author Philip Vendil
- * @version $Id: CRLUpdateWorker.java,v 1.2.2.1 2007-03-09 16:59:50 anatom Exp $
+ * @version $Id: CRLUpdateWorker.java,v 1.2.2.2 2007-03-09 17:23:51 anatom Exp $
  */
 public class CRLUpdateWorker extends BaseWorker {
 
@@ -54,12 +51,8 @@ public class CRLUpdateWorker extends BaseWorker {
 	public ICreateCRLSessionLocal getCreateCRLSession(){
 		if(createcrlsession == null){
 			try {
-				Context context = new InitialContext();
-				ICreateCRLSessionLocalHome home = (ICreateCRLSessionLocalHome) javax.rmi.PortableRemoteObject.narrow(context.lookup(
-				"CreateCRLSessionLocal"), ICreateCRLSessionLocalHome.class);
+	            ICreateCRLSessionLocalHome home = (ICreateCRLSessionLocalHome) getLocator().getLocalHome(ICreateCRLSessionLocalHome.COMP_NAME);
 				this.createcrlsession = home.create();
-			} catch (NamingException e) {
-				log.error(e);
 			} catch (CreateException e) {
 				log.error(e);
 			}
