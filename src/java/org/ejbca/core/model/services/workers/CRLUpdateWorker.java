@@ -29,7 +29,7 @@ import org.ejbca.core.model.services.ServiceExecutionFailedException;
  * This is a replacement of the old jboss service.
  * 
  * @author Philip Vendil
- * @version $Id: CRLUpdateWorker.java,v 1.2 2006-12-12 15:43:22 anatom Exp $
+ * @version $Id: CRLUpdateWorker.java,v 1.2.2.1 2007-03-09 16:59:50 anatom Exp $
  */
 public class CRLUpdateWorker extends BaseWorker {
 
@@ -44,8 +44,10 @@ public class CRLUpdateWorker extends BaseWorker {
 	 */
 	public void work() throws ServiceExecutionFailedException {
 	    long polltime = getNextInterval();
-	    getCreateCRLSession().createCRLs(getAdmin(), polltime*1000);
-
+	    ICreateCRLSessionLocal session = getCreateCRLSession();
+	    if (session != null) {
+	    	session.createCRLs(getAdmin(), polltime*1000);
+	    }
 	}
 
 	
