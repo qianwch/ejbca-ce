@@ -27,11 +27,22 @@ import org.ejbca.core.model.approval.ApprovalDataVO;
  * Class used to manage the list of approvaldatas resulted in the query.
  * 
  * @author Philip Vendil
- * @version $Id: ApprovalDataVOViewList.java,v 1.2 2006-09-05 09:23:28 anatom Exp $
+ * @version $Id: ApprovalDataVOViewList.java,v 1.2.6.1 2007-03-09 17:27:53 anatom Exp $
  */
 
-public class ApprovalDataVOViewList extends AbstractList {
+public class ApprovalDataVOViewList extends AbstractList implements java.io.Serializable {
 
+    /**
+     * Determines if a de-serialized file is compatible with this class.
+     *
+     * Maintainers must change this value if and only if the new version
+     * of this class is not compatible with old versions. See Sun docs
+     * for <a href=http://java.sun.com/products/jdk/1.1/docs/guide
+     * /serialization/spec/version.doc.html> details. </a>
+     *
+     */
+	private static final long serialVersionUID = 1680993305950225012L;
+	
 	List listData;
 	
 	public ApprovalDataVOViewList(Collection approvalDataVOs){
