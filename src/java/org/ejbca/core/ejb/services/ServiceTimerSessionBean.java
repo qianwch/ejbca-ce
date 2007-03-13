@@ -13,6 +13,7 @@
 
 package org.ejbca.core.ejb.services;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -264,7 +265,13 @@ public class ServiceTimerSessionBean extends BaseSessionBean implements javax.ej
 		HashSet existingTimers = new HashSet();
 		while(iter.hasNext()){
 			Timer timer = (Timer) iter.next();
-			existingTimers.add(timer.getInfo());    			
+			try {
+				Serializable info = timer.getInfo();
+				existingTimers.add(info);    			
+			} catch (Throwable e) {
+				// We need this try because weblogic seems to suck...
+				log.debug("Error invoking timer.getInfo(): ", e);
+			}
 		}
 
 		HashMap idToNameMap = getServiceSession().getServiceIdToNameMap(intAdmin);
