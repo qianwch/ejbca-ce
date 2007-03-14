@@ -33,7 +33,7 @@ import org.ejbca.core.model.InternalResources;
  * 
  * @author Philip Vendil 2007 jan 5
  *
- * @version $Id: CertificateExtensionFactory.java,v 1.2.2.1 2007-02-02 18:13:16 anatom Exp $
+ * @version $Id: CertificateExtensionFactory.java,v 1.2.2.2 2007-03-14 09:34:52 anatom Exp $
  */
 
 public class CertificateExtensionFactory {
@@ -96,7 +96,12 @@ public class CertificateExtensionFactory {
 	 * @returns null if the CertificateExtension doesn't exist
 	 */
 	public CertificateExtension getCertificateExtensions(Integer id){
-		return (CertificateExtension) certificateExtensions.get(id);
+		CertificateExtension ret = (CertificateExtension) certificateExtensions.get(id);
+		if (ret == null) {
+			// In EJBCA 3.5 this is a  localized message 
+			log.error("No extension configured for id: "+id+". Returning null.");			
+		}
+		return ret;
 	}
 
 	/** 
