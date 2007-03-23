@@ -43,7 +43,7 @@ administrator, who can be found on the sourceforge project page.
 <li>surd0007(at)yahoo.com.cn, Initial install guide.</li>
 <li>Mike Jackson, mj(at)sci.fi, Proper LDAP schema. Device certificate schemas.</li>
 <li>Stephane Bailliez, stephane(at)bearaway.org, Patches all over, XDoclet, new install, configure and cli for 3.1, web.</li>
-<li>Yannick Quenec'hdu, yquenechdu(at)linagora.com, French translation, help with SafeNet HSM and some other patches.</li>
+<li>Yannick Quenec'hdu, yquenechdu(at)linagora.com, French translation, help with SafeNet HSM and some other patches, new EJBCA pki logo.</li>
 <li>James A. Rome, jar(at)ornl.gov, Additional 'Use fields in DN' for publisher, JKStoPEM, lots of testing and input, change_p12_pwd.</li>
 <li>Manuel Ruiz, mruiz(at)safa.es, Make admin commands flexible and usable from within java-code.</li>
 <li>Risto Laanoja, risto.laanoja(at)eyp.ee, Fix for integer overflow when setting CRLPeriod longer than 596 hours. Several instances of one altName and other patches. User authentication with JAAS/Kerberos.</li>
@@ -62,6 +62,11 @@ administrator, who can be found on the sourceforge project page.
 <li>Javier Aparicio Conesa, aparicio_fracon(at)gva.es, User notice and CPS in certificate policy extension. Directoryname in alternative names. CRL Issue period. Option to not remove certificates from publisher when revoked. Patch for unsuspend from CRL.</li>
 <li>Jon Bendtsen, jon.bendtsen(at)laerdal.dk, OpenVPN installer package enrollment.</li>
 <li>Henrik Schack, henrik(at)schack.dk, Documentation about dns alt name for Cisco PIX.</li>
+<li>Alexander Horvath, alex(at)gekom.biz, Patch to make OCSP compatible with Thunderbird/Firefox.</li>
+<li>Henrik Anreasson, han(at)han.pp.se, Debian package, installer and documentation improvements, lots of testing and suggestions.</li>
+<li>Michael Rieken, michael.rieken(at)atosorigin.com, Updates to german translation.</li>
+<li>Johan Eklund, johan(at)primekey.se, Core developer.</li>
+<li>Rolf Staflin, rolf(at)piro.se, new public web.</li>
 </ul>
     </section>
   </body>
