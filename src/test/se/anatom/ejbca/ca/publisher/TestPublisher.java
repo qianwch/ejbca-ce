@@ -11,10 +11,12 @@
  *                                                                       *
  *************************************************************************/
 
-package se.anatom.ejbca.ca.publisher;
+package org.ejbca.core.model.ca.publisher;
 
+import java.io.IOException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Properties;
 
 import javax.naming.Context;
 import javax.naming.NamingException;
@@ -29,7 +31,9 @@ import org.ejbca.core.model.ca.crl.RevokedCertInfo;
 import org.ejbca.core.model.ca.publisher.ActiveDirectoryPublisher;
 import org.ejbca.core.model.ca.publisher.BasePublisher;
 import org.ejbca.core.model.ca.publisher.CustomPublisherContainer;
+import org.ejbca.core.model.ca.publisher.GeneralPurposeCustomPublisher;
 import org.ejbca.core.model.ca.publisher.LdapPublisher;
+import org.ejbca.core.model.ca.publisher.PublisherException;
 import org.ejbca.core.model.ca.publisher.PublisherExistsException;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.util.Base64;
@@ -40,7 +44,7 @@ import org.ejbca.util.CertTools;
 /**
  * Tests Publishers.
  *
- * @version $Id: TestPublisher.java,v 1.6 2006-07-21 15:28:26 anatom Exp $
+ * @version $Id: TestPublisher.java,v 1.6.6.1 2007-04-02 11:10:40 jeklund Exp $
  */
 public class TestPublisher extends TestCase {
     
@@ -92,9 +96,13 @@ public class TestPublisher extends TestCase {
     private static Logger log = Logger.getLogger(TestPublisher.class);
     private static Context ctx;
     private static IPublisherSessionRemote pub;
-    
+
     private static final Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
     
+    private String externalCommand	= "dir";
+    private String externalCommand2	= "ls";
+    private final String invalidOption		= " --------------:";
+
     /**
      * Creates a new TestPublisher object.
      *
@@ -305,4 +313,222 @@ public class TestPublisher extends TestCase {
         
         log.debug("<test09removePublishers()");
     }
-}
+
+	/**
+	 * Test normal operation of GeneralPurposeCustomPublisher.
+	 *
+	 * @throws Exception error
+	 */
+	public void test10GenPurpCustPubl() throws Exception {
+	    log.debug(">test10GenPurpCustPubl()");
+	    
+	    GeneralPurposeCustomPublisher gpcPublisher = null;
+	    Properties props = new Properties();
+	
+	    //Make sure an external command exists for testing purposes
+	    boolean ret = false;
+	    if ( !isValidCommand(externalCommand) ) {
+	    	externalCommand = externalCommand2; 
+	    }
+	    if ( !isValidCommand(externalCommand) ) {
+	    	ret = true; 
+	    }
+	    assertFalse("This test requires \"" + externalCommand + "\" to be available.", ret);
+	    // Create
+    	gpcPublisher = new GeneralPurposeCustomPublisher();
+	    // Make sure it fails without a given external command
+	    ret = false;
+	    try {
+	        props.setProperty(GeneralPurposeCustomPublisher.crlExternalCommandPropertyName, "");
+	        gpcPublisher.init(props);
+			ret = gpcPublisher.storeCRL(admin, testcrl, null, 1);
+		} catch (PublisherException e) {
+		}
+	    assertFalse("Store CRL with GeneralPurposeCustomPublisher did not failed with invalid properties.", ret);
+	    // Test function by calling a command that is available on most platforms 
+	    ret = false;
+	    try {
+	        props.setProperty(GeneralPurposeCustomPublisher.crlExternalCommandPropertyName, externalCommand);
+	        gpcPublisher.init(props);
+			ret = gpcPublisher.storeCRL(admin, testcrl, null, 1);
+		} catch (PublisherException e) {
+		}
+	    assertTrue("Store CRL with GeneralPurposeCustomPublisher failed.", ret);
+	    log.debug("<test10GenPurpCustPubl()");
+	} // test10GenPurpCustPubl
+
+	/**
+	 * Verify that GeneralPurposeCustomPublisher will fail on an error code from
+	 * an external application. 
+	 *
+	 * @throws Exception error
+	 */
+	public void test11GenPurpCustPublErrorCode() throws Exception {
+	    log.debug(">test11GenPurpCustPublErrorCode()");
+	    
+	    GeneralPurposeCustomPublisher gpcPublisher = null;
+	    Properties props = new Properties();
+	
+	    //Make sure an external command exists for testing purposes
+	    boolean ret = false;
+	    if ( !isValidCommand(externalCommand) ) {
+	    	externalCommand = externalCommand2; 
+	    }
+	    if ( !isValidCommand(externalCommand) ) {
+	    	ret = true; 
+	    }
+	    assertFalse("This test requires \"" + externalCommand + "\" to be available.", ret);
+	    // Create
+    	gpcPublisher = new GeneralPurposeCustomPublisher();
+	    // Test function by calling a command that is available on most platforms with invalid option
+	    ret = false;
+	    try {
+	        props.setProperty(GeneralPurposeCustomPublisher.crlExternalCommandPropertyName, externalCommand + invalidOption);
+	        props.setProperty(GeneralPurposeCustomPublisher.crlFailOnErrorCodePropertyName, "true");
+	        props.setProperty(GeneralPurposeCustomPublisher.crlFailOnStandardErrorPropertyName, "false");
+	        gpcPublisher.init(props);
+			ret = gpcPublisher.storeCRL(admin, testcrl, null, 1);
+		} catch (PublisherException e) {
+		}
+	    assertFalse("Store CRL with GeneralPurposeCustomPublisher did not fail on errorcode.", ret);
+	    ret = false;
+	    try {
+	        props.setProperty(GeneralPurposeCustomPublisher.certExternalCommandPropertyName, externalCommand + invalidOption);
+	        props.setProperty(GeneralPurposeCustomPublisher.certFailOnErrorCodePropertyName, "true");
+	        props.setProperty(GeneralPurposeCustomPublisher.certFailOnStandardErrorPropertyName, "false");
+	        gpcPublisher.init(props);
+			ret = gpcPublisher.storeCRL(admin, testcrl, null, 1);
+		} catch (PublisherException e) {
+		}
+	    assertFalse("Store cert with GeneralPurposeCustomPublisher did not fail on errorcode.", ret);
+	    ret = false;
+	    try {
+	        props.setProperty(GeneralPurposeCustomPublisher.revokeExternalCommandPropertyName, externalCommand + invalidOption);
+	        props.setProperty(GeneralPurposeCustomPublisher.revokeFailOnErrorCodePropertyName, "true");
+	        props.setProperty(GeneralPurposeCustomPublisher.revokeFailOnStandardErrorPropertyName, "false");
+	        gpcPublisher.init(props);
+			ret = gpcPublisher.storeCRL(admin, testcrl, null, 1);
+		} catch (PublisherException e) {
+		}
+	    assertFalse("Revoke cert with GeneralPurposeCustomPublisher did not fail on errorcode.", ret);
+	    log.debug("<test11GenPurpCustPublErrorCode()");
+	} // test11GenPurpCustPublErrorCode
+	    
+	/**
+	 * Verify that GeneralPurposeCustomPublisher will fail on output to standard
+	 * error from an external application. 
+	 *
+	 * @throws Exception error
+	 */
+	public void test12GenPurpCustPublStandardError() throws Exception {
+	    log.debug(">test12GenPurpCustPublStandardError()");
+	    
+	    GeneralPurposeCustomPublisher gpcPublisher = null;
+	    Properties props = new Properties();
+	
+	    //Make sure an external command exists for testing purposes
+	    boolean ret = false;
+	    if ( !isValidCommand(externalCommand) ) {
+	    	externalCommand = externalCommand2; 
+	    }
+	    if ( !isValidCommand(externalCommand) ) {
+	    	ret = true; 
+	    }
+	    assertFalse("This test requires \"" + externalCommand + "\" to be available.", ret);
+	    // Create
+    	gpcPublisher = new GeneralPurposeCustomPublisher();
+	    // Test function by calling a command that is available on most platforms with invalid option 
+	    ret = false;
+	    try {
+	        props.setProperty(GeneralPurposeCustomPublisher.crlExternalCommandPropertyName, externalCommand + invalidOption);
+	        props.setProperty(GeneralPurposeCustomPublisher.crlFailOnErrorCodePropertyName, "false");
+	        props.setProperty(GeneralPurposeCustomPublisher.crlFailOnStandardErrorPropertyName, "true");
+	        gpcPublisher.init(props);
+			ret = gpcPublisher.storeCRL(admin, testcrl, null, 1);
+		} catch (PublisherException e) {
+		}
+	    assertFalse("Store CRL with GeneralPurposeCustomPublisher did not fail on standard error.", ret);
+	    ret = false;
+	    try {
+	        props.setProperty(GeneralPurposeCustomPublisher.certExternalCommandPropertyName, externalCommand + invalidOption);
+	        props.setProperty(GeneralPurposeCustomPublisher.certFailOnErrorCodePropertyName, "false");
+	        props.setProperty(GeneralPurposeCustomPublisher.certFailOnStandardErrorPropertyName, "true");
+	        gpcPublisher.init(props);
+			ret = gpcPublisher.storeCRL(admin, testcrl, null, 1);
+		} catch (PublisherException e) {
+		}
+	    assertFalse("Store cert with GeneralPurposeCustomPublisher did not fail on standard error.", ret);
+	    ret = false;
+	    try {
+	        props.setProperty(GeneralPurposeCustomPublisher.revokeExternalCommandPropertyName, externalCommand + invalidOption);
+	        props.setProperty(GeneralPurposeCustomPublisher.revokeFailOnErrorCodePropertyName, "false");
+	        props.setProperty(GeneralPurposeCustomPublisher.revokeFailOnStandardErrorPropertyName, "true");
+	        gpcPublisher.init(props);
+			ret = gpcPublisher.storeCRL(admin, testcrl, null, 1);
+		} catch (PublisherException e) {
+		}
+	    assertFalse("Revoke cert with GeneralPurposeCustomPublisher did not fail on standard error.", ret);
+	    log.debug("<test12GenPurpCustPublStandardError()");
+	} // test12GenPurpCustPublStandardError
+
+	/**
+	 * Test that the GeneralPurposeCustomPublisher fails when the external executable file does not exist.
+	 *  
+	 * @throws Exception
+	 */
+	public void test13GenPurpCustPublConnection() throws Exception {
+	    log.debug(">test13GenPurpCustPublConnection()");
+	    GeneralPurposeCustomPublisher gpcPublisher = null;
+	    Properties props = new Properties();
+	    // Create
+    	gpcPublisher = new GeneralPurposeCustomPublisher();
+	    // Test connection separatly for all publishers with invalid filename 
+	    boolean ret = false;
+	    try {
+	        props.setProperty(GeneralPurposeCustomPublisher.crlExternalCommandPropertyName, "randomfilenamethatdoesnotexistandneverwill8998752");
+	        gpcPublisher.init(props);
+			gpcPublisher.testConnection(admin);
+			ret = true;
+		} catch (PublisherConnectionException e) {
+		}
+	    assertFalse("testConnection reported all ok, but commandfile does not exist!", ret);
+	    ret = false;
+	    try {
+	        props.setProperty(GeneralPurposeCustomPublisher.certExternalCommandPropertyName, "randomfilenamethatdoesnotexistandneverwill8998752");
+	        gpcPublisher.init(props);
+			gpcPublisher.testConnection(admin);
+			ret = true;
+		} catch (PublisherConnectionException e) {
+		}
+	    assertFalse("testConnection reported all ok, but commandfile does not exist!", ret);
+	    ret = false;
+	    try {
+	        props.setProperty(GeneralPurposeCustomPublisher.revokeExternalCommandPropertyName, "randomfilenamethatdoesnotexistandneverwill8998752");
+	        gpcPublisher.init(props);
+			gpcPublisher.testConnection(admin);
+			ret = true;
+		} catch (PublisherConnectionException e) {
+		}
+	    assertFalse("testConnection reported all ok, but commandfile does not exist!", ret);
+	    log.debug("<test12GenPurpCustPublStandardError()");
+	} // test13GenPurpCustPublConnection
+
+	/**
+	 * Tries to execute the argument and return true if no exception was thrown and the command returned 0.
+	 * 
+	 * @param externalCommandToTest The String to run.
+	 * @return Returns false on error.
+	 */
+	private boolean isValidCommand(String externalCommandToTest) {
+	    boolean ret = false;
+		try {
+			Process externalProcess = Runtime.getRuntime().exec( externalCommand );
+			if ( externalProcess.waitFor() == 0 ) {
+				ret = true;
+			}
+		} catch (IOException e) {
+		} catch (InterruptedException e) {
+		}
+		return ret;
+	} // isValidCommand
+} // TestPublisher
