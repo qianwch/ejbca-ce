@@ -319,7 +319,6 @@ function checkusefield(usefield, criticalfield){
 
 function checkallfields(){
     var illegalfields = 0;
-    
 
     <% if(!editca){ %>
     if(!checkfieldforcompletednchars("document.ca.<%=TEXTFIELD_SUBJECTDN%>","<%= ejbcawebbean.getText("ONLYCHARACTERS") + " " + ejbcawebbean.getText("SUBJECTDN") %>"))
@@ -327,6 +326,10 @@ function checkallfields(){
     if((document.ca.<%= TEXTFIELD_SUBJECTDN %>.value == "")){
       alert("<%= ejbcawebbean.getText("YOUAREREQUIRED", true) + " " + ejbcawebbean.getText("SUBJECTDN", true)%>");
       illegalfields++;
+    }
+    if((document.ca.<%= TEXTFIELD_SUBJECTDN %>.value.indexOf("=")==-1)){
+		alert("<%= ejbcawebbean.getText("SUBJECTDNINVALID")%>")
+		illegalfields++;
     }
    <% } %> 
 
@@ -955,6 +958,23 @@ function checkallfields(){
         <input type="submit" name="<%= BUTTON_PUBLISHCA %>"  value="<%= ejbcawebbean.getText("REPUBLISHCA") %>" >
       </td>
     </tr>
+	</form>
+	<%
+	if ( caname == null ) {
+		caname = cainfo.getName();
+	} 
+	if ( catokentype != CATokenInfo.CATOKENTYPE_HSM ) {
+	%>
+	<form name="exportca" action="<%= globalconfiguration.getCaPath() + "/exportca" %>" method="post">
+    <tr  id="Row<%=row++%2%>"> 
+      <td width="49%" valign="top"  align="right"><%= ejbcawebbean.getText("EXPORTCAHELP") %></td>
+      <td width="51%" valign="top">             
+		<input type="hidden" name='<%= org.ejbca.ui.web.admin.cainterface.CAExportServlet.HIDDEN_CANAME %>' value='<%=caname %>' />
+        <input type="password" name="<%= org.ejbca.ui.web.admin.cainterface.CAExportServlet.TEXTFIELD_EXPORTCA_PASSWORD %>"  value="" />
+        <input type="submit" name="<%= BUTTON_EXPORTCA %>"  value="<%= ejbcawebbean.getText("EXPORTCA")+".." %>" />
+      </td>
+    </tr>
+	</form>
+	<% } %>
         <% } %>   
-  </form>
   </table>

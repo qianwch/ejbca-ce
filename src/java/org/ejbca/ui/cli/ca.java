@@ -13,11 +13,10 @@
  
 package org.ejbca.ui.cli;
 
-
 /**
  * Implements the CA command line interface
  *
- * @version $Id: ca.java,v 1.2 2006-02-16 05:51:43 herrvendil Exp $
+ * @version $Id: ca.java,v 1.2.10.1 2007-04-02 08:22:52 jeklund Exp $
  */
 public class ca extends BaseCommand {
     /**
@@ -33,15 +32,12 @@ public class ca extends BaseCommand {
                 cmd.execute();
             } else {
                 System.out.println(
-                    "Usage: CA info | init | listcas | getrootcert | createcrl | getcrl |  listexpired | exportprofiles | importprofiles | importca | importcert | republish | activateca | deactivateca");
+                    "Usage: CA info | init | listcas | getrootcert | createcrl | getcrl |  listexpired | exportprofiles | importprofiles | exportca | importca | importcert | republish | activateca | deactivateca");
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());            
             //e.printStackTrace();
             System.exit(-1);
         }
-    }
-}
-
-
-//ca
+    } // main
+} // ca
