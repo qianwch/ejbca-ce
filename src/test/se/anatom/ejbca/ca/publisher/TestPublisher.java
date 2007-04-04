@@ -11,7 +11,7 @@
  *                                                                       *
  *************************************************************************/
 
-package org.ejbca.core.model.ca.publisher;
+package se.anatom.ejbca.ca.publisher;
 
 import java.io.IOException;
 import java.security.cert.X509Certificate;
@@ -33,6 +33,7 @@ import org.ejbca.core.model.ca.publisher.BasePublisher;
 import org.ejbca.core.model.ca.publisher.CustomPublisherContainer;
 import org.ejbca.core.model.ca.publisher.GeneralPurposeCustomPublisher;
 import org.ejbca.core.model.ca.publisher.LdapPublisher;
+import org.ejbca.core.model.ca.publisher.PublisherConnectionException;
 import org.ejbca.core.model.ca.publisher.PublisherException;
 import org.ejbca.core.model.ca.publisher.PublisherExistsException;
 import org.ejbca.core.model.log.Admin;
@@ -44,7 +45,7 @@ import org.ejbca.util.CertTools;
 /**
  * Tests Publishers.
  *
- * @version $Id: TestPublisher.java,v 1.6.6.1 2007-04-02 11:10:40 jeklund Exp $
+ * @version $Id: TestPublisher.java,v 1.6.6.2 2007-04-04 08:32:31 primelars Exp $
  */
 public class TestPublisher extends TestCase {
     
