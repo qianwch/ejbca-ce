@@ -48,7 +48,7 @@ import org.bouncycastle.x509.X509V3CertificateGenerator;
 public class KeyStoreContainer {
     private void setPassWord(boolean isKeystoreException) throws IOException {
         System.err.println((isKeystoreException ? "Setting key entry in keystore" : "Loading keystore")+". Give password of inserted card in slot:");
-        char result[] = new BufferedReader(new InputStreamReader(System.in)).readLine().toCharArray();
+        final char result[] = passwordReader.readPassword();
         if ( isKeystoreException )
             this.passPhraseGetSetEntry = result;
         else
@@ -57,30 +57,45 @@ public class KeyStoreContainer {
     private final KeyStore keyStore;
     private final String providerName;
     private final String ecryptProviderName;
+    private final PasswordReader passwordReader;
     private char passPhraseLoadSave[] = null;
     private char passPhraseGetSetEntry[] = null;
     public KeyStoreContainer(final String keyStoreType,
                              final String providerClassName,
                              final String encryptProviderClassName,
-                             final String storeID) throws NoSuchAlgorithmException, CertificateException, KeyStoreException, NoSuchProviderException, IOException, IllegalArgumentException, SecurityException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException {
-        this( keyStoreType, providerClassName,
-              encryptProviderClassName, storeID!=null ? storeID.getBytes():null);
+                             final String sStoreID) throws NoSuchAlgorithmException, CertificateException, KeyStoreException, NoSuchProviderException, IOException, IllegalArgumentException, SecurityException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException {
+        this( keyStoreType,
+              providerClassName,
+              encryptProviderClassName,
+              sStoreID,
+              null );
     }
-    KeyStoreContainer(final String keyStoreType,
-                      final String providerClassName,
-                      final String encryptProviderClassName,
-                      final byte storeID[]) throws NoSuchAlgorithmException, CertificateException, KeyStoreException, NoSuchProviderException, IOException, IllegalArgumentException, SecurityException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException {
+    public KeyStoreContainer(final String keyStoreType,
+                             final String providerClassName,
+                             final String encryptProviderClassName,
+                             final String sStoreID,
+                             final PasswordReader _passwordReader) throws NoSuchAlgorithmException, CertificateException, KeyStoreException, NoSuchProviderException, IOException, IllegalArgumentException, SecurityException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException {
+        final byte storeID[] = sStoreID!=null ? sStoreID.getBytes():null;
         Security.addProvider( new BouncyCastleProvider() );
         this.providerName = getProviderName(providerClassName);
         this.ecryptProviderName = getProviderName(encryptProviderClassName);
+        this.passwordReader = _passwordReader!=null ? _passwordReader : new DefaultPasswordReader();
         System.err.println("Creating KeyStore of type "+keyStoreType+" with provider "+this.providerName+(storeID!=null ? (" with ID "+new String(storeID)) : "")+'.');
         this.keyStore = KeyStore.getInstance(keyStoreType, this.providerName);
-         try {
-             load(storeID);
-         } catch( IOException e ) {
-             setPassWord(false);
-             load(storeID);
-         }
+        try {
+            load(storeID);
+        } catch( IOException e ) {
+            setPassWord(false);
+            load(storeID);
+        }
+    }
+    public interface PasswordReader {
+        char[] readPassword() throws IOException;
+    }
+    private class DefaultPasswordReader implements PasswordReader {
+        public char[] readPassword() throws IOException {
+            return new BufferedReader(new InputStreamReader(System.in)).readLine().toCharArray();
+        }
     }
     String getProviderName() {
         return this.providerName;

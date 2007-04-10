@@ -20,7 +20,7 @@ import java.io.FileOutputStream;
 
 /**
  * @author lars
- * @version $Id: HSMKeyTool.java,v 1.12.2.6 2007-03-18 12:56:00 primelars Exp $
+ * @version $Id: HSMKeyTool.java,v 1.12.2.7 2007-04-10 20:47:50 primelars Exp $
  *
  */
 public class HSMKeyTool {
@@ -72,10 +72,10 @@ public class HSMKeyTool {
                 else
                     KeyStoreContainerTest.test(args[2], args[3], args[4], args[5], args.length>6 ? Integer.parseInt(args[6].trim()) : 1);
             } else if( args.length > 1 && args[1].toLowerCase().trim().equals(CREATE_KEYSTORE_SWITCH)) {
-                new KeyStoreContainer(args[4], args[2], args[3], (byte[])null).storeKeyStore();
+                new KeyStoreContainer(args[4], args[2], args[3], null).storeKeyStore();
             } else if( args.length > 1 && args[1].toLowerCase().trim().equals(CREATE_KEYSTORE_MODULE_SWITCH)) {
                 System.setProperty("protect", "module");
-                new KeyStoreContainer(args[4], args[2], args[3], (byte[])null).storeKeyStore();
+                new KeyStoreContainer(args[4], args[2], args[3], null).storeKeyStore();
             } else if( args.length > 1 && args[1].toLowerCase().trim().equals(MOVE_SWITCH)) {
                 if ( args.length < 7 )
                     System.err.println(args[0] + " " + args[1] + " <from keystore ID> <to keystore ID>");
