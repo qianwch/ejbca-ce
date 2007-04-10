@@ -13,7 +13,9 @@
 
 package se.anatom.ejbca.ca.publisher;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Properties;
@@ -45,7 +47,7 @@ import org.ejbca.util.CertTools;
 /**
  * Tests Publishers.
  *
- * @version $Id: TestPublisher.java,v 1.6.6.2 2007-04-04 08:32:31 primelars Exp $
+ * @version $Id: TestPublisher.java,v 1.6.6.3 2007-04-10 10:42:21 jeklund Exp $
  */
 public class TestPublisher extends TestCase {
     
@@ -100,9 +102,10 @@ public class TestPublisher extends TestCase {
 
     private static final Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
     
-    private String externalCommand	= "dir";
-    private String externalCommand2	= "ls";
-    private final String invalidOption		= " --------------:";
+    private String externalCommand	= "ls";
+    private String externalCommand2	= "cmd.exe /c dir";
+    private String invalidOption		= " --------------:";
+    private String invalidOption2		= " /parameterthatdoesnotexist";
 
     /**
      * Creates a new TestPublisher object.
@@ -327,14 +330,15 @@ public class TestPublisher extends TestCase {
 	    Properties props = new Properties();
 	
 	    //Make sure an external command exists for testing purposes
-	    boolean ret = false;
-	    if ( !isValidCommand(externalCommand) ) {
-	    	externalCommand = externalCommand2; 
+	    boolean ret = true;
+	    if ( isValidCommand(externalCommand) ) {
+	    	ret = false;
+	    } else if ( isValidCommand(externalCommand2) ) {
+	    	externalCommand = externalCommand2;
+	    	invalidOption = invalidOption2;
+	    	ret = false; 
 	    }
-	    if ( !isValidCommand(externalCommand) ) {
-	    	ret = true; 
-	    }
-	    assertFalse("This test requires \"" + externalCommand + "\" to be available.", ret);
+	    assertFalse("This test requires \"" + externalCommand + "\" or \"" + externalCommand2 + "\"to be available.", ret);
 	    // Create
     	gpcPublisher = new GeneralPurposeCustomPublisher();
 	    // Make sure it fails without a given external command
@@ -353,6 +357,7 @@ public class TestPublisher extends TestCase {
 	        gpcPublisher.init(props);
 			ret = gpcPublisher.storeCRL(admin, testcrl, null, 1);
 		} catch (PublisherException e) {
+			e.printStackTrace();
 		}
 	    assertTrue("Store CRL with GeneralPurposeCustomPublisher failed.", ret);
 	    log.debug("<test10GenPurpCustPubl()");
@@ -371,14 +376,15 @@ public class TestPublisher extends TestCase {
 	    Properties props = new Properties();
 	
 	    //Make sure an external command exists for testing purposes
-	    boolean ret = false;
-	    if ( !isValidCommand(externalCommand) ) {
-	    	externalCommand = externalCommand2; 
+	    boolean ret = true;
+	    if ( isValidCommand(externalCommand) ) {
+	    	ret = false;
+	    } else if ( isValidCommand(externalCommand2) ) {
+	    	externalCommand = externalCommand2;
+	    	invalidOption = invalidOption2;
+	    	ret = false; 
 	    }
-	    if ( !isValidCommand(externalCommand) ) {
-	    	ret = true; 
-	    }
-	    assertFalse("This test requires \"" + externalCommand + "\" to be available.", ret);
+	    assertFalse("This test requires \"" + externalCommand + "\" or \"" + externalCommand2 + "\"to be available.", ret);
 	    // Create
     	gpcPublisher = new GeneralPurposeCustomPublisher();
 	    // Test function by calling a command that is available on most platforms with invalid option
@@ -428,14 +434,15 @@ public class TestPublisher extends TestCase {
 	    Properties props = new Properties();
 	
 	    //Make sure an external command exists for testing purposes
-	    boolean ret = false;
-	    if ( !isValidCommand(externalCommand) ) {
-	    	externalCommand = externalCommand2; 
+	    boolean ret = true;
+	    if ( isValidCommand(externalCommand) ) {
+	    	ret = false;
+	    } else if ( isValidCommand(externalCommand2) ) {
+	    	externalCommand = externalCommand2;
+	    	invalidOption = invalidOption2;
+	    	ret = false; 
 	    }
-	    if ( !isValidCommand(externalCommand) ) {
-	    	ret = true; 
-	    }
-	    assertFalse("This test requires \"" + externalCommand + "\" to be available.", ret);
+	    assertFalse("This test requires \"" + externalCommand + "\" or \"" + externalCommand2 + "\"to be available.", ret);
 	    // Create
     	gpcPublisher = new GeneralPurposeCustomPublisher();
 	    // Test function by calling a command that is available on most platforms with invalid option 
@@ -523,7 +530,10 @@ public class TestPublisher extends TestCase {
 	private boolean isValidCommand(String externalCommandToTest) {
 	    boolean ret = false;
 		try {
-			Process externalProcess = Runtime.getRuntime().exec( externalCommand );
+			String[] cmdarray = externalCommandToTest.split("\\s");
+			Process externalProcess = Runtime.getRuntime().exec( cmdarray, null, null );
+			BufferedReader br = new BufferedReader( new InputStreamReader( externalProcess.getInputStream() ) );
+			while (br.readLine() != null) { }
 			if ( externalProcess.waitFor() == 0 ) {
 				ret = true;
 			}
