@@ -471,7 +471,7 @@ try  {
     if (chain.size() == 0) {
         out.println("No CA certificates exist");
     } else {
-		out.println("<li><a href=\"../certdist?cmd=iecacert&level="+(chain.size()-1)+"&caid="+caid+"\">Root CA</a></li>");
+		out.println("<li><a href=\"../webdist/certdist?cmd=iecacert&level="+(chain.size()-1)+"&caid="+caid+"\">Root CA</a></li>");
 		if (chain.size() > 1) {
 			for (int i=chain.size()-2;i>=0;i--) {
                 out.println("<li><a href=\"../webdist/certdist?cmd=iecacert&level="+i+"&caid="+caid+"\">CA</a></li>");
