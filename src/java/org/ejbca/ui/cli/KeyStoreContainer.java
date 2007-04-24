@@ -131,9 +131,9 @@ public class KeyStoreContainer {
         if ( alias!=null )
             deleteAlias(alias);
         else {
-            Enumeration<String> e = this.keyStore.aliases();
+            Enumeration e = this.keyStore.aliases();
             while( e.hasMoreElements() )
-                deleteAlias( e.nextElement() );
+                deleteAlias( (String) e.nextElement() );
         }
         return storeKeyStore();
     }
@@ -201,9 +201,9 @@ public class KeyStoreContainer {
                      final String toID) throws IllegalArgumentException, SecurityException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NoSuchAlgorithmException, CertificateException, KeyStoreException, NoSuchProviderException, IOException, UnrecoverableKeyException {
         KeyStoreContainer fromKS = new KeyStoreContainer(keyStoreType, providerClassName, encryptProviderClassName, fromID);
         KeyStoreContainer toKS = new KeyStoreContainer(keyStoreType, providerClassName, encryptProviderClassName, toID);
-        Enumeration<String> e = fromKS.getKeyStore().aliases();
+        Enumeration e = fromKS.getKeyStore().aliases();
         while( e.hasMoreElements() ) {
-            String alias = e.nextElement();
+            String alias = (String) e.nextElement();
             if (fromKS.getKeyStore().isKeyEntry(alias)) {
                 Key key=fromKS.getKey(alias);
                 Certificate chain[] = fromKS.getKeyStore().getCertificateChain(alias);
