@@ -58,7 +58,7 @@ import org.ejbca.util.JDBCUtil;
  * Stores data used by web server clients.
  * Uses JNDI name for datasource as defined in env 'Datasource' in ejb-jar.xml.
  *
- * @version $Id: LocalAuthorizationSessionBean.java,v 1.10 2007-01-03 14:34:11 anatom Exp $
+ * @version $Id: LocalAuthorizationSessionBean.java,v 1.10.2.1 2007-05-09 08:11:03 anatom Exp $
  *
  * @ejb.bean
  *   description="Session bean handling interface with ra authorization"
@@ -209,7 +209,7 @@ public class LocalAuthorizationSessionBean extends BaseSessionBean {
     private String[] customaccessrules = null;
 
     private static final String DEFAULTGROUPNAME = "DEFAULT";
-    private static final String PUBLICWEBGROUPNAME = "Public Web Users";
+    protected static final String PUBLICWEBGROUPNAME = "Public Web Users"; // protected so it's available for unit tests
 
     /**
      * Default create for SessionBean without any creation Arguments.
@@ -257,7 +257,7 @@ public class LocalAuthorizationSessionBean extends BaseSessionBean {
 
 
     /**
-     * Gets connection to certificate store session bean
+     * Gets connection to ra admin session bean
      *
      * @return Connection
      */
@@ -319,6 +319,9 @@ public class LocalAuthorizationSessionBean extends BaseSessionBean {
      * @ejb.interface-method view-type="both"
      */
     public void initialize(Admin admin, int caid) throws AdminGroupExistsException {
+    	if (log.isDebugEnabled()) {
+    		log.debug(">initialize, caid: "+caid);
+    	}
         // Check if admingroup table is empty, if so insert default superuser
         // and create "special edit accessrules count group"
         try {
@@ -375,43 +378,57 @@ public class LocalAuthorizationSessionBean extends BaseSessionBean {
         }
         // Add Public Web Group
         try {
-            admingrouphome.findByGroupNameAndCAId(PUBLICWEBGROUPNAME, caid);
-            this.removeAdminGroup(admin, PUBLICWEBGROUPNAME, caid);
+            AdminGroupDataLocal agl = admingrouphome.findByGroupNameAndCAId(PUBLICWEBGROUPNAME, caid);
+            removeAndAddDefaultPublicWebGroupRules(agl);
         } catch (FinderException e) {
-        	debug("initialize: FinderEx, can't find public web group.");
-        }
-
-        try {
-            admingrouphome.findByGroupNameAndCAId(PUBLICWEBGROUPNAME, caid);
-        } catch (FinderException e) {
-        	debug("initialize: FinderEx, create public web group.");
+        	debug("initialize: FinderEx, can't find public web group for caid "+caid);
+        	debug("initialize: FinderEx, create public web group for caid "+caid);
         	try {
                 AdminGroupDataLocal agdl = admingrouphome.create(new Integer(findFreeAdminGroupId()), PUBLICWEBGROUPNAME, caid);
-
-                ArrayList adminentities = new ArrayList();
-                adminentities.add(new AdminEntity(AdminEntity.SPECIALADMIN_PUBLICWEBUSER));
-                agdl.addAdminEntities(adminentities);
-
-                ArrayList accessrules = new ArrayList();
-                accessrules.add(new AccessRule("/public_web_user", AccessRule.RULE_ACCEPT, false));
-
-                accessrules.add(new AccessRule("/ca_functionality/basic_functions", AccessRule.RULE_ACCEPT, false));
-                accessrules.add(new AccessRule("/ca_functionality/view_certificate", AccessRule.RULE_ACCEPT, false));
-                accessrules.add(new AccessRule("/ca_functionality/create_certificate", AccessRule.RULE_ACCEPT, false));
-                accessrules.add(new AccessRule("/ca_functionality/store_certificate", AccessRule.RULE_ACCEPT, false));
-                accessrules.add(new AccessRule("/ra_functionality/view_end_entity", AccessRule.RULE_ACCEPT, false));
-                accessrules.add(new AccessRule("/ca", AccessRule.RULE_ACCEPT, true));
-                accessrules.add(new AccessRule("/endentityprofilesrules", AccessRule.RULE_ACCEPT, true));
-
-                agdl.addAccessRules(accessrules);
-
+                addDefaultPublicWebGroupRules(agdl);
                 signalForAuthorizationTreeUpdate();
             } catch (CreateException ce) {
             	error("initialize continues after Exception: ", ce);
             }
         }
+
+    	if (log.isDebugEnabled()) {
+    		log.debug("<initialize, caid: "+caid);
+    	}
     }
 
+
+	private void addDefaultPublicWebGroupRules(AdminGroupDataLocal agdl) {
+    	debug("create public web group for caid "+agdl.getCaId());
+		ArrayList adminentities = new ArrayList();
+		adminentities.add(new AdminEntity(AdminEntity.SPECIALADMIN_PUBLICWEBUSER));
+		agdl.addAdminEntities(adminentities);
+
+		ArrayList accessrules = new ArrayList();
+		accessrules.add(new AccessRule("/public_web_user", AccessRule.RULE_ACCEPT, false));
+
+		accessrules.add(new AccessRule("/ca_functionality/basic_functions", AccessRule.RULE_ACCEPT, false));
+		accessrules.add(new AccessRule("/ca_functionality/view_certificate", AccessRule.RULE_ACCEPT, false));
+		accessrules.add(new AccessRule("/ca_functionality/create_certificate", AccessRule.RULE_ACCEPT, false));
+		accessrules.add(new AccessRule("/ca_functionality/store_certificate", AccessRule.RULE_ACCEPT, false));
+		accessrules.add(new AccessRule("/ra_functionality/view_end_entity", AccessRule.RULE_ACCEPT, false));
+		accessrules.add(new AccessRule("/ca", AccessRule.RULE_ACCEPT, true));
+		accessrules.add(new AccessRule("/endentityprofilesrules", AccessRule.RULE_ACCEPT, true));
+
+		agdl.addAccessRules(accessrules);
+	}
+
+
+    /**
+     */
+    private void removeAndAddDefaultPublicWebGroupRules(AdminGroupDataLocal agl) {
+    	if (log.isDebugEnabled()) {
+    		debug("Removing old and adding new accessrules and admin entitites to admin group "+agl.getAdminGroupName()+" for caid "+agl.getCaId());
+    	}
+        removeEntitiesAndRulesFromGroup(agl);
+        addDefaultPublicWebGroupRules(agl);
+        signalForAuthorizationTreeUpdate();
+    }
 
     /**
      * Method to check if a user is authorized to a certain resource.
@@ -548,19 +565,13 @@ public class LocalAuthorizationSessionBean extends BaseSessionBean {
      * @ejb.interface-method view-type="both"
      */
     public void removeAdminGroup(Admin admin, String admingroupname, int caid) {
+    	if (log.isDebugEnabled()) {
+    		debug("Removing admin group "+admingroupname+" for caid "+caid);
+    	}
         if (!(admingroupname.equals(DEFAULTGROUPNAME) && caid == LogConstants.INTERNALCAID)) {
             try {
                 AdminGroupDataLocal agl = admingrouphome.findByGroupNameAndCAId(admingroupname, caid);
-                // Remove groups user entities.
-                agl.removeAdminEntities(agl.getAdminEntityObjects());
-
-                // Remove groups accessrules.
-                Iterator iter = agl.getAccessRuleObjects().iterator();
-                ArrayList remove = new ArrayList();
-                while (iter.hasNext()) {
-                    remove.add(((AccessRule) iter.next()).getAccessRule());
-                }
-                agl.removeAccessRules(remove);
+                removeEntitiesAndRulesFromGroup(agl);
 
                 agl.remove();
                 signalForAuthorizationTreeUpdate();
@@ -574,6 +585,21 @@ public class LocalAuthorizationSessionBean extends BaseSessionBean {
             }
         }
     } // removeAdminGroup
+
+
+	private void removeEntitiesAndRulesFromGroup(AdminGroupDataLocal agl) {
+    	debug("removing entities and rules for caid "+agl.getCaId());
+		// Remove groups user entities.
+		agl.removeAdminEntities(agl.getAdminEntityObjects());
+
+		// Remove groups accessrules.
+		Iterator iter = agl.getAccessRuleObjects().iterator();
+		ArrayList remove = new ArrayList();
+		while (iter.hasNext()) {
+		    remove.add(((AccessRule) iter.next()).getAccessRule());
+		}
+		agl.removeAccessRules(remove);
+	}
 
     /**
      * Metod to rename a admingroup
@@ -1060,7 +1086,13 @@ public class LocalAuthorizationSessionBean extends BaseSessionBean {
      * to other beans that they should reconstruct their accesstrees.
      */
     private void signalForAuthorizationTreeUpdate() {
+    	if (log.isDebugEnabled()) {
+    		log.debug(">signalForAuthorizationTreeUpdate");
+    	}
         getAuthorizationTreeUpdateData().incrementAuthorizationTreeUpdateNumber();
+    	if (log.isDebugEnabled()) {
+    		log.debug("<signalForAuthorizationTreeUpdate");
+    	}
     }
 
     private int findFreeAdminGroupId() {
