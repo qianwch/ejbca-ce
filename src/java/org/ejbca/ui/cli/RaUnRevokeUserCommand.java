@@ -18,18 +18,14 @@ import org.ejbca.core.model.ca.crl.RevokedCertInfo;
 import org.ejbca.core.model.ra.UserDataConstants;
 import org.ejbca.core.model.ra.UserDataVO;
 
-
-
-
-
 /**
- * Revokes a user in the database, and also revokes all the users certificates.
+ * Unrevokes a user in the database, and also unrevokes all the users certificates on hold.
  *
- * @version $Id: RaUnRevokeUserCommand.java,v 1.3 2006-08-12 09:49:30 herrvendil Exp $
+ * @version $Id: RaUnRevokeUserCommand.java,v 1.3.6.1 2007-05-16 09:30:24 jeklund Exp $
  */
 public class RaUnRevokeUserCommand extends BaseRaAdminCommand {
     /**
-     * Creates a new instance of RaRevokeUserCommand
+     * Creates a new instance of RaUnRevokeUserCommand
      *
      * @param args command line arguments
      */
@@ -50,19 +46,14 @@ public class RaUnRevokeUserCommand extends BaseRaAdminCommand {
                 getOutputStream().println("A users certificate can unly be unrevoked if the revocation reason is certificate_hold.");
                 return;
             }
-
             String username = args[1];
-
             UserDataVO data = getAdminSession().findUser(administrator, username);
             getOutputStream().println("Found user:");
             getOutputStream().println("username=" + data.getUsername());
             getOutputStream().println("dn=\"" + data.getDN() + "\"");
             getOutputStream().println("Old status=" + data.getStatus());
-            getAdminSession().setUserStatus(administrator, username,
-            		UserDataConstants.STATUS_GENERATED);
             getOutputStream().println("New status=" + UserDataConstants.STATUS_GENERATED);
-
-            // Revoke users certificates
+            // Unrevoke user and certificates on hold
             try {
             	getAdminSession().revokeUser(administrator, username, RevokedCertInfo.NOT_REVOKED);
             } catch (AuthorizationDeniedException e) {
@@ -71,7 +62,5 @@ public class RaUnRevokeUserCommand extends BaseRaAdminCommand {
         } catch (Exception e) {
             throw new ErrorAdminCommandException(e);
         }
-    }
-
-    // execute
+    } // execute
 }

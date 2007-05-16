@@ -94,7 +94,7 @@ import org.ejbca.util.query.UserMatch;
  * Administrates users in the database using UserData Entity Bean.
  * Uses JNDI name for datasource as defined in env 'Datasource' in ejb-jar.xml.
  *
- * @version $Id: LocalUserAdminSessionBean.java,v 1.38.2.2 2007-03-08 09:57:21 anatom Exp $
+ * @version $Id: LocalUserAdminSessionBean.java,v 1.38.2.3 2007-05-16 09:30:22 jeklund Exp $
  * 
  * @ejb.bean
  *   display-name="UserAdminSB"
@@ -1013,15 +1013,21 @@ throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, Approva
         } else {
             publishers = prof.getPublisherList();
         }
+        String actionMessage = "ra.revokedentity";
         try {
-			setUserStatus(admin, username, UserDataConstants.STATUS_REVOKED);
+        	if ( reason == RevokedCertInfo.NOT_REVOKED ) {
+    			setUserStatus(admin, username, UserDataConstants.STATUS_GENERATED);
+    			actionMessage = "ra.unrevokedentity";
+        	} else {
+    			setUserStatus(admin, username, UserDataConstants.STATUS_REVOKED);
+        	}
 		} catch (ApprovalException e) {
 			throw new EJBException("This should never happen",e);
 		} catch (WaitingForApprovalException e) {
 			throw new EJBException("This should never happen",e);
 		}
-        certificatesession.setRevokeStatus(admin, username, publishers, reason);
-        String msg = intres.getLocalizedMessage("ra.revokedentity", username);            	
+        certificatesession.setRevokeStatus(admin, username, publishers, reason);	// Revoke/unrevoke all possible user certificates
+        String msg = intres.getLocalizedMessage(actionMessage, username);            	
         logsession.log(admin, caid, LogEntry.MODULE_RA, new java.util.Date(), username, null, LogEntry.EVENT_INFO_REVOKEDENDENTITY, msg);
         debug("<revokeUser()");
     } // revokeUser
