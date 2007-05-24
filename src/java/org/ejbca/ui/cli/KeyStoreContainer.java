@@ -227,7 +227,10 @@ public class KeyStoreContainer {
             final InputStream bis = new BufferedInputStream(is, bufferSize);
             final OutputStream bos = new BufferedOutputStream(os, bufferSize);
             final CMSEnvelopedDataStreamGenerator edGen = new CMSEnvelopedDataStreamGenerator();
-            edGen.addKeyTransRecipient(keyStore.getCertificate(alias).getPublicKey(), "hej".getBytes() );
+            final Certificate cert = keyStore.getCertificate(alias);
+            if ( cert==null )
+                throw new IllegalAdminCommandException("Certificate alias "+alias+" not found in keystore.");
+            edGen.addKeyTransRecipient(cert.getPublicKey(), "hej".getBytes() );
             OutputStream out = edGen.open(bos, CMSEnvelopedDataGenerator.AES128_CBC, "BC");
             byte[] buf = new byte[bufferSize];
             while (true) {
@@ -251,8 +254,11 @@ public class KeyStoreContainer {
             Collection  c = recipients.getRecipients();
             Iterator    it = c.iterator();
             if (it.hasNext()) {
-                RecipientInformation   recipient = (RecipientInformation)it.next();        
-                CMSTypedStream recData = recipient.getContentStream(getKey(alias), KeyStoreContainer.this.ecryptProviderName);
+                RecipientInformation   recipient = (RecipientInformation)it.next();
+                Key key = getKey(alias);
+                if ( key==null )
+                    throw new IllegalAdminCommandException("Key alias "+alias+" not found in keystore.");
+                CMSTypedStream recData = recipient.getContentStream(key, KeyStoreContainer.this.ecryptProviderName);
                 InputStream ris = recData.getContentStream();
                 byte[] buf = new byte[bufferSize];
                 while (true) {
