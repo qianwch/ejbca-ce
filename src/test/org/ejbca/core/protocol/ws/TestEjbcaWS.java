@@ -27,6 +27,11 @@ import org.ejbca.util.Base64;
 import org.ejbca.util.CertTools;
 import org.ejbca.util.KeyTools;
 
+/**
+ * Running this test requires that you first create a JKS keystore wstest.jks with password
+ * foo123. This user must be a superadmin in EJBCA.
+ * 
+ */
 public class TestEjbcaWS extends TestCase {
 	
 	private static EjbcaWS ejbcaraws;
@@ -461,7 +466,7 @@ public class TestEjbcaWS extends TestCase {
 		user1.setUsername("WSTESTUSER1");
 		user1.setPassword("foo123");
 		user1.setClearPwd(true);
-		user1.setSubjectDN("CN=WSÅÄÖåäö");
+		user1.setSubjectDN("CN=WSï¿½ï¿½ï¿½ï¿½ï¿½ï¿½");
 		user1.setCaName("AdminCA1");
 		user1.setEmail(null);
 		user1.setSubjectAltName(null);
@@ -482,7 +487,7 @@ public class TestEjbcaWS extends TestCase {
 		assertTrue(userdatas.size() == 1);
 		UserDataVOWS userdata = userdatas.get(0);
 		assertTrue(userdata.getUsername().equals("WSTESTUSER1"));
-        assertTrue(userdata.getSubjectDN().equals("CN=WSÅÄÖåäö"));
+        assertTrue(userdata.getSubjectDN().equals("CN=WSï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"));
 		
 	}
 	
