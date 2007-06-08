@@ -49,24 +49,26 @@ earlier version of EJBCA.
 <p>
 Note: EJBCA makes use of strong crypto and keystore passwords longer than 7 characters.
 For this to work you must install the 'Unlimited Strength Jurisdiction Policy Files' for JDK.
-The policy files can be found at the same place as the JDK download at java.sun.com. 
-Further information on this can be found in the Sun documentation on the JCE.
+The policy files can be found at the same place as the JDK download at java.sun.com. The text
+"Using exportable cryptography" is shown on the first page in the Admin GUI if you fail to
+install this package. Further information on this can be found in the Sun documentation on
+the JCE.
 </p><p>
 Needed to build and run are:
 <ul>
-<li>JDK 1.4.x or 1.5.x</li>
+<li>JDK 1.4.x, 1.5.x or 1.6.x (support for 1.4.x will be dropped as of EJBCA 3.5).</li>
 <li><i>Unlimited Strength Jurisdiction Policy Files</i> for your JDK</li>
-<li>JBOSS >=4.0.3 (latest tested verison is JBoss 4.0.4)</li>
+<li>JBOSS >=4.0.3 (latest tested verison is JBoss 4.0.5)</li>
 <li>Ant >= 1.6.5 to build (http://jakarta.apache.org/ant/)</li>
 <li>Apache Myfaces 1.1 JSF libraries (included in JBoss >=4.0.3), without this you can still run EJBCA but with limited functionality in the adminGUI.</li>
 </ul>
-<p>EJBCA can also run on other application servers, see doc/howto/HOWTO-Appserver.txt for details.</p>
+<p>EJBCA can also run on other application servers, see doc/howto/HOWTO-Appserver.txt for details how to run on Weblogic and Glassfish.</p>
 </p><p>
-Set the environment variable JBOSS_HOME to the directory where
+Set the environment variable APPSRV_HOME (or JBOSS_HOME) to the directory where
 JBoss's root is
  (/jboss-version). This is done so the deploy script will
  know where files are to be copied, they are copied to the
- directory $JBOSS_HOME/server/default/deploy.
+ directory $APPSRV_HOME/server/default/deploy.
  </p><p>
  Windows/Unix: 
  When we describe command line commands below we use
@@ -74,6 +76,11 @@ JBoss's root is
  The same command files are available for windows as cmd-files,
  e.g. 'ejbca.cmd.'
 </p>
+        <p>
+        Java 1.6.0<br/>
+        Java Cryptography Extension (JCE) Unlimited Strength Jurisdiction Policy Files 6.0
+        <br/><a href="http://java.sun.com/javase/downloads/index.jsp">http://java.sun.com/javase/downloads/index.jsp</a>
+        </p>
         <p>
         Java 1.5.0<br/>
         Java Cryptography Extension (JCE) Unlimited Strength Jurisdiction Policy Files 5.0
@@ -84,6 +91,7 @@ JBoss's root is
         Java Cryptography Extension (JCE) Unlimited Strength Jurisdiction Policy Files 1.4.2
         <br/><a href="http://java.sun.com/j2se/1.4.2/download.html">http://java.sun.com/j2se/1.4.2/download.html</a>
         </p>
+<p>NOTE: If you are unsure what version of EJBCA you are running, type 'ant ejbcaversion' in the EJBCA_HOME directory. (EJBCA 3.5 and newer.)</p>
 </subsection>
 
 <subsection name="Configure">
@@ -120,19 +128,17 @@ in the distribution.
 <subsubsection name="Memory configuration">
 <p>
 The memory parameters for Java is by default configured very low, for JBoss it is set by default to allow
-a maximum memory usage of 128mb, which is way too low. We recomend that you configure your java memory arguments to
+a maximum memory usage of 512mb, which is sufficient for most configurations. We still recomend that you check your 
+configuration of java memory arguments to set them to
 at least '-Xms128m -Xmx512m'. 
 For JBoss this is done in JBOSS_HOME/bin/run.conf where the line:
 </p>
 <source>
-JAVA_OPTS="-server -Xms128m -Xmx128m"
-</source>
-<p>
-should be changed to:
-</p>
-<source>
 JAVA_OPTS="-server -Xms128m -Xmx512m"
 </source>
+<p>
+can be changed.
+</p>
 </subsubsection>
 
 </subsection>
@@ -172,6 +178,8 @@ picking up everything and deploying the ear without errors.
 </p><p>
 5) Type 'ant install' it will generate all certificates, keys, etc needed to run with an initial CA.
 You will find admin keys in ${ejbca.home}/p12. (do not delete those files!)
+<br/>The command 'ant install' is only run once, when the CA is first installed. It creates lots of things in the database, 
+and can not be run again (it will give an error if you try).
 <ul>
 <li>tomcat.jks is for the servlet container (don't bother with it)</li>
 <li>superadmin.p12 should be imported in your browser, that's your administration certificate.</li>
@@ -1927,11 +1935,12 @@ to the HSM and independant of EJBCA. You should make sure you are familiar with 
 <p>
 When configuring a CA to use a HSM in the administration GUI it is a property field where properties unique to this very HSM is specified. All implemented HSM modules are using the same property keywords to define the identity and the purpose of the keys to be used. These keywords are:
 <ul>
-<li>certSignKey   - the key to be used when signing certificates, can be RSA or ECDSA.</li>
-<li>crlSignKey    - the key to be used when signing CLSs, can be RSA or ECDSA.</li>
-<li>keyEncryptKey - the key to be used for key encryption and decryption, this must be an RSA key.</li>
-<li>testKey       - the key to be used by HSM status checks, can be RSA or ECDSA.</li>
-<li>defaultKey    - the key to be used when no other key is defined for a purpose. If this is the only definition then this key will be used for all purposes.</li>
+<li>certSignKey      - the key to be used when signing certificates, can be RSA or ECDSA.</li>
+<li>crlSignKey       - the key to be used when signing CLSs, can be RSA or ECDSA.</li>
+<li>keyEncryptKey    - the key to be used for key encryption and decryption, this must be an RSA key.</li>
+<li>testKey          - the key to be used by HSM status checks, can be RSA or ECDSA.</li>
+<li>hardTokenEncrypt - the key to be used for hardtoken encryption and decryption. PUK will be decrypted by this key.</li>
+<li>defaultKey       - the key to be used when no other key is defined for a purpose. If this is the only definition then this key will be used for all purposes.</li>
 </ul>
 </p><p>
 You may omit defaultKey if you want to be sure that the right key is used, but then all the other keys must be specified. It's recommended that the certificate and CRL signing keys are linked to the same key since different keys are rarely supported by verifying applications.
@@ -1957,7 +1966,7 @@ Support for ECDSA in HSMs are dependant on the support for ECDSA in the HSM manu
 You have to check if that support is available.
 </p>
 </subsection>
-<subsection name="Generic PKCS#11 provider">
+<subsection name="Generic PKCS#11 provider (EJBCA 3.5)">
 <p>
 The PKCS#11 wrapper from SUN has been used to implement support for tokens with PKCS#11 libraries.
 </p><p>
@@ -2776,9 +2785,21 @@ to the domain controller. According to
 MS Article ID 321051</a>
 </p><p>
 The same certificate is used for both the AD and global catalogue (GC).
-Remember to add the CA certificate to the machine stores trusted root
+Remember to add the CA certificate to the machine that stores trusted root
 certificates.
+</p><p>
+To publish a CRL to Active Directory use a Base DN similar to
 </p>
+<source>
+CN=somename,CN=CDP,CN=Public Key Services,CN=Services,CN=Configuration,DC=somemachine,DC=primekey,DC=se
+</source>
+<p>
+and the "CRL Distribution Point" in the certificate should point to
+</p>
+<source>
+ldap:///CN=Test%20MS%20SC%20Logon%20CA%20v1,CN=somename,CN=CDP,CN=Public%20Key%20Services,CN=Services,
+CN=Configuration,DC=somemachine,DC=primekey,DC=se?certificateRevocationList?base?objectClass=cRLDistributionPoint
+</source>
 </subsubsection>
 
 <subsubsection name="What EJBCA stores/creates/modifies">
@@ -2794,6 +2815,9 @@ the certificate, the email attribute in ldap is replaced with the email adress f
 </p><p>
 Note that attributes are only replaced/updated if the flag "Modify Existing Users" in the Publisher is active. 
 The certificate attribute is always updated though.
+<br/>
+Attributes that are part of the DN, i.e. that reflects the location of the entry in LDAP is not modified, since this 
+is usually not allowed.
 </p><p>
 The attributes that EJBCA creates or replaces are:
 </p>
@@ -2808,6 +2832,7 @@ The attributes that EJBCA creates or replaces are:
 <li>uid (user id)</li>
 <li>initials</li>
 <li>title</li>
+<li>serialnumber - If we have selected to use the SN (serialNUmber DN field) in 'Ldap Location fields', we will also add it as an attribute.</li>
 </ul>
 </subsubsection>
 
@@ -3806,12 +3831,39 @@ certificates from the specified CertificateProfile.
 </p></subsection>
 </section>
 
-<section name="Adding your own public pages">
+<section name="Customizing EJBCA">
 <p>
-Put your files (static html is easy) under publicweb/root, do a full build and re-deploy. 
-The indexfile under publicweb/root is the one shown on http://<i>ejbcahost</i>:8080/ejbca, 
-so you can add a subdir under there.
-</p></section>
+You can change any part of EJBCA to better suit your specific needs.
+</p>
+<subsection name="Handling changes in a separate tree">
+<p>
+You can keep your personal modifications of EJBCA in a separate tree. Set the location
+of your personal modifications in conf/custom.properties or use the default location
+'$EJBCA_HOME/../ejbca-custom'. Your modifications will automatically overwrite any
+existing file(s) found in the EJBCA_HOME-directory or its subdirectories before
+executing an 'ant'-command. A sample, conf/custom.properties.sample, is provided. 
+</p>
+<p>
+Please note that
+<ul>
+<li>there is no way to recover overwritten files, so you have to manually restore
+files if needed.</li>
+<li>ant will not be able to detect if your changes are incompatible with newer
+versions of EJBCA. Always use 'diff' on the different versions to see if any file
+you override is affected.</li>
+<li>committing new features or improvements, that many would benefit from, is greatly
+appreciated by the community and makes your maintenance easier</li>
+</ul>
+</p>
+</subsection>
+<subsection name="Adding your own public web-pages">
+<p>
+The public web-pages are written in JSP and can be found under src/newPublicWeb.
+Modify the pages (directly or by using a separate tree), rebuild and redeploy. The
+changes should show on http://<i>ejbcahost</i>:8080/ejbca.
+</p>
+</subsection>
+</section>
 
 <section name="Using the demo servlet">
 <p>
