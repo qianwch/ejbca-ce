@@ -28,7 +28,7 @@ import org.apache.log4j.Logger;
  * The Eracom HSM is special in such way as the provider is ERACOM.<slot id>.
  * 
  * @author AdNovum Informatik AG
- * @version $Id: EracomCAToken.java,v 1.4 2006-06-24 21:38:56 primelars Exp $
+ * @version $Id: EracomCAToken.java,v 1.4.6.1 2007-06-15 09:07:50 jeklund Exp $
  */
 public class EracomCAToken extends BaseCAToken implements IHardCAToken {
 
@@ -62,7 +62,7 @@ public class EracomCAToken extends BaseCAToken implements IHardCAToken {
                 throw new CATokenOfflineException("not possible to install eracaom provider");
             KeyStore keyStore = KeyStore.getInstance("CRYPTOKI", "ERACOM."+sSlotLabel);
             log.debug("Loading key from slot"+sSlotLabel+" using pin.");
-            keyStore.load(null, authCode.toCharArray());
+            keyStore.load(null, (authCode!=null && authCode.length()>0)? authCode.toCharArray():null);
             setKeys(keyStore, authCode);
         }
         catch (Throwable t) {
