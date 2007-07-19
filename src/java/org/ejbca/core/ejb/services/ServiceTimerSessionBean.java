@@ -23,12 +23,6 @@ import java.util.Iterator;
 import javax.ejb.CreateException;
 import javax.ejb.EJBException;
 import javax.ejb.Timer;
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
-import javax.transaction.UserTransaction;
 
 import org.apache.commons.lang.StringUtils;
 import org.ejbca.core.ejb.BaseSessionBean;
@@ -138,6 +132,8 @@ import org.ejbca.core.model.services.ServiceExecutionFailedException;
  *   link="CreateCRLSession"
  *   
  *  @jonas.bean ejb-name="ServiceTimerSession"
+ *  
+ *  @version $Id: ServiceTimerSessionBean.java,v 1.10.2.6 2007-07-19 12:09:34 anatom Exp $
  */
 public class ServiceTimerSessionBean extends BaseSessionBean implements javax.ejb.TimedObject {
 
