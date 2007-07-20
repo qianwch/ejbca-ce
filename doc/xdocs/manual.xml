@@ -2274,6 +2274,81 @@ keyEncryptKey encryptRoot
 defaultKey defaultRoot
 testKey testRoot
 </source>
+<strong>Using module protected keys</strong>
+<p>
+The security world has to be initialized in the default FIPS 140-2 Level 2 for this to work.
+First backup and edit %JAVA_HOME%\jre\lib\security\java.security and insert com.ncipher.provider.km.nCipherKM as the first provider
+</p><source>
+security.provider.1=com.ncipher.provider.km.nCipherKM
+security.provider.2=sun.security.provider.Sun
+...
+</source><p>
+Then create an empty a keystore with
+</p>
+<source>host&gt; %EJBCA_HOME%\bin\nCipherHSM.cmd createkeystoremodule
+ ...
+ Next line will contain the identity identifying the keystore:
+ 0acea7eb80528b15851e6a3e7969d4a21eb2d57c
+</source>
+<p>
+This hash should be written to a file that has to be exactly 40 bytes long:
+</p>
+<ul>
+<li>Linux: 'cat &gt; temp.keystore' and copypaste the string, press Ctrl-D and Ctrl-C.</li>
+<li>Windows: 'copy con: temp.keystore' and copypaste the string, press Ctrl-Z and Enter.</li>
+</ul>
+<p>
+Generate module protected key "defaultRoot" in this keystore
+</p>
+<source>
+host&gt; %NFAST_HOME%\bin\nfkminfo.exe -k
+ AppName jcecsp Ident 0acea7eb80528b15851e6a3e7969d4a21eb2d57c
+ 
+host&gt; %NFAST_HOME%\bin\generatekey.exe --batch --generate jcecsp type=rsa size=4096 protect=module alias=defaultRoot keystore=temp.keystore
+ ...
+ ERROR: Could not write to temp.keystore
+ ...
+host&gt; %NFAST_HOME%\bin\nfkminfo.exe -k
+ AppName jcecsp Ident 0acea7eb80528b15851e6a3e7969d4a21eb2d57c
+ AppName jcecsp Ident 0acea7eb80528b15851e6a3e7969d4a21eb2d57c-key-a68f3efde60a519b7c9d4e4df22fd2b53ded37f3
+</source>
+<p>
+Despite the error message the key is still created.
+</p><p>
+Important: Restore %JAVA_HOME%\jre\lib\security\java.security now or EJBCA will stop working!
+</p><p>
+Start JBoss as for any soft token and create a new CA 'ModuleProtectedCA' in the Admin GUI.
+Choose CA Token Type 'NFastCAToken' and enter the generated key's properties.
+</p>
+<source>
+keyStore 0acea7eb80528b15851e6a3e7969d4a21eb2d57c
+defaultKey defaultRoot
+</source>
+<p>
+Complete the form and press "Create". Go to Admin GUI -> Basic Functions -> View Information for 'ModuleProtectedCA' -> Activate.
+Create a CRL to verify functionality by Admin GUI -> Basic Functions -> Create CRL for 'ModuleProtectedCA'.
+</p>
+<strong>Not using preload.</strong>
+<p>
+If a 1/N card set is used then preload don't have to be used (but it can be used). If preload is not used then jboss could be made to start automatically
+at boot time. Use the "-np" switch to the starting script if you don't want preload:
+</p>
+<source>$EJBCA_HOME/bin/nCipherJboss.sh -np start</source>
+<strong>Setting public exponent.</strong>
+<p>
+To choose the public exponent the "nCipherHSM.sh" script can not be used. nCipher has not implemented the initialization method of "KeyPairGenerator" that is
+used to set the public exponent.
+But there is another way to generate keys with the public exponent as a parameter. You must have this before you start:
+<ul>
+<li>A card that belongs to a 1/n card set in the nCipher reader</li>
+<li>A keystore protected by this card set</li>
+</ul>
+The keystore may be created with "$EJBCA_HOME/bin/nCipherHSM.sh createKeyStore" or "$EJBCA_HOME/bin/nCipherHSM.sh generate ...". Put the ID of the
+keystore (same as is used in the EJBCA web GUI) in a file. This file may not contain any other characters other than the characters of the ID. Check that the
+length of the file is 40 byte.
+If the file is called "single.jks" then the key is created like this:
+</p>
+<source>/opt/nfast/bin/generatekey -g -csingle -b jcecsp alias=default keystore=single.jks type=RSA pubexp=3 size=2048 keystorepass=single</source>
 <strong>Not using preload.</strong>
 <p>
 If a 1/N card set is used then preload don't have to be used (but it can be used). If preload is not used then jboss could be made to start automatically
