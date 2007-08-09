@@ -95,7 +95,7 @@ import org.ejbca.util.dn.DnComponents;
 /**
  * Tools to handle common certificate operations.
  *
- * @version $Id: CertTools.java,v 1.35.2.3 2007-06-05 13:36:33 anatom Exp $
+ * @version $Id: CertTools.java,v 1.35.2.4 2007-08-09 09:03:40 anatom Exp $
  */
 public class CertTools {
     private static Logger log = Logger.getLogger(CertTools.class);
@@ -1004,11 +1004,14 @@ public class CertTools {
      * Get the authority key identifier from a certificate extensions
      *
      * @param cert certificate containing the extension
-     * @return byte[] containing the authority key identifier
+     * @return byte[] containing the authority key identifier, or null if it does not exist
      * @throws IOException if extension can not be parsed
      */
     public static byte[] getAuthorityKeyId(X509Certificate cert)
         throws IOException {
+    	if (cert == null) {
+    		return null;
+    	}
         byte[] extvalue = cert.getExtensionValue("2.5.29.35");
         if (extvalue == null) {
             return null;
@@ -1023,11 +1026,14 @@ public class CertTools {
      * Get the subject key identifier from a certificate extensions
      *
      * @param cert certificate containing the extension
-     * @return byte[] containing the subject key identifier
+     * @return byte[] containing the subject key identifier, or null if it does not exist
      * @throws IOException if extension can not be parsed
      */
     public static byte[] getSubjectKeyId(X509Certificate cert)
         throws IOException {
+    	if (cert == null) {
+    		return null;
+    	}
         byte[] extvalue = cert.getExtensionValue("2.5.29.14");
         if (extvalue == null) {
             return null;
