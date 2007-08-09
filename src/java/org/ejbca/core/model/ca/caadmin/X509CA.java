@@ -131,7 +131,7 @@ import org.ejbca.util.cert.SubjectDirAttrExtension;
  * X509CA is a implementation of a CA and holds data specific for Certificate and CRL generation 
  * according to the X509 standard. 
  *
- * @version $Id: X509CA.java,v 1.50.2.7 2007-08-09 09:03:39 anatom Exp $
+ * @version $Id: X509CA.java,v 1.50.2.8 2007-08-09 09:10:30 anatom Exp $
  */
 public class X509CA extends CA implements Serializable {
 
@@ -513,21 +513,24 @@ public class X509CA extends CA implements Serializable {
             	log.debug("X509CA: CA Token Offline Exception: ", e);                
             	throw e; 
             }
+            
         	// If we have a CA-certificate (i.e. this is not a Root CA), we must take the authority key identifier from 
         	// the CA-certificates SubjectKeyIdentifier if it exists. If we don't do that we will get the wrong identifier if the 
         	// CA does not follow RFC3280 (guess if MS-CA follows RFC3280?)
             if ( (cacert != null) && (!isRootCA) ) {
                 byte[] akibytes = CertTools.getSubjectKeyId(cacert);
-                // TODO: The code below is snipped from AuthorityKeyIdentifier.java in BC 1.36, because there is no method there
-                // to set only a pre-computed key identifier
-                // This should be replaced when such a method is added to BC
-                ASN1OctetString keyidentifier = new DEROctetString(akibytes);
-                ASN1EncodableVector  v = new ASN1EncodableVector();
-                v.add(new DERTaggedObject(false, 0, keyidentifier));
-                ASN1Sequence seq = new DERSequence(v);
-                
-                aki = new AuthorityKeyIdentifier(seq);
-                log.debug("Using AuthorityKeyIdentifier from CA-certificates SubjectKeyIdentifier.");
+                if (akibytes != null) {
+                    // TODO: The code below is snipped from AuthorityKeyIdentifier.java in BC 1.36, because there is no method there
+                    // to set only a pre-computed key identifier
+                    // This should be replaced when such a method is added to BC
+                    ASN1OctetString keyidentifier = new DEROctetString(akibytes);
+                    ASN1EncodableVector  v = new ASN1EncodableVector();
+                    v.add(new DERTaggedObject(false, 0, keyidentifier));
+                    ASN1Sequence seq = new DERSequence(v);
+                    
+                    aki = new AuthorityKeyIdentifier(seq);
+                    log.debug("Using AuthorityKeyIdentifier from CA-certificates SubjectKeyIdentifier.");                	
+                }
             }
             certgen.addExtension(
                 X509Extensions.AuthorityKeyIdentifier.getId(),
