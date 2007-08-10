@@ -35,6 +35,7 @@ import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.ejbca.core.ejb.BaseSessionBean;
 import org.ejbca.core.ejb.JNDINames;
@@ -801,7 +802,7 @@ public class LocalApprovalSessionBean extends BaseSessionBean {
           sqlquery = sqlquery + caauthstring;
         }
 
-        if(endentityauth != null){
+        if (StringUtils.isNotEmpty(endentityauth)) {
           if (caauthstring.trim().equals("") && query == null){
         	sqlquery = sqlquery + endentityauth;
           }else{
