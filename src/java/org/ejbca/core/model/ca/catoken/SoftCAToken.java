@@ -30,7 +30,7 @@ import org.ejbca.util.Base64;
 /** Handles maintenance of the soft devices producing signatures and handling the private key
  *  and stored in database.
  * 
- * @version $Id: SoftCAToken.java,v 1.16 2007-08-12 16:54:03 anatom Exp $
+ * @version $Id: SoftCAToken.java,v 1.16.2.1 2007-10-18 11:13:50 anatom Exp $
  */
 public class SoftCAToken extends BaseCAToken {
 
@@ -117,19 +117,23 @@ public class SoftCAToken extends BaseCAToken {
 	 * @see org.ejbca.core.model.ca.catoken.CATokenContainer#activate(java.lang.String)
 	 */
     public void activate(String authenticationcode) throws CATokenAuthenticationFailedException, CATokenOfflineException {
-    	try {
-    		KeyStore keystore = loadKeyStore(keyStoreData, authenticationcode);
-    		setKeys(keystore, authenticationcode);
-    	} catch (Exception e) {
-    		String msg = intres.getLocalizedMessage("catoken.erroractivate", e.getMessage());
-            log.info(msg);
-    		log.info(e);
-    		CATokenOfflineException oe = new CATokenOfflineException(e.getMessage());
-    		oe.initCause(e);
-    		throw oe;
+    	if (keyStoreData != null) {
+    		try {
+    			KeyStore keystore = loadKeyStore(keyStoreData, authenticationcode);
+    			setKeys(keystore, authenticationcode);
+    		} catch (Exception e) {
+    			String msg = intres.getLocalizedMessage("catoken.erroractivate", e.getMessage());
+                log.info(msg, e);
+    			CATokenOfflineException oe = new CATokenOfflineException(e.getMessage());
+    			oe.initCause(e);
+    			throw oe;
+    		}
+    		String msg = intres.getLocalizedMessage("catoken.activated", "Soft");
+    		log.info(msg);
+    	} else {
+    		String msg = intres.getLocalizedMessage("catoken.erroractivate", "no keystore data available yet");
+    		log.info(msg);    		
     	}
-		String msg = intres.getLocalizedMessage("catoken.activated", "Soft");
-        log.info(msg);
     }
     
     private KeyStore loadKeyStore(byte[] ksdata, String keystorepass) throws NoSuchAlgorithmException, CertificateException, IOException, KeyStoreException, NoSuchProviderException {
