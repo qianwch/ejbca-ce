@@ -18,7 +18,7 @@ import org.ejbca.ui.cli.IAdminCommand;
 /**
  * Implements the EJBCA RA WS command line interface
  *
- * @version $Id: xkmscli.java,v 1.2 2007-01-07 00:31:51 herrvendil Exp $
+ * @version $Id: xkmscli.java,v 1.2.4.1 2007-10-19 10:59:23 jeklund Exp $
  */
 public class xkmscli  {
     /**
@@ -34,7 +34,8 @@ public class xkmscli  {
                 cmd.execute();
             } else {
                 System.out.println(
-                    "Usage: locate | register | reissue | recover | revoke");
+                    "Usage: locate | register | reissue | recover | revoke\n\n" +
+                    "Please note that XKMS cannot be used with end entites created with the EMPTY end entity profile for security reasons.");
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());
