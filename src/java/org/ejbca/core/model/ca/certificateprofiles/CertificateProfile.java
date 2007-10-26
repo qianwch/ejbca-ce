@@ -35,7 +35,7 @@ import org.ejbca.util.dn.DNFieldExtractor;
  * CertificateProfile is a basic class used to customize a certificate
  * configuration or be inherited by fixed certificate profiles.
  *
- * @version $Id: CertificateProfile.java,v 1.20.2.1 2007-10-22 08:56:48 anatom Exp $
+ * @version $Id: CertificateProfile.java,v 1.20.2.2 2007-10-26 06:42:06 anatom Exp $
  */
 public class CertificateProfile extends UpgradeableDataHashMap implements Serializable, Cloneable {
     private static final Logger log = Logger.getLogger(CertificateProfile.class);
@@ -43,7 +43,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
     private static final InternalResources intres = InternalResources.getInstance();
 
     // Default Values
-    public static final float LATEST_VERSION = (float) 21.0;
+    public static final float LATEST_VERSION = (float) 20.0;
 
     /**
      * Determines if a de-serialized file is compatible with this class.
@@ -54,7 +54,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
      * /serialization/spec/version.doc.html> details. </a>
      *
      */
-    private static final long serialVersionUID = -8069608639716545204L;
+    private static final long serialVersionUID = -8069608639716545203L;
 
     /** KeyUsage constants */
     public static final int DIGITALSIGNATURE = 0;
@@ -145,7 +145,6 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
     protected static final String EXTENDEDKEYUSAGECRITICAL       = "extendedkeyusagecritical";
     protected static final String AVAILABLECAS                   = "availablecas";
     protected static final String USEDPUBLISHERS                 = "usedpublishers";         
-    protected static final String USEOCSPNOCHECK                 = "useocspnocheck";
 	protected static final String USEOCSPSERVICELOCATOR          = "useocspservicelocator";
 	protected static final String USEDEFAULTOCSPSERVICELOCATOR   = "usedefaultocspservicelocator";	
 	protected static final String OCSPSERVICELOCATORURI          = "ocspservicelocatoruri";
@@ -234,7 +233,6 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
       
       setPublisherList(new ArrayList());
       
-      setUseOcspNoCheck(false);
 	  setUseOCSPServiceLocator(false);	  
 	  setUseDefaultOCSPServiceLocator(false);
 	  setOCSPServiceLocatorURI("");
@@ -720,19 +718,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
 		data.put(PATHLENGTHCONSTRAINT, new Integer(pathlength));			
 	}   
 
-    public boolean getUseOcspNoCheck() {
-        if(data.get(USEOCSPNOCHECK) == null) {
-            return false; 
-        } else {
-            return ((Boolean) data.get(USEOCSPNOCHECK)).booleanValue();
-        }
-    }
-
-    public void setUseOcspNoCheck(boolean useocspnocheck) {
-        data.put(USEOCSPNOCHECK, Boolean.valueOf(useocspnocheck));
-    }
-
-    public boolean getUseOCSPServiceLocator(){ return ((Boolean) data.get(USEOCSPSERVICELOCATOR)).booleanValue(); }
+	public boolean getUseOCSPServiceLocator(){ return ((Boolean) data.get(USEOCSPSERVICELOCATOR)).booleanValue(); }
 	public void setUseOCSPServiceLocator(boolean useocspservicelocator) { data.put(USEOCSPSERVICELOCATOR, Boolean.valueOf(useocspservicelocator));}
     
 	public boolean getUseDefaultOCSPServiceLocator(){ return ((Boolean) data.get(USEDEFAULTOCSPSERVICELOCATOR)).booleanValue(); }
@@ -942,10 +928,6 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
             
             if(data.get(CRLISSUER) == null) {
                 setCRLIssuer(null); // v20
-            }
-            
-            if(data.get(USEOCSPNOCHECK) == null){
-                setUseOcspNoCheck(false); // v21
             }
             
             data.put(VERSION, new Float(LATEST_VERSION));

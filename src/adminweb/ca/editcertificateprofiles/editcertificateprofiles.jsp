@@ -70,7 +70,6 @@
   static final String CHECKBOX_ALLOWKEYUSAGEOVERRIDE              = "checkallowkeyusageoverride";
   static final String CHECKBOX_USEEXTENDEDKEYUSAGE                = "checkuseextendedkeyusage";
   static final String CHECKBOX_EXTENDEDKEYUSAGECRITICAL           = "checkboxextendedkeyusagecritical";
-  static final String CHECKBOX_USEOCSPNOCHECK                     = "checkuseocspnocheck";
   static final String CHECKBOX_USEOCSPSERVICELOCATOR              = "checkuseocspservicelocator";
   static final String CHECKBOX_USEDEFAULTOCSPSERVICELOCALTOR      = "checkusedefaultocspservicelocator";
   static final String CHECKBOX_USEMSTEMPLATE                      = "checkusemstemplate";
@@ -509,15 +508,6 @@ int[]    defaultavailablebitlengths = CertificateProfile.DEFAULTBITLENGTHS;
               }
               certificateprofiledata.setPublisherList(availablepublishers);
 
-              value = request.getParameter(CHECKBOX_USEOCSPNOCHECK);
-              if(value != null){
-                  use = value.equals(CHECKBOX_VALUE);
-                  certificateprofiledata.setUseOcspNoCheck(use);
-              }
-              else{
-                  certificateprofiledata.setUseOcspNoCheck(false);
-              }
-              
              use = false;
              value = request.getParameter(CHECKBOX_USEOCSPSERVICELOCATOR);
              if(value != null){

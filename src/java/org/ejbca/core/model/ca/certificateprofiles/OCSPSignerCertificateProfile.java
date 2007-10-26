@@ -18,7 +18,7 @@ import java.util.ArrayList;
 /**
  * OCSPSignerCertificateProfile is a class defining the fixed characteristics of an enduser certificate type
  *
- * @version $Id: OCSPSignerCertificateProfile.java,v 1.3.8.1 2007-10-22 08:56:48 anatom Exp $
+ * @version $Id: OCSPSignerCertificateProfile.java,v 1.3.8.2 2007-10-26 06:42:06 anatom Exp $
  */
 public class OCSPSignerCertificateProfile extends CertificateProfile{
 
@@ -47,9 +47,7 @@ public class OCSPSignerCertificateProfile extends CertificateProfile{
 	  eku.add(new Integer(OCSPSIGNING));
       setExtendedKeyUsage(eku);
       setExtendedKeyUsageCritical(false);
-
-      setUseOcspNoCheck(true);
-
+      
     }
 
     // Public Methods.
