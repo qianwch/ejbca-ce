@@ -3,7 +3,7 @@
 
 	<property name="app.name" value="ejbca" />
     <property name="app.name.cap" value="EJBCA" />
-	<property name="app.version" value="${app.name.cap} 3.5.2" />
+	<property name="app.version" value="${app.name.cap} 3.5.3" />
 	
     <property name="ejbca.home" location="." />
     <property environment="env" />
