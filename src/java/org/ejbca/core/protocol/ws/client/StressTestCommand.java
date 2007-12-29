@@ -146,7 +146,7 @@ public class StressTestCommand extends EJBCAWSRABaseCommand implements IAdminCom
         getPrintStream().println();
         getPrintStream().println("Here is an example of how the test could be started:");
         getPrintStream().println("./ejbcawsracli.sh stress AdminCA1 20 5000");
-        getPrintStream().println("20 threads is started. When the thread is started it waits between 0-500 ms before requesting a certificate for it. The certificates will all be signed by the CA AdminCA1");
+        getPrintStream().println("20 threads is started. After adding a user the thread waits between 0-500 ms before requesting a certificate for it. The certificates will all be signed by the CA AdminCA1.");
     }
 
     /* (non-Javadoc)
