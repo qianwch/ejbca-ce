@@ -1,6 +1,15 @@
-/**
- * 
- */
+/*************************************************************************
+ *                                                                       *
+ *  EJBCA: The OpenSource Certificate Authority                          *
+ *                                                                       *
+ *  This software is free software; you can redistribute it and/or       *
+ *  modify it under the terms of the GNU Lesser General Public           *
+ *  License as published by the Free Software Foundation; either         *
+ *  version 2.1 of the License, or any later version.                    *
+ *                                                                       *
+ *  See terms of license at gnu.org.                                     *
+ *                                                                       *
+ *************************************************************************/
 package org.ejbca.core.protocol.ws.client;
 
 import java.io.ByteArrayInputStream;
@@ -30,13 +39,81 @@ import org.ejbca.ui.cli.IllegalAdminCommandException;
 import org.ejbca.util.CertTools;
 
 /**
- * @author lars
- *
+ * @author Lars Silvén, PrimeKey Solutions AB
+ * @version $Id: StressTestCommand.java,v 1.1.2.3 2007-12-30 21:57:07 primelars Exp $
  */
 public class StressTestCommand extends EJBCAWSRABaseCommand implements IAdminCommand {
 
     private final int STATISTIC_UPDATE_PERIOD_IN_SECONDS = 10;
     
+    private interface Command {
+        void doIt() throws Exception;
+    }
+    private class Pkcs10RequestCommand implements Command {
+        final private EjbcaWS ejbcaWS;
+        final private PKCS10CertificationRequest pkcs10;
+        final private String userName;
+        final private String passWord;
+        CertificateResponse certificateResponse;
+        Pkcs10RequestCommand(EjbcaWS _ejbcaWS, PKCS10CertificationRequest _pkcs10, String _userName, String _passWord) {
+            this.ejbcaWS = _ejbcaWS;
+            this.pkcs10 = _pkcs10;
+            this.userName = _userName;
+            this.passWord = _passWord;
+        }
+        public void doIt() throws Exception {
+            this.certificateResponse = this.ejbcaWS.pkcs10Request(userName, passWord, new String(Base64.encode(pkcs10.getEncoded())),null,CertificateHelper.RESPONSETYPE_CERTIFICATE);
+        }
+    }
+    private class EditUserCommand implements Command {
+        final private EjbcaWS ejbcaWS;
+        final private UserDataVOWS user;
+        EditUserCommand(EjbcaWS _ejbcaWS, UserDataVOWS _user) {
+            ejbcaWS = _ejbcaWS;
+            user = _user;
+        }
+        public void doIt() throws Exception {
+            this.ejbcaWS.editUser(user);
+        }
+    }
+    private class CallWS implements Runnable {
+        final private Command command;
+        final private Log log;
+        private boolean bIsFinished;
+        private int time;
+        CallWS( Command _command, Log _log ) throws Exception {
+            bIsFinished = false;
+            this.log = _log;
+            this.command = _command;
+            final Thread thread = new Thread(this);
+            synchronized(this) {
+                thread.start();
+                if ( !bIsFinished )
+                    this.wait(120000);
+                if ( !bIsFinished ) {
+                    thread.interrupt();
+                    throw new Exception("Web service not finished. See the error printout just above.");
+                }
+            }
+        }
+        public void run() {
+            try {
+                final long startTime = new Date().getTime();
+                command.doIt();
+                time = (int)(new Date().getTime()-startTime);
+                bIsFinished = true;
+            } catch (Throwable t) {
+                log.error("WS command failure", t);
+            } finally {
+                synchronized(this) {
+                    this.notifyAll();
+                }
+            }
+        }
+        public int getTimeConsumed() {
+            return time;
+        }
+    }
     class TestInstance implements Runnable {
         final private Log log;
         final private int nr;
@@ -78,10 +155,12 @@ public class StressTestCommand extends EJBCAWSRABaseCommand implements IAdminCom
                     final int waitTime;
                     if ( this.maxWaitTime > 0 ) {
                         waitTime = (int)(this.maxWaitTime*random.nextFloat());
-                        synchronized(this) {
-                            wait(waitTime);
+                        if ( waitTime > 0) {
+                            synchronized(this) {
+                                wait(waitTime);
+                            }
+                            this.statistic.addWaitTime(waitTime);
                         }
-                        this.statistic.addWaitTime(waitTime);
                     } else
                         waitTime = 0;
                     final X509Certificate cert = getCertificate(userName, passWord, this.keys);
@@ -108,18 +187,15 @@ public class StressTestCommand extends EJBCAWSRABaseCommand implements IAdminCom
             user1.setTokenType(org.ejbca.core.protocol.ws.objects.UserDataVOWS.TOKEN_TYPE_USERGENERATED);
             user1.setEndEntityProfileName("EMPTY");
             user1.setCertificateProfileName("ENDUSER");
-            final long startTime = new Date().getTime();
-            this.ejbcaWS.editUser(user1);
-            this.statistic.addRegisterTime(new Date().getTime()-startTime);
+            this.statistic.addRegisterTime(new CallWS(new EditUserCommand(ejbcaWS, user1),log).getTimeConsumed());
         }
         @SuppressWarnings("unchecked")
         private X509Certificate getCertificate(String userName, String passWord, KeyPair keys) throws Exception{
             final PKCS10CertificationRequest  pkcs10 = new PKCS10CertificationRequest("SHA1WithRSA", CertTools.stringToBcX509Name("CN=NOUSED"), keys.getPublic(), null, keys.getPrivate());
 
-            final long startTime = new Date().getTime();
-            final CertificateResponse certenv = this.ejbcaWS.pkcs10Request(userName, passWord, new String(Base64.encode(pkcs10.getEncoded())),null,CertificateHelper.RESPONSETYPE_CERTIFICATE);
-            this.statistic.addSignTime(new Date().getTime()-startTime);
-            final Iterator<X509Certificate> i = (Iterator<X509Certificate>)CertificateFactory.getInstance("X.509").generateCertificates(new ByteArrayInputStream(Base64.decode(certenv.getData()))).iterator();
+            final Pkcs10RequestCommand command = new Pkcs10RequestCommand(ejbcaWS, pkcs10, userName, passWord);
+            this.statistic.addSignTime(new CallWS(command,log).getTimeConsumed());
+            final Iterator<X509Certificate> i = (Iterator<X509Certificate>)CertificateFactory.getInstance("X.509").generateCertificates(new ByteArrayInputStream(Base64.decode(command.certificateResponse.getData()))).iterator();
             X509Certificate cert = null;
             while ( i.hasNext() )
                 cert = i.next();
@@ -167,6 +243,7 @@ public class StressTestCommand extends EJBCAWSRABaseCommand implements IAdminCom
             final Statistic statistic = new Statistic(numberOfThreads);
             final Thread threads[] = new Thread[numberOfThreads];
             final Random random = new Random();
+            System.out.println("A test key for each thread is generated. This could take some time if you have specified many threads and long keys.");
             for(int i=0; i < numberOfThreads;i++)
                 threads[i] = new Thread(new TestInstance(i,log, caName, waitTime, statistic, random));
             for(int i=0; i < numberOfThreads;i++)
@@ -178,7 +255,7 @@ public class StressTestCommand extends EJBCAWSRABaseCommand implements IAdminCom
                 wait();
             }
         } catch( InterruptedException e) {
-            throw new ErrorAdminCommandException(e);
+            // do nothing since user wants to exit.
         } catch( NoSuchAlgorithmException e) {
             throw new ErrorAdminCommandException(e);
         } catch (FileNotFoundException e) {
@@ -203,16 +280,16 @@ public class StressTestCommand extends EJBCAWSRABaseCommand implements IAdminCom
         public void addWaitTime(int additionalWaitTime) {
             waitTime += additionalWaitTime;
         }
-        void addRegisterTime(long time) {
+        void addRegisterTime(int time) {
             registerTime += time;
         }
-        void addSignTime(long time) {
+        void addSignTime(int time) {
             signTime += time;
             nrOfSignings++;
         }
         private void printStatistics() {
-            final long time = new Date().getTime()-this.startTime;
-            final long allThreadsTime = this.nr*time;
+            final int time = (int)(new Date().getTime()-this.startTime);
+            final int allThreadsTime = this.nr*time;
             final float signingsPerSecond = (float)nrOfSignings*1000/time;
             final float relativeWork = (float)(allThreadsTime-this.waitTime-this.signTime-registerTime) / allThreadsTime;
             final float relativeWait = (float)this.waitTime / allThreadsTime;
