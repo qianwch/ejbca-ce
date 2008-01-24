@@ -31,7 +31,7 @@ import org.ejbca.core.model.log.LogEntry;
  * logentryrownumber is the number of the last row number in the log entry database.
  * </pre>
  *
- * @version $Id: LogConfigurationDataBean.java,v 1.9 2006-11-10 09:29:11 anatom Exp $
+ * @version $Id: LogConfigurationDataBean.java,v 1.9.4.1 2008-01-24 17:32:24 jeklund Exp $
  *
  * @ejb.bean
  *   description="This enterprise bean entity represents a Log Entry with accompanying data"
@@ -66,6 +66,9 @@ import org.ejbca.core.model.log.LogEntry;
  *
  * @jonas.jdbc-mapping
  *   jndi-name="${datasource.jndi-name}"
+ *   
+ * @jboss.persistence
+ *   row-locking="true" 
  */
 public abstract class LogConfigurationDataBean extends BaseEntityBean {
 
@@ -92,7 +95,6 @@ public abstract class LogConfigurationDataBean extends BaseEntityBean {
 
     /**
      * @ejb.persistence column-name="logEntryRowNumber"
-     * @jboss.persistence row-locking="true" 
      */
     public abstract int getLogEntryRowNumber();
 
