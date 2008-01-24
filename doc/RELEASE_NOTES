@@ -1,5 +1,12 @@
 EJBCA 3.5.3
 -----------
+This is a minor release, fixing a few bugs.
+- A configuration file according to the Sun notation can now be used when creating keys.
+- A DB synchronization bug is fixed. Before two EJBCAs could update the log table with same sequence number.
+
+
+EJBCA 3.5.3
+-----------
 This is a minor release, fixing a few bugs and introducing a new tool.
 
 Notable changes are:
