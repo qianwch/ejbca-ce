@@ -159,7 +159,7 @@ import org.ejbca.util.query.Query;
  * @jonas.bean
  *   ejb-name="LogSession"
  *
- * @version $Id: LocalLogSessionBean.java,v 1.19.2.1 2008-01-24 19:41:17 primelars Exp $
+ * @version $Id: LocalLogSessionBean.java,v 1.19.2.2 2008-01-30 12:40:00 primelars Exp $
  */
 public class LocalLogSessionBean extends BaseSessionBean {
 
@@ -201,29 +201,6 @@ public class LocalLogSessionBean extends BaseSessionBean {
     private final String LOGENTRYDATA_COL_COMMENT_OLD = "comment";
     private final String LOGENTRYDATA_COL_COMMENT_ORA = "comment_";
 
-    // object used to assure that only one thread is using a service at a time
-    private final SyncObject syncObject;
-
-    private class SyncObject {
-        boolean fIsOccupied;
-        SyncObject() {
-            fIsOccupied = false;
-        }
-        boolean isOccupied() {
-            return fIsOccupied;
-        }
-        void occupy() {
-            fIsOccupied = true;
-        }
-        void free() {
-            fIsOccupied = false;
-            notifyAll();
-        }
-    }
-    LocalLogSessionBean() {
-        super();
-        syncObject = new SyncObject();
-    }
     /**
      * Default create for SessionBean without any creation Arguments.
      */
@@ -351,31 +328,17 @@ public class LocalLogSessionBean extends BaseSessionBean {
      * Internal implementation for logging
      */
     private synchronized void doSyncronizedLog(Admin admin, int caid, int module, Date time, String username, X509Certificate certificate, int event, String comment, Exception ex) {
-        synchronized(syncObject) {
-            while( syncObject.isOccupied() ) {
-                try {
-                    syncObject.wait();
-                } catch (InterruptedException e) {
-                    throw new Error(e);
-                }
-            }
+        final LogConfiguration config = loadLogConfiguration(caid);
+        if (config.logEvent(event)) {
             try {
-                syncObject.occupy();
-                final LogConfiguration config = loadLogConfiguration(caid);
-                if (config.logEvent(event)) {
-                    try {
-                        if (config.useLogDB()) {
-                            logDB(admin, caid, module, time, username, certificate, event, comment);
-                        }
-                    } finally {
-                        // make sure to log here if the db fails
-                        if (config.useExternalLogDevices()) {
-                            logExternal(admin, caid, module, time, username, certificate, event, comment, ex);
-                        }
-                    }
+                if (config.useLogDB()) {
+                    logDB(admin, caid, module, time, username, certificate, event, comment);
                 }
             } finally {
-                syncObject.free();
+                // make sure to log here if the db fails
+                if (config.useExternalLogDevices()) {
+                    logExternal(admin, caid, module, time, username, certificate, event, comment, ex);
+                }
             }
         }
     }
