@@ -61,7 +61,7 @@ import org.ejbca.core.model.ca.catoken.CATokenConstants;
 /**
  * Tools to handle common key and keystore operations.
  *
- * @version $Id: KeyTools.java,v 1.10.2.4 2008-01-22 03:57:07 primelars Exp $
+ * @version $Id: KeyTools.java,v 1.10.2.5 2008-02-21 08:49:59 anatom Exp $
  */
 public class KeyTools {
     private static Logger log = Logger.getLogger(KeyTools.class);
@@ -466,8 +466,8 @@ public class KeyTools {
 
     /** Creates the SUN PKCS#11 provider using the passed in pkcs11 library.
      * 
-     * @param slot pkcs11 slot number or config file name if libName is null
-     * @param fileName the manufacturers provided pkcs11 library (.dll or .so) 
+     * @param slot pkcs11 slot number
+     * @param fileName the manufacturers provided pkcs11 library (.dll or .so) or config file name if slot is null 
      * @return AuthProvider of type "sun.security.pkcs11.SunPKCS11"
      * @throws IOException if the pkcs11 library can not be found, or the SunPKCS11 can not be created.
      */ 
