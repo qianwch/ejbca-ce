@@ -124,7 +124,7 @@ import org.ejbca.util.query.Query;
  * Implementor of the IEjbcaWS interface.
  * 
  * @author Philip Vendil
- * $Id: EjbcaWS.java,v 1.18.2.1 2007-09-14 08:31:05 herrvendil Exp $
+ * $Id: EjbcaWS.java,v 1.18.2.2 2008-03-21 15:01:03 herrvendil Exp $
  */
 
 @WebService
@@ -814,9 +814,14 @@ public class EjbcaWS implements IEjbcaWS {
 				if(WSConfig.isApprovalGenTokenCertificates()){
 					ar = new GenerateTokenApprovalRequest(userDataWS.getUsername(), userDataWS.getSubjectDN(),  hardTokenDataWS.getLabel(),admin,null,WSConfig.getNumberOfWSApprovals(),significantcAInfo.getCAId(),endEntityProfileId);
 					int status = ApprovalDataVO.STATUS_REJECTED; 					
-					try{
+					try{					  	
 					  status = getApprovalSession().isApproved(admin, ar.generateApprovalId(), 1);
 					  approvalSuccessfullStep1 =  status == ApprovalDataVO.STATUS_APPROVED;
+					  if(approvalSuccessfullStep1){
+						ApprovalDataVO approvalDataVO = getApprovalSession().findNonExpiredApprovalRequest(intAdmin, ar.generateApprovalId());
+						String originalDN = ((GenerateTokenApprovalRequest) approvalDataVO.getApprovalRequest()).getDN();
+						userDataWS.setSubjectDN(originalDN); // replace requested DN with original DN to make sure nothing have changed.
+					  }
 					  isRejectedStep1 = status == ApprovalDataVO.STATUS_REJECTED;
 					  if(   status == ApprovalDataVO.STATUS_EXPIREDANDNOTIFIED
 					     || status == ApprovalDataVO.STATUS_EXPIRED){
