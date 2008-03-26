@@ -159,7 +159,7 @@ import org.ejbca.util.query.Query;
  * @jonas.bean
  *   ejb-name="LogSession"
  *
- * @version $Id: LocalLogSessionBean.java,v 1.19.2.2 2008-01-30 12:40:00 primelars Exp $
+ * @version $Id: LocalLogSessionBean.java,v 1.19.2.3 2008-03-26 09:17:35 herrvendil Exp $
  */
 public class LocalLogSessionBean extends BaseSessionBean {
 
@@ -358,21 +358,35 @@ public class LocalLogSessionBean extends BaseSessionBean {
      * Log everything in the database using the log entity bean
      */
     private void logDB(Admin admin, int caid, int module, Date time, String username, X509Certificate certificate, int event, String comment) {
-        try {
-            String uid = certificate == null ? null : certificate.getSerialNumber().toString(16) + "," + certificate.getIssuerDN().toString();
-            Integer id = getAndIncrementRowCount();
-            logentryhome.create(id, admin.getAdminType(), admin.getAdminData(), caid, module, time, username, uid, event, comment);
-            if (logsigning) {
-                LogEntry le = new LogEntry(id.intValue(), admin.getAdminType(), admin.getAdminData(), caid, module, time, username, uid, event, comment);
-            	TableProtectSessionLocal protect = protecthome.create();
-            	protect.protect(admin, le);
-            }
-        } catch (Throwable e) {
-            // FIXME we are losing a db audit entry in this case, what do we do ?
-            String msg = intres.getLocalizedMessage("log.errormissingentry");            	
-            log.error(msg, e);
-            getAndIncrementRowCount();        	
-        }
+    	boolean successfulLog = false;
+    	int tries = 0;
+    	do{
+    		try {
+    			String uid = certificate == null ? null : certificate.getSerialNumber().toString(16) + "," + certificate.getIssuerDN().toString();
+    			Integer id = getAndIncrementRowCount();
+    			logentryhome.create(id, admin.getAdminType(), admin.getAdminData(), caid, module, time, username, uid, event, comment);
+    			if (logsigning) {
+    				LogEntry le = new LogEntry(id.intValue(), admin.getAdminType(), admin.getAdminData(), caid, module, time, username, uid, event, comment);
+    				TableProtectSessionLocal protect = protecthome.create();
+    				protect.protect(admin, le);
+    			}
+    			successfulLog = true;
+    		} catch (Throwable e) {
+    			// FIXME we are losing a db audit entry in this case, what do we do ?
+    			tries++;
+    			if(tries == 3){
+    				String msg = intres.getLocalizedMessage("log.errormissingentry");            	
+    				log.error(msg,e);
+    				getAndIncrementRowCount();
+    			}else{
+    				String msg = intres.getLocalizedMessage("log.warningduplicatekey");            	
+    				log.warn(msg);
+    				getAndIncrementRowCount();
+    			}
+    			
+    		}
+    	}while(!successfulLog && tries < 3);
+    	
     }
 
     /**
