@@ -159,7 +159,7 @@ import org.ejbca.util.query.Query;
  * @jonas.bean
  *   ejb-name="LogSession"
  *
- * @version $Id: LocalLogSessionBean.java,v 1.19.2.3 2008-03-26 09:17:35 herrvendil Exp $
+ * @version $Id: LocalLogSessionBean.java,v 1.19.2.4 2008-03-28 22:04:48 anatom Exp $
  */
 public class LocalLogSessionBean extends BaseSessionBean {
 
@@ -196,6 +196,7 @@ public class LocalLogSessionBean extends BaseSessionBean {
     /** Columns in the database used in select */
     private final String LOGENTRYDATA_TABLE = "LogEntryData";
     private final String LOGENTRYDATA_COL = "id, adminType, adminData, caid, module, time, username, certificateSNR, event";
+    private final String LOGENTRYDATA_TIMECOL = "time";
     // Different column names is an unforturnalte workaround because of Orcale, you cannot have a column named 'comment' in Oracle.
     // The workaround 'comment_' was spread in the wild in 2005, so we have to use it so far.
     private final String LOGENTRYDATA_COL_COMMENT_OLD = "comment";
@@ -471,6 +472,7 @@ public class LocalLogSessionBean extends BaseSessionBean {
             if (StringUtils.isNotEmpty(viewlogprivileges)) {
                 sql += " and (" + viewlogprivileges + ")";
             }
+			sql += " order by "+LOGENTRYDATA_TIMECOL+" desc";
             if (log.isDebugEnabled()) {
             	log.debug("Query: "+sql);
             }
