@@ -20,19 +20,22 @@ package org.ejbca.util.query;
 
 import java.util.Date;
 
+import org.apache.log4j.Logger;
+
 
 /**
  * A class used by Query class to build a query for ejbca log or ra modules. Inherits BasicMatch.
  * Main function is getQueryString which returns a fragment of SQL statment.
  *
  * @author TomSelleck
- * @version $Id: TimeMatch.java,v 1.2 2006-07-29 11:26:37 herrvendil Exp $
+ * @version $Id: TimeMatch.java,v 1.2.8.1 2008-03-31 17:23:38 anatom Exp $
  *
  * @see org.ejbca.util.query.BasicMatch
  * @see org.ejbca.util.query.UserMatch
  * @see org.ejbca.util.query.LogMatch
  */
 public class TimeMatch extends BasicMatch {
+    private static final Logger log = Logger.getLogger(TimeMatch.class);
     // Public Constants
 	/** UserMatch Specific Constant */	
     public static final int MATCH_WITH_TIMECREATED = 0;
@@ -90,6 +93,7 @@ public class TimeMatch extends BasicMatch {
         String returnval = "( ";
 
         if (startdate != null) {
+        	log.debug("Making match with startdate: "+startdate);
             returnval += (MATCH_WITH_SQLNAMES[(type * 2) + matchwith] + " >= " +
             startdate.getTime() + " ");
 
@@ -99,6 +103,7 @@ public class TimeMatch extends BasicMatch {
         }
 
         if (enddate != null) {
+        	log.debug("Making match with enddate: "+enddate);
             returnval += (MATCH_WITH_SQLNAMES[(type * 2) + matchwith] + " <= " + enddate.getTime() +
             " ");
         }

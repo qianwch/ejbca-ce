@@ -97,7 +97,7 @@ import org.ejbca.util.query.UserMatch;
  * Administrates users in the database using UserData Entity Bean.
  * Uses JNDI name for datasource as defined in env 'Datasource' in ejb-jar.xml.
  *
- * @version $Id: LocalUserAdminSessionBean.java,v 1.44.2.1 2007-09-05 08:02:47 herrvendil Exp $
+ * @version $Id: LocalUserAdminSessionBean.java,v 1.44.2.2 2008-03-31 17:23:37 anatom Exp $
  * 
  * @ejb.bean
  *   display-name="UserAdminSB"
@@ -277,6 +277,7 @@ public class LocalUserAdminSessionBean extends BaseSessionBean {
      * Columns in the database used in select
      */
     private static final String USERDATA_COL = "username, subjectDN, subjectAltName, subjectEmail, status, type, clearpassword, timeCreated, timeModified, endEntityprofileId, certificateProfileId, tokenType, hardTokenIssuerId, cAId, extendedInformationData";
+    private static final String USERDATA_CREATED_COL = "timeCreated";
 
     /**
      * Default create for SessionBean.
@@ -1643,13 +1644,18 @@ throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, Approva
                 authorizedtoanyprofile = false;
             }
         }
+		// Finally order the return values
+        sqlquery += " order by "+USERDATA_CREATED_COL+" desc";
+		if (log.isDebugEnabled()) {
+			log.debug("generated query: " + sqlquery);
+		}
 
         try {
             if (authorizedtoanyprofile) {
                 // Construct SQL query.
                 con = JDBCUtil.getDBConnection(JNDINames.DATASOURCE);
-                log.debug("generated query: " + sqlquery);
                 ps = con.prepareStatement(sqlquery);
+    			ps.setFetchSize(fetchsize + 1);
 
                 // Execute query.
                 rs = ps.executeQuery();
