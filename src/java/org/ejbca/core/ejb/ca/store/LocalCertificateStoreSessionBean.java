@@ -172,7 +172,7 @@ import org.ejbca.util.StringTools;
  * local-class="org.ejbca.core.ejb.ca.store.ICertificateStoreSessionLocal"
  * remote-class="org.ejbca.core.ejb.ca.store.ICertificateStoreSessionRemote"
  * 
- * @version $Id: LocalCertificateStoreSessionBean.java,v 1.30.2.2 2007-09-19 12:38:41 anatom Exp $
+ * @version $Id: LocalCertificateStoreSessionBean.java,v 1.30.2.3 2008-04-01 20:35:40 anatom Exp $
  * 
  */
 public class LocalCertificateStoreSessionBean extends BaseSessionBean {
@@ -356,8 +356,13 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
     public boolean storeCRL(Admin admin, byte[] incrl, String cafp, int number, String issuerDN, Date thisUpdate, Date nextUpdate) {
         debug(">storeCRL(" + cafp + ", " + number + ")");
         try {
-            //X509CRL crl = CertTools.getCRLfromByteArray(incrl);
-            CRLDataLocal data1 = crlHome.create(incrl, number, issuerDN, thisUpdate, nextUpdate, cafp);
+        	int lastNo = getLastCRLNumber(admin, issuerDN);
+        	if (number <= lastNo) {
+        		// There is already a CRL with this number, or a later one stored. Don't create duplicates
+            	String msg = intres.getLocalizedMessage("store.storecrlwrongnumber", number, lastNo);            	
+                getLogSession().log(admin, LogConstants.INTERNALCAID, LogEntry.MODULE_CA, new java.util.Date(), null, null, LogEntry.EVENT_ERROR_STORECRL, msg);        		
+        	}
+            crlHome.create(incrl, number, issuerDN, thisUpdate, nextUpdate, cafp);
         	String msg = intres.getLocalizedMessage("store.storecrl", new Integer(number), null);            	
             getLogSession().log(admin, issuerDN.toString().hashCode(), LogEntry.MODULE_CA, new java.util.Date(), null, null, LogEntry.EVENT_INFO_STORECRL, msg);
         } catch (Exception e) {
