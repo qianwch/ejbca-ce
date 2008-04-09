@@ -144,7 +144,7 @@ import org.ejbca.util.dn.DnComponents;
  * X509CA is a implementation of a CA and holds data specific for Certificate and CRL generation 
  * according to the X509 standard. 
  *
- * @version $Id: X509CA.java,v 1.69.2.4 2007-10-26 06:42:07 anatom Exp $
+ * @version $Id: X509CA.java,v 1.69.2.5 2008-04-09 22:41:06 anatom Exp $
  */
 public class X509CA extends CA implements Serializable {
 
@@ -154,7 +154,7 @@ public class X509CA extends CA implements Serializable {
     private static final InternalResources intres = InternalResources.getInstance();
 
     // Default Values
-    public static final float LATEST_VERSION = 13;
+    public static final float LATEST_VERSION = 14;
 
     private byte[]  keyId = new byte[] { 1, 2, 3, 4, 5 };
     
@@ -191,6 +191,7 @@ public class X509CA extends CA implements Serializable {
       setUseUTF8PolicyText(cainfo.getUseUTF8PolicyText());
       setUsePrintableStringSubjectDN(cainfo.getUsePrintableStringSubjectDN());
       setUseLdapDNOrder(cainfo.getUseLdapDnOrder());
+      setIncludeInHealthCheck(cainfo.getIncludeInHealthCheck());
       
       data.put(CA.CATYPE, new Integer(CAInfo.CATYPE_X509));
       data.put(VERSION, new Float(LATEST_VERSION));   
@@ -213,7 +214,7 @@ public class X509CA extends CA implements Serializable {
         		  getCAToken(caId).getCATokenInfo(), getDescription(), getRevokationReason(), getRevokationDate(), getPolicyId(), getCRLPeriod(), getCRLIssueInterval(), getCRLOverlapTime(), getCRLPublishers(),
         		  getUseAuthorityKeyIdentifier(), getAuthorityKeyIdentifierCritical(),
         		  getUseCRLNumber(), getCRLNumberCritical(), getDefaultCRLDistPoint(), getDefaultCRLIssuer(), getDefaultOCSPServiceLocator(), getFinishUser(), externalcaserviceinfos, 
-        		  getUseUTF8PolicyText(), getApprovalSettings(), getNumOfRequiredApprovals(), getUsePrintableStringSubjectDN(), getUseLdapDNOrder());
+        		  getUseUTF8PolicyText(), getApprovalSettings(), getNumOfRequiredApprovals(), getUsePrintableStringSubjectDN(), getUseLdapDNOrder(), getIncludeInHealthCheck());
         super.setCAInfo(info);
     }
 
@@ -1023,7 +1024,11 @@ public class X509CA extends CA implements Serializable {
             	} else {
                 	setUseLdapDNOrder(true);            		
             	}
-            }            
+            }      
+            
+            if (data.get(INCLUDEINHEALTHCHECK) == null) {
+            	setIncludeInHealthCheck(true); // v14
+            }
             
             data.put(VERSION, new Float(LATEST_VERSION));
         }  

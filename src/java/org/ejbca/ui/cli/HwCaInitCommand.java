@@ -126,7 +126,8 @@ public class HwCaInitCommand extends BaseCaAdminCommand {
 			                                 new ArrayList(), // Approvals Settings
 			                                 1, // Number of Req approvals
 			                                 false, // Use UTF8 subject DN by default
-			                                 true // Use LDAP DN order by default
+			                                 true, // Use LDAP DN order by default
+			                                 true // Include in Health Check
 			                                 );
             
             getOutputStream().println("Creating CA...");

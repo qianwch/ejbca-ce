@@ -539,7 +539,8 @@
                                                         approvalsettings,
                                                         numofreqapprovals,
                                                         useprintablestringsubjectdn,
-                                                        useldapdnorder);
+                                                        useldapdnorder,
+                                                        true);
                  try{
                    cadatahandler.createCA((CAInfo) x509cainfo);
                  }catch(CAExistsException caee){
@@ -597,7 +598,8 @@
                                                         approvalsettings,
                                                         numofreqapprovals,
                                                         useprintablestringsubjectdn,
-                                                        useldapdnorder);
+                                                        useldapdnorder,
+                                                        true);
                  cabean.saveRequestInfo(x509cainfo);                
                  filemode = MAKEREQUESTMODE;
                  includefile="recievefile.jspf"; 
@@ -818,7 +820,8 @@
                                                       approvalsettings,
                                                       numofreqapprovals,
                                                       useprintablestringsubjectdn,
-                                                      useldapdnorder);
+                                                      useldapdnorder,
+                                                      true);
                  
                cadatahandler.editCA((CAInfo) x509cainfo);
                  
@@ -1043,7 +1046,8 @@
                                                         approvalsettings,
                                                         numofreqapprovals, 
                                                         useprintablestringsubjectdn,
-                                                        useldapdnorder);
+                                                        useldapdnorder,
+                                                        true);
                  try{
                    PKCS10CertificationRequest req = cabean.getPKCS10RequestData(); 
                    java.security.cert.Certificate result = cadatahandler.processRequest(x509cainfo, new PKCS10RequestMessage(req));

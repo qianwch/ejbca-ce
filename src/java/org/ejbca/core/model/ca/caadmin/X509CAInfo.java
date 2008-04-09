@@ -28,7 +28,7 @@ import org.ejbca.util.StringTools;
 /**
  * Holds nonsensitive information about a X509CA.
  *
- * @version $Id: X509CAInfo.java,v 1.11 2007-08-18 20:00:53 anatom Exp $
+ * @version $Id: X509CAInfo.java,v 1.11.2.1 2008-04-09 22:41:08 anatom Exp $
  */
 public class X509CAInfo extends CAInfo{
    
@@ -53,7 +53,7 @@ public class X509CAInfo extends CAInfo{
                     CATokenInfo catokeninfo, String description, int revokationreason, Date revokationdate, String policyid, int crlperiod, int crlIssueInterval, int crlOverlapTime, Collection crlpublishers,
                     boolean useauthoritykeyidentifier, boolean authoritykeyidentifiercritical,
                     boolean usecrlnumber, boolean crlnumbercritical, String defaultcrldistpoint, String defaultcrlissuer, String defaultocspservicelocator, boolean finishuser,
-                    Collection extendedcaserviceinfos, boolean useUTF8PolicyText, Collection approvalSettings, int numOfReqApprovals, boolean usePrintableStringSubjectDN, boolean useLdapDnOrder) {
+                    Collection extendedcaserviceinfos, boolean useUTF8PolicyText, Collection approvalSettings, int numOfReqApprovals, boolean usePrintableStringSubjectDN, boolean useLdapDnOrder, boolean includeInHealthCheck) {
         this.subjectdn = StringTools.strip(CertTools.stringToBCDNString(subjectdn));
         this.caid = this.subjectdn.hashCode();
         this.name = name;
@@ -103,6 +103,7 @@ public class X509CAInfo extends CAInfo{
         this.numOfReqApprovals = numOfReqApprovals;
         this.usePrintableStringSubjectDN = usePrintableStringSubjectDN;
         this.useLdapDNOrder = useLdapDnOrder;
+        this.includeInHealthCheck = includeInHealthCheck;
     }
 
     /**
@@ -113,7 +114,7 @@ public class X509CAInfo extends CAInfo{
                       boolean useauthoritykeyidentifier, boolean authoritykeyidentifiercritical,
                       boolean usecrlnumber, boolean crlnumbercritical, String defaultcrldistpoint, String defaultcrlissuer, String defaultocspservicelocator, 
                       boolean finishuser, Collection extendedcaserviceinfos, 
-                      boolean useUTF8PolicyText, Collection approvalSettings, int numOfReqApprovals, boolean usePrintableStringSubjectDN, boolean useLdapDnOrder) {        
+                      boolean useUTF8PolicyText, Collection approvalSettings, int numOfReqApprovals, boolean usePrintableStringSubjectDN, boolean useLdapDnOrder, boolean includeInHealthCheck) {        
         this.caid = caid;
         this.validity=validity;
         this.catokeninfo = catokeninfo; 
@@ -136,6 +137,7 @@ public class X509CAInfo extends CAInfo{
         this.numOfReqApprovals = numOfReqApprovals;
         this.usePrintableStringSubjectDN = usePrintableStringSubjectDN;
         this.useLdapDNOrder = useLdapDnOrder;
+        this.includeInHealthCheck = includeInHealthCheck;
     }  
   
   

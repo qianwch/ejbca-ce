@@ -47,7 +47,7 @@ import org.ejbca.util.CertTools;
 /**
  * Tests the ca data entity bean.
  *
- * @version $Id: TestCAs.java,v 1.24 2007-08-21 08:45:00 jeklund Exp $
+ * @version $Id: TestCAs.java,v 1.24.2.1 2008-04-09 22:41:15 anatom Exp $
  */
 public class TestCAs extends TestCase {
     private static Logger log = Logger.getLogger(TestCAs.class);
@@ -167,7 +167,8 @@ public class TestCAs extends TestCase {
                     new ArrayList(), // Approvals Settings
                     1, // Number of Req approvals
                     false, // Use UTF8 subject DN by default
-            		true // Use LDAP DN order by default
+            		true, // Use LDAP DN order by default
+            		true // include in Health Check
             		);
 
             cacheAdmin.createCA(admin, cainfo);
@@ -300,7 +301,8 @@ public class TestCAs extends TestCase {
                     new ArrayList(), // Approvals Settings
                     1, // Number of Req approvals
                     false, // Use UTF8 subject DN by default
-                    true // Use LDAP DN order by default
+                    true, // Use LDAP DN order by default
+                    true // include in Health Check
                     );
 
 
@@ -399,7 +401,8 @@ public class TestCAs extends TestCase {
                     new ArrayList(), // Approvals Settings
                     1, // Number of Req approvals
                     false, // Use UTF8 subject DN by default 
-                    true // Use LDAP DN order by default
+                    true, // Use LDAP DN order by default
+                    true // include in Health Check
                     );
 
             cacheAdmin.createCA(admin, cainfo);
@@ -497,7 +500,8 @@ public class TestCAs extends TestCase {
                     new ArrayList(), // Approvals Settings
                     1, // Number of Req approvals
                     false, // Use UTF8 subject DN by default
-                    true // Use LDAP DN order by default
+                    true, // Use LDAP DN order by default
+                    true // include in Health Check
                     );
 
             cacheAdmin.createCA(admin, cainfo);
@@ -585,7 +589,8 @@ public class TestCAs extends TestCase {
             		new ArrayList(), // Approvals Settings
             		1, // Number of Req approvals
             		false, // Use UTF8 subject DN by default
-                    true // Use LDAP DN order by default
+                    true, // Use LDAP DN order by default
+                    true // include in Health Check
                     );
 
             cacheAdmin.createCA(admin, cainfo);
@@ -676,7 +681,8 @@ public class TestCAs extends TestCase {
             		new ArrayList(), // Approvals Settings
             		1, // Number of Req approvals
             		false, // Use UTF8 subject DN by default
-                    false // Use X500 DN order
+                    false, // Use X500 DN order
+                    true // include in Health Check
                     );
 
             cacheAdmin.createCA(admin, cainfo);

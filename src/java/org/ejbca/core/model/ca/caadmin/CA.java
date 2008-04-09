@@ -72,7 +72,7 @@ import org.ejbca.util.CertTools;
 /**
  * CA is a base class that should be inherited by all CA types
  *
- * @version $Id: CA.java,v 1.20.2.2 2007-10-10 13:06:26 anatom Exp $
+ * @version $Id: CA.java,v 1.20.2.3 2008-04-09 22:41:07 anatom Exp $
  */
 public abstract class CA extends UpgradeableDataHashMap implements Serializable {
 
@@ -107,6 +107,7 @@ public abstract class CA extends UpgradeableDataHashMap implements Serializable 
 	protected static final String EXTENDEDCASERVICE              = "extendedcaservice";
 	protected static final String APPROVALSETTINGS               = "approvalsettings";
 	protected static final String NUMBEROFREQAPPROVALS           = "numberofreqapprovals";
+	protected static final String INCLUDEINHEALTHCHECK			 = "includeinhealthcheck";
     
     // Public Methods
     /** Creates a new instance of CA, this constuctor should be used when a new CA is created */
@@ -125,6 +126,7 @@ public abstract class CA extends UpgradeableDataHashMap implements Serializable 
        setCRLOverlapTime(cainfo.getCRLOverlapTime());
        setCRLPublishers(cainfo.getCRLPublishers());
        setFinishUser(cainfo.getFinishUser());
+       setIncludeInHealthCheck(cainfo.getIncludeInHealthCheck());
        
 	   
 	   Iterator iter = cainfo.getExtendedCAServiceInfos().iterator();
@@ -362,7 +364,19 @@ public abstract class CA extends UpgradeableDataHashMap implements Serializable 
     
 	public boolean  getFinishUser(){return ((Boolean)data.get(FINISHUSER)).booleanValue();}
 	
-	public void setFinishUser(boolean finishuser) {data.put(FINISHUSER, new Boolean(finishuser));}    
+	public void setFinishUser(boolean finishuser) {data.put(FINISHUSER, new Boolean(finishuser));}   
+	
+	public boolean  getIncludeInHealthCheck(){
+		Boolean temp = ((Boolean)data.get(INCLUDEINHEALTHCHECK)).booleanValue();
+		if (temp != null) {
+			return temp;
+		} 
+		return true;
+	}
+	
+	public void setIncludeInHealthCheck(boolean includeInHealthCheck) {
+			data.put(INCLUDEINHEALTHCHECK, new Boolean(includeInHealthCheck)); 
+	}
     
 	/**
 	 * Returns a collection of Integers (CAInfo.REQ_APPROVAL_ constants) of which
@@ -420,7 +434,8 @@ public abstract class CA extends UpgradeableDataHashMap implements Serializable 
     		setCAToken(token);
     	}
     	setFinishUser(cainfo.getFinishUser());
-    	
+    	setIncludeInHealthCheck(cainfo.getIncludeInHealthCheck());
+
     	Iterator iter = cainfo.getExtendedCAServiceInfos().iterator();
     	while(iter.hasNext()){
     		ExtendedCAServiceInfo info = (ExtendedCAServiceInfo) iter.next();
