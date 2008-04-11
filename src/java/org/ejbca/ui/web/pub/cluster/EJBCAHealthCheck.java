@@ -47,10 +47,10 @@ import org.ejbca.core.model.log.Admin;
  * * All Publishers can establish connection
  * 
  * @author Philip Vendil
- * @version $Id: EJBCAHealthCheck.java,v 1.6.4.3 2008-04-11 17:54:58 anatom Exp $
+ * @version $Id: EJBCAHealthCheck.java,v 1.6.4.4 2008-04-11 17:58:52 anatom Exp $
  */
 
-public class EJBCAHealthCheck extends CommonHealthCheck implements IHealthCheck {
+public class EJBCAHealthCheck extends CommonHealthCheck {
 	
 	private static Logger log = Logger.getLogger(EJBCAHealthCheck.class);
 
