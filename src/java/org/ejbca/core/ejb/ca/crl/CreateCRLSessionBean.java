@@ -13,7 +13,6 @@
 
 package org.ejbca.core.ejb.ca.crl;
 
-import java.security.cert.X509CRL;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
@@ -44,14 +43,13 @@ import org.ejbca.core.model.ca.crl.RevokedCertInfo;
 import org.ejbca.core.model.ca.store.CRLInfo;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.model.log.LogEntry;
-import org.ejbca.util.CertTools;
 
 
 /**
  * Generates a new CRL by looking in the database for revoked certificates and
  * generating a CRL.
  *
- * @version $Id: CreateCRLSessionBean.java,v 1.15.4.2 2008-04-11 00:21:05 anatom Exp $
+ * @version $Id: CreateCRLSessionBean.java,v 1.15.4.3 2008-04-11 23:49:35 anatom Exp $
  * @ejb.bean
  *   description="Session bean handling hard token data, both about hard tokens and hard token issuers."
  *   display-name="CreateCRLSB"
@@ -157,6 +155,15 @@ public class CreateCRLSessionBean extends BaseSessionBean {
         logsession = logsessionhome.create();
     }
 
+    /** Same as generating a new CRL but this is in a new separate transaction.
+     *
+     * @ejb.interface-method
+     * @ejb.transaction type="RequiresNew"
+     */
+    public void runNewTransaction(Admin admin, String issuerdn) throws CATokenOfflineException {
+    	run(admin,issuerdn);
+    }
+   
 	/**
 	 * Generates a new CRL by looking in the database for revoked certificates and generating a
 	 * CRL.
@@ -166,7 +173,6 @@ public class CreateCRLSessionBean extends BaseSessionBean {
 	 *
 	 * @throws EJBException om ett kommunikations eller systemfel intr?ffar.
      * @ejb.interface-method
-     * @ejb.transaction type="RequiresNew"
 	 */
     public void run(Admin admin, String issuerdn) throws CATokenOfflineException {
         debug(">run()");
@@ -331,7 +337,7 @@ public class CreateCRLSessionBean extends BaseSessionBean {
     			            	   if (log.isDebugEnabled()) {
         			            	   log.debug("Creating CRL for CA, because:"+currenttime.getTime()+overlap+" >= "+nextUpdate);    			            		   
     			            	   }
-    			                   this.run(admin, cainfo.getSubjectDN());
+    			                   this.runNewTransaction(admin, cainfo.getSubjectDN());
     			                   createdcrls++;
     			               }
     			               
