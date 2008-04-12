@@ -13,6 +13,7 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
+import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
@@ -124,7 +125,7 @@ import org.ejbca.util.query.Query;
  * Implementor of the IEjbcaWS interface.
  * 
  * @author Philip Vendil
- * $Id: EjbcaWS.java,v 1.18.2.2 2008-03-21 15:01:03 herrvendil Exp $
+ * $Id: EjbcaWS.java,v 1.18.2.3 2008-04-12 16:28:44 herrvendil Exp $
  */
 
 @WebService
@@ -893,7 +894,26 @@ public class EjbcaWS implements IEjbcaWS {
 				HardTokenDataWS toRevoke = (HardTokenDataWS)htdIter.next();
 				try{
 				  if(hardTokenDataWS.getLabel().equals(HardTokenConstants.LABEL_TEMPORARYCARD)){
-				     revokeToken(admin, toRevoke.getHardTokenSN(), RevokedCertInfo.REVOKATION_REASON_CERTIFICATEHOLD);
+					  if(WSConfig.isSetMSLogonOnHold()){
+						  // Set all certificates on hold
+						  revokeToken(admin, toRevoke.getHardTokenSN(), RevokedCertInfo.REVOKATION_REASON_CERTIFICATEHOLD);
+					  }else{
+						  // Token have extended key usage MS Logon, don't revoke it
+						  Iterator revokeCerts = getHardTokenSession().findCertificatesInHardToken(admin, toRevoke.getHardTokenSN()).iterator();
+						   
+						  while(revokeCerts.hasNext()){
+							  X509Certificate next = (X509Certificate) revokeCerts.next();							 
+							  try{
+								  if(!next.getExtendedKeyUsage().contains(CertificateProfile.EXTENDEDKEYUSAGEOIDSTRINGS[CertificateProfile.SMARTCARDLOGON])){
+									  revokeCert(CertTools.getIssuerDN(next), next.getSerialNumber().toString(16), RevokedCertInfo.REVOKATION_REASON_CERTIFICATEHOLD);
+								  }
+							  }catch(CertificateParsingException e){
+								  log.error(e);
+							  }
+						  }
+					  }
+					 
+				     
 				  }else{
 				     revokeToken(admin, toRevoke.getHardTokenSN(), RevokedCertInfo.REVOKATION_REASON_UNSPECIFIED);
 				  }
