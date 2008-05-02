@@ -1,3 +1,12 @@
+EJBCA 3.5.6
+-----------
+This is a minor release, fixing a few bugs and adding a new activation page to the admin-GUI.
+ - New activation page to effectively be able to activate many CAs quickly
+ - Possibility to exclude CAs from monitoring by the HealthCheckServlet
+ - Improve generation of CRL with the CRL worker
+ - Fix bugs listing many log or user entries
+ - Fix WS issues and a few other issues affecting hard token administration
+ 
 EJBCA 3.5.5
 -----------
 This is a minor release, fixing a few bugs and adding support for dual authentication for CATokens.
