@@ -71,12 +71,7 @@ public class ApplyBean implements java.io.Serializable {
     public void initialize(HttpServletRequest request)
         throws Exception {
         if (!initialized) {
-            if (request.getAttribute("javax.servlet.request.X509Certificate") != null) {
-                administrator = new Admin(((X509Certificate[]) request.getAttribute(
-                            "javax.servlet.request.X509Certificate"))[0]);
-            } else {
-                administrator = new Admin(Admin.TYPE_PUBLIC_WEB_USER, request.getRemoteAddr());
-            }
+        	administrator = new Admin(Admin.TYPE_PUBLIC_WEB_USER, request.getRemoteAddr());
 
             InitialContext jndicontext = new InitialContext();
             Object obj1 = jndicontext.lookup(IUserAdminSessionHome.JNDI_NAME);
