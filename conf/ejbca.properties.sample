@@ -169,8 +169,8 @@ ca.cmskeystorepass=foo123
 
 # Parameter specifying database test query string. Used to check that
 # the database is operational.
-# Default : Select 1 From CertificateData
-#healthcheck.dbquery=Select 1 From CertificateData
+# Default : Select 1 From CertificateData where fingerprint='XX'
+#healthcheck.dbquery=Select 1 From CertificateData where fingerprint='XX'
 
 # Parameter specifying IP addresses authorized to access the healthcheck
 # servlet. Use ';' for between multiple IPs. 
