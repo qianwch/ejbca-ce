@@ -37,7 +37,9 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.DERGeneralizedTime;
 import org.bouncycastle.asn1.DERObjectIdentifier;
+import org.bouncycastle.asn1.ocsp.CertID;
 import org.bouncycastle.asn1.ocsp.RevokedInfo;
+import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.CRLReason;
 import org.bouncycastle.asn1.x509.X509Extension;
 import org.bouncycastle.asn1.x509.X509Extensions;
@@ -65,10 +67,14 @@ import org.ejbca.core.model.ca.caadmin.extendedcaservices.OCSPCAServiceRequest;
 import org.ejbca.core.model.ca.caadmin.extendedcaservices.OCSPCAServiceResponse;
 import org.ejbca.core.model.ca.crl.RevokedCertInfo;
 import org.ejbca.core.model.log.Admin;
+import org.ejbca.core.protocol.ocsp.AccountLogger;
+import org.ejbca.core.protocol.ocsp.AuditLogger;
 import org.ejbca.core.protocol.ocsp.IOCSPExtension;
 import org.ejbca.core.protocol.ocsp.OCSPResponseItem;
 import org.ejbca.core.protocol.ocsp.OCSPUtil;
 import org.ejbca.util.CertTools;
+import org.ejbca.util.GUIDGenerator;
+import org.ejbca.util.StringTools;
 
 /**
  * @web.servlet-init-param description="Algorithm used by server to generate signature on OCSP responses"
@@ -119,6 +125,35 @@ import org.ejbca.util.CertTools;
  *   name="unidCACert"
  *   value="${ocsp.unidcacert}"
  *   
+ *  @web.servlet-init-param description="When true, an audit log will be created."
+ *   name="auditLog"
+ *   value="${ocsp.auditlog}"
+ *   
+ *  @web.servlet-init-param description="A format string for logging of dates in auditLog and accountLog"
+ *   name="auditLogDate"
+ *   value="${ocsp.audit-log-date}"
+ *   
+ *  @web.servlet-init-param description="A String to create a java Pattern to format the audit Log"
+ *   name="auditLogPattern"
+ *   value="${ocsp.audit-pattern}"
+ *   
+ *  @web.servlet-init-param description="A String which combined with auditLogPattern determines how auditLog output is formatted."
+ *   name="auditLogOrder"
+ *   value="${ocsp.audit-order}"
+ *   
+ *  @web.servlet-init-param description="When true, an account log will be created."
+ *   name="accountLog"
+ *   value="${ocsp.trxlog}"
+ *   
+ *  @web.servlet-init-param description="A String to create a java Pattern to format the account Log."
+ *   name="accountLogPattern"
+ *   value="${ocsp.trx-pattern}"
+ *   
+ *  @web.servlet-init-param description="A String which combined with auditLogPattern determines how auditLog output is formatted."
+ *   name="accountLogOrder"
+ *   value="${ocsp.trx-order}"
+ *   
+
  * @author Thomas Meckel (Ophios GmbH), Tomas Gustavsson, Lars Silven
  * @version  $Id: OCSPServletBase.java,v 1.37 2008-03-19 13:41:19 anatom Exp $
  */
@@ -135,7 +170,7 @@ abstract class OCSPServletBase extends HttpServlet {
     Collection m_cacerts = null;
     /** Cache time counter */
     private long m_certValidTo = 0;
-    /** String used to identify default responder id, used to generatwe responses when a request
+	/** String used to identify default responder id, used to generate responses when a request
      * for a certificate not signed by a CA on this server is received.
      */
     private String m_defaultResponderId;
@@ -143,7 +178,7 @@ abstract class OCSPServletBase extends HttpServlet {
      * signing the OCSP response. Defined in web.xml
      */
     private boolean m_useCASigningCert;
-    /** Marks if the CAs certificate chain shoudl be included in the OCSP response or not 
+	/** Marks if the CAs certificate chain should be included in the OCSP response or not 
      * Defined in web.xml
      */
     private boolean m_includeChain;
@@ -156,16 +191,18 @@ abstract class OCSPServletBase extends HttpServlet {
     private Collection m_extensionOids = new ArrayList();
     private Collection m_extensionClasses = new ArrayList();
     private HashMap m_extensionMap = null;
+	private boolean mAudit=false; //Default is no audit logging
+	private boolean mAccount=false; //Default is no account logging
+
     /**
      * The interval on which new OCSP signing certs are loaded in seconds.
      */
     private int m_valid_time;
     
-
     /** Loads cacertificates but holds a cache so it's reloaded only every five minutes is needed.
      */
     protected synchronized void loadCertificates() throws Exception {
-        // Kolla om vi har en cachad collection och om den inte ?r f?r gammal
+		// Check if we have a cached collection that is not too old
         if (m_cacerts != null && m_certValidTo > new Date().getTime()) {
             return;
         }
@@ -174,7 +211,7 @@ abstract class OCSPServletBase extends HttpServlet {
             m_log.debug("Loaded "+m_cacerts == null ? "0":m_cacerts.size()+" ca certificates");        	
         }
         loadPrivateKeys(m_adm);
-        m_certValidTo = m_valid_time>0 ? new Date().getTime()+m_valid_time : Long.MAX_VALUE;
+		m_certValidTo = m_valid_time>0 ? new Date().getTime()+m_valid_time : Long.MAX_VALUE;;
     }
     abstract protected void loadPrivateKeys(Admin adm) throws Exception;
 
@@ -207,7 +244,7 @@ abstract class OCSPServletBase extends HttpServlet {
 
     private BasicOCSPResp signOCSPResponse(OCSPReq req, ArrayList responseList, X509Extensions exts, X509Certificate cacert)
             throws CADoesntExistsException, ExtendedCAServiceRequestException, ExtendedCAServiceNotActiveException, IllegalExtendedCAServiceRequestException {
-        // Find the OCSP signing key and cert for the issuer
+
         BasicOCSPResp retval = null;
         {
             // Call extended CA services to get our OCSP stuff
@@ -225,6 +262,7 @@ abstract class OCSPServletBase extends HttpServlet {
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
         CertTools.installBCProvider();
+
         m_adm = new Admin(Admin.TYPE_INTERNALUSER);
         {
             final String sValue = config.getInitParameter("ocspSigningCertsValidTime");
@@ -304,6 +342,74 @@ abstract class OCSPServletBase extends HttpServlet {
             	m_nonExistingIsGood = true;
             }
         }
+
+		/**
+		 * Set up Audit and Account Logging
+		 */
+		initparam = config.getInitParameter("auditLog");
+		if (m_log.isDebugEnabled()) {
+			m_log.debug("Are we doing auditLogging?: '"
+					+ (StringUtils.isEmpty(initparam) ? "<not set>" : initparam)
+					+ "'");
+		}
+
+		if (!StringUtils.isEmpty(initparam)) {
+			if (initparam.equalsIgnoreCase("true")
+					|| initparam.equalsIgnoreCase("yes")) {
+				mAudit = true;
+			}
+		}
+
+		initparam = config.getInitParameter("auditLogDate");
+		String logDateFormat = initparam;
+		String temp = "deleteme";
+		if (mAudit==true) { // If we are not going to do any logging we wont bother setting it up
+
+			String auditLogPattern = config.getInitParameter("auditLogPattern");
+			if (m_log.isDebugEnabled()) {
+				m_log.debug("Pattern used for audit log: '"
+						+ (StringUtils.isEmpty(initparam) ? "<not set>" : initparam)
+						+ "'");
+			}
+			String auditLogOrder = config.getInitParameter("auditLogOrder");
+			if (m_log.isDebugEnabled()) {
+				m_log.debug("Pattern used for audit log: '"
+						+ (StringUtils.isEmpty(initparam) ? "<not set>" : initparam)
+						+ "'");
+			}
+
+			AuditLogger.configure(auditLogPattern, auditLogOrder,logDateFormat);
+		}
+
+		initparam = config.getInitParameter("accountLog");
+		if (m_log.isDebugEnabled()) {
+			m_log.debug("Are we doing auditLogging?: '"
+					+ (StringUtils.isEmpty(initparam) ? "<not set>" : initparam)
+					+ "'");
+		}
+		mAccount = false; // Default is no accountlogging
+		if (!StringUtils.isEmpty(initparam)) {
+			if (initparam.equalsIgnoreCase("true")
+					|| initparam.equalsIgnoreCase("yes")) {
+				mAccount = true;
+			}
+		}
+		if (mAccount==true) { // If we are not going to do any logging we wont bother setting it up
+
+			String accountLogPattern = config.getInitParameter("accountLogPattern");
+			if (m_log.isDebugEnabled()) {
+				m_log.debug("Pattern used for account log: '"
+						+ (StringUtils.isEmpty(initparam) ? "<not set>" : initparam)
+						+ "'");
+			}
+			String accountLogOrder = config.getInitParameter("accountLogOrder");
+			if (m_log.isDebugEnabled()) {
+				m_log.debug("Pattern used for account log: '"
+						+ (StringUtils.isEmpty(initparam) ? "<not set>" : initparam)
+						+ "'");
+			}	
+			AccountLogger.configure(accountLogPattern, accountLogOrder, logDateFormat);
+		}
 
         String extensionOid = null;
         String extensionClass = null;
@@ -399,8 +505,21 @@ abstract class OCSPServletBase extends HttpServlet {
         if (m_log.isDebugEnabled()) {
         	m_log.debug(">service()");
         }
+		AuditLogger audit = new AuditLogger();
+		AccountLogger account = new AccountLogger();
+		String transactionID = GUIDGenerator.generateGUID(this);
+		if (mAccount) account.paramPut(AccountLogger.OCSPREQUEST, new String (Hex.encode(reqBytes)));
+		if (mAccount) account.paramPut(AccountLogger.LOG_ID, transactionID);
+		if (mAudit) audit.paramPut(AuditLogger.LOG_ID, transactionID);
+		//audit.paramPut(AuditLogger.DIGEST_ALGOR, m_sigAlg); //Algorithm used by server to generate signature on OCSP responses
+		String remoteAddress = request.getRemoteAddr();
+		if (mAudit) audit.paramPut(AuditLogger.CLIENT_IP, remoteAddress);
+		if (mAccount) account.paramPut(AccountLogger.CLIENT_IP, remoteAddress);
         if ((reqBytes == null) || (reqBytes.length == 0)) {
-            m_log.info("No request bytes from ip: "+request.getRemoteAddr());
+			m_log.info("No request bytes from ip: "+remoteAddress);
+			if (mAudit) audit.paramPut(AuditLogger.STATUS, OCSPRespGenerator.MALFORMED_REQUEST);
+			if (mAudit) audit.writeln();
+			if (mAudit) audit.flush();
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "No request bytes.");
             return;
         }
@@ -411,15 +530,20 @@ abstract class OCSPServletBase extends HttpServlet {
             return;
         }
         try {
+
             OCSPResp ocspresp = null;
             OCSPRespGenerator res = new OCSPRespGenerator();
             X509Certificate cacert = null; // CA-certificate used to sign response
             OCSPReq req = new OCSPReq(reqBytes);
             try {
-                //m_log.debug("OCSPReq: "+new String(Base64.encode(req.getEncoded())));
-
+				if (null== req.getRequestorName()) {
+					m_log.debug("Requestorname is null"); 
+				}
+				else {
+					m_log.debug("Requestorname is req.getRequestorName().toString()");
+					if (mAudit) audit.paramPut(AuditLogger.REQ_NAME, req.getRequestorName().toString());
+				}
                 loadCertificates();
-
                 if (m_log.isDebugEnabled()) {
                     StringBuffer certInfo = new StringBuffer();
                     Iterator iter = m_cacerts.iterator();
@@ -434,7 +558,6 @@ abstract class OCSPServletBase extends HttpServlet {
                             + certInfo.toString());
                 }
 
-            
                 /**
                  * check the signature if contained in request.
                  * if the request does not contain a signature
@@ -445,15 +568,32 @@ abstract class OCSPServletBase extends HttpServlet {
                 if (m_log.isDebugEnabled()) {
                     m_log.debug("Incoming OCSP request is signed : " + req.isSigned());
                 }
+				if (req.isSigned()) {
+					try {
+						X509Certificate signercert = OCSPUtil.checkRequestSignature(request.getRemoteAddr(), req, m_cacerts);
+						String signercertIssuerName = signercert.getIssuerDN().getName();
+						BigInteger signercertSerNo = signercert.getSerialNumber();
+						String signercertSubjectName = signercert.getSubjectDN().getName();
+						if (mAudit) audit.paramPut(AuditLogger.SIGN_ISSUER_NAME_DN, signercertIssuerName);
+						if (mAudit) audit.paramPut(AuditLogger.SIGN_SERIAL_NO, signercertSerNo.toString());
+						if (mAudit) audit.paramPut(AuditLogger.SIGN_SUBJECT_NAME, signercertSubjectName);
+					} catch (Exception e ) {
+						// nothing, just keep going
+					}
+				}
+
                 if (m_reqMustBeSigned) {
                     X509Certificate signercert = OCSPUtil.checkRequestSignature(request.getRemoteAddr(), req, m_cacerts);
+					String signercertIssuerName = signercert.getIssuerDN().getName();
+					BigInteger signercertSerNo = signercert.getSerialNumber();
+					String signercertSubjectName = signercert.getSubjectDN().getName();
 					// If it verifies OK, check if it is revoked
 					RevokedCertInfo rci = isRevoked(m_adm, signercert.getIssuerDN().getName(), signercert.getSerialNumber());
 					// If rci == null it means the certificate does not exist in database, we then treat it as ok,
 					// because it may be so that only revoked certificates is in the (external) OCSP database.
 					if ((rci != null) && rci.isRevoked()) {
-						String serno = signercert.getSerialNumber().toString(16);
-						String errMsg = intres.getLocalizedMessage("ocsp.infosigner.revoked", signercert.getSubjectDN().getName(), signercert.getIssuerDN().getName(), serno);
+						String serno = signercertSerNo.toString(16);
+						String errMsg = intres.getLocalizedMessage("ocsp.infosigner.revoked", signercertSubjectName, signercertIssuerName, serno);
 						m_log.error(errMsg);
 			    		throw new SignRequestSignatureException(errMsg);
 					}
@@ -461,6 +601,7 @@ abstract class OCSPServletBase extends HttpServlet {
 
                 // Get the certificate status requests that are inside this OCSP req
                 Req[] requests = req.getRequestList();
+				if (mAudit) audit.paramPut(AuditLogger.NUM_CERT_ID, requests.length);
                 if (requests.length <= 0) {
             		String errMsg = intres.getLocalizedMessage("ocsp.errornoreqentities");
                     m_log.error(errMsg);
@@ -492,6 +633,14 @@ abstract class OCSPServletBase extends HttpServlet {
                 ArrayList responseList = new ArrayList();
                 for (int i = 0; i < requests.length; i++) {
                     CertificateID certId = requests[i].getCertID();
+					// now some Logging
+					if (mAudit) audit.paramPut(AuditLogger.SERIAL_NO, certId.getSerialNumber().toString());
+					if (mAudit) audit.paramPut(AuditLogger.DIGEST_ALGOR, certId.getHashAlgOID()); //todo, find text version of this or find out if it should be something else                    
+					if (mAudit) audit.paramPut(AuditLogger.ISSUER_NAME_HASH, new String( new String( Hex.encode(certId.getIssuerNameHash()))));
+					if (mAudit) audit.paramPut(AuditLogger.ISSUER_KEY,new String(Hex.encode(certId.getIssuerKeyHash())));
+					if (mAccount) account.paramPut(AccountLogger.SERIAL_NOHEX, new String( Hex.encode(certId.getSerialNumber().toByteArray())));
+					if (mAccount) account.paramPut(AccountLogger.ISSUER_NAME_HASH, new String( new String( Hex.encode(certId.getIssuerNameHash()))));
+					if (mAccount) account.paramPut(AccountLogger.ISSUER_KEY,new String(Hex.encode(certId.getIssuerKeyHash())));
                     byte[] hashbytes = certId.getIssuerNameHash();
                     String hash = null;
                     if (hashbytes != null) {
@@ -499,7 +648,8 @@ abstract class OCSPServletBase extends HttpServlet {
                     }
             		String infoMsg = intres.getLocalizedMessage("ocsp.inforeceivedrequest", certId.getSerialNumber().toString(16), hash, request.getRemoteAddr());
                     m_log.info(infoMsg);
-                    boolean unknownCA = false; // if the certId was issued by an unknown CA
+					boolean unknownCA = false; 
+					// if the certId was issued by an unknown CA
                     // The algorithm here:
                     // We will sign the response with the CA that issued the first 
                     // certificate(certId) in the request. If the issuing CA is not available
@@ -529,9 +679,14 @@ abstract class OCSPServletBase extends HttpServlet {
                         m_log.info(errMsg);
                         // If we can not find the CA, answer UnknowStatus
                         responseList.add(new OCSPResponseItem(certId, new UnknownStatus()));
+						if (mAudit) audit.paramPut(AuditLogger.CERT_STATUS, "3"); // 1= good 2 = revoked 3 = unknown
+						if (mAudit) audit.writeln();
+						if (mAccount) account.paramPut(AccountLogger.CERT_STATUS, "3"); // 1= good 2 = revoked 3 = unknown
+						//if (mAccount) account.writeln();
                         continue;
+					} else {
+						if (mAudit) audit.paramPut(AuditLogger.ISSUER_NAME_DN, cacert.getSubjectDN().getName());
                     }
-
                     /*
                      * Implement logic according to
                      * chapter 2.7 in RFC2560
@@ -546,7 +701,9 @@ abstract class OCSPServletBase extends HttpServlet {
                     if (null != rci && rci.getReason() == RevokedCertInfo.NOT_REVOKED) {
                         rci = null;
                     }
-                    CertificateStatus certStatus = null; // null mean good
+					CertificateStatus certStatus = null; // null means good
+					if (mAudit) audit.paramPut(AuditLogger.CERT_STATUS, "1"); // 3 = unknown
+					if (mAccount) account.paramPut(AccountLogger.CERT_STATUS, "1"); // 3 = unknown
                     if (null == rci) {
                         rci = isRevoked(m_adm, cacert.getSubjectDN().getName(), certId.getSerialNumber());
                         if (null == rci) {
@@ -557,38 +714,60 @@ abstract class OCSPServletBase extends HttpServlet {
                             }
                             String status = "good";
                             certStatus = null; // null means "good" in OCSP
-                            // If we do not treat non existing certificateas as good 
+							if (mAudit) audit.paramPut(AuditLogger.CERT_STATUS, "1"); // 1= good 2 = revoked 3 = unknown
+							if (mAccount) account.paramPut(AccountLogger.CERT_STATUS, "1"); // 3 = unknown
+							// If we do not treat non existing certificates as good 
                             // OR
                             // we don't actually handle requests for the CA issuing the certificate asked about
                             // then we return unknown
                             if ( (!m_nonExistingIsGood) || (OCSPUtil.findCAByHash(certId, m_cacerts) == null) ) {
                             	status = "unknown";
                             	certStatus = new UnknownStatus();
+								if (mAudit) audit.paramPut(AuditLogger.CERT_STATUS, "3"); // 1= good 2 = revoked 3 = unknown
+								if (mAccount) account.paramPut(AccountLogger.CERT_STATUS, "3"); // 3 = unknown
                             } 
                     		infoMsg = intres.getLocalizedMessage("ocsp.infoaddedstatusinfo", status, certId.getSerialNumber().toString(16), cacert.getSubjectDN().getName());
                             m_log.info(infoMsg);
                             responseList.add(new OCSPResponseItem(certId, certStatus));
+							if (mAudit) audit.writeln();
+							//  if (mAccount) account.writeln();
                         } else {
                         	BigInteger rciSerno = rci.getUserCertificate(); 
                         	if (rciSerno.compareTo(certId.getSerialNumber()) == 0) {
                                 if (rci.getReason() != RevokedCertInfo.NOT_REVOKED) {
                                     certStatus = new RevokedStatus(new RevokedInfo(new DERGeneralizedTime(rci.getRevocationDate()),
                                             new CRLReason(rci.getReason())));
+									if (mAudit) audit.paramPut(AuditLogger.CERT_STATUS, "2"); // 1= good 2 = revoked 3 = unknown
+									if (mAccount) account.paramPut(AuditLogger.CERT_STATUS, "2"); // 1= good 2 = revoked 3 = unknown
                                 } else {
                                     certStatus = null;
+									if (mAudit) audit.paramPut(AuditLogger.CERT_STATUS, "1"); // 1= good 2 = revoked 3 = unknown
+									if (mAccount) account.paramPut(AuditLogger.CERT_STATUS, "1"); // 1= good 2 = revoked 3 = unknown
                                 }
                                 String status = "good";
+								if (mAudit) audit.paramPut(AuditLogger.CERT_STATUS, "1"); // 1= good 2 = revoked 3 = unknown
+								if (mAccount) account.paramPut(AuditLogger.CERT_STATUS, "1"); // 1= good 2 = revoked 3 = unknown
                                 if (certStatus != null) {
                                 	status ="revoked";
+									if (mAudit) audit.paramPut(AuditLogger.CERT_STATUS, "2"); // 1= good 2 = revoked 3 = unknown
+									if (mAccount) account.paramPut(AuditLogger.CERT_STATUS, "2"); // 1= good 2 = revoked 3 = unknown
                                 }
                                 infoMsg = intres.getLocalizedMessage("ocsp.infoaddedstatusinfo", status, certId.getSerialNumber().toString(16), cacert.getSubjectDN().getName());
+
                                 m_log.info(infoMsg);
                                 responseList.add(new OCSPResponseItem(certId, certStatus));                        		
+								if (mAudit) audit.writeln();
+								//if (mAccount) account.writeln();
                         	} else {
                         		m_log.error("ERROR: Certificate serialNumber ("+rciSerno.toString(16)+") in response from database does not match request ("
                         				+certId.getSerialNumber().toString(16)+").");
                         		infoMsg = intres.getLocalizedMessage("ocsp.infoaddedstatusinfo", "unknown", certId.getSerialNumber().toString(16), cacert.getSubjectDN().getName());
                                 m_log.info(infoMsg);
+								// audit.paramPut(AuditLogger.ISSUER_NAME_DN, cacert.getSubjectDN().getName());
+								if (mAudit) audit.paramPut(AuditLogger.CERT_STATUS, "3");
+								if (mAccount) account.paramPut(AuditLogger.CERT_STATUS, "3"); // 1= good 2 = revoked 3 = unknown
+								if (mAudit) audit.writeln();
+								// if (mAccount) account.writeln();
                                 responseList.add(new OCSPResponseItem(certId, new UnknownStatus()));                        		
                         	}
                         }
@@ -598,8 +777,12 @@ abstract class OCSPServletBase extends HttpServlet {
                 		infoMsg = intres.getLocalizedMessage("ocsp.infoaddedstatusinfo", "revoked", certId.getSerialNumber().toString(16), cacert.getSubjectDN().getName());
                         m_log.info(infoMsg);
                         responseList.add(new OCSPResponseItem(certId, certStatus));
+						// audit.paramPut(AuditLogger.ISSUER_NAME_DN, cacert.getSubjectDN().getName());
+						if (mAudit) audit.paramPut(AuditLogger.CERT_STATUS, "2"); // 1= good 2 = revoked 3 = unknown
+						if (mAudit) audit.writeln();
+						if (mAccount) account.paramPut(AuditLogger.CERT_STATUS, "2"); // 1= good 2 = revoked 3 = unknown
+						//if (mAccount) account.writeln();
                     }
-
                     // Look for extension OIDs
                     Iterator iter = m_extensionOids.iterator();
                     while (iter.hasNext()) {
@@ -634,13 +817,14 @@ abstract class OCSPServletBase extends HttpServlet {
                         }
                     }
                     
-                }
+				} // end of huge for loop
                 if ((req != null) && (cacert != null)) {
                 	// Add responseExtensions
                 	X509Extensions exts = new X509Extensions(responseExtensions);
                 	// generate the signed response object
                     BasicOCSPResp basicresp = signOCSPResponse(req, responseList, exts, cacert);
                     ocspresp = res.generate(OCSPRespGenerator.SUCCESSFUL, basicresp);
+
                 } else {
             		String errMsg = intres.getLocalizedMessage("ocsp.errornocacreateresp");
                     m_log.error(errMsg);
@@ -652,18 +836,24 @@ abstract class OCSPServletBase extends HttpServlet {
                 // generate the signed response object
                 BasicOCSPResp basicresp = signOCSPResponse(req, null, null, cacert);
                 ocspresp = res.generate(OCSPRespGenerator.MALFORMED_REQUEST, basicresp);
+				if (mAudit) audit.paramPut(AuditLogger.STATUS, OCSPRespGenerator.MALFORMED_REQUEST);
+				if (mAudit) audit.writeln();
             } catch (SignRequestException e) {
         		String errMsg = intres.getLocalizedMessage("ocsp.errorprocessreq");
                 m_log.info(errMsg, e);
                 // generate the signed response object
                 BasicOCSPResp basicresp = signOCSPResponse(req, null, null, cacert);
                 ocspresp = res.generate(OCSPRespGenerator.SIG_REQUIRED, basicresp);
+				if (mAudit) audit.paramPut(AuditLogger.STATUS, OCSPRespGenerator.SIG_REQUIRED);
+				if (mAudit) audit.writeln();
             } catch (SignRequestSignatureException e) {
         		String errMsg = intres.getLocalizedMessage("ocsp.errorprocessreq");
                 m_log.info(errMsg, e);
                 // generate the signed response object
                 BasicOCSPResp basicresp = signOCSPResponse(req, null, null, cacert);
                 ocspresp = res.generate(OCSPRespGenerator.UNAUTHORIZED, basicresp);
+				if (mAudit) audit.paramPut(AuditLogger.STATUS, OCSPRespGenerator.UNAUTHORIZED);
+				if (mAudit) audit.writeln();
             } catch (Exception e) {
                 if (e instanceof ServletException)
                     throw (ServletException) e;
@@ -672,8 +862,12 @@ abstract class OCSPServletBase extends HttpServlet {
                 // generate the signed response object
                 BasicOCSPResp basicresp = signOCSPResponse(req, null, null, cacert);
                 ocspresp = res.generate(OCSPRespGenerator.INTERNAL_ERROR, basicresp);
+				if (mAudit) audit.paramPut(AuditLogger.STATUS, OCSPRespGenerator.INTERNAL_ERROR);
+				if (mAudit) audit.writeln();
             }
             byte[] respBytes = ocspresp.getEncoded();
+			if (mAccount) account.paramPut(AccountLogger.OCSPRESPONSE, new String (Hex.encode(respBytes)));
+			if (mAccount) account.writeln();
             response.setContentType("application/ocsp-response");
             //response.setHeader("Content-transfer-encoding", "binary");
             response.setContentLength(respBytes.length);
@@ -699,10 +893,13 @@ abstract class OCSPServletBase extends HttpServlet {
     		String errMsg = intres.getLocalizedMessage("ocsp.errorprocessreq");
             m_log.error(errMsg, e);
             throw new ServletException(e);
+		} catch (Exception e ) {
+			m_log.error(e);
         }
+		if (mAudit) audit.flush();
+		if (mAccount) account.flush();
         if (m_log.isDebugEnabled()) {
         	m_log.debug("<service()");
         }
     }
-
 } // OCSPServlet
