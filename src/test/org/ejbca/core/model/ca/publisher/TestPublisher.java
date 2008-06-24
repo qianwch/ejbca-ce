@@ -151,7 +151,7 @@ public class TestPublisher extends TestCase {
         boolean ret = false;
         try {
             LdapPublisher publisher = new LdapPublisher();
-            publisher.setHostname("localhost");
+            publisher.setHostnames("localhost");
             publisher.setDescription("Used in Junit Test, Remove this one");
             pub.addPublisher(admin, "TESTLDAP", publisher);
             ret = true;
@@ -172,7 +172,7 @@ public class TestPublisher extends TestCase {
         boolean ret = false;
         try {
             ActiveDirectoryPublisher publisher = new ActiveDirectoryPublisher();
-            publisher.setHostname("localhost");
+            publisher.setHostnames("localhost");
             publisher.setDescription("Used in Junit Test, Remove this one");
             pub.addPublisher(admin, "TESTAD", publisher);
             ret = true;
