@@ -43,6 +43,7 @@ public class TransactionLogger extends PatternLogger{
 	public static final String DIGEST_ALGOR="DIGEST_ALGOR";//Algorithm used by requested certificate to hash issuer key and issuer name
 	public static final String SERIAL_NO="SERIAL_NO";// Serial number of the a requested certificate.
 	public static final String CERT_STATUS="CERT_STATUS";//The requested certificate revocation status.
+	public static final String REPLY_TIME = "REPLY_TIME";
 
 	/** Internal localization of logs and errors */
 	private static final InternalResources intres = InternalResources.getInstance();
@@ -92,5 +93,6 @@ public class TransactionLogger extends PatternLogger{
 		super.paramPut(DIGEST_ALGOR,"0");
 		super.paramPut(SERIAL_NO,"0");
 		super.paramPut(CERT_STATUS,"0");
+		super.paramPut(REPLY_TIME,"0");
 	}
 }

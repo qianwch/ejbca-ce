@@ -9,14 +9,12 @@ import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SignatureException;
-import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -382,26 +380,29 @@ public class OCSPUtil {
     }
     
     boolean checkAuthorization(HttpServletRequest request, Hashtable trustedCerts) {
-        X509Certificate[] certs = (X509Certificate[]) request.getAttribute("javax.servlet.request.X509Certificate");
-        if (certs == null) {
-    		String errMsg = intres.getLocalizedMessage("ocsp.errornoclientauth", request.getRemoteAddr(), request.getRemoteHost());
-            m_log.error(errMsg);
-            return false;
-        }
-        // The entitys certificate is nr 0
-        X509Certificate cert = certs[0];
-        if (cert == null) {
-    		String errMsg = intres.getLocalizedMessage("ocsp.errornoclientauth", request.getRemoteAddr(), request.getRemoteHost());
-            m_log.error(errMsg);
-            return false;
-        }
-        if (checkCertInList(cert, trustedCerts)) {
-        	return true;
-        }
-    	String errMsg = intres.getLocalizedMessage("ocsp.erroruntrustedclientauth", request.getRemoteAddr(), request.getRemoteHost());
-        m_log.error(errMsg);
-		return false;
-	}
+    	if (trustedCerts != null) {
+    		X509Certificate[] certs = (X509Certificate[]) request.getAttribute("javax.servlet.request.X509Certificate");
+
+    		if (certs == null) {
+    			String errMsg = intres.getLocalizedMessage("ocsp.errornoclientauth", request.getRemoteAddr(), request.getRemoteHost());
+    			m_log.error(errMsg);
+    			return false;
+    		}
+    		// The entitys certificate is nr 0
+    		X509Certificate cert = certs[0];
+    		if (cert == null) {
+    			String errMsg = intres.getLocalizedMessage("ocsp.errornoclientauth", request.getRemoteAddr(), request.getRemoteHost());
+    			m_log.error(errMsg);
+    			return false;
+    		}
+    		if (checkCertInList(cert, trustedCerts)) {
+    			return true;
+    		}
+    		String errMsg = intres.getLocalizedMessage("ocsp.erroruntrustedclientauth", request.getRemoteAddr(), request.getRemoteHost());
+    		m_log.error(errMsg);
+    		return false;
+    	} return false;
+    }
     
     
     /**
@@ -412,8 +413,14 @@ public class OCSPUtil {
      * @return true if cert is in trustedCerts, false otherwise
      */
     public static boolean checkCertInList(X509Certificate cert, Hashtable trustedCerts) {
-    	String key = CertTools.getIssuerDN(cert)+";"+cert.getSerialNumber().toString(16);
+    	String key =  cert.getIssuerDN()+";"+cert.getSerialNumber().toString(16);
     	Object found = trustedCerts.get(key);
+    	if ( key != null) {
+    		if ((found != null) && (key != null) ) {
+    			m_log.debug("OCSPUtil.checkCertInList, found object with serial number:"+ key);
+    		}
+    		if (found == null) m_log.debug("OCSPUtil.checkCertInList, Could not find object with serial number:"+ key);
+    	}
         if (found != null) {
             return true;
         }

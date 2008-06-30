@@ -302,6 +302,7 @@ If you want your log to display all of the values available you only have to unc
 
 Available values for the transaction log are:
 LOG_ID, A random 32 bit number identifying a log entry for a request
+LOG_TIME, The time at which logging of the request started
 STATUS, The status of the OCSP-Request. SUCCESSFUL = 0;MALFORMED_REQUEST = 1;INTERNAL_ERROR = 2;
 										TRY_LATER = 3;SIG_REQUIRED = 5;UNAUTHORIZED = 6;
 CLIENT_IP, IP of the client making the request
@@ -323,6 +324,10 @@ Audit logging is configured in the same way as transaction logging. Valid values
 LOG_ID, A random 32 bit number identifying a log entry for a request
 OCSPREQUEST, The byte[] ocsp-request that came with the http-request
 OCSPRESPONSE, The byte[] ocsp-response that was included in the http-response
+LOG_TIME, The time at which logging of the request started
+REPLY_TIME, The time measured between when the servlet receives a request and reply is sent (in milliseconds)
+STATUS, The status of the OCSP-Request. SUCCESSFUL = 0;MALFORMED_REQUEST = 1;INTERNAL_ERROR = 2;
+										TRY_LATER = 3;SIG_REQUIRED = 5;UNAUTHORIZED = 6;
 
 Note that LOG_ID are of the same value for any request. This means they can be cross referenced.
 You can retrieve information from the audit log and verify that the information is valid by using the Account Log.

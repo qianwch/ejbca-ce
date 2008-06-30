@@ -40,6 +40,8 @@ public class AuditLogger extends PatternLogger {
 	public static final String OCSPRESPONSE = "OCSPRESPONSE"; //The byte[] ocsp-response that was included in the http-response
 	public static final String ISSUER_NAME_HASH = "ISSUER_NAME_HASH"; // The DN of the issuer of the requested
 	public static final String ISSUER_KEY = "ISSUER_KEY";
+	public static final String REPLY_TIME = "REPLY_TIME";
+	public static final String STATUS="STATUS";//The status of the OCSP-Request. SUCCESSFUL = 0;MALFORMED_REQUEST = 1;INTERNAL_ERROR = 2;
 	
 	//TRY_LATER = 3;SIG_REQUIRED = 5;UNAUTHORIZED = 6;
 	 /** regexp pattern to match ${identifier} patterns */// ${DN};${IP}
@@ -48,7 +50,7 @@ public class AuditLogger extends PatternLogger {
 		super(PATTERN.matcher(orderString), orderString, accountLog, mLogDateFormat);
 		cleanParams();
 		super.paramPut(LOG_ID, GUIDGenerator.generateGUID(this));
-        super.paramPut(LOG_TIME, new Date().toString());
+        //super.paramPut(LOG_TIME, new Date().toString());
 	}
 	
 	/**
@@ -60,6 +62,8 @@ public class AuditLogger extends PatternLogger {
 		super.paramPut(CLIENT_IP,"0");
 		super.paramPut(OCSPREQUEST, "0");
 		super.paramPut(OCSPRESPONSE, "0");
+		super.paramPut(REPLY_TIME,"0");
+		super.paramPut(STATUS, "-1");
 	}
 	
 	/**

@@ -18,6 +18,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -237,20 +239,21 @@ abstract class OCSPServletBase extends HttpServlet {
             m_log.debug("Loaded "+m_cacerts == null ? "0":m_cacerts.size()+" ca certificates");        	
         }
         loadPrivateKeys(m_adm);
-		m_certValidTo = m_valid_time>0 ? new Date().getTime()+m_valid_time : Long.MAX_VALUE;;
+		m_certValidTo = m_valid_time>0 ? new Date().getTime()+m_valid_time : Long.MAX_VALUE;
     }
     
 	protected synchronized void loadTrustDir() throws Exception {
 		// Check if we have a cached collection that is not too old
+		try {
 		if(m_reqRestrictMethod == RESTRICTONISSUER) {
 			if (mTrustedReqSigIssuers != null && m_trustDirValidTo > new Date().getTime()) {
 				return;
 			}
 			mTrustedReqSigIssuers = OCSPUtil.getCertificatesFromDirectory(m_signTrustDir);
 			if (m_log.isDebugEnabled()) {
-				m_log.debug("Loaded "+mTrustedReqSigIssuers == null ? "0":mTrustedReqSigIssuers.size()+" CA-certificates as trusted for OCSP-request signing");        	
+				m_log.debug("Loaded "+mTrustedReqSigIssuers == null ? "0":mTrustedReqSigIssuers.size()+" CA-certificates as trusted for OCSP-request signing");
 			}
-			m_trustDirValidTo = signTrustValidTime>0 ? new Date().getTime()+signTrustValidTime : Long.MAX_VALUE;;
+			m_trustDirValidTo = signTrustValidTime>0 ? new Date().getTime()+signTrustValidTime : Long.MAX_VALUE;
 		}
 		if(m_reqRestrictMethod == RESTRICTONSIGNER) {
 			if (mTrustedReqSigSigners != null && m_trustDirValidTo > new Date().getTime()) {
@@ -260,7 +263,12 @@ abstract class OCSPServletBase extends HttpServlet {
 			if (m_log.isDebugEnabled()) {
 				m_log.debug("Loaded "+mTrustedReqSigSigners == null ? "0":mTrustedReqSigSigners.size()+" Signer-certificates as trusted for OCSP-request signing");        	
 			}
-			m_trustDirValidTo = signTrustValidTime>0 ? new Date().getTime()+signTrustValidTime : Long.MAX_VALUE;;
+			m_trustDirValidTo = signTrustValidTime>0 ? new Date().getTime()+signTrustValidTime : Long.MAX_VALUE;
+		}
+		} catch (Exception e) {
+			if (m_log.isDebugEnabled()) {
+				m_log.debug("Failed to load trustdir");        	
+			}
 		}
 	}
     
@@ -597,6 +605,7 @@ abstract class OCSPServletBase extends HttpServlet {
         }
 		TransactionLogger transactionLogger = null;
 		AuditLogger auditLogger = null;
+		Date startTime = new Date();
 		if (mDoTransactionLog) transactionLogger = new TransactionLogger();
 		if (mDoAuditLog)  auditLogger = new AuditLogger();
 		String transactionID = GUIDGenerator.generateGUID(this);
@@ -693,16 +702,16 @@ abstract class OCSPServletBase extends HttpServlet {
 					if (m_reqRestrictSignatures) {
 						loadTrustDir();
 						if ( m_reqRestrictMethod == RESTRICTONSIGNER) {
-							if (!OCSPUtil.checkCertInList(signercert, mTrustedReqSigSigners)) {
-								String errMsg = intres.getLocalizedMessage("ocsp.infosigner.notallowed", signercertSubjectName, signercertIssuerName, signercertSerNo.toString(16));
+							if ((mTrustedReqSigIssuers == null) || (!OCSPUtil.checkCertInList(signercert, mTrustedReqSigSigners))) {
+								String errMsg = intres.getLocalizedMessage("ocsp.infosigner.signernotallowed", signercertSubjectName, signercertIssuerName);
 								m_log.error(errMsg);
 								throw new SignRequestSignatureException(errMsg);
 							}
 						}
 						else if (m_reqRestrictMethod == RESTRICTONISSUER) {
 							X509Certificate signerca = OCSPUtil.findCertificateBySubject(signercertIssuerName, m_cacerts);
-							if ((signerca == null) || (!OCSPUtil.checkCertInList(signerca, mTrustedReqSigIssuers)) ) {
-								String errMsg = intres.getLocalizedMessage("ocsp.infosigner.notallowed", signercertSubjectName, signercertIssuerName, signercertSerNo.toString(16));
+							if ((signerca == null) || (mTrustedReqSigIssuers == null) || (!OCSPUtil.checkCertInList(signerca, mTrustedReqSigIssuers)) ) {
+								String errMsg = intres.getLocalizedMessage("ocsp.infosigner.issuernotallowed", signercertSubjectName, signercertIssuerName);
 								m_log.error(errMsg);
 								throw new SignRequestSignatureException(errMsg);
 							}
@@ -741,14 +750,31 @@ abstract class OCSPServletBase extends HttpServlet {
                 
                 // Add standard response extensions
                 Hashtable responseExtensions = OCSPUtil.getStandardResponseExtensions(req);
-
+                if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.STATUS, OCSPRespGenerator.SUCCESSFUL);
                 // Look over the status requests
                 ArrayList responseList = new ArrayList();
                 for (int i = 0; i < requests.length; i++) {
                     CertificateID certId = requests[i].getCertID();
 					// now some Logging
+                    String digAlg = "";
+                    try {
+                    	 digAlg = certId.getHashAlgOID();
+                    	try {
+                    	    MessageDigest dig = MessageDigest.getInstance( digAlg, "BC" );
+                    	    digAlg = dig.getAlgorithm();
+                    	} catch (NoSuchAlgorithmException e) {
+                    	    if(m_log.isDebugEnabled()) {
+                    	    	m_log.debug("Algorithm oid "+digAlg+" could not be translated to algorithm name, sticking with oid.");
+                    	    }
+                    	} 
+                    	//digestAlgName = new AlgorithmIdentifier(certId.getHashAlgOID()).toString(); //ASN1Sequence(certId.getHashAlgOID())).getSignatureAlgorithm().toString();
+                    } catch (Exception e ) {
+                    	if (m_log.isDebugEnabled()) {
+                    		m_log.debug("failed to retrieve name for hashAlgOID");
+                    	}
+                    }
 					if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.SERIAL_NO, certId.getSerialNumber().toString());
-					if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.DIGEST_ALGOR, certId.getHashAlgOID()); //todo, find text version of this or find out if it should be something else                    
+					if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.DIGEST_ALGOR, digAlg); //todo, find text version of this or find out if it should be something else                    
 					if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.ISSUER_NAME_HASH, new String( new String( Hex.encode(certId.getIssuerNameHash()))));
 					if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.ISSUER_KEY,new String(Hex.encode(certId.getIssuerKeyHash())));
 					if (auditLogger != null) auditLogger.paramPut(AuditLogger.SERIAL_NOHEX, new String( Hex.encode(certId.getSerialNumber().toByteArray())));
@@ -942,6 +968,7 @@ abstract class OCSPServletBase extends HttpServlet {
                 BasicOCSPResp basicresp = signOCSPResponse(req, null, null, cacert);
                 ocspresp = res.generate(OCSPRespGenerator.MALFORMED_REQUEST, basicresp);
 				if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.STATUS, OCSPRespGenerator.MALFORMED_REQUEST);
+				if (auditLogger != null) auditLogger.paramPut(AuditLogger.STATUS, OCSPRespGenerator.MALFORMED_REQUEST);
 				if (transactionLogger != null) transactionLogger.writeln();
             } catch (SignRequestException e) {
         		String errMsg = intres.getLocalizedMessage("ocsp.errorprocessreq");
@@ -950,6 +977,7 @@ abstract class OCSPServletBase extends HttpServlet {
                 BasicOCSPResp basicresp = signOCSPResponse(req, null, null, cacert);
                 ocspresp = res.generate(OCSPRespGenerator.SIG_REQUIRED, basicresp);
 				if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.STATUS, OCSPRespGenerator.SIG_REQUIRED);
+				if (auditLogger != null) auditLogger.paramPut(AuditLogger.STATUS, OCSPRespGenerator.SIG_REQUIRED);
 				if (transactionLogger != null) transactionLogger.writeln();
             } catch (SignRequestSignatureException e) {
         		String errMsg = intres.getLocalizedMessage("ocsp.errorprocessreq");
@@ -958,6 +986,7 @@ abstract class OCSPServletBase extends HttpServlet {
                 BasicOCSPResp basicresp = signOCSPResponse(req, null, null, cacert);
                 ocspresp = res.generate(OCSPRespGenerator.UNAUTHORIZED, basicresp);
 				if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.STATUS, OCSPRespGenerator.UNAUTHORIZED);
+				if (auditLogger != null) auditLogger.paramPut(AuditLogger.STATUS, OCSPRespGenerator.UNAUTHORIZED);
 				if (transactionLogger != null) transactionLogger.writeln();
 			} catch (InvalidKeyException e) {
 				String errMsg = intres.getLocalizedMessage("ocsp.errorprocessreq");
@@ -966,6 +995,7 @@ abstract class OCSPServletBase extends HttpServlet {
 				BasicOCSPResp basicresp = signOCSPResponse(req, null, null, cacert);
 				ocspresp = res.generate(OCSPRespGenerator.UNAUTHORIZED, basicresp);
 				if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.STATUS, OCSPRespGenerator.UNAUTHORIZED);
+				if (auditLogger != null) auditLogger.paramPut(AuditLogger.STATUS, OCSPRespGenerator.UNAUTHORIZED);
 				if (transactionLogger != null) transactionLogger.writeln();
             } catch (Exception e) {
                 if (e instanceof ServletException)
@@ -976,11 +1006,15 @@ abstract class OCSPServletBase extends HttpServlet {
                 BasicOCSPResp basicresp = signOCSPResponse(req, null, null, cacert);
                 ocspresp = res.generate(OCSPRespGenerator.INTERNAL_ERROR, basicresp);
 				if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.STATUS, OCSPRespGenerator.INTERNAL_ERROR);
+				if (auditLogger != null) auditLogger.paramPut(AuditLogger.STATUS, OCSPRespGenerator.INTERNAL_ERROR);
 				if (transactionLogger != null) transactionLogger.writeln();
 			}
 			byte[] respBytes = ocspresp.getEncoded();
+			if (auditLogger != null) auditLogger.paramPut(AuditLogger.STATUS, OCSPRespGenerator.SUCCESSFUL);
 			if (auditLogger != null) auditLogger.paramPut(AuditLogger.OCSPRESPONSE, new String (Hex.encode(respBytes)));
+			if (auditLogger != null) auditLogger.paramPut(AuditLogger.REPLY_TIME, String.valueOf( new Date().getTime() - startTime.getTime() ));
 			if (auditLogger != null) auditLogger.writeln();
+			if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.STATUS, OCSPRespGenerator.INTERNAL_ERROR);
             response.setContentType("application/ocsp-response");
             //response.setHeader("Content-transfer-encoding", "binary");
             response.setContentLength(respBytes.length);
