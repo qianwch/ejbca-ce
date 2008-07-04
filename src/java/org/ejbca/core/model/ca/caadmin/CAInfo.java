@@ -100,6 +100,7 @@ public class CAInfo implements Serializable {
     public int getCAId(){return this.caid;}
     public String getName() {return this.name;}
     public int getStatus() {return status;}
+    public void setStatus(int status) {this.status = status;}
     public int getCAType() {return catype;}
     public int getSignedBy() {return signedby;}
     
