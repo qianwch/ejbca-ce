@@ -807,6 +807,7 @@ public class CAAdminSessionBean extends BaseSessionBean {
             authorizedToCA(admin,caid);
             CADataLocal cadata = cadatahome.findByPrimaryKey(new Integer(caid));
             CA ca = cadata.getCA();
+            String name = ca.getName();
             cainfo = ca.getCAInfo();
             int status = cainfo.getStatus();
             boolean includeInHealthCheck = cainfo.getIncludeInHealthCheck();
@@ -821,7 +822,7 @@ public class CAAdminSessionBean extends BaseSessionBean {
             	// Only do a real test signature if the CA is supposed to be active and if it is included in healthchecking
             	// Otherwise we will only waste resources
             	if (log.isDebugEnabled()) {
-                	log.debug("Making test signature with CAs token. doSignTest="+doSignTest+", CA status="+status+", includeInHealthCheck="+includeInHealthCheck);            		
+                	log.debug("Making test signature with CAs token. CA="+name+", doSignTest="+doSignTest+", CA status="+status+", includeInHealthCheck="+includeInHealthCheck);            		
             	}
                 CATokenContainer catoken = ca.getCAToken();
                 tokenstatus = catoken.getCATokenInfo().getCATokenStatus();            	
