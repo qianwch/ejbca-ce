@@ -835,7 +835,7 @@ public class CAAdminSessionBean extends BaseSessionBean {
             cainfo.getCATokenInfo().setCATokenStatus(tokenstatus);
         } catch(javax.ejb.FinderException fe) {
             // ignore
-            log.debug("Can nog find CA with id: "+caid);
+            log.debug("Can not find CA with id: "+caid);
         } catch(Exception e){
     		String msg = intres.getLocalizedMessage("caadmin.errorgetcainfo", new Integer(caid));            	
             log.error(msg, e);
