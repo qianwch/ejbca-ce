@@ -786,20 +786,10 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
     	debug("<saveGlobalConfiguration()");
     } // saveGlobalConfiguration
 
-
-
-    // Private methods
-
-    private static Random random = null;
-    /** Helper to re-use a Random object */
-    private int getRandomInt() {
-    	if (random == null) {
-    		random = new Random(new Date().getTime());
-    	}
-    	return random.nextInt();
-    }
-    
-    private int findFreeEndEntityProfileId(){
+    /**
+     * @ejb.interface-method
+     */
+    public int findFreeEndEntityProfileId(){
       int id = getRandomInt();
       boolean foundfree = false;
 
@@ -815,6 +805,18 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
       return id;
     } // findFreeEndEntityProfileId
 
+
+    // Private methods
+
+    private static Random random = null;
+    /** Helper to re-use a Random object */
+    private int getRandomInt() {
+    	if (random == null) {
+    		random = new Random(new Date().getTime());
+    	}
+    	return random.nextInt();
+    }
+    
 	private boolean isFreeEndEntityProfileId(int id) {
 			boolean foundfree = false;
 			try {
