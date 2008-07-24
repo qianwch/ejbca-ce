@@ -1031,7 +1031,9 @@ function fieldSetDisableAsCheckbox(field, boxTarget, boxSource) {
          &nbsp;
       </td>
       <td width="25%" align="right"> 
-        <%= ejbcawebbean.getText("SENDNOTIFICATION") %> <br>&nbsp;
+        <%= ejbcawebbean.getText("SENDNOTIFICATION") %>
+        <%= ejbcawebbean.getHelpReference("/manual.html#Email%20notifications") %>
+        <br />&nbsp;
       </td>
       <td width="70%"> 
         <% used = profiledata.getUse(EndEntityProfile.SENDNOTIFICATION,0); %>
@@ -1193,6 +1195,7 @@ function fieldSetDisableAsCheckbox(field, boxTarget, boxSource) {
       </td>
       <td width="25%" align="right"> 
         <%= ejbcawebbean.getText("NOTIFICATIONSUBJECT") %>
+        <%= ejbcawebbean.getHelpReference("/manual.html#Dynamic%20Substitution%20Variables") %>
       </td>
       <td width="70%">
         <input type="text" name="<%=TEXTFIELD_NOTIFICATIONSUBJECT%>" size="40" maxlength="1024" <%=profiledata.getUse(EndEntityProfile.SENDNOTIFICATION,0) ? "" : "disabled"%>/><br/>
@@ -1203,7 +1206,9 @@ function fieldSetDisableAsCheckbox(field, boxTarget, boxSource) {
          &nbsp;
       </td>
       <td width="25%" align="right"> 
-        <%= ejbcawebbean.getText("NOTIFICATIONMESSAGE") %> <br/>
+        <%= ejbcawebbean.getText("NOTIFICATIONMESSAGE") %> 
+        <%= ejbcawebbean.getHelpReference("/manual.html#Dynamic%20Substitution%20Variables") %>
+		<br />&nbsp; <br />&nbsp;
       </td>
       <td width="70%">
         <textarea name="<%=TEXTAREA_NOTIFICATIONMESSAGE%>" cols="40" rows="4" <%=profiledata.getUse(EndEntityProfile.SENDNOTIFICATION,0) ? "" : "disabled"%> ></textarea>
