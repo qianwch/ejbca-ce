@@ -28,6 +28,9 @@ public class LettersAndDigitsPasswordGenerator extends BasePasswordGenerator{
     	                                                             'j','J','k','K','l','L','z','Z','x','X','c','C',
     	                                                             'v','V','b','B','n','N','m','M'};
     
+	protected static final String NAME = "PWGEN_LETTERDIGIT";
+    
+	public String getName() { return NAME; }
     
     public LettersAndDigitsPasswordGenerator(){
     	super(USEDCHARS);

@@ -14,22 +14,24 @@
 package org.ejbca.util.passgen;
 
 /**
- * IPasswordGenerator is an interface used to generate passwords used by end entities in EJBCA
+ * This class allows all letters and digits except those that look similar like 0O and l1I.
  *
- * @version $Id: IPasswordGenerator.java,v 1.1 2006-01-17 20:28:05 anatom Exp $
  */
-public interface IPasswordGenerator {
+public class NoLookALikeLDPasswordGenerator extends BasePasswordGenerator {
     
-    /**
-     *  Method generating a new password for the user and returns a string representation of it.
-     * 
-     * @param minlength indicates the minimun length of the generated password.
-     * @param maxlength indicates the maximum length of the generated password.
-     * @return the generated password
-     */
+    private static final char[] USEDCHARS = {'2','3','4','5','6','7','8','9',
+    	                                                      'q','Q','w','W','e','E','r',
+    	                                                      'R','t','T','y','Y','u','U','i','o','p','P','a',
+    	                                                      'A','s','S','d','D','f','F','g','G','h','H','j','J','k','K',
+    	                                                      'L','z','Z','x','X','c','C','v','V','b','B','n','N','m',
+    	                                                      'M'};
+        
+	protected static final String NAME = "PWGEN_NOLOOKALIKELD";
     
-    public abstract String getNewPassword(int minlength, int maxlength);
-
-	public abstract String getName();
-   
+	public String getName() { return NAME; }
+	
+    public NoLookALikeLDPasswordGenerator(){
+    	super(USEDCHARS);
+    }
+      
 }
