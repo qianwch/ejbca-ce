@@ -15,7 +15,7 @@ package org.ejbca.core.ejb.ra;
 
 import java.awt.print.PrinterException;
 import java.math.BigInteger;
-import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -2000,7 +2000,7 @@ throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, Approva
                         Session mailSession = getLocator().getMailSession(mailJndi);
                         // Get the administrators DN from the admin certificate, if one exists
                         // When approvals is used, this will be the DN of the admin that approves the request
-                        Certificate adminCert = admin.getAdminInformation().getX509Certificate();
+                        X509Certificate adminCert = admin.getAdminInformation().getX509Certificate();
                         String approvalAdminDN = CertTools.getSubjectDN(adminCert);
                         log.debug("approvalAdminDN: "+approvalAdminDN);
                         NotificationParamGen paramGen = new NotificationParamGen(data, approvalAdminDN);
