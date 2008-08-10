@@ -33,7 +33,7 @@ public class AuditLogger extends PatternLogger {
 	private static Matcher m_matcher;
     private static final Logger accountLog = Logger.getLogger(AuditLogger.class.getName());
 	private static String mLogDateFormat ;
-	public static final String LOG_ID="LOG_ID";//A random 32 bit number identifying a log entry for a request
+	private static String mTimeZone;
 	public static final String CLIENT_IP="CLIENT_IP";//IP of the client making the request
 	public static final String SERIAL_NOHEX = "SERIAL_NOHEX"; // The serial number of the requested certificate
 	public static final String OCSPREQUEST = "OCSPREQUEST";	//The byte[] ocsp-request that came with the http-request
@@ -47,7 +47,7 @@ public class AuditLogger extends PatternLogger {
 	 /** regexp pattern to match ${identifier} patterns */// ${DN};${IP}
 
 	public AuditLogger () {
-		super(PATTERN.matcher(orderString), orderString, accountLog, mLogDateFormat);
+		super(PATTERN.matcher(orderString), orderString, accountLog, mLogDateFormat, mTimeZone);
 		cleanParams();
 		super.paramPut(LOG_ID, GUIDGenerator.generateGUID(this));
         //super.paramPut(LOG_TIME, new Date().toString());
@@ -58,7 +58,7 @@ public class AuditLogger extends PatternLogger {
 	 */
 	protected void cleanParams() {
 		super.cleanParams();
-		super.paramPut(TransactionLogger.LOG_ID, "0");
+		super.paramPut(LOG_ID, "0");
 		super.paramPut(CLIENT_IP,"0");
 		super.paramPut(OCSPREQUEST, "0");
 		super.paramPut(OCSPRESPONSE, "0");
@@ -73,10 +73,20 @@ public class AuditLogger extends PatternLogger {
 	 * @param accountLogOrder
 	 * @param logDateFormat
 	 */
-	public static void configure(String accountLogPattern, String accountLogOrder, String logDateFormat) {
+	public static void configure(String accountLogPattern, String accountLogOrder, String logDateFormat, String timeZone) {
 		PATTERN = Pattern.compile(accountLogPattern);
 		orderString = accountLogOrder;
 		m_matcher = PATTERN.matcher(orderString);
 		mLogDateFormat = logDateFormat;
+		mTimeZone = timeZone;
 	}
+	
+	/**
+	 * This Method needs to be called before creating any instances
+	 * 
+	 * @param accountLogPattern  
+	 * @param accountLogOrder
+	 * @param logDateFormat
+	 */
+
 }
