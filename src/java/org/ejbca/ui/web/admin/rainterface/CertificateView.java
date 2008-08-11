@@ -66,7 +66,7 @@ public class CertificateView implements java.io.Serializable {
                                     "CODESIGNING", "EMAILPROTECTION", null, 
                                     null, null, "TIMESTAMPING", "SMARTCARDLOGON",
                                     "OCSPSIGNER", "EFS_CRYPTO", "EFS_RECOVERY", "IPSECIKE",
-                                    "SCVPSERVER", "SCVPCLIENT"};
+                                    "SCVPSERVER", "SCVPCLIENT", "MS_DOCUMENT_SIGNING"};
 
 
    private static final int SUBALTNAME_OTHERNAME     = 0;
