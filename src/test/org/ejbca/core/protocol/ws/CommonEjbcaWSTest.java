@@ -134,7 +134,9 @@ public class CommonEjbcaWSTest extends TestCase {
         	System.out.println("Contacting webservice at " + urlstr);                       
 
         	System.setProperty("javax.net.ssl.trustStore","p12/wstest.jks");
-        	System.setProperty("javax.net.ssl.trustStorePassword","foo123");  
+        	// Use glassfish's truststore
+        	//System.setProperty("javax.net.ssl.trustStore","/home/tomas/Dev/glassfish/domains/domain1/config/cacerts.jks");
+        	System.setProperty("javax.net.ssl.trustStorePassword","changeit");  
 
         	System.setProperty("javax.net.ssl.keyStore","p12/wstest.jks");
         	System.setProperty("javax.net.ssl.keyStorePassword","foo123");      
@@ -157,8 +159,10 @@ public class CommonEjbcaWSTest extends TestCase {
 
         	System.out.println("Contacting webservice at " + urlstr);                       
 
-        	System.setProperty("javax.net.ssl.trustStore","p12/wsnonadmintest.jks");
-        	System.setProperty("javax.net.ssl.trustStorePassword","foo123");  
+        	System.setProperty("javax.net.ssl.trustStore","p12/wstest.jks");
+        	// Use glassfish's truststore
+        	//System.setProperty("javax.net.ssl.trustStore","/home/tomas/Dev/glassfish/domains/domain1/config/cacerts.jks");
+        	System.setProperty("javax.net.ssl.trustStorePassword","changeit");  
 
         	System.setProperty("javax.net.ssl.keyStore","p12/wsnonadmintest.jks");
         	System.setProperty("javax.net.ssl.keyStorePassword","foo123");      
