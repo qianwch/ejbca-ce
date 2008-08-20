@@ -508,7 +508,7 @@ abstract class OCSPServletBase extends HttpServlet {
 					+ "'");
 		}
 
-config.getInitParameter("logDateFormat");
+		config.getInitParameter("logDateFormat");
 		String logDateFormat = config.getInitParameter("logDateFormat");
 		if (mDoAuditLog==true) { // If we are not going to do any logging we wont bother setting it up
 
