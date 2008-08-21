@@ -504,14 +504,14 @@ abstract class OCSPServletBase extends HttpServlet {
 		String timezone = config.getInitParameter("logTimeZone");
 		if (m_log.isDebugEnabled()) {
 			m_log.debug("Is time zone set??: '"
-					+ (StringUtils.isEmpty(initparam) ? "<not set>" : timezone)
+					+ (StringUtils.isEmpty(timezone) ? "<not set>" : timezone)
 					+ "'");
 		}
 
 		String logDateFormat = config.getInitParameter("logDateFormat");
 		if (m_log.isDebugEnabled()) {
 			m_log.debug("Is date format set??: '"
-					+ (StringUtils.isEmpty(initparam) ? "<not set>" : logDateFormat)
+					+ (StringUtils.isEmpty(logDateFormat) ? "<not set>" : logDateFormat)
 					+ "'");
 		}
 
@@ -520,13 +520,13 @@ abstract class OCSPServletBase extends HttpServlet {
 			String auditLogPattern = config.getInitParameter("auditLogPattern");
 			if (m_log.isDebugEnabled()) {
 				m_log.debug("Pattern used for audit log: '"
-						+ (StringUtils.isEmpty(initparam) ? "<not set>" : initparam)
+						+ (StringUtils.isEmpty(auditLogPattern) ? "<not set>" : auditLogPattern)
 						+ "'");
 			}
 			String auditLogOrder = config.getInitParameter("auditLogOrder");
 			if (m_log.isDebugEnabled()) {
 				m_log.debug("Pattern used for audit log: '"
-						+ (StringUtils.isEmpty(initparam) ? "<not set>" : initparam)
+						+ (StringUtils.isEmpty(auditLogOrder) ? "<not set>" : auditLogOrder)
 						+ "'");
 			}
 				AuditLogger.configure(auditLogPattern, auditLogOrder,logDateFormat, timezone);
@@ -549,13 +549,13 @@ abstract class OCSPServletBase extends HttpServlet {
 			String transactionLogPattern = config.getInitParameter("transactionLogPattern");
 			if (m_log.isDebugEnabled()) {
 				m_log.debug("Pattern used for account log: '"
-						+ (StringUtils.isEmpty(initparam) ? "<not set>" : initparam)
+						+ (StringUtils.isEmpty(transactionLogPattern) ? "<not set>" : transactionLogPattern)
 						+ "'");
 			}
 			String transactionLogOrder = config.getInitParameter("transactionLogOrder");
 			if (m_log.isDebugEnabled()) {
 				m_log.debug("Pattern used for account log: '"
-						+ (StringUtils.isEmpty(initparam) ? "<not set>" : initparam)
+						+ (StringUtils.isEmpty(transactionLogOrder) ? "<not set>" : transactionLogOrder)
 						+ "'");
 			}	
 			TransactionLogger.configure(transactionLogPattern, transactionLogOrder, logDateFormat, timezone);
