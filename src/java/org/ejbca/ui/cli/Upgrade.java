@@ -13,9 +13,6 @@
  
 package org.ejbca.ui.cli;
 
-import org.ejbca.core.ejb.ServiceLocator;
-import org.ejbca.core.ejb.upgrade.IUpgradeSessionHome;
-import org.ejbca.core.ejb.upgrade.IUpgradeSessionRemote;
 
 /**
  * Implements call to the upgrade function
@@ -37,8 +34,10 @@ public class Upgrade extends BaseCommand {
         boolean ret = false;
         String database = System.getProperty("ejbcaDB");
         debug("ejbcaDB="+database);
-        String upgradeFromVersion = System.getProperty("ejbcaUpgradeFromVersion");
-        debug("ejbcaUpgradeFromVersion="+upgradeFromVersion);
+        
+        String upgradefrom33 = System.getProperty("ejbcaUpgradeFrom33");
+        String upgradefrom31 = System.getProperty("ejbcaUpgradeFrom31");
+        debug("ejbcaUpgradeFrom31="+database);
         
         // Check pre-requisites
         if (!appServerRunning()) {
@@ -47,14 +46,16 @@ public class Upgrade extends BaseCommand {
         }
        // Upgrade the database
        try {
-          String[] args = new String[2];
+          String[] args = new String[3];
           args[0] = database;
-          args[1] = upgradeFromVersion;
+          args[1] = upgradefrom33;
+          args[2] = upgradefrom31;
           ret = getUpgradeSession().upgrade(administrator, args);
        } catch (Exception e) {
            error("Can't upgrade: ", e);
            ret = false;
        }
+       
       debug("<upgrade");
       return ret;
     }
@@ -74,6 +75,7 @@ public class Upgrade extends BaseCommand {
             	upgrade.info("Upgrade completed.");   
             }
         } catch (Exception e) {
+            //System.out.println(e.getMessage());
             upgrade.error("Error doing upgrade: ", e);
             System.exit(-1);
         }
