@@ -188,7 +188,7 @@
 
         </td>
         <td width="53%">
-          <input type="hidden" name='<%= HIDDEN_MATCHVALUE + i %>' value='<%= adminentity.getMatchValue() %>'>
+          <input type="hidden" name="<%= HIDDEN_MATCHVALUE + i %>" value="<%= adminentity.getMatchValue() %>">
         	<%	// Link certificate serial numbers to the "List End Entity"-page
         		if ( adminentity.getMatchWith() == AdminEntity.WITH_SERIALNUMBER ) {
         			// As defined in listendetities.jsp:
