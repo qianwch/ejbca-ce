@@ -1691,7 +1691,7 @@ public class CommonEjbcaWSTest extends TestCase {
         } catch (AuthorizationDeniedException_Exception e) {
         	thrown = true;
         	String msg = e.getMessage();
-        	assertTrue(msg.contains("No old certificate"));
+        	assertTrue(msg.contains("No certificate found that could authenticate request"));
         }
         assertTrue(thrown);
         
