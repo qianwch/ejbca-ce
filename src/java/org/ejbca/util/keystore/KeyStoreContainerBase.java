@@ -149,6 +149,7 @@ public abstract class KeyStoreContainerBase implements KeyStoreContainer {
             kpg.initialize(new ECGenParameterSpec(name));
         } catch( InvalidAlgorithmParameterException e ) {
             log.debug("EC name "+name+" not supported.");
+            throw e;
         }
         final byte result[] = generate(kpg, keyEntryName, "SHA1withECDSA");
         log.debug("<generate: curve name "+name+", keyEntryName "+keyEntryName);
