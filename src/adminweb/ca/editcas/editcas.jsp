@@ -5,7 +5,7 @@
                org.ejbca.ui.web.admin.rainterface.RevokedInfoView, org.ejbca.ui.web.admin.configuration.InformationMemory, org.bouncycastle.asn1.x509.X509Name, org.bouncycastle.jce.PKCS10CertificationRequest, org.ejbca.core.EjbcaException,
                org.ejbca.core.protocol.PKCS10RequestMessage, org.ejbca.core.model.ca.caadmin.CAExistsException, org.ejbca.core.model.ca.caadmin.CADoesntExistsException, org.ejbca.core.model.ca.catoken.CATokenOfflineException, org.ejbca.core.model.ca.catoken.CATokenAuthenticationFailedException,
                org.ejbca.core.model.ca.caadmin.extendedcaservices.OCSPCAServiceInfo,org.ejbca.core.model.ca.caadmin.extendedcaservices.XKMSCAServiceInfo, org.ejbca.core.model.ca.caadmin.extendedcaservices.CmsCAServiceInfo, org.ejbca.core.model.ca.caadmin.extendedcaservices.ExtendedCAServiceInfo, org.ejbca.core.model.ca.catoken.CATokenManager, org.ejbca.core.model.ca.catoken.AvailableCAToken, org.ejbca.core.model.ca.catoken.HardCATokenInfo, org.ejbca.core.model.ca.catoken.CATokenConstants,
-               org.ejbca.util.dn.DNFieldExtractor,org.ejbca.util.dn.DnComponents,org.ejbca.core.model.ca.catoken.ICAToken,org.ejbca.core.model.ca.catoken.BaseCAToken, org.ejbca.core.model.ca.catoken.NullCAToken, org.ejbca.core.model.ca.catoken.NullCATokenInfo " %>
+               org.ejbca.util.dn.DNFieldExtractor,org.ejbca.util.dn.DnComponents,org.ejbca.core.model.ca.catoken.ICAToken,org.ejbca.core.model.ca.catoken.BaseCAToken, org.ejbca.core.model.ca.catoken.NullCAToken, org.ejbca.core.model.ca.catoken.NullCATokenInfo, org.ejbca.ui.web.admin.cainterface.CAInfoView " %>
 
 <html>
 <jsp:useBean id="ejbcawebbean" scope="session" class="org.ejbca.ui.web.admin.configuration.EjbcaWebBean" />
@@ -627,12 +627,17 @@
          caname = request.getParameter(HIDDEN_CANAME);
          catype = Integer.parseInt(request.getParameter(HIDDEN_CATYPE));
          
-         CATokenInfo catoken = null;
          catokentype = Integer.parseInt(request.getParameter(HIDDEN_CATOKENTYPE));
+         // We need to pick up the old CATokenInfo, so we don't overwrite with default values when we save the CA further down
+         CAInfoView infoView = cadatahandler.getCAInfo(caid);  
+         CATokenInfo catoken = infoView.getCATokenInfo();
+         
          if(catokentype == CATokenInfo.CATOKENTYPE_P12){
            String authenticationcode = request.getParameter(TEXTFIELD_AUTHENTICATIONCODE);
            String autoactivate = request.getParameter(CHECKBOX_AUTHENTICATIONCODEAUTOACTIVATE);
-           catoken = new SoftCATokenInfo();          
+           if (catoken == null) {
+               catoken = new SoftCATokenInfo();                  	   
+           }
            catoken.setAuthenticationCode(authenticationcode);
            if ( (autoactivate != null) && (autoactivate.equals("true")) ) {
                // it is not possible to use empty autoactivation passwords for soft tokens
@@ -649,7 +654,9 @@
             String properties = request.getParameter(TEXTFIELD_HARDCATOKENPROPERTIES);
             if(catokenpath == null)
               throw new Exception("Error in CATokenData");  
-            catoken = new HardCATokenInfo();                       
+            if (catoken == null) {
+                catoken = new HardCATokenInfo();                       
+            }
             catoken.setProperties(properties);
          }
 
