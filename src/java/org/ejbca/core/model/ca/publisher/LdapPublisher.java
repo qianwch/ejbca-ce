@@ -659,6 +659,13 @@ public class LdapPublisher extends BasePublisher {
 				// try to read the old object
 				log.debug("Searching for old entry with DN '" + ldapdn+"'");				
 				oldEntry = lc.read(ldapdn);
+				if (log.isDebugEnabled()) {
+					if (oldEntry != null) {
+						log.debug("Found an old entry with DN '" + ldapdn+"'");
+					} else {
+						log.debug("Did not find an old entry with DN '" + ldapdn+"'");
+					}					
+				}
 			} catch (LDAPException e) {
 				if (e.getResultCode() == LDAPException.NO_SUCH_OBJECT) {
 					log.debug("No old entry exist for '" + ldapdn + "'.");
