@@ -639,12 +639,15 @@ public class OCSPServletStandAlone extends OCSPServletBase implements IHealtChec
                         while ( i.hasNext() )
                             ((PrivateKeyFactory)i.next()).clear();
                     }
-                    try {
-                        synchronized(this) {
-                            wait(1000);
+                    for (int i=0; i<5; i++) {
+                        try {
+                            synchronized(this) {
+                                wait(100);
+                            }
+                        } catch (InterruptedException e1) {
+                            throw new Error(e1);
                         }
-                    } catch (InterruptedException e1) {
-                        throw new Error(e1);
+                        System.runFinalization();
                     }
                     try {
                         addProvider();
