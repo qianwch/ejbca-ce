@@ -1,3 +1,13 @@
+3.6.3, 2008-10-06
+---
+Bug
+    * [ECA-952] - Entity Profile : the text "Use entity e-mail field" is not localizable
+    * [ECA-954] - TestProtectedLog fails if ProtectedLogDevice is not enabled in configuration
+    * [ECA-955] - PKCS11 support problem on OCSP responder
+    * [ECA-957] - ocspclient.jar cannot handle answers with responderID of type Name.
+    * [ECA-968] - Key length changes when editing CA in admin-GUI
+    * [ECA-970] - LdapPublisher searches for old objects on certDN instead of Ldap DN
+
 3.6.2, 2008-08-20
 ---
 
@@ -195,6 +205,22 @@ Bug
     * [ECA-746] - Not possible to renew CA that does not use default keystore pwd or autoaactivation.
     * [ECA-758] - Under some conditions it's not possible to edit rfc822name altname field for user in admin-gui
     * [ECA-766] - Error saving CRL Service on Weblogic 10
+
+3.5.9, 2008-10-06
+---
+Improvement
+    * [ECA-891] - Avoid unnecessary database searches during HealthCheck
+
+Bug
+    * [ECA-886] - Upgrade fails to set internal state of CA expire time for externally signed CAs
+    * [ECA-906] - EjbcaHealthCheck may use same session bean object for concurrent accesses
+    * [ECA-968] - Key length changes when editing CA in admin-GUI
+
+3.5.8, 2008-07-23
+---
+Improvement
+    * [ECA-845] - Attempt to revoke a certificate.user that is already revoked generates an error
+    * [ECA-847] - Option to Health Check to perform sign test on CA token
 
 3.5.7, 2008-06-29
 ---
