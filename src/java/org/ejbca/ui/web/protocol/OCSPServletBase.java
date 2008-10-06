@@ -872,7 +872,7 @@ abstract class OCSPServletBase extends HttpServlet {
                         m_log.info(errMsg);
                         // If we can not find the CA, answer UnknowStatus
                         responseList.add(new OCSPResponseItem(certId, new UnknownStatus()));
-						if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.CERT_STATUS, "3"); // 1= good 2 = revoked 3 = unknown
+						if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.CERT_STATUS, "2"); // 2 = unknown
 						if (transactionLogger != null) transactionLogger.writeln();
 						continue;
 
@@ -894,8 +894,7 @@ abstract class OCSPServletBase extends HttpServlet {
                         rci = null;
                     }
 					CertificateStatus certStatus = null; // null means good
-					if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.CERT_STATUS, "1"); // 3 = unknown
-					//if (account != null) account.paramPut(AuditLogger.CERT_STATUS, "1"); // 3 = unknown
+					if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.CERT_STATUS, "0"); // 0 = good
                     if (null == rci) {
                         rci = isRevoked(m_adm, cacert.getSubjectDN().getName(), certId.getSerialNumber());
                         if (null == rci) {
@@ -906,8 +905,7 @@ abstract class OCSPServletBase extends HttpServlet {
                             }
                             String status = "good";
                             certStatus = null; // null means "good" in OCSP
-							if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.CERT_STATUS, "1"); // 1= good 2 = revoked 3 = unknown
-							//if (account != null) account.paramPut(AuditLogger.CERT_STATUS, "1"); // 3 = unknown
+							if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.CERT_STATUS, "0"); // 0 = good
 							// If we do not treat non existing certificates as good 
                             // OR
                             // we don't actually handle requests for the CA issuing the certificate asked about
@@ -915,8 +913,7 @@ abstract class OCSPServletBase extends HttpServlet {
                             if ( (!m_nonExistingIsGood) || (OCSPUtil.findCAByHash(certId, m_cacerts) == null) ) {
                             	status = "unknown";
                             	certStatus = new UnknownStatus();
-								if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.CERT_STATUS, "3"); // 1= good 2 = revoked 3 = unknown
-								//if (account != null) account.paramPut(AccountLogger.CERT_STATUS, "3"); // 3 = unknown
+								if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.CERT_STATUS, "2"); // 2 = unknown
                             } 
                     		infoMsg = intres.getLocalizedMessage("ocsp.infoaddedstatusinfo", status, certId.getSerialNumber().toString(16), cacert.getSubjectDN().getName());
                             m_log.info(infoMsg);
@@ -929,33 +926,28 @@ abstract class OCSPServletBase extends HttpServlet {
                                 if (rci.getReason() != RevokedCertInfo.NOT_REVOKED) {
                                     certStatus = new RevokedStatus(new RevokedInfo(new DERGeneralizedTime(rci.getRevocationDate()),
                                             new CRLReason(rci.getReason())));
-									if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.CERT_STATUS, "2"); // 1= good 2 = revoked 3 = unknown
-									//if (account != null) account.paramPut(AuditLogger.CERT_STATUS, "2"); // 1= good 2 = revoked 3 = unknown
+									if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.CERT_STATUS, "1"); // 1 = revoked
                                 } else {
                                     certStatus = null;
-									if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.CERT_STATUS, "1"); // 1= good 2 = revoked 3 = unknown
-									//if (account != null) account.paramPut(AuditLogger.CERT_STATUS, "1"); // 1= good 2 = revoked 3 = unknown
+									if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.CERT_STATUS, "0"); // 0 = good
                                 }
                                 String status = "good";
-								if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.CERT_STATUS, "1"); // 1= good 2 = revoked 3 = unknown
-								//if (account != null) account.paramPut(AuditLogger.CERT_STATUS, "1"); // 1= good 2 = revoked 3 = unknown
+								if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.CERT_STATUS, "0"); // 0 = good
                                 if (certStatus != null) {
                                 	status ="revoked";
-									if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.CERT_STATUS, "2"); // 1= good 2 = revoked 3 = unknown
-									//if (account != null) account.paramPut(AuditLogger.CERT_STATUS, "2"); // 1= good 2 = revoked 3 = unknown
+									if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.CERT_STATUS, "1"); // 1= revoked
                                 }
                                 infoMsg = intres.getLocalizedMessage("ocsp.infoaddedstatusinfo", status, certId.getSerialNumber().toString(16), cacert.getSubjectDN().getName());
 
                                 m_log.info(infoMsg);
                                 responseList.add(new OCSPResponseItem(certId, certStatus));                        		
 								if (transactionLogger != null) transactionLogger.writeln();
-								//if (account != null) account.writeln();
                         	} else {
                         		m_log.error("ERROR: Certificate serialNumber ("+rciSerno.toString(16)+") in response from database does not match request ("
                         				+certId.getSerialNumber().toString(16)+").");
                         		infoMsg = intres.getLocalizedMessage("ocsp.infoaddedstatusinfo", "unknown", certId.getSerialNumber().toString(16), cacert.getSubjectDN().getName());
                                 m_log.info(infoMsg);
-								if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.CERT_STATUS, "3");
+								if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.CERT_STATUS, "2"); // 2 = unknown
 								if (transactionLogger != null) transactionLogger.writeln();
                                 responseList.add(new OCSPResponseItem(certId, new UnknownStatus()));                        		
                         	}
@@ -966,7 +958,7 @@ abstract class OCSPServletBase extends HttpServlet {
                 		infoMsg = intres.getLocalizedMessage("ocsp.infoaddedstatusinfo", "revoked", certId.getSerialNumber().toString(16), cacert.getSubjectDN().getName());
                         m_log.info(infoMsg);
                         responseList.add(new OCSPResponseItem(certId, certStatus));
-						if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.CERT_STATUS, "2"); // 1= good 2 = revoked 3 = unknown
+						if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.CERT_STATUS, "1"); // 1= revoked
 						if (transactionLogger != null) transactionLogger.writeln();
                     }
                     // Look for extension OIDs
