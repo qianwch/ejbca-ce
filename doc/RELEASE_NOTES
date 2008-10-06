@@ -1,3 +1,13 @@
+EJBCA 3.5.9
+-----------
+This is a minor release, targeted for fixing a few annoying bugs.
+- Upgrade fails to set internal state of CA expire time for externally signed CAs
+- Key length changes when editing CA in admin-GUI
+
+Read the changelog for details.
+
+This is a plug-in upgrade from 3.5.x. See UPGRADE for the simple instructions.
+
 EJBCA 3.5.8
 -----------
 This is a minor release, adding two minor improvements.

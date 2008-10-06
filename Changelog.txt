@@ -1,3 +1,13 @@
+3.5.9, 2008-10-06
+---
+Improvement
+    * [ECA-891] - Avoid unnecessary database searches during HealthCheck
+
+Bug
+    * [ECA-886] - Upgrade fails to set internal state of CA expire time for externally signed CAs
+    * [ECA-906] - EjbcaHealthCheck may use same session bean object for concurrent accesses
+    * [ECA-968] - Key length changes when editing CA in admin-GUI
+
 3.5.8, 2008-07-23
 ---
 Improvement
