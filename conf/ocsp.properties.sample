@@ -244,7 +244,7 @@ ocsp.defaultresponder=CN=AdminCA1,O=EJBCA Sample,C=SE
 # Default: false
 # ocsp.audit-log = true
 
-A pattern for use with ocsp.audit-order to replace constants with values during logging
+# A pattern for use with ocsp.audit-order to replace constants with values during logging
 # Default: \\$\\{(.+?)\\}
 # ocsp.audit-log-pattern = \\$\\{(.+?)\\}
 
