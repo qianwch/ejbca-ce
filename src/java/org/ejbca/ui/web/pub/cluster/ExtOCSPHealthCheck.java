@@ -73,7 +73,7 @@ public class ExtOCSPHealthCheck extends CommonHealthCheck {
 	
 	private String checkOCSPSignTokens(){
 		if ( healtChecker!=null ) {
-			return healtChecker.healtCheck();
+			return healtChecker.healthCheck();
 		} else {
 			return "No OCSP token health checker set";
 		}
