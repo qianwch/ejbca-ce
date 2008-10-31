@@ -283,27 +283,11 @@ public class OCSPUtil {
     	if (certs.length > 0) {
     		signer = CertTools.getSubjectDN(certs[0]);
     	}
-    	OCSPReq verifyReq = req;
-    	// We have a workaround to handle requests with wrong encoding of the signature, in the wild 
-    	// there are requests which have SHA1 (1.3.14.3.2.26) as signature algorithm instead of SHA1WithRSA
-    	if (StringUtils.equals(req.getSignatureAlgOID(), "1.3.14.3.2.26")) { 
-    		try {
-    			ASN1InputStream in = new ASN1InputStream(req.getTBSRequest());
-    			TBSRequest tbsReq;
-    			tbsReq = new TBSRequest((ASN1Sequence)in.readObject());
-    			DERBitString sigbits = new DERBitString(req.getSignature());
-    			AlgorithmIdentifier algId = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
-    			Signature signature = new Signature(algId, sigbits);
-    			verifyReq = new OCSPReq(new OCSPRequest(tbsReq, signature));
-    		} catch (IOException e1) {
-    			m_log.info("unable to convert request for SHA1 workaround: ", e1);
-    		}
-    	}
 
         // We must find a cert to verify the signature with...
     	boolean verifyOK = false;
     	for (int i = 0; i < certs.length; i++) {
-    		if (verifyReq.verify(certs[i].getPublicKey(), "BC") == true) {
+    		if (req.verify(certs[i].getPublicKey(), "BC") == true) {
     			signercert = certs[i];
         		signer = CertTools.getSubjectDN(signercert);
         		Date now = new Date();
