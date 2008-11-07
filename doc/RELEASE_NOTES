@@ -1,3 +1,14 @@
+EJBCA 3.7.3
+-----------
+This is a minor release mainly put out to fix building on Glassfish that broke in 3.7.2.
+- Fix on Glassfish that was broken in 3.7.2
+- Glassfish support for PostgreSQL
+- A couple of trivial fixes.
+
+Read the changelog for details.
+
+This is a plug-in upgrade from 3.7.x. See UPGRADE for the simple instructions.
+
 EJBCA 3.7.2
 -----------
 This is a minor release with focus on fixing making OCSP optimizations, introducing some minor features and fixing a few annoying bugs.
