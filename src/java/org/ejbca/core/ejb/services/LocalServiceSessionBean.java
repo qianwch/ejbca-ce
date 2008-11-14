@@ -120,6 +120,14 @@ import org.ejbca.core.model.services.ServiceExistsException;
  *   home="org.ejbca.core.ejb.services.IServiceTimerSessionLocalHome"
  *   business="org.ejbca.core.ejb.services.IServiceTimerSessionLocal"
  *   link="ServiceTimerSession"
+ *   
+ * @ejb.ejb-external-ref description="The Certificate store used to store and fetch certificates"
+ *   view-type="local"
+ *   ref-name="ejb/CertificateStoreSessionLocal"
+ *   type="Session"
+ *   home="org.ejbca.core.ejb.ca.store.ICertificateStoreSessionLocalHome"
+ *   business="org.ejbca.core.ejb.ca.store.ICertificateStoreSessionLocal"
+ *   link="CertificateStoreSession"
  *
  *  @jonas.bean ejb-name="ServiceSession"
  */

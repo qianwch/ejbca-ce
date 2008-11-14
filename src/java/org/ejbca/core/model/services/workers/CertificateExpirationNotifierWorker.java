@@ -23,14 +23,16 @@ import java.util.Iterator;
 
 import org.apache.log4j.Logger;
 import org.ejbca.core.ejb.JNDINames;
+import org.ejbca.core.ejb.ServiceLocator;
 import org.ejbca.core.ejb.ca.store.CertificateDataBean;
+import org.ejbca.core.ejb.ca.store.ICertificateStoreSessionLocal;
+import org.ejbca.core.ejb.ca.store.ICertificateStoreSessionLocalHome;
 import org.ejbca.core.model.InternalResources;
+import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.model.ra.UserDataVO;
 import org.ejbca.core.model.services.BaseWorker;
 import org.ejbca.core.model.services.ServiceExecutionFailedException;
 import org.ejbca.core.model.services.actions.MailActionInfo;
-import org.ejbca.util.Base64;
-import org.ejbca.util.CertTools;
 import org.ejbca.util.JDBCUtil;
 import org.ejbca.util.NotificationParamGen;
 
@@ -158,20 +160,26 @@ public class CertificateExpirationNotifierWorker extends BaseWorker {
 
 			try{		
 				con = JDBCUtil.getDBConnection(JNDINames.DATASOURCE);
-				ps = con.prepareStatement("SELECT DISTINCT fingerprint, base64Cert, username"
-						+ " FROM CertificateData WHERE ("
-						+ cASelectString + ") AND (" 
-						+ checkDate + ") AND (" 
-						+ statuses + ")");            
+				// We can not select the base64 certificate data here, because it may be a LONG datatype which we can't simply
+				String sql = "SELECT DISTINCT fingerprint, username"
+				+ " FROM CertificateData WHERE ("
+				+ cASelectString + ") AND (" 
+				+ checkDate + ") AND (" 
+				+ statuses + ")";
+				log.debug("Executing SQL: "+ sql);
+				ps = con.prepareStatement(sql);            
 				
 				result = ps.executeQuery();
-
+				 // Certificate store session bean for retrieving the certificate.
+				ICertificateStoreSessionLocalHome cs = (ICertificateStoreSessionLocalHome)ServiceLocator.getInstance().getLocalHome(ICertificateStoreSessionLocalHome.COMP_NAME);
+				ICertificateStoreSessionLocal cl = cs.create();
 				while(result.next()){
 					// For each certificate update status.
 					String fingerprint = result.getString(1);
-					String certBase64 = result.getString(2);
-					String username = result.getString(3);
-					X509Certificate cert = CertTools.getCertfromByteArray(Base64.decode(certBase64.getBytes()));					                  
+					String username = result.getString(2);
+					log.debug("Found one result for user "+username+", fingerprint="+fingerprint);
+					 // Get the certificate through a session bean
+					X509Certificate cert = (X509Certificate )cl.findCertificateByFingerprint(new Admin(Admin.TYPE_INTERNALUSER), fingerprint);
 					
 					UserDataVO userData = getUserAdminSession().findUser(getAdmin(), username);
 					if(userData != null){
@@ -221,6 +229,8 @@ public class CertificateExpirationNotifierWorker extends BaseWorker {
                 sendEmails(adminEmailQueue);
 			}	
 
+		} else {
+			log.debug("No CAs to check");
 		}
 		log.debug("<CertificateExpirationNotifierWorker.work ended");
 	}
