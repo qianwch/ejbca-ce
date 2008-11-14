@@ -1,3 +1,12 @@
+EJBCA 3.5.10
+-----------
+This is a minor release, only backorting a fix done in 3.6.
+- CertificateExpirationNotifier service not working on Weblogic-Oracle
+
+Read the changelog for details.
+
+This is a plug-in upgrade from 3.5.x. See UPGRADE for the simple instructions.
+
 EJBCA 3.5.9
 -----------
 This is a minor release, targeted for fixing a few annoying bugs.
