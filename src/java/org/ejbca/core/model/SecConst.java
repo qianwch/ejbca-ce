@@ -99,11 +99,12 @@ public class SecConst extends Object {
 	public static final int CERTPROFILE_FIXED_HARDTOKENAUTHENC= 6;
 	public static final int CERTPROFILE_FIXED_HARDTOKENENC    = 7;
 	public static final int CERTPROFILE_FIXED_HARDTOKENSIGN   = 8;
-    
+    public static final int CERTPROFILE_FIXED_SERVER          = 9;
+
     public static final int EMPTY_ENDENTITYPROFILE = 1;
 
     public static final int ALLCAS = 1;
-        
+
     /**
      * Constants defining range of id's reserved for fixed certificate types. Observe fixed
      * certificates cannot have value 0.
@@ -167,7 +168,8 @@ public class SecConst extends Object {
     			profileId == SecConst.CERTPROFILE_FIXED_HARDTOKENAUTHENC ||
     			profileId == SecConst.CERTPROFILE_FIXED_HARDTOKENENC ||
     			profileId == SecConst.CERTPROFILE_FIXED_HARDTOKENSIGN || 
-    			profileId == SecConst.CERTPROFILE_FIXED_OCSPSIGNER );
+    			profileId == SecConst.CERTPROFILE_FIXED_OCSPSIGNER ||
+    			profileId == SecConst.CERTPROFILE_FIXED_SERVER );
     }
 }
 

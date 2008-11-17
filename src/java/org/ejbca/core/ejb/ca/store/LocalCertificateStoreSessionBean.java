@@ -58,6 +58,7 @@ import org.ejbca.core.model.ca.certificateprofiles.HardTokenEncCertificateProfil
 import org.ejbca.core.model.ca.certificateprofiles.HardTokenSignCertificateProfile;
 import org.ejbca.core.model.ca.certificateprofiles.OCSPSignerCertificateProfile;
 import org.ejbca.core.model.ca.certificateprofiles.RootCACertificateProfile;
+import org.ejbca.core.model.ca.certificateprofiles.ServerCertificateProfile;
 import org.ejbca.core.model.ca.crl.RevokedCertInfo;
 import org.ejbca.core.model.ca.store.CRLInfo;
 import org.ejbca.core.model.ca.store.CertReqHistory;
@@ -1632,6 +1633,7 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
         if (certprofiletype == 0 || certprofiletype == CertificateDataBean.CERTTYPE_ENDENTITY || certprofiletype == CertificateDataBean.CERTTYPE_HARDTOKEN){
             returnval.add(new Integer(SecConst.CERTPROFILE_FIXED_ENDUSER));
             returnval.add(new Integer(SecConst.CERTPROFILE_FIXED_OCSPSIGNER));
+            returnval.add(new Integer(SecConst.CERTPROFILE_FIXED_SERVER));
         }
         if (certprofiletype == 0 || certprofiletype == CertificateDataBean.CERTTYPE_SUBCA)
             returnval.add(new Integer(SecConst.CERTPROFILE_FIXED_SUBCA));
@@ -1695,9 +1697,11 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
                 CACertificateProfile.CERTIFICATEPROFILENAME);
         returnval.put(new Integer(SecConst.CERTPROFILE_FIXED_ROOTCA),
                 RootCACertificateProfile.CERTIFICATEPROFILENAME);
-        
+
         returnval.put(new Integer(SecConst.CERTPROFILE_FIXED_OCSPSIGNER),
                 OCSPSignerCertificateProfile.CERTIFICATEPROFILENAME);
+        returnval.put(new Integer(SecConst.CERTPROFILE_FIXED_SERVER),
+                ServerCertificateProfile.CERTIFICATEPROFILENAME);
 
         returnval.put(new Integer(SecConst.CERTPROFILE_FIXED_HARDTOKENAUTH),
                 HardTokenAuthCertificateProfile.CERTIFICATEPROFILENAME);
@@ -1736,11 +1740,14 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
         if (certificateprofilename.equals(CACertificateProfile.CERTIFICATEPROFILENAME))
             return new CACertificateProfile();
 
-        if (certificateprofilename.equals(OCSPSignerCertificateProfile.CERTIFICATEPROFILENAME))
-            return new OCSPSignerCertificateProfile();
-        
         if (certificateprofilename.equals(RootCACertificateProfile.CERTIFICATEPROFILENAME))
             return new RootCACertificateProfile();
+
+        if (certificateprofilename.equals(OCSPSignerCertificateProfile.CERTIFICATEPROFILENAME))
+            return new OCSPSignerCertificateProfile();
+
+        if (certificateprofilename.equals(ServerCertificateProfile.CERTIFICATEPROFILENAME))
+            return new ServerCertificateProfile();
 
         if (certificateprofilename.equals(HardTokenAuthCertificateProfile.CERTIFICATEPROFILENAME))
             return new HardTokenAuthCertificateProfile();
@@ -1782,6 +1789,12 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
                     break;
                 case SecConst.CERTPROFILE_FIXED_ROOTCA:
                     returnval = new RootCACertificateProfile();
+                    break;
+                case SecConst.CERTPROFILE_FIXED_OCSPSIGNER:
+                    returnval = new OCSPSignerCertificateProfile();
+                    break;
+                case SecConst.CERTPROFILE_FIXED_SERVER:
+                    returnval = new ServerCertificateProfile();
                     break;
                 case SecConst.CERTPROFILE_FIXED_HARDTOKENAUTH:
                     returnval = new HardTokenAuthCertificateProfile();
@@ -1829,6 +1842,12 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
         if (certificateprofilename.equals(RootCACertificateProfile.CERTIFICATEPROFILENAME))
             return SecConst.CERTPROFILE_FIXED_ROOTCA;
 
+        if (certificateprofilename.equals(OCSPSignerCertificateProfile.CERTIFICATEPROFILENAME))
+            return SecConst.CERTPROFILE_FIXED_OCSPSIGNER;
+
+        if (certificateprofilename.equals(ServerCertificateProfile.CERTIFICATEPROFILENAME))
+            return SecConst.CERTPROFILE_FIXED_SERVER;
+
         if (certificateprofilename.equals(HardTokenAuthCertificateProfile.CERTIFICATEPROFILENAME))
             return SecConst.CERTPROFILE_FIXED_HARDTOKENAUTH;
 
@@ -1875,6 +1894,9 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
                     break;
                 case SecConst.CERTPROFILE_FIXED_OCSPSIGNER:
                     returnval = OCSPSignerCertificateProfile.CERTIFICATEPROFILENAME;
+                    break;
+                case SecConst.CERTPROFILE_FIXED_SERVER:
+                    returnval = ServerCertificateProfile.CERTIFICATEPROFILENAME;
                     break;
                 case SecConst.CERTPROFILE_FIXED_HARDTOKENAUTH:
                     returnval = HardTokenAuthCertificateProfile.CERTIFICATEPROFILENAME;
@@ -1999,6 +2021,12 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
             return true;
 
         if (certificateprofilename.equals(RootCACertificateProfile.CERTIFICATEPROFILENAME))
+            return true;
+
+        if (certificateprofilename.equals(OCSPSignerCertificateProfile.CERTIFICATEPROFILENAME))
+            return true;
+
+        if (certificateprofilename.equals(ServerCertificateProfile.CERTIFICATEPROFILENAME))
             return true;
 
         return returnval;
