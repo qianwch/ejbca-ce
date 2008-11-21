@@ -230,6 +230,13 @@ public class CertTools {
      */
     private static final boolean developmentProviderInstallation = BooleanUtils.toBoolean("@development.provider.installation@");
     
+	public static final String BEGIN_CERTIFICATE_REQUEST  = "-----BEGIN CERTIFICATE REQUEST-----";
+	public static final String END_CERTIFICATE_REQUEST     = "-----END CERTIFICATE REQUEST-----";
+	public static final String BEGIN_KEYTOOL_CERTIFICATE_REQUEST  = "-----BEGIN NEW CERTIFICATE REQUEST-----";
+	public static final String END_KEYTOOL_CERTIFICATE_REQUEST  = "-----END NEW CERTIFICATE REQUEST-----";
+	public static final String BEGIN_CERTIFICATE                = "-----BEGIN CERTIFICATE-----";
+	public static final String END_CERTIFICATE                    = "-----END CERTIFICATE-----";
+    
     /**
      * inhibits creation of new CertTools
      */
@@ -1006,8 +1013,6 @@ public class CertTools {
     throws IOException, CertificateException {
         log.debug(">getCertfromPEM:");
         ArrayList ret = new ArrayList();
-        String beginKey = "-----BEGIN CERTIFICATE-----";
-        String endKey = "-----END CERTIFICATE-----";
         String beginKeyTrust = "-----BEGIN TRUSTED CERTIFICATE-----";
         String endKeyTrust = "-----END TRUSTED CERTIFICATE-----";
         BufferedReader bufRdr = null;
@@ -1020,12 +1025,12 @@ public class CertTools {
 				opstr = new PrintStream(ostr);
 				String temp;
 				while ((temp = bufRdr.readLine()) != null
-						&& !(temp.equals(beginKey) || temp.equals(beginKeyTrust)))
+						&& !(temp.equals(CertTools.BEGIN_CERTIFICATE) || temp.equals(beginKeyTrust)))
 					continue;
 				if (temp == null) {
 					if (ret.size() == 0) {
 						// There was no certificate in the file
-						throw new IOException("Error in " + certstream.toString() + ", missing " + beginKey + " boundary");											
+						throw new IOException("Error in " + certstream.toString() + ", missing " + CertTools.BEGIN_CERTIFICATE + " boundary");											
 					} else {
 						// There were certificates, but some blank lines or something in the end
 						// anyhow, the file has ended so we can break here.
@@ -1033,11 +1038,11 @@ public class CertTools {
 					}
 				}
 				while ((temp = bufRdr.readLine()) != null
-						&& !(temp.equals(endKey) || temp.equals(endKeyTrust)))
+						&& !(temp.equals(CertTools.END_CERTIFICATE) || temp.equals(endKeyTrust)))
 					opstr.print(temp);
 				if (temp == null)
 					throw new IOException("Error in " + certstream.toString()
-							+ ", missing " + endKey + " boundary");
+							+ ", missing " + CertTools.END_CERTIFICATE + " boundary");
 				opstr.close();
 
 				byte[] certbuf = Base64.decode(ostr.toByteArray());
@@ -1092,8 +1097,6 @@ public class CertTools {
      */
     public static byte[] getPEMFromCerts(Collection certs)
     throws CertificateException {
-        String beginKey = "-----BEGIN CERTIFICATE-----";
-        String endKey = "-----END CERTIFICATE-----";
         ByteArrayOutputStream ostr = new ByteArrayOutputStream();
         PrintStream opstr = new PrintStream(ostr);
         Iterator iter = certs.iterator();
@@ -1102,9 +1105,9 @@ public class CertTools {
             byte[] certbuf = Base64.encode(cert.getEncoded());
             opstr.println("Subject: "+CertTools.getSubjectDN(cert));
             opstr.println("Issuer: "+CertTools.getIssuerDN(cert));
-            opstr.println(beginKey);
+            opstr.println(CertTools.BEGIN_CERTIFICATE);
             opstr.println(new String(certbuf));
-            opstr.println(endKey);
+            opstr.println(CertTools.END_CERTIFICATE);
         }
         opstr.close();
         byte[] ret = ostr.toByteArray();
