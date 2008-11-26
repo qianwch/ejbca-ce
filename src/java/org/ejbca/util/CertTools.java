@@ -880,8 +880,16 @@ public class CertTools {
         }
         return null;
     }
+
     public static CertificateFactory getCertificateFactory() {
+    	installBCProviderIfNotAvailable();
     	return getCertificateFactory("BC");
+    }
+    
+    public static synchronized void installBCProviderIfNotAvailable() {
+    	if (Security.getProvider("BC") == null) {
+    		installBCProvider();
+    	}
     }
 
     public static synchronized void removeBCProvider() {
