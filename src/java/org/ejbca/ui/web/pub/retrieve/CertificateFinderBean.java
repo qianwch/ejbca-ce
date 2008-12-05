@@ -16,7 +16,6 @@ package org.ejbca.ui.web.pub.retrieve;
 import java.math.BigInteger;
 import java.rmi.RemoteException;
 import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -220,7 +219,7 @@ public class CertificateFinderBean {
 		if (certificates != null) {
 			Iterator i = certificates.iterator();
 			while (i.hasNext()) {
-				X509Certificate cert = (X509Certificate)i.next();
+				Certificate cert = (Certificate)i.next();
 				// TODO: CertificateView is located in web.admin package, but this is web.pub package...
 				CertificateView view = new CertificateView(cert,null,null);
 				result.add(view);
