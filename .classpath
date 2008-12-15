@@ -35,7 +35,7 @@
 	<classpathentry kind="lib" path="lib/commons-logging.jar"/>
 	<classpathentry kind="lib" path="lib/quickserver/QuickServer.jar"/>
 	<classpathentry kind="lib" path="lib/quickserver/commons-pool.jar"/>
-	<classpathentry kind="lib" path="lib/bcprov-jdk15.jar"/>
+	<classpathentry kind="lib" path="lib/bcprov-jdk15.jar" sourcepath="/home/tomas/Dev/bcprov-jdk15-141"/>
 	<classpathentry kind="lib" path="lib/bcmail-jdk15.jar"/>
 	<classpathentry kind="lib" path="lib/bctsp-jdk15.jar"/>
 	<classpathentry kind="lib" path="lib/cert-cvc.jar"/>
