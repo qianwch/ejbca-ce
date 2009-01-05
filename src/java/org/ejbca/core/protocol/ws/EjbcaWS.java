@@ -140,7 +140,6 @@ import org.ejbca.cvc.exception.ConstructionException;
 import org.ejbca.cvc.exception.ParseException;
 import org.ejbca.util.Base64;
 import org.ejbca.util.CertTools;
-import org.ejbca.util.StringTools;
 import org.ejbca.util.keystore.KeyTools;
 import org.ejbca.util.passgen.PasswordGeneratorFactory;
 import org.ejbca.util.query.IllegalQueryException;
@@ -404,8 +403,7 @@ public class EjbcaWS implements IEjbcaWS {
 	 * @see org.ejbca.core.protocol.ws.common.IEjbcaWS#cvcRequest
 	 */
 	public List<Certificate> cvcRequest(String username, String password, String cvcreq)
-			throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, NotFoundException,
-			EjbcaException, ApprovalException, WaitingForApprovalException, SignRequestException {
+			throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, NotFoundException, EjbcaException, ApprovalException, WaitingForApprovalException, SignRequestException, CertificateExpiredException {
 		log.debug(">cvcRequest");
 		EjbcaWSHelper ejbhelper = new EjbcaWSHelper();
 		Admin admin = ejbhelper.getAdmin(wsContext);
@@ -498,6 +496,14 @@ public class EjbcaWS implements IEjbcaWS {
 								} catch (InvalidKeyException e) {
 									String msg = intres.getLocalizedMessage("cvc.error.outersignature", holderRef.getConcatenated(), e.getMessage());            	
 									log.warn(msg, e);
+								} catch (CertificateExpiredException e) { // thrown by checkValidityAndSetUserPassword
+									String msg = intres.getLocalizedMessage("cvc.error.outersignature", holderRef.getConcatenated(), e.getMessage());            	
+									// Only log this with DEBUG since it will be a common case that happens, nothing that should cause any alerts
+									log.debug(msg);
+									// This exception we want to throw on, because we want to give this error if there was a certificate suitable for
+									// verification, but it had expired. This is thrown by checkValidityAndSetUserPassword after the request has already been 
+									// verified using the public key of the certificate.
+									throw e;
 								} catch (CertificateException e) {
 									String msg = intres.getLocalizedMessage("cvc.error.outersignature", holderRef.getConcatenated(), e.getMessage());            	
 									log.warn(msg, e);
@@ -514,11 +520,12 @@ public class EjbcaWS implements IEjbcaWS {
 										log.debug(msg);									
 									}
 								}
-							}
-							// if verification failed because the old cert was not valid, continue processing as usual, using the sent in username/password hoping the
-							// status is NEW and password is correct.
+							} // while (iterator.hasNext()) {
+							// if verification failed because the old cert was not yet valid, continue processing as usual, using the sent in username/password hoping the
+							// status is NEW and password is correct. If old certificate was expired a CertificateExpiredException is thrown above.
 
-						}
+						} // if (certs != null) {
+						
 						// If there are no old certificate, continue processing as usual, using the sent in username/password hoping the
 						// status is NEW and password is correct.
 					} else { // if (StringUtils.equals(holderRef, caRef))
@@ -634,7 +641,8 @@ public class EjbcaWS implements IEjbcaWS {
 		}		
 	}
 
-	private boolean checkValidityAndSetUserPassword(Admin admin, EjbcaWSHelper ejbhelper, java.security.cert.Certificate cert, String username, String password) throws RemoteException, ServiceLocatorException, UserDoesntFullfillEndEntityProfile, AuthorizationDeniedException, FinderException, CreateException, ApprovalException, WaitingForApprovalException {
+	private boolean checkValidityAndSetUserPassword(Admin admin, EjbcaWSHelper ejbhelper, java.security.cert.Certificate cert, String username, String password) 
+	throws RemoteException, ServiceLocatorException, CertificateNotYetValidException, CertificateExpiredException, UserDoesntFullfillEndEntityProfile, AuthorizationDeniedException, FinderException, CreateException, ApprovalException, WaitingForApprovalException {
 		boolean ret = false;
 		try {
 			// Check validity of the certificate after verifying the signature
@@ -650,8 +658,10 @@ public class EjbcaWS implements IEjbcaWS {
 		} catch (CertificateNotYetValidException e) {
 			// If verification of outer signature fails because the old certificate is not valid, we don't really care, continue as if it was an initial request  
 			log.debug("Certificate we try to verify outer signature with is not yet valid");
+			throw e;
 		} catch (CertificateExpiredException e) {									
 			log.debug("Certificate we try to verify outer signature with has expired");
+			throw e;
 		}
 		return ret;
 	}

@@ -322,13 +322,14 @@ public interface EjbcaWS {
      * @param arg0
      * @return
      *     returns java.util.List<org.ejbca.core.protocol.ws.client.gen.Certificate>
-     * @throws UserDoesntFullfillEndEntityProfile_Exception
-     * @throws NotFoundException_Exception
-     * @throws WaitingForApprovalException_Exception
      * @throws EjbcaException_Exception
+     * @throws CertificateExpiredException_Exception
      * @throws AuthorizationDeniedException_Exception
-     * @throws ApprovalException_Exception
+     * @throws UserDoesntFullfillEndEntityProfile_Exception
      * @throws SignRequestException_Exception
+     * @throws WaitingForApprovalException_Exception
+     * @throws ApprovalException_Exception
+     * @throws NotFoundException_Exception
      */
     @WebMethod
     @WebResult(targetNamespace = "")
@@ -341,7 +342,7 @@ public interface EjbcaWS {
         String arg1,
         @WebParam(name = "arg2", targetNamespace = "")
         String arg2)
-        throws ApprovalException_Exception, AuthorizationDeniedException_Exception, EjbcaException_Exception, NotFoundException_Exception, SignRequestException_Exception, UserDoesntFullfillEndEntityProfile_Exception, WaitingForApprovalException_Exception
+        throws ApprovalException_Exception, AuthorizationDeniedException_Exception, CertificateExpiredException_Exception, EjbcaException_Exception, NotFoundException_Exception, SignRequestException_Exception, UserDoesntFullfillEndEntityProfile_Exception, WaitingForApprovalException_Exception
     ;
 
     /**

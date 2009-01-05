@@ -13,6 +13,7 @@
 package org.ejbca.core.protocol.ws.common;
 
 import java.rmi.RemoteException;
+import java.security.cert.CertificateExpiredException;
 import java.util.List;
 
 import org.ejbca.core.EjbcaException;
@@ -215,8 +216,7 @@ public interface IEjbcaWS {
 	 * @throws SignRequestException if the provided request is invalid, for example not containing a username or password 
 	 */
 	public List<Certificate> cvcRequest(String username, String password, String cvcreq)
-	throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, NotFoundException,
-	EjbcaException, ApprovalException, WaitingForApprovalException, SignRequestException;
+	throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, NotFoundException, EjbcaException, ApprovalException, WaitingForApprovalException, SignRequestException, CertificateExpiredException;
 	
 	/**
 	 * Method to use to generate a certificate for a user. The method must be preceded by
