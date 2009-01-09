@@ -413,6 +413,7 @@ public class EjbcaWS implements IEjbcaWS {
 		if (StringUtils.isEmpty(password)) {
 			AllPrintableCharPasswordGenerator gen = new AllPrintableCharPasswordGenerator();
 			password = gen.getNewPassword(15, 20);
+			log.debug("Using a long random password");
 		}
 		// get and old status that we can remember so we can reset status if this fails in the last step
 		int olduserStatus = UserDataConstants.STATUS_GENERATED;
