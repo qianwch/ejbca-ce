@@ -14,11 +14,11 @@
 package org.ejbca.core.protocol.cmp;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.rmi.RemoteException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.util.Properties;
 
 import javax.ejb.CreateException;
 import javax.ejb.DuplicateKeyException;
@@ -250,7 +250,13 @@ public class CrmfMessageHandler implements ICmpMessageHandler {
 					PKIHeader head = crmfreq.getHeader();
 					DEROctetString os = head.getSenderKID();
 					if (os != null) {
-						String keyId = new String(os.getOctets());
+						String keyId;
+						try {
+							keyId = new String(os.getOctets(), "UTF-8");
+						} catch (UnsupportedEncodingException e2) {
+							keyId = new String(os.getOctets());
+							log.info("UTF-8 not available, using platform default encoding for keyId.");
+						}
 						log.debug("Found a sender keyId: "+keyId);
 						if (keyId == null) {
 							log.error("No KeyId contained in CMP request.");
