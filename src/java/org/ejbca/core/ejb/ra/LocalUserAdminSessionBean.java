@@ -24,8 +24,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
-
 import java.util.Map;
+
 import javax.ejb.CreateException;
 import javax.ejb.DuplicateKeyException;
 import javax.ejb.EJBException;
@@ -2176,7 +2176,7 @@ throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, Approva
                         msg.setRecipients(javax.mail.Message.RecipientType.TO, InternetAddress.parse(rcptemail, false));
                         /* Note - substitution already happening in TemplateMimeMessage() */ 
                         msg.setSubject(not.getNotificationSubject());
-                        msg.setContent(not.getNotificationMessage(), "text/plain;charset=ISO-8859-1");
+                        msg.setContent(not.getNotificationMessage(), WebConfiguration.getMailMimeType());
                         
                         msg.setHeader("X-Mailer", "JavaMailer");
                         msg.setSentDate(new Date());

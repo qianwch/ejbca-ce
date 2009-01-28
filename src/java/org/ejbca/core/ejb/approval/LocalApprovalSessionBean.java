@@ -38,6 +38,7 @@ import javax.mail.internet.InternetAddress;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.ejbca.config.WebConfiguration;
 import org.ejbca.core.ErrorCode;
 import org.ejbca.core.ejb.BaseSessionBean;
 import org.ejbca.core.ejb.JNDINames;
@@ -1021,7 +1022,7 @@ public class LocalApprovalSessionBean extends BaseSessionBean {
             	  msg.addRecipients(javax.mail.Message.RecipientType.TO, InternetAddress.parse(requestAdminEmail, false));
               }
               msg.setSubject(notificationSubject);
-              msg.setContent(notificationMsg, "text/plain");
+              msg.setContent(notificationMsg, WebConfiguration.getMailMimeType());
               msg.setHeader("X-Mailer", "JavaMailer");
               msg.setSentDate(new Date());
               Transport.send(msg);
