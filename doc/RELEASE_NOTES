@@ -1,3 +1,13 @@
+EJBCA 3.5.11
+-----------
+This is a minor release, fixing two minor issues with webservice calls used by HardTokenMgmt.
+- Change genTokenCertificates WS call behavior to not temporary revoke certificates for MS logon
+- Fix error in EJBCAWS.genTokenCertificate temporary cards aren't revoked properly
+
+Read the changelog for details.
+
+This is a plug-in upgrade from 3.5.x. See UPGRADE for the simple instructions.
+
 EJBCA 3.5.10
 -----------
 This is a minor release, only backorting a fix done in 3.6.
