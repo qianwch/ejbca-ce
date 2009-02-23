@@ -102,6 +102,10 @@ import org.ejbca.util.CertTools;
  * signature="Collection findByUsername(java.lang.String username)"
  * query="SELECT OBJECT(a) from CertificateDataBean a WHERE  a.username=?1"
  *
+ * @ejb.finder description="findByUsernameAndStatus"
+ * signature="Collection findByUsernameAndStatus(java.lang.String username, int status)"
+ * query="SELECT OBJECT(a) from CertificateDataBean a WHERE a.username=?1 AND a.status=?2"
+ * 
  * @jonas.jdbc-mapping
  *   jndi-name="${datasource.jndi-name}"
  */

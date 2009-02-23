@@ -19,11 +19,14 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Resource;
 import javax.ejb.CreateException;
+import javax.ejb.DuplicateKeyException;
 import javax.ejb.EJBException;
 import javax.ejb.FinderException;
 import javax.ejb.ObjectNotFoundException;
@@ -48,6 +51,7 @@ import org.ejbca.core.ejb.ca.publisher.IPublisherSessionLocal;
 import org.ejbca.core.ejb.ca.publisher.IPublisherSessionLocalHome;
 import org.ejbca.core.ejb.ca.sign.ISignSessionLocal;
 import org.ejbca.core.ejb.ca.sign.ISignSessionLocalHome;
+import org.ejbca.core.ejb.ca.store.CertificateDataBean;
 import org.ejbca.core.ejb.ca.store.ICertificateStoreSessionLocal;
 import org.ejbca.core.ejb.ca.store.ICertificateStoreSessionLocalHome;
 import org.ejbca.core.ejb.hardtoken.IHardTokenSessionLocal;
@@ -164,6 +168,9 @@ public class EjbcaWS implements IEjbcaWS {
 			throw new EjbcaException(e.getMessage());
 		} catch (AuthorizationDeniedException e) {
 			throw e;
+		} catch (DuplicateKeyException e) {
+			log.info("EJBCA WebService edituser failed. User already exists. ", e);
+			throw new EjbcaException(e.getMessage());
 		} catch (CreateException e) {
 	    	log.error("EJBCA WebService error, editUser : ", e);
 			throw new EjbcaException(e.getMessage());
@@ -221,29 +228,17 @@ public class EjbcaWS implements IEjbcaWS {
 	
 	public List<Certificate> findCerts(String username, boolean onlyValid)
 			throws  AuthorizationDeniedException, NotFoundException, EjbcaException {
-		
 		List<Certificate> retval = null;
 		try{
 			Admin admin = getAdmin();
 			getUserAdminSession().findUser(admin,username);
-			
-			Collection certs = getCertStoreSession().findCertificatesByUsername(admin,username);
-			
-			if(onlyValid){
-				certs = returnOnlyValidCertificates(admin,certs); 
+			Collection<java.security.cert.Certificate> certs;
+			if (onlyValid) {
+				certs = getCertStoreSession().findCertificatesByUsernameAndStatus(admin, username, CertificateDataBean.CERT_ACTIVE);
+			} else {
+				certs = getCertStoreSession().findCertificatesByUsername(admin, username);
 			}
-			
-			certs = returnOnlyAuthorizedCertificates(admin,certs);
-			
-			if(certs.size() > 0){
-			  retval = new ArrayList<Certificate>();
-			  Iterator iter = certs.iterator();
-			  for(int i=0; i < certs.size(); i++){				  					
-				  retval.add(new Certificate((java.security.cert.Certificate) iter.next()));
-			  }
-			}
-		}catch(AuthorizationDeniedException e){
-			throw e;
+			retval = returnAuthorizedCertificates(admin, certs, onlyValid);
 		} catch (ClassCastException e) {
 		    log.error("EJBCA WebService error, findCerts : ",e);
 		    throw new EjbcaException(e.getMessage());
@@ -255,10 +250,10 @@ public class EjbcaWS implements IEjbcaWS {
 		    throw new EjbcaException(e.getMessage());
 		} catch (FinderException e) {
 			throw new NotFoundException(e.getMessage());
-		} catch (CertificateEncodingException e) {
+		} catch (EJBException e) {
 			log.error("EJBCA WebService error, findCerts : ",e);
 		    throw new EjbcaException(e.getMessage());
-		}
+		} 
 		return retval;
 	}
 
@@ -1753,27 +1748,44 @@ public class EjbcaWS implements IEjbcaWS {
        return retval;
 	}
 	
-	private Collection returnOnlyAuthorizedCertificates(Admin admin, Collection certs) {
-		ArrayList<X509Certificate> retval = new ArrayList<X509Certificate>();
-		
-		Iterator iter = certs.iterator();
+	/**
+	 * Checks authorization for each certificate and optionally check that it's valid. Does not check revocation status. 
+	 * @param admin is the admin used for authorization
+	 * @param certs is the collection of certs to verify
+	 * @param validate set to true to perform validation of each certificate
+	 * @return a List of valid and authorized certificates
+	 */
+	protected List<Certificate> returnAuthorizedCertificates(Admin admin, Collection<java.security.cert.Certificate> certs, boolean validate) {
+		List<Certificate> retval = new ArrayList<Certificate>();
+		Iterator<java.security.cert.Certificate> iter = certs.iterator();
+		Map<Integer, Boolean> authorizationCache = new HashMap<Integer, Boolean>(); 
 		while(iter.hasNext()){
-			X509Certificate next = (X509Certificate) iter.next();
-			
-			try{
-				// check that admin is autorized to CA
-				int caid = CertTools.stringToBCDNString(next.getIssuerDN().toString()).hashCode();		
-				getAuthorizationSession().isAuthorizedNoLog(admin,AvailableAccessRules.CAPREFIX +caid);
-				retval.add(next);
-			}catch(AuthorizationDeniedException ade){
-				log.debug("findCerts : not authorized to certificate " + next.getSerialNumber().toString(16));
+			java.security.cert.Certificate next = iter.next();
+			try {
+				if (validate) {
+					// Check validity
+					((X509Certificate) next).checkValidity(new Date());
+				}
+				// Check authorization
+				int caid = CertTools.stringToBCDNString(((X509Certificate) next).getIssuerDN().toString()).hashCode();
+				Boolean authorized = authorizationCache.get(caid);
+				if (authorized == null) {
+					authorized = getAuthorizationSession().isAuthorizedNoLog(admin,AvailableAccessRules.CAPREFIX +caid);
+					authorizationCache.put(caid, authorized);
+				}
+				if (authorized) {
+					retval.add(new Certificate((java.security.cert.Certificate) next));
+				}
+			} catch (CertificateExpiredException e) {		// Drop invalid cert
+			} catch (CertificateNotYetValidException e) {   // Drop invalid cert
+			} catch (CertificateEncodingException e) {		// Drop invalid cert
+				log.error("A defect certificate was detected.");
+			} catch (AuthorizationDeniedException e) {		// Drop unauthorized cert
 			}
 		}
-		
 		return retval;
 	}
-	
-	
+
 	private final String[] softtokennames = {UserDataVOWS.TOKEN_TYPE_USERGENERATED,UserDataVOWS.TOKEN_TYPE_P12,
 			                                 UserDataVOWS.TOKEN_TYPE_JKS,UserDataVOWS.TOKEN_TYPE_PEM};
 	private final int[] softtokenids = {SecConst.TOKEN_SOFT_BROWSERGEN,
