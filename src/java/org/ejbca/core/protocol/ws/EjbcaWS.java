@@ -1754,8 +1754,11 @@ public class EjbcaWS implements IEjbcaWS {
 	 * @param certs is the collection of certs to verify
 	 * @param validate set to true to perform validation of each certificate
 	 * @return a List of valid and authorized certificates
+	 * @throws NamingException 
+	 * @throws CreateException 
+	 * @throws ClassCastException 
 	 */
-	protected List<Certificate> returnAuthorizedCertificates(Admin admin, Collection<java.security.cert.Certificate> certs, boolean validate) {
+	protected List<Certificate> returnAuthorizedCertificates(Admin admin, Collection<java.security.cert.Certificate> certs, boolean validate) throws ClassCastException, CreateException, NamingException {
 		List<Certificate> retval = new ArrayList<Certificate>();
 		Iterator<java.security.cert.Certificate> iter = certs.iterator();
 		Map<Integer, Boolean> authorizationCache = new HashMap<Integer, Boolean>(); 
@@ -1765,6 +1768,7 @@ public class EjbcaWS implements IEjbcaWS {
 				if (validate) {
 					// Check validity
 					((X509Certificate) next).checkValidity(new Date());
+					getCertStoreSession().verifyProtection(admin, ((X509Certificate) next).getIssuerDN().toString(), ((X509Certificate) next).getSerialNumber());
 				}
 				// Check authorization
 				int caid = CertTools.stringToBCDNString(((X509Certificate) next).getIssuerDN().toString()).hashCode();
