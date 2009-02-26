@@ -979,7 +979,9 @@ public class EndEntityProfile extends UpgradeableDataHashMap implements java.io.
     		  }
     		  long relative = (Long.parseLong(endTimeArray[0])*24*60 + Long.parseLong(endTimeArray[1])*60 +
     				  Long.parseLong(endTimeArray[2])) * 60 * 1000;
-    		  endTimeDate = new Date(startTimeDate.getTime() + relative);
+    		  // If we haven't set a startTime, use "now"
+    		  Date start = (startTimeDate == null) ? new Date(): startTimeDate;
+    		  endTimeDate = new Date(start.getTime() + relative);
     	  } else {
     		  try {
     			  endTimeDate = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT, Locale.US).parse(endTime);

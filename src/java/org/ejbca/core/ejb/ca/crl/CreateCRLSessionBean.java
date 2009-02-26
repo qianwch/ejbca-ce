@@ -19,6 +19,7 @@ import java.util.Iterator;
 
 import javax.ejb.CreateException;
 import javax.ejb.EJBException;
+import javax.ejb.FinderException;
 
 import org.ejbca.core.ejb.BaseSessionBean;
 import org.ejbca.core.ejb.ca.caadmin.ICAAdminSessionLocal;
@@ -166,7 +167,7 @@ public class CreateCRLSessionBean extends BaseSessionBean {
    
 	/**
 	 * Generates a new CRL by looking in the database for revoked certificates and generating a
-	 * CRL.
+	 * CRL. This method also "archives" certificates when after they are no longer neeeded in the CRL. 
 	 *
 	 * @param admin administrator performing the task
 	 * @param issuerdn of the ca (normalized for EJBCA)
@@ -204,9 +205,7 @@ public class CreateCRLSessionBean extends BaseSessionBean {
                     // so the revoked certs are included in ONE CRL at least.
                     if ( data.getExpireDate().before(now) ) {
                     	// Certificate has expired, set status to archived in the database 
-                    	CertificateDataPK pk = new CertificateDataPK(data.getCertificateFingerprint());
-                    	CertificateDataLocal certdata = certHome.findByPrimaryKey(pk);
-                    	certdata.setStatus(CertificateDataBean.CERT_ARCHIVED);
+            			setArchivedStatus(data.getCertificateFingerprint());
                     } else {
                         if (revDate == null) {
                             data.setRevocationDate(new Date());
@@ -245,6 +244,20 @@ public class CreateCRLSessionBean extends BaseSessionBean {
         debug("<run()");
     }
 
+	/**
+	 * This method sets the "archived" certificates status. Normally this is done by the CRL-creation process.
+	 * This is also used from the createLotsOfCertsPerUser test.
+	 *
+	 * @param certificateFingerprint is the fingerprint of the certifiate
+	 * @throws FinderException is thrown when no such certificate exists
+	 *
+     * @ejb.interface-method
+	 */
+    public void setArchivedStatus(String certificateFingerprint) throws FinderException {
+		CertificateDataPK pk = new CertificateDataPK(certificateFingerprint);
+		CertificateDataLocal certdata = certHome.findByPrimaryKey(pk);
+		certdata.setStatus(CertificateDataBean.CERT_ARCHIVED);
+    }
 
     /**
      * Method that checks if there are any CRLs needed to be updated and then creates their
