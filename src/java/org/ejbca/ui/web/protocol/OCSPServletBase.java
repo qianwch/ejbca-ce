@@ -20,6 +20,9 @@ import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.net.URLDecoder;
 import java.security.InvalidKeyException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -42,6 +45,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.DERGeneralizedTime;
 import org.bouncycastle.asn1.DERObjectIdentifier;
+import org.bouncycastle.asn1.ocsp.OCSPObjectIdentifiers;
 import org.bouncycastle.asn1.ocsp.RevokedInfo;
 import org.bouncycastle.asn1.x509.CRLReason;
 import org.bouncycastle.asn1.x509.X509Extension;
@@ -55,6 +59,7 @@ import org.bouncycastle.ocsp.OCSPResp;
 import org.bouncycastle.ocsp.OCSPRespGenerator;
 import org.bouncycastle.ocsp.Req;
 import org.bouncycastle.ocsp.RevokedStatus;
+import org.bouncycastle.ocsp.SingleResp;
 import org.bouncycastle.ocsp.UnknownStatus;
 import org.bouncycastle.util.encoders.Hex;
 import org.ejbca.core.model.InternalResources;
@@ -189,6 +194,14 @@ import org.ejbca.util.GUIDGenerator;
  *   name="transactionLogOrder"
  *   value="${ocsp.trx-log-order}"
  *   
+ *  @web.servlet-init-param description="The default number of seconds a request is valid or 0 to disable."
+ *   name="untilNextUpdate"
+ *   value="${ocsp.untilNextUpdate}"
+ *   
+ *  @web.servlet-init-param description="The default number of seconds a HTTP-response should be cached."
+ *   name="maxAge"
+ *   value="${ocsp.maxAge}"
+ *   
  * @author Thomas Meckel (Ophios GmbH), Tomas Gustavsson, Lars Silven
  * @version  $Id$
  */
@@ -265,7 +278,10 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 	private Method m_errorHandlerMethod = null;
 	private static final String PROBEABLE_ERRORHANDLER_CLASS = "org.ejbca.appserver.jboss.ProbeableErrorHandler";
 	private static final String SAFER_LOG4JAPPENDER_CLASS = "org.ejbca.appserver.jboss.SaferDailyRollingFileAppender";
-
+	
+	/** The interval in milliseconds which a OCSP result is valid. */
+	private long untilNextUpdate;
+	private long maxAge;
 	
 	protected synchronized void loadTrustDir() throws Exception {
 		// Check if we have a cached collection that is not too old
@@ -625,6 +641,23 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 			}
 			m_extensionMap.put(oid,ext);
 		}
+		// Cache-friendly parameters
+		initparam = config.getInitParameter("untilNextUpdate");
+		if (StringUtils.isEmpty(initparam)) {
+			initparam = "0";	// Disabled by default
+		}
+		if (m_log.isDebugEnabled()) {
+			m_log.debug("untilNextUpdate: " + initparam);
+		}
+		untilNextUpdate = Long.parseLong(initparam) * 1000;
+		initparam = config.getInitParameter("maxAge");
+		if (StringUtils.isEmpty(initparam)) {
+			initparam = "30";	// 30 seconds by default
+		}
+		if (m_log.isDebugEnabled()) {
+			m_log.debug("maxAge: " + initparam);
+		}
+		maxAge = Long.parseLong(initparam) * 1000;
 		
 		// Finally we load the CA certificates and private keys of this OCSP responder
 		{
@@ -749,7 +782,7 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 			m_log.debug("Received "+method+" request with content length: "+request.getContentLength()+" from "+remoteAddress);		
 		}
 		if (request.getContentLength() > MAX_OCSP_REQUEST_SIZE) {
-			String msg = "Request dropped. OCSP only supports requests of "+MAX_OCSP_REQUEST_SIZE+" bytes in total or less: "+request.getContentLength();
+			String msg = intres.getLocalizedMessage("ocsp.toolarge", MAX_OCSP_REQUEST_SIZE, request.getContentLength());
 			m_log.info(msg);
 			throw new MalformedRequestException(msg);
 		} else {
@@ -765,9 +798,9 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 						baos.write(b);
 						b = in.read();
 					}
-					
+					// Double-check so the actual data also is smaller than the allowed length, not just the Content-Length header.
 					if (baos.size() > MAX_OCSP_REQUEST_SIZE) {
-						String msg = "Request dropped. OCSP only supports requests of "+MAX_OCSP_REQUEST_SIZE+" bytes in total or less.";
+						String msg = intres.getLocalizedMessage("ocsp.toolarge", MAX_OCSP_REQUEST_SIZE, baos.size());
 						m_log.info(msg);
 						throw new MalformedRequestException(msg);
 					} else {
@@ -789,45 +822,45 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 				// RFC2560 A.1.1 says that request longer than 255 bytes SHOULD be sent by POST, we support GET for longer requests anyway.
 				if (url.length() <= MAX_OCSP_REQUEST_SIZE) {
 					String pathInfo = request.getPathInfo();
-					if (m_log.isDebugEnabled()) {
-						// Don't log the request if it's too long, we don't want to cause denial of serice by filling log files or buffers.
-						if (pathInfo.length() < 2048) {
-							m_log.debug("pathInfo: "+pathInfo);
-						} else {
-							m_log.debug("pathInfo too long to log: "+pathInfo.length());
-						}
-					}
 					if (pathInfo != null && pathInfo.length() > 0) {
+						if (m_log.isDebugEnabled()) {
+							// Don't log the request if it's too long, we don't want to cause denial of service by filling log files or buffers.
+							if (pathInfo.length() < 2048) {
+								m_log.debug("pathInfo: "+pathInfo);
+							} else {
+								m_log.debug("pathInfo too long to log: "+pathInfo.length());
+							}
+						}
 						try {
 							ret = org.ejbca.util.Base64.decode(URLDecoder.decode(pathInfo.substring(1), "UTF-8").getBytes());
-						} catch (IOException e) {
-							String msg = "Bad URL encoding in request.";
+						} catch (Exception e) {
+							String msg = intres.getLocalizedMessage("ocsp.badurlenc");
 							m_log.info(msg);
 							throw new MalformedRequestException(e);
 						}
 					} else {
-						String msg = "Request is missing last part of URL defined in RFC2560 A.1.1.";
+						String msg = intres.getLocalizedMessage("ocsp.missingreq");
 						m_log.info(msg);
 						throw new MalformedRequestException(msg);
 					}
 				} else {
-					String msg = "Request dropped. OCSP only supports requests of "+MAX_OCSP_REQUEST_SIZE+" bytes in total or less: "+url.length();
+					String msg = intres.getLocalizedMessage("ocsp.toolarge", MAX_OCSP_REQUEST_SIZE, url.length());
 					m_log.info(msg);
 					throw new MalformedRequestException(msg);
 				}
 			} else {
 				// Strange, an unknown method
-				m_log.info("Unknown request method: "+method);
-				throw new MalformedRequestException("Unknown request method: "+method);
+				String msg = intres.getLocalizedMessage("ocsp.unknownmethod", method);
+				m_log.info(msg);
+				throw new MalformedRequestException(msg);
 			}
 		}
-
 		// Make a final check that we actually received something
 		if ((ret == null) || (ret.length == 0)) {
-			m_log.info("No request bytes from ip: "+remoteAddress);
-			throw new MalformedRequestException("No request bytes.");
+			String msg = intres.getLocalizedMessage("ocsp.emptyreq", remoteAddress);
+			m_log.info(msg);
+			throw new MalformedRequestException(msg);
 		}
-		// If this request was bad, log it in the transaction and audit loggers, if they exist
 		return ret;
 	}
 	
@@ -952,23 +985,23 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 				Req[] requests = req.getRequestList();
 				if (transactionLogger != null) transactionLogger.paramPut(TransactionLogger.NUM_CERT_ID, requests.length);
 				if (requests.length <= 0) {
-					String errMsg = intres.getLocalizedMessage("ocsp.errornoreqentities");
-					m_log.error(errMsg);
+					String infoMsg = intres.getLocalizedMessage("ocsp.errornoreqentities");
+					m_log.info(infoMsg);
 					{
 						// All this just so we can create an error response
 						cacert = m_caCertCache.findLatestBySubjectDN(m_defaultResponderId);
 					}
-					throw new MalformedRequestException(errMsg);
+					throw new MalformedRequestException(infoMsg);
 				}
 				int maxRequests = 100;
 				if (requests.length > maxRequests) {
-					String errMsg = intres.getLocalizedMessage("ocsp.errortoomanyreqentities", maxRequests);
-					m_log.error(errMsg);
+					String infoMsg = intres.getLocalizedMessage("ocsp.errortoomanyreqentities", maxRequests);
+					m_log.info(infoMsg);
 					{
 						// All this just so we can create an error response
 						cacert = m_caCertCache.findLatestBySubjectDN(m_defaultResponderId);
 					}
-					throw new MalformedRequestException(errMsg);
+					throw new MalformedRequestException(infoMsg);
 				}
 
 				if (m_log.isDebugEnabled()) {
@@ -1021,7 +1054,7 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 						String errMsg = intres.getLocalizedMessage("ocsp.errorfindcacertusedefault", new String(Hex.encode(certId.getIssuerNameHash())));
 						m_log.info(errMsg);
 						// If we can not find the CA, answer UnknowStatus
-						responseList.add(new OCSPResponseItem(certId, new UnknownStatus()));
+						responseList.add(new OCSPResponseItem(certId, new UnknownStatus(), untilNextUpdate));
 						transactionLogger.paramPut(ITransactionLogger.CERT_STATUS, OCSPUnidResponse.OCSP_UNKNOWN); 
 						transactionLogger.writeln();
 						continue;
@@ -1070,7 +1103,7 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 							}
 							infoMsg = intres.getLocalizedMessage("ocsp.infoaddedstatusinfo", status, certId.getSerialNumber().toString(16), cacert.getSubjectDN().getName());
 							m_log.info(infoMsg);
-							responseList.add(new OCSPResponseItem(certId, certStatus));
+							responseList.add(new OCSPResponseItem(certId, certStatus, untilNextUpdate));
 							transactionLogger.writeln();
 							//  if (account != null) account.writeln();
 						} else {
@@ -1091,7 +1124,7 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 							}
 							infoMsg = intres.getLocalizedMessage("ocsp.infoaddedstatusinfo", status, certId.getSerialNumber().toString(16), cacert.getSubjectDN().getName());
 							m_log.info(infoMsg);
-							responseList.add(new OCSPResponseItem(certId, certStatus));
+							responseList.add(new OCSPResponseItem(certId, certStatus, untilNextUpdate));
 							transactionLogger.writeln();
 						}
 					} else {
@@ -1099,7 +1132,7 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 								new CRLReason(rci.getReason())));
 						infoMsg = intres.getLocalizedMessage("ocsp.infoaddedstatusinfo", "revoked", certId.getSerialNumber().toString(16), cacert.getSubjectDN().getName());
 						m_log.info(infoMsg);
-						responseList.add(new OCSPResponseItem(certId, certStatus));
+						responseList.add(new OCSPResponseItem(certId, certStatus, untilNextUpdate));
 						transactionLogger.paramPut(ITransactionLogger.CERT_STATUS, OCSPUnidResponse.OCSP_REVOKED);
 						transactionLogger.writeln();
 					}
@@ -1152,8 +1185,11 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 					throw new ServletException(errMsg);
 				}
 			} catch (MalformedRequestException e) {
-				String errMsg = intres.getLocalizedMessage("ocsp.errorprocessreq");
-				m_log.info(errMsg, e);
+				String errMsg = intres.getLocalizedMessage("ocsp.errorprocessreq", e.getMessage());
+				m_log.info(errMsg);
+				if (m_log.isDebugEnabled()) {
+					m_log.debug(errMsg, e);
+				}
 				ocspresp = res.generate(OCSPRespGenerator.MALFORMED_REQUEST, null);	// RFC 2560: responseBytes are not set on error.
 				transactionLogger.paramPut(ITransactionLogger.STATUS, OCSPRespGenerator.MALFORMED_REQUEST);
 				auditLogger.paramPut(IAuditLogger.STATUS, OCSPRespGenerator.MALFORMED_REQUEST);
@@ -1213,6 +1249,7 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 			response.setContentType("application/ocsp-response");
 			//response.setHeader("Content-transfer-encoding", "binary");
 			response.setContentLength(respBytes.length);
+			addRfc5019CacheHeaders(request, response, ocspresp, maxAge);
 			response.getOutputStream().write(respBytes);
 			response.getOutputStream().flush();
 		} catch (OCSPException e) {
@@ -1220,12 +1257,64 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 			m_log.error(errMsg, e);
 			throw new ServletException(e);
 		} catch (Exception e ) {
-			m_log.error(e);
+			m_log.error("", e);
 			transactionLogger.flush();
 			auditLogger.flush();
 		}
 		if (m_log.isTraceEnabled()) {
 			m_log.trace("<service()");
 		}
+	}
+
+	/**
+	 * RFC 2560 does not specify how cache headers should be used, but RFC 5019 does. Therefore we will only
+	 * add the headers if the requirements of RFC 5019 is fulfilled: A GET-request, a single embedded reponse,
+	 * the response contains a nextUpdate and no nonce is present.
+	 * @param maxAge is the margin to Expire when using max-age in milliseconds 
+	 */
+	private void addRfc5019CacheHeaders(HttpServletRequest request, HttpServletResponse response, OCSPResp ocspresp, long maxAge) throws IOException, NoSuchAlgorithmException, NoSuchProviderException, OCSPException {
+		if (maxAge <= 0) {
+			m_log.debug("Will not add RFC 5019 caches headers: RFC 5019 6.2: max-age should be 'later than thisUpdate but earlier than nextUpdate'.");
+			return;
+		}
+		if (!"GET".equalsIgnoreCase(request.getMethod())) {
+			m_log.debug("Will not add RFC 5019 caches headers: \"clients MUST use the GET method (to enable OCSP response caching)\"");
+			return;
+		}
+		if (ocspresp.getResponseObject() == null) {
+			m_log.debug("Will not add cache headers for response to bad request.");
+			return;
+		}
+		SingleResp[] singleRespones = ((BasicOCSPResp) ocspresp.getResponseObject()).getResponses();
+		if (singleRespones.length != 1) {
+			m_log.debug("Will not add RFC 5019 caches headers: reponse contains multiple embedded responses.");
+			return;
+		}
+		if (singleRespones[0].getNextUpdate() == null) {
+			m_log.debug("Will not add RFC 5019 caches headers: nextUpdate isn't set.");
+			return;
+		}
+		if (singleRespones[0].getSingleExtensions() != null && singleRespones[0].getSingleExtensions().getExtension(OCSPObjectIdentifiers.id_pkix_ocsp_nonce) == null) {
+			m_log.debug("Will not add RFC 5019 caches headers: response contains a nonce.");
+			return;
+		}
+		long now = new Date().getTime();
+		//long producedAt = ((BasicOCSPResp) ocspresp.getResponseObject()).getProducedAt().getTime();
+		long nextUpdate = singleRespones[0].getNextUpdate().getTime();
+		long thisUpdate = singleRespones[0].getThisUpdate().getTime();
+		if (maxAge >= (nextUpdate - thisUpdate)) {
+			maxAge = nextUpdate - thisUpdate - 1;
+			m_log.warn(intres.getLocalizedMessage("ocsp.shrinkmaxage", maxAge));
+		}
+		// RFC 5019 6.2: Date: The date and time at which the OCSP server generated the HTTP response.
+		// On JBoss AS the "Date"-header is cached for 1 second, so this value will be overwritten and off by up to a second 
+		response.setDateHeader("Date", now);
+		// RFC 5019 6.2: Last-Modified: date and time at which the OCSP responder last modified the response. == thisUpdate
+		response.setDateHeader("Last-Modified", thisUpdate);
+		// RFC 5019 6.2: Expires: This date and time will be the same as the nextUpdate timestamp in the OCSP response itself.
+		response.setDateHeader("Expires", nextUpdate);	// This is overridden by max-age on HTTP/1.1 compatible components
+		// RFC 5019 6.2: This profile RECOMMENDS that the ETag value be the ASCII HEX representation of the SHA1 hash of the OCSPResponse structure.
+		response.setHeader("ETag", "\"" + new String(Hex.encode(MessageDigest.getInstance("SHA-1", "BC").digest(ocspresp.getEncoded()))) + "\"");
+		response.setHeader("Cache-Control", "max-age=" + (maxAge/1000) + ",public,no-transform,must-revalidate");
 	}
 } // OCSPServlet

@@ -25,6 +25,7 @@ import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
@@ -61,6 +62,7 @@ import org.bouncycastle.ocsp.OCSPReq;
 import org.bouncycastle.ocsp.OCSPReqGenerator;
 import org.bouncycastle.ocsp.OCSPResp;
 import org.bouncycastle.ocsp.RespID;
+import org.ejbca.util.Base64;
 import org.ejbca.util.CertTools;
 import org.ejbca.util.keystore.KeyTools;
 
@@ -151,26 +153,27 @@ public class OCSPUnidClient {
 	 * 
 	 * @param cert X509Certificate to query, the DN should contain serialNumber which is Unid to be looked up
 	 * @param cacert CA certificate that issued the certificate to be queried
-	 * @param getfnr if we should ask for a Unid-Fnr mapping or only query the OCSP server
+     * @param useGet if true GET will be used instead of POST as HTTP method
 	 * @return OCSPUnidResponse conatining the response and the fnr, can contain and an error code and the fnr can be null, never returns null.
 	 */
-	public OCSPUnidResponse lookup(Certificate cert, Certificate cacert) throws OCSPException, IOException, GeneralSecurityException {
+	public OCSPUnidResponse lookup(Certificate cert, Certificate cacert, boolean useGet) throws OCSPException, IOException, GeneralSecurityException {
         // See if we must try to get the ocsprul from the cert
         if (httpReqPath == null) {
             httpReqPath = CertTools.getAuthorityInformationAccessOcspUrl(cert);
         }
-        return lookup( CertTools.getSerialNumber(cert), cacert );
+        return lookup( CertTools.getSerialNumber(cert), cacert, useGet);
     }
     /**
      * @param serialNr serial number of the certificate to verify
      * @param cacert issuer of the certificate to verify
+     * @param useGet if true GET will be used instead of POST as HTTP method
      * @return response can contain and an error code but the fnr is allways null, never returns null.
      * @throws OCSPException 
      * @throws IllegalArgumentException 
      * @throws IOException
      * @throws GeneralSecurityException
      */
-    public OCSPUnidResponse lookup(BigInteger serialNr, Certificate cacert) throws OCSPException, IOException, GeneralSecurityException {
+    public OCSPUnidResponse lookup(BigInteger serialNr, Certificate cacert, boolean useGet) throws OCSPException, IOException, GeneralSecurityException {
         if (httpReqPath == null) {
             // If we didn't pass a url to the constructor and the cert does not have the URL, we will fail...
             OCSPUnidResponse ret = new OCSPUnidResponse();
@@ -205,31 +208,39 @@ public class OCSPUnidClient {
             os.close();
         }
         // Send the request and receive a BasicResponse
-        return sendOCSPPost(req.getEncoded(), cacert, nonce);
+        return sendOCSPRequest(req.getEncoded(), cacert, useGet);
 	}
 
     //
     // Private helper methods
     //
     
-    private OCSPUnidResponse sendOCSPPost(byte[] ocspPackage, Certificate cacert, byte[] nonce) throws IOException, OCSPException, GeneralSecurityException {
-        // POST the OCSP request
-        URL url = new URL(httpReqPath);
-        HttpURLConnection con = (HttpURLConnection)getUrlConnection(url);
-        // we are going to do a POST
-        con.setDoOutput(true);
-        con.setRequestMethod("POST");
-
-        // POST it
-        con.setRequestProperty("Content-Type", "application/ocsp-request");
-        OutputStream os = null;
-        try {
-            os = con.getOutputStream();
-            os.write(ocspPackage);
-        } finally {
-            if (os != null) os.close();
-        }
-        OCSPUnidResponse ret = new OCSPUnidResponse();
+    private OCSPUnidResponse sendOCSPRequest(byte[] ocspPackage, Certificate cacert, boolean useGet) throws IOException, OCSPException, GeneralSecurityException {
+    	HttpURLConnection con;
+    	if (useGet) {
+        	String b64 = new String(Base64.encode(ocspPackage, false));
+        	String req = b64.replace("+", "%2B").replace("/", "%2F");
+        	String urls = URLEncoder.encode(req, "UTF-8");
+        	URL url = new URL(httpReqPath + '/' + urls);
+            con = (HttpURLConnection)url.openConnection();
+    	} else {
+            // POST the OCSP request
+            URL url = new URL(httpReqPath);
+            con = (HttpURLConnection)getUrlConnection(url);
+            // we are going to do a POST
+            con.setDoOutput(true);
+            con.setRequestMethod("POST");
+            // POST it
+            con.setRequestProperty("Content-Type", "application/ocsp-request");
+            OutputStream os = null;
+            try {
+                os = con.getOutputStream();
+                os.write(ocspPackage);
+            } finally {
+                if (os != null) os.close();
+            }
+    	}
+        final OCSPUnidResponse ret = new OCSPUnidResponse();
         ret.setHttpReturnCode(con.getResponseCode());
         if (ret.getHttpReturnCode() != 200) {
         	if (ret.getHttpReturnCode() == 401) {
@@ -262,26 +273,31 @@ public class OCSPUnidClient {
         	ret.setErrorCode(OCSPUnidResponse.ERROR_NO_RESPONSE);
         	return ret;
         }
-        OCSPResp response = new OCSPResp(new ByteArrayInputStream(respBytes));
-        BasicOCSPResp brep = (BasicOCSPResp) response.getResponseObject();
+        final OCSPResp response = new OCSPResp(new ByteArrayInputStream(respBytes));
+        ret.setResp(response);
+        final BasicOCSPResp brep = (BasicOCSPResp) response.getResponseObject();
+        if ( brep==null ) {
+            ret.setErrorCode(OCSPUnidResponse.ERROR_NO_RESPONSE);
+            return ret;
+        }
         // Compare nonces to see if the server sent the same nonce as we sent
-    	byte[] noncerep = brep.getExtensionValue(OCSPObjectIdentifiers.id_pkix_ocsp_nonce.getId());
+    	final byte[] noncerep = brep.getExtensionValue(OCSPObjectIdentifiers.id_pkix_ocsp_nonce.getId());
     	if (noncerep != null) {
         	ASN1InputStream ain = new ASN1InputStream(noncerep);
         	ASN1OctetString oct = ASN1OctetString.getInstance(ain.readObject());
-        	boolean eq = ArrayUtils.isEquals(nonce, oct.getOctets());    		
+        	boolean eq = ArrayUtils.isEquals(this.nonce, oct.getOctets());    		
             if (!eq) {
             	ret.setErrorCode(OCSPUnidResponse.ERROR_INVALID_NONCE);
             	return ret;
             }
     	}
 
-		RespID id = brep.getResponderId();
-		DERTaggedObject to = (DERTaggedObject)id.toASN1Object().toASN1Object();
-		RespID respId = null;
-        X509Certificate[] chain = brep.getCerts("BC");
-        X509Certificate cert = chain[0];
-        PublicKey signerPub = cert.getPublicKey();
+		final RespID id = brep.getResponderId();
+		final DERTaggedObject to = (DERTaggedObject)id.toASN1Object().toASN1Object();
+		final RespID respId;
+        final X509Certificate[] chain = brep.getCerts("BC");
+        final X509Certificate cert = chain[0];
+        final PublicKey signerPub = cert.getPublicKey();
 		if (to.getTagNo() == 1) {
 			// This is Name
 			respId = new RespID(cert.getSubjectX500Principal());
@@ -300,12 +316,11 @@ public class OCSPUnidClient {
         }
         // Also verify the signers certificate
         try {
-            chain[0].verify(cacert.getPublicKey());        	 
+            cert.verify(cacert.getPublicKey());        	 
         } catch (SignatureException e) {
         	ret.setErrorCode(OCSPUnidResponse.ERROR_INVALID_SIGNERCERT);
         	return ret;        	
         }
-        ret.setResp(response);
         String fnr = getFnr(brep);
         if (fnr != null) {
         	ret.setFnr(fnr);
