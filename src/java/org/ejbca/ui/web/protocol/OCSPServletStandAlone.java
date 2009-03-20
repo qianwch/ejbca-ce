@@ -77,6 +77,7 @@ import org.ejbca.util.keystore.KeyTools;
  *              load-on-startup = "1"
  *
  * @web.servlet-mapping url-pattern = "/ocsp"
+ * @web.servlet-mapping url-pattern = "/ocsp/*"
  *
  * @web.servlet-init-param description="Directory name of the soft keystores. The signing keys will be fetched from all files in this directory. Valid formats of the files are JKS and PKCS12 (p12)."
  *   name="softKeyDirectoryName"
