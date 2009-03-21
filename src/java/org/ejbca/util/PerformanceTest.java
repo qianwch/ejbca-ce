@@ -137,8 +137,11 @@ public class PerformanceTest {
                         isSuccess = jobRunner.execute();
                         this.statistic.addTime(commands[i].getJobTimeDescription(), jobRunner.getTimeConsumed());
                     }
-                    if ( isSuccess )
+                    if ( isSuccess ) {
                         this.statistic.taskFinished();
+                    } else {
+                        this.statistic.taskFailed();
+                    }
                 } catch( Throwable t ) {
                     log.error("Exeption in thread "+nr+".", t);
                 }
@@ -164,16 +167,21 @@ public class PerformanceTest {
     private class Statistic implements Runnable {
         private final int nr;
         private final Map<String, Long> mTimes;
-        private int nrOfTests = 0;
+        private int nrOfSuccesses = 0;
+        private int nrOfSuccessesLastTime = 0;
+        private int nrOfFailures = 0;
         private long startTime;
         private final PrintStream printStream;
         Statistic(int _nr, PrintStream _printStream) {
             this.nr = _nr;
-            mTimes = new HashMap<String, Long>();
-            printStream = _printStream;
+            this.mTimes = new HashMap<String, Long>();
+            this.printStream = _printStream;
+        }
+        void taskFailed() {
+            this.nrOfFailures++;
         }
         void taskFinished() {
-            nrOfTests++;
+            this.nrOfSuccesses++;
         }
         Statistic(int nr) {
             this(nr, System.out);
@@ -195,27 +203,31 @@ public class PerformanceTest {
         private void printStatistics() {
             final long time = (int)(new Date().getTime()-this.startTime);
             final long allThreadsTime = this.nr*time;
-            final float signingsPerSecond = (float)nrOfTests*1000/time;
+            final Float testsPerSecond = new Float((float)this.nrOfSuccesses*1000/time);
+            final Float testsPerSecondInLastPeriod = new Float((float)(this.nrOfSuccesses - this.nrOfSuccessesLastTime)/PerformanceTest.this.STATISTIC_UPDATE_PERIOD_IN_SECONDS);
+            this.nrOfSuccessesLastTime = this.nrOfSuccesses;
             final float relativeWork; {
                 long tmp = 0;
-                Iterator<Long> i=mTimes.values().iterator();
+                Iterator<Long> i=this.mTimes.values().iterator();
                 while (i.hasNext() )
                     tmp += i.next().longValue();
                 relativeWork = (float)(allThreadsTime-tmp) / allThreadsTime;
             }
             final String CSI = "\u001B[";
 
-            printStream.println(CSI+"J"); // clear rest of screen on VT100 terminals.
-            printLine("Total # of successfully performed tests", nrOfTests);
-            printLine("# of tests completed each second", signingsPerSecond);
-            final Iterator<Entry<String, Long>> i = mTimes.entrySet().iterator();
+            this.printStream.println(CSI+"J"); // clear rest of screen on VT100 terminals.
+            printLine("Total # of successfully performed tests", new Integer(this.nrOfSuccesses));
+            printLine("Total # of failed tests", new Integer(this.nrOfFailures));
+            printLine("# of tests completed each second", testsPerSecond);
+            printLine("# of tests completed each second in last period", testsPerSecondInLastPeriod);
+            final Iterator<Entry<String, Long>> i = this.mTimes.entrySet().iterator();
             while( i.hasNext() ) {
                 final Entry<String, Long> entry = i.next();
-                printLine(entry.getKey(), (float)entry.getValue().longValue() / allThreadsTime);
+                printLine(entry.getKey(), new Float((float)entry.getValue().longValue() / allThreadsTime));
             }
-            printLine("Relative time spent with test client work", relativeWork);
-            printStream.print(CSI+(4+mTimes.size())+"A"); // move up 7 rows.
-            printStream.flush();
+            printLine("Relative time spent with test client work", new Float(relativeWork));
+            this.printStream.print(CSI+(6+this.mTimes.size())+"A"); // move up.
+            this.printStream.flush();
         }
         public void run() {
             startTime = new Date().getTime();
