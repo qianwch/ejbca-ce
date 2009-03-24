@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.ejb.EJBException;
 import javax.servlet.ServletConfig;
@@ -141,6 +142,7 @@ public class OCSPServletStandAlone extends OCSPServletBase implements IHealtChec
     private String mStorePassword;
     private CardKeys mCardTokenObject;
 	private final Map mSignEntity;
+	private final Map mNewSignEntity;
     private ICertificateStoreOnlyDataSessionLocal m_certStore = null;
     private String mSlot;
     private String mSharedLibrary;
@@ -149,7 +151,8 @@ public class OCSPServletStandAlone extends OCSPServletBase implements IHealtChec
 
     public OCSPServletStandAlone() {
         super();
-        mSignEntity = new HashMap();
+        mSignEntity = new ConcurrentHashMap();
+        mNewSignEntity = new HashMap();
     }
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
@@ -367,7 +370,7 @@ public class OCSPServletStandAlone extends OCSPServletBase implements IHealtChec
                 String wMsg = intres.getLocalizedMessage("ocsp.newsigningkey", chain[1].getSubjectDN(), chain[0].getSubjectDN());
                 m_log.warn(wMsg);
             }
-            mSignEntity.put( new Integer(caid), new SigningEntity(chain, keyFactory, providerHandler) );
+            mNewSignEntity.put( new Integer(caid), new SigningEntity(chain, keyFactory, providerHandler) );
             m_log.debug("CA with ID "+caid+" now has a OCSP signing key.");
         }
         return true;
@@ -535,7 +538,7 @@ public class OCSPServletStandAlone extends OCSPServletBase implements IHealtChec
 	    	m_log.trace("<loadPrivateKeys: using cache");
 			return;
 		}
-        mSignEntity.clear();
+        mNewSignEntity.clear();
         loadFromP11HSM(adm);
         final File dir = mKeystoreDirectoryName!=null ? new File(mKeystoreDirectoryName) : null;
         if ( dir!=null && dir.isDirectory() ) {
@@ -548,23 +551,38 @@ public class OCSPServletStandAlone extends OCSPServletBase implements IHealtChec
                 }
             } else {
             	m_log.debug("No files in directory: " + dir.getCanonicalPath());            	
-                if ( mSignEntity.size()<1 ) {
+                if ( mNewSignEntity.size()<1 ) {
                     throw new ServletException("No files in soft key directory: " + dir.getCanonicalPath());            	
                 }
             }
         } else {
         	m_log.debug((dir != null ? dir.getCanonicalPath() : "null") + " is not a directory.");
-            if ( mSignEntity.size()<1 ) {
+            if ( mNewSignEntity.size()<1 ) {
                 throw new ServletException((dir != null ? dir.getCanonicalPath() : "null") + " is not a directory.");
             }
         }
-        
-        // Hmm, I don't think we can ever get into this if clause
-        if ( mSignEntity.size()<1 ) {
+        // No P11 keys, there are files, but none are valid keys or certs for cards
+        if ( mNewSignEntity.size()<1 ) {
         	String dirStr = (dir != null ? dir.getCanonicalPath() : "null");
             throw new ServletException("No valid keys in directory " + dirStr+", or in PKCS#11 keystore.");        	
         }
-
+        // Replace old signEntity references with new ones or null if they no longer exist
+        Iterator iterator = mSignEntity.keySet().iterator();
+        while (iterator.hasNext()) {
+        	Object key = iterator.next();
+        	if (mNewSignEntity.get(key) != null) {
+            	mSignEntity.put(key, mNewSignEntity.get(key));
+        	} else {
+        		mSignEntity.remove(key);
+        	}
+        }
+        // Replace existing signEntity references and add new ones. (Yes, we have some overlap here..)
+        iterator = mNewSignEntity.keySet().iterator();
+        while (iterator.hasNext()) {
+        	Object key = iterator.next();
+        	mSignEntity.put(key, mNewSignEntity.get(key));
+        }
+        
         m_log.debug("We have keys, returning");
         
         // Update cache time
