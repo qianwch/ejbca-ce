@@ -191,8 +191,10 @@ public class OCSPUnidClient {
 //                + "      Name hash : '" + new String(Hex.encode(certId.getIssuerNameHash())) + "'\n"
 //                + "      Key hash  : '" + new String(Hex.encode(certId.getIssuerKeyHash())) + "'\n");
         gen.addRequest(certId);
-        // Add a nonce to the request
-        gen.setRequestExtensions(extensions);        	
+        if (!useGet) {
+            // Add a nonce to the request
+            gen.setRequestExtensions(extensions);        	
+        }
         final OCSPReq req;
         if ( signKey!=null ) {
             gen.setRequestorName(certChain[0].getSubjectX500Principal());
@@ -219,8 +221,9 @@ public class OCSPUnidClient {
     	HttpURLConnection con;
     	if (useGet) {
         	String b64 = new String(Base64.encode(ocspPackage, false));
-        	String urls = URLEncoder.encode(b64, "UTF-8");
-        	URL url = new URL(httpReqPath + '/' + urls);
+        	//String urls = URLEncoder.encode(b64, "UTF-8");
+        	//URL url = new URL(httpReqPath + '/' + urls);
+        	URL url = new URL(httpReqPath + '/' + b64);
             con = (HttpURLConnection)url.openConnection();
     	} else {
             // POST the OCSP request
