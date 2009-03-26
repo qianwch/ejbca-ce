@@ -13,6 +13,8 @@
 
 package org.ejbca.core.protocol.ocsp;
 
+import java.util.Date;
+
 import org.bouncycastle.ocsp.BasicOCSPResp;
 import org.bouncycastle.ocsp.OCSPException;
 import org.bouncycastle.ocsp.OCSPResp;
@@ -155,5 +157,17 @@ public class OCSPUnidResponse {
         }
         return resp.getStatus();
 	}	
-	
+
+	public Date getProducedAt() throws OCSPException {
+		return ((BasicOCSPResp)resp.getResponseObject()).getProducedAt();
+	}
+
+	public Date getThisUpdate() throws OCSPException {
+		return ((BasicOCSPResp)resp.getResponseObject()).getResponses()[0].getThisUpdate();
+	}
+
+	public Date getNextUpdate() throws OCSPException {
+		return ((BasicOCSPResp)resp.getResponseObject()).getResponses()[0].getNextUpdate();
+	}
+
 }
