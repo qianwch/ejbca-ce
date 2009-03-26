@@ -366,7 +366,7 @@ public class OCSPServletStandAlone extends OCSPServletBase implements IHealtChec
         if ( chain!=null ) {
             int caid = getCaid(chain[1]);
             SigningEntity oldSigningEntity = (SigningEntity)mSignEntity.get(new Integer(caid));
-            if ( oldSigningEntity!=null && !oldSigningEntity.getCertificateChain().equals(chain) ) {
+            if ( oldSigningEntity!=null && !CertTools.compareCertificateChains(oldSigningEntity.getCertificateChain(), chain) ) {
                 String wMsg = intres.getLocalizedMessage("ocsp.newsigningkey", chain[1].getSubjectDN(), chain[0].getSubjectDN());
                 m_log.warn(wMsg);
             }
