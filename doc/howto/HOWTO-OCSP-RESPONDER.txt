@@ -426,6 +426,18 @@ If you use category instead of logger Log4j will output warnings on startup
 5. Start JBoss and you are ready
 
 
+OCSP GET
+========
+The GET OCSP request is defined in RFC 2560 A.1.1 as: 'GET {url}/{url-encoding of base-64 encoding
+of the DER encoding of the OCSPRequest}'. A base64-encoded request can contain the reserved
+characters '+', '/' and '=', but will be handled correctly both in their %-escaped and original form
+by the responder, since it's unclear if they do conflict as defined in RFC 2395 2.2. 
+
+Not all web-product handles the encoded '/' (%2F) nicely. JBoss/Tomcat has to be started with
+-Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true added to JAVA_OPT in
+JBOSS_HOME/bin/run.conf.
+
+
 Responses with longer validity and caching
 ==========================================
 RFC 2560 defines thisUpdate, nextUpdate and producedAt. producedAt is always
@@ -498,7 +510,9 @@ and dropping some unwanted requests:
                 #BalancerMember http://ocsp3.domain.org:8080/ejbca/publicweb/status/ocsp
         </Proxy>
 
-        # We only want RFC 5019 URLs to be forwarded to the OCSP, the rest should get a "404 Not found"
+        # We only want RFC 5019 compliant URLs to be forwarded to the OCSP, the rest
+        # should get a "404 Not found" or "414 Request-URI Too Large."
+        LimitRequestLine 257
         AllowEncodedSlashes On
         RewriteEngine On
         RewriteCond %{REQUEST_METHOD} get [NC]
