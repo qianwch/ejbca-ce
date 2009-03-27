@@ -164,15 +164,24 @@ Note, that this can usually not be done from a windows machine, to a Linux machi
 
 Running several responders.
 --------------------------
-In many case it is desirable to have several responders on different computers. This is easily
-achieved if it is an mysql database that EJBCA is publishing to (see section "Building and
-configuring EJBCA"). All you have to do is to set up the publishing database as a master. Then one
-slave data base is created on each computer that should host a responder.
-How to do it is described in the mysql documentation. Depending on which which version you are using
-please read one of the followings:
-http://dev.mysql.com/doc/refman/4.1/en/replication-howto.html
-http://dev.mysql.com/doc/refman/5.0/en/replication-howto.html
-http://dev.mysql.com/doc/refman/5.1/en/replication-howto.html
+Additional OCSP DataSources for OCSP responders have to be added manually. The easiest way to do this
+on JBoss is to clone the initially deployed OCSP DataSource JBOSS_HOME/server/default/deploy/ocsp-ds.xml
+to JBOSS_HOME/server/default/deploy/ocsp2-ds.xml and change 
+      <jndi-name>OcspDS</jndi-name>
+      <connection-url>jdbc:mysql://ocsp1.domain.org:3306/ejbca</connection-url>
+to
+      <jndi-name>Ocsp2DS</jndi-name>
+      <connection-url>jdbc:mysql://ocsp2.domain.org:3306/ejbca</connection-url>
+and configure an additional publisher to use this new DataSource 'java:/Ocsp2DS'.
+
+An alternative approach for MySQL users is to use the tools for database replication. Either you could
+replicate CertificateData from you master EJBCA database to slave-responders or you could publish
+to a master OCSP responders database that in turn is replicated to the other responders. How to do it
+is described in the mysql documentation. Depending on which which version you are using please read one
+of the followings:
+	http://dev.mysql.com/doc/refman/4.1/en/replication-howto.html
+	http://dev.mysql.com/doc/refman/5.0/en/replication-howto.html 
+	http://dev.mysql.com/doc/refman/5.1/en/replication-howto.html
 
 
 Setting up the Unid-Fnr OCSP extension
