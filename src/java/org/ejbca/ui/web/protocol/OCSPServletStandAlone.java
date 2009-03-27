@@ -793,7 +793,13 @@ public class OCSPServletStandAlone extends OCSPServletBase implements IHealtChec
     
     protected OCSPCAServiceResponse extendedService(Admin adm, int caid, OCSPCAServiceRequest request) throws ExtendedCAServiceRequestException,
                                                                                                     ExtendedCAServiceNotActiveException, IllegalExtendedCAServiceRequestException {
-        SigningEntity se =(SigningEntity)mSignEntity.get(new Integer(caid));
+        SigningEntity se = (SigningEntity)mSignEntity.get(new Integer(caid));
+        if ( se==null ) {
+        	if (m_log.isDebugEnabled()) {
+            	m_log.debug("No key is available for caid=" + caid + " even though a valid certificate was present. Trying to use the default responder's key instead.");
+        	}
+        	se = (SigningEntity)mSignEntity.get(new Integer(getCaid(null)));	// Use the key issued by the default responder ID instead
+        }
         if ( se!=null ) {
             return se.sign(request);            
         }
