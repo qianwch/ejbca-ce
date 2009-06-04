@@ -1,3 +1,13 @@
+EJBCA 3.8.3
+-----------
+This is a minor release with only a few fixes
+Read the changelog for details.
+- Fixed unability to deploy on PostgreSQL + Glassfish combination.
+- Fixed possible extensive CPU usage for crafted messages to CMP RA service (not default config).
+- Fixed Ugly error message in LDAP publisher if no certificate to remove exists.
+
+For upgrade instructions, please see UPGRADE. 
+
 EJBCA 3.8.2
 -----------
 This is a minor release adding improvements and bugfixes
