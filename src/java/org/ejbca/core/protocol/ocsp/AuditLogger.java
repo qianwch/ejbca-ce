@@ -25,10 +25,10 @@ import org.ejbca.util.PatternLogger;
  * @author tham
  * @version $Id$
  */
-public class AuditLoggerFactory { 
+public class AuditLogger { 
 	private final Pattern PATTERN;
 	private final String orderString;
-    private final Logger accountLog = Logger.getLogger(AuditLoggerFactory.class.getName());
+    private final Logger accountLog = Logger.getLogger(AuditLogger.class.getName());
 	private final String mLogDateFormat ;
 	private final String mTimeZone;
 	
@@ -38,7 +38,7 @@ public class AuditLoggerFactory {
     /**
 	 * Use this method to avoid having parts of the order-string logged when some values have not been stored before a writeln()
 	 */
-    public IPatternLogger getTransactionLogger() {
+    public IPatternLogger getPatternLogger() {
         IPatternLogger pl = new PatternLogger(this.PATTERN.matcher(this.orderString), this.orderString, this.accountLog, this.mLogDateFormat, this.mTimeZone);
 		pl.paramPut(IOCSPLogger.CLIENT_IP,"0");
 		pl.paramPut(IAuditLogger.OCSPREQUEST, "0");
@@ -54,7 +54,7 @@ public class AuditLoggerFactory {
 	 * @param accountLogOrder
 	 * @param logDateFormat
 	 */
-	public AuditLoggerFactory(String accountLogPattern, String accountLogOrder, String logDateFormat, String timeZone) {
+	public AuditLogger(String accountLogPattern, String accountLogOrder, String logDateFormat, String timeZone) {
 		this.PATTERN = Pattern.compile(accountLogPattern);
 		this.orderString = accountLogOrder;
 		this.mLogDateFormat = logDateFormat;

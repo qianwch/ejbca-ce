@@ -72,7 +72,7 @@ import org.ejbca.core.model.ca.caadmin.extendedcaservices.IllegalExtendedCAServi
 import org.ejbca.core.model.ca.caadmin.extendedcaservices.OCSPCAServiceRequest;
 import org.ejbca.core.model.ca.caadmin.extendedcaservices.OCSPCAServiceResponse;
 import org.ejbca.core.model.log.Admin;
-import org.ejbca.core.protocol.ocsp.AuditLoggerFactory;
+import org.ejbca.core.protocol.ocsp.AuditLogger;
 import org.ejbca.core.protocol.ocsp.CertificateCache;
 import org.ejbca.core.protocol.ocsp.IAuditLogger;
 import org.ejbca.core.protocol.ocsp.IOCSPExtension;
@@ -82,7 +82,7 @@ import org.ejbca.core.protocol.ocsp.ITransactionLogger;
 import org.ejbca.core.protocol.ocsp.OCSPResponseItem;
 import org.ejbca.core.protocol.ocsp.OCSPUnidResponse;
 import org.ejbca.core.protocol.ocsp.OCSPUtil;
-import org.ejbca.core.protocol.ocsp.TransactionLoggerFactory;
+import org.ejbca.core.protocol.ocsp.TransactionLogger;
 import org.ejbca.util.CertTools;
 import org.ejbca.util.DummyPatternLogger;
 import org.ejbca.util.GUIDGenerator;
@@ -159,8 +159,8 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 	/** Method gotten through reflection, we put it in a variable so we don't have to use
 	 * reflection every time we use the audit or transaction log */
 	private Method m_errorHandlerMethod = null;
-    private TransactionLoggerFactory transactionLoggerFactory;
-    private AuditLoggerFactory auditLoggerFactory;
+    private TransactionLogger transactionLogger;
+    private AuditLogger auditLogger;
 	private static final String PROBEABLE_ERRORHANDLER_CLASS = "org.ejbca.appserver.jboss.ProbeableErrorHandler";
 	private static final String SAFER_LOG4JAPPENDER_CLASS = "org.ejbca.appserver.jboss.SaferDailyRollingFileAppender";
 	
@@ -277,7 +277,7 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 			m_log.debug("Pattern used for auditLogPattern: '" + auditLogPattern + "'");
 			final String auditLogOrder = OcspConfiguration.getAuditLogOrder();
 			m_log.debug("Pattern used for auditLogOrder: '" + auditLogOrder + "'");
-			this.auditLoggerFactory = new AuditLoggerFactory(auditLogPattern, auditLogOrder,logDateFormat, timezone);
+			this.auditLogger = new AuditLogger(auditLogPattern, auditLogOrder,logDateFormat, timezone);
 		}
 		m_log.debug("Are we doing auditLogging?: '" + mDoTransactionLog + "'");
 		if (mDoTransactionLog==true) { // If we are not going to do any logging we wont bother setting it up
@@ -285,7 +285,7 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 			m_log.debug("Pattern used for transactionLogPattern: '" + transactionLogPattern + "'");
 			final String transactionLogOrder = OcspConfiguration.getTransactionLogOrder();
 			m_log.debug("Pattern used for transactionLogOrder: '" + transactionLogOrder + "'");
-            this.transactionLoggerFactory = new TransactionLoggerFactory(transactionLogPattern, transactionLogOrder, logDateFormat, timezone);
+            this.transactionLogger = new TransactionLogger(transactionLogPattern, transactionLogOrder, logDateFormat, timezone);
 		}
 		// Are we supposed to abort the response if logging is failing?
 		m_log.debug("Are we doing safer logging?: '" + mDoSaferLogging + "'");
@@ -569,12 +569,12 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 		final IPatternLogger auditLogger;
 		final Date startTime = new Date();
 		if (this.mDoTransactionLog) {
-			transactionLogger = this.transactionLoggerFactory.getTransactionLogger();
+			transactionLogger = this.transactionLogger.getPatternLogger();
 		} else {
 			transactionLogger = new DummyPatternLogger();	// Ignores everything
 		}
 		if (this.mDoAuditLog) {
-			auditLogger = this.auditLoggerFactory.getTransactionLogger();
+			auditLogger = this.auditLogger.getPatternLogger();
 		} else {
 			auditLogger = new DummyPatternLogger();	// Ignores everything
 		}

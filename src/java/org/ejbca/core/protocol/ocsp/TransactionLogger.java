@@ -25,9 +25,9 @@ import org.ejbca.util.PatternLogger;
  * @version $Id$
  *
  */
-public class TransactionLoggerFactory {
+public class TransactionLogger {
 
-	public static final Logger auditlog = Logger.getLogger(TransactionLoggerFactory.class.getName());
+	public static final Logger auditlog = Logger.getLogger(TransactionLogger.class.getName());
 
 	/** regexp pattern to match ${identifier} patterns */// ${DN};${IP}
 	// private final static Pattern PATTERN = Pattern.compile("\\$\\{(.+?)\\}"); // TODO this should be configurable from file
@@ -40,7 +40,7 @@ public class TransactionLoggerFactory {
 	final private String mLogDateFormat; 
 	final private String mTimeZone;
 
-    public IPatternLogger getTransactionLogger() {
+    public IPatternLogger getPatternLogger() {
         IPatternLogger pl = new PatternLogger(this.PATTERN.matcher(this.orderString), this.orderString, auditlog, this.mLogDateFormat, this.mTimeZone);
         pl.paramPut(IOCSPLogger.STATUS,"0");
         pl.paramPut(IOCSPLogger.CLIENT_IP,"0");
@@ -65,7 +65,7 @@ public class TransactionLoggerFactory {
 	 * @param auditLogOrder
 	 * @param logDateFormat
 	 */
-	public TransactionLoggerFactory(String auditLogPattern, String auditLogOrder, String logDateFormat, String timeZone) {
+	public TransactionLogger(String auditLogPattern, String auditLogOrder, String logDateFormat, String timeZone) {
 		this.PATTERN = Pattern.compile(auditLogPattern);
 		this.orderString = auditLogOrder;
 		this.mLogDateFormat = logDateFormat;
