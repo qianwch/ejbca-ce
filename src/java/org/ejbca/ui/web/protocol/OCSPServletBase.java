@@ -581,10 +581,10 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 		final String remoteAddress = request.getRemoteAddr();
 		auditLogger.paramPut(IAuditLogger.OCSPREQUEST, ""); // No request bytes yet
 		auditLogger.paramPut(IPatternLogger.LOG_ID, new Integer(this.mTransactionID));
-		auditLogger.paramPut(IPatternLogger.SESSION_ID, new Integer(this.m_SessionID));
+		auditLogger.paramPut(IPatternLogger.SESSION_ID, this.m_SessionID);
 		auditLogger.paramPut(IOCSPLogger.CLIENT_IP, remoteAddress);
 		transactionLogger.paramPut(IPatternLogger.LOG_ID, new Integer(this.mTransactionID));
-		transactionLogger.paramPut(IPatternLogger.SESSION_ID, new Integer(this.m_SessionID));
+		transactionLogger.paramPut(IPatternLogger.SESSION_ID, this.m_SessionID);
 		transactionLogger.paramPut(IOCSPLogger.CLIENT_IP, remoteAddress);
 
 		try {
