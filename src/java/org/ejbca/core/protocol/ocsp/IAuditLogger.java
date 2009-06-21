@@ -14,9 +14,19 @@
 package org.ejbca.core.protocol.ocsp;
 
 
+/**
+ * Audit logger constants.
+ * @author lars
+ * @version $Id:
+ *
+ */
 public interface IAuditLogger extends IOCSPLogger {
-
-	public static final String OCSPREQUEST = "OCSPREQUEST";	//The byte[] ocsp-request that came with the http-request
-	public static final String OCSPRESPONSE = "OCSPRESPONSE"; //The byte[] ocsp-response that was included in the http-response
-
+	/**
+	 * The byte[] ocsp-request that came with the http-request
+	 */
+    static final String OCSPREQUEST = "OCSPREQUEST";
+	/**
+	 * The byte[] ocsp-response that was included in the http-response
+	 */
+	static final String OCSPRESPONSE = "OCSPRESPONSE";
 }

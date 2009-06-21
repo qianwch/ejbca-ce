@@ -11,18 +11,18 @@
  *                                                                       *
  *************************************************************************/
 
-package org.ejbca.core.protocol.ocsp;
+package org.ejbca.util;
+
 
 /**
  * This class ignores all input.
  */
-public class DummyTransactionLogger implements ITransactionLogger {
+public class DummyPatternLogger implements IPatternLogger {
 
-	public void flush(String replytime) { }
-	public void flush() { }
-	public void paramPut(String key, byte[] value) { }
-	public void paramPut(String key, String value) { }
-	public void paramPut(String key, Integer value) { }
-	public void writeln() { }
+	public void flush(String s) { /* nothing done */ }
+	public void paramPut(String key, byte[] value) { /* nothing done */ }
+	public void paramPut(String key, String value) { /* nothing done */ }
+	public void paramPut(String key, Integer value) { /* nothing done */ }
+	public void writeln() { /* nothing done */ }
 
 }
