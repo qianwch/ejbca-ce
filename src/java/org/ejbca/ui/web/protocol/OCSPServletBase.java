@@ -906,9 +906,8 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 			byte[] respBytes = ocspresp.getEncoded();
 			auditLogger.paramPut(IAuditLogger.OCSPRESPONSE, new String (Hex.encode(respBytes)));
             auditLogger.writeln();
-            final String replyTime = String.valueOf( new Date().getTime() - startTime.getTime() );
-			auditLogger.flush(replyTime);
-			transactionLogger.flush(replyTime);
+			auditLogger.flush();
+			transactionLogger.flush();
 			if (mDoSaferLogging){
 				// See if the Errorhandler has found any problems
 				if (hasErrorHandlerFailedSince(startTime)) {
@@ -935,8 +934,8 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 			throw new ServletException(e);
 		} catch (Exception e ) {
 			m_log.error("", e);
-			transactionLogger.flush(String.valueOf( new Date().getTime() - startTime.getTime() ));
-			auditLogger.flush(String.valueOf( new Date().getTime() - startTime.getTime() ));
+			transactionLogger.flush();
+			auditLogger.flush();
 		}
 		if (m_log.isTraceEnabled()) {
 			m_log.trace("<service()");

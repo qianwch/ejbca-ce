@@ -47,6 +47,7 @@ public class PatternLogger implements IPatternLogger {
 	final private Logger logger;
 	final private String logDateFormat;
 	final private String timeZone;
+    final private Date startTime;
 	
 	/**
      * @param m A matcher that is used together with orderstring to determine how output is formatted
@@ -61,6 +62,7 @@ public class PatternLogger implements IPatternLogger {
 		this.logger = logger;
 		this.logDateFormat = logDateFormat;
 		this.timeZone =timeZone;
+        this.startTime = new Date();
         final DateFormat dateformat = new SimpleDateFormat(this.logDateFormat); 
         if (this.timeZone != null) {
             dateformat.setTimeZone(TimeZone.getTimeZone(this.timeZone));
@@ -138,8 +140,8 @@ public class PatternLogger implements IPatternLogger {
     /**
      * @see org.ejbca.core.protocol.ocsp.ITransactionLogger#flush(String)
      */
-    public void flush(String replytime) {
+    public void flush() {
         this.pw.flush();
-        this.logger.debug(this.sw.toString().replaceAll("REPLY_TIME", replytime));
+        this.logger.debug(this.sw.toString().replaceAll("REPLY_TIME", String.valueOf( new Date().getTime()-this.startTime.getTime() )));
     }
 }

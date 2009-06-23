@@ -10,19 +10,12 @@
  *  See terms of license at gnu.org.                                     *
  *                                                                       *
  *************************************************************************/
+package org.ejbca.core.protocol.ws.logger;
 
-package org.ejbca.util;
-
-
-/**
- * This class ignores all input.
- */
-public class DummyPatternLogger implements IPatternLogger {
-
-	public void flush() { /* nothing done */ }
-	public void paramPut(String key, byte[] value) { /* nothing done */ }
-	public void paramPut(String key, String value) { /* nothing done */ }
-	public void paramPut(String key, Integer value) { /* nothing done */ }
-	public void writeln() { /* nothing done */ }
-
+public enum TransactionTags {
+    METHOD,
+    ERROR_MESSAGE;
+    public String getTag() {
+        return "${"+toString()+"}";
+    }
 }
