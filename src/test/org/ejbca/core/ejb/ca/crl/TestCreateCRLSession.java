@@ -303,7 +303,7 @@ public class TestCreateCRLSession extends TestCase {
 		log.trace(">test05CRLPeriodOverflow()");
 		// Fetch CAInfo and save CRLPeriod
 		CAInfo cainfo = TestTools.getCAAdminSession().getCAInfo(admin, caid);
-		int tempCRLPeriod = cainfo.getCRLPeriod();
+		long tempCRLPeriod = cainfo.getCRLPeriod();
 		try {
 			// Create a user that Should be revoked
 			boolean userExists = false;
