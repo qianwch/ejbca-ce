@@ -2053,6 +2053,7 @@ public class CAAdminSessionBean extends BaseSessionBean {
             
 	    	// Import the keys and save to database
 	    	thisCAToken.importKeys(keystorepass, p12PrivateSignatureKey, p12PublicSignatureKey, p12PrivateEncryptionKey, p12PublicEncryptionKey, signatureCertChain);
+	    	thisCa.setCAToken(thisCAToken);
 	    	caData.setCA(thisCa);
 	    	
 	    	// Log
