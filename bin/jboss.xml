@@ -40,10 +40,6 @@
 		<!-- copy the truststore file to the server -->
 		<available file="${ejbca.home}/p12/truststore.jks" property="truststore.file.present"/>
 		<fail message="Missing JKS truststorestore file in '${basedir}/p12/truststore.jks'" unless="truststore.file.present"/>
-		<condition property="javatrust.password.present">
-			<isset property="java.trustpassword"/> 
-		</condition>
-		<fail message="Missing Truststore password '${java.trustpassword}'" unless="javatrust.password.present"/>
 		
 		<copy file="${ejbca.home}/p12/truststore.jks" tofile="${jboss.server.home.dir}/${truststore.file}" overwrite="true"/>
 		<chmod file="${jboss.server.home.dir}/${truststore.file}" perm="600"/>		
@@ -55,10 +51,6 @@
 		<!-- copy the keystore file to the server -->
 		<available file="p12/tomcat.jks" property="keystore.file.present"/>
 		<fail message="Missing JKS keystore file in '${basedir}/p12/tomcat.jks'" unless="keystore.file.present"/>
-		<condition property="httpsserver.password.present">
-			<isset property="httpsserver.password"/> 
-		</condition>
-		<fail message="Missing JKS password '${httpsserver.password}'" unless="httpsserver.password.present"/>
 
 		<copy file="p12/tomcat.jks" tofile="${jboss.server.home.dir}/${keystore.file}" overwrite="true"/>
 		<chmod file="${jboss.server.home.dir}/${keystore.file}" perm="600"/>
@@ -90,6 +82,9 @@
         <available file="${jboss.deploy.dir}/jboss-web.deployer" type="dir" property="tomcat.dir" value="${jboss.deploy.dir}/jboss-web.deployer"/>
 		<!-- For JBoss 5.0.0 tomcat has yet a new naming scheme -->
         <available file="${jboss.deploy.dir}/jbossweb.sar" type="dir" property="tomcat.dir" value="${jboss.deploy.dir}/jbossweb.sar"/>
+        <!-- Set dummy value if password is not defined. If defined the old value is kept -->
+        <property name="java.trustpassword" value="changeThisToThePassword"/>
+        <property name="httpsserver.password" value="changeThisToThePassword"/>
         <copy todir="${tomcat.dir}" overwrite="true">
 			<fileset dir="src/appserver/jboss/${jboss.web}"/>
 			<filterchain>
