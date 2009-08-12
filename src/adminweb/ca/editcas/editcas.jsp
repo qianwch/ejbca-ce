@@ -679,6 +679,13 @@
 						}
                     	t = t.getCause();
                     }
+                 } catch(EJBException ejbe) {
+                	Exception ex = ejbe.getCausedByException();
+                	if(ex instanceof InvalidAlgorithmParameterException) {
+                		errormessage = ejbcawebbean.getText("INVALIDSIGORKEYALGPARAM") + ": " + ex.getLocalizedMessage();
+                	} else {
+	               		throw ejbe;
+               		}
                  }
                  includefile="choosecapage.jspf"; 
                }
