@@ -10,15 +10,15 @@
     <note>
     If you have problems with any of the download links below, try to download through the Sourceforge <a href="https://sourceforge.net/project/platformdownload.php?group_id=39716">download page</a>.
     <br/><br/>
-    EJBCA 3.8.2 is now available for <a
-    href="http://downloads.sourceforge.net/ejbca/ejbca_3_8_2.zip">download</a>.
+    EJBCA 3.9.1 is now available for <a
+    href="http://downloads.sourceforge.net/ejbca/ejbca_3_9.1.zip">download</a>.
     <br/>
-    SHA1 checksum: d3611578ff56eab492871aa0bea288570f9a3331
+    SHA1 checksum:
     <br/><br/>
-    External RA API 3.8.0 is now available for <a
-    href="http://downloads.sourceforge.net/ejbca/extra_3_8_0.zip">download</a>.
+    External RA API 3.9.1 is now available for <a
+    href="http://downloads.sourceforge.net/ejbca/extra_3_9.1.zip">download</a>.
     <br/>
-    SHA1 checksum: 080213133b27c9dbad13ccfc42eb341de1482611
+    SHA1 checksum:
     <br/><br/>
     Cert-cvc library 1.2.8 with full RSA and ECC support is now available for <a
     href="http://downloads.sourceforge.net/ejbca/cert-cvc-1.2.8.zip">download</a>.
