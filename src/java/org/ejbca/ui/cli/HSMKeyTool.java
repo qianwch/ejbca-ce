@@ -13,10 +13,17 @@
 
 package org.ejbca.ui.cli;
 
+import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
+import java.security.Security;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 
+import org.apache.log4j.Logger;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.ejbca.util.CMS;
 import org.ejbca.util.keystore.KeyStoreContainer;
 import org.ejbca.util.keystore.KeyStoreContainerBase;
 import org.ejbca.util.keystore.KeyStoreContainerFactory;
@@ -34,6 +41,7 @@ public class HSMKeyTool extends ClientToolBox {
 //    private static String CREATE_CA_SWITCH = "createca";
     private static final String ENCRYPT_SWITCH = "encrypt";
     private static final String DECRYPT_SWITCH = "decrypt";
+    private static final String VERIFY_SWITCH = "verify";
     private static final String GENERATE_SWITCH = "generate";
     private static final String GENERATE_MODULE_SWITCH = GENERATE_SWITCH+"module";
     private static final String DELETE_SWITCH = "delete";
@@ -45,6 +53,9 @@ public class HSMKeyTool extends ClientToolBox {
     private static final String INSTALL_CERT = "installcert";
     private static final String RENAME = "rename";
     private static final String INSTALL_TRUSTED_ROOT = "installtrusted";
+    private static final Object SIGN_SWITCH = "sign";
+
+    final static private Logger log = Logger.getLogger(HSMKeyTool.class);
 
     /**
      * To be overided if the HSM implementation knows the value of some parameters.
@@ -85,19 +96,184 @@ public class HSMKeyTool extends ClientToolBox {
     void setModuleProtection() {
         return;
     }
-    /**
-     * HSMs not capable to create a key store should overide with a method doing nothing
-     * @param args command line arguments from user
-     * @throws Exception
-     */
-    void createKeyStore(String args[]) throws Exception {
-        if( args.length > 1 && args[1].toLowerCase().trim().contains(CREATE_KEYSTORE_SWITCH)) {
+    private String commandString(String[] sa) {
+        String s = "";
+        for ( int i=0; i<sa.length; i++) {
+            s += sa[i];
+            if (i+1<sa.length) {
+                s += " ";
+            }
+        }
+        return s;
+    }
+    private void tooFewArguments(String[] args) {
+        log.error("Too few arguments in command: '"+commandString(args)+'\'');
+        System.exit(3);
+    }
+    private boolean doIt(String[] args) throws Exception {
+        final String commandStringNoSharedLib = args[0]+" "+args[1]+" ";
+        final String commandString = commandStringNoSharedLib+getProviderParameterDescription()+" ";
+        /*if ( args[1].toLowerCase().trim().equals(CREATE_CA_SWITCH)) {
+            try {
+                new HwCaInitCommand(args).execute();
+            } catch (Exception e) {
+                System.out.println(e.getMessage());            
+                //e.printStackTrace();
+                System.exit(-1);
+            }
+            return true;
+        } else */
+        if ( args[1].toLowerCase().trim().contains(GENERATE_SWITCH) ) {
+            if ( args.length < 6 ) {
+                System.err.println(commandString + "<all decimal digits RSA key with specified length, otherwise name of ECC curve or DSA key using syntax DSAnnnn> <key entry name> " + '['+'<'+getKeyStoreDescription()+'>'+']');
+                generateComment();
+                tooFewArguments(args);
+            } else {
+                if ( args[1].toLowerCase().trim().contains(GENERATE_MODULE_SWITCH) ) {
+                    setModuleProtection();
+                }
+                KeyStoreContainer store = KeyStoreContainerFactory.getInstance(args[4], args[2], args[3], args.length>7 ? args[7] : null, null, null);
+                String keyEntryName = args.length>6 ? args[6] :"myKey";
+                store.generate(args[5], keyEntryName);
+                System.err.println("Created certificate with entry "+keyEntryName+'.');
+            }
+            return true;
+        }
+        if ( args[1].toLowerCase().trim().equals(DELETE_SWITCH)) {
+            if ( args.length < 6 ) {
+                System.err.println(commandString + '<'+getKeyStoreDescription()+'>' + " [<key entry name>]");
+                tooFewArguments(args);
+            } else {
+                String alias = args.length>6 ? args[6] : null;
+                System.err.println("Deleting certificate with alias "+alias+'.');
+                KeyStoreContainerFactory.getInstance(args[4], args[2], args[3], args[5], null, null).delete(alias);
+            }
+            return true;
+        }
+        if ( args[1].toLowerCase().trim().equals(CERT_REQ)) {
+            if ( args.length < 7 ) {
+                System.err.println(commandString + '<'+getKeyStoreDescription()+'>' + " <key entry name> [<CN>]");
+                tooFewArguments(args);
+            } else {
+                KeyStoreContainerFactory.getInstance(args[4], args[2], args[3], args[5], null, null).generateCertReq(args[6], args.length>7 ? args[7] : null);
+            }
+            return true;
+        }
+        if ( args[1].toLowerCase().trim().equals(INSTALL_CERT)) {
+            if ( args.length < 7 ) {
+                System.err.println(commandString + '<'+getKeyStoreDescription()+'>' + " <certificate chain in PEM format>");
+                tooFewArguments(args);
+            } else {
+                KeyStoreContainerFactory.getInstance(args[4], args[2], args[3], args[5], null, null).installCertificate(args[6]);
+            }
+            return true;
+        }
+        if ( args[1].toLowerCase().trim().equals(INSTALL_TRUSTED_ROOT)) {
+            if ( args.length < 7 ) {
+                System.err.println(commandString + '<'+getKeyStoreDescription()+'>' + " <trusted root certificate in PEM format>");
+                tooFewArguments(args);
+            } else {
+                KeyStoreContainerFactory.getInstance(args[4], args[2], args[3], args[5], null, null).installTrustedRoot(args[6]);
+            }
+            return true;
+        }
+        if ( args[1].toLowerCase().trim().equals(ENCRYPT_SWITCH)) {
+            if ( args.length < 7 ) {
+                System.err.println("There are two ways of doing the encryption:");
+                System.err.println(commandString + '<'+getKeyStoreDescription()+'>' + " <input file> <output file> <key alias>");
+                System.err.println(commandStringNoSharedLib + "<input file> <output file> <file with certificate with public key to use>");
+                tooFewArguments(args);
+            } else if ( args.length < 9 ) {
+                Security.addProvider( new BouncyCastleProvider() );
+                final X509Certificate cert = (X509Certificate)CertificateFactory.getInstance("X.509").generateCertificate(new BufferedInputStream(new FileInputStream(args[6])));
+                CMS.encrypt(new FileInputStream(args[2]), new FileOutputStream(args[5]), cert);
+            } else {
+                KeyStoreContainerFactory.getInstance(args[4], args[2], args[3], args[5], null, null).encrypt(new FileInputStream(args[6]), new FileOutputStream(args[7]), args[8]);
+            }
+            return true;
+        }
+        if ( args[1].toLowerCase().trim().equals(DECRYPT_SWITCH)) {
+            if ( args.length < 9 ) {
+                System.err.println(commandString + '<'+getKeyStoreDescription()+'>' + " <input file> <output file> <key alias>");
+                tooFewArguments(args);
+            } else {
+                KeyStoreContainerFactory.getInstance(args[4], args[2], args[3], args[5], null, null).decrypt(new FileInputStream(args[6]), new FileOutputStream(args[7]), args[8]);
+            }
+            return true;
+        }
+        if ( args[1].toLowerCase().trim().equals(SIGN_SWITCH)) {
+            if ( args.length < 9 ) {
+                System.err.println(commandString + '<'+getKeyStoreDescription()+'>' + " <input file> <output file> <key alias>");
+                tooFewArguments(args);
+            } else {
+                KeyStoreContainerFactory.getInstance(args[4], args[2], args[3], args[5], null, null).sign(new FileInputStream(args[6]), new FileOutputStream(args[7]), args[8]);
+            }
+            return true;
+        }
+        if ( args[1].toLowerCase().trim().equals(VERIFY_SWITCH)) {
+            final CMS.VerifyResult verifyResult;
+            if ( args.length < 7 ) {
+                System.err.println("There are two ways of doing the encryption:");
+                System.err.println(commandString + '<'+getKeyStoreDescription()+'>' + " <input file> <output file> <key alias>");
+                System.err.println(commandStringNoSharedLib + "<input file> <output file> <file with certificate with public key to use>");
+                tooFewArguments(args);
+                return true;
+            } else if ( args.length < 9 ) {
+                Security.addProvider( new BouncyCastleProvider() );
+                final X509Certificate cert = (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(new BufferedInputStream(new FileInputStream(args[6])));
+                verifyResult = CMS.verify(new FileInputStream(args[2]), new FileOutputStream(args[5]), cert);
+            } else {
+                verifyResult = KeyStoreContainerFactory.getInstance(args[4], args[2], args[3], args[5], null, null).verify(new FileInputStream(args[6]), new FileOutputStream(args[7]), args[8]);
+            }
+            if ( verifyResult==null ) {
+                System.out.println("Not possible to parse signed file.");
+                System.exit(4); // Not verifying
+            }
+            System.out.println("The signature of the input " +(verifyResult.isVerifying?"has been":"could not be")+" verified. The file was signed on '"+verifyResult.signDate+"'. The public part of the signing key is in a certificate with serial number "+verifyResult.signerId.getSerialNumber()+" issued by '"+verifyResult.signerId.getIssuer()+"'.");
+            if ( !verifyResult.isVerifying ) {
+                System.exit(4); // Not verifying
+            }
+            return true;
+        }
+        if ( args[1].toLowerCase().trim().equals(TEST_SWITCH)) {
+            if ( args.length < 6 ) {
+                System.err.println(commandString + '<'+getKeyStoreDescription()+'>' + " [<# of tests or threads>] [<alias for stress test>] [<type of stress test>]");
+                tooFewArguments(args);
+            } else {
+                KeyStoreContainerTest.test(args[2], args[3], args[4], args[5],
+                                           args.length>6 ? Integer.parseInt(args[6].trim()) : 1, args.length>7 ? args[7].trim() : null, args.length>8 ? args[8].trim() : null);
+            }
+            return true;
+        }
+        if ( args[1].toLowerCase().trim().equals(RENAME)) {
+            if ( args.length < 8 ) {
+                System.err.println(commandString + '<'+getKeyStoreDescription()+'>' + " <old key alias> <new key alias>");
+                tooFewArguments(args);
+            } else {
+                KeyStoreContainerFactory.getInstance(args[4], args[2], args[3], args[5], null, null).renameAlias(args[6], args[7]);
+            }
+            return true;
+        }
+        if ( args[1].toLowerCase().trim().equals(MOVE_SWITCH)) {
+            if ( args.length < 7 ) {
+                System.err.println(commandString + "<from "+getKeyStoreDescription()+"> <to "+getKeyStoreDescription()+'>');
+                tooFewArguments(args);
+            } else {
+                String fromId = args[5];                    
+                String toId = args[6];
+                System.err.println("Moving entry with alias '"+fromId+"' to alias '"+toId+'.');
+                KeyStoreContainerBase.move(args[2], args[3], args[4], fromId, toId, null);
+            }
+            return true;
+        }
+        if ( doCreateKeyStore() && args[1].toLowerCase().trim().contains(CREATE_KEYSTORE_SWITCH)) {
             if( args[1].toLowerCase().trim().contains(CREATE_KEYSTORE_MODULE_SWITCH)) {
                 setModuleProtection();
             }
             KeyStoreContainerFactory.getInstance(args[4], args[2], args[3], null, null, null).storeKeyStore();
-            return;
+            return true;
         }
+        return false;
     }
     /* (non-Javadoc)
      * @see org.ejbca.ui.cli.ClientToolBox#execute(java.lang.String[])
@@ -105,102 +281,8 @@ public class HSMKeyTool extends ClientToolBox {
     @Override
     public void execute(String[] args) {
         try {
-            final String commandString = args.length>1 ? args[0]+" "+args[1]+" "+getProviderParameterDescription()+" " : null;
-            /*if ( args.length > 1 && args[1].toLowerCase().trim().equals(CREATE_CA_SWITCH)) {
-                try {
-                    new HwCaInitCommand(args).execute();
-                } catch (Exception e) {
-                    System.out.println(e.getMessage());            
-                    //e.printStackTrace();
-                    System.exit(-1);
-                }
-                return;
-            } else */
-            if ( args.length > 1 && args[1].toLowerCase().trim().contains(GENERATE_SWITCH) ) {
-                if ( args.length < 6 ) {
-                    System.err.println(commandString + "<all decimal digits RSA key with specified length, otherwise name of ECC curve or DSA key using syntax DSAnnnn> <key entry name> " + '['+'<'+getKeyStoreDescription()+'>'+']');
-                    generateComment();
-                } else {
-                    if ( args[1].toLowerCase().trim().contains(GENERATE_MODULE_SWITCH) ) {
-                        setModuleProtection();
-                    }
-                    KeyStoreContainer store = KeyStoreContainerFactory.getInstance(args[4], args[2], args[3], args.length>7 ? args[7] : null, null, null);
-                    String keyEntryName = args.length>6 ? args[6] :"myKey";
-                    store.generate(args[5], keyEntryName);
-                    System.err.println("Created certificate with entry "+keyEntryName+'.');
-                }
-                return;
-            } else if ( args.length > 1 && args[1].toLowerCase().trim().equals(DELETE_SWITCH)) {
-                if ( args.length < 6 ) {
-                    System.err.println(commandString + '<'+getKeyStoreDescription()+'>' + " [<key entry name>]");
-                } else {
-                	String alias = args.length>6 ? args[6] : null;
-                    System.err.println("Deleting certificate with alias "+alias+'.');
-                    KeyStoreContainerFactory.getInstance(args[4], args[2], args[3], args[5], null, null).delete(alias);
-                }
-                return;
-            } else if ( args.length > 1 && args[1].toLowerCase().trim().equals(CERT_REQ)) {
-                if ( args.length < 7 ) {
-                    System.err.println(commandString + '<'+getKeyStoreDescription()+'>' + " <key entry name> [<CN>]");
-                } else {
-                    KeyStoreContainerFactory.getInstance(args[4], args[2], args[3], args[5], null, null).generateCertReq(args[6], args.length>7 ? args[7] : null);
-                }
-                return;
-            } else if ( args.length > 1 && args[1].toLowerCase().trim().equals(INSTALL_CERT)) {
-                if ( args.length < 7 ) {
-                    System.err.println(commandString + '<'+getKeyStoreDescription()+'>' + " <certificate chain in PEM format>");
-                } else {
-                    KeyStoreContainerFactory.getInstance(args[4], args[2], args[3], args[5], null, null).installCertificate(args[6]);
-                }
-                return;
-            } else if ( args.length > 1 && args[1].toLowerCase().trim().equals(INSTALL_TRUSTED_ROOT)) {
-                if ( args.length < 7 ) {
-                    System.err.println(commandString + '<'+getKeyStoreDescription()+'>' + " <trusted root certificate in PEM format>");
-                } else {
-                    KeyStoreContainerFactory.getInstance(args[4], args[2], args[3], args[5], null, null).installTrustedRoot(args[6]);
-                }
-                return;
-            } else if ( args.length > 1 && args[1].toLowerCase().trim().equals(ENCRYPT_SWITCH)) {
-                if ( args.length < 9 ) {
-                    System.err.println(commandString + '<'+getKeyStoreDescription()+'>' + " <input file> <output file> <key alias>");
-                } else {
-                    KeyStoreContainerFactory.getInstance(args[4], args[2], args[3], args[5], null, null).encrypt(new FileInputStream(args[6]), new FileOutputStream(args[7]), args[8]);
-                }
-                return;
-            } else if ( args.length > 1 && args[1].toLowerCase().trim().equals(DECRYPT_SWITCH)) {
-                if ( args.length < 9 ) {
-                    System.err.println(commandString + '<'+getKeyStoreDescription()+'>' + " <input file> <output file> <key alias>");
-                } else {
-                    KeyStoreContainerFactory.getInstance(args[4], args[2], args[3], args[5], null, null).decrypt(new FileInputStream(args[6]), new FileOutputStream(args[7]), args[8]);
-                }
-                return;
-            } else if( args.length > 1 && args[1].toLowerCase().trim().equals(TEST_SWITCH)) {
-                if ( args.length < 6 ) {
-                    System.err.println(commandString + '<'+getKeyStoreDescription()+'>' + " [<# of tests or threads>] [<alias for stress test>] [<type of stress test>]");
-                } else {
-                    KeyStoreContainerTest.test(args[2], args[3], args[4], args[5],
-                                               args.length>6 ? Integer.parseInt(args[6].trim()) : 1, args.length>7 ? args[7].trim() : null, args.length>8 ? args[8].trim() : null);
-                }
-                return;
-            } else if( args.length > 1 && args[1].toLowerCase().trim().equals(RENAME)) {
-                if ( args.length < 8 ) {
-                    System.err.println(commandString + '<'+getKeyStoreDescription()+'>' + " <old key alias> <new key alias>");
-                } else {
-                    KeyStoreContainerFactory.getInstance(args[4], args[2], args[3], args[5], null, null).renameAlias(args[6], args[7]);
-                }
-                return;
-            } else if( args.length > 1 && args[1].toLowerCase().trim().equals(MOVE_SWITCH)) {
-                if ( args.length < 7 ) {
-                    System.err.println(commandString + "<from "+getKeyStoreDescription()+"> <to "+getKeyStoreDescription()+'>');
-                } else {
-                	String fromId = args[5];                	
-                	String toId = args[6];
-                    System.err.println("Moving entry with alias '"+fromId+"' to alias '"+toId+'.');
-                    KeyStoreContainerBase.move(args[2], args[3], args[4], fromId, toId, null);
-                }
-                return;
-            } else {
-                createKeyStore(args);
+            if ( args.length>1 && doIt(args)) {
+                return; // command was found.
             }
             PrintWriter pw = new PrintWriter(System.err);
             pw.println("Use one of following commands: ");
@@ -222,10 +304,16 @@ public class HSMKeyTool extends ClientToolBox {
             }
             pw.println("  "+args[0]+" "+ENCRYPT_SWITCH);
             pw.println("  "+args[0]+" "+DECRYPT_SWITCH);
+            pw.println("  "+args[0]+" "+SIGN_SWITCH);
+            pw.println("  "+args[0]+" "+VERIFY_SWITCH);
             pw.println("  "+args[0]+" "+MOVE_SWITCH);
             pw.flush();
+            log.error("Command '"+commandString(args)+"' not found.");
+            System.exit(1); // Command not found.
         } catch (Throwable e) {
-            e.printStackTrace(System.err);
+            System.err.println("Command could not be executed. See log for stack trace.");
+            log.error("Command '"+commandString(args)+"' could not be executed.", e);
+            System.exit(2); // Command did not execute OK!
         }
     }
     /* (non-Javadoc)
