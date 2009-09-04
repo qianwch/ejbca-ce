@@ -55,10 +55,15 @@ public abstract class UpgradeableDataHashMap implements IUpgradeableData, java.i
     /**
      * Function returning the current version of the class data.
      *
-     * @return DOCUMENT ME!
+     * @return float value from the field VERSION in the hashmap, or -1 if no VERSION value exists.
      */
     public float getVersion() {
-        return ((Float) data.get(VERSION)).floatValue();
+    	float ret = -1;
+    	Object o = data.get(VERSION);
+    	if (o != null) {
+    		ret = ((Float)o).floatValue();
+    	}
+        return ret;
     }
 
     /**
