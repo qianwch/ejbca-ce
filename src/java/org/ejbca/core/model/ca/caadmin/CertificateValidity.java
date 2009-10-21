@@ -25,7 +25,7 @@ import org.ejbca.core.model.ca.certificateprofiles.CertificateProfile;
 import org.ejbca.core.model.ra.ExtendedInformation;
 import org.ejbca.core.model.ra.UserDataVO;
 import org.ejbca.util.CertTools;
-import org.ejbca.util.StringTools;
+import org.ejbca.util.ValidityDate;
 
 public class CertificateValidity {
 
@@ -47,7 +47,7 @@ public class CertificateValidity {
         	log.warn("Using default value for ca.toolateexpiredate because it has not been replaced in CertificateValidity.java.");
             tooLateExpireDate = new Date(Long.MAX_VALUE);        	
         } else {
-            tooLateExpireDate = StringTools.getDateFromString(sDate);
+            tooLateExpireDate = ValidityDate.getDateFromString(sDate);
         	log.debug("tooLateExpireData is set to: "+tooLateExpireDate);
         }
     }
@@ -125,8 +125,8 @@ public class CertificateValidity {
         if (firstDate == null) {
         	firstDate = now;
         }
-        long val = certProfile.getValidity();        
-        Date certProfileLastDate = new Date(firstDate.getTime() + ( val * 24 * 60 * 60 * 1000));
+        final long val = certProfile.getValidity();        
+        Date certProfileLastDate = ValidityDate.getDate(val,firstDate);
         if (lastDate == null) {
         	lastDate = certProfileLastDate;
         }
@@ -144,7 +144,7 @@ public class CertificateValidity {
 			log.error(intres.getLocalizedMessage("signsession.errorbeforecurrentdate",firstDate,subject.getUsername()));
     		firstDate = now;
     		// Update valid length from the profile since the starting point has changed
-			certProfileLastDate = new Date(firstDate.getTime() + ( val * 24 * 60 * 60 * 1000));
+			certProfileLastDate = ValidityDate.getDate(val,firstDate);
     		// Update lastDate if we use maximum validity
     		if (lastDate.equals(certProfileLastDate)) {
     			lastDate = certProfileLastDate;
