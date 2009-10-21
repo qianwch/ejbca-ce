@@ -25,7 +25,6 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Locale;
 
-import javax.ejb.CreateException;
 import javax.ejb.EJBException;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -285,6 +284,11 @@ public class EjbcaWebBean implements java.io.Serializable {
     /** Return the admins selected theme including it's trailing '.css' */
     public String getCssFile(){
       return globalconfiguration.getAdminWebPath() + globalconfiguration.getThemePath() + "/" + currentadminpreference.getTheme() + ".css";
+    }
+
+    /** Return the IE fixes CSS of the admins selected theme including it's trailing '.css' */
+    public String getIeFixesCssFile(){
+      return globalconfiguration.getAdminWebPath() + globalconfiguration.getThemePath() + "/" + currentadminpreference.getTheme() + globalconfiguration.getIeCssFilenamePostfix() + ".css";
     }
 
     /** Returns the admins prefered language */

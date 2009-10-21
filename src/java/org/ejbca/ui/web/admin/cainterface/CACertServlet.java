@@ -71,7 +71,7 @@ import org.ejbca.util.CertTools;
  * @web.env-entry description="Defines the available themes by css-filenames separated with a comma"
  *   name="AVAILABLETHEMES"
  *   type="java.lang.String"
- *   value="default_theme.css"
+ *   value="default_theme.css,second_theme.css"
  * 
  * @web.env-entry description="Port used by EJBCA public webcomponents. i.e that doesn't require client authentication"
  *   name="PUBLICPORT"
