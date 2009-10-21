@@ -28,6 +28,8 @@ import org.ejbca.core.ejb.ca.store.CertificateData;
 /**
  * Injects different kind of errors in the OCSP responder "ocsp1" and tries to detect them
  * by calling the OCSP monitoring tool.
+ *
+ * @version $Id$
  */
 public class TestOcspMonitoringTool extends TestCase {
 
