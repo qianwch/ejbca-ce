@@ -245,7 +245,7 @@ public abstract class CADataBean extends BaseEntityBean {
         boolean isUpdated = false;
         if (ca != null) {
         	if (log.isDebugEnabled()) {
-        		log.debug("found CA ('"+ca.getName()+"', "+getCaId().intValue()+") in cache.");
+        		log.debug("Found CA ('"+ca.getName()+"', "+getCaId().intValue()+") in cache.");
         	}
         	long update = ca.getCAInfo().getUpdateTime().getTime();
         	long t = getUpdateTime();
