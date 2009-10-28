@@ -1184,7 +1184,7 @@ throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, Approva
     			// Reset remaining login counter
     			resetRemainingLoginAttempts(admin, username);
     		} else {
-    			log.debug("Status not chaning from something else to new, not resetting requestCounter.");
+    			log.debug("Status not changing from something else to new, not resetting requestCounter.");
     		}
             data1.setStatus(status);
             data1.setTimeModified((new java.util.Date()).getTime());
