@@ -13,16 +13,15 @@
  
 package org.ejbca.ui.cli;
 
-import java.security.PublicKey;
-import java.security.cert.X509Certificate;
-import java.security.interfaces.DSAPublicKey;
-import java.security.interfaces.RSAPublicKey;
+import java.security.cert.Certificate;
+import java.security.interfaces.ECPublicKey;
 import java.util.ArrayList;
 
 import org.bouncycastle.jce.provider.JCEECPublicKey;
 import org.bouncycastle.jce.spec.ECNamedCurveSpec;
 import org.ejbca.core.model.ca.caadmin.CAInfo;
 import org.ejbca.util.CertTools;
+import org.ejbca.util.keystore.KeyTools;
 
 
 
@@ -58,11 +57,12 @@ public class CaInfoCommand extends BaseCaAdminCommand {
             CAInfo cainfo = getCAInfo(caname);
                                     
             getOutputStream().println("CA name: " + caname);
+            getOutputStream().println("CA type: "+cainfo.getCAType());
             getOutputStream().println("CA ID: " + cainfo.getCAId());
             getOutputStream().println("CA CRL Expiration Period: " + cainfo.getCRLPeriod());
             getOutputStream().println("CA CRL Issue Interval: " + cainfo.getCRLIssueInterval());
             getOutputStream().println("CA Description: " + cainfo.getDescription());
-            getOutputStream().println("\n");
+            getOutputStream().println();
             
             if (chain.size() < 2) {
               getOutputStream().println("This is a Root CA.");
@@ -72,33 +72,30 @@ public class CaInfoCommand extends BaseCaAdminCommand {
               
             getOutputStream().println("Size of chain: " + chain.size());
             if (chain.size() > 0) {
-                X509Certificate rootcert = (X509Certificate)chain.get(chain.size()-1);
+                Certificate rootcert = (Certificate)chain.get(chain.size()-1);
                 getOutputStream().println("Root CA DN: "+CertTools.getSubjectDN(rootcert));
                 getOutputStream().println("Root CA id: "+CertTools.getSubjectDN(rootcert).hashCode());
-                getOutputStream().println("Certificate valid from: "+rootcert.getNotBefore().toString());
-                getOutputStream().println("Certificate valid to: "+rootcert.getNotAfter().toString());
-                if(rootcert.getPublicKey() instanceof JCEECPublicKey) {
-                	if(((JCEECPublicKey) rootcert.getPublicKey()).getParams() instanceof ECNamedCurveSpec) {
-                		getOutputStream().println("Root CA ECDSA key spec: " + ((ECNamedCurveSpec) ((JCEECPublicKey) 
-rootcert.getPublicKey()).getParams()).getName());
+                getOutputStream().println("Certificate valid from: "+CertTools.getNotBefore(rootcert));
+                getOutputStream().println("Certificate valid to: "+CertTools.getNotAfter(rootcert));
+            	getOutputStream().println("Root CA key algorithm: "+rootcert.getPublicKey().getAlgorithm());
+            	getOutputStream().println("Root CA key size: "+KeyTools.getKeyLength(rootcert.getPublicKey()));
+                if(rootcert.getPublicKey() instanceof ECPublicKey) {
+                	if(((ECPublicKey) rootcert.getPublicKey()).getParams() instanceof ECNamedCurveSpec) {
+                		getOutputStream().println("Root CA ECDSA key spec: " + ((ECNamedCurveSpec) ((ECPublicKey)rootcert.getPublicKey()).getParams()).getName());
                 	}
-                } else {
-                	getOutputStream().println("Root CA keysize: "+getKeyLength(rootcert.getPublicKey()));
                 }
                 for(int i = chain.size()-2; i>=0; i--){                                          
-                    X509Certificate cacert = (X509Certificate)chain.get(i);
+                    Certificate cacert = (Certificate)chain.get(i);
                     getOutputStream().println("CA DN: "+CertTools.getSubjectDN(cacert));
-                    getOutputStream().println("Certificate valid from: "+cacert.getNotBefore().toString());
-                    getOutputStream().println("Certificate valid to: "+cacert.getNotAfter().toString());
-                    if(cacert.getPublicKey() instanceof JCEECPublicKey) {
-                    	if(((JCEECPublicKey) cacert.getPublicKey()).getParams() instanceof ECNamedCurveSpec) {
-                    		getOutputStream().println("CA ECDSA key spec: " + ((ECNamedCurveSpec) ((JCEECPublicKey) 
-cacert.getPublicKey()).getParams()).getName());
+                    getOutputStream().println("Certificate valid from: "+CertTools.getNotBefore(cacert));
+                    getOutputStream().println("Certificate valid to: "+CertTools.getNotAfter(cacert));
+                	getOutputStream().println("CA key algorithm: "+cacert.getPublicKey().getAlgorithm());
+                	getOutputStream().println("CA key size: "+KeyTools.getKeyLength(cacert.getPublicKey()));
+                    if(cacert.getPublicKey() instanceof ECPublicKey) {
+                    	if(((ECPublicKey) cacert.getPublicKey()).getParams() instanceof ECNamedCurveSpec) {
+                    		getOutputStream().println("CA ECDSA key spec: " + ((ECNamedCurveSpec) ((ECPublicKey)cacert.getPublicKey()).getParams()).getName());
                     	}
-                    } else {
-                    	getOutputStream().println("CA keysize: "+getKeyLength(rootcert.getPublicKey()));
                     }
-
                 }                
             }
         } catch (Exception e) {
@@ -106,12 +103,4 @@ cacert.getPublicKey()).getParams()).getName());
         }
     } // execute
     
-    private static int getKeyLength(PublicKey key) {
-    	if(key instanceof RSAPublicKey) {
-    		return ((RSAPublicKey) key).getModulus().bitLength();
-    	} else if(key instanceof DSAPublicKey) {
-    		return ((DSAPublicKey) key).getY().bitLength();
-    	}
-    	return 0;
-    } // getKeyLength
 }
