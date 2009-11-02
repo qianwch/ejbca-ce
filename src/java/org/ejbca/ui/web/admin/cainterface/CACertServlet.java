@@ -335,7 +335,6 @@ public class CACertServlet extends HttpServlet {
                     log.debug("Sent CA cert to NS client, len="+enccert.length+".");
                 } else if (command.equalsIgnoreCase(COMMAND_IECACERT)) {
                 	String ending = "crt";
-                	System.out.println(cacert.getClass().getName());
                 	if (cacert instanceof CardVerifiableCertificate) {
                 		ending = "cvcert";
                 	}
