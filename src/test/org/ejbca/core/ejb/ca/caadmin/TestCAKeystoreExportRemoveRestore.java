@@ -30,6 +30,7 @@ import org.ejbca.core.model.ca.catoken.CATokenOfflineException;
 import org.ejbca.core.model.ca.catoken.ICAToken;
 import org.ejbca.core.model.ca.catoken.SoftCATokenInfo;
 import org.ejbca.core.model.log.Admin;
+import org.ejbca.util.CertTools;
 
 /**
  * Tests for the Soft catoken removal functionality.
@@ -50,6 +51,7 @@ public class TestCAKeystoreExportRemoveRestore extends TestCase  {
     
     public TestCAKeystoreExportRemoveRestore(String name) {
         super(name);
+        CertTools.installBCProviderIfNotAvailable();
     }
     
     /**
