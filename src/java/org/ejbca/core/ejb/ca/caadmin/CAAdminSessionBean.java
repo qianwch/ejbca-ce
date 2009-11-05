@@ -1325,7 +1325,9 @@ public class CAAdminSessionBean extends BaseSessionBean {
     } // recieveResponse
 
     /**
-     *  Processes a Certificate Request from an external CA.
+     * Processes a Certificate Request from an external CA.
+     *  
+     * @param cainfo the info for the CA that should be created, or already exists. Don't forget to set signedBy in the info.
      *   
      * @ejb.interface-method
      */
