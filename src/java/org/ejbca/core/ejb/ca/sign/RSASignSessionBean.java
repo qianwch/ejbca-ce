@@ -1265,13 +1265,14 @@ public class RSASignSessionBean extends BaseSessionBean {
      */
     public void publishCACertificate(Admin admin, Collection certificatechain, Collection usedpublishers) {
         try {
-
             ICertificateStoreSessionLocal certificateStore = storeHome.create();
 
-            Iterator certificates = certificatechain.iterator();
-            while (certificates.hasNext()) {
-                Certificate cert = (Certificate)certificates.next();
+            Object[] certs = certificatechain.toArray();
+            for (int i = 0; i < certs.length; i++) {
+				Certificate cert = (Certificate)certs[i];
                 String fingerprint = CertTools.getFingerprintAsString(cert);
+                // CA fingerprint, figure out the value if this is not a root CA
+                String cafp = fingerprint;
                 // Calculate the certtype
                 boolean isSelfSigned = CertTools.isSelfSigned(cert);
                 int type = CertificateDataBean.CERTTYPE_ENDENTITY;
@@ -1281,10 +1282,21 @@ public class RSASignSessionBean extends BaseSessionBean {
                 		type = CertificateDataBean.CERTTYPE_ROOTCA;
                 	} else {
                 		type = CertificateDataBean.CERTTYPE_SUBCA;
+                		// If not a root CA, the next certificate in the chain should be the CA of this CA
+                		if ((i+1) < certs.length) {
+                			Certificate cacert = (Certificate)certs[i+1]; 
+                			cafp = CertTools.getFingerprintAsString(cacert);
+                		}
                 	}                		
                 } else if (isSelfSigned) {
                 	// If we don't have basic constraints, but is self signed, we are still a CA, just a stupid CA
                 	type = CertificateDataBean.CERTTYPE_ROOTCA;
+                } else {
+            		// If and end entity, the next certificate in the chain should be the CA of this end entity
+            		if ((i+1) < certs.length) {
+            			Certificate cacert = (Certificate)certs[i+1]; 
+            			cafp = CertTools.getFingerprintAsString(cacert);
+            		}
                 }
                 
                 String name = "SYSTEMCERT";
@@ -1298,7 +1310,7 @@ public class RSASignSessionBean extends BaseSessionBean {
                 CertificateInfo ci = certificateStore.getCertificateInfo(admin, fingerprint);
                 if (ci == null) {
                 	// If we don't have it in the database, store it setting certificateProfileId = 0 and tag = null
-                    certificateStore.storeCertificate(admin, cert, name, fingerprint, CertificateDataBean.CERT_ACTIVE, type, profileId, tag, updateTime);
+                    certificateStore.storeCertificate(admin, cert, name, cafp, CertificateDataBean.CERT_ACTIVE, type, profileId, tag, updateTime);
                 } else {
                 	updateTime = ci.getUpdateTime().getTime();
                 	profileId = ci.getCertificateProfileId();
@@ -1307,7 +1319,7 @@ public class RSASignSessionBean extends BaseSessionBean {
                 // Store cert in ca cert publishers.
                 IPublisherSessionLocal pub = publishHome.create();
                 if (usedpublishers != null) {
-                    pub.storeCertificate(admin, usedpublishers, cert, fingerprint, null, fingerprint, CertificateDataBean.CERT_ACTIVE, type, -1, RevokedCertInfo.NOT_REVOKED, tag, profileId, updateTime, null);                	
+                    pub.storeCertificate(admin, usedpublishers, cert, cafp, null, fingerprint, CertificateDataBean.CERT_ACTIVE, type, -1, RevokedCertInfo.NOT_REVOKED, tag, profileId, updateTime, null);                	
                 }
             }
         } catch (javax.ejb.CreateException ce) {
