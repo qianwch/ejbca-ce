@@ -464,6 +464,7 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
     			ps.setInt(2, CertificateDataBean.CERT_REVOKED);            	
     		}
     		result = ps.executeQuery();
+    		trace("listRevokedCertInfo(): query done");
     		ArrayList vect = new ArrayList();
     		while (result.next()) {
     			String fp = result.getString(1);
