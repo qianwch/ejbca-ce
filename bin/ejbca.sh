@@ -40,8 +40,6 @@ elif [ "$1" = "hardtoken" ] ; then
 elif [ "$1" = "template" ] ; then
 	JAR_DIR=${EJBCA_HOME}/lib/batik
 	class_name=org.ejbca.ui.cli.SVGTemplatePrinter
-elif [ "$1" = "ocsp" ] ; then
-	class_name=org.ejbca.ui.cli.Ocsp
 elif [ "$1" = "asn1dump" ] ; then
 	class_name=org.ejbca.ui.cli.Asn1Dump
 elif [ "$1" = "encryptpwd" ] ; then
@@ -53,7 +51,7 @@ elif [ "$1" = "admins" ] ; then
 elif [ "$1" = "createcert" ] ; then
 	class_name=org.ejbca.ui.cli.CreateCert
 else
-	echo "Usage: $0 [batch|ca|ra|setup|hardtoken|template|ocsp|asn1dump|encryptpwd|log|admins|createcert] options"
+	echo "Usage: $0 [batch|ca|ra|setup|hardtoken|template|asn1dump|encryptpwd|log|admins|createcert] options"
 	echo "For options information, specify a command directive"
 	exit 1
 fi
