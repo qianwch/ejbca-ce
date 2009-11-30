@@ -1,10 +1,9 @@
 @echo off
 rem Starting ctb using a Windows .BAT file
-rem set TOOLBOX_HOME=.
-set TOOLBOX_HOME=%EJBCA_HOME%\clientToolBox-dist
-set CLASSES=%TOOLBOX_HOME%\clientToolBox.jar
+set TOOLBOX_HOME=%~dp0
+set CLASSES=%TOOLBOX_HOME%clientToolBox.jar
 SETLOCAL ENABLEDELAYEDEXPANSION
-FOR %%J IN ("%TOOLBOX_HOME%\lib\*.jar") DO set CLASSES=!CLASSES!;%%J
+FOR %%J IN ("%TOOLBOX_HOME%lib\*.jar") DO set CLASSES=!CLASSES!;%%J
 
 rem Fixup arguments, we have to do this since windows normally only 
 rem supports %1-%9 as command line arguments
@@ -21,4 +20,4 @@ shift
 set j=%9
 rem echo %a% %b% %c% %d% %e% %f% %g% %h% %i% %j%
 
-java -Djava.endorsed.dirs=%TOOLBOX_HOME%\endorsed -cp %CLASSES% org.ejbca.ui.cli.ClientToolBox %a% %b% %c% %d% %e% %f% %g% %h% %i% %j%
+java -Djava.endorsed.dirs=%TOOLBOX_HOME%endorsed -cp %CLASSES% org.ejbca.ui.cli.ClientToolBox %a% %b% %c% %d% %e% %f% %g% %h% %i% %j%
