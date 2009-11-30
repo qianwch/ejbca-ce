@@ -20,4 +20,4 @@ shift
 set j=%9
 rem echo %a% %b% %c% %d% %e% %f% %g% %h% %i% %j%
 
-java -Djava.endorsed.dirs=%TOOLBOX_HOME%endorsed -cp %CLASSES% org.ejbca.ui.cli.ClientToolBox %a% %b% %c% %d% %e% %f% %g% %h% %i% %j%
+java -Djava.endorsed.dirs="%TOOLBOX_HOME%endorsed" -cp "%CLASSES%" org.ejbca.ui.cli.ClientToolBox %a% %b% %c% %d% %e% %f% %g% %h% %i% %j%
