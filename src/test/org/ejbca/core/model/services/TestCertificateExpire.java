@@ -22,16 +22,15 @@ import java.util.Random;
 import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
+import org.ejbca.core.ejb.ca.store.CertificateDataBean;
 import org.ejbca.core.ejb.ca.store.ICertificateStoreSessionRemote;
 import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.ca.store.CertificateInfo;
 import org.ejbca.core.model.log.Admin;
-import org.ejbca.core.model.ra.UserDataConstants;
-import org.ejbca.core.model.ra.UserDataVO;
 import org.ejbca.core.model.services.actions.NoAction;
 import org.ejbca.core.model.services.intervals.PeriodicalInterval;
-import org.ejbca.core.model.services.workers.EmailSendingWorker;
 import org.ejbca.core.model.services.workers.CertificateExpirationNotifierWorker;
+import org.ejbca.core.model.services.workers.EmailSendingWorker;
 import org.ejbca.util.CertTools;
 import org.ejbca.util.TestTools;
 import org.ejbca.util.keystore.KeyTools;
@@ -121,7 +120,7 @@ public class TestCertificateExpire extends TestCase {
         assertEquals("issuerdn does not match.",CertTools.getIssuerDN(cert),info.getIssuerDN());
         assertEquals("subjectdn does not match.",CertTools.getSubjectDN(cert),info.getSubjectDN());
         // The cert was just stored above with status INACTIVE
-        assertEquals("status does not match.",SecConst.CERT_ACTIVE,info.getStatus());   
+        assertEquals("status does not match.",CertificateDataBean.CERT_ACTIVE,info.getStatus());   
         long seconds = (cert.getNotAfter().getTime() - new Date ().getTime())/1000l;
         log.debug("ceritificate OK in store, expires in " + seconds + " seconds");
 	    
@@ -153,12 +152,12 @@ public class TestCertificateExpire extends TestCase {
         // The service will run...
         Thread.sleep(5000);
         info = certificateStoreSession.getCertificateInfo(admin, fp);
-        assertEquals("status does not match.",SecConst.CERT_ACTIVE,info.getStatus());   
+        assertEquals("status does not match.",CertificateDataBean.CERT_ACTIVE,info.getStatus());   
        
         // The service will run...since there is a random delay of 30 seconds we have to wait a long time
         Thread.sleep(35000);
         info = certificateStoreSession.getCertificateInfo(admin, fp);
-        assertEquals("status does not match.",SecConst.CERT_NOTIFIEDABOUTEXPIRATION,info.getStatus());   
+        assertEquals("status does not match.",CertificateDataBean.CERT_NOTIFIEDABOUTEXPIRATION,info.getStatus());   
         
      
         log.trace("<test01CreateNewUser()");

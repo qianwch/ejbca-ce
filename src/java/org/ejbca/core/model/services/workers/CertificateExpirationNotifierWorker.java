@@ -24,10 +24,10 @@ import java.util.Iterator;
 import org.apache.log4j.Logger;
 import org.ejbca.core.ejb.JNDINames;
 import org.ejbca.core.ejb.ServiceLocator;
+import org.ejbca.core.ejb.ca.store.CertificateDataBean;
 import org.ejbca.core.ejb.ca.store.ICertificateStoreSessionLocal;
 import org.ejbca.core.ejb.ca.store.ICertificateStoreSessionLocalHome;
 import org.ejbca.core.model.InternalResources;
-import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.ca.caadmin.CAInfo;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.model.ra.UserDataVO;
@@ -137,10 +137,10 @@ public class CertificateExpirationNotifierWorker extends EmailSendingWorker {
 					+ cASelectString + ") AND "
 					+ "(expireDate > " + now + ") AND"
                     + "(expireDate < " + (nextRunTimestamp + thresHold) + ") AND "
-                    + "(status = " + SecConst.CERT_ACTIVE +" OR status = " + 
-                       SecConst.CERT_NOTIFIEDABOUTEXPIRATION + ") AND " 
+                    + "(status = " + CertificateDataBean.CERT_ACTIVE +" OR status = " + 
+                    CertificateDataBean.CERT_NOTIFIEDABOUTEXPIRATION + ") AND " 
                     + "(expireDate >= " + (currRunTimestamp + thresHold) + " OR " +
-                       "status = " + SecConst.CERT_ACTIVE +	")";
+                       "status = " + CertificateDataBean.CERT_ACTIVE +	")";
 				log.debug("Executing search sql: "+sqlstr);
 				ps = con.prepareStatement(sqlstr);            
 				
@@ -193,7 +193,7 @@ public class CertificateExpirationNotifierWorker extends EmailSendingWorker {
 					if(!isSendToEndUsers() && !isSendToAdmins()){
 						// a little bit of a kludge to make JUnit testing feasible...
 						log.debug("nobody to notify for cert with fp:" + fingerprint);
-						updateStatus(fingerprint, SecConst.CERT_NOTIFIEDABOUTEXPIRATION );
+						updateStatus(fingerprint, CertificateDataBean.CERT_NOTIFIEDABOUTEXPIRATION );
 					}	
 				}
 				if (count == 0) {
