@@ -2662,7 +2662,9 @@ substitution variables be used defined in the 'Email Notifications' section.
 </li>
 </ul>
 </p>
-
+<p>Note: you may configure <i>multiple</i> certificate expiration services set with different
+<i>Time before notification is sent</i> values in order to further alert the user or administrator
+that a certificate is about to expire.</p>
 <p><b>User Password Expire Service</b></p>
 <p>
 A worker that checks if a user has not enrolled for a new certificate within a specified amount of time
