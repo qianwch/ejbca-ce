@@ -245,8 +245,8 @@ public class TestPublisher extends TestCase {
         Certificate cert = CertTools.getCertfromByteArray(testcert);
         ArrayList publishers = new ArrayList();
         publishers.add(new Integer(TestTools.getPublisherSession().getPublisherId(admin, "TESTNEWDUMMYCUSTOM")));
-        
-        boolean ret = TestTools.getPublisherSession().storeCertificate(new Admin(Admin.TYPE_INTERNALUSER), publishers, cert, "test05", "foo123", null, CertificateDataBean.CERT_ACTIVE, CertificateDataBean.CERTTYPE_ENDENTITY, -1, RevokedCertInfo.NOT_REVOKED, "foo", SecConst.CERTPROFILE_FIXED_ENDUSER, new Date().getTime(), null);
+
+        boolean ret = TestTools.getPublisherSession().storeCertificate(new Admin(Admin.TYPE_INTERNALUSER), publishers, cert, "test05", "foo123", null, null, CertificateDataBean.CERT_ACTIVE, CertificateDataBean.CERTTYPE_ENDENTITY, -1, RevokedCertInfo.NOT_REVOKED, "foo", SecConst.CERTPROFILE_FIXED_ENDUSER, new Date().getTime(), null);
         assertTrue("Storing certificate to dummy publisher failed", ret);
         log.trace("<test07StoreCertToDummyr()");
     }
@@ -261,7 +261,7 @@ public class TestPublisher extends TestCase {
         
         ArrayList publishers = new ArrayList();
         publishers.add(new Integer(TestTools.getPublisherSession().getPublisherId(admin, "TESTNEWDUMMYCUSTOM")));
-        boolean ret = TestTools.getPublisherSession().storeCRL(admin, publishers, testcrl, null, 1);
+        boolean ret = TestTools.getPublisherSession().storeCRL(admin, publishers, testcrl, null, 1, null);
         assertTrue("Storing CRL to dummy publisher failed", ret);
         
         log.trace("<test08storeCRLToDummy()");
@@ -494,11 +494,11 @@ public class TestPublisher extends TestCase {
         Certificate cert = CertTools.getCertfromByteArray(testcert);
         ArrayList publishers = new ArrayList();
         publishers.add(new Integer(TestTools.getPublisherSession().getPublisherId(admin, "TESTEXTOCSP")));
-        
-        ret = TestTools.getPublisherSession().storeCertificate(new Admin(Admin.TYPE_INTERNALUSER), publishers, cert, "test05", "foo123", null, CertificateDataBean.CERT_ACTIVE, CertificateDataBean.CERTTYPE_ENDENTITY, -1, RevokedCertInfo.NOT_REVOKED, "foo", SecConst.CERTPROFILE_FIXED_ENDUSER, new Date().getTime(), null);
+
+        ret = TestTools.getPublisherSession().storeCertificate(new Admin(Admin.TYPE_INTERNALUSER), publishers, cert, "test05", "foo123", null, null, CertificateDataBean.CERT_ACTIVE, CertificateDataBean.CERTTYPE_ENDENTITY, -1, RevokedCertInfo.NOT_REVOKED, "foo", SecConst.CERTPROFILE_FIXED_ENDUSER, new Date().getTime(), null);
         assertTrue("Error storing certificate to external ocsp publisher", ret);
 
-        TestTools.getPublisherSession().revokeCertificate(new Admin(Admin.TYPE_INTERNALUSER), publishers, cert, "test05", null, CertificateDataBean.CERTTYPE_ENDENTITY, RevokedCertInfo.REVOKATION_REASON_CACOMPROMISE, new Date().getTime(), "foo", SecConst.CERTPROFILE_FIXED_ENDUSER, new Date().getTime());
+        TestTools.getPublisherSession().revokeCertificate(new Admin(Admin.TYPE_INTERNALUSER), publishers, cert, "test05", null, null, CertificateDataBean.CERTTYPE_ENDENTITY, RevokedCertInfo.REVOKATION_REASON_CACOMPROMISE, new Date().getTime(), "foo", SecConst.CERTPROFILE_FIXED_ENDUSER, new Date().getTime());
 	    log.trace("<test14ExternalOCSPPublisherCustom()");
     }
     
@@ -526,7 +526,7 @@ public class TestPublisher extends TestCase {
         publishers.add(new Integer(TestTools.getPublisherSession().getPublisherId(admin, "TESTEXTOCSP2")));
         
         long date = new Date().getTime();
-        ret = TestTools.getPublisherSession().storeCertificate(new Admin(Admin.TYPE_INTERNALUSER), publishers, cert, "test05", "foo123", null, CertificateDataBean.CERT_ACTIVE, CertificateDataBean.CERTTYPE_ENDENTITY, -1, RevokedCertInfo.NOT_REVOKED, "foo", SecConst.CERTPROFILE_FIXED_ENDUSER, date, null);
+        ret = TestTools.getPublisherSession().storeCertificate(new Admin(Admin.TYPE_INTERNALUSER), publishers, cert, "test05", "foo123", null, null, CertificateDataBean.CERT_ACTIVE, CertificateDataBean.CERTTYPE_ENDENTITY, -1, RevokedCertInfo.NOT_REVOKED, "foo", SecConst.CERTPROFILE_FIXED_ENDUSER, date, null);
         assertTrue("Error storing certificate to external ocsp publisher", ret);
 
         CertificateInfo info = TestTools.getCertificateStoreSession().getCertificateInfo(admin, CertTools.getFingerprintAsString(cert));
@@ -535,7 +535,7 @@ public class TestPublisher extends TestCase {
         assertEquals(date, info.getUpdateTime().getTime());
 
         date = date + 12345;
-        TestTools.getPublisherSession().revokeCertificate(new Admin(Admin.TYPE_INTERNALUSER), publishers, cert, "test05", null, CertificateDataBean.CERTTYPE_ENDENTITY, RevokedCertInfo.REVOKATION_REASON_CACOMPROMISE, new Date().getTime(), "foobar", 12345, date);
+        TestTools.getPublisherSession().revokeCertificate(new Admin(Admin.TYPE_INTERNALUSER), publishers, cert, "test05", null, null, CertificateDataBean.CERTTYPE_ENDENTITY, RevokedCertInfo.REVOKATION_REASON_CACOMPROMISE, new Date().getTime(), "foobar", 12345, date);
 
         info = TestTools.getCertificateStoreSession().getCertificateInfo(admin, CertTools.getFingerprintAsString(cert));
         assertEquals(12345, info.getCertificateProfileId());

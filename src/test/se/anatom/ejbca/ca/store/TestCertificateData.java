@@ -155,7 +155,7 @@ public class TestCertificateData extends TestCase {
             Date now = new Date();
             assertNotNull(info.getUpdateTime());
             assertTrue(now.after(info.getUpdateTime()));
-            store.revokeCertificate(admin,ce,null,RevokedCertInfo.REVOKATION_REASON_KEYCOMPROMISE);
+            store.revokeCertificate(admin,ce,null,RevokedCertInfo.REVOKATION_REASON_KEYCOMPROMISE, null);
             CertificateInfo info1 = store.getCertificateInfo(admin, fp);
             assertEquals("revocation reason does not match.",RevokedCertInfo.REVOKATION_REASON_KEYCOMPROMISE,info1.getRevocationReason());
             log.info("revocationdate (after rev)=" + info1.getRevocationDate());
@@ -196,7 +196,7 @@ public class TestCertificateData extends TestCase {
             String fp = CertTools.getFingerprintAsString(cert);
             log.debug("revoking cert with fp="+fp);
             // Revoke all foos certificates, note that revokeCertificate will not change status of certificates that are already revoked
-            store.revokeCertificate(admin, cert, null, RevokedCertInfo.REVOKATION_REASON_AFFILIATIONCHANGED);
+            store.revokeCertificate(admin, cert, null, RevokedCertInfo.REVOKATION_REASON_AFFILIATIONCHANGED, null);
             log.debug("Revoked cert " + fp);
         }
         log.trace("<test03listAndRevoke()");
