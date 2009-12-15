@@ -1,3 +1,24 @@
+EJBCA 3.9.3
+-----------
+This is a minor release but packed with new minor features and fixes, 41 issues have been resolved. 
+Some minor features and options and some bug fixes and stabilizations.
+
+Noteworthy changes:
+- Fixed a regression in 3.9.2 where you could not upload files in the admin GUI.
+- Certificate profiles can now specify a different signature algorithm than the CA. Useful to start migrating SHA1 CAs to issue SHA256 certificates.
+- Possibility to use part of user data in LDAP DN but not in certificate DN when publishing certificate to LDAP.
+- GUI improvement to the admin GUI with nicer navigation menu and CSS. Contributed by Linagora, France.
+- Possibility to set fixed end date of certificates in certificate profile and CA configuration.  
+- ECC improvement for CAs and HSMs. 
+- cert-cvc: fixed rare possibility to get bad encoding of EC points in certificates. Contributed by DGBK, Netherlands.
+- Fixed an OutOfMemory error when failing to publish large CRLs with connection closed error.
+- Browser enrollment tested with Windows 7.  
+- Many small optimizations, fixes and improvements.
+
+Read the full changelog for details.
+
+For upgrade instructions, please see UPGRADE. 
+
 EJBCA 3.9.2
 -----------
 This is a minor release but packed with new minor features and fixes, 38 issues have been resolved. 
