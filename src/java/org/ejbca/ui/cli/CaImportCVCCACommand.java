@@ -64,7 +64,8 @@ public class CaImportCVCCACommand extends BaseCaAdminCommand {
            String msg = "Usage 1: ca importcvcca <CA name> <pkcs8 RSA private key file> <certificate file>\n" +
         				"Imports a private key and a self signed CVCA certificate and creates a CVCA.\n" +
         				"Usage 2: ca importcvcca <CA name> <pkcs8 private key file> <certificate file> <DN of form C=country,CN=mnemonic,SERIALNUMBER=sequence> <signatureAlgorithm> <validity days>\n" +
-        				"Imports a private key and generates a new self signed CVCA certificate with the given DN and creates a CVCA. Signature algorithm can be SHA1WithRSA, SHA256WithRSA, SHA256WithRSAAndMGF1\n" +
+        				"Imports a private key and generates a new self signed CVCA certificate with the given DN and creates a CVCA.\n"+ 
+        				"Signature algorithm can be SHA1WithRSA, SHA256WithRSA, SHA1WithECDSA, SHA224WithECDSA, SHA256WithECDSA, etc.\n" +
         				"SERIALNUMBER will not be a part of the CAs DN, it is only used to set a specified sequence (should be of form 00001). Can be left out, and a random sequence is then generated.";
            
            throw new IllegalAdminCommandException(msg);
