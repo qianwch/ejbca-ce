@@ -214,17 +214,17 @@
   Type the command on the command line to get usage information. 
   </p>
   <source>
-  ejbca> cd dist/ejbcawscli
-  ejbca/dist/ejbcawscli> ./cvcwscli.sh
-  Usage: cvcrequest cvcprint
+ejbca> cd clientToolBox-dist
+ejbca/clientToolBox-dist> ./ejbcaClientToolBox.sh CvcWsRaCli
+Usage: cvcrequest cvcgetchain cvcprint cvcpem
   
-  ejbca/dist/ejbcawscli> ./cvcwscli.sh cvcrequest
-  Usage : cvcrequest &lt;username&gt; &lt;password&gt; &lt;subjectdn&gt; &lt;sequence&gt; &lt;caname&gt; &lt;signatureAlg&gt; ...
-  ...
+ejbca/dist/ejbcawscli> ./ejbcaClientToolBox.sh CvcWsRaCli cvcrequest
+Usage : cvcrequest &lt;username&gt; &lt;password&gt; &lt;subjectdn&gt; &lt;sequence&gt; &lt;caname&gt; &lt;signatureAlg&gt; ...
+...
   
-  ejbca/dist/ejbcawscli> ./cvcwscli.sh cvcprint
-  Usage : cvcprint &lt;filename&gt; [verifycert]
-  ...
+ejbca/dist/ejbcawscli> ./ejbcaClientToolBox.sh CvcWsRaCli
+Usage : cvcprint &lt;filename&gt; [verifycert]
+...
   </source>
   
   <subsection name="CLI authentication and privileges"> 
@@ -241,14 +241,21 @@
   
   <subsection name="CLI examples"> 
   <p>
+  The command line interface is part of the client tool box. First you have to build the client tool box (that can be used from any remote computer):
+  </p>
+  <source>
+ant clientToolBox
+cd clientToolBox-dist  
+  </source>  
+  <p>
   <strong>1.</strong><br/>
   Example command to receive a request from a foreign DV could look like:
   </p>
   <source>
-./ejbcawsracli.sh edituser dv-de foo123 false "CN=dvca,C=DE" NULL NULL CVCAPK 1 USERGENERATED NEW DV DV  
+./ejbcaClientToolBox.sh EjbcaWsRaCli edituser dv-de foo123 false "CN=dvca,C=DE" NULL NULL CVCAPK 1 USERGENERATED NEW DV DV  
   </source>  
   <source>
-./cvcwscli.sh cvcrequest dv-de foo123 "CN=dvca,C=DE" SE001 SHA256WithRSA 2048 false dedv
+./ejbcaClientToolBox.sh CvcWsRaCli cvcrequest dv-de foo123 "CN=dvca,C=DE" SE001 SHA256WithRSA 2048 false dedv
   </source>
   <p>
   Where your CVCA is called CVCAPK in EJBCA and uses algorithm SHA256WithRSA with 2048 bit keys.<br/>
@@ -264,24 +271,24 @@
   </p>
   <p>
   <strong>2.</strong><br/>
-  An example command to generate keys and a request for an IS using SHA224WithECDSA and brainpoolp224r1 curve:
+  An example command to generate keys and a request for an IS using SHA256WithECDSA and secp256r1 curve:
   </p>
   <source>
-./ejbcawsracli.sh edituser isbrainpool foo123 false "CN=ISBPOOL,C=SE" NULL NULL DV-BrainPool 1 USERGENERATED NEW IS IS
+./ejbcaClientToolBox.sh EjbcaWsRaCli edituser issecp foo123 false "CN=ISSECP,C=SE" NULL NULL DVCA 1 USERGENERATED NEW IS IS
   </source>
   <p>This command adds the IS as end end entity in EJBCA. It only has to be done the first time, or if the IS previous certificates expire.
   When using authenticated requests these are used instead of the one-time password, but if the previous certificate expires, a new one-time password is
   needed to authenticate the request.
   </p> 
   <source>
-./cvcwscli.sh cvcrequest isbrainpool foo123 "C=SE,CN=ISBPOOL" 00005 SHA224WithECDSA brainpoolp224r1 true isbrainpool
+./ejbcaClientToolBox.sh CvcWsRaCli cvcrequest issecp foo123 "C=SE,CN=ISSECP" 00005 SHA256WithECDSA secp256r1 true issecp
   </source>
   <p>
-  Where your DV is called DV-BrainPool in EJBCA and uses algorithm SHA224WithECDSA with brainpoolp224r1 curve.
+  Where your DV is called DVCA in EJBCA and uses algorithm SHA256WithECDSA with secp256r1 curve.
   Where an End entity profile, IS, is created with CN and C as required DN fields, and IS as available certificate profiles.<br/>
   Where a Certificate profile, IS, is created of type EndEntity.<br/>
-  Where the generated request is stored in a file 'isbrainpool.cvreq', the generated private key in 'isbrainpool.pkcs8'.<br/>
-  The issued IS certificate is stored in file 'isbrainpool.cvcert'.
+  Where the generated request is stored in a file 'issecp.cvreq', the generated private key in 'issecp.pkcs8'.<br/>
+  The issued IS certificate is stored in file 'issecp.cvcert'.
   </p> 
   <p>
   If the request is an authenticated request signed by a CVCA and that CVCA has been imported in EJBCA, the request will be verified and granted. 
@@ -290,10 +297,10 @@
   To create an authenticated request for this user you can issue the following command, which authenticates the new request with the old key and certificate. 
   </p>  
   <source>
-./cvcwscli.sh cvcrequest isbrainpool foo123 "C=SE,CN=ISBPOOL" 00005 SHA224WithECDSA brainpoolp224r1 true isbrainpoolnew isbrainpool.pkcs8 isbrainpool.cvcert
+./ejbcaClientToolBox.sh CvcWsRaCli cvcrequest issecp foo123 "C=SE,CN=ISSECP" 00006 SHA256WithECDSA secp256r1 true issecpnew issecp.pkcs8 issecp.cvcert
   </source>
   <p>
-  The request will be automatically granted (the password passed will be ignored) and the new certificate will be written to 'isbrainpoolnew.cvcert'.
+  The request will be automatically granted (the password passed will be ignored) and the new certificate will be written to 'issecpnew.cvcert'.
   </p>  
   </subsection>
   
@@ -348,26 +355,104 @@ bin/ejbca.sh ca importcvca importcvca1 GO_CVCA_RSA2008.pkcs8 GO_CVCA_RSA2008.cvc
   
   <subsection name="Generating keys">
   <p>
-  Generating keys on an HSM can be done with the tool <i>pkcs11HSM.sh</i>.
+  Generating keys on an HSM can be done with the tool <i>ejbcaClientToolBox.sh PKCS11HSMKeyTool</i>.
   </p>
-  <source>
-bin/pkcs11HSM.sh generate /etc/utimaco/libcs2_pkcs11.so secp160r1 signKey 1  
-  </source>
+<source>
+cd clientToolBox-dist
+ejbcaClientToolBox.sh PKCS11HSMKeyTool generate /etc/utimaco/libcs2_pkcs11.so secp256r1 signKey 1  
+</source>
   <p>See User Guide for more general information about generating keys.
   For supported curves, see your HSM documentation. For example for Utimaco it can be found in chapter 8 of CS_AdminGuide.pdf.</p>
   <p>Note that the Java PKCS#11 provider may not support all curves that your HSM supports.</p>
-  <p>To generate keys using the pkcs11HSM.sh tool, a patch for JDK is needed due to a bug. This patch will later be included in the official JDK.</p>
+  <p>To generate EC keys using the ejbcaClientToolBox.sh tool, a patch for JDK is needed due to a bug in JDK (see below).</p>
+  <p>Note that generation command may be different for different HSMs, see the HSM section in the User Guide for more details. 
+  For example on the SafeNet ProtectServer Gold you should use:</p>
+<source>
+ejbcaClientToolBox.sh PKCS11HSMKeyTool generate /slot1.cfg secp256r1 signKey  
+</source>
+  
   </subsection>
   
-  <subsection name="Sun Java PKCS#11 ECC key issue solved">
-  <p>If you are using the pkcs11HSM.sh tool in EJBCA to generate ECC keys in an HSM using the PKCS#11 interface you are likely
-  to stumble on a bug in the JDK which prevents reading of the public key from the HSM. the pkcs11HSM.sh tool needs to read the public key,
+  <subsubsection name="Generating keys using HSM tools">
+  <p>Depending on your HSM you may be able to generate keys, and the needed self signed certificate associated with it using HSM tools. For example for the
+  SafeNet ProtectServer you can see the HSM documentation in the EJBCA User Guide for an example how to generate ECC keys for EJBCA using the HSM tools.</p>
+  </subsubsection>
+  
+  <subsection name="Using EC keys">
+  <subsubsection name="Sun Java PKCS#11 ECC key issue">
+  <p>If you are using the ejbcaClientToolBox.sh tool in EJBCA to generate ECC keys in an HSM using the PKCS#11 interface you are likely
+  to stumble on a bug in the JDK which prevents reading of the public key from the HSM. the ejbcaClientToolBox.sh tool needs to read the public key,
   generate a "dummy" certificate and assign that to the key label, so we have a public key certificate in the keystore retrieved from 
   the Sun PKCS#11 provider.
-  This bug is present at least up to and including JDK 1.6u10.</p>
+  This bug is present at least up to and including JDK 1.6u14.</p>
   <p>You can look at this issue in the EJBCA Jira for a solution to the problem: <a href="https://jira.primekey.se/browse/ECA-940">ECA-940</a>
   </p>
-  </subsection> 
+  </subsubsection>
+
+  <subsubsection name="Using Brainpool ECC curves">
+  <p>Using the <a href="http://www.ecc-brainpool.org/download/Domain-parameters.pdf">Brainpool</a> family of elliptic curves requires a bit of special handling in Java, at least with the Sun PKCS#11 provider.
+  <br/>Here we provide a guide for using Brainpool curves with the SafeNet ProtectServer Gold HSM.
+  <br/>Using the brainpool curves have one disadvantage, at least when using the Sun PKCS#11 provider, and that is that you can not use the EJBCA tools to generate keys, but have to use the HSM vendors tools.
+  </p>
+  <p>
+  First you have to patch the Java file ECParameters.java. Again, it is the same file as patched above for the bug.
+  </p>
+  <ul>
+  <li>Download the JDK source code and locate the file sun/security/ec/ECParameters.java.</li>
+  <li>Starting at line 210 there is code for handling of non named curve EC parameters. Remove the Exception thrown in line 208 and enable the code that is commented.</li>
+  <li>Hard code the cofactor to 1, this works because all Brainpool curves use cofactor 1. This means that the code:</li>
+  </ul>
+<source>
+int cofactor = 0;
+if (in.available() != 0) {
+cofactor = in.getInteger();
+}
+</source>   
+  <p>should be replaced by:</p>
+<source>
+int cofactor = 1;
+</source>
+  <ul>
+  <li>Compile the class by running 'javac *.java' in the directory where the file is located.</li>
+  <li>Replace the existing sun/security/ec/ECParameters.class file in jre/lib/rt.jar with your patched and compiled version.</li>
+  </ul>
+  <p>
+  Now you are ready to start generating domain parameter and keys. 
+  These are the commands for <i>ProtectServer Gold software version 3.33, firmware version 2.07</i>.
+  </p>
+<p>
+<b>1.</b>Create domain parameters file brainpoolP160r1.txt from
+ptk_c_administration_manual_rev-c.pdf, Appendix G, Sample EC Domain Parameter Files. Note that you should not use cofactor in the parameters file, cofactor is hardcoded in ECParameters.java.
+</p><p><b>2.</b>
+We have to configure the HSM to accept custom domain parameters (E flag):
+</p>
+<source>
+./ctconf -fcE
+</source>
+<p> 
+<b>3.</b>Import the domain parameters to the HSM:
+</p>
+<source>
+./ctkmu idp -s 1 -t ec -n brainpoolP160r1 brainpoolP160r1.txt
+</source>
+<p> 
+<b>4.</b>Generate keys and a (dummy) certificate. Dummy certificate is needed for the java PKCS#11 provider.
+</p>
+<source>
+./ctcert c -k -l bpkey -tec -s1 -CbrainpoolP160r1 -d30y
+</source>
+<p> 
+<b>5.</b>Start EJBCA and create a new CVCA with CAToken Properties:
+</p>
+<source>
+sharedLibrary=/opt/PTK/lib/libcryptoki.so
+defaultKey=bpkey
+slot=1
+</source>
+  </subsubsection>
+  
+  </subsection>
+   
   </section>
 
   <section name="PEM requests">
