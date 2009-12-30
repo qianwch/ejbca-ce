@@ -49,11 +49,12 @@ import org.ejbca.util.keystore.KeyTools;
 
 import com.novosec.pkix.asn1.cmp.PKIMessage;
 
-/**
+/** These tests test RA functionality with the CMP protocol, i.e. a "trusted" RA sends CMP messages authenticated using PBE (password based encryption)
+ * and these requests are handled by EJBCA without further authentication, end entities are created automatically in EJBCA.
  * This test requires:
  * cmp.operationmode=ra, cmp.allowraverifypopo=true, cmp.responseprotection=pbe, cmp.ra.authenticationsecret=password,
  * Configure a Certificate profile (CmpRA) using ENDUSER as template and check "Allow validity override". Configure this profile in cmp.ra.certificateprofile=CmpRA
- * Configure an EndEntity profile (CmpRA) with allow CN, O, C in DN and rfc822Name (uncheck 'Use entity e-mail field' and check 'Modifyable'), MS UPN in altNames in the end entity profile. Configure this profile in cmp.ra.endentityprofile=CmpRA
+ * Configure an EndEntity profile (CmpRA) with allow CN, O, C in DN and rfc822Name (uncheck 'Use entity e-mail field' and check 'Modifyable'), MS UPN in altNames in the end entity profile. Add CmpRA as available certificate profile. Configure this profile in cmp.ra.endentityprofile=CmpRA
  * 
  * You need a CMP tcp listener configured on port 5587.
  * (cmp.tcp.enabled=true, cmp.tcp.portno=5587)
@@ -71,7 +72,7 @@ public class CrmfRAPbeRequestTest extends CmpTestCase {
     private static final String PBEPASSWORD = "password";
     private static final String APPROVINGADMINNAME = "superadmin";
     
-    private static String userDN = "C=SE,O=PrimeKey,CN=cmptest";
+    private static String userDN = "C=SE,O=PrimeKey'foo'&bar\\,ha\\<ff\\>\\\"aa,CN=cmptest";
     private static String issuerDN = "CN=AdminCA1,O=EJBCA Sample,C=SE";
     private KeyPair keys = null;  
 
