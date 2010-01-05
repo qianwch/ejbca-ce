@@ -31,7 +31,6 @@ import java.security.cert.CRL;
 import java.security.cert.CRLException;
 import java.security.cert.CertStore;
 import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
 import java.security.cert.CollectionCertStoreParameters;
 import java.security.cert.X509CRL;
 import java.security.cert.X509Certificate;
@@ -100,9 +99,7 @@ import org.ejbca.core.model.ca.catoken.CATokenInfo;
 import org.ejbca.core.model.ca.catoken.CATokenOfflineException;
 import org.ejbca.core.model.ca.catoken.NullCATokenInfo;
 import org.ejbca.core.model.ca.certextensions.CertificateExtension;
-import org.ejbca.core.model.ca.certextensions.CertificateExtensionException;
 import org.ejbca.core.model.ca.certextensions.CertificateExtensionFactory;
-import org.ejbca.core.model.ca.certextensions.CertificateExtentionConfigurationException;
 import org.ejbca.core.model.ca.certextensions.standard.CrlDistributionPoints;
 import org.ejbca.core.model.ca.certificateprofiles.CertificateProfile;
 import org.ejbca.core.model.ca.crl.RevokedCertInfo;
@@ -433,7 +430,8 @@ public class X509CA extends CA implements Serializable {
         getCAToken().getPublicKey(SecConst.CAKEYPURPOSE_CERTSIGN);
 
         // Also, we must only allow signing to take place if the CA itself if on line, even if the token is on-line.
-        if ((getStatus() != SecConst.CA_ACTIVE)) {
+        // We have to allow expired as well though, so we can renew expired CAs
+        if ((getStatus() != SecConst.CA_ACTIVE) && ((getStatus() != SecConst.CA_EXPIRED))) {
         	String msg = intres.getLocalizedMessage("error.caoffline", getName(), getStatus());
 			log.debug(msg); // This is something we handle so no need to log with higher priority
         	throw new CAOfflineException(msg);
