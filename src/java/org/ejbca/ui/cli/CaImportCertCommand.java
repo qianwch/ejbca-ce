@@ -179,8 +179,9 @@ public class CaImportCertCommand extends BaseCaAdminCommand {
 			if (getCertificateStoreSession().findCertificateByFingerprint(administrator, fingerprint) != null) {
 				throw new Exception("Certificate number '" + CertTools.getSerialNumberAsString(certificate) + "' is already present.");
 			}
+			// Certificate has expired, but we are obviously keeping it for archival purposes
 			if (CertTools.getNotAfter(certificate).compareTo(new java.util.Date()) < 0) {
-				status = CertificateDataBean.CERT_EXPIRED;
+				status = CertificateDataBean.CERT_ARCHIVED;
 			}
 			
 			// Check if username already exists.

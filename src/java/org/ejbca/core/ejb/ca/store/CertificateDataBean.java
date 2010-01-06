@@ -144,9 +144,9 @@ public abstract class CertificateDataBean extends BaseEntityBean {
     /** Certificate is permanently blocked (terminated) */
     public static final int CERT_REVOKED = 40;
 
-    /** Certificate is expired */
-    public static final int CERT_EXPIRED = 50;
-
+    // there was previously a status 50, EXPIRED here as well, but it was not used so
+    // it was removed to avoid misunderstandings.
+    
     /** Certificate is expired and kept for archive purpose */
     public static final int CERT_ARCHIVED = 60;
 
