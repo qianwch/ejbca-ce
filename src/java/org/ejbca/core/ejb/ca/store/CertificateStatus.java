@@ -13,6 +13,7 @@
 
 package org.ejbca.core.ejb.ca.store;
 
+import java.io.Serializable;
 import java.util.Date;
 
 import org.ejbca.core.model.SecConst;
@@ -22,11 +23,23 @@ import org.ejbca.core.model.ca.crl.RevokedCertInfo;
  * 
  * @version $Id$
  */
-public class CertificateStatus {
-    public final static CertificateStatus REVOKED = new CertificateStatus("REVOKED", SecConst.CERTPROFILE_NO_PROFILE);
+public class CertificateStatus implements Serializable {
+
+	private static final long serialVersionUID = 1136817557047738919L;
+	
+	public final static CertificateStatus REVOKED = new CertificateStatus("REVOKED", SecConst.CERTPROFILE_NO_PROFILE);
     public final static CertificateStatus OK = new CertificateStatus("OK", SecConst.CERTPROFILE_NO_PROFILE);
     public final static CertificateStatus NOT_AVAILABLE = new CertificateStatus("NOT_AVAILABLE", SecConst.CERTPROFILE_NO_PROFILE);
 
+    /** Algorithm:
+     * if status is CERT_REVOKED the certificate is revoked and reason and date is picked up
+     * if status is CERT_ARCHIVED and reason is _NOT_ REMOVEFROMCRL or NOT_REVOKED the certificate is revoked and reason and date is picked up
+     * if status is CERT_ARCHIVED and reason is REMOVEFROMCRL or NOT_REVOKED the certificate is NOT revoked
+     * if status is neither CERT_REVOKED or CERT_ARCHIVED the certificate is NOT revoked
+     * 
+     * @param data
+     * @return CertificateStatus, can be compared (==) with CertificateStatus.OK, CertificateStatus.REVOKED and CertificateStatus.NOT_AVAILABLE
+     */
     public final static CertificateStatus getIt( CertificateDataLocal data) {
         if ( data == null ) {
             return NOT_AVAILABLE;
@@ -35,10 +48,16 @@ public class CertificateStatus {
         if (pId == null) {
         	pId = Integer.valueOf(SecConst.CERTPROFILE_NO_PROFILE);
         }
-        if ( data.getStatus() != CertificateDataBean.CERT_REVOKED ) {
-            return new CertificateStatus(CertificateStatus.OK.name, pId.intValue());
+        final int revReason = data.getRevocationReason();
+        final int status = data.getStatus();
+        if ( status != CertificateDataBean.CERT_REVOKED ) {
+        	// If the certificate have status ARCHIVED, BUT revocationReason is REMOVEFROMCRL or NOTREVOKED, the certificate is OK
+        	// Otherwise it is a revoked certificate that has been archived and we must return REVOKED
+        	if ( (status != CertificateDataBean.CERT_ARCHIVED) || ((revReason == RevokedCertInfo.REVOKATION_REASON_REMOVEFROMCRL) || (revReason == RevokedCertInfo.NOT_REVOKED)) ) {
+                return new CertificateStatus(CertificateStatus.OK.name, pId.intValue());        		
+        	}
         }
-        return new CertificateStatus(data.getRevocationDate(), data.getRevocationReason(), pId.intValue());
+        return new CertificateStatus(data.getRevocationDate(), revReason, pId.intValue());
     }
     
     private final String name;

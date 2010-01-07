@@ -14,14 +14,22 @@
 package se.anatom.ejbca.ca.store;
 
 import java.rmi.RemoteException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.SignatureException;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Random;
 
+import javax.ejb.CreateException;
 import javax.naming.Context;
 import javax.naming.NamingException;
 
@@ -29,6 +37,7 @@ import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
 import org.ejbca.core.ejb.ca.store.CertificateDataBean;
+import org.ejbca.core.ejb.ca.store.CertificateStatus;
 import org.ejbca.core.ejb.ca.store.ICertificateStoreSessionHome;
 import org.ejbca.core.ejb.ca.store.ICertificateStoreSessionRemote;
 import org.ejbca.core.model.SecConst;
@@ -100,27 +109,8 @@ public class TestCertificateData extends TestCase {
      */
     public void test01CreateNewCertRSASha1() throws Exception {
         log.trace(">test01CreateNewCert()");
-        // create a key pair and a new self signed certificate
-        log.info("Generating a small key pair, might take a few seconds...");
         keyPair = KeyTools.genKeys("512", CATokenConstants.KEYALGORITHM_RSA);
-        cert = CertTools.genSelfCert("C=SE,O=PrimeCA,OU=TestCertificateData,CN=MyNameIsFoo", 24, null, keyPair.getPrivate(), keyPair.getPublic(), CATokenInfo.SIGALG_SHA1_WITH_RSA, false);
-        String fp = CertTools.getFingerprintAsString(cert);
-
-        ICertificateStoreSessionRemote store = storehome.create();
-        try {
-            Certificate ce = store.findCertificateByFingerprint(admin,fp);
-            if (ce != null) {
-                assertTrue("Certificate with fp="+fp+" already exists in db, very strange since I just generated it.", false);
-            }
-        	boolean ret = store.storeCertificate(admin, cert, "foo", "1234", CertificateDataBean.CERT_INACTIVE, CertificateDataBean.CERTTYPE_ENDENTITY, SecConst.CERTPROFILE_FIXED_ENDUSER, "footag", new Date().getTime());
-            //log.info("Stored new cert with fp="+fp);
-            assertTrue("Failed to store", ret);
-            log.debug("stored it!");
-        } catch (RemoteException e) {
-            log.error("Error storing certificate: ",e);
-            assertTrue("Error storing certificate.", false);
-            return;
-        }
+        cert = generateCert(CertificateDataBean.CERT_INACTIVE);
         log.trace("<test01CreateNewCert()");
     }
 
@@ -371,13 +361,12 @@ public class TestCertificateData extends TestCase {
         int reason = revinfo.getReason();
         assertEquals("Certificate not revoked, it should be!", RevokedCertInfo.REVOKATION_REASON_KEYCOMPROMISE, reason);
         assertTrue("Wrong revocationDate!", revinfo.getRevocationDate().compareTo(data3.getRevocationDate()) == 0);
-        assertTrue("Wrong reason!", revinfo.getReason() == data3.getRevocationReason());
-        log.debug("Removed it!");
+        assertTrue("Wrong reason!", revinfo.getReason() == data3.getRevocationReason());        
         log.trace("<test08IsRevoked()");
     }
 
     /**
-     * Adds two certificate request histroy datas to the database.
+     * Adds two certificate request history data to the database.
      *
      * @throws Exception error
      */
@@ -468,4 +457,92 @@ public class TestCertificateData extends TestCase {
         log.trace("<test12removeCertReqHistData()");
     }
     
+    public void test13GetStatus() throws Exception {
+    	// generate a new certificate
+    	X509Certificate xcert = generateCert(CertificateDataBean.CERT_ACTIVE);
+        // Test getStatus
+    	log.debug("Certificate fingerprint: "+CertTools.getFingerprintAsString(xcert));
+    	ICertificateStoreSessionRemote store = storehome.create();
+    	// Certificate is OK to start with
+        CertificateStatus status = store.getStatus(new Admin(Admin.TYPE_INTERNALUSER), CertTools.getIssuerDN(xcert), xcert.getSerialNumber());
+        assertEquals(CertificateStatus.OK, status);
+        // Set status of the certificate to ARCHIVED, as the CRL job does for expired certificates. getStatus should still return OK (see ECA-1527).
+        store.setArchivedStatus(new Admin(Admin.TYPE_INTERNALUSER), CertTools.getFingerprintAsString(xcert));
+        status = store.getStatus(new Admin(Admin.TYPE_INTERNALUSER), CertTools.getIssuerDN(xcert), xcert.getSerialNumber());
+        assertEquals(CertificateStatus.OK, status);
+        
+        // Revoke certificate and set to ON HOLD, this will change status from ARCHIVED to REVOKED
+        store.setRevokeStatus(new Admin(Admin.TYPE_INTERNALUSER), CertTools.getIssuerDN(xcert), xcert.getSerialNumber(), null, RevokedCertInfo.REVOKATION_REASON_CERTIFICATEHOLD, null);
+        status = store.getStatus(new Admin(Admin.TYPE_INTERNALUSER), CertTools.getIssuerDN(xcert), xcert.getSerialNumber());
+        assertEquals(CertificateStatus.REVOKED, status);
+        assertEquals(RevokedCertInfo.REVOKATION_REASON_CERTIFICATEHOLD, status.revocationReason);
+        // Check the revocation date once, it must be within one minute diff from current time  
+        Calendar cal1 = Calendar.getInstance();
+        cal1.add(Calendar.MINUTE, -1);
+        Date date1 = cal1.getTime();
+        Calendar cal2 = Calendar.getInstance();
+        cal2.add(Calendar.MINUTE, 1);
+        Date date2 = cal2.getTime();
+        assertTrue(date1.compareTo(status.revocationDate) < 0);
+        assertTrue(date2.compareTo(status.revocationDate) > 0);
+        Date revDate = status.revocationDate;
+
+        // Set status of the certificate to ARCHIVED, as the CRL job does for expired certificates. getStatus should still return REVOKED.
+        store.setArchivedStatus(new Admin(Admin.TYPE_INTERNALUSER), CertTools.getFingerprintAsString(xcert));
+        status = store.getStatus(new Admin(Admin.TYPE_INTERNALUSER), CertTools.getIssuerDN(xcert), xcert.getSerialNumber());
+        assertEquals(CertificateStatus.REVOKED, status);
+        assertEquals(RevokedCertInfo.REVOKATION_REASON_CERTIFICATEHOLD, status.revocationReason);
+        assertEquals(revDate, status.revocationDate);
+
+        // Now unrevoke the certificate, REMOVEFROMCRL
+        store.setRevokeStatus(new Admin(Admin.TYPE_INTERNALUSER), CertTools.getIssuerDN(xcert), xcert.getSerialNumber(), null, RevokedCertInfo.REVOKATION_REASON_REMOVEFROMCRL, null);
+        status = store.getStatus(new Admin(Admin.TYPE_INTERNALUSER), CertTools.getIssuerDN(xcert), xcert.getSerialNumber());
+        assertEquals(CertificateStatus.OK, status);
+
+        // Set status of the certificate to ARCHIVED, as the CRL job does for expired certificates. getStatus should still return OK.
+        store.setArchivedStatus(new Admin(Admin.TYPE_INTERNALUSER), CertTools.getFingerprintAsString(xcert));
+        status = store.getStatus(new Admin(Admin.TYPE_INTERNALUSER), CertTools.getIssuerDN(xcert), xcert.getSerialNumber());
+        assertEquals(CertificateStatus.OK, status);
+
+        // Finally revoke for real, this will change status from ARCHIVED to REVOKED
+        store.setRevokeStatus(new Admin(Admin.TYPE_INTERNALUSER), CertTools.getIssuerDN(xcert), xcert.getSerialNumber(), null, RevokedCertInfo.REVOKATION_REASON_PRIVILEGESWITHDRAWN, null);
+        status = store.getStatus(new Admin(Admin.TYPE_INTERNALUSER), CertTools.getIssuerDN(xcert), xcert.getSerialNumber());
+        assertEquals(CertificateStatus.REVOKED, status);
+        assertEquals(RevokedCertInfo.REVOKATION_REASON_PRIVILEGESWITHDRAWN, status.revocationReason);
+        revDate = status.revocationDate;
+        // Set status of the certificate to ARCHIVED, as the CRL job does for expired certificates. getStatus should still return REVOKED.
+        store.setArchivedStatus(new Admin(Admin.TYPE_INTERNALUSER), CertTools.getFingerprintAsString(xcert));
+        status = store.getStatus(new Admin(Admin.TYPE_INTERNALUSER), CertTools.getIssuerDN(xcert), xcert.getSerialNumber());
+        assertEquals(CertificateStatus.REVOKED, status);
+        assertEquals(RevokedCertInfo.REVOKATION_REASON_PRIVILEGESWITHDRAWN, status.revocationReason);
+        assertTrue(revDate.compareTo(status.revocationDate) == 0);
+    }
+    
+    
+    private X509Certificate generateCert(int status) throws NoSuchAlgorithmException,
+    NoSuchProviderException, InvalidAlgorithmParameterException,
+    SignatureException, InvalidKeyException,
+    CertificateEncodingException, CreateException, RemoteException {
+    	// create a key pair and a new self signed certificate
+    	log.info("Generating a small key pair, might take a few seconds...");
+    	X509Certificate xcert = CertTools.genSelfCert("C=SE,O=PrimeCA,OU=TestCertificateData,CN=MyNameIsFoo", 24, null, keyPair.getPrivate(), keyPair.getPublic(), CATokenInfo.SIGALG_SHA1_WITH_RSA, false);
+    	String fp = CertTools.getFingerprintAsString(xcert);
+
+    	ICertificateStoreSessionRemote store = storehome.create();
+    	try {
+    		Certificate ce = store.findCertificateByFingerprint(admin,fp);
+    		if (ce != null) {
+    			assertTrue("Certificate with fp="+fp+" already exists in db, very strange since I just generated it.", false);
+    		}
+    		boolean ret = store.storeCertificate(admin, xcert, "foo", "1234", status, CertificateDataBean.CERTTYPE_ENDENTITY, SecConst.CERTPROFILE_FIXED_ENDUSER, "footag", new Date().getTime());
+    		//log.info("Stored new cert with fp="+fp);
+    		assertTrue("Failed to store", ret);
+    		log.debug("stored it!");
+    	} catch (RemoteException e) {
+    		log.error("Error storing certificate: ",e);
+    		assertTrue("Error storing certificate.", false);
+    	}
+    	return xcert;
+    }
+
 }
