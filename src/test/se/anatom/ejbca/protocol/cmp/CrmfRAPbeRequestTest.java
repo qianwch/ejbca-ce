@@ -72,7 +72,8 @@ public class CrmfRAPbeRequestTest extends CmpTestCase {
     private static final String PBEPASSWORD = "password";
     private static final String APPROVINGADMINNAME = "superadmin";
     
-    private static String userDN = "C=SE,O=PrimeKey'foo'&bar\\,ha\\<ff\\>\\\"aa,CN=cmptest";
+    /** userDN of user used in this test, this contains special, escaped, characters to test that this works with CMP RA operations */
+    private static String userDN = "C=SE,O=PrimeKey'foo'&bar\\,ha\\<ff\\\"aa,CN=cmptest";
     private static String issuerDN = "CN=AdminCA1,O=EJBCA Sample,C=SE";
     private KeyPair keys = null;  
 
@@ -140,6 +141,7 @@ public class CrmfRAPbeRequestTest extends CmpTestCase {
 		Date notAfter = cal.getTime();
 
 		// In this we also test validity override using notBefore and notAfter from above
+		// In this test userDN contains special, escaped characters to verify that that works with CMP RA as well
         PKIMessage one = genCertReq(issuerDN, userDN, keys, cacert, nonce, transid, true, null, notBefore, notAfter);
         PKIMessage req = protectPKIMessage(one, false, PBEPASSWORD, 567);
 		assertNotNull(req);
