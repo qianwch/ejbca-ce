@@ -462,7 +462,7 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 		String method = request.getMethod();
 		String remoteAddress = request.getRemoteAddr();
 		if (m_log.isDebugEnabled()) {
-			m_log.debug("Received "+method+" request with content length: "+request.getContentLength()+" from "+remoteAddress);		
+			m_log.debug(">checkAndGetRequestBytes. Received "+method+" request with content length: "+request.getContentLength()+" from "+remoteAddress);		
 		}
 		if (request.getContentLength() > MAX_OCSP_REQUEST_SIZE) {
 			String msg = intres.getLocalizedMessage("ocsp.toolarge", MAX_OCSP_REQUEST_SIZE, request.getContentLength());
@@ -555,6 +555,9 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 			String msg = intres.getLocalizedMessage("ocsp.emptyreq", remoteAddress);
 			m_log.info(msg);
 			throw new MalformedRequestException(msg);
+		}
+		if (m_log.isDebugEnabled()) {
+			m_log.debug(">checkAndGetRequestBytes: "+ret.length);
 		}
 		return ret;
 	}
