@@ -557,7 +557,7 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 			throw new MalformedRequestException(msg);
 		}
 		if (m_log.isDebugEnabled()) {
-			m_log.debug(">checkAndGetRequestBytes: "+ret.length);
+			m_log.debug("<checkAndGetRequestBytes: "+ret.length);
 		}
 		return ret;
 	}
