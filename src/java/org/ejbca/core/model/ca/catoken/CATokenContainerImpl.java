@@ -666,6 +666,13 @@ public class CATokenContainerImpl extends CATokenContainer {
 		prop.store(baos, null);
 		baos.close(); // this has no effect according to javadoc
 		setPropertyData(baos.toString());
+		// Update the properties if we have set new keystrings
+		if (catoken != null) {
+			if (catoken instanceof BaseCAToken) {
+				BaseCAToken basetoken = (BaseCAToken)catoken;
+				basetoken.updateProperties(prop);				
+			}
+		}
 	}
 	private Properties getProperties() throws IOException{
 		Properties prop = new PropertiesWithHiddenPIN();
