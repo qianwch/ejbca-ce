@@ -315,27 +315,7 @@ public class CACertServlet extends HttpServlet {
                 byte[] enccert = cacert.getEncoded();
                 // Se if we can name the file as the CAs CN, if that does not exist try serialnumber, and if that does not exist, use the full O
                 // and if that does not exist, use the fixed string CertificateAuthority. 
-                String dnpart = null;
-                if (StringUtils.equals(cacert.getType(), "CVC")) {
-                    CardVerifiableCertificate cvccert = (CardVerifiableCertificate) cacert;
-                    String car = cvccert.getCVCertificate().getCertificateBody().getAuthorityReference().getConcatenated();
-                    String chr = cvccert.getCVCertificate().getCertificateBody().getHolderReference().getConcatenated();
-                    dnpart = car + "_" + chr;
-                } else {
-                    dnpart = CertTools.getPartFromDN(CertTools.getSubjectDN(cacert), "CN");
-                    if (dnpart == null) {
-                        dnpart = CertTools.getPartFromDN(CertTools.getSubjectDN(cacert), "SN");
-                    }
-                    if (dnpart == null) {
-                        dnpart = CertTools.getPartFromDN(CertTools.getSubjectDN(cacert), "O");
-                    }
-                }
-                if (dnpart == null) {
-                    dnpart = "CertificateAuthority";
-                }
-                log.debug("dnpart: "+dnpart);
-                // Strip whitespace though
-            	String strippedCACN = dnpart.replaceAll("\\W", "");
+                String filename = RequestHelper.getFileNameFromCertNoEnding(cacert, "CertificateAuthority");
                 // We must remove cache headers for IE
                 ServletUtils.removeCacheHeaders(res);
                 if (command.equalsIgnoreCase(COMMAND_NSCACERT)) {
@@ -344,11 +324,11 @@ public class CACertServlet extends HttpServlet {
                     res.getOutputStream().write(enccert);
                     log.debug("Sent CA cert to NS client, len="+enccert.length+".");
                 } else if (command.equalsIgnoreCase(COMMAND_IECACERT)) {
-                	String ending = "crt";
+                	String ending = ".cacert.crt";
                 	if (cacert instanceof CardVerifiableCertificate) {
-                		ending = "cvcert";
+                		ending = ".cvcert";
                 	}
-                    res.setHeader("Content-disposition", "attachment; filename=" + strippedCACN + ".cacert."+ending);
+                    res.setHeader("Content-disposition", "attachment; filename=" + filename + ending);
                     res.setContentType("application/octet-stream");
                     res.setContentLength(enccert.length);
                     res.getOutputStream().write(enccert);
@@ -358,7 +338,7 @@ public class CACertServlet extends HttpServlet {
                     String out = RequestHelper.BEGIN_CERTIFICATE_WITH_NL;                   
                     out += new String(b64cert);
                     out += RequestHelper.END_CERTIFICATE_WITH_NL;
-                    res.setHeader("Content-disposition", "attachment; filename=" + strippedCACN + ".cacert.pem");
+                    res.setHeader("Content-disposition", "attachment; filename=" + filename + ".cacert.pem");
                     res.setContentType("application/octet-stream");
                     res.setContentLength(out.length());
                     res.getOutputStream().write(out.getBytes());
@@ -369,8 +349,8 @@ public class CACertServlet extends HttpServlet {
                     if ( jksPassword != null && jksPassword.length() >= passwordRequiredLength ) {
                     	KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
                     	ks.load(null, jksPassword.toCharArray());
-                    	ks.setCertificateEntry(strippedCACN, cacert);
-                        res.setHeader("Content-disposition", "attachment; filename=" + strippedCACN + ".cacert.jks");
+                    	ks.setCertificateEntry(filename, cacert);
+                        res.setHeader("Content-disposition", "attachment; filename=" + filename + ".cacert.jks");
                         res.setContentType("application/octet-stream");
                     	ks.store(res.getOutputStream(), jksPassword.toCharArray());
                     } else {
