@@ -27,13 +27,11 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.commons.lang.CharUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.ejbca.core.model.InternalResources;
 import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.util.AlgorithmTools;
-import org.ejbca.cvc.AlgorithmUtil;
 import org.ejbca.cvc.CardVerifiableCertificate;
 import org.ejbca.util.Base64;
 import org.ejbca.util.CertTools;
@@ -65,7 +63,7 @@ public class CATokenContainerImpl extends CATokenContainer {
 
     final private int caid; 
 
-	public static final float LATEST_VERSION = 6;
+	public static final float LATEST_VERSION = 7;
 
 
 	// Default Values
@@ -179,6 +177,7 @@ public class CATokenContainerImpl extends CATokenContainer {
 		info.setProperties(getPropertyData());
 		info.setSignatureAlgorithm(getSignatureAlgorithm());
 		info.setKeySequence(getKeySequence());
+		info.setKeySequenceFormat(getKeySequenceFormat());
 
 		// Set status of the CA token
 		int status = ICAToken.STATUS_OFFLINE;
@@ -231,6 +230,7 @@ public class CATokenContainerImpl extends CATokenContainer {
 		if (catokeninfo.getKeySequence() != null) {
 			this.setKeySequence(catokeninfo.getKeySequence());
 		}
+        this.setKeySequenceFormat(catokeninfo.getKeySequenceFormat());
 		if (catokeninfo instanceof NullCATokenInfo) {
 			log.debug("CA Token is CATOKENTYPE_NULL");
 			if (data.get(CATOKENTYPE) == null) {
@@ -354,7 +354,7 @@ public class CATokenContainerImpl extends CATokenContainer {
 		// First we start by setting a new sequence for our new keys
 		String oldSequence = getKeySequence();
 		log.debug("Current sequence: "+oldSequence);
-		String newSequence = StringTools.incrementKeySequence(oldSequence);
+		String newSequence = StringTools.incrementKeySequence(getCATokenInfo().getKeySequenceFormat(), oldSequence);
 		log.debug("Setting new sequence: "+newSequence);
 		setKeySequence(newSequence);
 		
@@ -546,9 +546,13 @@ public class CATokenContainerImpl extends CATokenContainer {
 			String sequence = cvccacert.getCVCertificate().getCertificateBody().getHolderReference().getSequence();
 			log.debug("Setting sequence "+sequence);
 			setKeySequence(sequence);
+            log.debug("Setting default sequence format "+StringTools.KEY_SEQUENCE_FORMAT_NUMERIC);
+			setKeySequenceFormat(StringTools.KEY_SEQUENCE_FORMAT_NUMERIC);
 		} else {
 			log.debug("Setting default sequence "+CATokenConstants.DEFAULT_KEYSEQUENCE);
 			setKeySequence(CATokenConstants.DEFAULT_KEYSEQUENCE);
+            log.debug("Setting default sequence format "+StringTools.KEY_SEQUENCE_FORMAT_NUMERIC);
+            setKeySequenceFormat(StringTools.KEY_SEQUENCE_FORMAT_NUMERIC);
 		}
 
 		// import sign keys.
@@ -629,14 +633,32 @@ public class CATokenContainerImpl extends CATokenContainer {
 		}
 		return (String)seq;
 	}
+	
+    /**
+     *  Sets the key sequence
+     */        
+    private void setKeySequence(String sequence){
+        data.put(SEQUENCE, sequence);   
+    }
 
 	/**
-	 *  Sets the SignatureAlgoritm
+	 *  Sets the SequenceFormat
 	 */        
-	private void setKeySequence(String sequence){
-		data.put(SEQUENCE, sequence);	
+	private void setKeySequenceFormat(int sequence){
+		data.put(SEQUENCE_FORMAT, sequence);	
 	}
-	
+
+    /**
+     *  Returns the Sequence format, that is the format of the key sequence
+     */    
+    private int getKeySequenceFormat(){
+        Object seqF = data.get(SEQUENCE_FORMAT);
+        if (seqF == null) {
+            seqF = new Integer(StringTools.KEY_SEQUENCE_FORMAT_NUMERIC);
+        }
+        return (Integer)seqF;
+    }
+
 	/**
 	 *  Returns the propertydata used to configure this CA Token.
 	 */    
@@ -740,6 +762,11 @@ public class CATokenContainerImpl extends CATokenContainer {
 				String sequence = CATokenConstants.DEFAULT_KEYSEQUENCE;
 				log.info("Adding new sequence to CA Token data: "+sequence);
 				data.put(SEQUENCE, sequence);
+			}
+
+			if (data.get(SEQUENCE_FORMAT) == null) { // v7
+				log.info("Adding new sequence format to CA Token data: "+StringTools.KEY_SEQUENCE_FORMAT_NUMERIC);
+				data.put(SEQUENCE_FORMAT, StringTools.KEY_SEQUENCE_FORMAT_NUMERIC);
 			}
 
 			data.put(VERSION, new Float(LATEST_VERSION));
