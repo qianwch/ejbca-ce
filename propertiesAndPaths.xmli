@@ -278,8 +278,6 @@
     <property name="ca.cmskeystorepass" value="foo123"/>
     <property name="ca.serialnumberoctetsize" value="8"/>
     <property name="ca.toolateexpiredate" value=""/>
-    <property name="ocspHardTokenClasses" value="ocspHardTokenClasses"/>
-    <property name="ocsp.hardToken.classes" location="${ocspHardTokenClasses}"/>
     <property name="datasource.jndi-name" value="EjbcaDS" />
     <property name="datasource.jndi-name-prefix" value="java:/" />
     <property name="database.name" value="hsqldb" />
@@ -301,6 +299,11 @@
     <property name="ocsphealthcheck.maintenancefile" value="" />
     <property name="ocsphealthcheck.maintenancepropertyname" value="DOWN_FOR_MAINTENANCE" />    
     <property name="ocsphealthcheck.signtest" value="true" />  
+    <property name="ocspHardTokenClasses" value="ocspHardTokenClasses"/>
+    <property name="ocsp.hardToken.classes" location="${ocspHardTokenClasses}"/>
+    <property name="ocsp.defaultresponder" value="CN=AdminCA1,O=EJBCA Sample,C=SE"/>
+    <property name="ocsp.usecasigningcert" value="true"/>
+    <property name="ocsp.signaturealgorithm" value="SHA1WithRSA;SHA1WithECDSA;SHA1WithDSA"/>
     <property name="mail.jndi-name" value="java:/EjbcaMail" />
     <property name="mail.from" value="ejbca-donotreply@domain.com" />
     <property name="mail.user" value="ejbca_user" />
