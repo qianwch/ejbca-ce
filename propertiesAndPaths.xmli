@@ -269,6 +269,7 @@
 
     <!-- those are the default values used within JBoss for easy startup -->
     <property name="appserver.type" value="jboss"/>
+    <property name="ca.name" value="AdminCA1"/>
     <property name="ca.tokentype" value="soft"/>
     <property name="ca.tokenpassword" value="null"/>
     <property name="ca.tokenproperties" value=""/>
