@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.bouncycastle.util.encoders.Hex;
 
@@ -48,6 +49,7 @@ public class PatternLogger implements IPatternLogger {
 	final private String logDateFormat;
 	final private String timeZone;
     final private Date startTime;
+    private Date startProcessTime = null;
 	
 	/**
      * @param m A matcher that is used together with orderstring to determine how output is formatted
@@ -116,7 +118,10 @@ public class PatternLogger implements IPatternLogger {
 			this.valuepairs.put(key, "");
 		}else{
 			this.valuepairs.put(key, value);
-		}	  
+		}
+		if (StringUtils.equals(key, IPatternLogger.PROCESS_TIME)) {
+			startProcessTime = new Date();
+		}
 	}
 
 	/**
@@ -138,10 +143,15 @@ public class PatternLogger implements IPatternLogger {
 	}
 	
     /**
-     * @see org.ejbca.core.protocol.ocsp.ITransactionLogger#flush(String)
+     * @see org.ejbca.util.IPatternLogger#flush()
      */
     public void flush() {
         this.pw.flush();
-        this.logger.debug(this.sw.toString().replaceAll("REPLY_TIME", String.valueOf( new Date().getTime()-this.startTime.getTime() )));
+        String output = this.sw.toString();
+        output = output.replaceAll(IPatternLogger.REPLY_TIME, String.valueOf( new Date().getTime()-this.startTime.getTime()));
+        if (startProcessTime != null) {
+            output = output.replaceAll(IPatternLogger.PROCESS_TIME, String.valueOf(new Date().getTime()-this.startProcessTime.getTime()));
+        }
+        this.logger.debug(output); // Finally output the log row to the logging device
     }
 }

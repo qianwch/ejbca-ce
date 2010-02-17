@@ -609,12 +609,15 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 			X509Certificate cacert = null; // CA-certificate used to sign response
 			try {
 				byte[] reqBytes = checkAndGetRequestBytes(request, response);
+				// Start logging process time after we have received the request
+				transactionLogger.paramPut(IPatternLogger.PROCESS_TIME, IPatternLogger.PROCESS_TIME);
+				auditLogger.paramPut(IPatternLogger.PROCESS_TIME, IPatternLogger.PROCESS_TIME);
 				auditLogger.paramPut(IAuditLogger.OCSPREQUEST, new String (Hex.encode(reqBytes)));
 				OCSPReq req = null;
 				try {
 					req = new OCSPReq(reqBytes);					
 				} catch (Exception e) {
-					// When not beeing able to parse the request, we want to send a MalformedRequest back
+					// When not being able to parse the request, we want to send a MalformedRequest back
 					throw new MalformedRequestException(e);
 				}
 				if (req.getRequestorName() == null) {
@@ -646,7 +649,6 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 					transactionLogger.paramPut(ITransactionLogger.SIGN_ISSUER_NAME_DN, signercertIssuerName);
 					transactionLogger.paramPut(ITransactionLogger.SIGN_SERIAL_NO, signercert.getSerialNumber().toByteArray());
 					transactionLogger.paramPut(ITransactionLogger.SIGN_SUBJECT_NAME, signercertSubjectName);
-					transactionLogger.paramPut(IPatternLogger.REPLY_TIME, ITransactionLogger.REPLY_TIME);
 					if (m_reqMustBeSigned) {
 						// If it verifies OK, check if it is revoked
 						final CertificateStatus status = getStatus(m_adm, CertTools.getIssuerDN(signercert), CertTools.getSerialNumber(signercert));
