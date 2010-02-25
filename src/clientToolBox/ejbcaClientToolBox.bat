@@ -1,7 +1,7 @@
 @echo off
 rem Starting ctb using a Windows .BAT file
 set TOOLBOX_HOME=%~dp0
-set CLASSES=%TOOLBOX_HOME%clientToolBox.jar
+set CLASSES=%TOOLBOX_HOME%clientToolBox.jar;%TOOLBOX_HOME%properties
 SETLOCAL ENABLEDELAYEDEXPANSION
 FOR %%J IN ("%TOOLBOX_HOME%lib\*.jar") DO set CLASSES=!CLASSES!;%%J
 
