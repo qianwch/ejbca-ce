@@ -16,6 +16,7 @@ package org.ejbca.ui.cli;
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.rmi.RemoteException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
@@ -27,6 +28,7 @@ import java.util.Collection;
 import org.bouncycastle.asn1.DEROutputStream;
 import org.bouncycastle.asn1.DERSet;
 import org.bouncycastle.jce.PKCS10CertificationRequest;
+import org.ejbca.core.model.authorization.AdminGroupExistsException;
 import org.ejbca.core.model.ca.caadmin.CAInfo;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.util.Base64;
@@ -160,5 +162,8 @@ public abstract class BaseCaAdminCommand extends BaseAdminCommand {
 	   return result;
    }
    
-   
+   protected void initAuthorizationModule(int caid) throws RemoteException, AdminGroupExistsException {
+	   getOutputStream().println("Initalizing Temporary Authorization Module.");  
+	   getAuthorizationSession().initialize(administrator, caid);
+   } // initAuthorizationModule
 }

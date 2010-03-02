@@ -267,8 +267,4 @@ public class CaInitCommand extends BaseCaAdminCommand {
         }
     } // execute
     
-    private void initAuthorizationModule(int caid) throws Exception{
-      getOutputStream().println("Initalizing Temporary Authorization Module.");  
-      getAuthorizationSession().initialize(administrator, caid);
-    } // initAuthorizationModule
 }
