@@ -1,6 +1,6 @@
 EJBCA 3.9.5
 -----------
-This is a maintenance release with minor fixes. 
+This is a maintenance release with minor fixes and improvements. 
 
 Noteworthy changes:
 - Fixed a performance regression for the OCSP service that could lower throughput from 400 to 200 req/s.
@@ -8,7 +8,9 @@ Noteworthy changes:
 - Fixed and improved usage of the optional IAIK PKCS#11 provider.
 - Improve sequence handing for EAC CVC CAs.
 - Fixed a bug when renewing CA keys on HSMs.
-- Fixed that you could not use a dot in pre-set usernames in end entity profiles. 
+- Fixed that you could not use a dot in pre-set usernames in end entity profiles.
+- Added possibility to install directly with external admin CA, initializing authorization module in importcacert cli command.
+- Added possibility to prompt for keystore password during install so you never have to write it anywhere. 
 
 Read the full changelog for details.
 
