@@ -14,9 +14,10 @@
 package org.ejbca.ui.cli;
 
 import java.io.FileOutputStream;
+import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
 import org.ejbca.util.CertTools;
+import org.ejbca.util.CliTools;
 
 
 /**
@@ -41,26 +42,20 @@ public class CaGetCrlCommand extends BaseCaAdminCommand {
      * @throws ErrorAdminCommandException Error running command
      */
     public void execute() throws IllegalAdminCommandException, ErrorAdminCommandException {
+    	// Get and remove switches
+    	List<String> argsList = CliTools.getAsModifyableList(args);
+    	boolean deltaSelector = argsList.remove("-delta");
+    	boolean pem = argsList.remove("-pem");
+    	args = argsList.toArray(new String[0]);
 			if (args.length < 3) {
 				throw new IllegalAdminCommandException("Retrieves CRL in DER format.\nUsage: CA getcrl [-delta] <caname> <outfile> (-pem)");
 			}
 			try {
-                String caname = args[1];
-                int deltaSelector = 0;
-                if (StringUtils.equals(args[1], "-delta")) {
-                	deltaSelector = 1;
-                }
-				String outfile = args[2 + deltaSelector];
+				String caname = args[1];
+				String outfile = args[2];
 
-                boolean pem = false;
-                if (args.length > 3) {
-                    if (("-pem").equals(args[3 + deltaSelector])) {
-                        pem = true;
-                    }
-                }
-                
                 String issuerdn = getIssuerDN(caname);
-				byte[] crl = getCertificateStoreSession().getLastCRL(administrator, issuerdn, (deltaSelector > 0));
+				byte[] crl = getCertificateStoreSession().getLastCRL(administrator, issuerdn, deltaSelector);
 				FileOutputStream fos = new FileOutputStream(outfile);
                 if (pem) {		
                     fos.write(CertTools.getPEMFromCrl(crl));
@@ -68,8 +63,9 @@ public class CaGetCrlCommand extends BaseCaAdminCommand {
                 	fos.write(crl);
                 }
 				fos.close();
-				getOutputStream().println("Wrote latest " + (deltaSelector == 0 ? "" : "delta ") + "CRL to " + outfile + ".");
+				getOutputStream().println("Wrote latest " + (deltaSelector?"delta ":"") + "CRL to " + outfile + " using " + (pem?"PEM":"DER") + " format");
 			} catch (Exception e) {
+				e.printStackTrace();
 				throw new ErrorAdminCommandException(e);
 			}
     } // execute
