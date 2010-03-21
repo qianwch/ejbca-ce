@@ -44,6 +44,8 @@
 # When upgrading, the important options are:
 # - ca.keystorepass
 # - ca.ocspkeystorepass
+# - ca.xkmskeystorepass
+# - ca.cmskeystorepass
 
 # This installation will create a first administrative CA. This CA will be used to create the first
 # superadministrator and for the SSL server certificate of administrative web server.
