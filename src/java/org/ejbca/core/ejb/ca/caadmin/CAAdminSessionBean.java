@@ -590,15 +590,8 @@ public class CAAdminSessionBean extends BaseSessionBean {
         try{
         	cadatahome.create(cainfo.getSubjectDN(), cainfo.getName(), castatus, ca);
         	if(castatus == SecConst.CA_ACTIVE){
-        		//  create initial CRL
-        		String fp = this.getCRLCreateSession().run(admin, ca);
-        		// If we could not create a full CRL (for example CVC CAs does not even support CRLs), don't try to create a delta CRL.
-        		if (fp != null) {
-            		CRLInfo crlInfo = getCRLCreateSession().getCRLInfo(admin, fp);
-            		if(cainfo.getDeltaCRLPeriod() > 0) {
-            			this.getCRLCreateSession().runDeltaCRL(admin, ca, crlInfo.getLastCRLNumber(), crlInfo.getCreateDate().getTime());
-            		}        			
-        		}
+                //  create initial CRL
+        	    createCRLs(admin, ca, cainfo);
         	}
     		String msg = intres.getLocalizedMessage("caadmin.createdca", cainfo.getName(), new Integer(castatus));            	
         	getLogSession().log(admin, ca.getCAId(), LogConstants.MODULE_CA,  new java.util.Date(), null, null, LogConstants.EVENT_INFO_CACREATED, msg);
@@ -610,6 +603,17 @@ public class CAAdminSessionBean extends BaseSessionBean {
         // Update local OCSP's CA certificate cache
         CertificateCacheInternal.getInstance().update(ca.getCACertificate());
     } // createCA
+
+    private void createCRLs(Admin admin, CA ca, CAInfo cainfo) throws CATokenOfflineException {
+        final String fp = this.getCRLCreateSession().run(admin, ca);
+        // If we could not create a full CRL (for example CVC CAs does not even support CRLs), don't try to create a delta CRL.
+        if (fp != null) {
+            final CRLInfo crlInfo = getCRLCreateSession().getCRLInfo(admin, fp);
+            if(cainfo.getDeltaCRLPeriod() > 0) {
+                this.getCRLCreateSession().runDeltaCRL(admin, ca, crlInfo.getLastCRLNumber(), crlInfo.getCreateDate().getTime());
+            }                   
+        }
+    }
 
     /**
      * Method used to edit the data of a CA. 
@@ -1862,6 +1866,7 @@ public class CAAdminSessionBean extends BaseSessionBean {
     			ArrayList cacert = new ArrayList();
     			cacert.add(ca.getCACertificate());
     			publishCACertificate(admin, cacert, ca.getCRLPublishers(), ca.getSubjectDN());
+    			createCRLs(admin, ca, ca.getCAInfo());
     		    getCRLCreateSession().publishCRL(admin, ca.getCACertificate(), ca.getCRLPublishers(), ca.getSubjectDN());
     		}catch(CATokenOfflineException e){
 	    		String msg = intres.getLocalizedMessage("caadmin.errorrenewca", new Integer(caid));            	
