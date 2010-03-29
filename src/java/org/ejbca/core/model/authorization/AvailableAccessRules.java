@@ -76,6 +76,7 @@ public class AvailableAccessRules {
     public static final String REGULAR_CAFUNCTIONALTY                             = "/ca_functionality";
     public static final String REGULAR_CABASICFUNCTIONS                           = "/ca_functionality/basic_functions";
     public static final String REGULAR_ACTIVATECA                                 = "/ca_functionality/basic_functions/activate_ca";    
+    public static final String REGULAR_RENEWCA                                    = "/ca_functionality/renew_ca";    
     public static final String REGULAR_VIEWCERTIFICATE                            = "/ca_functionality/view_certificate";    
     public static final String REGULAR_APPROVECAACTION                            = "/ca_functionality/approve_caaction";
     public static final String REGULAR_CREATECRL                                  = "/ca_functionality/create_crl";    
@@ -114,6 +115,7 @@ public class AvailableAccessRules {
     private  final  String[] STANDARDREGULARACCESSRULES = {REGULAR_CAFUNCTIONALTY, 
                                                            REGULAR_CABASICFUNCTIONS,
                                                            REGULAR_ACTIVATECA,
+                                                           REGULAR_RENEWCA,
                                                            REGULAR_VIEWCERTIFICATE, 
                                                            REGULAR_CREATECRL,
                                                            REGULAR_EDITCERTIFICATEPROFILES,                                                           

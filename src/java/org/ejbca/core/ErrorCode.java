@@ -55,7 +55,9 @@ public class ErrorCode implements Serializable {
     private static final String _INTERNAL_ERROR = "INTERNAL_ERROR"; // Technical problem.
     private static final String _NOT_SPECIFIED = "NOT_SPECIFIED"; // No error code specified.
     private static final String _CA_OFFLINE = "CA_OFFLINE"; // CA is offline.
+    private static final String _CA_INVALID_TOKEN_PIN = "CA INVALID TOKEN PIN"; // an invalid CA token PIN was given
     private static final String _ALREADY_REVOKED ="ALREADY_REVOKED"; // End entity is already revoked
+    private static final String _CERT_PATH_INVALID ="CERT_PATH_INVALID"; // A certificate path was invalid/could not be constructed
 
     /** Default constructor. */
     private ErrorCode() {}
@@ -133,8 +135,12 @@ public class ErrorCode implements Serializable {
     public static final ErrorCode NOT_SPECIFIED = new ErrorCode(_NOT_SPECIFIED);
     /** CA is offline. */
     public static final ErrorCode CA_OFFLINE = new ErrorCode(_CA_OFFLINE);
+    /** CA token PIN is invalid. */
+    public static final ErrorCode CA_INVALID_TOKEN_PIN = new ErrorCode(_CA_INVALID_TOKEN_PIN);
     /** End entity is already revoked. */
     public static final ErrorCode  ALREADY_REVOKED = new ErrorCode(_ALREADY_REVOKED);
+    /** A certificate path was invalid/could not be constructed. */
+    public static final ErrorCode  CERT_PATH_INVALID = new ErrorCode(_CERT_PATH_INVALID);
 
     /** Get the internal error code. */
     public String getInternalErrorCode() {
