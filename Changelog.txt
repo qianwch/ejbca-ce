@@ -1,4 +1,4 @@
-3.9.6, 2010-03-29
+3.9.6, 2010-03-30
 ---
 New Feature
     * [ECA-1542] - New WS API methods for caRenewCertRequest and caCertResponse
