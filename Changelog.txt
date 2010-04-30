@@ -1,3 +1,13 @@
+3.9.7, 2010-05-02
+---
+Improvement
+    * [ECA-1616] - cvcRequest gives unclear error message when the exact same request is passed
+    * [ECA-1618] - OCSP responder, log startup, with version, and shutdown
+
+Bug
+    * [ECA-1636] - Error creating DVs signed by external CVCAs
+    * [ECA-1643] - Possible NullpointerException in EjbcaWS.getAvailableCertificateProfiles
+
 3.9.6, 2010-03-30
 ---
 New Feature

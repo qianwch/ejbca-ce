@@ -1,3 +1,17 @@
+EJBCA 3.9.7
+-----------
+This is a maintenance release with only four fixes.
+
+Changes:
+- Fixed an error when creating DVs signed by external CVCAs (EAC ePassport only).
+- Give better error message when the same public key is passed in initial CVC request (EAC ePassport only).
+- Log OCSP responder startup and shutdown.
+- Fix possible NullpointerException in EjbcaWS.getAvailableCertificateProfiles.
+
+Read the full changelog for details.
+
+For upgrade instructions, please see UPGRADE. 
+
 EJBCA 3.9.6
 -----------
 This is a maintenance release with two new features, and five minor fixes.
