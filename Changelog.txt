@@ -1,4 +1,4 @@
-3.9.7, 2010-05-02
+3.9.7, 2010-05-03
 ---
 Improvement
     * [ECA-1616] - cvcRequest gives unclear error message when the exact same request is passed
