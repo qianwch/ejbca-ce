@@ -200,6 +200,7 @@ public class TestEjbcaWS extends CommonEjbcaWSTest {
 	
 	/** Simulate a simple SQL injection by sending the illegal char "'". */
 	public void testEvilFind01() throws Exception {
+		setUpAdmin();
 		UserMatch usermatch = new UserMatch();
 	    usermatch.setMatchwith(org.ejbca.util.query.UserMatch.MATCH_WITH_USERNAME);
 	    usermatch.setMatchtype(org.ejbca.util.query.UserMatch.MATCH_TYPE_EQUALS);
