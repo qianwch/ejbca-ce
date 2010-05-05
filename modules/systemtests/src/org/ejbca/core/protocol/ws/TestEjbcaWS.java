@@ -12,7 +12,12 @@
  *************************************************************************/
 package org.ejbca.core.protocol.ws; 
 
+import java.util.List;
+
 import org.ejbca.core.model.authorization.AccessRulesConstants;
+import org.ejbca.core.protocol.ws.client.gen.IllegalQueryException_Exception;
+import org.ejbca.core.protocol.ws.client.gen.UserDataVOWS;
+import org.ejbca.core.protocol.ws.client.gen.UserMatch;
 
 /**
  * To run you must have the file tmp/bin/junit/jndi.properties
@@ -191,6 +196,19 @@ public class TestEjbcaWS extends CommonEjbcaWSTest {
 
 	public void test35CleanUpCACertRequest() throws Exception{
 		super.test35CleanUpCACertRequest(true);
+	}
+	
+	/** Simulate a simple SQL injection by sending the illegal char "'". */
+	public void testEvilFind01() throws Exception {
+		UserMatch usermatch = new UserMatch();
+	    usermatch.setMatchwith(org.ejbca.util.query.UserMatch.MATCH_WITH_USERNAME);
+	    usermatch.setMatchtype(org.ejbca.util.query.UserMatch.MATCH_TYPE_EQUALS);
+	    usermatch.setMatchvalue("A' OR '1=1");
+	    try {
+			List<UserDataVOWS> userdatas = ejbcaraws.findUser(usermatch);
+			fail("SQL injection did not cause an error! " + userdatas.size());
+	    } catch (IllegalQueryException_Exception e) {
+	    }
 	}
 
     public void test99cleanUpAdmins() throws Exception {
