@@ -42,21 +42,22 @@ public class OcspConfiguration {
 	public static String getSignatureAlgorithm() {
 		return ConfigurationHolder.getString("ocsp.signaturealgorithm", "SHA1WithRSA;SHA1WithECDSA;SHA1WithDSA");
 	}
+    public static final String WARNING_BEFORE_EXPERATION_TIME            = "ocsp.warningBeforeExpirationTime";
 
 	public static final String SIGNING_CERTD_VALID_TIME= "ocsp.signingCertsValidTime";
     /**
 	 * The interval on which new OCSP signing certificates are loaded in seconds
 	 */
 	public static int getSigningCertsValidTime() {
-        int timeInMinutes;
-        final int defaultTimeInMinutes = 300;
+        int timeInSeconds;
+        final int defaultTimeInSeconds = 300; // 5 minutes
 		try {
-            timeInMinutes = Integer.parseInt(ConfigurationHolder.getString(SIGNING_CERTD_VALID_TIME, ""+defaultTimeInMinutes));
+            timeInSeconds = Integer.parseInt(ConfigurationHolder.getString(SIGNING_CERTD_VALID_TIME, ""+defaultTimeInSeconds));
 		} catch( NumberFormatException e ) {
-            timeInMinutes = defaultTimeInMinutes;
-			log.warn("\"ocsp.signingCertsValidTime\" is not a decimal number. Using default 5 minutes");
+            timeInSeconds = defaultTimeInSeconds;
+			log.warn(SIGNING_CERTD_VALID_TIME+" is not a decimal number. Using default 5 minutes");
 		}
-		return timeInMinutes*1000;
+		return timeInSeconds*1000;
 	}
 
 	/**
@@ -270,6 +271,13 @@ public class OcspConfiguration {
 		return value;
 	}
 
+	/**
+	 * @return true if the validity of the OCSP signing certificates should be tested by the healthcheck.
+	 */
+	public static boolean getHealthCheckCertificateValidity() {
+		return ConfigurationHolder.getString("ocsphealthcheck.checkSigningCertificateValidity", "true").toLowerCase().indexOf("false")<0;
+	}
+
 	/** 
 	 * The default number of milliseconds a response is valid, or 0 to disable. See RFC5019.
 	 */
@@ -435,16 +443,33 @@ public class OcspConfiguration {
 
     public static String WSSWKEYSTOREPASSWORD = "ocsp.rekeying.swKeystorePassword";
     /**
-     * @return
+     * @return password for the SW keystore
      */
     public static String getWsSwKeystorePassword() {
         return ConfigurationHolder.getString(WSSWKEYSTOREPASSWORD, null);
     }
+    /**
+     * @return alias for keys that could be used as signer keys. null means all keys
+     */
     public static String[] getKeyAlias() {
         final String sConf = ConfigurationHolder.getString("ocsp.rekeying.listOfAliases", null);
         if ( sConf==null ) {
             return null;
         }
         return StringUtils.split(sConf.trim(), ';');
+    }
+    /**
+     * @return The interval on which new OCSP signing certificates are loaded in seconds
+     */
+    public static long getWarningBeforeExpirationTime() {
+    	int timeInSeconds;
+    	final int defaultTimeInSeconds = 604800; // 1 week 60*60*24*7
+    	try {
+    		timeInSeconds = Integer.parseInt(ConfigurationHolder.getString(WARNING_BEFORE_EXPERATION_TIME, ""+defaultTimeInSeconds));
+    	} catch( NumberFormatException e ) {
+    		timeInSeconds = defaultTimeInSeconds;
+    		log.warn(WARNING_BEFORE_EXPERATION_TIME+" is not a decimal number. Using default 1 week.");
+    	}
+    	return 1000*(long)timeInSeconds;
     }
 }
