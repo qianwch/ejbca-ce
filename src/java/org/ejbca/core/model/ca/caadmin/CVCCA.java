@@ -224,6 +224,9 @@ public class CVCCA extends CA implements Serializable {
 	 * @see CA#signRequest(byte[], boolean, boolean)
 	 */
 	public byte[] signRequest(byte[] request, boolean usepreviouskey, boolean createlinkcert) throws CATokenOfflineException {
+		if (log.isTraceEnabled()) {
+			log.trace(">signRequest: usepreviouskey="+usepreviouskey+", createlinkcert="+createlinkcert);
+		}
 		byte[] ret = request;
 		try {
 			CardVerifiableCertificate cacert = (CardVerifiableCertificate)getCACertificate();
@@ -347,6 +350,9 @@ public class CVCCA extends CA implements Serializable {
 			throw new RuntimeException(e);
 		} catch (NoSuchFieldException e) {
 			throw new RuntimeException(e);
+		}
+		if (log.isTraceEnabled()) {
+			log.trace("<signRequest");
 		}
 		return ret;
 	}
