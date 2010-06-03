@@ -1114,7 +1114,8 @@ public class ProtocolOcspHttpTest extends TestCase {
                     false,  // CRL Distribution Point on CRL critical
                     true, // Include in Health Check
                     true, // isDoEnforceUniquePublicKeys
-                    true // isDoEnforceUniqueDistinguishedName
+                    true, // isDoEnforceUniqueDistinguishedName
+                    false // isDoEnforceUniqueSubjectDNSerialnumber
                     );
 
             TestTools.getCAAdminSession().createCA(admin, cainfo);
@@ -1216,7 +1217,8 @@ public class ProtocolOcspHttpTest extends TestCase {
                     false,  // CRL Distribution Point on CRL critical
                     true, // Include in Health Check
                     true, // isDoEnforceUniquePublicKeys
-                    true // isDoEnforceUniqueDistinguishedName
+                    true, // isDoEnforceUniqueDistinguishedName
+                    false // isDoEnforceUniqueSubjectDNSerialnumber
                     );
 
             TestTools.getCAAdminSession().createCA(admin, cainfo);

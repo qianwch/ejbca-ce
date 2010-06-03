@@ -98,7 +98,7 @@ public class EjbcaException extends Exception {
      * Constructor used to create exception with an errormessage. Calls the same constructor in
      * baseclass <code>Exception</code>.
      *
-     * @param message Human redable error message, can not be NULL.
+     * @param message Human readable error message, can not be NULL.
      */
     public EjbcaException(String message, Throwable cause) {
 		super(message, cause);
