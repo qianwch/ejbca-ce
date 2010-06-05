@@ -2536,7 +2536,7 @@ public class CommonEjbcaWSTest extends TestCase {
     	java.security.cert.Certificate cvcacert = null;
     	int cvcaid = rootcadn.hashCode();
         try {
-            getAuthSession().initialize(intAdmin, rootcadn.hashCode());
+            getAuthSession().initialize(intAdmin, rootcadn.hashCode(), TestTools.defaultSuperAdminCN);
 
             CVCCAInfo cvccainfo = new CVCCAInfo(rootcadn, rootcaname, SecConst.CA_ACTIVE, new Date(),
             		SecConst.CERTPROFILE_FIXED_ROOTCA, 3650, 

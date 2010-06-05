@@ -95,7 +95,7 @@ public class TestCAs extends TestCase {
         boolean ret = false;
         try {
         	TestTools.removeTestCA();	// We cant be sure this CA was not left over from some other failed test
-            TestTools.getAuthorizationSession().initialize(admin, TestTools.getTestCAId());
+            TestTools.getAuthorizationSession().initialize(admin, TestTools.getTestCAId(), TestTools.defaultSuperAdminCN);
             SoftCATokenInfo catokeninfo = new SoftCATokenInfo();
             catokeninfo.setSignKeySpec("1024");
             catokeninfo.setEncKeySpec("1024");
@@ -234,7 +234,7 @@ public class TestCAs extends TestCase {
         log.trace(">test04AddECDSACA()");
         boolean ret = false;
         try {
-        	TestTools.getAuthorizationSession().initialize(admin, "CN=TESTECDSA".hashCode());
+        	TestTools.getAuthorizationSession().initialize(admin, "CN=TESTECDSA".hashCode(), TestTools.defaultSuperAdminCN);
 
             SoftCATokenInfo catokeninfo = new SoftCATokenInfo();
             catokeninfo.setSignKeySpec("prime192v1");
@@ -335,7 +335,7 @@ public class TestCAs extends TestCase {
         log.trace(">test05AddECDSAImplicitlyCACA()");
         boolean ret = false;
         try {
-        	TestTools.getAuthorizationSession().initialize(admin, "CN=TESTECDSAImplicitlyCA".hashCode());
+        	TestTools.getAuthorizationSession().initialize(admin, "CN=TESTECDSAImplicitlyCA".hashCode(), TestTools.defaultSuperAdminCN);
 
             SoftCATokenInfo catokeninfo = new SoftCATokenInfo();
             catokeninfo.setSignKeySpec("implicitlyCA");
@@ -437,7 +437,7 @@ public class TestCAs extends TestCase {
         try {
         	String cadn = "CN=TESTSha256WithMGF1";
 
-        	TestTools.getAuthorizationSession().initialize(admin, cadn.hashCode());
+        	TestTools.getAuthorizationSession().initialize(admin, cadn.hashCode(), TestTools.defaultSuperAdminCN);
 
             SoftCATokenInfo catokeninfo = new SoftCATokenInfo();
             catokeninfo.setSignKeySpec("1024");
@@ -525,7 +525,7 @@ public class TestCAs extends TestCase {
         boolean ret = false;
         try {
         	String dn = CertTools.stringToBCDNString("CN=TESTRSA4096,OU=FooBaaaaaar veeeeeeeery long ou,OU=Another very long very very long ou,O=FoorBar Very looong O,L=Lets ad a loooooooooooooooooong Locality as well,C=SE");
-        	TestTools.getAuthorizationSession().initialize(admin, dn.hashCode());
+        	TestTools.getAuthorizationSession().initialize(admin, dn.hashCode(), TestTools.defaultSuperAdminCN);
 
             SoftCATokenInfo catokeninfo = new SoftCATokenInfo();
             catokeninfo.setSignKeySpec("4096");
@@ -618,7 +618,7 @@ public class TestCAs extends TestCase {
         try {
         	String dn = CertTools.stringToBCDNString("CN=TESTRSAReverse,O=FooBar,OU=BarFoo,C=SE");
         	String name = "TESTRSAREVERSE";
-        	TestTools.getAuthorizationSession().initialize(admin, dn.hashCode());
+        	TestTools.getAuthorizationSession().initialize(admin, dn.hashCode(), TestTools.defaultSuperAdminCN);
 
             SoftCATokenInfo catokeninfo = new SoftCATokenInfo();
             catokeninfo.setSignKeySpec("1024");
@@ -730,7 +730,7 @@ public class TestCAs extends TestCase {
     	
     	// Create a root CVCA
         try {
-        	TestTools.getAuthorizationSession().initialize(admin, rootcadn.hashCode());
+        	TestTools.getAuthorizationSession().initialize(admin, rootcadn.hashCode(), TestTools.defaultSuperAdminCN);
 
             CVCCAInfo cvccainfo = new CVCCAInfo(rootcadn, rootcaname, SecConst.CA_ACTIVE, new Date(),
             		SecConst.CERTPROFILE_FIXED_ROOTCA, 3650, 
@@ -787,7 +787,7 @@ public class TestCAs extends TestCase {
 
         // Create a Sub DV domestic
         try {
-        	TestTools.getAuthorizationSession().initialize(admin, dvddn.hashCode());
+        	TestTools.getAuthorizationSession().initialize(admin, dvddn.hashCode(), TestTools.defaultSuperAdminCN);
             // Create a Certificate profile
             CertificateProfile profile = new CACertificateProfile();
             profile.setType(CertificateProfile.TYPE_SUBCA);
@@ -849,7 +849,7 @@ public class TestCAs extends TestCase {
 
         // Create a Sub DV foreign
         try {
-            TestTools.getAuthorizationSession().initialize(admin, dvfdn.hashCode());
+            TestTools.getAuthorizationSession().initialize(admin, dvfdn.hashCode(), TestTools.defaultSuperAdminCN);
 
             CVCCAInfo cvccainfo = new CVCCAInfo(dvfdn, dvfcaname, SecConst.CA_ACTIVE, new Date(),
             		SecConst.CERTPROFILE_FIXED_SUBCA, 3650, 
@@ -1002,7 +1002,7 @@ public class TestCAs extends TestCase {
         boolean ret = false;
         CAInfo info =null;
         try {
-            TestTools.getAuthorizationSession().initialize(admin, "CN=TESTSIGNEDBYEXTERNAL".hashCode());
+            TestTools.getAuthorizationSession().initialize(admin, "CN=TESTSIGNEDBYEXTERNAL".hashCode(), TestTools.defaultSuperAdminCN);
 
             SoftCATokenInfo catokeninfo = new SoftCATokenInfo();
             catokeninfo.setSignKeySpec("1024");
@@ -1128,7 +1128,7 @@ public class TestCAs extends TestCase {
         boolean ret = false;
         try {
         	TestTools.removeTestCA("TESTDSA");	// We cant be sure this CA was not left over from some other failed test
-            TestTools.getAuthorizationSession().initialize(admin, TestTools.getTestCAId());
+            TestTools.getAuthorizationSession().initialize(admin, TestTools.getTestCAId(), TestTools.defaultSuperAdminCN);
             SoftCATokenInfo catokeninfo = new SoftCATokenInfo();
             catokeninfo.setSignKeySpec("1024");
             catokeninfo.setEncKeySpec("1024");
