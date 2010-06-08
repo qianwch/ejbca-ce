@@ -60,9 +60,6 @@ import com.novosec.pkix.asn1.cmp.PKIMessage;
 /** These tests test RA functionality with the CMP protocol, i.e. a "trusted" RA sends CMP messages authenticated using PBE (password based encryption)
  * and these requests are handled by EJBCA without further authentication, end entities are created automatically in EJBCA.
  * 
- * You need a CMP TCP listener configured on port 5587 to run this test.
- * (cmp.tcp.enabled=true, cmp.tcp.portno=5587)
- * 
  * 'ant clean; ant bootstrap' to deploy configuration changes.
  * 
  * @author tomas
@@ -125,6 +122,7 @@ public class CrmfRAPbeRequestTest extends CmpTestCase {
         TestTools.getConfigurationSession().updateProperty(CmpConfiguration.CONFIG_RA_AUTHENTICATIONSECRET, "password");
         TestTools.getConfigurationSession().updateProperty(CmpConfiguration.CONFIG_RA_CERTIFICATEPROFILE, CPNAME);
         TestTools.getConfigurationSession().updateProperty(CmpConfiguration.CONFIG_RA_ENDENTITYPROFILE, EEPNAME);
+        TestTools.getConfigurationSession().updateProperty(CmpConfiguration.CONFIG_RACANAME, cainfo.getName());
         // Configure a Certificate profile (CmpRA) using ENDUSER as template and check "Allow validity override".
         if (TestTools.getCertificateStoreSession().getCertificateProfile(admin, CPNAME) == null) {
             CertificateProfile cp = new EndUserCertificateProfile();
@@ -188,7 +186,7 @@ public class CrmfRAPbeRequestTest extends CmpTestCase {
 		out.writeObject(req);
 		byte[] ba = bao.toByteArray();
 		// Send request and receive response
-		byte[] resp = sendCmpHttp(ba);
+		byte[] resp = sendCmpHttp(ba, 200);
 		assertNotNull(resp);
 		assertTrue(resp.length > 0);
 		checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, false, true);
@@ -210,7 +208,7 @@ public class CrmfRAPbeRequestTest extends CmpTestCase {
 		out.writeObject(req1);
 		ba = bao.toByteArray();
 		// Send request and receive response
-		resp = sendCmpHttp(ba);
+		resp = sendCmpHttp(ba, 200);
 		assertNotNull(resp);
 		assertTrue(resp.length > 0);
 		checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, false, true);
@@ -225,7 +223,7 @@ public class CrmfRAPbeRequestTest extends CmpTestCase {
 		out.writeObject(revReq);
 		ba = bao.toByteArray();
 		// Send request and receive response
-		resp = sendCmpHttp(ba);
+		resp = sendCmpHttp(ba, 200);
 		assertNotNull(resp);
 		assertTrue(resp.length > 0);
 		checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, false, true);
@@ -242,7 +240,7 @@ public class CrmfRAPbeRequestTest extends CmpTestCase {
 		out.writeObject(revReq);
 		ba = bao.toByteArray();
 		// Send request and receive response
-		resp = sendCmpHttp(ba);
+		resp = sendCmpHttp(ba, 200);
 		assertNotNull(resp);
 		assertTrue(resp.length > 0);
 		checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, false, true);
@@ -323,7 +321,7 @@ public class CrmfRAPbeRequestTest extends CmpTestCase {
 		out.writeObject(req);
 		byte[] ba = bao.toByteArray();
 		// Send request and receive response
-		byte[] resp = sendCmpHttp(ba);
+		byte[] resp = sendCmpHttp(ba, 200);
 		assertNotNull(resp);
 		assertTrue(resp.length > 0);
 		checkCmpFailMessage(resp, "Iteration count can not exceed 10000", 23, reqId, 1); // We expect a FailInfo.BAD_MESSAGE_CHECK
@@ -367,7 +365,7 @@ public class CrmfRAPbeRequestTest extends CmpTestCase {
 			out = new DEROutputStream(bao);
 			out.writeObject(revReq);
 			byte[] ba = bao.toByteArray();
-			byte[] resp = sendCmpHttp(ba);
+			byte[] resp = sendCmpHttp(ba, 200);
 			assertNotNull(resp);
 			assertTrue(resp.length > 0);
 			checkCmpResponseGeneral(resp, cainfo.getSubjectDN(), userdata.getDN(), newCACert, nonce, transid, false, true);
@@ -386,7 +384,7 @@ public class CrmfRAPbeRequestTest extends CmpTestCase {
 			out = new DEROutputStream(bao);
 			out.writeObject(revReq);
 			ba = bao.toByteArray();
-			resp = sendCmpHttp(ba);
+			resp = sendCmpHttp(ba, 200);
 			assertNotNull(resp);
 			assertTrue(resp.length > 0);
 			checkCmpResponseGeneral(resp, cainfo.getSubjectDN(), userdata.getDN(), newCACert, nonce, transid, false, true);
@@ -411,7 +409,7 @@ public class CrmfRAPbeRequestTest extends CmpTestCase {
 			out = new DEROutputStream(bao);
 			out.writeObject(revReq);
 			ba = bao.toByteArray();
-			resp = sendCmpHttp(ba);
+			resp = sendCmpHttp(ba, 200);
 			assertNotNull(resp);
 			assertTrue(resp.length > 0);
 			checkCmpResponseGeneral(resp, cainfo.getSubjectDN(), userdata.getDN(), newCACert, nonce, transid, false, true);

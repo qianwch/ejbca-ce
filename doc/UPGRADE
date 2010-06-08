@@ -35,6 +35,8 @@ Copy the directory 'p12' from the earlier installation and do 'ant deploy' with 
 Note the possibility to use 'ejbca-custom' directory since EJBCA 3.5.x, this can simplify upgrades. 
 See Admin Guide
 
+Read RELEASE_NOTES carefully in order to see if any particular changes might effect your upgrade particularly.
+
 From EJBCA 3.9.x to EJBCA 3.10.x
 --------------------------------
 Backup your database first! If the upgrade fails, you can always go back to the earlier version.
