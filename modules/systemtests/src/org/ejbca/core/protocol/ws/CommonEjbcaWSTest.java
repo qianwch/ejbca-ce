@@ -2592,7 +2592,8 @@ public class CommonEjbcaWSTest extends TestCase {
         			1, // Number of Req approvals
         			true, // Include in health check
                     true, // isDoEnforceUniquePublicKeys
-                    true // isDoEnforceUniqueDistinguishedName
+                    true, // isDoEnforceUniqueDistinguishedName
+                    false // isDoEnforceUniqueSubjectDNSerialnumber
         	);
 
         	getCAAdminSession().createCA(intAdmin, cvcdvinfo);
