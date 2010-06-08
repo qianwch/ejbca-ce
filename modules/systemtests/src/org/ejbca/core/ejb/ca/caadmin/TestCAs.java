@@ -149,7 +149,8 @@ public class TestCAs extends TestCase {
             		false,  // CRL Distribution Point on CRL critical
             		true,
                     true, // isDoEnforceUniquePublicKeys
-                    true // isDoEnforceUniqueDistinguishedName
+                    true, // isDoEnforceUniqueDistinguishedName
+                    false // isDoEnforceUniqueSubjectDNSerialnumber
             		);
 
             TestTools.getCAAdminSession().createCA(admin, cainfo);
@@ -291,7 +292,8 @@ public class TestCAs extends TestCase {
                     false,  // CRL Distribution Point on CRL critical
                     true, // include in Health Check
                     true, // isDoEnforceUniquePublicKeys
-                    true // isDoEnforceUniqueDistinguishedName
+                    true, // isDoEnforceUniqueDistinguishedName
+                    false // isDoEnforceUniqueSubjectDNSerialnumber
                     );
 
 
@@ -393,7 +395,8 @@ public class TestCAs extends TestCase {
                     false,  // CRL Distribution Point on CRL critical
                     true, // Include in healthCheck
                     true, // isDoEnforceUniquePublicKeys
-                    true // isDoEnforceUniqueDistinguishedName
+                    true, // isDoEnforceUniqueDistinguishedName
+                    false // isDoEnforceUniqueSubjectDNSerialnumber
             );
 
             TestTools.getCAAdminSession().createCA(admin, cainfo);
@@ -492,7 +495,8 @@ public class TestCAs extends TestCase {
                     false,  // CRL Distribution Point on CRL critical
                     true, // Include in healthCheck
                     true, // isDoEnforceUniquePublicKeys
-                    true // isDoEnforceUniqueDistinguishedName
+                    true, // isDoEnforceUniqueDistinguishedName
+                    false // isDoEnforceUniqueSubjectDNSerialnumber
                     );
             TestTools.getCAAdminSession().createCA(admin, cainfo);
 
@@ -580,7 +584,8 @@ public class TestCAs extends TestCase {
                     false,  // CRL Distribution Point on CRL critical
                     true, // Include in HealthCheck
                     true, // isDoEnforceUniquePublicKeys
-                    true // isDoEnforceUniqueDistinguishedName
+                    true, // isDoEnforceUniqueDistinguishedName
+                    false // isDoEnforceUniqueSubjectDNSerialnumber
                     );
 
             TestTools.getCAAdminSession().createCA(admin, cainfo);
@@ -673,7 +678,8 @@ public class TestCAs extends TestCase {
                     false,  // CRL Distribution Point on CRL critical
                     true, // Include in health check
                     true, // isDoEnforceUniquePublicKeys
-                    true // isDoEnforceUniqueDistinguishedName
+                    true, // isDoEnforceUniqueDistinguishedName
+                    false // isDoEnforceUniqueSubjectDNSerialnumber
                     );
 
             TestTools.getCAAdminSession().createCA(admin, cainfo);
@@ -749,7 +755,8 @@ public class TestCAs extends TestCase {
                     1, // Number of Req approvals
                     true, // Include in health check
                     true, // isDoEnforceUniquePublicKeys
-                    true // isDoEnforceUniqueDistinguishedName
+                    true, // isDoEnforceUniqueDistinguishedName
+                    false // isDoEnforceUniqueSubjectDNSerialnumber
                     );
             
             TestTools.getCAAdminSession().createCA(admin, cvccainfo);
@@ -811,7 +818,8 @@ public class TestCAs extends TestCase {
                     1, // Number of Req approvals
                     true, // Include in health check
                     true, // isDoEnforceUniquePublicKeys
-                    true // isDoEnforceUniqueDistinguishedName
+                    true, // isDoEnforceUniqueDistinguishedName
+                    false // isDoEnforceUniqueSubjectDNSerialnumber
                     );
             
             TestTools.getCAAdminSession().createCA(admin, cvccainfo);
@@ -868,7 +876,8 @@ public class TestCAs extends TestCase {
                     1, // Number of Req approvals
                     true, // Include in health check
                     true, // isDoEnforceUniquePublicKeys
-                    true // isDoEnforceUniqueDistinguishedName
+                    true, // isDoEnforceUniqueDistinguishedName
+                    false // isDoEnforceUniqueSubjectDNSerialnumber
                     );
             
             TestTools.getCAAdminSession().createCA(admin, cvccainfo);
@@ -1061,7 +1070,8 @@ public class TestCAs extends TestCase {
             		false,  // CRL Distribution Point on CRL critical
             		true,
                     true, // isDoEnforceUniquePublicKeys
-                    true // isDoEnforceUniqueDistinguishedName
+                    true, // isDoEnforceUniqueDistinguishedName
+                    false // isDoEnforceUniqueSubjectDNSerialnumber
             		);
 
             TestTools.getCAAdminSession().createCA(admin, cainfo);
@@ -1182,7 +1192,8 @@ public class TestCAs extends TestCase {
             		false,  // CRL Distribution Point on CRL critical
             		true,
                     true, // isDoEnforceUniquePublicKeys
-                    true // isDoEnforceUniqueDistinguishedName
+                    true, // isDoEnforceUniqueDistinguishedName
+                    false // isDoEnforceUniqueSubjectDNSerialnumber
             		);
 
             TestTools.getCAAdminSession().createCA(admin, cainfo);
