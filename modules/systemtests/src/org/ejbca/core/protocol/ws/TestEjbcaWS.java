@@ -215,7 +215,8 @@ public class TestEjbcaWS extends CommonEjbcaWSTest {
 			List<UserDataVOWS> userdatas = ejbcaraws.findUser(usermatch);
 			fail("SQL injection did not cause an error! " + userdatas.size());
 	    } catch (IllegalQueryException_Exception e) {
-	    }
+	    	// NOPMD, this should be thrown and we ignore it because we fail if it is not thrown
+	    } 
 	}
 
 	/** Use single transaction method for requesting KeyStore with special characters in the certificate SubjectDN. */
