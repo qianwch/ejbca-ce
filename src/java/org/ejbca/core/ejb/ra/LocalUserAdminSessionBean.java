@@ -56,6 +56,8 @@ import org.ejbca.core.ejb.log.ILogSessionLocal;
 import org.ejbca.core.ejb.log.ILogSessionLocalHome;
 import org.ejbca.core.ejb.ra.raadmin.IRaAdminSessionLocal;
 import org.ejbca.core.ejb.ra.raadmin.IRaAdminSessionLocalHome;
+import org.ejbca.core.ejb.ra.userdatasource.CustomFieldException;
+import org.ejbca.core.ejb.ra.userdatasource.FieldValidator;
 import org.ejbca.core.model.InternalResources;
 import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.approval.ApprovalException;
@@ -68,7 +70,6 @@ import org.ejbca.core.model.approval.approvalrequests.EditEndEntityApprovalReque
 import org.ejbca.core.model.approval.approvalrequests.RevocationApprovalRequest;
 import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.core.model.authorization.AuthorizationDeniedException;
-import org.ejbca.core.model.ca.caadmin.CADoesntExistsException;
 import org.ejbca.core.model.ca.caadmin.CAInfo;
 import org.ejbca.core.model.ca.certificateprofiles.CertificateProfile;
 import org.ejbca.core.model.ca.crl.RevokedCertInfo;
@@ -453,6 +454,11 @@ public class LocalUserAdminSessionBean extends BaseSessionBean {
      * @ejb.interface-method
      */
     public void addUser(Admin admin, UserDataVO userdata, boolean clearpwd) throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, DuplicateKeyException, WaitingForApprovalException, EjbcaException {
+        try {
+            FieldValidator.validate(userdata, userdata.getEndEntityProfileId(), raadminsession.getEndEntityProfileName(admin, userdata.getEndEntityProfileId()));
+        } catch (CustomFieldException e1) {
+            throw new EjbcaException(ErrorCode.FIELD_VALUE_NOT_VALID, e1.getMessage(), e1);
+        }
         String dn = CertTools.stringToBCDNString(StringTools.strip(userdata.getDN()));
     	String altName = StringTools.strip(userdata.getSubjectAltName());
     	String username = StringTools.strip(userdata.getUsername());
@@ -605,7 +611,9 @@ public class LocalUserAdminSessionBean extends BaseSessionBean {
     		user = (UserDataVO) itr.next();
     		sn = getSerialnumber(user.getDN());
     		if(sn != null){
-    			if(sn.equals(serialnumber))	return false;
+    			if(sn.equals(serialnumber)) {
+                    return false;
+                }
     		}
     	}
     	return true;
@@ -723,6 +731,11 @@ throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, Waiting
      */
     public void changeUser(Admin admin, UserDataVO userdata, boolean clearpwd, boolean fromWebService)
             throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, WaitingForApprovalException, EjbcaException {
+        try {
+            FieldValidator.validate(userdata, userdata.getEndEntityProfileId(), raadminsession.getEndEntityProfileName(admin, userdata.getEndEntityProfileId()));
+        } catch (CustomFieldException e1) {
+            throw new EjbcaException(ErrorCode.FIELD_VALUE_NOT_VALID, e1.getMessage(), e1);
+        }
         String dn = CertTools.stringToBCDNString(StringTools.strip(userdata.getDN()));
         String altName = userdata.getSubjectAltName();    
         String newpassword = userdata.getPassword();
