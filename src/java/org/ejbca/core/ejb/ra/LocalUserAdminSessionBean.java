@@ -724,7 +724,6 @@ throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, Waiting
      * @throws UserDoesntFullfillEndEntityProfile if data doesn't fullfil requirements of end entity profile 
      * @throws WaitingForApprovalException if approval is required and the action have been added in the approval queue.
      * @throws EjbcaException with ErrorCode "SUBJECTDN_SERIALNUMBER_ALREADY_EXISTS" if the SubjectDN Serialnumber already exists when it is specified in the CA that it should be unique.
-	 *
      * @throws EJBException if the user does not exist
 	 *
      * @ejb.interface-method
