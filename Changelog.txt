@@ -1,3 +1,12 @@
+3.9.8, 2010-06-17
+---
+Improvement
+    * [ECA-1658] - Supervision of the validity time of the signing certificates for the OCSP responder
+
+Bug
+    * [ECA-1266] - Upgrade may cause "use authority information access" to be enabled though it was not before in certificate profile
+    * [ECA-1639] - The CAR of a CV Certificate can hold an incorrect sequence number (which makes the CAR incorrect)
+
 3.9.7, 2010-05-03
 ---
 Improvement

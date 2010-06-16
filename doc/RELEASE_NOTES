@@ -1,3 +1,16 @@
+EJBCA 3.9.8
+-----------
+This is a maintenance release with only three fixes.
+
+Changes:
+- Supervision of the validity time of the signing certificates for the OCSP responder.
+- The CAR of a CV Certificate can hold an incorrect sequence number (which makes the CAR incorrect).
+- Upgrade may cause "use authority information access" to be enabled though it was not before in certificate profile.
+
+Read the full changelog for details.
+
+For upgrade instructions, please see UPGRADE. 
+
 EJBCA 3.9.7
 -----------
 This is a maintenance release with only four fixes.
