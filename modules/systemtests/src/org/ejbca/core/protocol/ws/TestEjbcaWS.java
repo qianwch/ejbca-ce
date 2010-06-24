@@ -164,9 +164,24 @@ public class TestEjbcaWS extends CommonEjbcaWSTest {
     	test25CreateCRL(true);  
     }
 
-    public void test26CVCRequest() throws Exception {
-    	test26CVCRequest(true);  
+    public void test26_1CvcRequestRSA() throws Exception {
+    	test26CvcRequest(true, "CN=WSCVCA,C=SE", "WSTESTCVCA", "CN=WSDVCA,C=SE", "WSTESTDVCA", CA1_WSTESTUSER1CVCRSA, "1024", AlgorithmConstants.KEYALGORITHM_RSA, AlgorithmConstants.SIGALG_SHA256_WITH_RSA_AND_MGF1);
     }
+
+    public void test26_2CleanCvcRequestRSA() throws Exception {
+        // Remove the CAs
+        deleteCVCCA("CN=WSCVCA,C=SE", "CN=WSDVCA,C=SE");        
+    }
+
+    public void test26_3CvcRequestECDSA() throws Exception {
+    	test26CvcRequest(true, "CN=WSCVCAEC,C=SE", "WSTESTCVCAEC", "CN=WSDVCAEC,C=SE", "WSTESTDVCAEC", CA2_WSTESTUSER1CVCEC, "secp256r1", AlgorithmConstants.KEYALGORITHM_ECDSA, AlgorithmConstants.SIGALG_SHA256_WITH_ECDSA);
+    }
+
+    public void test26_4CleanCvcRequestECDSA() throws Exception {
+        // Remove the CAs
+        deleteCVCCA("CN=WSCVCAEC,C=SE", "CN=WSDVCAEC,C=SE");        
+    }
+
 
     public void test27EjbcaVersion() throws Exception {
     	test27EjbcaVersion(true);  
