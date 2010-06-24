@@ -1875,7 +1875,7 @@ public class CommonEjbcaWSTest extends TestCase {
 		assertTrue(version.contains("EJBCA 3")); // We don't know which specific version we are testing
 	}
 	
-	protected void test28getLastCertChain(boolean performSetup) throws Exception{
+	protected void test10getLastCertChain(boolean performSetup) throws Exception{
 		if(performSetup){
 			setUpAdmin();
 		}
@@ -2486,6 +2486,16 @@ public class CommonEjbcaWSTest extends TestCase {
         	getUserAdminSession().revokeAndDeleteUser(intAdmin, CA2_WSTESTUSER1, RevokedCertInfo.REVOKATION_REASON_UNSPECIFIED);
         } catch (Exception e) {
         	e.printStackTrace();
+        }
+        try {
+            getUserAdminSession().revokeAndDeleteUser(intAdmin, CA1_WSTESTUSER1CVCRSA, RevokedCertInfo.REVOKATION_REASON_UNSPECIFIED);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        try {
+            getUserAdminSession().revokeAndDeleteUser(intAdmin, CA2_WSTESTUSER1CVCEC, RevokedCertInfo.REVOKATION_REASON_UNSPECIFIED);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         try {
         	getUserAdminSession().revokeAndDeleteUser(intAdmin, "WSTESTUSERKEYREC1", RevokedCertInfo.REVOKATION_REASON_UNSPECIFIED);
