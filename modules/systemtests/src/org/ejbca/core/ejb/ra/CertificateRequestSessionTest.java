@@ -40,6 +40,7 @@ public class CertificateRequestSessionTest extends TestCase {
 
 	private static final Logger log = Logger.getLogger(CertificateRequestSessionTest.class);
 	private final Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+	private final Random random= new Random();
 
 	public void test000Setup() {
 		TestTools.createTestCA();
@@ -50,7 +51,7 @@ public class CertificateRequestSessionTest extends TestCase {
 	 */
 	public void testSoftTokenRequestRollback() throws Exception {
 		// First try a successful request and validate the returned KeyStore
-		String username = "softTokenRequestTest-" + new Random().nextInt();
+		String username = "softTokenRequestTest-" + random.nextInt();
 		String password = "foo123";
 		UserDataVO userdata = new UserDataVO(username, "CN="+username, TestTools.getTestCAId(), null, null, SecConst.USER_ENDUSER,
 				SecConst.EMPTY_ENDENTITYPROFILE, SecConst.CERTPROFILE_FIXED_ENDUSER, SecConst.TOKEN_SOFT_JKS, 0, null);
@@ -74,7 +75,7 @@ public class CertificateRequestSessionTest extends TestCase {
     	// Try again with a user that does not exist and use values that we will break certificate generation
     	// If the transaction really is rolled back successfully there will be no trace of the user in the database
     	// We can do this by relying on the Unique Subject DN constraint
-		String username2 = "softTokenRequestTest-" + new Random().nextInt();
+		String username2 = "softTokenRequestTest-" + random.nextInt();
     	userdata.setUsername(username2);	// Still the same Subject DN
 		userdata.setPassword(password);
 		try {
@@ -91,7 +92,7 @@ public class CertificateRequestSessionTest extends TestCase {
 	 */
 	public void testCertificateRequestRollback() throws Exception {
 		// First try a successful request and validate the returned KeyStore
-		String username = "certificateRequestTest-" + new Random().nextInt();
+		String username = "certificateRequestTest-" + random.nextInt();
 		String password = "foo123";
 		UserDataVO userdata = new UserDataVO(username, "CN="+username, TestTools.getTestCAId(), null, null, SecConst.USER_ENDUSER,
 				SecConst.EMPTY_ENDENTITYPROFILE, SecConst.CERTPROFILE_FIXED_ENDUSER, SecConst.TOKEN_SOFT_BROWSERGEN, 0, null);
@@ -104,7 +105,7 @@ public class CertificateRequestSessionTest extends TestCase {
     	// Try again with a user that does not exist and use values that we will break certificate generation
     	// If the transaction really is rolled back successfully there will be no trace of the user in the database
     	// We can do this by relying on the Unique Public Key constraint
-		String username2 = "certificateRequestTest-" + new Random().nextInt();
+		String username2 = "certificateRequestTest-" + random.nextInt();
     	userdata.setUsername(username2);	// Still the same Subject DN
 		userdata.setPassword(password);
 		try {
