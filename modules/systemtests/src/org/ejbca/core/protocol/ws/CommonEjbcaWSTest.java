@@ -2565,7 +2565,8 @@ public class CommonEjbcaWSTest extends TestCase {
                     true, // Include in health check
                     true, // isDoEnforceUniquePublicKeys
                     true, // isDoEnforceUniqueDistinguishedName
-                    false // isDoEnforceUniqueSibjectDNSerialnumber
+                    false, // isDoEnforceUniqueSubjectDNSerialnumber
+                    true // useCertReqHistory
             );
 
             getCAAdminSession().createCA(intAdmin, cvccainfo);
@@ -2595,7 +2596,8 @@ public class CommonEjbcaWSTest extends TestCase {
                     true, // Include in health check
                     true, // isDoEnforceUniquePublicKeys
                     true, // isDoEnforceUniqueDistinguishedName
-                    false // isDoEnforceUniqueSubjectDNSerialnumber
+                    false, // isDoEnforceUniqueSubjectDNSerialnumber
+                    true // useCertReqHistory
             );
 
             getCAAdminSession().createCA(intAdmin, cvcdvinfo);
@@ -2648,7 +2650,8 @@ public class CommonEjbcaWSTest extends TestCase {
                     true, // Include in health check
                     true, // isDoEnforceUniquePublicKeys
                     true, // isDoEnforceUniqueDistinguishedName
-                    false // isDoEnforceUniqueSubjectDNSerialnumber
+                    false, // isDoEnforceUniqueSubjectDNSerialnumber
+                    true // useCertReqHistory
         	);
 
         	getCAAdminSession().createCA(intAdmin, cvcdvinfo);
