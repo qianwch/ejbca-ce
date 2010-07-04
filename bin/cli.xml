@@ -116,13 +116,13 @@ appserver.home         : ${appserver.home}
         <input message="Enter ca token password: " addproperty="password">
             <handler classname="org.apache.tools.ant.input.SecureInputHandler" />
         </input>
-        <echo message="Initializing CA with ${ca.name} '${ca.dn}' ${ca.tokentype} ${password} ${ca.keyspec} ${ca.keytype} ${ca.validity} ${ca.policy} ${ca.signaturealgorithm} ${ca.tokenproperties} -superadmincn ${superadmin.cn}..." />
-        <ejbca:cli arg='ca init "${ca.name}" "${ca.dn}" ${ca.tokentype} ${password} ${ca.keyspec} ${ca.keytype} ${ca.validity} ${ca.policy} ${ca.signaturealgorithm} ${ca.tokenproperties} -superadmincn ${superadmin.cn}'/>
+        <echo message="Initializing CA with '${ca.name}' '${ca.dn}' ${ca.tokentype} ${password} ${ca.keyspec} ${ca.keytype} ${ca.validity} ${ca.policy} ${ca.signaturealgorithm} ${ca.tokenproperties} -superadmincn '${superadmin.cn}'..." />
+        <ejbca:cli arg='ca init "${ca.name}" "${ca.dn}" ${ca.tokentype} ${password} ${ca.keyspec} ${ca.keytype} ${ca.validity} ${ca.policy} ${ca.signaturealgorithm} ${ca.tokenproperties} -superadmincn "${superadmin.cn}"'/>
     </target>
 
     <target name="ejbca:initCA" unless="isPrompt">
-        <echo message="Initializing CA with ${ca.name} '${ca.dn}' ${ca.tokentype} ${ca.tokenpassword} ${ca.keyspec} ${ca.keytype} ${ca.validity} ${ca.policy} ${ca.signaturealgorithm} ${ca.tokenproperties} -superadmincn ${superadmin.cn}..." />
-        <ejbca:cli arg='ca init "${ca.name}" "${ca.dn}" ${ca.tokentype} ${ca.tokenpassword} ${ca.keyspec} ${ca.keytype} ${ca.validity} ${ca.policy} ${ca.signaturealgorithm} ${ca.tokenproperties} -superadmincn ${superadmin.cn}'/>
+        <echo message="Initializing CA with '${ca.name}' '${ca.dn}' ${ca.tokentype} ${ca.tokenpassword} ${ca.keyspec} ${ca.keytype} ${ca.validity} ${ca.policy} ${ca.signaturealgorithm} ${ca.tokenproperties} -superadmincn '${superadmin.cn}'..." />
+        <ejbca:cli arg='ca init "${ca.name}" "${ca.dn}" ${ca.tokentype} ${ca.tokenpassword} ${ca.keyspec} ${ca.keytype} ${ca.validity} ${ca.policy} ${ca.signaturealgorithm} ${ca.tokenproperties} -superadmincn "${superadmin.cn}"'/>
     </target>
 
 	<target name="ejbca:adminweb">
