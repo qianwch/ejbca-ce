@@ -42,7 +42,11 @@ import org.ejbca.util.CertTools;
  * Timestamp (timestamp)
  * UserDataVO (userAdminData)
  * </pre>
- *
+ * 
+ * the information is currently used to:
+ * - list request history for a user
+ * - find issuing User DN (UserDataVO) when republishing a certificate (in case the userDN for the user changed)
+ * 
  * @version $Id$
  *
  * @ejb.bean description="This enterprise bean entity containing historical record over data user to generate a users certificate"
