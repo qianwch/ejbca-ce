@@ -211,14 +211,18 @@ public class TestEjbcaWS extends CommonEjbcaWSTest {
 		test33checkQueueLength(true);
 	}
 
-	public void test34CaRenewCertRequest() throws Exception{
-		super.test34CaRenewCertRequest(true);
+	public void test34_1CaRenewCertRequestRSA() throws Exception{
+		super.test34_1CaRenewCertRequestRSA(true);
+	}
+
+	public void test34_2CaRenewCertRequestECC() throws Exception{
+		super.test34_2CaRenewCertRequestECC(true);
 	}
 
 	public void test35CleanUpCACertRequest() throws Exception{
 		super.test35CleanUpCACertRequest(true);
 	}
-	
+
 	/** Simulate a simple SQL injection by sending the illegal char "'". */
 	public void testEvilFind01() throws Exception {
 		setUpAdmin();
