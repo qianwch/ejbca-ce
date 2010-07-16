@@ -451,7 +451,7 @@
 			}
 			value = request.getParameter(TEXTFIELD_CERTSERIALNUMBER);
 			if ( value!=null && value.length()>0 ) {
-				ei.setCertificateSerialNumber(new BigInteger(value.trim()));
+				ei.setCertificateSerialNumber(new BigInteger(value.trim(), 16));
 			} else {
 			    ei.setCertificateSerialNumber(null);
 			}
@@ -1389,12 +1389,12 @@ function checkUseInBatch(){
 		<tr  id="Row<%=(row++)%2%>"> 
 			<td align="right"> 
 				<%= ejbcawebbean.getText("CERTSERIALNUMER") %> <br />
-				(<%= ejbcawebbean.getText("EXAMPLE").toLowerCase() %> 1234567890 <%= ejbcawebbean.getText("OR").toLowerCase() %> 0x1234567890abcdef)
+				(<%= ejbcawebbean.getText("EXAMPLE").toLowerCase() %> 1234567890abcdef)
 			</td><td> 
 				<input type="text" name="<%= TEXTFIELD_CERTSERIALNUMBER %>" size="40" maxlength="40" tabindex="<%=tabindex++%>"
 					<%	final ExtendedInformation ei = userdata.getExtendedInformation();
 						final BigInteger oldNr = ei!=null ? ei.getCertificateSerialNumber() : null;
-						final String certSerialNr = oldNr!=null ? oldNr.toString() : "";
+						final String certSerialNr = oldNr!=null ? oldNr.toString(16) : "";
 						%>
 					value="<%= certSerialNr %>"
 					/>
