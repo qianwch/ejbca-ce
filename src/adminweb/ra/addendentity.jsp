@@ -1809,14 +1809,7 @@ function edituser(row){
  
 
   <% if(addedusers == null || addedusers.length == 0){     %>
-  <table width="100%" border="0" cellspacing="1" cellpadding="0">
-  <tr id="Row0"> 
-    <td width="10%">&nbsp;</td>
-    <td width="20%">&nbsp;</td>
-    <td width="20%">&nbsp;</td>
-    <td width="20%">&nbsp;</td>
-    <td width="30%">&nbsp;</td>
-  </tr>
+  <!-- nothing to do -->
   <% } else{ %>
   <div align="center"><H4><%= ejbcawebbean.getText("PREVIOUSLYADDEDENDENTITIES") %> </H4></div>
   <p>
@@ -1856,9 +1849,10 @@ function edituser(row){
   </tr>
  <%        }
          }
-       }
-     }%>
+ %>
   </table>
+ <%    }
+     }%>
   </form>
 
   <%// Include Footer 
