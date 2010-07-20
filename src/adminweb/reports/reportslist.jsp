@@ -24,7 +24,7 @@
 <f:view>
 <body>
 
-<h1 align="center"><h:outputText value="#{web.text.REPORTS}"/></h1>
+<h1><h:outputText value="#{web.text.REPORTS}"/></h1>
   <h4 align="center"><h:messages layout="table" errorClass="alert"/></h4>
   <p><h:outputText style="color: red" value="#{web.text.REPORTSINFO}"/></p>
   <h:form >
@@ -59,7 +59,12 @@
      </p>
   </h:form>
   <hr/>
- 
+
+	<%	// Include Footer 
+	String footurl = globalconfiguration.getFootBanner(); %>
+   
+	<jsp:include page="<%= footurl %>" />
+
 </body>
 </f:view>
 </html>
