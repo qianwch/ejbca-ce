@@ -1860,7 +1860,6 @@ function edituser(row){
      }%>
   </table>
   </form>
-   <p></p>
 
   <%// Include Footer 
    String footurl =   globalconfiguration .getFootBanner(); %>
