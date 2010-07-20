@@ -1089,7 +1089,7 @@ function checkallfields(){
 <body onload='<% if(usehardtokenissuers) out.write("setAvailableHardTokenIssuers();");
                  if(usekeyrecovery) out.write(" isKeyRecoveryPossible();");%>
                  fillCAField();'>
-  <h2 align="center"><%= ejbcawebbean.getText("ADDENDENTITY") %></h2>
+  <h1><%= ejbcawebbean.getText("ADDENDENTITY") %></h1>
   <!-- <div align="right"><A  onclick='displayHelpWindow("<%= ejbcawebbean.getHelpfileInfix("ra_help.html") + "#addendentity"%>")'>
     <u><%= ejbcawebbean.getText("HELP") %></u> </A> 
   </div> -->
