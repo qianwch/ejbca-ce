@@ -37,10 +37,8 @@ public class CaRenewCertRequest {
 	throws CADoesntExistsException, AuthorizationDeniedException, EjbcaException, ApprovalException, WaitingForApprovalException, CertPathValidatorException {
 		byte[] ret = null;		
 		try {
-			CAInfo cainfo = ejbhelper.getCAAdminSession().getCAInfo(admin, caname);
-			if (cainfo != null) {
-				ret = ejbhelper.getCAAdminSession().makeRequest(admin, cainfo.getCAId(), cachain, regenerateKeys, usenextkey, activatekey, keystorepwd);				
-			}
+			CAInfo cainfo = ejbhelper.getCAAdminSession().getCAInfoOrThrowException(admin, caname);
+			ret = ejbhelper.getCAAdminSession().makeRequest(admin, cainfo.getCAId(), cachain, regenerateKeys, usenextkey, activatekey, keystorepwd);				
 		} catch (RemoteException e) {
             throw EjbcaWSHelper.getInternalException(e, null);
 		}
