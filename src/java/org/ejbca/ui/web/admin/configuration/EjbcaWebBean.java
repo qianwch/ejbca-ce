@@ -736,5 +736,12 @@ public class EjbcaWebBean implements java.io.Serializable {
     	return "[<a href=\"" + getHelpBaseURI() +lastPart + "\" target=\"" + GlobalConfiguration.DOCWINDOW +
     		"\" title=\"" + getText("OPENHELPSECTION") + "\" >?</a>]";
     }
+    
+    public String getCleanOption(String parameter, String[] validOptions) throws Exception {
+    	for(int i=0; i<validOptions.length; i++){
+    		if(parameter.equals(validOptions[i]))	return parameter;
+    	}
+    	throw new Exception("Trying to set an unvalid option.");
+    }
 
 }
