@@ -741,7 +741,7 @@ public class EjbcaWebBean implements java.io.Serializable {
     	for(int i=0; i<validOptions.length; i++){
     		if(parameter.equals(validOptions[i]))	return parameter;
     	}
-    	throw new Exception("Trying to set an unvalid option.");
+    	throw new Exception("Trying to set an invalid option.");
     }
 
 }
