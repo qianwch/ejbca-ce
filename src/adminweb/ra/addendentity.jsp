@@ -1114,11 +1114,11 @@ function checkallfields(){
   <% } %>
 
 
-     <table border="0" cellpadding="0" cellspacing="2" width="792">
+     <table id="addendentity" border="0" cellpadding="0" cellspacing="2" width="792">
        <form name="changeprofile" action="<%= THIS_FILENAME %>" method="post">
        <input type="hidden" name='<%= ACTION %>' value='<%=ACTION_CHANGEPROFILE %>'>
        <tr>
-         <td></td>
+         <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
 	 <td align="right"><c:out value="<%= ejbcawebbean.getText("ENDENTITYPROFILE") %>"/></td>
 	 <td><select name="<%=SELECT_ENDENTITYPROFILE %>" size="1" tabindex="<%=tabindex++%>" onchange="document.changeprofile.submit()"'>
                 <% for(int i = 0; i < profilenames.length;i++){
@@ -1172,10 +1172,8 @@ function checkallfields(){
          <% }%>
           <% if(profile.getUse(EndEntityProfile.PASSWORD,0)){ %>
       <tr id="Row<%=(row++)%2%>">
-        <td>&nbsp&nbsp&nbsp&nbsp&nbsp;&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
-&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
-        </td>
-	<td align="right"><c:out value="<%= ejbcawebbean.getText("PASSWORD") %>"/></td>
+        <td></td>
+		<td align="right"><c:out value="<%= ejbcawebbean.getText("PASSWORD") %>"/></td>
         <td>   
              <%
                if(!profile.isModifyable(EndEntityProfile.PASSWORD,0)){ 
@@ -1216,8 +1214,7 @@ function checkallfields(){
              <input type="password" name="<%= TEXTFIELD_CONFIRMPASSWORD %>" size="40" maxlength="255" tabindex="<%=tabindex++%>" value='<c:out value="<%= profile.getValue(EndEntityProfile.PASSWORD,0) %>"/>'>
            <% } %>
         </td>
-	<td>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
-&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</td> 
+		<td></td> 
       </tr>
       <% }
           if(profile.getUse(EndEntityProfile.CLEARTEXTPASSWORD,0)){%>
@@ -1259,7 +1256,7 @@ function checkallfields(){
 	 <td></td>
 	 <td align="right"><c:out value="<%= ejbcawebbean.getText("EMAIL") %>"/></td>
 	 <td>      
-           <input type="text" name="<%= TEXTFIELD_EMAIL %>" size="20" maxlength="255" tabindex="<%=tabindex++%>" value='<c:out value="<%=oldemail%>"/>'>@
+           <input type="text" name="<%= TEXTFIELD_EMAIL %>" size="20" maxlength="255" tabindex="<%=tabindex++%>" value='<c:out value="<%=oldemail%>"/>'> @
           <% if(!profile.isModifyable(EndEntityProfile.EMAIL,0)){ 
                  String[] options = profile.getValue(EndEntityProfile.EMAIL, 0).split(EndEntityProfile.SPLITCHAR);
                %>
@@ -1376,7 +1373,7 @@ function checkallfields(){
             		if (!(!modifyable && rfc822NameString.contains("@"))) {
             		%>
 					<input type="text" name="<%= TEXTFIELD_RFC822NAME+i %>" size="20" maxlength="255" tabindex="<%=tabindex++%>"
-						value='<c:out value="<%= rfc822NameArray[0] %>"/>' />@
+						value='<c:out value="<%= rfc822NameArray[0] %>"/>' /> @
 				<%	}
             		if ( modifyable ) { %>
 					<input type="text" name="<%= TEXTFIELD_SUBJECTALTNAME + i %>" size="40" maxlength="255" tabindex="<%=tabindex++%>"
@@ -1404,7 +1401,7 @@ function checkallfields(){
 					// Display fixed subject altname fields
 					String[] options = profile.getValue(fielddata[EndEntityProfile.FIELDTYPE],fielddata[EndEntityProfile.NUMBER]).split(EndEntityProfile.SPLITCHAR);
 					if ( EndEntityProfile.isFieldOfType(fielddata[EndEntityProfile.FIELDTYPE], DnComponents.UPN) ) { %>
-						<input type="text" name="<%= TEXTFIELD_UPNNAME+i %>" size="20" maxlength="255" tabindex="<%=tabindex++%>" />@
+						<input type="text" name="<%= TEXTFIELD_UPNNAME+i %>" size="20" maxlength="255" tabindex="<%=tabindex++%>" /> @
 				<%	} %>
 				<%	if( options != null && options.length > 0 ) { %>
 						<select name="<%= SELECT_SUBJECTALTNAME + i %>" size="1" tabindex="<%=tabindex++%>">
@@ -1423,7 +1420,7 @@ function checkallfields(){
 			<%	} else {
 					// Display modifyable subject altname fields
 	               	if(EndEntityProfile.isFieldOfType(fielddata[EndEntityProfile.FIELDTYPE], DnComponents.UPN)) { %>
-						<input type="text" name="<%= TEXTFIELD_UPNNAME+i %>" size="20" maxlength="255" tabindex="<%=tabindex++%>" >@
+						<input type="text" name="<%= TEXTFIELD_UPNNAME+i %>" size="20" maxlength="255" tabindex="<%=tabindex++%>" > @
 				<%	} %>
 					<input type="text" name="<%= TEXTFIELD_SUBJECTALTNAME + i %>" size="40" maxlength="255" tabindex="<%=tabindex++%>" value='<c:out value="<%= profile.getValue(fielddata[EndEntityProfile.FIELDTYPE],fielddata[EndEntityProfile.NUMBER]) %>"/>'>
 			<%	} %>
@@ -1540,12 +1537,6 @@ function checkallfields(){
 			</td>
 		</tr>
 	<% } %> 
-     <tr id="Row<%=(row++)%2%>">
-	 <td>&nbsp;</td>
-	 <td>&nbsp;</td>
-	 <td>&nbsp;</td>
-	 <td>&nbsp;</td>
-     </tr>
      
         <% int revstatus = RevokedCertInfo.NOT_REVOKED;
            String value = profile.getValue(EndEntityProfile.ISSUANCEREVOCATIONREASON ,0);
@@ -1555,6 +1546,12 @@ function checkallfields(){
         %>
      
 	<% if( profile.getUse(EndEntityProfile.ISSUANCEREVOCATIONREASON, 0) ) { %>
+		<tr id="Row<%=(row++)%2%>">
+		<td>&nbsp;</td>
+		<td>&nbsp;</td>
+		<td>&nbsp;</td>
+		<td>&nbsp;</td>
+		</tr>
 		<tr  id="Row<%=(row++)%2%>"> 
 			<td></td><td align="right"> 
 				<c:out value="<%= ejbcawebbean.getText("ISSUANCEREVOCATIONREASON") %>"/>
