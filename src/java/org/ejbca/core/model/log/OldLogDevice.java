@@ -130,7 +130,7 @@ public class OldLogDevice implements ILogDevice, Serializable {
     			if (certificate != null) {
     				uid = CertTools.getSerialNumberAsString(certificate) + "," + CertTools.getIssuerDN(certificate);        		
     			}
-    			
+    			/*
     			String userdata = username;
     			if(admin.certificate != null) {
     				if(userdata==null || userdata.length()<=0){
@@ -141,11 +141,11 @@ public class OldLogDevice implements ILogDevice, Serializable {
     			} else {
     				userdata += ", admincert is null";
     			}
-    			
+    			*/
     			Integer id = getAndIncrementRowCount();
-    			logentryhome.create(id, admin.getAdminType(), admin.getAdminData(), caid, module, time, userdata, uid, event, comment);
+    			logentryhome.create(id, admin.getAdminType(), admin.getAdminData(), caid, module, time, username, uid, event, comment);
     			if (logsigning) {
-    				LogEntry le = new LogEntry(id.intValue(), admin.getAdminType(), admin.getAdminData(), caid, module, time, userdata, uid, event, comment);
+    				LogEntry le = new LogEntry(id.intValue(), admin.getAdminType(), admin.getAdminData(), caid, module, time, username, uid, event, comment);
     				TableProtectSessionLocal protect = protecthome.create();
     				protect.protect(le);
     			}
