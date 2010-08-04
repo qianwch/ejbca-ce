@@ -140,7 +140,7 @@ public class CrmfMessageHandlerTest extends TestCase {
      * mocks in EJBCA4. Code below this point is merely utility.
      */
 
-    class SignSessionStub implements ISignSessionRemote {
+    public static class SignSessionStub implements ISignSessionRemote {
 
         /**
          * For the purpose of this test stub, this variable simply stores a test
