@@ -100,13 +100,17 @@ public class CrmfMessageHandler implements ICmpMessageHandler {
 	/** Parameter used to determine the type of protection for the response message */
 	private String responseProt = null;
 	
-	private final Admin admin;
-	private final ISignSessionRemote signsession;
-	private final IUserAdminSessionRemote usersession;
-	private final ICAAdminSessionRemote casession;
-	private final IRaAdminSessionRemote rasession;
-	private final ICertificateStoreSessionRemote storesession;
-	private final ICertificateRequestSessionRemote reqsession;
+	private Admin admin;
+	private ISignSessionRemote signsession;
+	private IUserAdminSessionRemote usersession;
+	private ICAAdminSessionRemote casession;
+	private IRaAdminSessionRemote rasession;
+	private ICertificateStoreSessionRemote storesession;
+	private ICertificateRequestSessionRemote reqsession;
+	
+	public CrmfMessageHandler() {
+	    
+	}
 	
 	public CrmfMessageHandler(final Admin admin) throws CreateException, RemoteException {
 		this.admin = admin;
