@@ -117,7 +117,7 @@ function checkuseautoenroll(){
     <tr id="Row0"> 
       <td width="49%" valign="top"> 
         <h3><c:out value="<%= ejbcawebbean.getText("ENABLEKEYRECOVERY")%>"/>
-        <c:out value="<%= ejbcawebbean.getHelpReference("/adminguide.html#Key%20recovery") %>"/>
+        <%= ejbcawebbean.getHelpReference("/adminguide.html#Key%20recovery") %>
         </h3>
         <p class="help">&nbsp; </p>          
       </td>
@@ -205,7 +205,7 @@ function checkuseautoenroll(){
     <tr id="Row1"> 
       <td width="49%" valign="top"> 
         <h3><c:out value="<%= ejbcawebbean.getText("AUTOENROLLUSE") %>"/>
-        <c:out value="<%= ejbcawebbean.getHelpReference("/howto.html#Setting%20up%20Autoenrollment%20for%20Windows%20clients%20with%20EJBCA") %>"/>
+        <%= ejbcawebbean.getHelpReference("/howto.html#Setting%20up%20Autoenrollment%20for%20Windows%20clients%20with%20EJBCA") %>
         </h3>
         <p class="help"><c:out value="<%= ejbcawebbean.getText("AUTOENROLLUSEHELP") %>"/></p>
       </td>
