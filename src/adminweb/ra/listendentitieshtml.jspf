@@ -327,13 +327,13 @@ function confirmrevokation(){
           <input type="checkbox" name="<%= CHECKBOX_SELECT_USER + i %>" value='<%= CHECKBOX_VALUE %>'>
         </div>
       </td>
-    <td width="11%"><%= users[i].getUsername() %>
+    <td width="11%"><c:out value="<%= users[i].getUsername() %>"/>
        <input type="hidden" name='<%= HIDDEN_USERNAME + i %>' value='<c:out value="<%= java.net.URLEncoder.encode(users[i].getUsername(),"UTF-8") %>"/>' >
     </td>
-    <td width="10%"><%= users[i].getCAName() %></td>      
-    <td width="19%"><%= users[i].getCommonName() %></td>
-    <td width="17%"><%= users[i].getSubjectDNField(DNFieldExtractor.OU,0) %></td>
-    <td width="18%"><%= users[i].getSubjectDNField(DNFieldExtractor.O,0) %></td>
+    <td width="10%"><c:out value="<%= users[i].getCAName() %>"/></td>      
+    <td width="19%"><c:out value="<%= users[i].getCommonName() %>"/></td>
+    <td width="17%"><c:out value="<%= users[i].getSubjectDNField(DNFieldExtractor.OU,0) %>"/></td>
+    <td width="18%"><c:out value="<%= users[i].getSubjectDNField(DNFieldExtractor.O,0) %>"/></td>
     <td width="12%"><%  switch(users[i].getStatus()){
                           case UserDataConstants.STATUS_NEW : %>
                             <c:out value="<%= ejbcawebbean.getText("STATUSNEW") %>" />

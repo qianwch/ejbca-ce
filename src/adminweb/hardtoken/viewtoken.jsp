@@ -262,7 +262,7 @@ function viewcopies(link){
      <table border="0" cellpadding="0" cellspacing="2" width="400">
       <tr id="Row<%=(row++)%2%>">
 	<td align="right" width="<%=columnwidth%>"><%= ejbcawebbean.getText("USERNAME") %></td>
-	<td><% if(token.getUsername() != null) out.write(token.getUsername()); %>
+	<td><% if(token.getUsername() != null){ %> <c:out value="<%= token.getUsername() %>"/> <% } %>
         </td>
       </tr> 
       <% if(alluserstokens){ %>

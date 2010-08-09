@@ -61,7 +61,7 @@
      <table border="0" cellpadding="0" cellspacing="2" width="400">
       <tr id="Row<%=(viewendentityhelper.row++)%2%>">
 	<td align="right" width="<%=ViewEndEntityHelper.columnwidth%>"><%= ejbcawebbean.getText("USERNAME") %></td>
-	<td><% if(viewendentityhelper.userdata.getUsername() != null) out.write(viewendentityhelper.userdata.getUsername()); %>
+	<td><% if(viewendentityhelper.userdata.getUsername() != null){%> <c:out value="<%= viewendentityhelper.userdata.getUsername() %>"/> <%} %>
         </td>
       </tr>
       <tr id="Row<%=(viewendentityhelper.row++)%2%>">
