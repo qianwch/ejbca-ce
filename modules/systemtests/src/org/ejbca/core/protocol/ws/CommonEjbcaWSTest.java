@@ -2221,12 +2221,13 @@ public class CommonEjbcaWSTest extends TestCase {
         final String keyalg = AlgorithmConstants.KEYALGORITHM_ECDSA;
         final String signalg = AlgorithmConstants.SIGALG_SHA256_WITH_ECDSA;
                 
-		caRenewCertRequest(cvcaMnemonic, dvcaName, dvcaMnemonic, keyspec, keyalg, signalg);
+		CardVerifiableCertificate cvcacert = caRenewCertRequest(cvcaMnemonic, dvcaName, dvcaMnemonic, keyspec, keyalg, signalg);
 		
+		caMakeRequestAndFindCA(dvcaName, cvcacert);
 	} // test34_2CaRenewCertRequestECC
 	
 	/** Private method used for both RSA and ECC tests */
-	private void caRenewCertRequest(final String cvcaMnemonic, final String dvcaName, final String dvcaMnemonic, final String keyspec, final String keyalg, final String signalg) throws Exception {
+	private CardVerifiableCertificate caRenewCertRequest(final String cvcaMnemonic, final String dvcaName, final String dvcaMnemonic, final String keyspec, final String keyalg, final String signalg) throws Exception {
 		List<byte[]> cachain = new ArrayList<byte[]>();
 		String pwd = "foo123"; // use default hard coded soft CA token password 
 		// first we just try to create a simple request from an active X.509 CA. 
@@ -2302,7 +2303,7 @@ public class CommonEjbcaWSTest extends TestCase {
         // make the mandatory junit checks...
         assertNotNull(request);
         cvcreq = RequestMessageUtils.genCVCRequestMessage(request);
-        assertNotNull(request);
+        assertNotNull(cvcreq);
         assertEquals(dvinfo.getSubjectDN(), cvcreq.getRequestDN());
         obj = CertificateParser.parseCVCObject(request);
         //System.out.println(obj.getAsText());
@@ -2310,8 +2311,9 @@ public class CommonEjbcaWSTest extends TestCase {
 		CVCAuthenticatedRequest authreq = (CVCAuthenticatedRequest)obj;
 		assertEquals(dvcertactive.getCVCertificate().getCertificateBody().getHolderReference().getConcatenated(), authreq.getAuthorityReference().getConcatenated());
 		cert = authreq.getRequest();
+		// The request should be targeted for the CVCA, i.e. ca_ref in request should be the same as the CVCAs ref
         assertEquals(cvcacert.getCVCertificate().getCertificateBody().getAuthorityReference().getConcatenated(), cert.getCertificateBody().getAuthorityReference().getConcatenated());
-        // Now test our WS API to generate a request, setting status to "WAITING_FOR_CERTIFICATE_RESPONSE"
+        // Now test our WS API that it has set status to "WAITING_FOR_CERTIFICATE_RESPONSE"
         dvinfo = getCAAdminSession().getCAInfo(intAdmin, caname);
         assertEquals(SecConst.CA_WAITING_CERTIFICATE_RESPONSE, dvinfo.getStatus());
         // Check to see that is really is a new keypair
@@ -2461,7 +2463,47 @@ public class CommonEjbcaWSTest extends TestCase {
         iscert.verify(pk);
         pk = KeyTools.getECPublicKeyWithParams(dvretcert.getCertificateBody().getPublicKey(), cvcacert.getPublicKey());
         iscert.verify(pk);
+        
+        return cvcacert;
 	} // caRenewCertRequest
+	
+	private void caMakeRequestAndFindCA(String caname, CardVerifiableCertificate cvcacert) throws Exception {
+		/*
+		 * Test making a certificate request from a DVCA without giving the certificate chain to the CVCA. If the CVCA is imported in the database as an external CA the CVCA
+		 * certificate should be found automatically (by CAAdminSessionBean.makeRequest).
+		 */
+        byte[] request = ejbcaraws.caRenewCertRequest(caname, new ArrayList(), false, false, false, null);
+        // make the mandatory junit checks...
+        assertNotNull(request);
+        CVCRequestMessage cvcreq = RequestMessageUtils.genCVCRequestMessage(request);
+        assertNotNull(cvcreq);
+        CAInfo dvinfo = getCAAdminSession().getCAInfo(intAdmin, caname);
+        assertEquals(dvinfo.getSubjectDN(), cvcreq.getRequestDN());
+        CVCObject obj = CertificateParser.parseCVCObject(request);
+        //System.out.println(obj.getAsText());
+        // We should have created an authenticated request signed by the old certificate
+        CardVerifiableCertificate dvcertactive = (CardVerifiableCertificate)dvinfo.getCertificateChain().iterator().next();
+		CVCAuthenticatedRequest authreq = (CVCAuthenticatedRequest)obj;
+		CVCertificate cert = authreq.getRequest();
+		// The request should be targeted for the CVCA, i.e. ca_ref in request should be the same as the CVCAs ref
+		String cvcaref = cvcacert.getCVCertificate().getCertificateBody().getAuthorityReference().getConcatenated();
+		String caref = cert.getCertificateBody().getAuthorityReference().getConcatenated();
+		// In this first case however, we did not have any CVCA certificate, so the CA_ref will then simply be the DV's own ref
+        assertEquals(caref, caref);
+        
+        // Now we have to import the CVCA certificate as an external CA, and do it again, then it should find the CVCA certificate
+        Collection cvcacerts = new ArrayList();
+        cvcacerts.add(cvcacert);
+        getCAAdminSession().importCACertificate(intAdmin, "WSTESTCVCAIMPORTED", cvcacerts);
+        request = ejbcaraws.caRenewCertRequest(caname, new ArrayList(), false, false, false, null);
+        assertNotNull(request);
+        obj = CertificateParser.parseCVCObject(request);
+		authreq = (CVCAuthenticatedRequest)obj;
+		cert = authreq.getRequest();
+		// The request should be targeted for the CVCA, i.e. ca_ref in request should be the same as the CVCAs ref
+		caref = cert.getCertificateBody().getAuthorityReference().getConcatenated();
+        assertEquals(cvcaref, caref);
+	}
 	
 	protected void test35CleanUpCACertRequest(boolean performSetup) throws Exception {
 		// Remove CAs created by previous tests test34_1 and 2
@@ -2720,7 +2762,6 @@ public class CommonEjbcaWSTest extends TestCase {
     		getCAAdminSession().removeCA(intAdmin, dn.hashCode());
     	} catch (Exception e) {
     		e.printStackTrace();
-    		assertTrue(false);
     	}
     	
     	try {
@@ -2728,8 +2769,15 @@ public class CommonEjbcaWSTest extends TestCase {
     		getCAAdminSession().removeCA(intAdmin, dn.hashCode());
     	} catch (Exception e) {
     		e.printStackTrace();
-    		assertTrue(false);
     	}
+
+    	try {
+    		String dn = CertTools.stringToBCDNString("CN=CVCAEXEC,C=SE");
+    		getCAAdminSession().removeCA(intAdmin, dn.hashCode());
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    	}
+
     }
     
 	/**

@@ -24,8 +24,6 @@ import org.ejbca.core.model.log.Admin;
 import org.ejbca.util.TestTools;
 
 /**
- * Tests and removes the ca data entity bean.
- *
  * @version $Id$
  */
 public class TestRenewCA extends TestCase {

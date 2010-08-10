@@ -1258,7 +1258,9 @@ public class CAAdminSessionBean extends BaseSessionBean {
             String caname = ca.getName();
             
             // AR+ patch to make SPOC independent of external CVCA certs for automatic renewals
-            if (cachain.isEmpty() && regenerateKeys &&
+            // i.e. if we don't pass a ca certificate as parameter we try to find a suitable CA certificate in the database, among existing CAs 
+            // (can be a simple imported CA-certificate of external CA)
+            if (cachain.isEmpty() &&
             	ca.getCAType() == CAInfo.CATYPE_CVC &&
                 ca.getSignedBy() == CAInfo.SIGNEDBYEXTERNALCA &&
                 ca.getStatus() == SecConst.CA_ACTIVE){
@@ -1271,7 +1273,7 @@ public class CAAdminSessionBean extends BaseSessionBean {
 	        		if (cvca.getCAType() == CAInfo.CATYPE_CVC && cvca.getSignedBy() == CAInfo.SELFSIGNED){
 	        			CardVerifiableCertificate cvccert = (CardVerifiableCertificate)cvca.getCACertificate();
 	        			if (ca_ref.equals (cvccert.getCVCertificate().getCertificateBody().getHolderReference().getConcatenated())){
-	                    	log.info("Added missing CVCA to rewnewal request: "+ cvca.getName());
+	                    	log.debug("Added missing CVCA to rewnewal request: "+ cvca.getName());
 	        				cachain.add(cvccert);
 	        				break;
 	        			}
