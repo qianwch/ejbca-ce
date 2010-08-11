@@ -46,12 +46,6 @@
         <servlet-name>ExtOCSPHealthCheckServlet</servlet-name>
         <url-pattern>/extocsphealth</url-pattern>
     </servlet-mapping>
-  <env-entry>
-    <env-entry-name>DataSource</env-entry-name>
-    <env-entry-value>@datasource.jndi-name-prefix@@datasource.jndi-name@</env-entry-value>
-    <env-entry-type>java.lang.String</env-entry-type>
-  </env-entry>
-
     <security-constraint>
         <web-resource-collection>
             <web-resource-name>restricted methods</web-resource-name>
@@ -63,6 +57,12 @@
         </web-resource-collection>
         <auth-constraint />
     </security-constraint> 
+
+  <env-entry>
+    <env-entry-name>DataSource</env-entry-name>
+    <env-entry-value>@datasource.jndi-name-prefix@@datasource.jndi-name@</env-entry-value>
+    <env-entry-type>java.lang.String</env-entry-type>
+  </env-entry>
 
   <ejb-local-ref id="EJBLocalRef_1">
     <ejb-ref-name>ejb/CertificateStoreOnlyDataSessionLocal</ejb-ref-name>
