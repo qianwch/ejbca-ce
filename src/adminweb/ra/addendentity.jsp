@@ -1366,7 +1366,7 @@ function checkallfields(){
                 %>
            </select>
            <% }else{ %> 
-             <input type="text" name="<%= TEXTFIELD_SUBJECTDN + i %>" size="40" maxlength="255" tabindex="<%=tabindex++%>" value='<c:out value="<%= profile.getValue(fielddata[EndEntityProfile.FIELDTYPE],fielddata[EndEntityProfile.NUMBER]) %>" /> '>
+             <input type="text" name="<%= TEXTFIELD_SUBJECTDN + i %>" size="40" maxlength="255" tabindex="<%=tabindex++%>" value='<c:out value="<%= profile.getValue(fielddata[EndEntityProfile.FIELDTYPE],fielddata[EndEntityProfile.NUMBER]) %>"/>'>
            <% }
             }
             else{ %>
@@ -1882,7 +1882,7 @@ function edituser(row){
      
   <tr id="Row<%= i%2 %>"> 
 
-    <td width="15%">c:out value="<%= addedusers[i].getUsername() %>"/>
+    <td width="15%"><c:out value="<%= addedusers[i].getUsername() %>"/>
        <input type="hidden" name='<%= HIDDEN_USERNAME + i %>' value='<c:out value="<%=java.net.URLEncoder.encode(addedusers[i].getUsername(),"UTF-8")%>"/>'>
     </td>
     <td width="20%"><c:out value="<%= addedusers[i].getSubjectDNField(DNFieldExtractor.CN,0)  %>"/></td>
