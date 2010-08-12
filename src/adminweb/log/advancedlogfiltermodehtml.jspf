@@ -619,7 +619,7 @@ function checkfields(){
            </option>
            <option <%  if(tempval == LogMatch.MATCH_WITH_EVENT)
                          out.write(" selected ");
-                    %> value='<:out value="<%= Integer.toString(LogMatch.MATCH_WITH_EVENT) %>"/>'><c:out value="<%= ejbcawebbean.getText("MATCHEVENT") %>" />
+                    %> value='<c:out value="<%= Integer.toString(LogMatch.MATCH_WITH_EVENT) %>"/>'><c:out value="<%= ejbcawebbean.getText("MATCHEVENT") %>" />
            </option>
            <option <%  if(tempval == LogMatch.MATCH_WITH_CA)
                          out.write(" selected ");
