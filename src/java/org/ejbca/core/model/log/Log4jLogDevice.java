@@ -100,12 +100,16 @@ public class Log4jLogDevice implements ILogDevice, Serializable {
             user = username;
         }
 
+        String admindata = admininfo.getAdminData();
         if (certificate != null) {
-        	cert = CertTools.getSerialNumberAsString(certificate) + " : issuer: \"" + CertTools.getIssuerDN(certificate)+"\"";        		
+        	cert = CertTools.getSerialNumberAsString(certificate) + " : issuer: \"" + CertTools.getIssuerDN(certificate)+"\"";
+        	admindata += " : CertDN : \"" + CertTools.getSubjectDN(certificate) + "\""; 
         }
 
+        
+        
         if (admininfo.getAdminType() == Admin.TYPE_CLIENTCERT_USER) {
-            admin = Admin.ADMINTYPETEXTS[Admin.TYPE_CLIENTCERT_USER] + " : Certificate SNR : " + admininfo.getAdminData();
+            admin = Admin.ADMINTYPETEXTS[Admin.TYPE_CLIENTCERT_USER] + " : Certificate SNR : " + admindata;
         } else if (admininfo.getAdminType() == Admin.TYPE_PUBLIC_WEB_USER) {
             if (admininfo.getAdminData() != null) {
                 if (!admininfo.getAdminData().equals("")) {
