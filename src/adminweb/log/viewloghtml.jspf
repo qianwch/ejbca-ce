@@ -40,20 +40,20 @@ function viewcert(row){
 </head>
 
 <body>
-<h1><c:out value="<%= ejbcawebbean.getText("VIEWLOG") %>" /></h1>
+<h1><c:out value="<%= ejbcawebbean.getText(\"VIEWLOG\") %>" /></h1>
   <form name="changefiltermode" method="post" action="<%=THIS_FILENAME %>">
     <div align="right">
      <% if(filtermode == AdminPreference.FILTERMODE_BASIC){ %>
       <input type="hidden" name='<%= ACTION %>' value='<%=ACTION_CHANGEFILTERMODETO_ADVANCED %>'>
-      <A href='javascript:document.changefiltermode.submit();'><u><c:out value="<%= ejbcawebbean.getText("ADVANCEDMODE") %>" /></u></A>
+      <A href='javascript:document.changefiltermode.submit();'><u><c:out value="<%= ejbcawebbean.getText(\"ADVANCEDMODE\") %>" /></u></A>
      <% }
         if(filtermode == AdminPreference.FILTERMODE_ADVANCED){ %>
         <input type="hidden" name='<%= ACTION %>' value='<%=ACTION_CHANGEFILTERMODETO_BASIC %>'>
-        <A href='javascript:document.changefiltermode.submit();'><u><c:out value="<%= ejbcawebbean.getText("BASICMODE") %>" /></u></A>
+        <A href='javascript:document.changefiltermode.submit();'><u><c:out value="<%= ejbcawebbean.getText(\"BASICMODE\") %>" /></u></A>
      <% } %>
      &nbsp;&nbsp;&nbsp;
    <!--  <A  onclick='displayHelpWindow("<%= ejbcawebbean.getHelpfileInfix("log_help.html") +"#viewlog" %>")'>
-     <u><c:out value="<%= ejbcawebbean.getText("HELP") %>" /></u> </A> -->
+     <u><c:out value="<%= ejbcawebbean.getText(\"HELP\") %>" /></u> </A> -->
   </div>
   </form> 
 <form name="form" method="post" action="<%=THIS_FILENAME %>">
@@ -128,7 +128,7 @@ function viewcert(row){
   <input type="hidden" name='<%= HIDDEN_RECORDNUMBER %>' value='<c:out value="<%=String.valueOf(record) %>"/>'>
   <input type="hidden" name='<%= HIDDEN_SORTBY  %>' value='<%=sortby %>'>
      <% if(filtermode == AdminPreference.FILTERMODE_BASIC){ %>
-      <p><c:out value="<%= ejbcawebbean.getText("VIEWEVENTSOCCURED") %>" />
+      <p><c:out value="<%= ejbcawebbean.getText(\"VIEWEVENTSOCCURED\") %>" />
       <select name="<%=SELECT_VIEWLASTENTRIES %>" >
         <option  value='' > -- </option>
       <% 
@@ -139,7 +139,7 @@ function viewcert(row){
                                    %>><c:out value="<%=ejbcawebbean.getText(VIEWLASTTIMESTEXTS[i]) %>" /></option>
       <% } %>
      </select>  
-		<c:out value="<%= ejbcawebbean.getText("FROM").toLowerCase() %>" />
+		<c:out value="<%= ejbcawebbean.getText(\"FROM\").toLowerCase() %>" />
       <select name="<%=SELECT_VIEWLOGDEVICE %>" >
       <%	Collection availableLogDevices = logbean.getAvailableLogDevices();
             Iterator iter = availableLogDevices.iterator();
@@ -150,7 +150,7 @@ function viewcert(row){
       <%	}	%>
      </select>  
 
-    <input type="submit" name="<%=BUTTON_VIEWLAST %>" value='<c:out value="<%= ejbcawebbean.getText("VIEW") %>"/>'>
+    <input type="submit" name="<%=BUTTON_VIEWLAST %>" value='<c:out value="<%= ejbcawebbean.getText(\"VIEW\") %>"/>'>
   </p>
      <% }
         if(filtermode == AdminPreference.FILTERMODE_ADVANCED){ %>
@@ -158,20 +158,20 @@ function viewcert(row){
      <%   } %>
 
   <% if(illegalquery){ %>
-      <H4 id="alert"><div align="center"><c:out value="<%= ejbcawebbean.getText("INVALIDQUERY") %>" /></div></H4>
+      <H4 id="alert"><div align="center"><c:out value="<%= ejbcawebbean.getText(\"INVALIDQUERY\") %>" /></div></H4>
   <% } %>
 
   <% if(largeresult){ %>
-     <H4 id="alert"><div align="center" ><c:out value="<%= ejbcawebbean.getText("TOLARGERESULT")  + " " + LogInterfaceBean.MAXIMUM_QUERY_ROWCOUNT
-                                             + " " + ejbcawebbean.getText("ROWSWILLBEDISPLAYED") %>" /> </div> </H4>  
+     <H4 id="alert"><div align="center" ><c:out value="<%= ejbcawebbean.getText(\"TOLARGERESULT\")  + \" \" + LogInterfaceBean.MAXIMUM_QUERY_ROWCOUNT
+                                             + \" \" + ejbcawebbean.getText(\"ROWSWILLBEDISPLAYED\") %>" /> </div> </H4>  
   <% } %>
   <% if(cmsnotactive){ %>
-     <H4 id="alert"><div align="center" ><c:out value="<%= ejbcawebbean.getText("EXPORTCMSSERVICENOTACTIVE") %>" /> </div> </H4>  
+     <H4 id="alert"><div align="center" ><c:out value="<%= ejbcawebbean.getText(\"EXPORTCMSSERVICENOTACTIVE\") %>" /> </div> </H4>  
   <% } %>
   <p>
-    <input type="submit" name="<%=BUTTON_RELOAD %>" value='<c:out value="<%= ejbcawebbean.getText("RELOAD") %>"/>'>
-    <input type="submit" name="<%=BUTTON_EXPORTCSV %>" value='<c:out value="<%= ejbcawebbean.getText("EXPORTCSV") %>"/>'>
-    <c:out value="<%= ejbcawebbean.getText("EXPORTSIGNWITHCA") %>" />
+    <input type="submit" name="<%=BUTTON_RELOAD %>" value='<c:out value="<%= ejbcawebbean.getText(\"RELOAD\") %>"/>'>
+    <input type="submit" name="<%=BUTTON_EXPORTCSV %>" value='<c:out value="<%= ejbcawebbean.getText(\"EXPORTCSV\") %>"/>'>
+    <c:out value="<%= ejbcawebbean.getText(\"EXPORTSIGNWITHCA\") %>" />
       <select name="<%=SELECT_SIGNCSVCA %>" >
         <option  value=''><c:out value="<%=SELECT_EMPTYVALUE%>" /></option>
                 <% 
@@ -198,14 +198,14 @@ function viewcert(row){
     <tr> 
       <td width="14%"> 
         <% if(logbean.previousButton(record)){ %>
-          <input type="submit" name="<%=BUTTON_PREVIOUS %>" value='<c:out value="<%= ejbcawebbean.getText("PREVIOUS") %>"/>'>
+          <input type="submit" name="<%=BUTTON_PREVIOUS %>" value='<c:out value="<%= ejbcawebbean.getText(\"PREVIOUS\") %>"/>'>
         <% } %>
       </td>
       <td width="76%">&nbsp; </td>
       <td width="10%"> 
         <div align="right">
         <% if(logbean.nextButton(record,size)){ %>
-          <input type="submit" name="<%=BUTTON_NEXT %>" value='<c:out value="<%= ejbcawebbean.getText("NEXT") %>"/>'>
+          <input type="submit" name="<%=BUTTON_NEXT %>" value='<c:out value="<%= ejbcawebbean.getText(\"NEXT\") %>"/>'>
         <% } %>
         </div>
       </td>
@@ -214,101 +214,101 @@ function viewcert(row){
   <table width="1100" border="0" cellspacing="1" cellpadding="0">
   <tr> 
     <td width="9%"><% if(sortby.equals(SORTBY_TIME_ACC)){ %>
-                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("downarrow.gif") %>' border="0" name="<%=SORTBY_TIME_DEC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText("TIME") %>" />
+                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("downarrow.gif") %>' border="0" name="<%=SORTBY_TIME_DEC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText(\"TIME\") %>" />
                    <% }else{
                          if(sortby.equals(SORTBY_TIME_DEC)){ %>
-                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("uparrow.gif") %>' border="0" name="<%=SORTBY_TIME_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText("TIME") %>" />
+                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("uparrow.gif") %>' border="0" name="<%=SORTBY_TIME_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText(\"TIME\") %>" />
                    <%    }else{ %> 
-                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("noarrow.gif") %>' border="0" name="<%=SORTBY_TIME_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText("TIME") %>" />
+                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("noarrow.gif") %>' border="0" name="<%=SORTBY_TIME_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText(\"TIME\") %>" />
                    <%    }
                        } %>
     </td>
     <td width="7%">
                    <% if(sortby.equals(SORTBY_ADMINTYPE_ACC)){ %>
-                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("downarrow.gif") %>' border="0" name="<%=SORTBY_ADMINTYPE_DEC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText("ADMINTYPE") %>" />
+                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("downarrow.gif") %>' border="0" name="<%=SORTBY_ADMINTYPE_DEC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText(\"ADMINTYPE\") %>" />
                    <% }else{
                          if(sortby.equals(SORTBY_ADMINTYPE_DEC)){ %>
-                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("uparrow.gif") %>' border="0" name="<%=SORTBY_ADMINTYPE_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText("ADMINTYPE") %>" />
+                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("uparrow.gif") %>' border="0" name="<%=SORTBY_ADMINTYPE_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText(\"ADMINTYPE\") %>" />
                    <%    }else{ %> 
-                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("noarrow.gif") %>' border="0" name="<%=SORTBY_ADMINTYPE_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText("ADMINTYPE") %>" />
+                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("noarrow.gif") %>' border="0" name="<%=SORTBY_ADMINTYPE_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText(\"ADMINTYPE\") %>" />
                    <%    }
                        } %>
     </td>
     <td width="10%">
                    <% if(sortby.equals(SORTBY_ADMINDATA_ACC)){ %>
-                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("downarrow.gif") %>' border="0" name="<%=SORTBY_ADMINDATA_DEC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText("ADMINISTRATOR") %>" />
+                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("downarrow.gif") %>' border="0" name="<%=SORTBY_ADMINDATA_DEC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText(\"ADMINISTRATOR\") %>" />
                    <% }else{
                          if(sortby.equals(SORTBY_ADMINDATA_DEC)){ %>
-                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("uparrow.gif") %>' border="0" name="<%=SORTBY_ADMINDATA_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText("ADMINISTRATOR") %>" />
+                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("uparrow.gif") %>' border="0" name="<%=SORTBY_ADMINDATA_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText(\"ADMINISTRATOR\") %>" />
                    <%    }else{ %> 
-                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("noarrow.gif") %>' border="0" name="<%=SORTBY_ADMINDATA_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText("ADMINISTRATOR") %>" />
+                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("noarrow.gif") %>' border="0" name="<%=SORTBY_ADMINDATA_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText(\"ADMINISTRATOR\") %>" />
                    <%    }
                        } %>
     </td>
     <td width="10%">
                    <% if(sortby.equals(SORTBY_CA_ACC)){ %>
-                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("downarrow.gif") %>' border="0" name="<%=SORTBY_CA_DEC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText("CA") %>" />
+                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("downarrow.gif") %>' border="0" name="<%=SORTBY_CA_DEC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText(\"CA\") %>" />
                    <% }else{
                          if(sortby.equals(SORTBY_CA_DEC)){ %>
-                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("uparrow.gif") %>' border="0" name="<%=SORTBY_CA_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText("CA") %>" /> 
+                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("uparrow.gif") %>' border="0" name="<%=SORTBY_CA_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText(\"CA\") %>" /> 
                    <%    }else{ %> 
-                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("noarrow.gif") %>' border="0" name="<%=SORTBY_CA_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText("CA") %>" />
+                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("noarrow.gif") %>' border="0" name="<%=SORTBY_CA_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText(\"CA\") %>" />
                    <%    }
                        } %>
     </td>
     <td width="5%">
                    <% if(sortby.equals(SORTBY_MODULE_ACC)){ %>
-                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("downarrow.gif") %>' border="0" name="<%=SORTBY_MODULE_DEC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText("MODULE") %>" />
+                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("downarrow.gif") %>' border="0" name="<%=SORTBY_MODULE_DEC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText(\"MODULE\") %>" />
                    <% }else{
                          if(sortby.equals(SORTBY_MODULE_DEC)){ %>
-                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("uparrow.gif") %>' border="0" name="<%=SORTBY_MODULE_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText("MODULE") %>" /> 
+                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("uparrow.gif") %>' border="0" name="<%=SORTBY_MODULE_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText(\"MODULE\") %>" /> 
                    <%    }else{ %> 
-                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("noarrow.gif") %>' border="0" name="<%=SORTBY_MODULE_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText("MODULE") %>" />
+                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("noarrow.gif") %>' border="0" name="<%=SORTBY_MODULE_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText(\"MODULE\") %>" />
                    <%    }
                        } %>
     </td>
     <td width="9%"><% if(sortby.equals(SORTBY_EVENT_ACC)){ %>
-                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("downarrow.gif") %>' border="0" name="<%=SORTBY_EVENT_DEC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText("EVENT") %>" />
+                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("downarrow.gif") %>' border="0" name="<%=SORTBY_EVENT_DEC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText(\"EVENT\") %>" />
                    <% }else{ 
                          if(sortby.equals(SORTBY_EVENT_DEC)){ %>
-                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("uparrow.gif") %>' border="0" name="<%=SORTBY_EVENT_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText("EVENT") %>" />
+                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("uparrow.gif") %>' border="0" name="<%=SORTBY_EVENT_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText(\"EVENT\") %>" />
                    <%    }else{ %> 
-                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("noarrow.gif") %>' border="0" name="<%=SORTBY_EVENT_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText("EVENT") %>" />
+                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("noarrow.gif") %>' border="0" name="<%=SORTBY_EVENT_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText(\"EVENT\") %>" />
                    <%    }
                        } %>
     </td>
     <td width="7%"><% if(sortby.equals(SORTBY_USERNAME_ACC)){ %>
-                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("downarrow.gif") %>' border="0" name="<%=SORTBY_USERNAME_DEC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText("USERNAME") %>" />
+                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("downarrow.gif") %>' border="0" name="<%=SORTBY_USERNAME_DEC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText(\"USERNAME\") %>" />
                    <% }else{
                          if(sortby.equals(SORTBY_USERNAME_DEC)){ %>
-                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("uparrow.gif") %>' border="0" name="<%=SORTBY_USERNAME_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText("USERNAME") %>" />
+                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("uparrow.gif") %>' border="0" name="<%=SORTBY_USERNAME_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText(\"USERNAME\") %>" />
                    <%    }else{ %> 
-                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("noarrow.gif") %>' border="0" name="<%=SORTBY_USERNAME_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText("USERNAME") %>" />
+                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("noarrow.gif") %>' border="0" name="<%=SORTBY_USERNAME_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText(\"USERNAME\") %>" />
                    <%    }
                        } %>
     </td>
     <td width="18%"><% if(sortby.equals(SORTBY_CERTIFICATE_ACC)){ %>
-                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("downarrow.gif") %>' border="0" name="<%=SORTBY_CERTIFICATE_DEC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText("CERTIFICATE") %>" />    
+                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("downarrow.gif") %>' border="0" name="<%=SORTBY_CERTIFICATE_DEC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText(\"CERTIFICATE\") %>" />    
                    <% }else{
                          if(sortby.equals(SORTBY_CERTIFICATE_DEC)){ %>
-                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("uparrow.gif") %>' border="0" name="<%=SORTBY_CERTIFICATE_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText("CERTIFICATE") %>" />
+                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("uparrow.gif") %>' border="0" name="<%=SORTBY_CERTIFICATE_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText(\"CERTIFICATE\") %>" />
                    <%    }else{ %> 
-                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("noarrow.gif") %>' border="0" name="<%=SORTBY_CERTIFICATE_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText("CERTIFICATE") %>" />
+                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("noarrow.gif") %>' border="0" name="<%=SORTBY_CERTIFICATE_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText(\"CERTIFICATE\") %>" />
                    <%    }
                        } %>
     </td>
     <td width="18%"><% if(sortby.equals(SORTBY_COMMENT_ACC)){ %>
-                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("downarrow.gif") %>' border="0" name="<%=SORTBY_COMMENT_DEC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText("COMMENT") %>" />
+                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("downarrow.gif") %>' border="0" name="<%=SORTBY_COMMENT_DEC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText(\"COMMENT\") %>" />
                    <% }else{
                          if(sortby.equals(SORTBY_COMMENT_DEC)){ %>
-                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("uparrow.gif") %>' border="0" name="<%=SORTBY_COMMENT_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText("COMMENT") %>" />
+                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("uparrow.gif") %>' border="0" name="<%=SORTBY_COMMENT_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText(\"COMMENT\") %>" />
                    <%    }else{ %> 
-                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("noarrow.gif") %>' border="0" name="<%=SORTBY_COMMENT_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText("COMMENT") %>" />
+                          <input type="image" src='<%= ejbcawebbean.getImagefileInfix("noarrow.gif") %>' border="0" name="<%=SORTBY_COMMENT_ACC %>" value="submit" ><c:out value="<%= ejbcawebbean.getText(\"COMMENT\") %>" />
                    <%    }
                        } %>
     </td>
     <td width="7%">
-                   <img src='<%= ejbcawebbean.getImagefileInfix("noarrow.gif") %>' border="0"><c:out value="<%= ejbcawebbean.getText("VERIFY") %>" />
+                   <img src='<%= ejbcawebbean.getImagefileInfix("noarrow.gif") %>' border="0"><c:out value="<%= ejbcawebbean.getText(\"VERIFY\") %>" />
     </td>
     
   </tr>
@@ -316,7 +316,7 @@ function viewcert(row){
   <tr id="LogTextRow0"> 
     <td width="9%"> &nbsp;</td>
     <td width="7%">&nbsp;</td>
-    <td width="17%"><c:out value="<%= ejbcawebbean.getText("NOLOGENTRIESFOUND") %>" /></td>
+    <td width="17%"><c:out value="<%= ejbcawebbean.getText(\"NOLOGENTRIESFOUND\") %>" /></td>
     <td width="10%">&nbsp;</td>
     <td width="5%">&nbsp;</td>
     <td width="9%">&nbsp;</td>
@@ -336,7 +336,7 @@ function viewcert(row){
     <td width="10%">
        <%  if(Integer.parseInt(logentries[i].getValue(LogEntryView.ADMINTYPE)) == Admin.TYPE_CLIENTCERT_USER) 
              if(logentries[i].getValue(LogEntryView.ADMINDATA).equals("")){ %>
-                <c:out value="<%= ejbcawebbean.getText("CERTIFICATENOTKNOWN") %>" />
+                <c:out value="<%= ejbcawebbean.getText(\"CERTIFICATENOTKNOWN\") %>" />
              <%}else{%>
         <A style="cursor:pointer;"  onclick='viewadmincert(<%= i %>)'>
         <u><c:out value="<%= logentries[i].getValue(LogEntryView.ADMINDATA) %>" /></u> </A>
@@ -348,17 +348,17 @@ function viewcert(row){
     <td width="5%"><c:out value="<%= logentries[i].getValue(LogEntryView.MODULE) %>"/></td>
     <td width="9%"><c:out value="<%= logentries[i].getValue(LogEntryView.EVENT) %>"/></td>
     <td width="7%"><% if(logentries[i].getValue(LogEntryView.USERNAME) == null) { %>
-                         <c:out value="<%= ejbcawebbean.getText("NOENDENTITYINVOLVED") %>" />
+                         <c:out value="<%= ejbcawebbean.getText(\"NOENDENTITYINVOLVED\") %>" />
                        <%}else{%> 
         <A  style="cursor:pointer;"  onclick='viewuser(<%= i %>)'>
         <u><c:out value="<%= logentries[i].getValue(LogEntryView.USERNAME) %>" /></u> </A>
                     <% } %>
     </td>
     <td width="18%"><% if(logentries[i].getValue(LogEntryView.CERTIFICATESERNO) == null) { %>
-                         <c:out value="<%= ejbcawebbean.getText("NOCERTIFICATEINVOLVED") %>" />
+                         <c:out value="<%= ejbcawebbean.getText(\"NOCERTIFICATEINVOLVED\") %>" />
                        <%}else{
                          if(logentries[i].getValue(LogEntryView.CERTIFICATE).equals("")){ %>
-                           <c:out value="<%= ejbcawebbean.getText("CERTIFICATENOTKNOWN") %>" />
+                           <c:out value="<%= ejbcawebbean.getText(\"CERTIFICATENOTKNOWN\") %>" />
                        <%}else{%> 
         <A  style="cursor:pointer;"  onclick='viewcert(<%= i %>)'>
         <u><c:out value="<%= logentries[i].getValue(LogEntryView.CERTIFICATE) %>" /></u> </A>
@@ -381,7 +381,7 @@ function viewcert(row){
     <tr>
       <td width="14%">
         <% if(logbean.previousButton(record)){ %>
-          <input type="submit" name="<%=BUTTON_PREVIOUS %>" value='<c:out value="<%= ejbcawebbean.getText("PREVIOUS") %>"/>'>
+          <input type="submit" name="<%=BUTTON_PREVIOUS %>" value='<c:out value="<%= ejbcawebbean.getText(\"PREVIOUS\") %>"/>'>
         <% } %>
       </td>
       <td width="76%"> 
@@ -390,14 +390,14 @@ function viewcert(row){
       <td width="10%"> 
         <div align="right">
         <% if(logbean.nextButton(record,size)){ %>
-          <input type="submit" name="<%=BUTTON_NEXT %>" value='<c:out value="<%= ejbcawebbean.getText("NEXT") %>"/>'>
+          <input type="submit" name="<%=BUTTON_NEXT %>" value='<c:out value="<%= ejbcawebbean.getText(\"NEXT\") %>"/>'>
         <% } %>
         </div>
       </td>
     </tr>
   </table>
     <div align="right">
-      <c:out value="<%= ejbcawebbean.getText("ENTRIESPERPAGE") %>" /></A>
+      <c:out value="<%= ejbcawebbean.getText(\"ENTRIESPERPAGE\") %>" /></A>
       <select name="<%=SELECT_ENTRIESPERPAGE %>" onchange='document.form.<%=ACTION%>.value="<%=ACTION_CHANGEENTRIESPERPAGE %>"; javascript:document.form.submit();'>
       <% String[] availablesizes = globalconfiguration.getPossibleLogEntiresPerPage();
          for(int i=0; i < availablesizes.length; i++){ %>

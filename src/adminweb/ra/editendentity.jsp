@@ -451,7 +451,7 @@
 			}
 			value = request.getParameter(TEXTFIELD_CERTSERIALNUMBER);
 			if ( value!=null && value.length()>0 ) {
-				ei.setCertificateSerialNumber(new BigInteger(value.trim(), 16));
+				ei.setCertificateSerialNumber( new BigInteger(value.trim(), 16) );
 			} else {
 			    ei.setCertificateSerialNumber(null);
 			}
