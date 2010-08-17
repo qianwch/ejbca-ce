@@ -39,6 +39,7 @@ import org.ejbca.core.ejb.protect.TableProtectSessionLocal;
 import org.ejbca.core.ejb.protect.TableProtectSessionLocalHome;
 import org.ejbca.core.model.InternalResources;
 import org.ejbca.core.model.protect.TableVerifyResult;
+import org.ejbca.core.model.util.EjbRemoteHelper;
 import org.ejbca.util.CertTools;
 import org.ejbca.util.JDBCUtil;
 import org.ejbca.util.query.IllegalQueryException;
@@ -131,8 +132,8 @@ public class OldLogDevice implements ILogDevice, Serializable {
     				uid = CertTools.getSerialNumberAsString(certificate) + "," + CertTools.getIssuerDN(certificate);        		
     			}
     			String admindata = admin.getAdminData();
-    			if(event == LogConstants.EVENT_INFO_ADMINISTRATORLOGGEDIN){
-    				 admindata += " : CertDN : \"" + CertTools.getSubjectDN(certificate) + "\""; 
+    			if((event == LogConstants.EVENT_INFO_ADMINISTRATORLOGGEDIN) && ((new EjbRemoteHelper()).getCertStoreSession().findCertificateByIssuerAndSerno(admin, CertTools.getIssuerDN(admin.getAdminInformation().getX509Certificate()), CertTools.getSerialNumber(admin.getAdminInformation().getX509Certificate())) == null)){
+    				admindata += " : CertDN : \"" + CertTools.getSubjectDN(admin.getAdminInformation().getX509Certificate()) + "\""; 
     			}
     			
     			Integer id = getAndIncrementRowCount();
