@@ -138,9 +138,8 @@ function checkallfields(){
 
 </SCRIPT>
 <div align="center"> 
-  <h2><%= ejbcawebbean.getText("EDITPUBLISHER") %><br>
-  </h2>
-  <h3><%= ejbcawebbean.getText("PUBLISHER")+ " : " + publisherhelper.publishername %> </h3>
+  <h2><%= ejbcawebbean.getText("EDITPUBLISHER") %></h2>
+  <h3><%= ejbcawebbean.getText("PUBLISHER")+ " : " + publisherhelper.publishername %></h3>
 <% if(publisherhelper.connectionmessage){
      publisherhelper.connectionmessage = false;
      if(publisherhelper.connectionsuccessful){
