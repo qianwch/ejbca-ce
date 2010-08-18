@@ -151,7 +151,7 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
     private GlobalConfigurationDataLocalHome globalconfigurationhome = null;
 
     /** Cache variable containing the global configuration. */
-    private GlobalConfiguration globalconfiguration = null;
+    private static volatile GlobalConfiguration globalconfiguration = null;
     /** Constant indicating minimum time between updates of the global configuration cache. In milliseconds, 30 seconds. */
     private static final long MIN_TIME_BETWEEN_GLOBCONF_UPDATES = 30000;
     /** help variable used to control that update isn't performed to often. */

@@ -167,7 +167,7 @@ public class LocalAuthorizationSessionBean extends BaseSessionBean {
      */
     private ILogSessionLocal logsession = null;
 
-    private Authorizer authorizer = null;
+    private static volatile Authorizer authorizer = null;
 
     private String[] customaccessrules = null;
 
