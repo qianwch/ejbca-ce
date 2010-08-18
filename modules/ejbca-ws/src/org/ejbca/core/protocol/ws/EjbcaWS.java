@@ -1134,34 +1134,22 @@ public class EjbcaWS implements IEjbcaWS {
 			BigInteger serno = new BigInteger(certificateSN,16);
 			String username = ejbhelper.getCertStoreSession().findUsernameByCertSerno(admin,serno,issuerDN);
 
-			// check that admin is autorized to CA
+			// check that admin is authorized to CA
 			ejbhelper.getAuthorizationSession().isAuthorizedNoLog(admin,AccessRulesConstants.CAPREFIX +caid);			  
 
-			if(reason == RevokedCertInfo.NOT_REVOKED){
-				java.security.cert.Certificate cert = ejbhelper.getCertStoreSession().findCertificateByIssuerAndSerno(admin, issuerDN, serno);
-				if(cert == null){
-					throw new NotFoundException("Error: certificate with issuerdn " + issuerDN + " and serial number " + serno + " couldn't be found in database.");
-				}
-				CertificateInfo certInfo = ejbhelper.getCertStoreSession().getCertificateInfo(admin, CertTools.getCertFingerprintAsString(cert.getEncoded()));
-				if(certInfo.getRevocationReason()== RevokedCertInfo.REVOKATION_REASON_CERTIFICATEHOLD){
-					ejbhelper.getUserAdminSession().unRevokeCert(admin, serno, issuerDN, username);
-				}else{
-                    throw EjbcaWSHelper.getEjbcaException("Error: Status is NOT 'certificate hold' for certificate with serial number " + serno + " and issuer DN " + issuerDN,
-                                            logger, ErrorCode.CERT_WRONG_STATUS, null);
-				}
-			}else{			
-				ejbhelper.getUserAdminSession().revokeCert(admin,serno, issuerDN, username,  reason);
-			}
+			// Revoke or unrevoke, will throw appropriate exceptions if parameters are wrong, such as trying to unrevoke a certificate
+			// that was permanently revoked
+			ejbhelper.getUserAdminSession().revokeCert(admin,serno, issuerDN, username,  reason);
 		}catch(AuthorizationDeniedException e){
 			throw e;
 		} catch (ClassCastException e) {
             throw EjbcaWSHelper.getInternalException(e, logger);
+		} catch (AlreadyRevokedException e) {
+            throw EjbcaWSHelper.getEjbcaException(e.getMessage(), logger, ErrorCode.CERT_WRONG_STATUS, null);
 		} catch (EJBException e) {
             throw EjbcaWSHelper.getInternalException(e, logger);
 		} catch (FinderException e) {
 			throw new NotFoundException(e.getMessage());
-		} catch (CertificateEncodingException e) {
-            throw EjbcaWSHelper.getInternalException(e, logger);
 		} catch (RemoteException e) {
             throw EjbcaWSHelper.getInternalException(e, logger);
         } catch( RuntimeException t ) {
@@ -1318,41 +1306,19 @@ public class EjbcaWS implements IEjbcaWS {
 				int caid = CertTools.getIssuerDN(next).hashCode();
 				ejbhelper.getCAAdminSession().verifyExistenceOfCA(caid);
 				ejbhelper.getAuthorizationSession().isAuthorizedNoLog(admin,AccessRulesConstants.CAPREFIX +caid);
-				if(reason == RevokedCertInfo.NOT_REVOKED){
-					String issuerDN = CertTools.getIssuerDN(next);
-					BigInteger serno = CertTools.getSerialNumber(next);
-
-					CertificateInfo certInfo = ejbhelper.getCertStoreSession().getCertificateInfo(admin, CertTools.getCertFingerprintAsString(next.getEncoded()));
-					if(certInfo.getRevocationReason()== RevokedCertInfo.REVOKATION_REASON_CERTIFICATEHOLD){
-						try {
-							ejbhelper.getUserAdminSession().unRevokeCert(admin, serno, issuerDN, username);
-							success = true;
-						} catch (WaitingForApprovalException e) {
-							lastWaitingForApprovalException = e;
-						} catch (ApprovalException e) {
-							lastApprovalException = e;
-						} catch(AuthorizationDeniedException e) {
-							lastAuthorizationDeniedException = e;
-						} catch (AlreadyRevokedException e) {
-							lastAlreadyRevokedException = e;
-						}
-					}else{
-                        throw EjbcaWSHelper.getEjbcaException("Error: Status is NOT 'certificate hold' for certificate with serial number " + serno + " and issuer DN " + issuerDN,
-                                                logger, ErrorCode.CERT_WRONG_STATUS, null);
-					}
-				}else{
-					try {
-						ejbhelper.getUserAdminSession().revokeCert(admin,CertTools.getSerialNumber(next),CertTools.getIssuerDN(next),username,reason);
-						success = true;
-					} catch (WaitingForApprovalException e) {
-						lastWaitingForApprovalException = e;
-					} catch (ApprovalException e) {
-						lastApprovalException = e;
-					} catch(AuthorizationDeniedException e) {
-						lastAuthorizationDeniedException = e;
-					} catch (AlreadyRevokedException e) {
-						lastAlreadyRevokedException = e;
-					}
+				try {
+					// Revoke or unrevoke, will throw appropriate exceptions if parameters are wrong, such as trying to unrevoke a certificate
+					// that was permanently revoked
+					ejbhelper.getUserAdminSession().revokeCert(admin,CertTools.getSerialNumber(next),CertTools.getIssuerDN(next),username,reason);
+					success = true;
+				} catch (WaitingForApprovalException e) {
+					lastWaitingForApprovalException = e;
+				} catch (ApprovalException e) {
+					lastApprovalException = e;
+				} catch(AuthorizationDeniedException e) {
+					lastAuthorizationDeniedException = e;
+				} catch (AlreadyRevokedException e) {
+					lastAlreadyRevokedException = e;
 				}
 			}
 			if (lastWaitingForApprovalException != null ) {
@@ -1371,12 +1337,12 @@ public class EjbcaWS implements IEjbcaWS {
 			throw e;
 		} catch (ClassCastException e) {
             throw EjbcaWSHelper.getInternalException(e, logger);
+		} catch (AlreadyRevokedException e) {
+            throw EjbcaWSHelper.getEjbcaException(e.getMessage(), logger, ErrorCode.CERT_WRONG_STATUS, null);
 		} catch (EJBException e) {
             throw EjbcaWSHelper.getInternalException(e, logger);
 		} catch (FinderException e) {
 			throw new NotFoundException(e.getMessage());
-		} catch (CertificateEncodingException e) {
-            throw EjbcaWSHelper.getInternalException(e, logger);
 		} catch (RemoteException e) {
             throw EjbcaWSHelper.getInternalException(e, logger);
 		} 

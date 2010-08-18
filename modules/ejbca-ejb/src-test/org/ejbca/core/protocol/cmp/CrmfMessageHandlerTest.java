@@ -473,11 +473,6 @@ public class CrmfMessageHandlerTest extends TestCase {
 
         }
 
-        public void unRevokeCert(Admin admin, BigInteger certserno, String issuerdn, String username) throws AuthorizationDeniedException, FinderException,
-                ApprovalException, WaitingForApprovalException, AlreadyRevokedException, RemoteException {
-
-        }
-
         public boolean verifyPassword(Admin admin, String username, String password) throws UserDoesntFullfillEndEntityProfile, AuthorizationDeniedException,
                 FinderException, RemoteException {
 

@@ -1618,6 +1618,7 @@ throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, Waiting
 
 	/**
      * Method that revokes a certificate for a user.
+     * It can also be used to un-revoke a certificate that has been revoked with reason ON_HOLD. This is done by giving reason RevokedCertInfo.NOT_REVOKED (or RevokedCertInfo.REVOKATION_REASON_REMOVEFROMCRL).
      *
      * @param admin the administrator performing the action
      * @param certserno the serno of certificate to revoke.
@@ -1695,11 +1696,17 @@ throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, Waiting
         if (info != null) {
         	certificateProfileId = info.getCertificateProfileId();
         }
-        // If for some reason the certificate profile id was not set in the certificate data, try to get it from the certreq history
-        if (certificateProfileId == 0) {
-            CertReqHistory certReqHistory = certificatesession.getCertReqHistory(admin, certserno, issuerdn);
-            if (certReqHistory != null) {
+        String userDataDN = data.getSubjectDN();
+        CertReqHistory certReqHistory = certificatesession.getCertReqHistory(admin, certserno, issuerdn);
+        if (certReqHistory != null) {
+            // If for some reason the certificate profile id was not set in the certificate data, try to get it from the certreq history
+            if (certificateProfileId == 0) {
             	certificateProfileId = certReqHistory.getUserDataVO().getCertificateProfileId();
+            }
+            // Republish with the same user DN that was used in the original publication, if we can find it
+            UserDataVO udv = certReqHistory.getUserDataVO();
+            if (udv != null) {
+            	userDataDN = udv.getDN();
             }
         }
         // Finally find the publishers for the certificate profileId that we found
@@ -1710,7 +1717,7 @@ throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, Waiting
         }
         
         // Revoke certificate in database and all publishers
-        certificatesession.setRevokeStatus(admin, issuerdn, certserno, publishers, reason, data.getSubjectDN());
+        certificatesession.setRevokeStatus(admin, issuerdn, certserno, publishers, reason, userDataDN);
         // Reset the revocation code identifier used in XKMS
         ExtendedInformation inf = data.getExtendedInformation();
         if (inf != null) {
@@ -1720,28 +1727,6 @@ throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, Waiting
         	log.trace("<revokeCert()");
         }
     } // revokeCert
-
-    /** 
-     * Reactivates the certificate with certificate serno.
-     *
-     * @param admin the adminsitrator performing the action
-     * @param certserno serial number of certificate to reactivate.
-     * @param issuerdn the issuerdn of certificate to reactivate.
-     * @param username the username joined to the certificate.
-     * @throws WaitingForApprovalException 
-     * @throws ApprovalException 
-     * @throws AlreadyRevokedException 
-     * @ejb.interface-method
-     */
-    public void unRevokeCert(Admin admin, BigInteger certserno, String issuerdn, String username) throws AuthorizationDeniedException, FinderException, ApprovalException, WaitingForApprovalException, AlreadyRevokedException {
-        if (log.isTraceEnabled()) {
-        	log.trace(">unrevokeCert()");
-        }
-        revokeCert(admin, certserno, issuerdn, username, RevokedCertInfo.NOT_REVOKED);
-        if (log.isTraceEnabled()) {
-        	log.trace("<unrevokeCert()");
-        }
-    }
 
     /**
      * Method that looks up the username and email address for a administrator and returns the populated Admin object.

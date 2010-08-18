@@ -60,7 +60,7 @@ public class RaUnRevokeUserCommand extends BaseRaAdminCommand {
             				cert.getSerialNumber()).revocationReason == RevokedCertInfo.REVOKATION_REASON_CERTIFICATEHOLD) {
             			foundCertificateOnHold = true;
             			try {
-                			getUserAdminSession().unRevokeCert(getAdmin(), cert.getSerialNumber(), cert.getIssuerDN().toString(), username);
+                			getUserAdminSession().revokeCert(getAdmin(), cert.getSerialNumber(), cert.getIssuerDN().toString(), username, RevokedCertInfo.NOT_REVOKED);
                         } catch (AlreadyRevokedException e) {
                         	getLogger().error("The user was already reactivated while the request executed.");
                         } catch (ApprovalException e) {

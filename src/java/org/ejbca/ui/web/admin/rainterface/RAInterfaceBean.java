@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.TreeMap;
 
@@ -56,9 +55,7 @@ import org.ejbca.core.model.approval.ApprovalException;
 import org.ejbca.core.model.approval.WaitingForApprovalException;
 import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.core.model.authorization.AuthorizationDeniedException;
-import org.ejbca.core.model.ca.caadmin.CA;
-import org.ejbca.core.model.ca.caadmin.CAInfo;
-import org.ejbca.core.model.ca.certificateprofiles.CertificateProfile;
+import org.ejbca.core.model.ca.crl.RevokedCertInfo;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.model.ra.AlreadyRevokedException;
 import org.ejbca.core.model.ra.NotFoundException;
@@ -66,15 +63,12 @@ import org.ejbca.core.model.ra.UserAdminConstants;
 import org.ejbca.core.model.ra.UserDataConstants;
 import org.ejbca.core.model.ra.UserDataVO;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfile;
-import org.ejbca.ui.web.admin.cainterface.CAInterfaceBean;
 import org.ejbca.ui.web.admin.configuration.EjbcaWebBean;
 import org.ejbca.ui.web.admin.configuration.InformationMemory;
 import org.ejbca.util.CertTools;
 import org.ejbca.util.StringTools;
 import org.ejbca.util.cert.CertificateNotBeforeComparator;
-import org.ejbca.util.dn.DNFieldExtractor;
 import org.ejbca.util.query.Query;
-import org.ejbca.util.query.UserMatch;
 
 /**
  * A java bean handling the interface between EJBCA ra module and JSP pages.
@@ -235,7 +229,9 @@ public class RAInterfaceBean implements java.io.Serializable {
      * @return false if administrator wasn't authorized to revoke the given certificate.
      */
     public boolean revokeCert(BigInteger serno, String issuerdn, String username, int reason) throws ApprovalException, WaitingForApprovalException {
-    	log.trace(">revokeCert()");
+    	if (log.isTraceEnabled()) {
+        	log.trace(">revokeCert(): "+username+", "+reason);    		
+    	}
     	boolean success = true;
     	try {
     		adminsession.revokeCert(administrator, serno, issuerdn, username, reason);
@@ -246,7 +242,9 @@ public class RAInterfaceBean implements java.io.Serializable {
     	} catch (AlreadyRevokedException e) {
     		success = false;
 		}
-    	log.trace("<revokeCert(): " + success);
+    	if (log.isTraceEnabled()) {
+    		log.trace("<revokeCert(): " + success);
+    	}
     	return success;
     }
 
@@ -259,19 +257,8 @@ public class RAInterfaceBean implements java.io.Serializable {
      * @return false if administrator wasn't authorized to unrevoke the given certificate.
      */
     public boolean unrevokeCert(BigInteger serno, String issuerdn, String username) throws ApprovalException, WaitingForApprovalException {
-    	log.trace(">unrevokeCert()");
-	  	boolean success = true;
-		try {
-			adminsession.unRevokeCert(administrator, serno, issuerdn, username);
-		} catch( AuthorizationDeniedException e) {
-			success = false;
-		} catch (FinderException e) {
-			success = false;
-		} catch (AlreadyRevokedException e) {
-			success = false;
-		}
-		log.trace("<unrevokeCert(): " + success);
-		return success;
+    	// Method needed because it is used as an ApprovalOveradableClassName
+    	return revokeCert(serno, issuerdn, username, RevokedCertInfo.NOT_REVOKED);
     }
     
     /* Changes the userdata  */
