@@ -195,8 +195,12 @@ public class EjbcaWebBean implements java.io.Serializable {
     		// Check if certificate and user is an RA Admin
     		userdn = CertTools.getSubjectDN(certificates[0]);
     		log.debug("Verifying authorization of '"+userdn);    		
-    		userAdminSession.checkIfCertificateBelongToUser(administrator, CertTools.getSerialNumber(certificates[0]), CertTools.getIssuerDN(certificates[0]));        
-    		logsession.log(administrator, certificates[0], LogConstants.MODULE_ADMINWEB,  new java.util.Date(),null, null, LogConstants.EVENT_INFO_ADMINISTRATORLOGGEDIN,"");
+    		userAdminSession.checkIfCertificateBelongToUser(administrator, CertTools.getSerialNumber(certificates[0]), CertTools.getIssuerDN(certificates[0]));
+    		String comment = "";
+    		if(certificateStoreSession.findCertificateByIssuerAndSerno(administrator, CertTools.getIssuerDN(certificates[0]), CertTools.getSerialNumber(certificates[0])) == null){
+    			comment = "Logging in : Administrator certificate issued by external CA";
+    		}
+    		logsession.log(administrator, certificates[0], LogConstants.MODULE_ADMINWEB,  new java.util.Date(),null, null, LogConstants.EVENT_INFO_ADMINISTRATORLOGGEDIN,comment);
     	}
 
     	try {

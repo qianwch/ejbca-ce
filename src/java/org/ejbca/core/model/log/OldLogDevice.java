@@ -132,7 +132,7 @@ public class OldLogDevice implements ILogDevice, Serializable {
     				uid = CertTools.getSerialNumberAsString(certificate) + "," + CertTools.getIssuerDN(certificate);        		
     			}
     			String admindata = admin.getAdminData();
-    			if((event == LogConstants.EVENT_INFO_ADMINISTRATORLOGGEDIN) && ((new EjbRemoteHelper()).getCertStoreSession().findCertificateByIssuerAndSerno(admin, CertTools.getIssuerDN(admin.getAdminInformation().getX509Certificate()), CertTools.getSerialNumber(admin.getAdminInformation().getX509Certificate())) == null)){
+    			if((event == LogConstants.EVENT_INFO_ADMINISTRATORLOGGEDIN) && (comment.contains("external CA"))){
     				admindata += " : CertDN : \"" + CertTools.getSubjectDN(admin.getAdminInformation().getX509Certificate()) + "\""; 
     			}
     			
