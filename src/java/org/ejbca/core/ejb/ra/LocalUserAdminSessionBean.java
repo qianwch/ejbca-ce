@@ -527,7 +527,7 @@ public class LocalUserAdminSessionBean extends BaseSessionBean {
         if(caadminsession.getCAInfoOrThrowException(admin, userdata.getCAId()).isDoEnforceUniqueSubjectDNSerialnumber()){
             String serialnumber = getSerialnumber(userdata.getDN());
             if(serialnumber != null){
-            	if(!serialnumberIsUnique(admin, userdata.getCAId(), serialnumber)){
+            	if(!serialnumberIsUnique(admin, userdata.getCAId(), serialnumber, null)){
    		 			throw new EjbcaException(ErrorCode.SUBJECTDN_SERIALNUMBER_ALREADY_EXISTS, "Error: SubjectDN Serialnumber already exists.");
             	}
             }
@@ -607,17 +607,16 @@ public class LocalUserAdminSessionBean extends BaseSessionBean {
     	return null;
     }
     
-    private boolean serialnumberIsUnique(Admin admin, int caid, String serialnumber) {
+    private boolean serialnumberIsUnique(Admin admin, int caid, String serialnumber, String username) {
     	UserDataVO user = null;
     	String sn = null;
     	Iterator itr = findAllUsersByCaId(admin, caid).iterator();
     	while(itr.hasNext()){
     		user = (UserDataVO) itr.next();
     		sn = getSerialnumber(user.getDN());
-    		if(sn != null){
-    			if(sn.equals(serialnumber)) {
-                    return false;
-                }
+    		if((sn != null) && (sn.equals(serialnumber))){
+       			if(username == null)	return false;
+    			if(!username.equals(user.getUsername()))	return false;
     		}
     	}
     	return true;
@@ -843,7 +842,7 @@ throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, Waiting
         if(caadminsession.getCAInfoOrThrowException(admin, userdata.getCAId()).isDoEnforceUniqueSubjectDNSerialnumber()){
             String serialnumber = getSerialnumber(userdata.getDN());
             if(serialnumber != null){
-				if(!serialnumberIsUnique(admin, userdata.getCAId(), serialnumber)){
+				if(!serialnumberIsUnique(admin, userdata.getCAId(), serialnumber, userdata.getUsername())){
 					throw new EjbcaException(ErrorCode.SUBJECTDN_SERIALNUMBER_ALREADY_EXISTS, "Error: SubjectDN Serialnumber already exists.");
 				}
             }
