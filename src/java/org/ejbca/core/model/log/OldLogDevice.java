@@ -39,7 +39,6 @@ import org.ejbca.core.ejb.protect.TableProtectSessionLocal;
 import org.ejbca.core.ejb.protect.TableProtectSessionLocalHome;
 import org.ejbca.core.model.InternalResources;
 import org.ejbca.core.model.protect.TableVerifyResult;
-import org.ejbca.core.model.util.EjbRemoteHelper;
 import org.ejbca.util.CertTools;
 import org.ejbca.util.JDBCUtil;
 import org.ejbca.util.query.IllegalQueryException;
