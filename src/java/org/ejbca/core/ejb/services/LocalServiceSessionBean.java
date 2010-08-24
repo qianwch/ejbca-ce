@@ -42,8 +42,8 @@ import org.ejbca.core.model.services.ServiceExistsException;
 
 
 /**
- * Stores data used by web server clients.
- * Uses JNDI name for datasource as defined in env 'Datasource' in ejb-jar.xml.
+ * Session bean that handles adding and editing services as displayed in EJBCA. 
+ * This bean manages the service configuration as stored in the database, but is not used for running the services. 
  *
  * @ejb.bean description="Session bean handling interface with service configuration"
  *   display-name="ServiceSessionSB"
