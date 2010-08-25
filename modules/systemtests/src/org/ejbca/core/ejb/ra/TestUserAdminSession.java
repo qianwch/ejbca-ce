@@ -15,6 +15,8 @@ package org.ejbca.core.ejb.ra;
 
 import java.rmi.RemoteException;
 import java.rmi.ServerException;
+import java.security.KeyPair;
+import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Random;
@@ -27,16 +29,21 @@ import junit.framework.TestCase;
 import org.apache.log4j.Logger;
 import org.ejbca.core.EjbcaException;
 import org.ejbca.core.ErrorCode;
+import org.ejbca.core.ejb.ca.store.CertificateStatus;
 import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.approval.WaitingForApprovalException;
 import org.ejbca.core.model.authorization.AuthorizationDeniedException;
 import org.ejbca.core.model.ca.caadmin.CAInfo;
+import org.ejbca.core.model.ca.crl.RevokedCertInfo;
 import org.ejbca.core.model.log.Admin;
+import org.ejbca.core.model.ra.AlreadyRevokedException;
 import org.ejbca.core.model.ra.NotFoundException;
 import org.ejbca.core.model.ra.UserDataConstants;
 import org.ejbca.core.model.ra.UserDataVO;
 import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
+import org.ejbca.util.CertTools;
 import org.ejbca.util.TestTools;
+import org.ejbca.util.keystore.KeyTools;
 
 /** Tests the UserData entity bean and some parts of UserAdminSession.
  *
@@ -249,14 +256,59 @@ public class TestUserAdminSession extends TestCase {
         assertEquals("dnsName=a.b.se, rfc822name=" + email, data.getSubjectAltName());
         log.trace("<test04ChangeUser()");
     }
-    
+
+    public void test05RevokeCert() throws Exception {
+    	KeyPair keypair = KeyTools.genKeys("512", "RSA");
+
+        UserDataVO data1 = TestTools.getUserAdminSession().findUser(admin, username);
+        assertNotNull(data1);
+        data1.setPassword("foo123");
+        TestTools.getUserAdminSession().changeUser(admin, data1, true);
+
+    	Certificate cert = TestTools.getSignSession().createCertificate(admin, username, "foo123", keypair.getPublic());
+        CertificateStatus status = TestTools.getCertificateStoreSession().getStatus(CertTools.getIssuerDN(cert), CertTools.getSerialNumber(cert));
+        assertEquals(RevokedCertInfo.NOT_REVOKED, status.revocationReason);
+        // Revoke the certificate, put on hold        
+        TestTools.getUserAdminSession().revokeCert(admin, CertTools.getSerialNumber(cert), CertTools.getIssuerDN(cert), username, RevokedCertInfo.REVOKATION_REASON_CERTIFICATEHOLD);
+        status = TestTools.getCertificateStoreSession().getStatus(CertTools.getIssuerDN(cert), CertTools.getSerialNumber(cert));
+        assertEquals(RevokedCertInfo.REVOKATION_REASON_CERTIFICATEHOLD, status.revocationReason);
+
+        // Unrevoke the certificate        
+        TestTools.getUserAdminSession().revokeCert(admin, CertTools.getSerialNumber(cert), CertTools.getIssuerDN(cert), username, RevokedCertInfo.NOT_REVOKED);
+        status = TestTools.getCertificateStoreSession().getStatus(CertTools.getIssuerDN(cert), CertTools.getSerialNumber(cert));
+        assertEquals(RevokedCertInfo.NOT_REVOKED, status.revocationReason);
+
+        // Revoke again certificate        
+        TestTools.getUserAdminSession().revokeCert(admin, CertTools.getSerialNumber(cert), CertTools.getIssuerDN(cert), username, RevokedCertInfo.REVOKATION_REASON_CERTIFICATEHOLD);
+        status = TestTools.getCertificateStoreSession().getStatus(CertTools.getIssuerDN(cert), CertTools.getSerialNumber(cert));
+        assertEquals(RevokedCertInfo.REVOKATION_REASON_CERTIFICATEHOLD, status.revocationReason);
+
+        // Unrevoke the certificate, but with different code        
+        TestTools.getUserAdminSession().revokeCert(admin, CertTools.getSerialNumber(cert), CertTools.getIssuerDN(cert), username, RevokedCertInfo.REVOKATION_REASON_REMOVEFROMCRL);
+        status = TestTools.getCertificateStoreSession().getStatus(CertTools.getIssuerDN(cert), CertTools.getSerialNumber(cert));
+        assertEquals(RevokedCertInfo.NOT_REVOKED, status.revocationReason);
+
+        // Revoke again certificate permanently        
+        TestTools.getUserAdminSession().revokeCert(admin, CertTools.getSerialNumber(cert), CertTools.getIssuerDN(cert), username, RevokedCertInfo.REVOKATION_REASON_CACOMPROMISE);
+        status = TestTools.getCertificateStoreSession().getStatus(CertTools.getIssuerDN(cert), CertTools.getSerialNumber(cert));
+        assertEquals(RevokedCertInfo.REVOKATION_REASON_CACOMPROMISE, status.revocationReason);
+
+        // Unrevoke the certificate, should not work
+        try {
+            TestTools.getUserAdminSession().revokeCert(admin, CertTools.getSerialNumber(cert), CertTools.getIssuerDN(cert), username, RevokedCertInfo.REVOKATION_REASON_REMOVEFROMCRL);
+            assertTrue(false); // should not reach this
+        } catch (AlreadyRevokedException e) {}
+        status = TestTools.getCertificateStoreSession().getStatus(CertTools.getIssuerDN(cert), CertTools.getSerialNumber(cert));
+        assertEquals(RevokedCertInfo.REVOKATION_REASON_CACOMPROMISE, status.revocationReason);
+    }
+
+
     /**
      * tests deletion of user, and user that does not exist
      *
      * @throws Exception error
      */
-    public void test05DeleteUser() throws Exception {
-        log.trace(">test05DeleteUser()");
+    public void test06DeleteUser() throws Exception {
         TestTools.getUserAdminSession().deleteUser(admin, username);
         log.debug("deleted user: " + username);
         // Delete the the same user again
@@ -267,7 +319,6 @@ public class TestUserAdminSession extends TestCase {
             removed = true;
         }
         assertTrue("User does not exist does not throw NotFoundException", removed);
-        log.trace("<test05DeleteUser()");
     }
 
 	public void test99RemoveTestCA() throws Exception {

@@ -974,7 +974,7 @@ public class CommonEjbcaWSTest extends TestCase {
         try{
           ejbcaraws.revokeCert(issuerdn,serno, RevokedCertInfo.NOT_REVOKED);
           assertTrue(false);
-        }catch(EjbcaException_Exception e){}
+        }catch(AlreadyRevokedException_Exception e){}
         
 	}
 	
