@@ -450,6 +450,73 @@ public class TestUserData extends TestCase {
         log.trace("<test06RequestCounter()");
     }
 
+    public void test07EndEntityProfileMappings() throws Exception {
+    	// Add a couple of profiles and verify that the mappings and get functions work
+        EndEntityProfile profile1 = new EndEntityProfile();
+        profile1.setPrinterName("foo");
+        TestTools.getRaAdminSession().addEndEntityProfile(admin, "TESTEEPROFCACHE1", profile1);
+        EndEntityProfile profile2 = new EndEntityProfile();
+        profile2.setPrinterName("bar");
+        TestTools.getRaAdminSession().addEndEntityProfile(admin, "TESTEEPROFCACHE2", profile2);
+        int pid = TestTools.getRaAdminSession().getEndEntityProfileId(admin, "TESTEEPROFCACHE1"); 
+        String name = TestTools.getRaAdminSession().getEndEntityProfileName(admin, pid);
+        int pid1 = TestTools.getRaAdminSession().getEndEntityProfileId(admin, "TESTEEPROFCACHE1"); 
+        String name1 = TestTools.getRaAdminSession().getEndEntityProfileName(admin, pid1);
+        assertEquals(pid, pid1);
+        assertEquals(name, name1);
+        EndEntityProfile profile = TestTools.getRaAdminSession().getEndEntityProfile(admin, pid);
+        assertEquals("foo", profile.getPrinterName());
+        profile = TestTools.getRaAdminSession().getEndEntityProfile(admin, name);
+        assertEquals("foo", profile.getPrinterName());
+
+        int pid2 = TestTools.getRaAdminSession().getEndEntityProfileId(admin, "TESTEEPROFCACHE2"); 
+        String name2 = TestTools.getRaAdminSession().getEndEntityProfileName(admin, pid2);
+        profile = TestTools.getRaAdminSession().getEndEntityProfile(admin, pid2);
+        assertEquals("bar", profile.getPrinterName());
+        profile = TestTools.getRaAdminSession().getEndEntityProfile(admin, name2);
+        assertEquals("bar", profile.getPrinterName());
+
+        // flush caches and make sure it is read correctly again
+        TestTools.getRaAdminSession().flushProfileCache();
+
+        int pid3 = TestTools.getRaAdminSession().getEndEntityProfileId(admin, "TESTEEPROFCACHE1"); 
+        String name3 = TestTools.getRaAdminSession().getEndEntityProfileName(admin, pid3);
+        assertEquals(pid1, pid3);
+        assertEquals(name1, name3);
+        profile = TestTools.getRaAdminSession().getEndEntityProfile(admin, pid3);
+        assertEquals("foo", profile.getPrinterName());
+        profile = TestTools.getRaAdminSession().getEndEntityProfile(admin, name3);
+        assertEquals("foo", profile.getPrinterName());
+
+        int pid4 = TestTools.getRaAdminSession().getEndEntityProfileId(admin, "TESTEEPROFCACHE2"); 
+        String name4 = TestTools.getRaAdminSession().getEndEntityProfileName(admin, pid4);
+        assertEquals(pid2, pid4);
+        assertEquals(name2, name4);
+        profile = TestTools.getRaAdminSession().getEndEntityProfile(admin, pid4);
+        assertEquals("bar", profile.getPrinterName());
+        profile = TestTools.getRaAdminSession().getEndEntityProfile(admin, name4);
+        assertEquals("bar", profile.getPrinterName());
+
+        // Remove a profile and make sure it is not cached still
+        TestTools.getRaAdminSession().removeEndEntityProfile(admin, "TESTEEPROFCACHE1");
+        profile = TestTools.getRaAdminSession().getEndEntityProfile(admin, pid1);
+        assertNull(profile);
+        int pid5 = TestTools.getRaAdminSession().getEndEntityProfileId(admin, "TESTEEPROFCACHE1");
+        assertEquals(0, pid5);
+        String name5 = TestTools.getRaAdminSession().getEndEntityProfileName(admin, pid5);
+        assertNull(name5);
+
+        // But the other, non-removed profile should still be there
+        int pid6 = TestTools.getRaAdminSession().getEndEntityProfileId(admin, "TESTEEPROFCACHE2"); 
+        String name6 = TestTools.getRaAdminSession().getEndEntityProfileName(admin, pid6);
+        assertEquals(pid2, pid6);
+        assertEquals(name2, name6);
+        profile = TestTools.getRaAdminSession().getEndEntityProfile(admin, pid6);
+        assertEquals("bar", profile.getPrinterName());
+        profile = TestTools.getRaAdminSession().getEndEntityProfile(admin, name6);
+        assertEquals("bar", profile.getPrinterName());        
+    } // test07EndEntityProfileMappings
+
     /**
      * DOCUMENT ME!
      *
@@ -466,6 +533,12 @@ public class TestUserData extends TestCase {
         } catch (Exception e) { /* ignore */ }
         try {        	
             TestTools.getRaAdminSession().removeEndEntityProfile(admin, "TESTREQUESTCOUNTER");
+        } catch (Exception e) { /* ignore */ }
+        try {        	
+            TestTools.getRaAdminSession().removeEndEntityProfile(admin, "TESTEEPROFCACHE1");
+        } catch (Exception e) { /* ignore */ }
+        try {        	
+            TestTools.getRaAdminSession().removeEndEntityProfile(admin, "TESTEEPROFCACHE2");
         } catch (Exception e) { /* ignore */ }
         log.debug("Removed it!");
         TestTools.removeTestCA();
