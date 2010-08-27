@@ -682,7 +682,9 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
         nameIdCache.put(EMPTY_ENDENTITYPROFILENAME, new Integer(SecConst.EMPTY_ENDENTITYPROFILE));
         try{
         	Collection result = profiledatahome.findAll();
-            //debug("Found "+result.size()+ " end entity profiles.");
+        	if (log.isDebugEnabled()) {
+                debug("Found "+result.size()+ " end entity profiles.");        		
+        	}
             Iterator i = result.iterator();
             while(i.hasNext()){
                 EndEntityProfileDataLocal next = (EndEntityProfileDataLocal) i.next();
