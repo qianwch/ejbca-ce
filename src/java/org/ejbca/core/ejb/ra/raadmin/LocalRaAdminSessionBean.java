@@ -582,17 +582,25 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
      * @ejb.interface-method
      */
     public void changeEndEntityProfile(Admin admin, String profilename, EndEntityProfile profile){
+    	internalChangeEndEntityProfileNoFlushCache(admin, profilename, profile);
+        flushProfileCache();
+    }// changeEndEntityProfile
+
+    /** Do not use, use changeEndEntityProfile instead.
+     * Used internally for testing only. Updates a profile without flushing caches.
+     * @ejb.interface-method
+     */
+    public void internalChangeEndEntityProfileNoFlushCache(Admin admin, String profilename, EndEntityProfile profile){
         try{
             EndEntityProfileDataLocal pdl = profiledatahome.findByProfileName(profilename);
             pdl.setProfile(profile);
-            flushProfileCache();
 			String msg = intres.getLocalizedMessage("ra.changedprofile", profilename);            	
             getLogSession().log(admin, admin.getCaId(), LogConstants.MODULE_RA, new java.util.Date(),null, null, LogConstants.EVENT_INFO_ENDENTITYPROFILE,msg);
         }catch(FinderException e){
 			String msg = intres.getLocalizedMessage("ra.errorchangeprofile", profilename);            	
             getLogSession().log(admin, admin.getCaId(), LogConstants.MODULE_RA, new java.util.Date(),null, null, LogConstants.EVENT_ERROR_ENDENTITYPROFILE,msg);
         }
-    }// changeEndEntityProfile
+    }// internalChangeEndEntityProfileNoFlushCache
 
     /**
      * Retrives a Collection of id:s (Integer) to authorized profiles.
@@ -699,21 +707,21 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
     } // flushProfileCache
     
     private HashMap getEndEntityProfileIdNameMapInternal() {
-    	if ((profileIdNameMapCache == null) || (lastProfileCacheUpdateTime+EjbcaConfiguration.getCacheEndEntityProfileTime() > System.currentTimeMillis())) {
+    	if ((profileIdNameMapCache == null) || (lastProfileCacheUpdateTime+EjbcaConfiguration.getCacheEndEntityProfileTime() < System.currentTimeMillis())) {
     		flushProfileCache();
     	}
     	return profileIdNameMapCache;
       } // getEndEntityProfileIdNameMapInternal
 
     private Map getEndEntityProfileNameIdMapInternal(){
-    	if ((profileNameIdMapCache == null) || (lastProfileCacheUpdateTime+EjbcaConfiguration.getCacheEndEntityProfileTime() > System.currentTimeMillis())) {
+    	if ((profileNameIdMapCache == null) || (lastProfileCacheUpdateTime+EjbcaConfiguration.getCacheEndEntityProfileTime() < System.currentTimeMillis())) {
     		flushProfileCache();
     	}
     	return profileNameIdMapCache;
       } // getEndEntityProfileIdNameMapInternal
 
     private Map getProfileCacheInternal() {
-    	if ((profileCache == null) || (lastProfileCacheUpdateTime+EjbcaConfiguration.getCacheEndEntityProfileTime() > System.currentTimeMillis())) {
+    	if ((profileCache == null) || (lastProfileCacheUpdateTime+EjbcaConfiguration.getCacheEndEntityProfileTime() < System.currentTimeMillis())) {
     		flushProfileCache();
     	}
     	return profileCache;
@@ -759,7 +767,7 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
     		returnval = new EndEntityProfile(true);
     	} else {
     		Integer id = (Integer)getEndEntityProfileNameIdMapInternal().get(profilename);
-    		returnval = (EndEntityProfile)getProfileCacheInternal().get(Integer.valueOf(id));
+    		returnval = (EndEntityProfile)getProfileCacheInternal().get(id);
     	}
     	if (log.isTraceEnabled()) {
     		log.trace("<getEndEntityProfile("+profilename+"): "+(returnval == null ? "null":"not null"));        	
@@ -807,7 +815,7 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
     	if(id == SecConst.EMPTY_ENDENTITYPROFILE) {
     		return EMPTY_ENDENTITYPROFILENAME;
     	}
-    	returnval = (String)getEndEntityProfileIdNameMapInternal().get(id);
+    	returnval = (String)getEndEntityProfileIdNameMapInternal().get(Integer.valueOf(id));
     	if (log.isTraceEnabled()) {
     		log.trace("<getEndEntityProfilename("+id+"): "+returnval);    		
     	}
