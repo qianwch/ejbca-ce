@@ -27,6 +27,7 @@ import javax.ejb.EJBException;
 import javax.ejb.FinderException;
 
 import org.apache.commons.lang.StringUtils;
+import org.ejbca.config.EjbcaConfiguration;
 import org.ejbca.core.ejb.BaseSessionBean;
 import org.ejbca.core.ejb.JNDINames;
 import org.ejbca.core.ejb.ServiceLocator;
@@ -133,11 +134,6 @@ import org.ejbca.util.JDBCUtil;
  *   
  */
 public class LocalAuthorizationSessionBean extends BaseSessionBean {
-
-    /**
-     * Constant indicating minimum time between updates. In milliseconds, 30 seconds.
-     */
-    private static final long MIN_TIME_BETWEEN_UPDATES = 30000;
     
     /** Internal localization of logs and errors */
     private static final InternalResources intres = InternalResources.getInstance();
@@ -153,21 +149,20 @@ public class LocalAuthorizationSessionBean extends BaseSessionBean {
     private AuthorizationTreeUpdateDataLocalHome authorizationtreeupdatehome = null;
 
     /**
-     * help variable used to check that authorization trees is updated.
-     */
-    private int authorizationtreeupdate = -1;
-
-    /**
-     * help variable used to control that update isn't performed to often.
-     */
-    private long lastupdatetime = -1;
-
-    /**
      * The local interface of  log session bean
      */
     private ILogSessionLocal logsession = null;
 
+    /** Cache for authorization data */
     private static volatile Authorizer authorizer = null;
+    /**
+     * help variable used to check that authorization trees are updated.
+     */
+    private static volatile int authorizationtreeupdate = -1;
+    /**
+     * help variable used to control that update isn't performed to often.
+     */
+    private static volatile long lastupdatetime = -1;
 
     private String[] customaccessrules = null;
 
@@ -1001,12 +996,12 @@ public class LocalAuthorizationSessionBean extends BaseSessionBean {
     private boolean updateNeccessary() {
     	boolean ret = false;
     	// Only do the actual SQL query if we might update the configuration due to cache time anyhow
-    	if (this.lastupdatetime < (System.currentTimeMillis() - MIN_TIME_BETWEEN_UPDATES)) {
+    	if (lastupdatetime < (System.currentTimeMillis() - EjbcaConfiguration.getCacheAuthorizationTime())) {
     		if (log.isDebugEnabled()) {
     			log.debug("Checking if update neccessary");
     		}
-            ret = getAuthorizationTreeUpdateData().updateNeccessary(this.authorizationtreeupdate);
-            this.lastupdatetime = System.currentTimeMillis(); // we don't want to run the above query often
+            ret = getAuthorizationTreeUpdateData().updateNeccessary(authorizationtreeupdate);
+            lastupdatetime = System.currentTimeMillis(); // we don't want to run the above query often
     	}
     	return ret;
     } // updateNeccessary
@@ -1019,8 +1014,8 @@ public class LocalAuthorizationSessionBean extends BaseSessionBean {
 			log.debug("updateAuthorizationTree");
     	}
         getAuthorizer().buildAccessTree(getAdminGroups());
-        this.authorizationtreeupdate = getAuthorizationTreeUpdateData().getAuthorizationTreeUpdateNumber();
-        this.lastupdatetime = System.currentTimeMillis();
+        authorizationtreeupdate = getAuthorizationTreeUpdateData().getAuthorizationTreeUpdateNumber();
+        lastupdatetime = System.currentTimeMillis();
     }
 
     /**
@@ -1028,9 +1023,13 @@ public class LocalAuthorizationSessionBean extends BaseSessionBean {
      * to other beans that they should reconstruct their accesstrees.
      */
     private void signalForAuthorizationTreeUpdate() {
-		log.trace(">signalForAuthorizationTreeUpdate");
+    	if (log.isTraceEnabled()) {
+    		log.trace(">signalForAuthorizationTreeUpdate");
+    	}
         getAuthorizationTreeUpdateData().incrementAuthorizationTreeUpdateNumber();
-		log.trace("<signalForAuthorizationTreeUpdate");
+    	if (log.isTraceEnabled()) {
+    		log.trace("<signalForAuthorizationTreeUpdate");
+    	}
     }
 
     private int findFreeAdminGroupId() {

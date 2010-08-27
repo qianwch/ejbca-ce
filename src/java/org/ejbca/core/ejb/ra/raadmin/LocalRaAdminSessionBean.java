@@ -154,10 +154,8 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
 
     /** Cache variable containing the global configuration. */
     private static volatile GlobalConfiguration globalconfiguration = null;
-    /** Constant indicating minimum time between updates of the global configuration cache. In milliseconds, 30 seconds. */
-    private static final long MIN_TIME_BETWEEN_GLOBCONF_UPDATES = 30000;
     /** help variable used to control that GlobalConfiguration update isn't performed to often. */
-    private long lastupdatetime = -1;
+    private static volatile long lastupdatetime = -1;
 
     /** The local interface of  log session bean */
     private ILogSessionLocal logsession = null;
@@ -897,7 +895,7 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
         		trace(">loadGlobalConfiguration()");
         	}
             // Only do the actual SQL query if we might update the configuration due to cache time anyhow
-            if ( globalconfiguration!=null && lastupdatetime+MIN_TIME_BETWEEN_GLOBCONF_UPDATES > new Date().getTime() ){
+            if ( globalconfiguration!=null && lastupdatetime+EjbcaConfiguration.getCacheGlobalConfigurationTime() > new Date().getTime() ){
                 return globalconfiguration;
             }
             try{
