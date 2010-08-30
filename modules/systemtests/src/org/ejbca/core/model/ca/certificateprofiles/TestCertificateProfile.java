@@ -443,7 +443,7 @@ public class TestCertificateProfile extends TestCase {
         assertEquals("bar", ecp.getCNPostfix());
 
         // Flush caches to reset cache timeout
-    	TestTools.getRaAdminSession().flushProfileCache();
+    	TestTools.getCertificateStoreSession().flushProfileCache();
     	// Change profile, not flushing cache
         ecp.setCNPostfix("bar2000");
     	TestTools.getCertificateStoreSession().internalChangeCertificateProfileNoFlushCache(admin, "TESTCPCACHE1", ecp);
