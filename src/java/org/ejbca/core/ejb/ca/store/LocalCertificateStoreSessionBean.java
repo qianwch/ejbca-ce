@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
@@ -38,6 +39,7 @@ import javax.ejb.FinderException;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.ejbca.config.EjbcaConfiguration;
 import org.ejbca.config.ProtectConfiguration;
 import org.ejbca.core.ejb.BaseSessionBean;
 import org.ejbca.core.ejb.JNDINames;
@@ -49,6 +51,7 @@ import org.ejbca.core.ejb.log.ILogSessionLocal;
 import org.ejbca.core.ejb.log.ILogSessionLocalHome;
 import org.ejbca.core.ejb.protect.TableProtectSessionLocal;
 import org.ejbca.core.ejb.protect.TableProtectSessionLocalHome;
+import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileDataLocal;
 import org.ejbca.core.model.InternalResources;
 import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.authorization.AuthenticationFailedException;
@@ -71,6 +74,7 @@ import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.model.log.LogConstants;
 import org.ejbca.core.model.protect.TableVerifyResult;
 import org.ejbca.core.model.ra.UserDataVO;
+import org.ejbca.core.model.ra.raadmin.EndEntityProfile;
 import org.ejbca.cvc.PublicKeyEC;
 import org.ejbca.util.Base64;
 import org.ejbca.util.CertTools;
@@ -233,6 +237,15 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
     /** If protection of database entries are enabled of not, default not */
     private boolean protect = ProtectConfiguration.getCertProtectionEnabled();
     
+    /** help variable used to control that profiles update (read from database) isn't performed to often. */
+    private static volatile long lastProfileCacheUpdateTime = -1;
+    /** Cache of mappings between profileId and profileName */
+    private static volatile HashMap profileIdNameMapCache = null;
+    /** Cache of mappings between profileName and profileId */
+    private static volatile Map profileNameIdMapCache = null;
+    /** Cache of end entity profiles, with Id as keys */
+    private static volatile Map profileCache = null;
+
     /**
      * The local interface of the publisher session bean
      */
@@ -1558,6 +1571,7 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
     	} catch (FinderException e) {
     		log.error("FinderException trying to load profiles: ", e);
     	}
+    	flushProfileCache();
     }
 
     
@@ -1601,6 +1615,7 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
             } catch (FinderException e) {
                 try {
                     certprofilehome.create(new Integer(certificateprofileid), certificateprofilename, certificateprofile);
+                    flushProfileCache();
                 	String msg = intres.getLocalizedMessage("store.addedcertprofile", certificateprofilename);            	
                     getLogSession().log(admin, admin.getCaId(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_INFO_CERTPROFILE, msg);
                 } catch (Exception f) {
@@ -1651,6 +1666,7 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
             } catch (FinderException e) {
                 try {
                     certprofilehome.create(new Integer(findFreeCertificateProfileId()), newcertificateprofilename, certificateprofile);
+                    flushProfileCache();
                 	String msg = intres.getLocalizedMessage("store.addedprofilewithtempl", newcertificateprofilename, originalcertificateprofilename);            	
                     getLogSession().log(admin, admin.getCaId(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_INFO_CERTPROFILE, msg);
                 } catch (CreateException f) {
@@ -1672,6 +1688,7 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
         try {
             CertificateProfileDataLocal pdl = certprofilehome.findByCertificateProfileName(certificateprofilename);
             pdl.remove();
+            flushProfileCache();
         	String msg = intres.getLocalizedMessage("store.removedprofile", certificateprofilename);            	
             getLogSession().log(admin, admin.getCaId(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_INFO_CERTPROFILE, msg);
         } catch (Exception e) {
@@ -1707,6 +1724,7 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
             try {
                 CertificateProfileDataLocal pdl = certprofilehome.findByCertificateProfileName(oldcertificateprofilename);
                 pdl.setCertificateProfileName(newcertificateprofilename);
+                flushProfileCache();
             	String msg = intres.getLocalizedMessage("store.renamedprofile", oldcertificateprofilename, newcertificateprofilename);            	
                 getLogSession().log(admin, admin.getCaId(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_INFO_CERTPROFILE, msg);
             } catch (FinderException f) {
@@ -1724,6 +1742,15 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
      * @ejb.interface-method
      */
     public void changeCertificateProfile(Admin admin, String certificateprofilename, CertificateProfile certificateprofile) {
+    	internalChangeCertificateProfileNoFlushCache(admin, certificateprofilename, certificateprofile);
+        flushProfileCache();
+    }// changeCertificateProfile
+    
+    /** Do not use, use changeCertificateProfile instead.
+     * Used internally for testing only. Updates a profile without flushing caches.
+     * @ejb.interface-method
+     */
+    public void internalChangeCertificateProfileNoFlushCache(Admin admin, String certificateprofilename, CertificateProfile certificateprofile) {
         try {
             CertificateProfileDataLocal pdl = certprofilehome.findByCertificateProfileName(certificateprofilename);
             pdl.setCertificateProfile(certificateprofile);
@@ -1733,7 +1760,7 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
         	String msg = intres.getLocalizedMessage("store.erroreditprofile", certificateprofilename);            	
             getLogSession().log(admin, admin.getCaId(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_ERROR_CERTPROFILE, msg);
         }
-    }// changeCertificateProfile
+    }// internalChangeCertificateProfileNoFlushCache
 
     /**
      * Retrives a Collection of id:s (Integer) to authorized profiles.
@@ -1813,42 +1840,89 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
      * @ejb.interface-method
      */
     public HashMap getCertificateProfileIdToNameMap(Admin admin) {
-        HashMap returnval = new HashMap();
-        Collection result = null;
-        returnval.put(new Integer(SecConst.CERTPROFILE_FIXED_ENDUSER),
-                EndUserCertificateProfile.CERTIFICATEPROFILENAME);
-        returnval.put(new Integer(SecConst.CERTPROFILE_FIXED_SUBCA),
-                CACertificateProfile.CERTIFICATEPROFILENAME);
-        returnval.put(new Integer(SecConst.CERTPROFILE_FIXED_ROOTCA),
-                RootCACertificateProfile.CERTIFICATEPROFILENAME);
-
-        returnval.put(new Integer(SecConst.CERTPROFILE_FIXED_OCSPSIGNER),
-                OCSPSignerCertificateProfile.CERTIFICATEPROFILENAME);
-        returnval.put(new Integer(SecConst.CERTPROFILE_FIXED_SERVER),
-                ServerCertificateProfile.CERTIFICATEPROFILENAME);
-
-        returnval.put(new Integer(SecConst.CERTPROFILE_FIXED_HARDTOKENAUTH),
-                HardTokenAuthCertificateProfile.CERTIFICATEPROFILENAME);
-        returnval.put(new Integer(SecConst.CERTPROFILE_FIXED_HARDTOKENAUTHENC),
-                HardTokenAuthEncCertificateProfile.CERTIFICATEPROFILENAME);
-        returnval.put(new Integer(SecConst.CERTPROFILE_FIXED_HARDTOKENENC),
-                HardTokenEncCertificateProfile.CERTIFICATEPROFILENAME);
-        returnval.put(new Integer(SecConst.CERTPROFILE_FIXED_HARDTOKENSIGN),
-                HardTokenSignCertificateProfile.CERTIFICATEPROFILENAME);
-
-
-        try {
-            result = certprofilehome.findAll();
-            Iterator i = result.iterator();
-            while (i.hasNext()) {
-                CertificateProfileDataLocal next = (CertificateProfileDataLocal) i.next();
-                returnval.put(next.getId(), next.getCertificateProfileName());
-            }
-        } catch (FinderException e) {
-        }
-        return returnval;
+    	if (log.isTraceEnabled()) {
+    		log.trace("><getCertificateProfileIdToNameMap");
+    	}
+    	return getCertificateProfileIdNameMapInternal();    	
     } // getCertificateProfileIdToNameMap
 
+    /**
+     * Clear and reload certificate profile caches.
+     * @ejb.transaction type="Supports"
+     * @ejb.interface-method
+     */
+    public void flushProfileCache() {
+    	if (log.isTraceEnabled()) {
+    		log.trace(">flushProfileCache");
+    	}
+        HashMap idNameCache = new HashMap();
+        HashMap nameIdCache = new HashMap();
+        HashMap profCache = new HashMap();
+        
+        idNameCache.put(Integer.valueOf(SecConst.CERTPROFILE_FIXED_ENDUSER), EndUserCertificateProfile.CERTIFICATEPROFILENAME);
+        idNameCache.put(Integer.valueOf(SecConst.CERTPROFILE_FIXED_SUBCA), CACertificateProfile.CERTIFICATEPROFILENAME);
+        idNameCache.put(Integer.valueOf(SecConst.CERTPROFILE_FIXED_ROOTCA), RootCACertificateProfile.CERTIFICATEPROFILENAME);
+        idNameCache.put(Integer.valueOf(SecConst.CERTPROFILE_FIXED_OCSPSIGNER), OCSPSignerCertificateProfile.CERTIFICATEPROFILENAME);
+        idNameCache.put(Integer.valueOf(SecConst.CERTPROFILE_FIXED_SERVER), ServerCertificateProfile.CERTIFICATEPROFILENAME);
+        idNameCache.put(Integer.valueOf(SecConst.CERTPROFILE_FIXED_HARDTOKENAUTH), HardTokenAuthCertificateProfile.CERTIFICATEPROFILENAME);
+        idNameCache.put(Integer.valueOf(SecConst.CERTPROFILE_FIXED_HARDTOKENAUTHENC), HardTokenAuthEncCertificateProfile.CERTIFICATEPROFILENAME);
+        idNameCache.put(Integer.valueOf(SecConst.CERTPROFILE_FIXED_HARDTOKENENC), HardTokenEncCertificateProfile.CERTIFICATEPROFILENAME);
+        idNameCache.put(Integer.valueOf(SecConst.CERTPROFILE_FIXED_HARDTOKENSIGN), HardTokenSignCertificateProfile.CERTIFICATEPROFILENAME);
+
+        nameIdCache.put(EndUserCertificateProfile.CERTIFICATEPROFILENAME, Integer.valueOf(SecConst.CERTPROFILE_FIXED_ENDUSER));
+        nameIdCache.put(CACertificateProfile.CERTIFICATEPROFILENAME, Integer.valueOf(SecConst.CERTPROFILE_FIXED_SUBCA));
+        nameIdCache.put(RootCACertificateProfile.CERTIFICATEPROFILENAME, Integer.valueOf(SecConst.CERTPROFILE_FIXED_ROOTCA));
+        nameIdCache.put(OCSPSignerCertificateProfile.CERTIFICATEPROFILENAME, Integer.valueOf(SecConst.CERTPROFILE_FIXED_OCSPSIGNER));
+        nameIdCache.put(ServerCertificateProfile.CERTIFICATEPROFILENAME, Integer.valueOf(SecConst.CERTPROFILE_FIXED_SERVER));
+        nameIdCache.put(HardTokenAuthCertificateProfile.CERTIFICATEPROFILENAME, Integer.valueOf(SecConst.CERTPROFILE_FIXED_HARDTOKENAUTH));
+        nameIdCache.put(HardTokenAuthEncCertificateProfile.CERTIFICATEPROFILENAME, Integer.valueOf(SecConst.CERTPROFILE_FIXED_HARDTOKENAUTHENC));
+        nameIdCache.put(HardTokenEncCertificateProfile.CERTIFICATEPROFILENAME, Integer.valueOf(SecConst.CERTPROFILE_FIXED_HARDTOKENENC));
+        nameIdCache.put(HardTokenSignCertificateProfile.CERTIFICATEPROFILENAME, Integer.valueOf(SecConst.CERTPROFILE_FIXED_HARDTOKENSIGN));
+
+        try{
+        	Collection result = certprofilehome.findAll();
+        	if (log.isDebugEnabled()) {
+                debug("Found "+result.size()+" certificate profiles.");        		
+        	}
+            Iterator i = result.iterator();
+            while(i.hasNext()){
+                CertificateProfileDataLocal next = (CertificateProfileDataLocal) i.next();
+                idNameCache.put(next.getId(),next.getCertificateProfileName());
+                nameIdCache.put(next.getCertificateProfileName(), next.getId());
+                profCache.put(next.getId(), next.getCertificateProfile());
+            }
+        }catch(FinderException e) {
+            log.error("Error reading certificate profiles: ", e);
+        }
+        profileIdNameMapCache = idNameCache;
+        profileNameIdMapCache = nameIdCache;
+        profileCache = profCache;
+        lastProfileCacheUpdateTime = System.currentTimeMillis();
+    	if (log.isTraceEnabled()) {
+    		log.trace("<flushProfileCache");
+    	}
+    } // flushProfileCache
+
+    private HashMap getCertificateProfileIdNameMapInternal() {
+    	if ((profileIdNameMapCache == null) || (lastProfileCacheUpdateTime+EjbcaConfiguration.getCacheCertificateProfileTime() < System.currentTimeMillis())) {
+    		flushProfileCache();
+    	}
+    	return profileIdNameMapCache;
+      } // getEndEntityProfileIdNameMapInternal
+
+    private Map getCertificateProfileNameIdMapInternal(){
+    	if ((profileNameIdMapCache == null) || (lastProfileCacheUpdateTime+EjbcaConfiguration.getCacheCertificateProfileTime() < System.currentTimeMillis())) {
+    		flushProfileCache();
+    	}
+    	return profileNameIdMapCache;
+      } // getEndEntityProfileIdNameMapInternal
+
+    private Map getProfileCacheInternal() {
+    	if ((profileCache == null) || (lastProfileCacheUpdateTime+EjbcaConfiguration.getCacheCertificateProfileTime() < System.currentTimeMillis())) {
+    		flushProfileCache();
+    	}
+    	return profileCache;
+    }
 
     /**
      * Retrives a named certificate profile or null if none was found.
@@ -1856,42 +1930,12 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
      * @ejb.interface-method
      */
     public CertificateProfile getCertificateProfile(Admin admin, String certificateprofilename) {
-        CertificateProfile returnval = null;
-
-        if (certificateprofilename.equals(EndUserCertificateProfile.CERTIFICATEPROFILENAME)) {
-            return new EndUserCertificateProfile();
-        }
-        if (certificateprofilename.equals(CACertificateProfile.CERTIFICATEPROFILENAME)) {
-            return new CACertificateProfile();
-        }
-        if (certificateprofilename.equals(RootCACertificateProfile.CERTIFICATEPROFILENAME)) {
-            return new RootCACertificateProfile();
-        }
-        if (certificateprofilename.equals(OCSPSignerCertificateProfile.CERTIFICATEPROFILENAME)) {
-            return new OCSPSignerCertificateProfile();
-        }
-        if (certificateprofilename.equals(ServerCertificateProfile.CERTIFICATEPROFILENAME)) {
-            return new ServerCertificateProfile();
-        }
-        if (certificateprofilename.equals(HardTokenAuthCertificateProfile.CERTIFICATEPROFILENAME)) {
-            return new HardTokenAuthCertificateProfile();
-        }
-        if (certificateprofilename.equals(HardTokenAuthEncCertificateProfile.CERTIFICATEPROFILENAME)) {
-            return new HardTokenAuthEncCertificateProfile();
-        }
-        if (certificateprofilename.equals(HardTokenEncCertificateProfile.CERTIFICATEPROFILENAME)) {
-            return new HardTokenEncCertificateProfile();
-        }
-        if (certificateprofilename.equals(HardTokenSignCertificateProfile.CERTIFICATEPROFILENAME)) {
-            return new HardTokenSignCertificateProfile();
-        }
-
-        try {
-            returnval = (certprofilehome.findByCertificateProfileName(certificateprofilename)).getCertificateProfile();
-        } catch (FinderException e) {
-            // return null if we cant find it
-        }
-        return returnval;
+		Integer id = (Integer)getCertificateProfileNameIdMapInternal().get(certificateprofilename);
+		if (id != null) {
+			return getCertificateProfile(admin, id);			
+		} else {
+			return null;
+		}
     } //  getCertificateProfile
 
     /**
@@ -1902,8 +1946,10 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
      * @ejb.interface-method
      */
     public CertificateProfile getCertificateProfile(Admin admin, int id) {
+    	if (log.isTraceEnabled()) {
+            log.trace(">getCertificateProfile("+id+")");    		
+    	}
         CertificateProfile returnval = null;
-
         if (id < SecConst.FIXED_CERTIFICATEPROFILE_BOUNDRY) {
             switch (id) {
                 case SecConst.CERTPROFILE_FIXED_ENDUSER:
@@ -1937,12 +1983,11 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
                     returnval = new EndUserCertificateProfile();
             }
         } else {
-            try {
-                returnval = (certprofilehome.findByPrimaryKey(new Integer(id))).getCertificateProfile();
-            } catch (FinderException e) {
-                // return null if we cant find it
-            }
+        	returnval = (CertificateProfile)getProfileCacheInternal().get(Integer.valueOf(id));
         }
+    	if (log.isTraceEnabled()) {
+            log.trace("<getCertificateProfile("+id+"): "+(returnval == null ? "null":"not null"));     
+    	}
         return returnval;
     } // getCertificateProfile
 
@@ -1959,42 +2004,12 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
         	log.trace(">getCertificateProfileId: "+certificateprofilename);
     	}
         int returnval = 0;
-
-        if (certificateprofilename.equals(EndUserCertificateProfile.CERTIFICATEPROFILENAME)) {
-            return SecConst.CERTPROFILE_FIXED_ENDUSER;
-        }
-        if (certificateprofilename.equals(CACertificateProfile.CERTIFICATEPROFILENAME)) {
-            return SecConst.CERTPROFILE_FIXED_SUBCA;
-        }
-        if (certificateprofilename.equals(RootCACertificateProfile.CERTIFICATEPROFILENAME)) {
-            return SecConst.CERTPROFILE_FIXED_ROOTCA;
-        }
-        if (certificateprofilename.equals(OCSPSignerCertificateProfile.CERTIFICATEPROFILENAME)) {
-            return SecConst.CERTPROFILE_FIXED_OCSPSIGNER;
-        }
-        if (certificateprofilename.equals(ServerCertificateProfile.CERTIFICATEPROFILENAME)) {
-            return SecConst.CERTPROFILE_FIXED_SERVER;
-        }
-        if (certificateprofilename.equals(HardTokenAuthCertificateProfile.CERTIFICATEPROFILENAME)) {
-            return SecConst.CERTPROFILE_FIXED_HARDTOKENAUTH;
-        }
-        if (certificateprofilename.equals(HardTokenAuthEncCertificateProfile.CERTIFICATEPROFILENAME)) {
-            return SecConst.CERTPROFILE_FIXED_HARDTOKENAUTHENC;
-        }
-        if (certificateprofilename.equals(HardTokenEncCertificateProfile.CERTIFICATEPROFILENAME)) {
-            return SecConst.CERTPROFILE_FIXED_HARDTOKENENC;
-        }
-        if (certificateprofilename.equals(HardTokenSignCertificateProfile.CERTIFICATEPROFILENAME)) {
-            return SecConst.CERTPROFILE_FIXED_HARDTOKENSIGN;
-        }
-        try {
-            Integer id = (certprofilehome.findByCertificateProfileName(certificateprofilename)).getId();
-            returnval = id.intValue();
-        } catch (FinderException e) {
-        	log.debug("No certificate profile found with name: "+certificateprofilename);
-        }
+    	Integer id = (Integer)getCertificateProfileNameIdMapInternal().get(certificateprofilename);
+    	if (id != null) {
+    		returnval = id.intValue();
+    	}
     	if (log.isTraceEnabled()) {
-        	log.trace("<getCertificateProfileId: "+certificateprofilename);
+        	log.trace("<getCertificateProfileId: "+certificateprofilename+"): "+returnval);
     	}
         return returnval;
     } // getCertificateProfileId
@@ -2011,48 +2026,9 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
         	log.trace(">getCertificateProfileName: "+id);
     	}
         String returnval = null;
-        // Is id a fixed profile
-        if (id < SecConst.FIXED_CERTIFICATEPROFILE_BOUNDRY) {
-            switch (id) {
-                case SecConst.CERTPROFILE_FIXED_ENDUSER:
-                    returnval = EndUserCertificateProfile.CERTIFICATEPROFILENAME;
-                    break;
-                case SecConst.CERTPROFILE_FIXED_SUBCA:
-                    returnval = CACertificateProfile.CERTIFICATEPROFILENAME;
-                    break;
-                case SecConst.CERTPROFILE_FIXED_ROOTCA:
-                    returnval = RootCACertificateProfile.CERTIFICATEPROFILENAME;
-                    break;
-                case SecConst.CERTPROFILE_FIXED_OCSPSIGNER:
-                    returnval = OCSPSignerCertificateProfile.CERTIFICATEPROFILENAME;
-                    break;
-                case SecConst.CERTPROFILE_FIXED_SERVER:
-                    returnval = ServerCertificateProfile.CERTIFICATEPROFILENAME;
-                    break;
-                case SecConst.CERTPROFILE_FIXED_HARDTOKENAUTH:
-                    returnval = HardTokenAuthCertificateProfile.CERTIFICATEPROFILENAME;
-                    break;
-                case SecConst.CERTPROFILE_FIXED_HARDTOKENAUTHENC:
-                    returnval = HardTokenAuthEncCertificateProfile.CERTIFICATEPROFILENAME;
-                    break;
-                case SecConst.CERTPROFILE_FIXED_HARDTOKENENC:
-                    returnval = HardTokenEncCertificateProfile.CERTIFICATEPROFILENAME;
-                    break;
-                case SecConst.CERTPROFILE_FIXED_HARDTOKENSIGN:
-                    returnval = HardTokenSignCertificateProfile.CERTIFICATEPROFILENAME;
-                    break;
-                default:
-                    returnval = EndUserCertificateProfile.CERTIFICATEPROFILENAME;
-            }
-        } else {
-            try {
-                returnval = (certprofilehome.findByPrimaryKey(new Integer(id))).getCertificateProfileName();
-            } catch (FinderException e) {
-            	log.debug("No certificate profile found with id: "+id);
-            }
-        }
+    	returnval = (String)getCertificateProfileIdNameMapInternal().get(Integer.valueOf(id));
     	if (log.isTraceEnabled()) {
-        	log.trace("<getCertificateProfileName: "+id);
+        	log.trace("<getCertificateProfileName: "+id+"): "+returnval);
     	}
         return returnval;
     } // getCertificateProfileName
