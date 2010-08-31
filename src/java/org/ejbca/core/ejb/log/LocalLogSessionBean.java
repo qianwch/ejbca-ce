@@ -26,6 +26,7 @@ import javax.ejb.CreateException;
 import javax.ejb.EJBException;
 import javax.ejb.FinderException;
 
+import org.ejbca.config.EjbcaConfiguration;
 import org.ejbca.core.ejb.BaseSessionBean;
 import org.ejbca.core.ejb.ServiceLocator;
 import org.ejbca.core.model.InternalResources;
@@ -139,7 +140,7 @@ public class LocalLogSessionBean extends BaseSessionBean {
      * 5 seconds is enough to not limit performance in high performance environments, but low enough so that 
      * changes to configuration is visible almost immediately.
      */
-    private static final ObjectCache logConfCache = new ObjectCache();
+    private static volatile ObjectCache logConfCache = new ObjectCache(EjbcaConfiguration.getCacheLogConfigurationTime());
 
     /** The home interface of  LogConfigurationData entity bean */
     private LogConfigurationDataLocalHome logconfigurationhome;
@@ -483,12 +484,20 @@ public class LocalLogSessionBean extends BaseSessionBean {
      *
      */
     public void saveLogConfiguration(Admin admin, int caid, LogConfiguration logconfiguration) {
+    	internalSaveLogConfigurationNoFlushCache(admin, caid, logconfiguration);
+        // Update cache
+		logConfCache.put(Integer.valueOf(caid), logconfiguration);    	
+    }
+    /** Do not use, use saveLogConfiguration instead.
+     * Used internally for testing only. Updates configuration without flushing caches.
+     * @ejb.interface-method
+     * @ejb.transaction type="Required"
+     */
+    public void internalSaveLogConfigurationNoFlushCache(Admin admin, int caid, LogConfiguration logconfiguration) {
         try {
             try {
                 log(admin, caid, LogConstants.MODULE_LOG, new Date(), null, null, LogConstants.EVENT_INFO_EDITLOGCONFIGURATION, "");
                 (logconfigurationhome.findByPrimaryKey(new Integer(caid))).saveLogConfiguration(logconfiguration);
-                // Update cache
-    			logConfCache.put(Integer.valueOf(caid), logconfiguration);
             } catch (FinderException e) {
                 String msg = intres.getLocalizedMessage("log.createconf", new Integer(caid));            	
                 log.info(msg);
@@ -499,6 +508,15 @@ public class LocalLogSessionBean extends BaseSessionBean {
             throw new EJBException(e);
         }
     } // saveLogConfiguration
+
+    /**
+     * Clear and reload log profile caches.
+     * @ejb.transaction type="Supports"
+     * @ejb.interface-method
+     */
+    public void flushConfigurationCache() {
+    	logConfCache = new ObjectCache(EjbcaConfiguration.getCacheLogConfigurationTime());
+    }
 
 	/**
      * Methods for testing that a log-row is never rolled back if the rest of the transaction is.
