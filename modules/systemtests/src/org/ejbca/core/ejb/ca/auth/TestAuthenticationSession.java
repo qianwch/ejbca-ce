@@ -230,8 +230,9 @@ public class TestAuthenticationSession extends TestCase {
 		assertTrue("Failure the users keyrecovery session should have been marked", TestTools.getKeyRecoverySession().isUserMarked(admin,username1));
 		
     	// Now finish the user (The actual test)
-		TestTools.getAuthenticationSession().finishUser(admin,username1,pwd1);
-		// And se if the user is still marked
+		UserDataVO userdata = TestTools.getUserAdminSession().findUser(admin, username1);
+		TestTools.getAuthenticationSession().finishUser(userdata);
+		// And see if the user is still marked
 		
 		assertTrue("Failure the users keyrecovery session should have been unmarked", !TestTools.getKeyRecoverySession().isUserMarked(admin,username1));
 		

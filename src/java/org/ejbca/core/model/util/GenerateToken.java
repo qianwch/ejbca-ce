@@ -9,6 +9,7 @@ import java.security.cert.X509Certificate;
 import org.apache.log4j.Logger;
 import org.ejbca.core.model.keyrecovery.KeyRecoveryData;
 import org.ejbca.core.model.log.Admin;
+import org.ejbca.core.model.ra.UserDataVO;
 import org.ejbca.util.CertTools;
 import org.ejbca.util.keystore.KeyTools;
 
@@ -92,9 +93,11 @@ public class GenerateToken {
     		}
     		if (finishUser) {
     			if (local) {
-        			lhelper.getAuthenticationSession().finishUser(administrator, username, password);    				
+    				UserDataVO userdata = lhelper.getUserAdminSession().findUser(administrator, username);
+        			lhelper.getAuthenticationSession().finishUser(userdata);    				
     			} else {
-        			rhelper.getAuthenticationSession().finishUser(administrator, username, password);
+    				UserDataVO userdata = rhelper.getUserAdminSession().findUser(administrator, username);
+        			rhelper.getAuthenticationSession().finishUser(userdata);
     			}
     		}
     	} else {

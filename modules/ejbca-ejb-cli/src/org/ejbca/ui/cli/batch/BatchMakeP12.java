@@ -232,7 +232,8 @@ public class BatchMakeP12 extends BaseCommand {
           cert = orgCert;
           boolean finishUser = getCAAdminSession().getCAInfo(getAdmin(),caid).getFinishUser();
           if(finishUser){
-        	  getAuthenticationSession().finishUser(getAdmin(), username, password);
+        	  UserDataVO userdata = getUserAdminSession().findUser(admin, username);
+        	  getAuthenticationSession().finishUser(userdata);
           }
           
           
