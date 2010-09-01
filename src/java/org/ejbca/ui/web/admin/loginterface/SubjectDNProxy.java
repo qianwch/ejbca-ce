@@ -63,25 +63,25 @@ public class SubjectDNProxy implements java.io.Serializable {
       returnval = (String) subjectdnstore.get(admindata);
 
       if(returnval==null && admindata.indexOf(':') != -1){
-        // Try to find the certificate in database
+          // Try to find the certificate in database
     	  
-    	String data[] = admindata.split(":");  
-        String certificatesnr = data[0].trim();
-        String issuerdn = data[2].substring(data[2].indexOf('"')+1, data[2].lastIndexOf('"'));
-        if(local) {
-          result = certificatesessionlocal.findCertificateByIssuerAndSerno(admin, issuerdn, new BigInteger(certificatesnr, 16));
-        } else {
-          result = certificatesessionremote.findCertificateByIssuerAndSerno(admin, issuerdn, new BigInteger(certificatesnr, 16));
-        }
-        if(result != null){
-          returnval = CertTools.getSubjectDN(result);
-          subjectdnstore.put(admindata,returnval);
-        } else {
-          if((data.length > 3) && ("CertDN".equals(data[3].trim()))){
-        	  returnval = data[4].substring(data[4].indexOf('"')+1, data[4].lastIndexOf('"'));
-        	  subjectdnstore.put(admindata,returnval);
+    	  String data[] = admindata.split(":");  
+          String certificatesnr = data[0].trim();
+          String issuerdn = data[2].substring(data[2].indexOf('"')+1, data[2].lastIndexOf('"'));
+          if(local) {
+              result = certificatesessionlocal.findCertificateByIssuerAndSerno(admin, issuerdn, new BigInteger(certificatesnr, 16));
+          } else {
+              result = certificatesessionremote.findCertificateByIssuerAndSerno(admin, issuerdn, new BigInteger(certificatesnr, 16));
           }
-        }
+          if(result != null){
+              returnval = CertTools.getSubjectDN(result);
+              subjectdnstore.put(admindata,returnval);
+          } else {
+              if((data.length > 3) && ("SubjectDN".equals(data[3].trim()))){
+        	      returnval = data[4].substring(data[4].indexOf('"')+1, data[4].lastIndexOf('"'));
+        	      subjectdnstore.put(admindata,returnval);
+              }
+          }
       }
 
       return returnval;
