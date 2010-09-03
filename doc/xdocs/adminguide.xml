@@ -3979,6 +3979,14 @@ More advanced scripts or applications have the ability to use the additional arg
 <li>revoke.application fulltempfilepathname x509reason certificateDN issuerDN certHexSerialNumber</li>
 </ul>
 </p>
+<p>An example linux script for certificate publishing could look like:</p>
+<source>
+#!/usr/bin/env bash
+
+echo $* >> /home/user/publisherlog.txt
+
+cp $1 /home/user/cert.crt
+</source>
 </subsubsection>
 </subsection>
 
