@@ -38,6 +38,7 @@ import org.ejbca.ui.cli.IllegalAdminCommandException;
 import org.ejbca.ui.cli.util.ConsolePasswordReader;
 import org.ejbca.util.CertTools;
 import org.ejbca.util.CliTools;
+import org.ejbca.util.CryptoProviderTools;
 import org.ejbca.util.FileTools;
 import org.ejbca.util.SimpleTime;
 import org.ejbca.util.StringTools;
@@ -55,6 +56,9 @@ public class CaInitCommand extends BaseCaAdminCommand {
 	public String getDescription() { return "Create a CA and its first CRL. Publishes the CRL and CA certificate"; }
 
     public void execute(String[] args) throws ErrorAdminCommandException {
+    	// Install BC provider
+    	CryptoProviderTools.installBCProvider();
+    	
         // Create new CA.
         if (args.length < 10) {
     		getLogger().info("Description: " + getDescription());
