@@ -60,6 +60,7 @@ import org.ejbca.core.model.ra.raadmin.AdminPreference;
 import org.ejbca.core.model.ra.raadmin.GlobalConfiguration;
 import org.ejbca.util.CertTools;
 import org.ejbca.util.HTMLTools;
+import org.ejbca.util.StringTools;
 import org.ejbca.util.dn.DNFieldExtractor;
 import org.ejbca.util.keystore.KeyTools;
 
@@ -740,7 +741,11 @@ public class EjbcaWebBean implements java.io.Serializable {
     	return "[<a href=\"" + getHelpBaseURI() +lastPart + "\" target=\"" + GlobalConfiguration.DOCWINDOW +
     		"\" title=\"" + getText("OPENHELPSECTION") + "\" >?</a>]";
     }
-    
+
+    public String[] getCertSernoAndIssuerdn(String certdata){
+        return StringTools.parseCertData(certdata);
+    }
+
     public String getCleanOption(String parameter, String[] validOptions) throws Exception {
     	for(int i=0; i<validOptions.length; i++){
     		if(parameter.equals(validOptions[i]))	return parameter;
