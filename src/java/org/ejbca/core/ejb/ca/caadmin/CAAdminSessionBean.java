@@ -981,6 +981,9 @@ public class CAAdminSessionBean extends BaseSessionBean {
     public void flushCACache() {
     	lastCACacheUpdateTime = -1;
     	CACacheManager.instance().removeAll();
+    	if (log.isDebugEnabled()) {
+    		log.debug("Flushed CA cache.");
+    	}
     }
 
     /** Internal method for getting CA, to avoid code duplication. Tries to find the CA even if the CAId is wrong due 

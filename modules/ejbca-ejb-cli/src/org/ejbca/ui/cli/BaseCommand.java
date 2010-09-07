@@ -48,6 +48,8 @@ import org.ejbca.core.ejb.hardtoken.IHardTokenSessionHome;
 import org.ejbca.core.ejb.hardtoken.IHardTokenSessionRemote;
 import org.ejbca.core.ejb.keyrecovery.IKeyRecoverySessionHome;
 import org.ejbca.core.ejb.keyrecovery.IKeyRecoverySessionRemote;
+import org.ejbca.core.ejb.log.ILogSessionHome;
+import org.ejbca.core.ejb.log.ILogSessionRemote;
 import org.ejbca.core.ejb.log.IProtectedLogSessionHome;
 import org.ejbca.core.ejb.log.IProtectedLogSessionRemote;
 import org.ejbca.core.ejb.ra.IUserAdminSessionHome;
@@ -78,6 +80,7 @@ public abstract class BaseCommand implements CliCommandPlugin {
     private IUserAdminSessionRemote userAdminSession = null;
     private IRaAdminSessionRemote raAdminSession = null;
     private ICAAdminSessionRemote caAdminSession = null;
+    private ILogSessionRemote logSession = null;
     private ICertificateStoreSessionRemote certificateStoreSession = null;
     private IPublisherSessionRemote publisherSession = null;
 	private IProtectedLogSessionRemote protectedLogSession = null;
@@ -122,6 +125,24 @@ public abstract class BaseCommand implements CliCommandPlugin {
 		}
 		baseLog.trace("<getCAAdminSession()");
         return caAdminSession;
+     }
+
+    /**
+     *@return a reference to a LogSessionBean
+     */
+    protected ILogSessionRemote getLogSession() {
+    	baseLog.trace(">getLogSession()");
+		try {
+			if (logSession == null) {
+				logSession = ((ILogSessionHome) ServiceLocator.getInstance().getRemoteHome(
+						ILogSessionHome.JNDI_NAME, ILogSessionHome.class)).create();
+			}
+		} catch (Exception e) {
+			baseLog.error("", e);
+			throw new RuntimeException(e);
+		}
+		baseLog.trace("<getLogSession()");
+        return logSession;
      }
 
     /**

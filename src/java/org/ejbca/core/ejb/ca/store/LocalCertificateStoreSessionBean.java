@@ -1896,6 +1896,9 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
         profileNameIdMapCache = nameIdCache;
         profileCache = profCache;
         lastProfileCacheUpdateTime = System.currentTimeMillis();
+    	if (log.isDebugEnabled()) {
+    		log.debug("Flushed profile cache.");
+    	}
     	if (log.isTraceEnabled()) {
     		log.trace("<flushProfileCache");
     	}

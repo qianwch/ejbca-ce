@@ -701,6 +701,9 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
         profileNameIdMapCache = nameIdCache;
         profileCache = profCache;
         lastProfileCacheUpdateTime = System.currentTimeMillis();
+        if (log.isDebugEnabled()) {
+        	log.debug("Flushed profile cache");
+        }
     	if (log.isTraceEnabled()) {
     		log.trace("<flushProfileCache");
     	}
@@ -931,21 +934,20 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
      * @throws EJBException if a communication or other error occurs.
      * @ejb.interface-method
      */
-
-    public void saveGlobalConfiguration(Admin admin, GlobalConfiguration globalconfiguration)  {
+    public void saveGlobalConfiguration(Admin admin, GlobalConfiguration globconf)  {
     	if (log.isTraceEnabled()) {
     		trace(">saveGlobalConfiguration()");
     	}
     	String pk = "0";
     	try {
     		GlobalConfigurationDataLocal gcdata = globalconfigurationhome.findByPrimaryKey(pk);
-    		gcdata.setGlobalConfiguration(globalconfiguration);
+    		gcdata.setGlobalConfiguration(globconf);
 			String msg = intres.getLocalizedMessage("ra.savedconf", gcdata.getConfigurationId());            	
     		getLogSession().log(admin, admin.getCaId(), LogConstants.MODULE_RA, new java.util.Date(),null, null, LogConstants.EVENT_INFO_EDITSYSTEMCONFIGURATION,msg);
     	}catch (javax.ejb.FinderException fe) {
     		// Global configuration doesn't yet exists.
     		try{
-    			GlobalConfigurationDataLocal data1 = globalconfigurationhome.create(pk,globalconfiguration);
+    			GlobalConfigurationDataLocal data1 = globalconfigurationhome.create(pk,globconf);
     			String msg = intres.getLocalizedMessage("ra.createdconf", data1.getConfigurationId());            	
     			getLogSession().log(admin, admin.getCaId(), LogConstants.MODULE_RA, new java.util.Date(),null, null, LogConstants.EVENT_INFO_EDITSYSTEMCONFIGURATION, msg);
     		} catch(CreateException e){
@@ -953,12 +955,31 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
     			getLogSession().log(admin, admin.getCaId(), LogConstants.MODULE_RA, new java.util.Date(),null, null, LogConstants.EVENT_ERROR_EDITSYSTEMCONFIGURATION,msg);
     		}
     	}
-    	this.globalconfiguration=globalconfiguration;
+    	globalconfiguration=globconf;
     	if (log.isTraceEnabled()) {
     		trace("<saveGlobalConfiguration()");
     	}
     } // saveGlobalConfiguration
 
+    /**
+     * Clear and load global configuration cache.
+     * @ejb.transaction type="Supports"
+     * @ejb.interface-method
+     */
+    public void flushGlobalConfigurationCache()  {
+    	if (log.isTraceEnabled()) {
+    		trace(">flushGlobalConfigurationCache()");
+    	}
+    	globalconfiguration = null;
+    	loadGlobalConfiguration(new Admin(Admin.TYPE_INTERNALUSER, "internal"));
+    	if (log.isDebugEnabled()) {
+    		log.debug("Flushed global configuration cache.");
+    	}
+    	if (log.isTraceEnabled()) {
+    		trace("<flushGlobalConfigurationCache()");
+    	}
+    }
+    
     /**
      * @ejb.interface-method
      */

@@ -516,6 +516,9 @@ public class LocalLogSessionBean extends BaseSessionBean {
      */
     public void flushConfigurationCache() {
     	logConfCache = new ObjectCache(EjbcaConfiguration.getCacheLogConfigurationTime());
+    	if (log.isDebugEnabled()) {
+    		log.debug("Flushed log configuration cache.");
+    	}
     }
 
 	/**

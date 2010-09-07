@@ -884,7 +884,6 @@ public class LocalAuthorizationSessionBean extends BaseSessionBean {
      * @ejb.interface-method view-type="both"
      * @ejb.transaction type="Supports"
      */
-
     public boolean existsCAInRules(Admin admin, int caid) {
         return existsCAInAdminGroups(caid) && existsCAInAccessRules(caid);
     } // existsCAInRules
@@ -895,12 +894,28 @@ public class LocalAuthorizationSessionBean extends BaseSessionBean {
      * @ejb.interface-method view-type="both"
      * @ejb.transaction type="Supports"
      */
-
     public void forceRuleUpdate(Admin admin) {
         signalForAuthorizationTreeUpdate();
         updateAuthorizationTree();
-    } // existsCAInRules
+    } // forceRuleUpdate
 
+    /**
+     * Clear and load authorization rules cache.
+     * @ejb.transaction type="Supports"
+     * @ejb.interface-method
+     */
+    public void flushAuthorizationRuleCache()  {
+    	if (log.isTraceEnabled()) {
+    		trace(">flushAuthorizationRuleCache()");
+    	}
+    	updateAuthorizationTree();
+    	if (log.isDebugEnabled()) {
+    		log.debug("Flushed authorization cache.");
+    	}    	
+    	if (log.isTraceEnabled()) {
+    		trace("<flushAuthorizationRuleCache()");
+    	}
+    }
 
     /**
      * Help function to existsCAInRules, checks if caid axists among entities in admingroups.
