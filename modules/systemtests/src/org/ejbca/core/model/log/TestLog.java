@@ -115,7 +115,7 @@ public class TestLog extends TestCase {
     }
     
     /**
-     * Test of the cache of certificate profiles. This test depends on the default cache time of 1 second being used.
+     * Test of the cache of certificate profiles. This test depends on the default cache time of 5 second being used.
      * If you changed this config, eeprofiles.cachetime, this test may fail. 
      */
     public void test03LogConfigurationCache() throws Exception {
