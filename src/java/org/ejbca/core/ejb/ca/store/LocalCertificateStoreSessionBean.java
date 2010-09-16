@@ -980,7 +980,9 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
         return ret;
     } // getCertificateInfo
 
-    /**
+    /** Finds a certificate based on fingerprint. 
+     * You can get fingerprint by for example "String fingerprint = CertTools.getFingerprintAsString(certificate);"
+     * @return Certificate or null if it can not be found.
      * @ejb.interface-method
      */
     public Certificate findCertificateByFingerprint(Admin admin, String fingerprint) {
