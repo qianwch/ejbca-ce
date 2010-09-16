@@ -41,13 +41,13 @@ import org.ejbca.config.ProtectedLogConfiguration;
 import org.ejbca.core.ejb.ServiceLocator;
 import org.ejbca.core.ejb.ca.caadmin.ICAAdminSessionLocal;
 import org.ejbca.core.ejb.ca.caadmin.ICAAdminSessionLocalHome;
+import org.ejbca.core.ejb.ca.sign.ISignSessionLocalHome;
 import org.ejbca.core.ejb.ca.store.ICertificateStoreSessionLocal;
 import org.ejbca.core.ejb.ca.store.ICertificateStoreSessionLocalHome;
 import org.ejbca.core.ejb.log.ILogSessionLocal;
 import org.ejbca.core.ejb.log.ILogSessionLocalHome;
 import org.ejbca.core.ejb.ra.raadmin.IRaAdminSessionLocal;
 import org.ejbca.core.ejb.ra.raadmin.IRaAdminSessionLocalHome;
-import org.ejbca.core.model.ra.raadmin.GlobalConfiguration;
 import org.ejbca.core.ejb.services.IServiceSessionLocal;
 import org.ejbca.core.ejb.services.IServiceSessionLocalHome;
 import org.ejbca.core.ejb.services.IServiceTimerSessionLocalHome;
@@ -58,6 +58,7 @@ import org.ejbca.core.model.log.LogConstants;
 import org.ejbca.core.model.log.ProtectedLogDevice;
 import org.ejbca.core.model.log.ProtectedLogExporter;
 import org.ejbca.core.model.log.ProtectedLogVerifier;
+import org.ejbca.core.model.ra.raadmin.GlobalConfiguration;
 import org.ejbca.core.model.services.ServiceConfiguration;
 import org.ejbca.core.model.services.ServiceExistsException;
 import org.ejbca.core.model.services.actions.NoAction;
@@ -385,6 +386,15 @@ public class StartServicesServlet extends HttpServlet {
         } catch (Exception e) {
         	log.error("Error creating CAAdminSession: ", e);
         }
+
+        log.trace(">init SignSession to check for unique issuerDN,serialNumber index");
+        try {
+        	ISignSessionLocalHome signsessionhome = (ISignSessionLocalHome)ServiceLocator.getInstance().getLocalHome(ISignSessionLocalHome.COMP_NAME);
+        	signsessionhome.create();
+        } catch (Exception e) {
+        	log.error("Error creating SignSession: ", e);
+        }
+
     }
     
 }

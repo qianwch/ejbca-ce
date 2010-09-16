@@ -303,25 +303,28 @@ public class RSASignSessionBean extends BaseSessionBean {
 		}
 		final Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
 		final ICertificateStoreSessionLocal certificateStore = this.storeHome.create();
-		final Collection c = certificateStore.findCertificatesByUsername(admin, userName);
-		if ( c.size()>1 ) {
-			this.log.warn( intres.getLocalizedMessage("signsession.not_unique_certserialnumberindex") );
+		Certificate c1 = certificateStore.findCertificateByFingerprint(admin, CertTools.getFingerprintAsString(cert1));
+		Certificate c2 = certificateStore.findCertificateByFingerprint(admin, CertTools.getFingerprintAsString(cert2));
+		if ( (c1 != null) && (c2 != null) ) {
+			this.log.info( intres.getLocalizedMessage("signsession.not_unique_certserialnumberindex") );
 			return false; // already proved that not checking index for serial number.
 		}
-		if ( c.size()<1 ) {// storing initial certificate if no test certificate created.
+		if (c1 == null) {// storing initial certificate if no test certificate created.
 			try {
 				certificateStore.storeCertificate(admin, cert1, userName, "abcdef0123456789", SecConst.CERT_INACTIVE, 0, 0, "", new Date().getTime());
-			} catch (Exception e) {
+			} catch (Throwable e) {
 				throw new Exception("It should always be possible to store initial dummy certificate.", e);
 			}
+		} 
+		if (c2 == null) { // storing a second certificate with same issuer 
+			try {  
+				certificateStore.storeCertificate(admin, cert2, userName, "fedcba9876543210", SecConst.CERT_INACTIVE, 0, 0, "", new Date().getTime());
+			} catch (Throwable e) {
+				this.log.info("Unique index in CertificateData table for certificate serial number");
+				return true;// Exception is thrown when unique index is working and a certificate with same serial number is in the database.
+			}			
 		}
-		try { // storing a second certificate with same issuer 
-			certificateStore.storeCertificate(admin, cert2, userName, "fedcba9876543210", SecConst.CERT_INACTIVE, 0, 0, "", new Date().getTime());
-		} catch (Exception e) {
-			this.log.info("Unique index in CertificateData table for certificate serial number");
-			return true;// Exception is thrown when unique index is working and a certificate with same serial number is in the database.
-		}
-		this.log.warn( intres.getLocalizedMessage("signsession.not_unique_certserialnumberindex") );
+		this.log.info( intres.getLocalizedMessage("signsession.not_unique_certserialnumberindex") );
 		return false;// It was possible to store a second certificate with same serial number. Unique number not working.
 	}
 
