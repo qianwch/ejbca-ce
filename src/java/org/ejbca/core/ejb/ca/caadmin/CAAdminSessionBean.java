@@ -1123,12 +1123,14 @@ public class CAAdminSessionBean extends BaseSessionBean {
                 }
             }
             String msg = intres.getLocalizedMessage("signsession.caexpired", ca.getSubjectDN());
-            getLogSession().log(admin, ca.getCAId(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_INFO_UNKNOWN, msg, cee);
+            msg += " "+cee.getMessage();
+            getLogSession().log(admin, ca.getCAId(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_INFO_UNKNOWN, msg);
         } catch (CertificateNotYetValidException e) {
         	// Signers Certificate is not yet valid.
             String msg = intres.getLocalizedMessage("signsession.canotyetvalid", ca.getSubjectDN());
+            msg += " "+e.getMessage();
             log.warn(msg);
-            getLogSession().log(admin, ca.getCAId(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_INFO_UNKNOWN, msg, e);
+            getLogSession().log(admin, ca.getCAId(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_INFO_UNKNOWN, msg);
 		}
 	} // checkCAExpireAndUpdateCA
     
