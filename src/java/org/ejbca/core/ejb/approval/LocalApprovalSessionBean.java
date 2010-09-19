@@ -307,36 +307,9 @@ public class LocalApprovalSessionBean extends BaseSessionBean {
 		} catch (ApprovalException e1) {
 			getLogSession().log(admin,admin.getCaId(),LogConstants.MODULE_APPROVAL,new Date(),null,null,LogConstants.EVENT_ERROR_APPROVALAPPROVED,"Approval request with id : " +approvalId +" doesn't exists.");
 			throw e1;
-		} 
+		}		
 		
-		// Check that the approvers username doesn't exists among the existing usernames.
-    	ApprovalDataVO data = adl.getApprovalDataVO();
-        String username = admin.getUsername();
-
-        // Check that the approver isn't the same as requested the action.
-		if(data.getReqadmincertissuerdn() != null){
-	        boolean sameAsRequester = false;
-	        String requsername = adl.getRequestAdminUsername();
-	        if(username != null) {
-	        	if(username.equals(requsername))	sameAsRequester=true;
-	        } else {
-	        	if(admin.getAdminData().equals(adl.getApprovalRequest().getRequestAdmin().getAdminData()))	sameAsRequester=true;
-	        }
-			if(sameAsRequester){
-				getLogSession().log(admin,adl.getCaId(),LogConstants.MODULE_APPROVAL,new Date(),null,null,LogConstants.EVENT_ERROR_APPROVALAPPROVED,"Error administrator have already approved, rejected or requested current request, approveId " + approvalId);
-				throw new AdminAlreadyApprovedRequestException("Error administrator have already approved, rejected or requested current request, approveId : " + approvalId);			
-			}
-		}
-		
-        //Check that his admin has not approved this this request before
-		Iterator iter = data.getApprovals().iterator();
-		while(iter.hasNext()){
-			Approval next = (Approval) iter.next();
-	        if ((next.getAdmin().getUsername()!=null && username!=null && next.getAdmin().getUsername().equals(username)) || ((next.getAdmin().getUsername()==null || username==null) && admin.getAdminData().equals(next.getAdmin().getAdminData()))) {
-	        	getLogSession().log(admin,adl.getCaId(),LogConstants.MODULE_APPROVAL,new Date(),null,null,LogConstants.EVENT_ERROR_APPROVALAPPROVED,"Error administrator have already approved or rejected current request, approveId " + approvalId);
-	        	throw new AdminAlreadyApprovedRequestException("Error administrator have already approved or rejected current request, approveId : " + approvalId);					
-	        }
-		}
+		checkExecutionPossibility(admin, approval, approvalId, adl);
 		approval.setApprovalAdmin(true, admin);
 				
     	
@@ -411,6 +384,28 @@ public class LocalApprovalSessionBean extends BaseSessionBean {
 			throw e1;
 		} 
 		
+		checkExecutionPossibility(admin, approval, approvalId, adl);
+		approval.setApprovalAdmin(false, admin);
+
+    	try {
+			adl.reject(approval);
+			if(gc.getUseApprovalNotifications()){				
+			  sendApprovalNotification(admin, gc.getApprovalAdminEmailAddress(), gc.getApprovalNotificationFromAddress(), gc.getBaseUrl() + "adminweb/approval/approveaction.jsf?uniqueId=" + adl.getId(),
+						               intres.getLocalizedMessage("notification.requestrejected.subject"),
+						               intres.getLocalizedMessage("notification.requestrejected.msg"),
+						               adl.getId(), adl.getApprovalDataVO().getRemainingApprovals(), adl.getApprovalDataVO().getRequestDate(),
+						               adl.getApprovalDataVO().getApprovalRequest(), 
+						               approval);
+			}
+			getLogSession().log(admin,adl.getCaId(),LogConstants.MODULE_APPROVAL,new Date(),null,null,LogConstants.EVENT_INFO_APPROVALREJECTED,"Approval request with id : " +approvalId +" have been rejected.");
+		} catch (ApprovalRequestExpiredException e) {
+			getLogSession().log(admin,adl.getCaId(),LogConstants.MODULE_APPROVAL,new Date(),null,null,LogConstants.EVENT_ERROR_APPROVALREJECTED,"Approval request with id : " +approvalId +" have expired.");
+			throw e;
+		}
+		log.trace("<reject");
+    }    
+
+    private void checkExecutionPossibility(Admin admin, Approval approval, int approvalId, ApprovalDataLocal adl) throws AdminAlreadyApprovedRequestException{
 		// Check that the approvers username doesn't exists among the existing usernames.
 		ApprovalDataVO data = adl.getApprovalDataVO();
         String username = admin.getUsername();
@@ -439,25 +434,8 @@ public class LocalApprovalSessionBean extends BaseSessionBean {
 				throw new AdminAlreadyApprovedRequestException("Error administrator have already approved or rejected current request, approveId : " + approvalId);					
 			}
 		}
-		approval.setApprovalAdmin(false, admin);
-
-    	try {
-			adl.reject(approval);
-			if(gc.getUseApprovalNotifications()){				
-			  sendApprovalNotification(admin, gc.getApprovalAdminEmailAddress(), gc.getApprovalNotificationFromAddress(), gc.getBaseUrl() + "adminweb/approval/approveaction.jsf?uniqueId=" + adl.getId(),
-						               intres.getLocalizedMessage("notification.requestrejected.subject"),
-						               intres.getLocalizedMessage("notification.requestrejected.msg"),
-						               adl.getId(), adl.getApprovalDataVO().getRemainingApprovals(), adl.getApprovalDataVO().getRequestDate(),
-						               adl.getApprovalDataVO().getApprovalRequest(), 
-						               approval);
-			}
-			getLogSession().log(admin,adl.getCaId(),LogConstants.MODULE_APPROVAL,new Date(),null,null,LogConstants.EVENT_INFO_APPROVALREJECTED,"Approval request with id : " +approvalId +" have been rejected.");
-		} catch (ApprovalRequestExpiredException e) {
-			getLogSession().log(admin,adl.getCaId(),LogConstants.MODULE_APPROVAL,new Date(),null,null,LogConstants.EVENT_ERROR_APPROVALREJECTED,"Approval request with id : " +approvalId +" have expired.");
-			throw e;
-		}
-		log.trace("<reject");
-    }    
+    	
+    }
 
 
 	/**
