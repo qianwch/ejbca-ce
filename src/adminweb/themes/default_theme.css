@@ -257,8 +257,9 @@ table.grid td {
 }
 
 /* Page: ALL Edit forms */
+form#basicRules table tr td,
 table.edit tr td {
-	line-height: 1.55em;
+		line-height: 1.55em;
 }
 table.edit tr td table tr td {
 	line-height: 1.75em;
