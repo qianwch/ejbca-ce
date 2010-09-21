@@ -1,6 +1,13 @@
 package org.ejbca.core.ejb.approval;
 
 import java.io.File;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.SignatureException;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,21 +20,25 @@ import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
 import org.ejbca.core.EjbcaException;
+import org.ejbca.core.model.AlgorithmConstants;
 import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.approval.AdminAlreadyApprovedRequestException;
 import org.ejbca.core.model.approval.Approval;
 import org.ejbca.core.model.approval.ApprovalDataVO;
 import org.ejbca.core.model.approval.ApprovalException;
+import org.ejbca.core.model.approval.ApprovalRequestExecutionException;
 import org.ejbca.core.model.approval.ApprovalRequestExpiredException;
 import org.ejbca.core.model.approval.approvalrequests.DummyApprovalRequest;
 import org.ejbca.core.model.authorization.AdminEntity;
 import org.ejbca.core.model.authorization.AdminGroup;
+import org.ejbca.core.model.authorization.AuthorizationDeniedException;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.model.ra.UserDataVO;
 import org.ejbca.core.model.ra.raadmin.GlobalConfiguration;
 import org.ejbca.ui.cli.batch.BatchMakeP12;
 import org.ejbca.util.CertTools;
 import org.ejbca.util.TestTools;
+import org.ejbca.util.keystore.KeyTools;
 import org.ejbca.util.query.ApprovalMatch;
 import org.ejbca.util.query.BasicMatch;
 import org.ejbca.util.query.Query;
@@ -44,10 +55,12 @@ public class TestApprovalSession extends TestCase {
     private static X509Certificate reqadmincert = null;    
     private static X509Certificate admincert1 = null;
     private static X509Certificate admincert2 = null;
+    private static X509Certificate externalcert = null;
 
     private static Admin reqadmin = null;
     private static Admin admin1 = null;
     private static Admin admin2 = null;
+    private static Admin externaladmin = null;
     
     private static int caid = TestTools.getTestCAId();
     private static ArrayList adminentities;
@@ -84,6 +97,10 @@ public class TestApprovalSession extends TestCase {
 			userdata3.setPassword("foo123");
 			TestTools.getUserAdminSession().addUser(intadmin, userdata3 , true);
 			
+            KeyPair rsakey = KeyTools.genKeys("1024", AlgorithmConstants.KEYALGORITHM_RSA);
+        	externalcert = CertTools.genSelfCert("CN=externalCert,C=SE", 30, null, rsakey.getPrivate(), rsakey.getPublic(), AlgorithmConstants.SIGALG_SHA1_WITH_RSA, false);
+        	externaladmin = new Admin(externalcert, null, null);
+        	
 	        File tmpfile = File.createTempFile("ejbca", "p12");
 	        BatchMakeP12 makep12 = new BatchMakeP12();
 	        makep12.setMainStoreDir(tmpfile.getParent());
@@ -94,6 +111,7 @@ public class TestApprovalSession extends TestCase {
 			adminentities.add(new AdminEntity(AdminEntity.WITH_COMMONNAME,AdminEntity.TYPE_EQUALCASEINS,adminusername1,caid));	
 			adminentities.add(new AdminEntity(AdminEntity.WITH_COMMONNAME,AdminEntity.TYPE_EQUALCASEINS,adminusername2,caid));
 			adminentities.add(new AdminEntity(AdminEntity.WITH_COMMONNAME,AdminEntity.TYPE_EQUALCASEINS,reqadminusername,caid));
+            adminentities.add(new AdminEntity(AdminEntity.WITH_SERIALNUMBER, AdminEntity.TYPE_EQUALCASEINS, CertTools.getSerialNumberAsString(externalcert), "CN=externalCert,C=SE".hashCode()));
 			TestTools.getAuthorizationSession().addAdminEntities(intadmin, AdminGroup.TEMPSUPERADMINGROUP, adminentities);
 			TestTools.getAuthorizationSession().forceRuleUpdate(intadmin);
 			
@@ -493,6 +511,32 @@ public class TestApprovalSession extends TestCase {
 		TestTools.getApprovalSession().removeApprovalRequest(admin1, id2);
 		TestTools.getApprovalSession().removeApprovalRequest(admin1, id3);
 	}
+	
+	public void testApprovalsWithExternalAdmins() throws ApprovalException, ApprovalRequestExpiredException, ApprovalRequestExecutionException, AuthorizationDeniedException,
+					AdminAlreadyApprovedRequestException, java.rmi.RemoteException, EjbcaException{
+		log.trace(">testApprovalsWithExternalAdmins()");
+		DummyApprovalRequest nonExecutableRequest = new DummyApprovalRequest(reqadmin, null, caid, SecConst.EMPTY_ENDENTITYPROFILE, false);
+		TestTools.getApprovalSession().addApprovalRequest(admin1, nonExecutableRequest, gc);
+
+		Approval approval1 = new Approval("ap1test");
+		TestTools.getApprovalSession().approve(admin1, nonExecutableRequest.generateApprovalId(), approval1, gc);
+		Collection<ApprovalDataVO> result = TestTools.getApprovalSession().findApprovalDataVO(admin1, nonExecutableRequest.generateApprovalId());
+		assertTrue(result.size() == 1);
+		ApprovalDataVO next = result.iterator().next();
+		assertTrue("Status = " + next.getStatus(), next.getStatus() == ApprovalDataVO.STATUS_WAITINGFORAPPROVAL);
+		assertTrue(next.getRemainingApprovals() == 1);
+
+		Approval approval2 = new Approval("ap2test");
+		TestTools.getApprovalSession().approve(externaladmin, nonExecutableRequest.generateApprovalId(), approval2, gc);
+		result = TestTools.getApprovalSession().findApprovalDataVO(admin1, nonExecutableRequest.generateApprovalId());
+		assertTrue(result.size() == 1);
+		next = (ApprovalDataVO) result.iterator().next();
+		assertTrue("Status = " + next.getStatus(), next.getStatus() == ApprovalDataVO.STATUS_APPROVED);
+		assertTrue(next.getRemainingApprovals() == 0);
+
+		log.trace("<testApprovalsWithExternalAdmins()");
+	}
+
 
 	public void testZZZCleanUp() throws Exception {
 		TestTools.getUserAdminSession().deleteUser(intadmin, adminusername1);
