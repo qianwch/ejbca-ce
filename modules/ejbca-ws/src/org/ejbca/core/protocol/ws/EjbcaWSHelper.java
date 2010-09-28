@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import javax.ejb.CreateException;
@@ -38,6 +39,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.ws.WebServiceContext;
 import javax.xml.ws.handler.MessageContext;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.Priority;
@@ -67,6 +69,7 @@ import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
 import org.ejbca.core.model.util.EjbRemoteHelper;
 import org.ejbca.core.protocol.ws.logger.TransactionTags;
 import org.ejbca.core.protocol.ws.objects.Certificate;
+import org.ejbca.core.protocol.ws.objects.ExtendedInformationWS;
 import org.ejbca.core.protocol.ws.objects.HardTokenDataWS;
 import org.ejbca.core.protocol.ws.objects.NameAndId;
 import org.ejbca.core.protocol.ws.objects.PinDataWS;
@@ -285,7 +288,27 @@ public class EjbcaWSHelper extends EjbRemoteHelper {
             useEI = true;
         }
 
-		final UserDataVO userdatavo = new UserDataVO(userdata.getUsername(),
+        // Set generic Custom ExtendedInformation from potential data in UserDataVOWS
+        List<ExtendedInformationWS> userei = userdata.getExtendedInformation();
+        if (userei != null) {
+            for (ExtendedInformationWS item : userei) {
+            	String key = item.getName();
+            	String value = item.getValue ();
+            	if ((key != null) && (value != null)) {
+            		if (log.isDebugEnabled()) {
+            			log.debug("Set generic extended information: "+key+", "+value);
+            		}
+                    ei.setMapData(key, value);    			            		
+                    useEI = true;
+            	} else {
+            		if (log.isDebugEnabled()) {
+            			log.debug("Key or value is null when trying to set generic extended information.");
+            		}
+            	}
+    		}
+        }
+
+        final UserDataVO userdatavo = new UserDataVO(userdata.getUsername(),
 				userdata.getSubjectDN(),
 				caid,
 				userdata.getSubjectAltName(),
@@ -369,6 +392,20 @@ public class EjbcaWSHelper extends EjbRemoteHelper {
             dataWS.setEndTime(ei.getCustomData(ExtendedInformation.CUSTOM_ENDTIME));
 		}
 
+		// Fill custom data in extended information
+		HashMap<String, ?> data = (HashMap<String,?>)ei.getData();
+		if (data != null) {
+			List<ExtendedInformationWS> extendedInfo = new ArrayList<ExtendedInformationWS> ();
+			Set<String> set = data.keySet();
+			for (Iterator<String> iterator = set.iterator(); iterator.hasNext();) {
+				String key = iterator.next();
+				String value = ei.getMapData(key);
+				if (value != null) {
+					extendedInfo.add(new ExtendedInformationWS (key, value));				
+				}
+			}
+			dataWS.setExtendedInformation(extendedInfo);
+		}
 		return dataWS;
 	}
 
