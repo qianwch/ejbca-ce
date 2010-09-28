@@ -426,7 +426,6 @@ public class CommonEjbcaWSTest extends TestCase {
 		TestTools.createTestCA(CA1);
 		TestTools.createTestCA(CA2);
         // Create suitable EE prof
-        int pid = 0;
         try {
             EndEntityProfile profile = new EndEntityProfile();
             profile.addField(DnComponents.ORGANIZATION);
@@ -437,7 +436,7 @@ public class CommonEjbcaWSTest extends TestCase {
             profile.setUse(EndEntityProfile.ISSUANCEREVOCATIONREASON, 0, true);
             profile.setValue(EndEntityProfile.ISSUANCEREVOCATIONREASON,0,""+RevokedCertInfo.REVOKATION_REASON_CERTIFICATEHOLD);
             getRAAdmin().addEndEntityProfile(intAdmin, WS_EEPROF_EI, profile);
-            pid = TestTools.getRaAdminSession().getEndEntityProfileId(intAdmin, WS_EEPROF_EI);
+            TestTools.getRaAdminSession().getEndEntityProfileId(intAdmin, WS_EEPROF_EI);
         } catch (EndEntityProfileExistsException pee) {
         	assertTrue("Can not create end entity profile", false);
         }
