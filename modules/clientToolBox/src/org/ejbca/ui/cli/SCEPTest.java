@@ -681,7 +681,7 @@ class SCEPTest extends ClientToolBox {
      * @see org.ejbca.ui.cli.ClientToolBox#execute(java.lang.String[])
      */
     @Override
-    void execute(String[] args) {
+    public void execute(String[] args) {
         final String url;
         final int numberOfThreads;
         final int waitTime;
@@ -715,7 +715,7 @@ class SCEPTest extends ClientToolBox {
      * @see org.ejbca.ui.cli.ClientToolBox#getName()
      */
     @Override
-    String getName() {
+    public String getName() {
         return "SCEPTest";
     }
 
