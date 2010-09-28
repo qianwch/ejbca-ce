@@ -38,6 +38,7 @@ import javax.xml.namespace.QName;
 
 import junit.framework.TestCase;
 
+import org.apache.commons.lang.StringUtils;
 import org.bouncycastle.asn1.DERSet;
 import org.bouncycastle.cms.CMSSignedData;
 import org.bouncycastle.jce.PKCS10CertificationRequest;
@@ -48,6 +49,7 @@ import org.ejbca.core.ejb.authorization.IAuthorizationSessionHome;
 import org.ejbca.core.ejb.authorization.IAuthorizationSessionRemote;
 import org.ejbca.core.ejb.ca.caadmin.ICAAdminSessionHome;
 import org.ejbca.core.ejb.ca.caadmin.ICAAdminSessionRemote;
+import org.ejbca.core.ejb.ca.store.CertificateStatus;
 import org.ejbca.core.ejb.ca.store.ICertificateStoreSessionHome;
 import org.ejbca.core.ejb.ca.store.ICertificateStoreSessionRemote;
 import org.ejbca.core.ejb.hardtoken.IHardTokenSessionHome;
@@ -74,6 +76,7 @@ import org.ejbca.core.model.ca.publisher.CustomPublisherContainer;
 import org.ejbca.core.model.ca.publisher.DummyCustomPublisher;
 import org.ejbca.core.model.ca.publisher.PublisherQueueData;
 import org.ejbca.core.model.log.Admin;
+import org.ejbca.core.model.ra.ExtendedInformation;
 import org.ejbca.core.model.ra.UserDataConstants;
 import org.ejbca.core.model.ra.UserDataVO;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfile;
@@ -90,6 +93,7 @@ import org.ejbca.core.protocol.ws.client.gen.EjbcaException_Exception;
 import org.ejbca.core.protocol.ws.client.gen.EjbcaWS;
 import org.ejbca.core.protocol.ws.client.gen.EjbcaWSService;
 import org.ejbca.core.protocol.ws.client.gen.ErrorCode;
+import org.ejbca.core.protocol.ws.client.gen.ExtendedInformationWS;
 import org.ejbca.core.protocol.ws.client.gen.HardTokenDataWS;
 import org.ejbca.core.protocol.ws.client.gen.HardTokenDoesntExistsException_Exception;
 import org.ejbca.core.protocol.ws.client.gen.HardTokenExistsException_Exception;
@@ -402,7 +406,17 @@ public class CommonEjbcaWSTest extends TestCase {
 		user1.setEndEntityProfileName("EMPTY");
 		user1.setCertificateProfileName("ENDUSER");
 
-            ejbcaraws.editUser(user1);
+		List<ExtendedInformationWS> ei = new ArrayList<ExtendedInformationWS> ();
+		ExtendedInformationWS ei1 = new ExtendedInformationWS();
+		ei1.setName(ExtendedInformation.CUSTOMDATA+ExtendedInformation.CUSTOM_REVOCATIONREASON);
+        ei1.setValue(Integer.toString(RevokedCertInfo.REVOKATION_REASON_CERTIFICATEHOLD));
+        user1.getExtendedInformation().add(ei1);
+		ExtendedInformationWS ei2 = new ExtendedInformationWS();
+		ei2.setName(ExtendedInformation.SUBJECTDIRATTRIBUTES);
+        ei2.setValue("DATEOFBIRTH=19761123");
+        user1.getExtendedInformation().add(ei2);
+
+        ejbcaraws.editUser(user1);
 
         UserMatch usermatch = new UserMatch();
         usermatch.setMatchwith(org.ejbca.util.query.UserMatch.MATCH_WITH_USERNAME);
@@ -424,6 +438,23 @@ public class CommonEjbcaWSTest extends TestCase {
         assertTrue(userdata.getEndEntityProfileName().equals("EMPTY"));
         assertTrue(userdata.getTokenType().equals("USERGENERATED"));        
         assertTrue(userdata.getStatus() == 10);
+		List<ExtendedInformationWS> userei = userdata.getExtendedInformation();
+		assertNotNull (userei);
+        // The extended information can contain other stuff as well
+        boolean foundrevreason = false;
+        boolean founddirattrs = false;
+        for (ExtendedInformationWS item : userei) {
+        	if (StringUtils.equals(item.getName(), ExtendedInformation.CUSTOMDATA+ExtendedInformation.CUSTOM_REVOCATIONREASON)) {
+		        assertEquals(Integer.toString(RevokedCertInfo.REVOKATION_REASON_CERTIFICATEHOLD), item.getValue());
+		        foundrevreason = true;
+			}
+			if (StringUtils.equals(item.getName(), ExtendedInformation.SUBJECTDIRATTRIBUTES)) {
+		        assertEquals("DATEOFBIRTH=19761123", item.getValue());
+		        founddirattrs = true;
+			}
+		}
+        assertTrue(foundrevreason);
+        assertTrue(founddirattrs);
         
         // Edit the user
         userdata.setSubjectDN("CN=WSTESTUSER1,O=Test");
@@ -433,7 +464,24 @@ public class CommonEjbcaWSTest extends TestCase {
 		assertTrue(userdatas2.size() == 1);  
 		UserDataVOWS userdata2 = userdatas.get(0);
         assertTrue(userdata2.getSubjectDN().equals("CN=WSTESTUSER1,O=Test"));
-		
+        userei = userdata.getExtendedInformation();
+        assertNotNull(userei);
+
+        // The extended information can contain other stuff as well
+        foundrevreason = false;
+        founddirattrs = false;
+        for (ExtendedInformationWS item : userei) {
+			if (StringUtils.equals(item.getName(), ExtendedInformation.CUSTOMDATA+ExtendedInformation.CUSTOM_REVOCATIONREASON)) {
+		        assertEquals(Integer.toString(RevokedCertInfo.REVOKATION_REASON_CERTIFICATEHOLD), item.getValue());
+		        foundrevreason = true;
+			}
+			if (StringUtils.equals(item.getName(), ExtendedInformation.SUBJECTDIRATTRIBUTES)) {
+		        assertEquals("DATEOFBIRTH=19761123", item.getValue());
+		        founddirattrs = true;
+			}
+		}
+        assertTrue(foundrevreason);
+        assertTrue(founddirattrs);
 	}
 	
 
@@ -467,9 +515,9 @@ public class CommonEjbcaWSTest extends TestCase {
         usermatch.setMatchtype(org.ejbca.util.query.UserMatch.MATCH_TYPE_BEGINSWITH);
         usermatch.setMatchvalue("Te");			
         List<UserDataVOWS> userdatas3 = ejbcaraws.findUser(usermatch);
-		assertTrue(userdatas3 != null);
-		assertTrue(userdatas3.size() == 1);
-		assertTrue(userdatas3.get(0).getSubjectDN().equals("CN=WSTESTUSER1,O=Test"));
+		assertNotNull(userdatas3);
+		assertEquals(1, userdatas3.size());
+		assertEquals("CN=WSTESTUSER1,O=Test", userdatas3.get(0).getSubjectDN());
 		
 		// Find by subjectDN pattern
 		usermatch = new UserMatch();
@@ -531,6 +579,9 @@ public class CommonEjbcaWSTest extends TestCase {
 		X509Certificate cert = (X509Certificate) CertificateHelper.getCertificate(certenv.getData()); 
 		
 		assertNotNull(cert);
+		
+		CertificateStatus status = getCertStore().getStatus(intAdmin, CertTools.getIssuerDN(cert), CertTools.getSerialNumber(cert));
+		assertEquals(RevokedCertInfo.REVOKATION_REASON_CERTIFICATEHOLD, status.revocationReason);
 		
 		assertEquals("CN=WSTESTUSER1,O=Test", cert.getSubjectDN().toString());
 		

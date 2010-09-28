@@ -55,12 +55,12 @@ public class ExtendedInformation extends UpgradeableDataHashMap implements java.
     // protected fields.
     /** Used to store subject directory attributes, which are put in an extension in the certificate.
      * SubjectDirectoryAttributes are standard attributes, see rfc3280 */
-    protected static final String SUBJECTDIRATTRIBUTES = "subjectdirattributes";
+    public static final String SUBJECTDIRATTRIBUTES = "subjectdirattributes";
     /**  the revocation code identifier primarily used in the XKMS protocol to let the end user revoke his certificate
      * see the XKMS specification */
-    protected static final String XKMSREVOCATIONCODEIDENTIFIER = "revocationcodeidentifier";
+    public static final String XKMSREVOCATIONCODEIDENTIFIER = "revocationcodeidentifier";
     /** Custom data can be used by various custom work-flows and other non-standard things to store information needed  */
-    protected static final String CUSTOMDATA = "customdata_";
+    public static final String CUSTOMDATA = "customdata_";
     
     /** Identifier for Custom data holding a base64 encoded PKCS10 request
      * extInfo.setCustomData("PKCS10", new String(Base64.encode(pkcs10.getEncoded())));
@@ -176,16 +176,30 @@ public class ExtendedInformation extends UpgradeableDataHashMap implements java.
     	data.put(MAXFAILEDLOGINATTEMPTS, new Integer(maxLoginAttempts));
     }
     
+    /** Gets generic string data from the ExtendedInformation map.
+	 */
+    public String getMapData(String key) {
+    	String ret = null;
+    	Object o = data.get(key);
+    	if (o instanceof String) {
+    		ret = (String)o;
+		}
+    	return ret;
+    }
+    
+    /** Sets generic string data in the ExtendedInformation map.
+	 */
+    public void setMapData(String key, String value) {
+    	data.put(key,value);
+    }
+
     /**
-     * Special method used to retrieve customly set userdata
+     * Special method used to retrieve custom set userdata
      * 
      * @returns The data or null if no such data have been set for the user
      */
     public String getCustomData(String key){ 
     	String retval = (String) data.get(CUSTOMDATA + key);
-    	
-
-    	
     	return retval;     	
     }
     
