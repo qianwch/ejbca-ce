@@ -108,10 +108,7 @@ public class SqlExecutor {
             commands = 0;
             List list = new LinkedList();
             while ((temp = br.readLine()) != null) {
-            	if (!temp.startsWith("#")) { // Don't include comments
-            		list.add(temp);
-            	}
-            	if (!temp.startsWith("--")) { // Don't include SQL comments
+            	if (!temp.startsWith("#") && !temp.startsWith("--")) { // Don't include comments and SQL comments
             		list.add(temp);
             	}
                 if (!temp.endsWith(";")) {
