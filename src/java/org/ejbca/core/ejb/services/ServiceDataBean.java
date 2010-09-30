@@ -113,6 +113,39 @@ public abstract class ServiceDataBean extends BaseEntityBean {
      */
     public abstract void setName(String name);
 
+    /**
+     * Date formated as seconds since 1970 (== Date.getTime())
+     *
+     * @return runTimeStamp the time the was running last time
+     * @ejb.persistence column-name="runTimeStamp"
+     * @ejb.interface-method
+     */
+    public abstract long getRunTimeStamp();
+
+    /**
+     * Date formated as seconds since 1970 (== Date.getTime())
+     *
+     * @return runTimeStamp the time the was running last time
+     * @ejb.interface-method
+     */
+    public abstract void setRunTimeStamp(long runTimeStamp);
+
+    /**
+     * Date formated as seconds since 1970 (== Date.getTime())
+     *
+     * @return nextRunTimeStamp the time the service will run next time
+     * @ejb.persistence column-name="nextRunTimeStamp"
+     * @ejb.interface-method
+     */
+    public abstract long getNextRunTimeStamp();
+
+    /**
+     * Date formated as seconds since 1970 (== Date.getTime())
+     *
+     * @param expireDate nextRunTimeStamp the time the service will run next time
+     * @ejb.interface-method
+     */
+    public abstract void setNextRunTimeStamp(long nextRunTimeStamp);
 
     /**
      * @ejb.persistence jdbc-type="LONGVARCHAR" column-name="data"
@@ -146,9 +179,23 @@ public abstract class ServiceDataBean extends BaseEntityBean {
     	serviceConfiguration.loadData(data);
     	// Check if we upgraded the version, in that case we need to save the upgraded value
     	if ( ((serviceConfiguration != null) && (Float.compare(oldversion, serviceConfiguration.getVersion()) != 0))) {
+    		// Upgrade in version 4 of ServiceConfiguration. If we do not have nextRunTimeStamp and runTimeStamp set in
+    		// the database, but we have them in serviceConfiguration, we will simply copy the values over.
+    		// After this we will not use the values in ServiceConfiguration any more 
+    		final String NEXTRUNTIMESTAMP = "NEXTRUNTIMESTAMP";
+    		final String OLDRUNTIMESTAMP = "OLDRUNTIMESTAMP";
+    		if ((getNextRunTimeStamp() == 0) && (data.get(NEXTRUNTIMESTAMP) != null)) {
+    			final long nextRunTs = ((Long) data.get(NEXTRUNTIMESTAMP)).longValue();
+    			log.debug("Upgrading nextRunTimeStamp to "+nextRunTs);
+    			setNextRunTimeStamp(nextRunTs);
+    		}
+    		if ((getRunTimeStamp() == 0) && (data.get(OLDRUNTIMESTAMP) != null)) {
+    			final long runTs = ((Long) data.get(OLDRUNTIMESTAMP)).longValue();
+    			log.debug("Upgrading runTimeStamp to "+runTs);
+    			setRunTimeStamp(runTs);
+    		}
     		setServiceConfiguration(serviceConfiguration);
     	}
-
     	return serviceConfiguration;
     }
 
@@ -191,6 +238,8 @@ public abstract class ServiceDataBean extends BaseEntityBean {
     public Integer ejbCreate(Integer id, String name, ServiceConfiguration serviceConfiguration) throws CreateException {
         setId(id);
         setName(name);
+        setNextRunTimeStamp(0); // defaults to 0 until we activate the service
+        setRunTimeStamp(0); // when created the service has never run yet
 
         if (serviceConfiguration != null) {
             setServiceConfiguration(serviceConfiguration);

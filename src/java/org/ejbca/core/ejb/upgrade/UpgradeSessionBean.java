@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.ejb.CreateException;
 import javax.ejb.EJBException;
@@ -52,6 +53,8 @@ import org.ejbca.core.ejb.ca.store.ICertificateStoreSessionLocal;
 import org.ejbca.core.ejb.ca.store.ICertificateStoreSessionLocalHome;
 import org.ejbca.core.ejb.ra.IUserAdminSessionLocal;
 import org.ejbca.core.ejb.ra.IUserAdminSessionLocalHome;
+import org.ejbca.core.ejb.services.IServiceSessionLocal;
+import org.ejbca.core.ejb.services.IServiceSessionLocalHome;
 import org.ejbca.core.model.approval.Approval;
 import org.ejbca.core.model.approval.ApprovalRequest;
 import org.ejbca.core.model.authorization.AdminGroup;
@@ -250,15 +253,18 @@ public class UpgradeSessionBean extends BaseSessionBean {
     }
     
     private boolean postUpgrade(Admin admin, String dbtype, int oldVersion) {
+    	boolean ret = true; // unusual but the default is to return true, if no post upgrades are run
+    	
     	// Upgrade database change between ejbca 3.9.x and 3.10.x if needed
         if (oldVersion <= 309) {
-        	return postMigrateDatabase310(dbtype);
+        	ret = postMigrateDatabase310(dbtype);
         }
         // Upgrade database change between ejbca 3.10.x and 3.11.x if needed
-        if (oldVersion <= 310) {
-            return postMigrateDatabase311();
+        // But only if the postUpgrade before was successful (or not run at all)
+        if (ret && (oldVersion <= 310)) {
+            ret = postMigrateDatabase311();
         }
-    	return false;
+    	return ret;
     }
     
     private boolean upgrade(Admin admin, String dbtype, int oldVersion) {
@@ -504,6 +510,7 @@ public class UpgradeSessionBean extends BaseSessionBean {
 		final String lKeyID = "subjectKeyId";
 		final String lCert = "base64Cert";
 		final String lFingerPrint = "fingerprint";
+		boolean ret = false;
 		final Connection connection = JDBCUtil.getDBConnection(JNDINames.DATASOURCE);
 		try {
 			final Statement stmt = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
@@ -533,7 +540,7 @@ public class UpgradeSessionBean extends BaseSessionBean {
 			srs.close();
 			stmt.close();
 			error("(this is not an error) Finished post upgrade.");
-			return true;
+			ret = true;
 		} catch (SQLException e) {
 			error("post upgrade failed. See exception:", e);
 		} finally {
@@ -545,7 +552,8 @@ public class UpgradeSessionBean extends BaseSessionBean {
 				}
 			}
 		}
-		return false;
+		error("(this is not an error) Finished post upgrade from ejbca 3.9.x to ejbca 3.10.x with result: "+ret);
+		return ret;
 	}
 	
 	private boolean migrateDatabase311(String dbtype) {
@@ -556,10 +564,28 @@ public class UpgradeSessionBean extends BaseSessionBean {
 	}
 
     private boolean postMigrateDatabase311() {
-        // TODO: Here we could access all serialized objects so they are stored
-        // in a non-JBoss-proprietary way and allow an app-server switch..
-        error("Post upgrade not yet implemented for EJBCA 3.11.x.");
-        return false;
+		error("(this is not an error) Starting post upgrade from ejbca 3.10.x to ejbca 3.11.x");
+    	boolean ret = false;
+    	// Make sure services are upgraded and time stamps copied to new columns
+    	IServiceSessionLocalHome home = (IServiceSessionLocalHome)getLocator().getLocalHome(IServiceSessionLocalHome.COMP_NAME);
+    	try {
+			IServiceSessionLocal serviceSession = home.create();
+			Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+			HashMap ids = serviceSession.getServiceIdToNameMap(admin);
+        	Collection allServiceIds = ids.keySet();
+        	Iterator i = allServiceIds.iterator();
+        	while (i.hasNext()) {
+        		int id = ((Integer) i.next()).intValue();
+        		// Load serviceConfiguration, this will populate new columns if needed
+        		serviceSession.getServiceConfiguration(admin, id);
+        	}
+        	ret = true;
+		} catch (CreateException e) {
+			log.error(e);
+		}
+
+		error("(this is not an error) Finished post upgrade from ejbca 3.10.x to ejbca 3.11.x with result: "+ret);    	
+        return ret;
     }
 
 }

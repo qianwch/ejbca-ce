@@ -1512,6 +1512,14 @@
                <opm:field name="NAME" xsi:type="opm:column"/>
             </opm:attribute-mapping>
             <opm:attribute-mapping xsi:type="toplink:direct-mapping">
+               <opm:attribute-name>nextRunTimeStamp</opm:attribute-name>
+               <opm:field name="NEXTRUNTIMESTAMP" xsi:type="opm:column"/>
+            </opm:attribute-mapping>
+            <opm:attribute-mapping xsi:type="toplink:direct-mapping">
+               <opm:attribute-name>runTimeStamp</opm:attribute-name>
+               <opm:field name="RUNTIMESTAMP" xsi:type="opm:column"/>
+            </opm:attribute-mapping>
+            <opm:attribute-mapping xsi:type="toplink:direct-mapping">
                <opm:attribute-name>data</opm:attribute-name>
                <opm:field name="DATA" xsi:type="opm:column"/>
             </opm:attribute-mapping>

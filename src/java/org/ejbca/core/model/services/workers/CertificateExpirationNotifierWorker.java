@@ -120,8 +120,6 @@ public class CertificateExpirationNotifierWorker extends EmailSendingWorker {
  */
 
 			long thresHold = getTimeBeforeExpire();
-			long currRunTimestamp = serviceConfiguration.getOldRunTimestamp().getTime();
-			long nextRunTimestamp = serviceConfiguration.getNextRunTimestamp().getTime();
 			long now = new Date ().getTime();
 
 			// Execute Query
@@ -136,10 +134,10 @@ public class CertificateExpirationNotifierWorker extends EmailSendingWorker {
 					+ " FROM CertificateData WHERE ("
 					+ cASelectString + ") AND "
 					+ "(expireDate > " + now + ") AND"
-                    + "(expireDate < " + (nextRunTimestamp + thresHold) + ") AND "
+                    + "(expireDate < " + (nextRunTimeStamp + thresHold) + ") AND "
                     + "(status = " + SecConst.CERT_ACTIVE +" OR status = " + 
                        SecConst.CERT_NOTIFIEDABOUTEXPIRATION + ") AND " 
-                    + "(expireDate >= " + (currRunTimestamp + thresHold) + " OR " +
+                    + "(expireDate >= " + (runTimeStamp + thresHold) + " OR " +
                        "status = " + SecConst.CERT_ACTIVE +	")";
 				log.debug("Executing search sql: "+sqlstr);
 				ps = con.prepareStatement(sqlstr);            

@@ -299,6 +299,8 @@ CREATE TABLE ServiceData (
     id integer NOT NULL,
     name varchar(256),
     data clob DEFAULT NULL,
+    nextRunTimeStamp BIGINT NOT NULL WITH DEFAULT 0,
+    runTimeStamp BIGINT NOT NULL WITH DEFAULT 0,
     PRIMARY KEY (id)
 );
 

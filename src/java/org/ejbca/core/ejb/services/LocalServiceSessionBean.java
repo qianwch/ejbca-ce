@@ -181,15 +181,17 @@ public class LocalServiceSessionBean extends BaseSessionBean  {
     * 
     * @param serviceConfiguration
     * @param serviceName
-    * @return a worker object or null if the worker is missconfigured.
+    * @param runTimeStamp the time this service runs
+    * @param nextRunTimeStamp the time this service will run next time
+    * @return a worker object or null if the worker is misconfigured.
     */
-    private IWorker getWorker(ServiceConfiguration serviceConfiguration, String serviceName) {
+    private IWorker getWorker(ServiceConfiguration serviceConfiguration, String serviceName, long runTimeStamp, long nextRunTimeStamp) {
 		IWorker worker = null;
     	try {
     		String cp = serviceConfiguration.getWorkerClassPath();
     		if (StringUtils.isNotEmpty(cp)) {
     			worker = (IWorker) this.getClass().getClassLoader().loadClass(cp).newInstance();
-    			worker.init(intAdmin, serviceConfiguration, serviceName);    			
+    			worker.init(intAdmin, serviceConfiguration, serviceName, runTimeStamp, nextRunTimeStamp);    			
     		} else {
     			String msg = intres.getLocalizedMessage("services.errorworkerconfig", "null", serviceName);
     			log.error(msg);
@@ -431,7 +433,7 @@ public class LocalServiceSessionBean extends BaseSessionBean  {
         	ServiceDataLocal htp = getServiceDataHome().findByName(name);
         	ServiceConfiguration serviceConfiguration = htp.serviceConfiguration();
         	if(isAuthorizedToEditService(admin,serviceConfiguration)){        	        		
-        	  IWorker worker = getWorker(serviceConfiguration, name);
+        	  IWorker worker = getWorker(serviceConfiguration, name, htp.getRunTimeStamp(), htp.getNextRunTimeStamp());
         	  if(worker != null){
         		  getServiceTimerSession().cancelTimer(htp.getId());
         	  }
@@ -665,7 +667,7 @@ public class LocalServiceSessionBean extends BaseSessionBean  {
     		ServiceDataLocal htp = getServiceDataHome().findByName(name);
     		ServiceConfiguration serviceConfiguration = htp.serviceConfiguration();
     		if(isAuthorizedToEditService(admin,serviceConfiguration)){
-    			IWorker worker = getWorker(serviceConfiguration, name);
+    			IWorker worker = getWorker(serviceConfiguration, name, htp.getRunTimeStamp(), htp.getNextRunTimeStamp());
     			if(worker != null){
     				getServiceTimerSession().cancelTimer(htp.getId());
     				if(serviceConfiguration.isActive() && worker.getNextInterval() != IInterval.DONT_EXECUTE){

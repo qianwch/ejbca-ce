@@ -326,7 +326,9 @@ DROP TABLE SERVICEDATA;
 CREATE TABLE servicedata (
   id INT4 NOT NULL,
   name TEXT, 
-  data TEXT, 
+  data TEXT,
+  nextRunTimeStamp INT8 NOT NULL DEFAULT 0,  
+  runTimeStamp INT8 NOT NULL DEFAULT 0,  
 CONSTRAINT pk_servicedata PRIMARY KEY (id)
 );
 

@@ -299,6 +299,8 @@ create table servicedata (
     id int(11) not null default '0',
     name varchar(250) binary null default null,
     data longtext null default null,
+    nextRunTimeStamp bigint(20) NOT NULL DEFAULT '0',
+    runTimeStamp bigint(20) NOT NULL DEFAULT '0',
     primary key (id)
 );
 

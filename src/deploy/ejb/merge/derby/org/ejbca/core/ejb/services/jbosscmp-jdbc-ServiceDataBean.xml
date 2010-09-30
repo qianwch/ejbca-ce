@@ -5,6 +5,12 @@
   <field-name>name</field-name>
 </cmp-field>
 <cmp-field>
+  <field-name>runTimeStamp</field-name>
+</cmp-field>
+<cmp-field>
+  <field-name>nextRunTimeStamp</field-name>
+</cmp-field>
+<cmp-field>
   <field-name>data</field-name>
   <jdbc-type>CLOB</jdbc-type>
   <sql-type>CLOB</sql-type>

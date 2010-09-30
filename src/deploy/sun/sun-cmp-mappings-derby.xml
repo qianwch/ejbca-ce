@@ -532,6 +532,18 @@
             </cmp-field-mapping>
 
             <cmp-field-mapping>
+                <field-name>runTimeStamp</field-name>
+                <column-name>RUNTIMESTAMP</column-name>
+
+            </cmp-field-mapping>
+
+            <cmp-field-mapping>
+                <field-name>nextRunTimeStamp</field-name>
+                <column-name>NEXTRUNTIMESTAMP</column-name>
+
+            </cmp-field-mapping>
+
+            <cmp-field-mapping>
                 <field-name>data</field-name>
                 <column-name>DATA</column-name>
 

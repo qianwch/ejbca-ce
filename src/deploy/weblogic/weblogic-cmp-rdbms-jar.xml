@@ -19,6 +19,14 @@
          <dbms-column>name</dbms-column>
       </field-map>
       <field-map>
+         <cmp-field>runTimeStamp</cmp-field>
+         <dbms-column>runTimeStamp</dbms-column>
+      </field-map>
+      <field-map>
+         <cmp-field>nextRunTimeStamp</cmp-field>
+         <dbms-column>nextRunTimeStamp</dbms-column>
+      </field-map>
+      <field-map>
          <cmp-field>data</cmp-field>
          <dbms-column>data</dbms-column>
       </field-map>

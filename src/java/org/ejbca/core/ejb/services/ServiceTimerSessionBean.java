@@ -23,6 +23,7 @@ import java.util.Random;
 
 import javax.ejb.CreateException;
 import javax.ejb.EJBException;
+import javax.ejb.FinderException;
 import javax.ejb.Timer;
 
 import org.apache.commons.lang.StringUtils;
@@ -84,7 +85,15 @@ import org.ejbca.core.model.services.ServiceExecutionFailedException;
  *   home="org.ejbca.core.ejb.services.IServiceTimerSessionLocalHome"
  *   business="org.ejbca.core.ejb.services.IServiceTimerSessionLocal"
  *   link="ServiceTimerSession"
-
+ *
+ * @ejb.ejb-external-ref description="The Service entity bean"
+ *   view-type="local"
+ *   ref-name="ejb/ServiceDataLocal"
+ *   type="Entity"
+ *   home="org.ejbca.core.ejb.services.ServiceDataLocalHome"
+ *   business="org.ejbca.core.ejb.services.ServiceDataLocal"
+ *   link="ServiceData"
+ *   
  * @ejb.ejb-external-ref description="The Certificate entity bean used to store and fetch certificates"
  *   view-type="local"
  *   ref-name="ejb/CertificateDataLocal"
@@ -228,6 +237,11 @@ public class ServiceTimerSessionBean extends BaseSessionBean implements javax.ej
     private transient IServiceSessionLocal servicesession = null;
 
     /**
+     * The local home interface of service data source entity bean.
+     */
+    private transient ServiceDataLocalHome servicehome = null;
+
+    /**
      * The remote interface of service timer session bean
      */
     IServiceTimerSessionLocal servicetimersession = null;
@@ -274,23 +288,26 @@ public class ServiceTimerSessionBean extends BaseSessionBean implements javax.ej
 			log.debug("Running the internal Service loader.");
 			load();
 		}else{		
-			ServiceConfiguration serviceData = null;
 			IWorker worker = null;
 			String serviceName = null;
+			ServiceConfiguration serviceData = null;
 			boolean run = false;
 			try{
-				serviceData = getServiceSession().getServiceConfiguration(intAdmin, timerInfo.intValue());
+    			ServiceDataLocal htp = getServiceDataHome().findByPrimaryKey(timerInfo);
+    			serviceData = htp.serviceConfiguration();
+    			serviceName = htp.getName();
 				if(serviceData != null){
-					serviceName = getServiceSession().getServiceName(intAdmin, timerInfo.intValue());
-					worker = getWorker(serviceData,serviceName);
-					run = getServiceTimerSession().checkAndUpdateServiceTimeout(worker.getNextInterval(), timerInfo, serviceData, serviceName);
-					log.debug("Service will run: "+run);
+					worker = getWorker(serviceData, serviceName, htp.getRunTimeStamp(), htp.getNextRunTimeStamp());
+					run = getServiceTimerSession().checkAndUpdateServiceTimeout(worker.getNextInterval(), timerInfo, htp);
+					if (log.isDebugEnabled()) {
+						log.debug("Service "+serviceName+" will run: "+run);
+					}
 				} else {
 					log.debug("Service was null and will not run, neither will it be rescheduled, so it will never run. Id: "+timerInfo.intValue());
 				}
 			} catch (Throwable e) {
 			    // We need to catch wide here in order to continue even if there is some error
-				log.info("Error getting and running service, we must see if we need to re-schedule: "+ e.getMessage());
+				log.info("Error getting and running service ("+timerInfo+"), we must see if we need to re-schedule: "+ e.getMessage());
 				if (log.isDebugEnabled()) {
 					// Don't spam log with stacktraces in normal production cases
 					log.debug("Exception: ", e);
@@ -360,7 +377,10 @@ public class ServiceTimerSessionBean extends BaseSessionBean implements javax.ej
      * @ejb.interface-method view-type="local"
      * @ejb.transaction type="RequiresNew"
      */
-	public boolean checkAndUpdateServiceTimeout(long nextInterval, int timerInfo, ServiceConfiguration serviceData, String serviceName) {
+	public boolean checkAndUpdateServiceTimeout(long nextInterval, int timerInfo, ServiceDataLocal serviceData) {
+		if (log.isTraceEnabled()) {
+			log.trace(">checkAndUpdateServiceTimeout");
+		}
 		boolean ret = false;
 		// Add a random delay within 30 seconds to the interval, just to make sure nodes in a cluster is
 		// not scheduled to run on the exact same second. If the next scheduled run is less than 40 seconds away, 
@@ -368,7 +388,7 @@ public class ServiceTimerSessionBean extends BaseSessionBean implements javax.ej
 		long intervalMillis = getNextIntervalMillis(nextInterval);
 		getSessionContext().getTimerService().createTimer(intervalMillis, timerInfo);
 		// Calculate the nextRunTimeStamp, since we set a new timer
-		Date runDateCheck = serviceData.getNextRunTimestamp(); // nextRunDateCheck will typically be the same (or just a millisecond earlier) as now here
+		Date runDateCheck = new Date(serviceData.getNextRunTimeStamp()); // nextRunDateCheck will typically be the same (or just a millisecond earlier) as now here
 		Date currentDate = new Date();
 		Date nextRunDate = new Date(currentDate.getTime() + intervalMillis);
 		if (log.isDebugEnabled()) {
@@ -379,15 +399,18 @@ public class ServiceTimerSessionBean extends BaseSessionBean implements javax.ej
 		// Check if the current date is after when the service should run.
 		// If a service on another cluster node has updated this timestamp already, then it will return false and
 		// this service will not run.
-		// This is a semaphor (not the best one admitted) so that services in a cluster only runs on one node and don't compete with each other.
+		// This is a semaphore (not the best one admitted) so that services in a cluster only runs on one node and don't compete with each other.
 		// If a worker on one node for instance runs for a very long time, there is a chance that another worker on another node will break this semaphore and
 		// run as well.
 		if(currentDate.after(runDateCheck)){
 			// We only update the nextRunTimeStamp if the service will be running otherwise it will, in theory, be a race to exclude each other between the nodes.
-			serviceData.setNextRunTimestamp(nextRunDate);
-			getServiceSession().changeService(intAdmin, serviceName, serviceData, true); 
+			serviceData.setRunTimeStamp(runDateCheck.getTime());
+			serviceData.setNextRunTimeStamp(nextRunDate.getTime());
 			ret=true;
 		}		
+		if (log.isTraceEnabled()) {
+			log.trace("<checkAndUpdateServiceTimeout: "+ret);
+		}
 		return ret;
 	}
 
@@ -450,13 +473,19 @@ public class ServiceTimerSessionBean extends BaseSessionBean implements javax.ej
 		iter = allServices.iterator();
 		while(iter.hasNext()){
 			Integer id = (Integer) iter.next();
-			ServiceConfiguration serviceConfiguration = getServiceSession().getServiceConfiguration(intAdmin, id.intValue());
-			if(!existingTimers.contains(id)){
-				IWorker worker = getWorker(serviceConfiguration, (String) idToNameMap.get(id));
-				if(worker != null && serviceConfiguration.isActive()  && worker.getNextInterval() != IInterval.DONT_EXECUTE){
-					getSessionContext().getTimerService().createTimer((worker.getNextInterval()) *1000, id);
-				}
-			}
+    		try {
+    			ServiceDataLocal htp = getServiceDataHome().findByPrimaryKey(id);
+    			if(!existingTimers.contains(id)){
+    				ServiceConfiguration serviceConfiguration = htp.serviceConfiguration();
+    				IWorker worker = getWorker(serviceConfiguration, (String) idToNameMap.get(id), htp.getRunTimeStamp(), htp.getNextRunTimeStamp());
+    				if(worker != null && serviceConfiguration.isActive()  && worker.getNextInterval() != IInterval.DONT_EXECUTE){
+    					getSessionContext().getTimerService().createTimer((worker.getNextInterval()) *1000, id);
+    				}
+    			}
+    		} catch (FinderException e) {
+    			// Service does not exist, strange, but no panic.
+    			log.debug("Can not get service with id "+id, e);
+    		}
 		}
 
 		if(!existingTimers.contains(SERVICELOADER_ID)){
@@ -535,13 +564,13 @@ public class ServiceTimerSessionBean extends BaseSessionBean implements javax.ej
     * @param serviceName
     * @return a worker object or null if the worker is missconfigured.
     */
-    private IWorker getWorker(ServiceConfiguration serviceConfiguration, String serviceName) {
+    private IWorker getWorker(ServiceConfiguration serviceConfiguration, String serviceName, long runTimeStamp, long nextRunTimeStamp) {
 		IWorker worker = null;
     	try {
     		String clazz = serviceConfiguration.getWorkerClassPath();
     		if (StringUtils.isNotEmpty(clazz)) {
     			worker = (IWorker) this.getClass().getClassLoader().loadClass(clazz).newInstance();
-    			worker.init(intAdmin, serviceConfiguration, serviceName);    			
+    			worker.init(intAdmin, serviceConfiguration, serviceName, runTimeStamp, nextRunTimeStamp);    			
     		} else {
     			log.info("Worker has empty classpath for service "+serviceName);
     		}
@@ -578,6 +607,17 @@ public class ServiceTimerSessionBean extends BaseSessionBean implements javax.ej
 
 
 
+    /**
+     * Gets connection to service data bean
+     *
+     * @return ServiceDataLocalHome
+     */
+    private ServiceDataLocalHome getServiceDataHome() {
+        if (servicehome == null) {                
+        	servicehome = (ServiceDataLocalHome) getLocator().getLocalHome(ServiceDataLocalHome.COMP_NAME); 
+        }
+        return servicehome;
+    } //getServiceDataHome
 
     /**
      * Gets connection a service session, used for timed services

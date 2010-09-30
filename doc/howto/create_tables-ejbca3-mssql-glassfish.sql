@@ -268,6 +268,8 @@ CREATE TABLE ServiceData (
     id int NOT NULL DEFAULT '0',
     name varchar(250) NULL DEFAULT NULL,
     data text NULL DEFAULT NULL,
+    nextRunTimeStamp BIGINT NOT NULL DEFAULT '0',
+    runTimeStamp BIGINT NOT NULL DEFAULT '0',
     PRIMARY KEY (id)
 );
 
