@@ -303,16 +303,20 @@
              }
              if(value !=null){
                value= value.trim(); 
-               if(!value.equals("")){
-                 oldprofile.setValue(fielddata[EndEntityProfile.FIELDTYPE],fielddata[EndEntityProfile.NUMBER], value);   
-                 value = org.ietf.ldap.LDAPDN.escapeRDN(DNFieldExtractor.getFieldComponent(DnComponents.profileIdToDnId(fielddata[EndEntityProfile.FIELDTYPE]), DNFieldExtractor.TYPE_SUBJECTDN) +value);  
-                 if(subjectdn.equals(""))
-                   subjectdn = value;
-                 else
-                   subjectdn += ", " + value;
-                   
-               }
-             }
+            		 oldprofile.setValue(fielddata[EndEntityProfile.FIELDTYPE],fielddata[EndEntityProfile.NUMBER], value);   
+            		 final String field = DNFieldExtractor.getFieldComponent(DnComponents.profileIdToDnId(fielddata[EndEntityProfile.FIELDTYPE]), DNFieldExtractor.TYPE_SUBJECTDN) +value;
+                     final String dnPart;
+                     if ( field.charAt(field.length()-1)!='=' ) {
+                         dnPart = org.ietf.ldap.LDAPDN.escapeRDN(field);
+                     } else {
+                         dnPart = field;
+                     }
+            		 if(subjectdn.equals(""))
+            			 subjectdn = dnPart;
+            		 else
+            			 subjectdn += ", " + dnPart;
+              }
+
              value = request.getParameter(SELECT_SUBJECTDN+i);
              if(value !=null){
                if(!value.equals("")){
