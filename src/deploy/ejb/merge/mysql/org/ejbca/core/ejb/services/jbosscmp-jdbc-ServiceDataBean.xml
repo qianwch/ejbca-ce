@@ -15,3 +15,6 @@
   <jdbc-type>LONGVARCHAR</jdbc-type>
   <sql-type>LONGTEXT</sql-type>
 </cmp-field>
+<cmp-field>
+  <field-name>rowVersion</field-name>
+</cmp-field>

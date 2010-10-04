@@ -117,6 +117,12 @@ public abstract class AdminGroupDataBean extends BaseEntityBean {
     public abstract void setPrimKey(Integer primKey);
 
     /**
+     * @ejb.persistence column-name="rowVersion"
+     */
+    public abstract int getRowVersion();
+    public abstract void setRowVersion(int rowVersion);
+
+    /**
      * @ejb.persistence column-name="adminGroupName"
      * @ejb.interface-method view-type="local"
      */

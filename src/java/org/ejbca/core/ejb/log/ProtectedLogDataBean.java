@@ -153,6 +153,12 @@ public abstract class ProtectedLogDataBean extends BaseEntityBean {
     public abstract void setPk(String pk);
 
     /**
+     * @ejb.persistence column-name="rowVersion"
+     */
+    public abstract int getRowVersion();
+    public abstract void setRowVersion(int rowVersion);
+
+    /**
      * @ejb.persistence column-name="adminType"
      * @ejb.interface-method
      */

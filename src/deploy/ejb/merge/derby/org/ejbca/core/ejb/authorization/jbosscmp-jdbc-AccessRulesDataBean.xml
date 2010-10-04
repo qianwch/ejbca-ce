@@ -13,3 +13,6 @@
   <jdbc-type>BIT</jdbc-type>
   <sql-type>SMALLINT</sql-type>
 </cmp-field>
+<cmp-field>
+  <field-name>rowVersion</field-name>
+</cmp-field>

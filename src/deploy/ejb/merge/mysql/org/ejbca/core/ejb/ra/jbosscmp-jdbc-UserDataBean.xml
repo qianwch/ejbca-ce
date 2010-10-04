@@ -55,3 +55,6 @@
 <cmp-field>
   <field-name>cardNumber</field-name>
 </cmp-field>
+<cmp-field>
+  <field-name>rowVersion</field-name>
+</cmp-field>

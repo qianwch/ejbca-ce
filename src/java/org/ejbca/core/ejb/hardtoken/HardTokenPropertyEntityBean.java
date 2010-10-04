@@ -85,6 +85,12 @@ public abstract class HardTokenPropertyEntityBean extends BaseEntityBean {
 	public abstract void setId(String id);
 
     /**
+     * @ejb.persistence column-name="rowVersion"
+     */
+    public abstract int getRowVersion();
+    public abstract void setRowVersion(int rowVersion);
+
+    /**
      * @ejb.persistence column-name="property"
      * @ejb.pk-field
      * @ejb.interface-method

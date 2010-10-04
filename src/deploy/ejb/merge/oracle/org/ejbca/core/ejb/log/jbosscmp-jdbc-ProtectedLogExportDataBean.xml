@@ -32,3 +32,6 @@
   <jdbc-type>LONGVARCHAR</jdbc-type>
   <sql-type>VARCHAR2(4000)</sql-type>
 </cmp-field>
+<cmp-field>
+  <field-name>rowVersion</field-name>
+</cmp-field>

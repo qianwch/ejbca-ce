@@ -9,3 +9,6 @@
   <jdbc-type>BLOB</jdbc-type>
   <sql-type>IMAGE</sql-type>
 </cmp-field>
+<cmp-field>
+  <field-name>rowVersion</field-name>
+</cmp-field>

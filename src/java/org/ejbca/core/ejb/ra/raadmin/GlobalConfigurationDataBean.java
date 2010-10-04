@@ -86,6 +86,12 @@ public abstract class GlobalConfigurationDataBean extends BaseEntityBean {
     public abstract void setConfigurationId(String id);
 
     /**
+     * @ejb.persistence column-name="rowVersion"
+     */
+    public abstract int getRowVersion();
+    public abstract void setRowVersion(int rowVersion);
+
+    /**
      * @ejb.persistence column-name="data"
      * @weblogic.ora.columntyp@
      */

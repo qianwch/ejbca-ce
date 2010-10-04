@@ -90,6 +90,12 @@ public abstract class LogEntryDataBean extends BaseEntityBean {
     public abstract void setId(Integer id);
 
     /**
+     * @ejb.persistence column-name="rowVersion"
+     */
+    public abstract int getRowVersion();
+    public abstract void setRowVersion(int rowVersion);
+
+    /**
      * @ejb.persistence column-name="adminType"
      * @ejb.interface-method view-type="local"
      */

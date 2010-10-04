@@ -11,3 +11,6 @@
 <cmp-field>
   <field-name>isRecursiveNumeric</field-name>
 </cmp-field>
+<cmp-field>
+  <field-name>rowVersion</field-name>
+</cmp-field>

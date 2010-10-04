@@ -32,3 +32,6 @@
   <field-name>comment</field-name>
   <column-name>logComment</column-name>
 </cmp-field>
+<cmp-field>
+  <field-name>rowVersion</field-name>
+</cmp-field>

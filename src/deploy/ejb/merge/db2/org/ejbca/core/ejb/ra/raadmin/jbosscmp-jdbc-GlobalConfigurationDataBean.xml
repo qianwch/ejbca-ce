@@ -6,3 +6,6 @@
   <jdbc-type>VARBINARY</jdbc-type>
   <sql-type>BLOB(200K)</sql-type>
 </cmp-field>
+<cmp-field>
+  <field-name>rowVersion</field-name>
+</cmp-field>

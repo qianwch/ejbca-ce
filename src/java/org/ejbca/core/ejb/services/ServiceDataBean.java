@@ -103,6 +103,12 @@ public abstract class ServiceDataBean extends BaseEntityBean {
     public abstract void setId(Integer id);
 
     /**
+     * @ejb.persistence column-name="rowVersion"
+     */
+    public abstract int getRowVersion();
+    public abstract void setRowVersion(int rowVersion);
+
+    /**
      * @ejb.persistence column-name="name"
      * @ejb.interface-method view-type="local"
      */

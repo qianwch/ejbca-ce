@@ -97,6 +97,12 @@ public abstract class HardTokenDataBean extends BaseEntityBean {
     public abstract void setTokenSN(String tokensn);
 
     /**
+     * @ejb.persistence column-name="rowVersion"
+     */
+    public abstract int getRowVersion();
+    public abstract void setRowVersion(int rowVersion);
+
+    /**
      * @ejb.persistence column-name="username"
      * @ejb.interface-method view-type="local"
      */

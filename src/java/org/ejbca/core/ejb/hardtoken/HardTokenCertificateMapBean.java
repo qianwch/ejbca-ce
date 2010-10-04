@@ -85,6 +85,12 @@ public abstract class HardTokenCertificateMapBean extends BaseEntityBean {
     public abstract void setCertificateFingerprint(String certificateFingerprint);
 
     /**
+     * @ejb.persistence column-name="rowVersion"
+     */
+    public abstract int getRowVersion();
+    public abstract void setRowVersion(int rowVersion);
+
+    /**
      * @ejb.persistence column-name="tokenSN"
      * @ejb.interface-method view-type="local"
      */

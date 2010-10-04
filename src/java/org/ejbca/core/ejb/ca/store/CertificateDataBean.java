@@ -148,6 +148,12 @@ public abstract class CertificateDataBean extends BaseEntityBean {
     private static final Logger log = Logger.getLogger(CertificateDataBean.class);
 
     /**
+     * @ejb.persistence column-name="rowVersion"
+     */
+    public abstract int getRowVersion();
+    public abstract void setRowVersion(int rowVersion);
+
+    /**
      * DN of issuer of certificate
      *
      * @return issuer dn

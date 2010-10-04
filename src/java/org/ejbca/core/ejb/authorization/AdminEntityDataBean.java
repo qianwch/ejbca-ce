@@ -84,6 +84,12 @@ public abstract class AdminEntityDataBean extends BaseEntityBean {
      */
     public abstract void setPrimKey(int primKey);
 
+    /**
+     * @ejb.persistence column-name="rowVersion"
+     */
+    public abstract int getRowVersion();
+    public abstract void setRowVersion(int rowVersion);
+
 	/**
 	 * @ejb.persistence column-name="matchWith"
      * @ejb.interface-method view-type="local"

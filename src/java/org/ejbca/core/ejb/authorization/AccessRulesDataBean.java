@@ -81,7 +81,13 @@ public abstract class AccessRulesDataBean extends BaseEntityBean
     public abstract int getPrimKey();
     public abstract void setPrimKey(int primKey);
 
-	/**
+    /**
+     * @ejb.persistence column-name="rowVersion"
+     */
+    public abstract int getRowVersion();
+    public abstract void setRowVersion(int rowVersion);
+
+    /**
 	 * @ejb.persistence column-name="accessRule"
      * @ejb.interface-method view-type="local"
 	 */

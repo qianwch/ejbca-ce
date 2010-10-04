@@ -94,6 +94,12 @@ public abstract class CertReqHistoryDataBean extends BaseEntityBean {
     private static final Logger log = Logger.getLogger(CertReqHistoryDataBean.class);
 
     /**
+     * @ejb.persistence column-name="rowVersion"
+     */
+    public abstract int getRowVersion();
+    public abstract void setRowVersion(int rowVersion);
+
+    /**
      * DN of issuer of certificate
      * Should be used outside of entity bean, use getCertReqHistory instead
      *

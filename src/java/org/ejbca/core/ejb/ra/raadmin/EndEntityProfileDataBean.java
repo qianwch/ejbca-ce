@@ -93,6 +93,12 @@ public abstract class EndEntityProfileDataBean extends BaseEntityBean implements
     public abstract void setId(Integer id);
 
     /**
+     * @ejb.persistence column-name="rowVersion"
+     */
+    public abstract int getRowVersion();
+    public abstract void setRowVersion(int rowVersion);
+
+    /**
      * @ejb.persistence column-name="profileName"
      * @ejb.interface-method
      */

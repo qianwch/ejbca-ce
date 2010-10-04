@@ -101,6 +101,12 @@ public abstract class PublisherQueueDataBean extends BaseEntityBean {
     public abstract void setPk(String pk);
 
     /**
+     * @ejb.persistence column-name="rowVersion"
+     */
+    public abstract int getRowVersion();
+    public abstract void setRowVersion(int rowVersion);
+
+    /**
      * @ejb.persistence column-name="timeCreated"
      * @ejb.interface-method view-type="local"
      */

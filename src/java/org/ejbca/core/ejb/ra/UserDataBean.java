@@ -133,6 +133,12 @@ public abstract class UserDataBean extends BaseEntityBean {
     public abstract void setUsername(String username);
 
     /**
+     * @ejb.persistence column-name="rowVersion"
+     */
+    public abstract int getRowVersion();
+    public abstract void setRowVersion(int rowVersion);
+
+    /**
      * @ejb.persistence column-name="subjectDN"
      * @ejb.interface-method
      */

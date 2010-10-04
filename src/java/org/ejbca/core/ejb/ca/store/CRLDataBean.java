@@ -81,6 +81,12 @@ public abstract class CRLDataBean extends BaseEntityBean {
     private static final Logger log = Logger.getLogger(CRLDataBean.class);
 
     /**
+     * @ejb.persistence column-name="rowVersion"
+     */
+    public abstract int getRowVersion();
+    public abstract void setRowVersion(int rowVersion);
+
+    /**
      * @ejb.persistence column-name="cRLNumber"
      * @ejb.interface-method
      */

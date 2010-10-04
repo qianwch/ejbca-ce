@@ -20,3 +20,6 @@
 <cmp-field>
   <field-name>username</field-name>
 </cmp-field>
+<cmp-field>
+  <field-name>rowVersion</field-name>
+</cmp-field>

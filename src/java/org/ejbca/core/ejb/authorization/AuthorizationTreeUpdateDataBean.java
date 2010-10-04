@@ -80,6 +80,12 @@ public abstract class AuthorizationTreeUpdateDataBean extends BaseEntityBean
     public abstract Integer getPrimKey();
     public abstract void setPrimKey(Integer primKey);
 
+    /**
+     * @ejb.persistence column-name="rowVersion"
+     */
+    public abstract int getRowVersion();
+    public abstract void setRowVersion(int rowVersion);
+
 	/**
      * Method returning the newest authorizationtreeupdatenumber. Should be used after each
      * time the authorization tree is built.

@@ -92,6 +92,12 @@ public abstract class TableProtectDataBean extends BaseEntityBean {
     public abstract void setId(String id);
 
     /**
+     * @ejb.persistence column-name="rowVersion"
+     */
+    public abstract int getRowVersion();
+    public abstract void setRowVersion(int rowVersion);
+
+    /**
      * @ejb.persistence column-name="version"
      * @ejb.interface-method view-type="local"
      */

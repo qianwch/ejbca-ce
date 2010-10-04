@@ -119,6 +119,12 @@ public abstract class CADataBean extends BaseEntityBean {
     public abstract void setCaId(Integer caid);
 
     /**
+     * @ejb.persistence column-name="rowVersion"
+     */
+    public abstract int getRowVersion();
+    public abstract void setRowVersion(int rowVersion);
+
+    /**
      * @ejb.persistence column-name="name"
      * @ejb.interface-method
      */

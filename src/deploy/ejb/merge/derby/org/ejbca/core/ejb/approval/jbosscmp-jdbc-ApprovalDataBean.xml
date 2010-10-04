@@ -42,4 +42,7 @@
 <cmp-field>
   <field-name>remainingApprovals</field-name>
 </cmp-field>
+<cmp-field>
+  <field-name>rowVersion</field-name>
+</cmp-field>
 

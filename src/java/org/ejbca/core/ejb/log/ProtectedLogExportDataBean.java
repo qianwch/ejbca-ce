@@ -117,6 +117,12 @@ public abstract class ProtectedLogExportDataBean extends BaseEntityBean {
     public abstract void setPk(String pk);
 
     /**
+     * @ejb.persistence column-name="rowVersion"
+     */
+    public abstract int getRowVersion();
+    public abstract void setRowVersion(int rowVersion);
+
+    /**
      * @ejb.persistence column-name="timeOfExport"
      * @ejb.interface-method
      */

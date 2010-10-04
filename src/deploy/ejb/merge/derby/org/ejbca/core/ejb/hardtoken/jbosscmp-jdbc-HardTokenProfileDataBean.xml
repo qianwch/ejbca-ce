@@ -12,3 +12,6 @@
   <jdbc-type>CLOB</jdbc-type>
   <sql-type>CLOB</sql-type>
 </cmp-field>
+<cmp-field>
+  <field-name>rowVersion</field-name>
+</cmp-field>
