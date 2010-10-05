@@ -42,7 +42,6 @@ ALTER TABLE ProtectedLogData ADD COLUMN rowVersion int(11) DEFAULT 0;
 ALTER TABLE ProtectedLogExportData ADD COLUMN rowVersion int(11) DEFAULT 0;
 ALTER TABLE ProtectedLogTokenData ADD COLUMN rowVersion int(11) DEFAULT 0;
 ALTER TABLE PublisherData ADD COLUMN rowVersion int(11) DEFAULT 0;
-ALTER TABLE PublisherQueueData ADD COLUMN rowVersion int(11) DEFAULT 0;
 ALTER TABLE ServiceData ADD COLUMN rowVersion int(11) DEFAULT 0;
 ALTER TABLE TableProtectData ADD COLUMN rowVersion int(11) DEFAULT 0;
 ALTER TABLE UserData ADD COLUMN rowVersion int(11) DEFAULT 0;
