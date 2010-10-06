@@ -866,8 +866,8 @@ throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, Waiting
               getKeyRecoverySession().unmarkUser(admin,userdata.getUsername());	
             }
             ExtendedInformation ei = userdata.getExtendedinformation();
+            userDataLocal.setExtendedInformation(ei);
             if (ei != null) {
-                userDataLocal.setExtendedInformation(ei);
             	String requestCounter = ei.getCustomData(ExtendedInformation.CUSTOM_REQUESTCOUNTER);
             	if ( StringUtils.equals(requestCounter, "0") && (userdata.getStatus() == UserDataConstants.STATUS_NEW) && (oldstatus != UserDataConstants.STATUS_NEW) ) {
             		// If status is set to new, we should re-set the allowed request counter to the default values
