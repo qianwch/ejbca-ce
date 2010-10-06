@@ -1,13 +1,7 @@
 package org.ejbca.core.ejb.approval;
 
 import java.io.File;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
 import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.SignatureException;
-import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,7 +36,6 @@ import org.ejbca.util.keystore.KeyTools;
 import org.ejbca.util.query.ApprovalMatch;
 import org.ejbca.util.query.BasicMatch;
 import org.ejbca.util.query.Query;
-import org.hibernate.validator.AssertTrue;
 
 public class TestApprovalSession extends TestCase {
     
