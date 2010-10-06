@@ -23,7 +23,6 @@ import javax.ejb.CreateException;
 
 import org.apache.log4j.Logger;
 import org.ejbca.core.ejb.BaseEntityBean;
-import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.ca.crl.RevokedCertInfo;
 import org.ejbca.util.Base64;
 import org.ejbca.util.CertTools;
@@ -532,11 +531,19 @@ public abstract class CertificateDataBean extends BaseEntityBean {
      *
      * @param incert the Certificate (x.509 or cvc) to be stored in the database.
      * @param enrichedpubkey possibly an EC public key enriched with the full set of parameters, if the public key in the certificate does not have parameters. Can be null if RSA or certificate public key contains all parameters.
+     * @param username the username in UserData to map the certificate to
+     * @param cafp CA certificate fingerprint, can be null
+     * @param status status of the certificate, active, revoked etcc, i.e. SecConst.CERT_ACTIVE etc
+     * @param type the usertype the certificate belongs to, i.e. SecConst.USER_ENDUSER etc
+     * @param certprofileid	certificate profile id, can be 0
+     * @param tag a custom tag to map the certificate to any custom defined tag
+     * @param updatetime the time the certificate was updated in the database, i.e. System.currentTimeMillis().
      *
      * @return primary key
      * @ejb.create-method
      */
-    public CertificateDataPK ejbCreate(Certificate incert, PublicKey enrichedpubkey)
+    public CertificateDataPK ejbCreate(Certificate incert, PublicKey enrichedpubkey, String username, String cafp, int status, 
+    		int type, int certprofileid, String tag, long updatetime)
         throws CreateException {
         // Exctract all fields to store with the certificate.
         try {
@@ -553,16 +560,16 @@ public abstract class CertificateDataBean extends BaseEntityBean {
                 log.debug("Creating certdata, subject=" + getSubjectDN() + ", issuer=" + getIssuerDN()+", fingerprint="+fp);            	
             }
             setSerialNumber(CertTools.getSerialNumber(incert).toString());
-
-            // Default values for status and type
-            setStatus(SecConst.CERT_UNASSIGNED);
-            setType(SecConst.USER_INVALID);
-            setCaFingerprint(null);
+            setUsername(username);
+            // Values for status and type
+            setStatus(status);
+            setType(type);
+            setCaFingerprint(cafp);
             setExpireDate(CertTools.getNotAfter(incert));
             setRevocationDate(-1L);
             setRevocationReason(RevokedCertInfo.NOT_REVOKED);
-            setUpdateTime(0);
-            setCertificateProfileId(0);
+            setUpdateTime(updatetime);
+            setCertificateProfileId(certprofileid);
             // Create a key identifier
             PublicKey pubk = incert.getPublicKey();
             if (enrichedpubkey != null) {
@@ -576,6 +583,7 @@ public abstract class CertificateDataBean extends BaseEntityBean {
             	log.warn("Error creating subjectKeyId for certificate with fingerprint '"+fp+": ", e);
             }
             setSubjectKeyId(keyId);
+            setTag(tag);
         } catch (CertificateEncodingException cee) {
             log.error("Can't extract DER encoded certificate information.", cee);
             CreateException ce = new CreateException(cee.getMessage());
@@ -589,7 +597,8 @@ public abstract class CertificateDataBean extends BaseEntityBean {
      *
      * @param incert certificate
      */
-    public void ejbPostCreate(Certificate incert, PublicKey enrichedpubkey) {
+    public void ejbPostCreate(Certificate incert, PublicKey enrichedpubkey, String username, String cafp, int status, 
+    		int type, int certprofileid, String tag, long updatetime) {
         // Do nothing. Required.
     }
 }

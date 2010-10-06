@@ -24,7 +24,6 @@ import javax.ejb.EJBException;
 import org.apache.log4j.Logger;
 import org.bouncycastle.util.encoders.Hex;
 import org.ejbca.core.ejb.BaseEntityBean;
-import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.ra.ExtendedInformation;
 import org.ejbca.core.model.ra.UserDataConstants;
 import org.ejbca.core.model.ra.UserDataVO;
@@ -372,7 +371,7 @@ public abstract class UserDataBean extends BaseEntityBean {
     }
 
     /**
-     * Sets password in ahsed form in the database, this way it cannot be read in clear form
+     * Sets password in hashed form in the database, this way it cannot be read in clear form
      * @ejb.interface-method
      */
     public void setPassword(String password) throws NoSuchAlgorithmException {
@@ -397,13 +396,17 @@ public abstract class UserDataBean extends BaseEntityBean {
      * @ejb.interface-method
      */
     public boolean comparePassword(String password) throws NoSuchAlgorithmException {
-        log.trace(">comparePassword()");
+    	if (log.isTraceEnabled()) {
+    		log.trace(">comparePassword()");
+    	}
         boolean ret = false;
         if (password != null) {
             //log.debug("Newhash="+makePasswordHash(password)+", OldHash="+passwordHash);
             ret = (makePasswordHash(password).equals(getPasswordHash()));
         }
-        log.trace("<comparePassword()");
+    	if (log.isTraceEnabled()) {
+    		log.trace("<comparePassword()");
+    	}
         return ret;
     }
 
@@ -419,7 +422,6 @@ public abstract class UserDataBean extends BaseEntityBean {
      */
 
     private String makePasswordHash(String password) throws NoSuchAlgorithmException {
-        log.trace(">makePasswordHash()");
         String ret = null;
         if (password != null) {
             try {
@@ -431,7 +433,6 @@ public abstract class UserDataBean extends BaseEntityBean {
                 throw nsae;
             }
         }
-        log.trace("<makePasswordHash()");
         return ret;
     }
 
@@ -494,33 +495,48 @@ public abstract class UserDataBean extends BaseEntityBean {
      * and should be set using the respective set-methods. Clear text password is not set at all and must be set using setClearPassword();
      *
      * @param username   the unique username used for authentication.
-     * @param password   the password used for authentication. This inly sets passwordhash, to set cleartext password, the setPassword() method must be used.
+     * @param password   the password used for authentication. If clearpwd is false this only sets passwordhash, if clearpwd is true it also sets cleartext password.
+     * @param clearpwd   true if clear password should be set for CA generated tokens (p12, jks, pem), false otherwise for only storing hashed passwords.
      * @param dn         the DN the subject is given in his certificate.
      * @param cardnumber the number printed on the card.
+     * @param altname	string of alternative names, i.e. rfc822name=foo2bar.com,dnsName=foo.bar.com, can be null
+     * @param email		user email address, can be null
+     * @param type		user type, i.e. SecConst.USER_ENDUSER etc
+     * @param eeprofileid	end entity profile id, can be 0
+     * @param certprofileid	certificate profile id, can be 0
+     * @param tokentype	token type to issue to the user, i.e. SecConst.TOKEN_SOFT_BROWSERGEN
+     * @param hardtokenissuerid hard token issuer id if hard token issuing is used, 0 otherwise
+     * @param extendedInformation ExtendedInformation object
+     * 
      * @return UserDataPK primary key
      * @ejb.create-method
      */
-    public UserDataPK ejbCreate(String username, String password, String dn, int caid, String cardnumber)
+    public UserDataPK ejbCreate(String username, String password, boolean clearpwd, String dn, int caid, String cardnumber, String altname, String email,
+    		int type, int eeprofileid, int certprofileid, int tokentype, int hardtokenissuerid, ExtendedInformation extendedInformation)
             throws CreateException, NoSuchAlgorithmException {
 
         long time = (new Date()).getTime();
 
         setUsername(StringTools.strip(username));
-        setClearPassword(null);
-        setPasswordHash(makePasswordHash(password));
+        if (clearpwd) {
+        	setOpenPassword(password);
+        } else {
+            setPasswordHash(makePasswordHash(password));        	
+            setClearPassword(null);
+        }
         setSubjectDN(CertTools.stringToBCDNString(dn));
         setCaId(caid);
-        setSubjectAltName(null);
-        setSubjectEmail(null);
+        setSubjectAltName(altname);
+        setSubjectEmail(email);
         setStatus(UserDataConstants.STATUS_NEW);
-        setType(SecConst.USER_INVALID);
+        setType(type);
         setTimeCreated(time);
         setTimeModified(time);
-        setEndEntityProfileId(0);
-        setCertificateProfileId(0);
-        setTokenType(SecConst.TOKEN_SOFT_BROWSERGEN);
-        setHardTokenIssuerId(0);
-        setExtendedInformationData(null);
+        setEndEntityProfileId(eeprofileid);
+        setCertificateProfileId(certprofileid);
+        setTokenType(tokentype);
+        setHardTokenIssuerId(hardtokenissuerid);
+        setExtendedInformation(extendedInformation);
         setCardNumber(cardnumber);
         UserDataPK pk = new UserDataPK(username);
         if (log.isDebugEnabled()) {        
@@ -529,7 +545,8 @@ public abstract class UserDataBean extends BaseEntityBean {
         return pk;
     }
 
-    public void ejbPostCreate(String username, String password, String dn, int caid, String cardnumber) {
+    public void ejbPostCreate(String username, String password, boolean clearpwd, String dn, int caid, String cardnumber, String altname, String email,
+    		int type, int eeprofileid, int certprofileid, int tokentype, int hardtokenissuerid, ExtendedInformation extendedInformation) {
         // Do nothing. Required.
     }
 }

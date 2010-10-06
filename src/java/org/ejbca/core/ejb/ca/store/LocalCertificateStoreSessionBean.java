@@ -382,14 +382,9 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
     	
         CertificateDataPK pk = new CertificateDataPK();
         pk.fingerprint = CertTools.getFingerprintAsString(incert);
-        final CertificateDataLocal data1 = certHome.create(incert, pubk);
-        data1.setUsername(username);
-        data1.setCaFingerprint(cafp);
-        data1.setStatus(status);
-        data1.setType(type);
-        data1.setCertificateProfileId(certificateProfileId);
-        data1.setTag(tag);
-        data1.setUpdateTime(updateTime);
+    	// Create the certificate in one go with all parameters at once. This is important so the persistence layer only creates *one* single
+    	// insert statement. If we do a home.create and the some setXX, it will create one insert and one update statement to the database.
+        final CertificateDataLocal data1 = certHome.create(incert, pubk, username, cafp, status, type, certificateProfileId, tag, updateTime);
         String msg = intres.getLocalizedMessage("store.storecert");            	
         getLogSession().log(admin, incert, LogConstants.MODULE_CA, new java.util.Date(), username, incert, LogConstants.EVENT_INFO_STORECERTIFICATE, msg);
         if (protect) {
