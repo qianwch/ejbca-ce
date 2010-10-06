@@ -14,6 +14,7 @@
 package org.ejbca.ui.cli.ra;
 
 import org.ejbca.core.model.authorization.AuthorizationDeniedException;
+import org.ejbca.core.model.ra.ExtendedInformation;
 import org.ejbca.core.model.ra.UserDataVO;
 import org.ejbca.ui.cli.ErrorAdminCommandException;
 
@@ -44,7 +45,8 @@ public class RaFindUserCommand extends BaseRaAdminCommand {
                     getLogger().info("password=" + data.getPassword());
                     getLogger().info("dn: \"" + data.getDN() + "\"");
                     getLogger().info("altName: \"" + data.getSubjectAltName() + "\"");
-                    getLogger().info("directoryAttributes: \"" + data.getExtendedinformation().getSubjectDirectoryAttributes() + "\"");
+                    ExtendedInformation ei = data.getExtendedinformation();
+                    getLogger().info("directoryAttributes: \"" + (ei != null ? ei.getSubjectDirectoryAttributes() : "") + "\"");
                     getLogger().info("email=" + data.getEmail());
                     getLogger().info("status=" + data.getStatus());
                     getLogger().info("type=" + data.getType());

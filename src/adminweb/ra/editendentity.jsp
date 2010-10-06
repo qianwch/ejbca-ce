@@ -140,11 +140,6 @@
              newuser.setEndEntityProfileId(profileid);
              newuser.setUsername(username);
              
-             final ExtendedInformation ei = newuser.getExtendedInformation();
-
-             ei.setRemainingLoginAttempts(userdata.getExtendedInformation().getRemainingLoginAttempts());
-
-
              String value = request.getParameter(TEXTFIELD_PASSWORD);
              if(value !=null){
                value=value.trim(); 
@@ -179,7 +174,16 @@
                    newuser.setClearTextPassword(false);
                }
              }
-             
+
+             ExtendedInformation ei = newuser.getExtendedInformation();
+             if (ei == null) {
+            	 ei = new ExtendedInformation();
+             }
+             ExtendedInformation userei = userdata.getExtendedInformation();
+             if (userei != null) {            	 
+                 ei.setRemainingLoginAttempts(userei.getRemainingLoginAttempts());
+             }
+
              value = request.getParameter(RADIO_MAXFAILEDLOGINS);
              if(RADIO_MAXFAILEDLOGINS_VAL_UNLIMITED.equals(value)) {
             	value = "-1";
@@ -190,7 +194,7 @@
             	 ei.setMaxLoginAttempts(Integer.parseInt(value));
             	 newuser.setExtendedInformation(ei);
              }
-             
+
              value = request.getParameter(CHECKBOX_RESETLOGINATTEMPTS);
              if(value !=null){
                if(value.equals(CHECKBOX_VALUE)){
@@ -1101,7 +1105,7 @@ function checkUseInBatch(){
       <tr id="Row<%=(row++)%2%>">
 		<td align="right"><%= ejbcawebbean.getText("REMAININGLOGINATTEMPTS") %></td>
        	<td>   
-             <input type="text" name="_remainingloginattempts" size="5" maxlength="255" tabindex="<%=tabindex++%>" value='<% if(userdata.getExtendedInformation().getRemainingLoginAttempts() != -1) out.write(""+userdata.getExtendedInformation().getRemainingLoginAttempts()); %>' readonly> <input type="checkbox" name="<%= CHECKBOX_RESETLOGINATTEMPTS %>" value="<%= CHECKBOX_VALUE %>"> <%= ejbcawebbean.getText("RESETLOGINATTEMPTS") %>
+             <input type="text" name="_remainingloginattempts" size="5" maxlength="255" tabindex="<%=tabindex++%>" value='<% if((userdata.getExtendedInformation()!=null) && (userdata.getExtendedInformation().getRemainingLoginAttempts() != -1)) out.write(""+userdata.getExtendedInformation().getRemainingLoginAttempts()); %>' readonly> <input type="checkbox" name="<%= CHECKBOX_RESETLOGINATTEMPTS %>" value="<%= CHECKBOX_VALUE %>"> <%= ejbcawebbean.getText("RESETLOGINATTEMPTS") %>
       	</td>
 		<td>&nbsp;</td>
       </tr>
@@ -1574,7 +1578,7 @@ function checkUseInBatch(){
         	   defaultnrofrequests = "1";
            }
            ExtendedInformation ei = userdata.getExtendedInformation();
-           String counter = ei.getCustomData(ExtendedInformation.CUSTOM_REQUESTCOUNTER);
+           String counter = ei!=null ? ei.getCustomData(ExtendedInformation.CUSTOM_REQUESTCOUNTER) : null;
            if (counter == null) {
         	   counter = defaultnrofrequests;
            }

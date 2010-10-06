@@ -333,7 +333,6 @@ public class EjbcaWSHelper extends EjbRemoteHelper {
 	    UserDataVOWS dataWS = new UserDataVOWS();
 		String username = userdata.getUsername();
 		String caname = getCAAdminSession().getCAInfo(admin,userdata.getCAId()).getName();
-		ExtendedInformation ei = userdata.getExtendedinformation();
 
 		dataWS.setUsername(username);
 
@@ -386,25 +385,26 @@ public class EjbcaWSHelper extends EjbRemoteHelper {
 		dataWS.setEmail(userdata.getEmail());
 		dataWS.setStatus(userdata.getStatus());
 
+		ExtendedInformation ei = userdata.getExtendedinformation();
 		if(ei != null) {
 		    dataWS.setStartTime(ei.getCustomData(ExtendedInformation.CUSTOM_STARTTIME));
             dataWS.setEndTime(ei.getCustomData(ExtendedInformation.CUSTOM_ENDTIME));
+    		// Fill custom data in extended information
+    		HashMap<String, ?> data = (HashMap<String,?>)ei.getData();
+    		if (data != null) {
+    			List<ExtendedInformationWS> extendedInfo = new ArrayList<ExtendedInformationWS> ();
+    			Set<String> set = data.keySet();
+    			for (Iterator<String> iterator = set.iterator(); iterator.hasNext();) {
+    				String key = iterator.next();
+    				String value = ei.getMapData(key);
+    				if (value != null) {
+    					extendedInfo.add(new ExtendedInformationWS (key, value));				
+    				}
+    			}
+    			dataWS.setExtendedInformation(extendedInfo);
+    		}
 		}
 
-		// Fill custom data in extended information
-		HashMap<String, ?> data = (HashMap<String,?>)ei.getData();
-		if (data != null) {
-			List<ExtendedInformationWS> extendedInfo = new ArrayList<ExtendedInformationWS> ();
-			Set<String> set = data.keySet();
-			for (Iterator<String> iterator = set.iterator(); iterator.hasNext();) {
-				String key = iterator.next();
-				String value = ei.getMapData(key);
-				if (value != null) {
-					extendedInfo.add(new ExtendedInformationWS (key, value));				
-				}
-			}
-			dataWS.setExtendedInformation(extendedInfo);
-		}
 		return dataWS;
 	}
 

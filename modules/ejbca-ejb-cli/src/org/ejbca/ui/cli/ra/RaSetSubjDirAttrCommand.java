@@ -49,6 +49,9 @@ public class RaSetSubjDirAttrCommand extends BaseRaAdminCommand {
             try {
             	UserDataVO uservo = getUserAdminSession().findUser(getAdmin(), username);
             	ExtendedInformation ext = uservo.getExtendedinformation();
+            	if (ext == null) {
+            		ext = new ExtendedInformation();
+            	}
             	ext.setSubjectDirectoryAttributes(attributes);
             	uservo.setExtendedinformation(ext);
             	getUserAdminSession().changeUser(getAdmin(), uservo, false);
