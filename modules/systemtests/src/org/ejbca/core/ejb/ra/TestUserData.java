@@ -439,14 +439,13 @@ public class TestUserData extends TestCase {
         ei = user1.getExtendedinformation();
         value = ei.getCustomData(ExtendedInformation.CUSTOM_REQUESTCOUNTER);
         assertEquals("0", value);
-        // Setting with null value will always remove the request counter
+        // Setting with null value will always remove the request counter (the whole extendedinformatin actually)
         user1.setExtendedinformation(null);
         user1.setStatus(UserDataConstants.STATUS_NEW);
         TestTools.getUserAdminSession().changeUser(admin, user1, false);
         user1 = TestTools.getUserAdminSession().findUser(admin, user.getUsername());
         ei = user1.getExtendedinformation();
-        value = ei.getCustomData(ExtendedInformation.CUSTOM_REQUESTCOUNTER);
-        assertNull(value);
+        assertNull(ei);
         
         log.trace("<test06RequestCounter()");
     }
