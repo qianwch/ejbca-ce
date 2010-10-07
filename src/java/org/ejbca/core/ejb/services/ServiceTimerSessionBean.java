@@ -14,11 +14,15 @@
 package org.ejbca.core.ejb.services;
 
 import java.io.Serializable;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
 
 import javax.ejb.CreateException;
@@ -298,15 +302,25 @@ public class ServiceTimerSessionBean extends BaseSessionBean implements javax.ej
     			serviceName = htp.getName();
 				if(serviceData != null){
 					worker = getWorker(serviceData, serviceName, htp.getRunTimeStamp(), htp.getNextRunTimeStamp());
-					run = getServiceTimerSession().checkAndUpdateServiceTimeout(worker.getNextInterval(), timerInfo, htp);
-					if (log.isDebugEnabled()) {
-						log.debug("Service "+serviceName+" will run: "+run);
+					if (shouldRunOnThisNode(Arrays.asList(serviceData.getPinToNodes()))) {
+						run = getServiceTimerSession().checkAndUpdateServiceTimeout(worker.getNextInterval(), timerInfo, htp);
+						if (log.isDebugEnabled()) {
+							log.debug("Service "+serviceName+" will run: "+run);
+						}
+					} else {
+						log.info("Service " + serviceName + " will not run on this node. Pinned to: " + Arrays.toString(serviceData.getPinToNodes()));
+						
+						// Add a random delay within 30 seconds to the interval, just to make sure nodes in a cluster is
+						// not scheduled to run on the exact same second. If the next scheduled run is less than 40 seconds away, 
+						// in which case we only randomize on 5 seconds.
+						long intervalMillis = getNextIntervalMillis(worker.getNextInterval());
+						getSessionContext().getTimerService().createTimer(intervalMillis, timerInfo);
 					}
 				} else {
 					log.debug("Service was null and will not run, neither will it be rescheduled, so it will never run. Id: "+timerInfo.intValue());
 				}
 			} catch (Throwable e) {
-			    // We need to catch wide here in order to continue even if there is some error
+				// We need to catch wide here in order to continue even if there is some error
 				log.info("Error getting and running service ("+timerInfo+"), we must see if we need to re-schedule: "+ e.getMessage());
 				if (log.isDebugEnabled()) {
 					// Don't spam log with stacktraces in normal production cases
@@ -365,8 +379,9 @@ public class ServiceTimerSessionBean extends BaseSessionBean implements javax.ej
 			}
 		}
 		trace("<ejbTimeout");		
-	}    
-    /**
+	}
+    
+	/**
      * Internal method should not be called from external classes, method is public to get automatic transaction handling.
      * 
      * This method need "RequiresNew" transaction handling, because we want to make sure that the timer
@@ -652,5 +667,39 @@ public class ServiceTimerSessionBean extends BaseSessionBean implements javax.ej
     	}
         return servicetimersession;
     } //getServiceTimerSession
+    
+    /**
+     * Return true if the service should run on the node given the list of nodes it is pinned to. An empty list means that the service
+     * is not pinned to any particular node and should run on all.
+     * @param nodes list of nodes the service is pinned to
+     * @return true if the service should run on this node
+     */
+    private boolean shouldRunOnThisNode(final List/*String*/ nodes) {
+    	final boolean result;
+    	final String hostname = getHostName();
+    	if (nodes == null || nodes.isEmpty()) {
+    		result = true;
+    	} else if (hostname == null) {
+    		result = false;
+    	} else {
+    		result = nodes.contains(hostname);
+    	}
+		return result;
+	}
+    
+    /**
+     * @return The host's name or null if it could not be determined.
+     */
+    private String getHostName() {
+    	String hostname = null;
+    	try {
+	        InetAddress addr = InetAddress.getLocalHost();    
+	        // Get hostname
+	        hostname = addr.getHostName();
+	    } catch (UnknownHostException e) {
+	    	log.error("Hostname could not be determined", e);
+	    }
+	    return hostname;
+    }
 
 } // LocalServiceSessionBean

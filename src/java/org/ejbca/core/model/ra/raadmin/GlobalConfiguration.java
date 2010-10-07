@@ -13,7 +13,11 @@
  
 package org.ejbca.core.model.ra.raadmin;
 
-
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 import org.ejbca.config.InternalConfiguration;
 import org.ejbca.config.WebConfiguration;
@@ -58,6 +62,9 @@ public class GlobalConfiguration extends UpgradeableDataHashMap implements java.
     private static final  String   DEFAULTHEADBANNER             = "head_banner.jsp";
     // Default name of footbanner page in web interface.
     private static final  String   DEFAULTFOOTBANNER             = "foot_banner.jsp";
+    
+    // Default list of nodes in cluster
+    private static final Set    NODESINCLUSTER_DEFAULT        = new HashSet/*String*/();
 
     // Title of ra admin web interface.
     private static final  String   DEFAULTEJBCATITLE             = InternalConfiguration.getAppNameCapital() + " Administration";
@@ -415,6 +422,12 @@ public class GlobalConfiguration extends UpgradeableDataHashMap implements java.
     	   Boolean ret = (Boolean) data.get(AUTOENROLL_USE);
    		   return (ret == null ? AUTOENROLL_DEFAULT_USE : ret);
        }
+       
+       public void setNodesInCluster(final Set/*String*/ nodes) { data.put(NODESINCLUSTER, nodes); }
+       public Set/*String*/ getNodesInCluster() {
+    	   Set ret = (Set) data.get(NODESINCLUSTER);
+    	   return (ret == null ? NODESINCLUSTER_DEFAULT : ret);
+       }
 
     /** Implementation of UpgradableDataHashMap function getLatestVersion */
     public float getLatestVersion(){
@@ -465,6 +478,8 @@ public class GlobalConfiguration extends UpgradeableDataHashMap implements java.
     private static final   String USEAPPROVALNOTIFICATIONS     = "useapprovalnotifications";
     private static final   String APPROVALADMINEMAILADDRESS    = "approvaladminemailaddress";
     private static final   String APPROVALNOTIFICATIONFROMADDR = "approvalnotificationfromaddr";
+    
+    private static final   String NODESINCLUSTER               = "nodesincluster";
 
     // Configuration for Auto Enrollment
     private static final   String AUTOENROLL_USE = "autoenroll.use";
