@@ -15,12 +15,15 @@ package org.ejbca.ui.web.admin.configuration;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.security.SecureRandom;
 import java.security.Security;
 import java.util.Date;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.ejb.CreateException;
 import javax.ejb.EJBException;
@@ -383,8 +386,20 @@ public class StartServicesServlet extends HttpServlet {
         	IRaAdminSessionLocal rasession = rasessionhome.create();
         	Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER, "StartServicesServlet");
         	rasession.initializeAndUpgradeProfiles(admin);
+        	
+        	// Add this node's hostname to list of nodes
+            log.trace(">init checking if this node is in the list of nodes");
+            final GlobalConfiguration config = rasession.loadGlobalConfiguration(admin);
+            final Set/*String*/ nodes = config.getNodesInCluster();
+            final String hostname = getHostName();
+            if (hostname != null && !nodes.contains(hostname)) {
+            	log.debug("Adding this node the list of nodes");
+            	nodes.add(hostname);
+            	config.setNodesInCluster(nodes);
+            	rasession.saveGlobalConfiguration(admin, config);
+            }
         } catch (Exception e) {
-        	log.error("Error creating CAAdminSession: ", e);
+        	log.error("Error creating RAAdminSession: ", e);
         }
 
         log.trace(">init SignSession to check for unique issuerDN,serialNumber index");
@@ -394,7 +409,22 @@ public class StartServicesServlet extends HttpServlet {
         } catch (Exception e) {
         	log.error("Error creating SignSession: ", e);
         }
-
+        
+    }
+    
+    /**
+     * @return The host's name or null if it could not be determined.
+     */
+    private String getHostName() {
+    	String hostname = null;
+    	try {
+	        InetAddress addr = InetAddress.getLocalHost();    
+	        // Get hostname
+	        hostname = addr.getHostName();
+	    } catch (UnknownHostException e) {
+	    	log.error("Hostname could not be determined", e);
+	    }
+	    return hostname;
     }
     
 }
