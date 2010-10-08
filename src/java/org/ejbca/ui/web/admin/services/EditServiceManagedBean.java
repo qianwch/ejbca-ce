@@ -322,14 +322,5 @@ public class EditServiceManagedBean extends BaseManagedBean {
 		return availablePublisherNames;		
 	}
 
-	public List getNodesInCluster() {
-		final List/*SelectItem*/ ret = new LinkedList/*SelectItem*/();
-		final Iterator it = EjbcaJSFHelper.getBean().getEjbcaWebBean().getGlobalConfiguration().getNodesInCluster().iterator(); 
-		while(it.hasNext()) {
-			ret.add(new SelectItem(it.next()));
-		}
-		return ret; 
-	}
-
 }
 
