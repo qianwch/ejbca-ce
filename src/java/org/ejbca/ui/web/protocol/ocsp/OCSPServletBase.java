@@ -11,7 +11,7 @@
  *                                                                       *
  *************************************************************************/
 
-package org.ejbca.ui.web.protocol;
+package org.ejbca.ui.web.protocol.ocsp;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -84,6 +84,7 @@ import org.ejbca.core.protocol.ocsp.OCSPUtil;
 import org.ejbca.core.protocol.ocsp.TransactionLogger;
 import org.ejbca.ui.web.LimitLengthASN1Reader;
 import org.ejbca.util.CertTools;
+import org.ejbca.util.CryptoProviderTools;
 import org.ejbca.util.DummyPatternLogger;
 import org.ejbca.util.GUIDGenerator;
 import org.ejbca.util.IPatternLogger;
@@ -186,16 +187,16 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 		}
 	}
 
-	abstract void loadPrivateKeys(Admin adm, String password) throws Exception;
+	abstract protected void loadPrivateKeys(Admin adm, String password) throws Exception;
 
-	abstract Certificate findCertificateByIssuerAndSerno(Admin adm, String issuerDN, BigInteger serno);
+	abstract protected Certificate findCertificateByIssuerAndSerno(Admin adm, String issuerDN, BigInteger serno);
 
-	abstract OCSPCAServiceResponse extendedService(Admin m_adm2, int caid, OCSPCAServiceRequest request) throws CADoesntExistsException, ExtendedCAServiceRequestException, IllegalExtendedCAServiceRequestException, ExtendedCAServiceNotActiveException;
+	abstract protected OCSPCAServiceResponse extendedService(Admin m_adm2, int caid, OCSPCAServiceRequest request) throws CADoesntExistsException, ExtendedCAServiceRequestException, IllegalExtendedCAServiceRequestException, ExtendedCAServiceNotActiveException;
 
-    abstract CertificateStatus getStatus(String name, BigInteger serialNumber);
+    abstract protected CertificateStatus getStatus(String name, BigInteger serialNumber);
 
 	/** returns a CertificateCache of appropriate type */
-	abstract CertificateCache createCertificateCache();
+	abstract protected CertificateCache createCertificateCache();
 
 	/** Generates an EJBCA caid from a CA certificate, or looks up the default responder certificate.
 	 * 
@@ -237,7 +238,7 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 	 */
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
-		CertTools.installBCProvider();
+		CryptoProviderTools.installBCProvider();
 		if (m_log.isDebugEnabled()) {
 			m_log.debug("signTrustValidTime is: " + m_signTrustValidTime);
 			m_log.debug("SignatureAlgorithm is: " + m_sigAlg);

@@ -150,7 +150,7 @@ xkms.serviceport                = ${xkms.serviceport}
             <classpath refid="compile.classpath" />
             <exclude name="**/appserver/**" />
             <exclude name="org/ejbca/ui/web/protocol/OCSPServletStandAlone.java" />
-            <exclude name="org/ejbca/ui/web/protocol/OCSPServletStandAloneSession.java" />
+            <exclude name="org/ejbca/ui/web/protocol/ocsp/**" />
             <exclude name="org/ejbca/ui/web/pub/cluster/ExtOCSPHealthCheck.java" />
             <!--
             	Don't include stuff that relies on JPA until EJBCA 4

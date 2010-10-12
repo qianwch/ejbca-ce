@@ -35,6 +35,7 @@ import org.ejbca.core.model.ca.caadmin.extendedcaservices.OCSPCAServiceResponse;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.protocol.ocsp.CertificateCache;
 import org.ejbca.core.protocol.ocsp.CertificateCacheInternal;
+import org.ejbca.ui.web.protocol.ocsp.OCSPServletBase;
 
 /** 
  * Servlet implementing server side of the Online Certificate Status Protocol (OCSP)
