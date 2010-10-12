@@ -17,9 +17,12 @@ import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Properties;
 import java.util.Random;
+import java.util.Set;
 
 import junit.framework.TestCase;
 
@@ -95,8 +98,12 @@ public class TestServiceService extends TestCase {
         final ServiceConfiguration config = createAServiceConfig(username, TESTCA1);
         
         // Pin this service to some nodes including this node
-        final String thisHost = getHostName();
-		config.setPinToNodes(new String[] { NOT_THIS_HOST1, thisHost, NOT_THIS_HOST2 });
+        final Set<String> thisHosts = getHostNames();
+        final List<String> nodes = new LinkedList<String>();
+        nodes.add(NOT_THIS_HOST1);
+        nodes.addAll(thisHosts);
+        nodes.add(NOT_THIS_HOST2);
+		config.setPinToNodes(nodes.toArray(new String[0]));
         
         addAndActivateService(TEST01_SERVICE, config, TESTCA1);
         
@@ -256,9 +263,23 @@ public class TestServiceService extends TestCase {
     }
     
     /**
-     * @return The host's name or null if it could not be determined.
+     * @return The host's names or null if it could not be determined.
      */
-    private String getHostName() throws Exception {
-	    return InetAddress.getLocalHost().getHostName();
+    private Set<String> getHostNames() throws Exception {
+    	final Set<String> hostnames = new HashSet<String>();
+    	
+    	// Normally this is the hostname
+    	final String hostname = InetAddress.getLocalHost().getHostName();
+    	if (hostnames != null) {
+    		hostnames.add(hostname);
+    	}
+    	
+    	// Maybe we have a fully qualified hostname
+    	final String fullHostname = InetAddress.getLocalHost().getCanonicalHostName();
+    	if (fullHostname != null) {
+    		hostnames.add(fullHostname);
+    	}
+    	
+	    return hostnames;
     }
 }
