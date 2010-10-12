@@ -120,7 +120,7 @@ public class TestServiceService extends TestCase {
         usernames.add(username);
         final ServiceConfiguration config = createAServiceConfig(username, TESTCA2);
         
-        // Pin this service to some nodes including this node
+        // Pin this service to some nodes NOT including this node
 		config.setPinToNodes(new String[] { NOT_THIS_HOST1, NOT_THIS_HOST2 });
         
         addAndActivateService(TEST02_SERVICE, config, TESTCA2);
