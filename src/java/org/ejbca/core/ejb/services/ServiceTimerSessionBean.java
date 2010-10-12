@@ -302,13 +302,14 @@ public class ServiceTimerSessionBean extends BaseSessionBean implements javax.ej
     			serviceName = htp.getName();
 				if(serviceData != null){
 					worker = getWorker(serviceData, serviceName, htp.getRunTimeStamp(), htp.getNextRunTimeStamp());
-					if (shouldRunOnThisNode(Arrays.asList(serviceData.getPinToNodes()))) {
+					final String hostname = getHostName();
+					if (shouldRunOnThisNode(hostname, Arrays.asList(serviceData.getPinToNodes()))) {
 						run = getServiceTimerSession().checkAndUpdateServiceTimeout(worker.getNextInterval(), timerInfo, htp);
 						if (log.isDebugEnabled()) {
 							log.debug("Service "+serviceName+" will run: "+run);
 						}
 					} else {
-						log.info("Service " + serviceName + " will not run on this node. Pinned to: " + Arrays.toString(serviceData.getPinToNodes()));
+						log.info("Service " + serviceName + " will not run on this node: \"" + hostname + "\", Pinned to: " + Arrays.toString(serviceData.getPinToNodes()));
 						
 						// Add a random delay within 30 seconds to the interval, just to make sure nodes in a cluster is
 						// not scheduled to run on the exact same second. If the next scheduled run is less than 40 seconds away, 
@@ -674,9 +675,8 @@ public class ServiceTimerSessionBean extends BaseSessionBean implements javax.ej
      * @param nodes list of nodes the service is pinned to
      * @return true if the service should run on this node
      */
-    private boolean shouldRunOnThisNode(final List/*String*/ nodes) {
+    private boolean shouldRunOnThisNode(final String hostname, final List/*String*/ nodes) {
     	final boolean result;
-    	final String hostname = getHostName();
     	if (nodes == null || nodes.isEmpty()) {
     		result = true;
     	} else if (hostname == null) {
