@@ -22,7 +22,6 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.Random;
 
@@ -116,6 +115,7 @@ public class TestXKMSKRSS extends TestCase {
 	private final static String endentityprofilename;
 	
 	private final static GlobalConfiguration orgGlobalConfig;
+	private final static CAInfo orgCaInfo;
 	
 	private final static JAXBContext jAXBContext;
 	private final static Marshaller marshaller;
@@ -135,6 +135,7 @@ public class TestXKMSKRSS extends TestCase {
 	    	endentityprofilename = "XKMSTESTPROFILE" + baseUsername;
 	    	
 	    	orgGlobalConfig = TestTools.getRaAdminSession().loadGlobalConfiguration(administrator);
+	        orgCaInfo = TestTools.getCAAdminSession().getCAInfo(administrator, "AdminCA1");
 	    	
     		username1 = baseUsername+'1';
 	    	dn1 = "C=SE, O=AnaTom, CN=" + username1;
@@ -1120,6 +1121,7 @@ public class TestXKMSKRSS extends TestCase {
     	TestTools.getCertificateStoreSession().removeCertificateProfile(administrator, certprofilename2);
     	
     	TestTools.getRaAdminSession().saveGlobalConfiguration(administrator, orgGlobalConfig);
+        TestTools.getCAAdminSession().editCA(administrator, orgCaInfo);
     }
 
     private static KeyPair genKeys() throws Exception {

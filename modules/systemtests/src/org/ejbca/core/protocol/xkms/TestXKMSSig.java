@@ -47,6 +47,7 @@ import org.ejbca.core.protocol.xkms.common.XKMSNamespacePrefixMapper;
 import org.ejbca.core.protocol.xkms.common.XKMSUtil;
 import org.ejbca.ui.cli.batch.BatchMakeP12;
 import org.ejbca.util.CertTools;
+import org.ejbca.util.CryptoProviderTools;
 import org.ejbca.util.TestTools;
 import org.ejbca.util.keystore.KeyTools;
 import org.w3._2000._09.xmldsig_.KeyInfoType;
@@ -92,7 +93,7 @@ public class TestXKMSSig extends TestCase {
 	
 	static{    	
 		try {
-			CertTools.installBCProvider();
+			CryptoProviderTools.installBCProvider();
 			org.apache.xml.security.Init.init();
 
 			jAXBContext = JAXBContext.newInstance("org.w3._2002._03.xkms_:org.w3._2001._04.xmlenc_:org.w3._2000._09.xmldsig_");    		

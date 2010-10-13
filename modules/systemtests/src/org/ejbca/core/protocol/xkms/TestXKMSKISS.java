@@ -45,6 +45,7 @@ import org.ejbca.core.protocol.xkms.client.XKMSInvoker;
 import org.ejbca.core.protocol.xkms.common.XKMSConstants;
 import org.ejbca.util.Base64;
 import org.ejbca.util.CertTools;
+import org.ejbca.util.CryptoProviderTools;
 import org.ejbca.util.TestTools;
 import org.w3._2000._09.xmldsig_.KeyInfoType;
 import org.w3._2000._09.xmldsig_.KeyValueType;
@@ -103,7 +104,7 @@ public class TestXKMSKISS extends TestCase {
 	
     protected void setUp() throws Exception {
         log.trace(">setUp()");
-        CertTools.installBCProvider();
+        CryptoProviderTools.installBCProvider();
         Random ran = new Random();
         if(baseUsername == null){
           baseUsername = "xkmstestuser" + (ran.nextInt() % 1000) + "-";
