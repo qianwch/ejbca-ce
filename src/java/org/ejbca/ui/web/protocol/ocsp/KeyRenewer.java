@@ -32,6 +32,7 @@ import java.util.Map;
 
 import javax.xml.namespace.QName;
 
+import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.DERSet;
 import org.bouncycastle.jce.PKCS10CertificationRequest;
 import org.bouncycastle.util.encoders.Base64;
@@ -54,7 +55,12 @@ import org.ejbca.util.query.BasicMatch;
  */
 class KeyRenewer {
     /**
-     * 
+     * Log object.
+     */
+    static final private Logger m_log = Logger.getLogger(KeyRenewer.class);
+    /**
+     * The keystore containing the key to authenticate with.
+     * TODO: should be removed. Makes it circular.
      */
     private final PrivateKeyContainerKeyStore privateKeyContainerKeyStore;
     /**
@@ -85,9 +91,9 @@ class KeyRenewer {
                 if ( KeyRenewer.this.privateKeyContainerKeyStore.certificate==null ) {
                     return;
                 }
-                final long timeToRenew = KeyRenewer.this.privateKeyContainerKeyStore.certificate.getNotAfter().getTime()-new Date().getTime()-1000*(long)KeyRenewer.this.privateKeyContainerKeyStore.standAloneSession.mRenewTimeBeforeCertExpiresInSeconds;
-                if (StandAloneSession.m_log.isDebugEnabled()) {
-                    StandAloneSession.m_log.debug("time to renew signing key for CA \'"+KeyRenewer.this.privateKeyContainerKeyStore.certificate.getIssuerDN()+"\' : "+timeToRenew );
+                final long timeToRenew = KeyRenewer.this.privateKeyContainerKeyStore.certificate.getNotAfter().getTime()-new Date().getTime()-1000*(long)KeyRenewer.this.privateKeyContainerKeyStore.sessionData.mRenewTimeBeforeCertExpiresInSeconds;
+                if (m_log.isDebugEnabled()) {
+                    m_log.debug("time to renew signing key for CA \'"+KeyRenewer.this.privateKeyContainerKeyStore.certificate.getIssuerDN()+"\' : "+timeToRenew );
                 }
                 try {
                     wait(Math.max(timeToRenew, 15000)); // set to 15 seconds if long time to renew before expire 
@@ -97,7 +103,7 @@ class KeyRenewer {
                 try {
                     updateKey();
                 } catch( Throwable t ) {
-                    StandAloneSession.m_log.error("Unknown problem when rekeying. Trying again.", t);
+                    m_log.error("Unknown problem when rekeying. Trying again.", t);
                 }
             }
         }
@@ -109,12 +115,12 @@ class KeyRenewer {
         if ( !this.doUpdateKey ) {
             return;
         }
-        this.privateKeyContainerKeyStore.standAloneSession.setNextKeyUpdate(new Date().getTime()); //  since a key is now reloaded we should wait an whole interval for next key update
-        StandAloneSession.m_log.debug("rekeying started for CA \'"+this.privateKeyContainerKeyStore.certificate.getIssuerDN()+"\'");
+        this.privateKeyContainerKeyStore.sessionData.setNextKeyUpdate(new Date().getTime()); //  since a key is now reloaded we should wait an whole interval for next key update
+        m_log.debug("rekeying started for CA \'"+this.privateKeyContainerKeyStore.certificate.getIssuerDN()+"\'");
         // Check that we at least potentially have a RA key available for P11 sessions
-        if ("pkcs11".equalsIgnoreCase(System.getProperty("javax.net.ssl.keyStoreType")) && this.privateKeyContainerKeyStore.standAloneSession.mP11Password == null &&
-                !this.privateKeyContainerKeyStore.standAloneSession.doNotStorePasswordsInMemory) {
-            StandAloneSession.m_log.info("PKCS#11 slot password is not yet available. Cannot access RA admin key until token is activated.");
+        if ("pkcs11".equalsIgnoreCase(System.getProperty("javax.net.ssl.keyStoreType")) && this.privateKeyContainerKeyStore.sessionData.mP11Password == null &&
+                !this.privateKeyContainerKeyStore.sessionData.doNotStorePasswordsInMemory) {
+            m_log.info("PKCS#11 slot password is not yet available. Cannot access RA admin key until token is activated.");
             return;
         }
         // TODO: If the password for the RA token was wrong, the SSL provider will crash and burn.. solve this.
@@ -124,21 +130,21 @@ class KeyRenewer {
         }
         final String caName = getCAName(ejbcaWS);
         if ( caName==null ) {
-            StandAloneSession.m_log.debug("No CA for caid "+this.caid+" found.");
+            m_log.debug("No CA for caid "+this.caid+" found.");
             return;
         }
         final UserDataVOWS userData=getUserDataVOWS(ejbcaWS, caName);
         if ( userData==null ) {
             return;
         }
-        StandAloneSession.m_log.debug("user name found: "+ userData.getUsername());
+        m_log.debug("user name found: "+ userData.getUsername());
         try {
             this.privateKeyContainerKeyStore.waitUntilKeyIsNotUsed();
             final KeyPair keyPair = generateKeyPair();
             if ( keyPair==null ) {
                 return;
             }
-            StandAloneSession.m_log.debug("public key: "+keyPair.getPublic() );
+            m_log.debug("public key: "+keyPair.getPublic() );
             if ( !editUser(ejbcaWS, userData) ) {
                 return;
             }
@@ -151,7 +157,7 @@ class KeyRenewer {
         } finally {
             this.privateKeyContainerKeyStore.keyGenerationFinished();
         }
-        StandAloneSession.m_log.info("New OCSP signing key generated for CA '"+ userData.getCaName()+"'. Username: '"+userData.getUsername()+"'. Subject DN: '"+userData.getSubjectDN()+"'.");
+        m_log.info("New OCSP signing key generated for CA '"+ userData.getCaName()+"'. Username: '"+userData.getUsername()+"'. Subject DN: '"+userData.getSubjectDN()+"'.");
     }
     /**
      * Get WS object.
@@ -160,13 +166,13 @@ class KeyRenewer {
     private EjbcaWS getEjbcaWS() {
         final URL ws_url;
         try {
-            ws_url = new URL(this.privateKeyContainerKeyStore.standAloneSession.webURL + "?wsdl");
+            ws_url = new URL(this.privateKeyContainerKeyStore.sessionData.webURL + "?wsdl");
         } catch (MalformedURLException e) {
-            StandAloneSession.m_log.error("Problem with URL: '"+this.privateKeyContainerKeyStore.standAloneSession.webURL+"'", e);
+            m_log.error("Problem with URL: '"+this.privateKeyContainerKeyStore.sessionData.webURL+"'", e);
             return null;
         }
         final QName qname = new QName("http://ws.protocol.core.ejbca.org/", "EjbcaWSService");
-        StandAloneSession.m_log.debug("web service. URL: "+ws_url+" QName: "+qname);
+        m_log.debug("web service. URL: "+ws_url+" QName: "+qname);
         return new EjbcaWSService(ws_url, qname).getEjbcaWSPort();
     }
     /**
@@ -180,13 +186,13 @@ class KeyRenewer {
             try {
                 i = ejbcaWS.getAvailableCAs().iterator();
             } catch (Exception e) {
-                StandAloneSession.m_log.error("WS not working", e);
+                m_log.error("WS not working", e);
                 return null;
             }
             while( i.hasNext() ) {
                 final NameAndId nameAndId = i.next();
                 mCA.put(new Integer(nameAndId.getId()), nameAndId.getName());
-                StandAloneSession.m_log.debug("CA. id: "+nameAndId.getId()+" name: "+nameAndId.getName());
+                m_log.debug("CA. id: "+nameAndId.getId()+" name: "+nameAndId.getName());
             }
             return mCA.get(new Integer(this.caid));
     }
@@ -206,14 +212,14 @@ class KeyRenewer {
         try {
             result = ejbcaWS.findUser(match);
         } catch (Exception e) {
-            StandAloneSession.m_log.error("WS not working", e);
+            m_log.error("WS not working", e);
             return null;
         }
         if ( result==null || result.size()<1) {
-            StandAloneSession.m_log.info("no match for subject DN:"+subjectDN);
+            m_log.info("no match for subject DN:"+subjectDN);
             return null;
         }
-        StandAloneSession.m_log.debug("at least one user found for cert with DN: "+subjectDN+" Trying to match it with CA name: "+caName);
+        m_log.debug("at least one user found for cert with DN: "+subjectDN+" Trying to match it with CA name: "+caName);
         UserDataVOWS userData = null;
         final Iterator<UserDataVOWS> i = result.iterator();
         while ( i.hasNext() ) {
@@ -224,7 +230,7 @@ class KeyRenewer {
             }
         }
         if ( userData==null ) {
-            StandAloneSession.m_log.error("No user found for certificate '"+subjectDN+"' on CA '"+caName+"'.");
+            m_log.error("No user found for certificate '"+subjectDN+"' on CA '"+caName+"'.");
             return null;
         }
         return userData;
@@ -238,7 +244,7 @@ class KeyRenewer {
         final RSAPublicKey oldPublicKey; {
             final PublicKey tmpPublicKey = this.privateKeyContainerKeyStore.certificate.getPublicKey();
             if ( !(tmpPublicKey instanceof RSAPublicKey) ) {
-                StandAloneSession.m_log.error("Only RSA keys could be renewed.");
+                m_log.error("Only RSA keys could be renewed.");
                 return null;
             }
             oldPublicKey = (RSAPublicKey)tmpPublicKey;
@@ -249,7 +255,7 @@ class KeyRenewer {
             kpg.initialize(oldPublicKey.getModulus().bitLength());
             return kpg.generateKeyPair();
         } catch (Throwable e) {
-            StandAloneSession.m_log.error("Key generation problem.", e);
+            m_log.error("Key generation problem.", e);
             return null;
         }
     }
@@ -266,7 +272,7 @@ class KeyRenewer {
         try {
             ejbcaWS.editUser(userData);
         } catch (Exception e) {
-            StandAloneSession.m_log.error("Problem to edit user.", e);
+            m_log.error("Problem to edit user.", e);
             return false;
         }
         return true;
@@ -288,7 +294,7 @@ class KeyRenewer {
                                                                                   new String(Base64.encode(pkcs10.getEncoded())),null,CertificateHelper.RESPONSETYPE_CERTIFICATE);
             i = (Iterator<X509Certificate>)CertificateFactory.getInstance("X.509").generateCertificates(new ByteArrayInputStream(Base64.decode(certificateResponse.getData()))).iterator();
         } catch (Exception e) {
-            StandAloneSession.m_log.error("Certificate generation problem.", e);
+            m_log.error("Certificate generation problem.", e);
             return null;
         }
         while ( i.hasNext() ) {
@@ -304,46 +310,46 @@ class KeyRenewer {
             tmpCert = null;
         }
         if ( tmpCert==null ) {
-            StandAloneSession.m_log.error("No certificate signed by correct CA generated.");
+            m_log.error("No certificate signed by correct CA generated.");
             return null;
         }
         final List<X509Certificate> lCertChain = new ArrayList<X509Certificate>(this.caChain);
         lCertChain.add(0, tmpCert);
         final X509Certificate certChain[] = lCertChain.toArray(new X509Certificate[0]);
-        if ( this.privateKeyContainerKeyStore.fileName!=null && this.privateKeyContainerKeyStore.standAloneSession.mKeyPassword==null ) {
-            StandAloneSession.m_log.error("Key password must be configured when updating SW keystore.");
+        if ( this.privateKeyContainerKeyStore.fileName!=null && this.privateKeyContainerKeyStore.sessionData.mKeyPassword==null ) {
+            m_log.error("Key password must be configured when updating SW keystore.");
             return null;
         }
         try {
             this.privateKeyContainerKeyStore.keyStore.setKeyEntry(this.privateKeyContainerKeyStore.alias, keyPair.getPrivate(),
-                                                                  this.privateKeyContainerKeyStore.standAloneSession.mKeyPassword!=null ? this.privateKeyContainerKeyStore.standAloneSession.mKeyPassword.toCharArray() : null,
+                                                                  this.privateKeyContainerKeyStore.sessionData.mKeyPassword!=null ? this.privateKeyContainerKeyStore.sessionData.mKeyPassword.toCharArray() : null,
                                                                   certChain);
         } catch (Throwable e) {
-            StandAloneSession.m_log.error("Problem to store new key in HSM.", e);
+            m_log.error("Problem to store new key in HSM.", e);
             return null;
         }
         if ( this.privateKeyContainerKeyStore.fileName!=null ) {
             try {
                 this.privateKeyContainerKeyStore.keyStore.store(new FileOutputStream(this.privateKeyContainerKeyStore.fileName),
-                                                                this.privateKeyContainerKeyStore.standAloneSession.mStorePassword.toCharArray());
+                                                                this.privateKeyContainerKeyStore.sessionData.mStorePassword.toCharArray());
             } catch (Throwable e) {
-                StandAloneSession.m_log.error("Not possible to store keystore on file.",e);
+                m_log.error("Not possible to store keystore on file.",e);
             }
         }
         return certChain;
     }
     /**
      * Initialize renewing of keys.
+     * @param privateKeyContainerKeyStore keystore to use
      * @param _caChain sets {@link #caChain}
      * @param _caid sets {@link #caid}
-     * @param privateKeyContainerKeyStore TODO
      */
     KeyRenewer(PrivateKeyContainerKeyStore privateKeyContainerKeyStore, List<X509Certificate> _caChain, int _caid) {
         this.privateKeyContainerKeyStore = privateKeyContainerKeyStore;
         this.caid = _caid;
         this.caChain = _caChain;
         this.doUpdateKey = false;
-        if ( this.privateKeyContainerKeyStore.standAloneSession.doKeyRenewal() ) {
+        if ( this.privateKeyContainerKeyStore.sessionData.doKeyRenewal() ) {
             this.runner = new Runner();
             this.doUpdateKey = true;
             new Thread(this.runner).start();

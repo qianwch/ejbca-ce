@@ -20,6 +20,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
 /**
  * P11 implementation. Reload the provider when {@link #reload()} is called.
  * 
@@ -28,9 +30,13 @@ import java.util.Set;
  */
 class P11ProviderHandler implements ProviderHandler {
     /**
-     * 
+     * Log object.
      */
-    private final StandAloneSession standAloneSession;
+    static final private Logger m_log = Logger.getLogger(P11ProviderHandler.class);
+    /**
+     * The data of the session.
+     */
+    private final SessionData data;
     /**
      * Provider name.
      */
@@ -41,12 +47,12 @@ class P11ProviderHandler implements ProviderHandler {
     final Set<PrivateKeyContainer> sKeyContainer = new HashSet<PrivateKeyContainer>();
     /**
      * Creation of the provider.
-     * @param standAloneSession TODO
+     * @param standAloneSession data for the session
      * @throws Exception
      */
-    P11ProviderHandler(StandAloneSession standAloneSession) throws Exception {
-        this.standAloneSession = standAloneSession;
-        this.name = this.standAloneSession.slot.getProvider().getName();
+    P11ProviderHandler(SessionData _data) throws Exception {
+        this.data = _data;
+        this.name = this.data.slot.getProvider().getName();
     }
     /**
      * Get the keystore for the slot.
@@ -56,10 +62,10 @@ class P11ProviderHandler implements ProviderHandler {
      */
     public KeyStore getKeyStore(PasswordProtection pwp) throws Exception {
         final KeyStore.Builder builder = KeyStore.Builder.newInstance("PKCS11",
-                                                                      this.standAloneSession.slot.getProvider(),
+                                                                      this.data.slot.getProvider(),
                                                                       pwp);
         final KeyStore keyStore = builder.getKeyStore();
-        StandAloneSession.m_log.debug("Loading key from slot '"+this.standAloneSession.slot+"' using pin.");
+        m_log.debug("Loading key from slot '"+this.data.slot+"' using pin.");
         keyStore.load(null, null);
         return keyStore;
     }
@@ -67,7 +73,7 @@ class P11ProviderHandler implements ProviderHandler {
      * @see org.ejbca.ui.web.protocol.OCSPServletStandAloneSession.ProviderHandler#getProviderName()
      */
     public String getProviderName() {
-        return this.standAloneSession.isNotReloadingP11Keys ? this.name : null;
+        return this.data.isNotReloadingP11Keys ? this.name : null;
     }
     /**
      * An object of this class reloads the provider in a separate thread.
@@ -86,7 +92,7 @@ class P11ProviderHandler implements ProviderHandler {
                         i.next().clear(); // clear all not useable old keys
                     }
                 }
-                P11ProviderHandler.this.standAloneSession.slot.reset();
+                P11ProviderHandler.this.data.slot.reset();
                 synchronized( this ) {
                     this.wait(10000); // wait 10 seconds to make system recover before trying again. all threads with ongoing operations has to stop
                 }
@@ -95,16 +101,16 @@ class P11ProviderHandler implements ProviderHandler {
                     while ( i.hasNext() ) {
                         PrivateKeyContainer pkf = i.next();
                         errorMessage = pkf.toString();
-                        StandAloneSession.m_log.debug("Trying to reload: "+errorMessage);
-                        pkf.set(getKeyStore(P11ProviderHandler.this.standAloneSession.getP11Pwd(null)));
-                        StandAloneSession.m_log.info("Reloaded: "+errorMessage);
+                        m_log.debug("Trying to reload: "+errorMessage);
+                        pkf.set(getKeyStore(P11ProviderHandler.this.data.getP11Pwd(null)));
+                        m_log.info("Reloaded: "+errorMessage);
                     }
                 }
-                P11ProviderHandler.this.standAloneSession.setNextKeyUpdate(new Date().getTime()); // since all keys are now reloaded we should wait an whole interval for next key update
-                P11ProviderHandler.this.standAloneSession.isNotReloadingP11Keys = true;
+                P11ProviderHandler.this.data.setNextKeyUpdate(new Date().getTime()); // since all keys are now reloaded we should wait an whole interval for next key update
+                P11ProviderHandler.this.data.isNotReloadingP11Keys = true;
                 return;
             } catch ( Throwable t ) {
-                StandAloneSession.m_log.debug("Failing to reload p11 keystore. "+errorMessage, t);
+                m_log.debug("Failing to reload p11 keystore. "+errorMessage, t);
             }
         }
     }
@@ -112,14 +118,14 @@ class P11ProviderHandler implements ProviderHandler {
      * @see org.ejbca.ui.web.protocol.OCSPServletStandAlone.ProviderHandler#reload()
      */
     public synchronized void reload() {
-        if ( this.standAloneSession.doNotStorePasswordsInMemory ) {
-            StandAloneSession.m_log.info("Not possible to recover a lost HSM with no passowrd.");
+        if ( this.data.doNotStorePasswordsInMemory ) {
+            m_log.info("Not possible to recover a lost HSM with no passowrd.");
             return;
         }
-        if ( !this.standAloneSession.isNotReloadingP11Keys ) {
+        if ( !this.data.isNotReloadingP11Keys ) {
             return;
         }
-        this.standAloneSession.isNotReloadingP11Keys = false;
+        this.data.isNotReloadingP11Keys = false;
         new Thread(new Reloader()).start();
     }
     /* (non-Javadoc)

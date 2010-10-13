@@ -18,6 +18,8 @@ import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 
 
 /**
@@ -28,9 +30,13 @@ import java.util.List;
  */
 class PrivateKeyContainerKeyStore implements PrivateKeyContainer {
     /**
-     * 
+     * Log object.
      */
-    final StandAloneSession standAloneSession;
+    static final private Logger m_log = Logger.getLogger(PrivateKeyContainerKeyStore.class);
+    /**
+     * The data of the session.
+     */
+    final SessionData sessionData;
     /**
      * Alias of the in the {@link KeyStore} for this key.
      */
@@ -69,18 +75,18 @@ class PrivateKeyContainerKeyStore implements PrivateKeyContainer {
     private int nrOfusers = 0;
     /**
      * Constructs the key reference.
-     * @param a sets {@link #alias}
+     * @param _sessionData data of the session.
+     * @param _alias for the key
      * @param pw sets {@link #password}
      * @param _keyStore sets {@link #keyStore}
      * @param cert sets {@link #certificate}
      * @param _providerName sets {@link #providerName}
      * @param _fileName Only used SW keystores.
-     * @param standAloneSession TODO
      * @throws Exception
      */
-    PrivateKeyContainerKeyStore( StandAloneSession standAloneSession, String a, char pw[], KeyStore _keyStore, X509Certificate cert, String _providerName, String _fileName) throws Exception {
-        this.standAloneSession = standAloneSession;
-        this.alias = a;
+    PrivateKeyContainerKeyStore( SessionData _sessionData, String _alias, char pw[], KeyStore _keyStore, X509Certificate cert, String _providerName, String _fileName) throws Exception {
+        this.sessionData = _sessionData;
+        this.alias = _alias;
         this.certificate = cert;
         this.keyStore = _keyStore;
         this.providerName = _providerName;
@@ -92,11 +98,11 @@ class PrivateKeyContainerKeyStore implements PrivateKeyContainer {
      */
     public void init(List<X509Certificate> caChain, int caid) {
         destroy();
-        if ( !this.standAloneSession.doKeyRenewal() ) {
+        if ( !this.sessionData.doKeyRenewal() ) {
             return;
         }
-        if ( this.fileName!=null && this.standAloneSession.mStorePassword==null ) {
-            StandAloneSession.m_log.error("Not possible to renew keys whith no stored keystore password for certificate with DN: "+caChain.get(0).getSubjectDN());
+        if ( this.fileName!=null && this.sessionData.mStorePassword==null ) {
+            m_log.error("Not possible to renew keys whith no stored keystore password for certificate with DN: "+caChain.get(0).getSubjectDN());
             return;
         }
         this.keyRenewer = new KeyRenewer(this, caChain, caid);
@@ -114,10 +120,10 @@ class PrivateKeyContainerKeyStore implements PrivateKeyContainer {
      */
     public void set(KeyStore _keyStore) throws Exception {
         this.keyStore = _keyStore;
-        if ( this.fileName!=null && this.standAloneSession.mKeyPassword==null ) {
+        if ( this.fileName!=null && this.sessionData.mKeyPassword==null ) {
             throw new Exception("Key password must be configured when reloading SW keystore.");
         }
-        set(this.standAloneSession.mKeyPassword.toCharArray());
+        set(this.sessionData.mKeyPassword.toCharArray());
     }
     /* (non-Javadoc)
      * @see org.ejbca.ui.web.protocol.OCSPServletStandAloneSession.PrivateKeyContainer#clear()
@@ -147,7 +153,7 @@ class PrivateKeyContainerKeyStore implements PrivateKeyContainer {
      */
     public void releaseKey() {
         if ( this.privateKey==null ) {
-            StandAloneSession.m_log.warn("This should never ever happen. But if it does things may work afterwards anyway.");
+            m_log.warn("This should never ever happen. But if it does things may work afterwards anyway.");
             this.nrOfusers--;
             return;
         }
@@ -201,7 +207,7 @@ class PrivateKeyContainerKeyStore implements PrivateKeyContainer {
             this.isUpdatingKey = true;
         }
         if ( this.privateKey==null ) {
-            StandAloneSession.m_log.warn("This should never ever happen. But if it does things may work afterwards anyway.");
+            m_log.warn("This should never ever happen. But if it does things may work afterwards anyway.");
             if ( this.nrOfusers>0 ) {
                 throw new Error("No private key in '"+this.toString()+"'. Still used by "+this.nrOfusers+" users.");
             }

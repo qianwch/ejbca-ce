@@ -5,6 +5,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
 import org.ejbca.core.model.ca.caadmin.extendedcaservices.ExtendedCAServiceRequestException;
 import org.ejbca.core.model.ca.caadmin.extendedcaservices.IllegalExtendedCAServiceRequestException;
 import org.ejbca.core.model.ca.caadmin.extendedcaservices.OCSPCAServiceRequest;
@@ -15,6 +16,10 @@ import org.ejbca.core.protocol.ocsp.OCSPUtil;
  * An object of this class is used to sign OCSP responses for certificates belonging to one CA.
  */
 class SigningEntity {
+    /**
+     * Log object.
+     */
+    static final private Logger m_log = Logger.getLogger(SigningEntity.class);
     /**
      * The certificate chain with the CA of the signer on top.
      */
@@ -53,7 +58,7 @@ class SigningEntity {
     private X509Certificate[] getCertificateChain(final X509Certificate entityCert) {
         final List<X509Certificate> entityChain = new ArrayList<X509Certificate>(this.chain);
         if ( entityCert==null ) {
-            StandAloneSession.m_log.error("CA "+this.chain.get(0).getSubjectDN()+" has no signer.");
+            m_log.error("CA "+this.chain.get(0).getSubjectDN()+" has no signer.");
             return null;
         }
         entityChain.add(0, entityCert);
@@ -133,7 +138,7 @@ class SigningEntity {
         try {
             return this.keyContainer.isOK();
         } catch (Exception e) {
-            StandAloneSession.m_log.info("Exception thrown when accessing the private key: ", e);
+            m_log.info("Exception thrown when accessing the private key: ", e);
             return false;
         }
     }
