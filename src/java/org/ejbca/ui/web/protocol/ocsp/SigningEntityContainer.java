@@ -129,7 +129,7 @@ class  SigningEntityContainer {
             // We will only load private keys if the cache time has run out
             if ( password==null && (
                     this.updating || this.lastTryOfKeyReload+10000>currentTime || !this.standAloneSession.isNotReloadingP11Keys ||
-                    (this.signEntityMap!=null && this.signEntityMap.size()>0 && this.standAloneSession.servlet.mKeysValidTo>currentTime)
+                    (this.signEntityMap!=null && this.signEntityMap.size()>0 && this.standAloneSession.data.mKeysValidTo>currentTime)
             ) ) {
                 return;
             }
@@ -402,7 +402,7 @@ class  SigningEntityContainer {
      */
     private List<X509Certificate> getCertificateChain(X509Certificate cert, Admin adm) {
         String issuerDN = CertTools.getIssuerDN(cert);
-        final CertificateStatus status = this.standAloneSession.servlet.getStatus(issuerDN, CertTools.getSerialNumber(cert));
+        final CertificateStatus status = this.standAloneSession.data.getStatus(issuerDN, CertTools.getSerialNumber(cert));
         if ( status.equals(CertificateStatus.NOT_AVAILABLE) ) {
             StandAloneSession.m_log.warn(StandAloneSession.intres.getLocalizedMessage("ocsp.signcertnotindb", CertTools.getSerialNumberAsString(cert), issuerDN));
             return null;
@@ -418,7 +418,7 @@ class  SigningEntityContainer {
                 return list;
             }
             // Is there a CA certificate?
-            final X509Certificate target = this.standAloneSession.servlet.m_caCertCache.findLatestBySubjectDN(CertTools.getIssuerDN(current));
+            final X509Certificate target = this.standAloneSession.data.m_caCertCache.findLatestBySubjectDN(CertTools.getIssuerDN(current));
             if (target != null) {
                 current = target;
                 list.add(current);
@@ -448,7 +448,7 @@ class  SigningEntityContainer {
         if ( chain==null || chain.size()<1 ) {
             return false;
         }
-        final Integer caid = new Integer(this.standAloneSession.servlet.getCaid(chain.get(0)));
+        final Integer caid = new Integer(this.standAloneSession.data.getCaid(chain.get(0)));
         {
             final SigningEntity entityForSameCA = newSignEntitys.get(caid);
             final X509Certificate otherChainForSameCA[] = entityForSameCA!=null ? entityForSameCA.getCertificateChain() : null;

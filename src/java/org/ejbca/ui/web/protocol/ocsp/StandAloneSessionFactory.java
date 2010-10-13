@@ -15,7 +15,7 @@ package org.ejbca.ui.web.protocol.ocsp;
 
 import javax.servlet.ServletException;
 
-import org.ejbca.ui.web.protocol.OCSPServletStandAlone;
+import org.ejbca.ui.web.protocol.OCSPData;
 import org.ejbca.ui.web.protocol.OCSPServletStandAlone.IStandAloneSession;
 
 /**
@@ -26,14 +26,16 @@ import org.ejbca.ui.web.protocol.OCSPServletStandAlone.IStandAloneSession;
  * 
  */
 public class StandAloneSessionFactory {
-
+    private static IStandAloneSession instance;
     /**
      * @param ocspServletStandAlone
      * @return The session
      * @throws ServletException
      */
-    public static IStandAloneSession create(OCSPServletStandAlone ocspServletStandAlone) throws ServletException {
-        return new StandAloneSession(ocspServletStandAlone);
+    public static IStandAloneSession getInstance(OCSPData data) throws ServletException {
+        if ( instance==null ) {
+            instance = new StandAloneSession(data);
+        }
+        return instance;
     }
-
 }

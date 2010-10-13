@@ -34,7 +34,6 @@ import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.model.ra.raadmin.GlobalConfiguration;
 import org.ejbca.core.protocol.ocsp.CertificateCache;
 import org.ejbca.core.protocol.ocsp.CertificateCacheStandalone;
-import org.ejbca.ui.web.protocol.ocsp.OCSPServletBase;
 import org.ejbca.ui.web.protocol.ocsp.StandAloneSessionFactory;
 import org.ejbca.ui.web.pub.cluster.ExtOCSPHealthCheck;
 
@@ -74,7 +73,6 @@ public class OCSPServletStandAlone extends OCSPServletBase implements IHealtChec
      */
 	private static final Logger m_versionLog = Logger.getLogger("org.ejbca.version.log");
 
-    private ICertificateStoreOnlyDataSessionLocal m_certStore = null;
     private IStandAloneSession session;
 
     /**
@@ -106,7 +104,7 @@ public class OCSPServletStandAlone extends OCSPServletBase implements IHealtChec
         OCSPCAServiceResponse extendedService(int caid, OCSPCAServiceRequest request) throws ExtendedCAServiceRequestException, ExtendedCAServiceNotActiveException, IllegalExtendedCAServiceRequestException;
     }
     public OCSPServletStandAlone() {
-        super();
+        super(new LocalOCSPData());
     }
     /* (non-Javadoc)
      * @see org.ejbca.ui.web.protocol.OCSPServletBase#init(javax.servlet.ServletConfig)
@@ -117,7 +115,7 @@ public class OCSPServletStandAlone extends OCSPServletBase implements IHealtChec
         // Log with warn priority so it will be visible in strict production configurations  
 	    m_versionLog.warn("Init, "+GlobalConfiguration.EJBCA_VERSION+" OCSP startup");
 
-        this.session = StandAloneSessionFactory.create(this);
+        this.session = StandAloneSessionFactory.getInstance(this.data);
         // session must be created before health check could be done
         ExtOCSPHealthCheck.setHealtChecker(this);
     }
@@ -132,23 +130,6 @@ public class OCSPServletStandAlone extends OCSPServletBase implements IHealtChec
 	    m_versionLog.warn("Destroy, "+GlobalConfiguration.EJBCA_VERSION+" OCSP shutdown");
 	}
 
-    /**
-     * Returns the certificate data only session bean
-     */
-    synchronized ICertificateStoreOnlyDataSessionLocal getStoreSessionOnlyData(){
-    	if(this.m_certStore == null){	
-    		try {
-                ServiceLocator locator = ServiceLocator.getInstance();
-                ICertificateStoreOnlyDataSessionLocalHome castorehome =
-                    (ICertificateStoreOnlyDataSessionLocalHome)locator.getLocalHome(ICertificateStoreOnlyDataSessionLocalHome.COMP_NAME);
-                this.m_certStore = castorehome.create();
-    		}catch(Exception e){
-    			throw new EJBException(e);      	  	    	  	
-    		}
-    	}
-    	return this.m_certStore;
-    }
-
     /* (non-Javadoc)
      * @see org.ejbca.ui.web.protocol.IHealtChecker#healthCheck()
      */
@@ -162,23 +143,42 @@ public class OCSPServletStandAlone extends OCSPServletBase implements IHealtChec
         this.session.loadPrivateKeys(adm, password);
     }
     /* (non-Javadoc)
-     * @see org.ejbca.ui.web.protocol.OCSPServletBase#findCertificateByIssuerAndSerno(org.ejbca.core.model.log.Admin, java.lang.String, java.math.BigInteger)
-     */
-    protected Certificate findCertificateByIssuerAndSerno(Admin adm, String issuer, BigInteger serno) {
-        return getStoreSessionOnlyData().findCertificateByIssuerAndSerno(adm, issuer, serno);
-    }
-    /* (non-Javadoc)
      * @see org.ejbca.ui.web.protocol.OCSPServletBase#extendedService(org.ejbca.core.model.log.Admin, int, org.ejbca.core.model.ca.caadmin.extendedcaservices.OCSPCAServiceRequest)
      */
     protected OCSPCAServiceResponse extendedService(Admin adm, int caid, OCSPCAServiceRequest request) throws ExtendedCAServiceRequestException,
                                                                                                     ExtendedCAServiceNotActiveException, IllegalExtendedCAServiceRequestException {
         return this.session.extendedService(caid, request);
     }
-    /* (non-Javadoc)
-     * @see org.ejbca.ui.web.protocol.OCSPServletBase#getStatus(org.ejbca.core.model.log.Admin, java.lang.String, java.math.BigInteger)
-     */
-    protected CertificateStatus getStatus(String name, BigInteger serialNumber) {
-        return getStoreSessionOnlyData().getStatus(name, serialNumber);
+    static private class LocalOCSPData extends OCSPData {
+        private ICertificateStoreOnlyDataSessionLocal m_certStore = null;
+        /**
+         * Returns the certificate data only session bean
+         */
+        synchronized ICertificateStoreOnlyDataSessionLocal getStoreSessionOnlyData(){
+            if(this.m_certStore == null){   
+                try {
+                    ServiceLocator locator = ServiceLocator.getInstance();
+                    ICertificateStoreOnlyDataSessionLocalHome castorehome =
+                        (ICertificateStoreOnlyDataSessionLocalHome)locator.getLocalHome(ICertificateStoreOnlyDataSessionLocalHome.COMP_NAME);
+                    this.m_certStore = castorehome.create();
+                }catch(Exception e){
+                    throw new EJBException(e);                          
+                }
+            }
+            return this.m_certStore;
+        }
+        /* (non-Javadoc)
+         * @see org.ejbca.ui.web.protocol.OCSPData#findCertificateByIssuerAndSerno(org.ejbca.core.model.log.Admin, java.lang.String, java.math.BigInteger)
+         */
+        protected Certificate findCertificateByIssuerAndSerno(Admin adm, String issuer, BigInteger serno) {
+            return getStoreSessionOnlyData().findCertificateByIssuerAndSerno(adm, issuer, serno);
+        }
+        /* (non-Javadoc)
+         * @see org.ejbca.ui.web.protocol.OCSPData#getStatus(java.lang.String, java.math.BigInteger)
+         */
+        public CertificateStatus getStatus(String name, BigInteger serialNumber) {
+            return getStoreSessionOnlyData().getStatus(name, serialNumber);
+        }
     }
     /* (non-Javadoc)
      * @see org.ejbca.ui.web.protocol.OCSPServletBase#createCertificateCache()

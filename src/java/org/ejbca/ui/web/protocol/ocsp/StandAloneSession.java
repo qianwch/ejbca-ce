@@ -41,6 +41,7 @@ import org.ejbca.core.model.ca.caadmin.extendedcaservices.OCSPCAServiceRequest;
 import org.ejbca.core.model.ca.caadmin.extendedcaservices.OCSPCAServiceResponse;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.protocol.ocsp.OCSPUtil;
+import org.ejbca.ui.web.protocol.OCSPData;
 import org.ejbca.ui.web.protocol.OCSPServletStandAlone;
 import org.ejbca.util.keystore.P11Slot;
 import org.ejbca.util.keystore.P11Slot.P11SlotUser;
@@ -91,9 +92,9 @@ class StandAloneSession implements P11SlotUser,  OCSPServletStandAlone.IStandAlo
      */
     final int mRenewTimeBeforeCertExpiresInSeconds = OcspConfiguration.getRenewTimeBeforeCertExpiresInSeconds();
     /**
-     * Reference to the servlet object.
+     * Reference to the servlet object data.
      */
-    final OCSPServletBase servlet;
+    final OCSPData data;
     /**
      * The URL of the EJBCAWS used when "rekeying" is activated.
      */
@@ -122,9 +123,9 @@ class StandAloneSession implements P11SlotUser,  OCSPServletStandAlone.IStandAlo
      * @param _servlet The servlet object.
      * @throws ServletException
      */
-    StandAloneSession(OCSPServletStandAlone _servlet) throws ServletException {
+    StandAloneSession(OCSPData _data) throws ServletException {
         this.signEntitycontainer = new SigningEntityContainer(this);
-        this.servlet = _servlet;
+        this.data = _data;
         try {
             if ( this.doNotStorePasswordsInMemory ) {
                 final Set<String> sError = new HashSet<String>();
@@ -232,7 +233,7 @@ class StandAloneSession implements P11SlotUser,  OCSPServletStandAlone.IStandAlo
                 final String aKeyAlias[] = OcspConfiguration.getKeyAlias();
                 this.keyAlias = aKeyAlias!=null && aKeyAlias.length>0 ? new HashSet<String>(Arrays.asList(aKeyAlias)) : null;
             }
-            loadPrivateKeys(this.servlet.m_adm, null);
+            loadPrivateKeys(this.data.m_adm, null);
         } catch( ServletException e ) {
             throw e;
         } catch (Exception e) {
@@ -396,8 +397,8 @@ class StandAloneSession implements P11SlotUser,  OCSPServletStandAlone.IStandAlo
     void setNextKeyUpdate(final long currentTime) {
         // Update cache time
         // If getSigningCertsValidTime() == 0 we set reload time to Long.MAX_VALUE, which should be forever, so the cache is never refreshed
-        StandAloneSession.this.servlet.mKeysValidTo = OcspConfiguration.getSigningCertsValidTime()>0 ? currentTime+OcspConfiguration.getSigningCertsValidTime() : Long.MAX_VALUE;
-        m_log.debug("time: "+currentTime+" next update: "+StandAloneSession.this.servlet.mKeysValidTo);
+        StandAloneSession.this.data.mKeysValidTo = OcspConfiguration.getSigningCertsValidTime()>0 ? currentTime+OcspConfiguration.getSigningCertsValidTime() : Long.MAX_VALUE;
+        m_log.debug("time: "+currentTime+" next update: "+StandAloneSession.this.data.mKeysValidTo);
     }
     /* (non-Javadoc)
      * @see org.ejbca.ui.web.protocol.OCSPServletStandAlone.IStandAloneSession#extendedService(int, org.ejbca.core.model.ca.caadmin.extendedcaservices.OCSPCAServiceRequest)
@@ -411,7 +412,7 @@ class StandAloneSession implements P11SlotUser,  OCSPServletStandAlone.IStandAlo
                 if (m_log.isDebugEnabled()) {
                     m_log.debug("No key is available for caid=" + caid + " even though a valid certificate was present. Trying to use the default responder's key instead.");
                 }
-                se = map.get(new Integer(this.servlet.getCaid(null)));	// Use the key issued by the default responder ID instead
+                se = map.get(new Integer(this.data.getCaid(null)));	// Use the key issued by the default responder ID instead
             }
         }
         if ( se==null ) {

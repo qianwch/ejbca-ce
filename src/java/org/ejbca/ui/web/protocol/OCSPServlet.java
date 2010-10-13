@@ -35,7 +35,6 @@ import org.ejbca.core.model.ca.caadmin.extendedcaservices.OCSPCAServiceResponse;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.protocol.ocsp.CertificateCache;
 import org.ejbca.core.protocol.ocsp.CertificateCacheInternal;
-import org.ejbca.ui.web.protocol.ocsp.OCSPServletBase;
 
 /** 
  * Servlet implementing server side of the Online Certificate Status Protocol (OCSP)
@@ -80,25 +79,16 @@ import org.ejbca.ui.web.protocol.ocsp.OCSPServletBase;
  */
 public class OCSPServlet extends OCSPServletBase {
 
-    private ICertificateStoreSessionLocal m_certStore = null;
     private ISignSessionLocal m_signsession = null;
     
+    OCSPServlet() {
+        super(new LocalOCSPData());
+    }
     public void init(ServletConfig config)
             throws ServletException {
         super.init(config);
     }
     
-    private synchronized ICertificateStoreSessionLocal getStoreSession(){
-    	if(m_certStore == null){	
-    		try {
-    			ICertificateStoreSessionLocalHome storehome = (ICertificateStoreSessionLocalHome)ServiceLocator.getInstance().getLocalHome(ICertificateStoreSessionLocalHome.COMP_NAME);
-    			m_certStore = storehome.create();
-    		}catch(Exception e){
-    			throw new EJBException(e);
-    		}
-    	}
-    	return m_certStore;
-    }
     
     private synchronized ISignSessionLocal getSignSession(){
     	if(m_signsession == null){	
@@ -112,16 +102,34 @@ public class OCSPServlet extends OCSPServletBase {
     	return m_signsession;
     }
 
-    protected Certificate findCertificateByIssuerAndSerno(Admin adm, String issuer, BigInteger serno) {
-        return getStoreSession().findCertificateByIssuerAndSerno(adm, issuer, serno);
-    }
-    
     protected OCSPCAServiceResponse extendedService(Admin adm, int caid, OCSPCAServiceRequest request) throws CADoesntExistsException, ExtendedCAServiceRequestException, IllegalExtendedCAServiceRequestException, ExtendedCAServiceNotActiveException {
         return (OCSPCAServiceResponse)getSignSession().extendedService(adm, caid, request);
     }
-
-    protected CertificateStatus getStatus(String name, BigInteger serialNumber) {
-        return getStoreSession().getStatus(name, serialNumber);
+    static private class LocalOCSPData extends OCSPData {
+        private ICertificateStoreSessionLocal m_certStore = null;
+        private synchronized ICertificateStoreSessionLocal getStoreSession(){
+            if(m_certStore == null){    
+                try {
+                    ICertificateStoreSessionLocalHome storehome = (ICertificateStoreSessionLocalHome)ServiceLocator.getInstance().getLocalHome(ICertificateStoreSessionLocalHome.COMP_NAME);
+                    m_certStore = storehome.create();
+                }catch(Exception e){
+                    throw new EJBException(e);
+                }
+            }
+            return m_certStore;
+        }
+        /* (non-Javadoc)
+         * @see org.ejbca.ui.web.protocol.OCSPData#findCertificateByIssuerAndSerno(org.ejbca.core.model.log.Admin, java.lang.String, java.math.BigInteger)
+         */
+        protected Certificate findCertificateByIssuerAndSerno(Admin adm, String issuer, BigInteger serno) {
+            return getStoreSession().findCertificateByIssuerAndSerno(adm, issuer, serno);
+        }
+        /* (non-Javadoc)
+         * @see org.ejbca.ui.web.protocol.OCSPData#getStatus(java.lang.String, java.math.BigInteger)
+         */
+        public CertificateStatus getStatus(String name, BigInteger serialNumber) {
+            return getStoreSession().getStatus(name, serialNumber);
+        }
     }
 
     protected CertificateCache createCertificateCache() {
