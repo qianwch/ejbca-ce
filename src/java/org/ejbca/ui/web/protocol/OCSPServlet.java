@@ -81,12 +81,8 @@ public class OCSPServlet extends OCSPServletBase {
 
     private ISignSessionLocal m_signsession = null;
     
-    OCSPServlet() {
+    public OCSPServlet() {
         super(new LocalOCSPData());
-    }
-    public void init(ServletConfig config)
-            throws ServletException {
-        super.init(config);
     }
     
     
