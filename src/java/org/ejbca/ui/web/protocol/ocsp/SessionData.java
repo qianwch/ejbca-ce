@@ -168,4 +168,12 @@ class SessionData {
             return result;
         }
     }
+    /* (non-Javadoc)
+     * @see java.lang.Object#finalize()
+     */
+    @Override
+    protected void finalize() throws Throwable {
+        m_log.info("Object finalized");
+        super.finalize();
+    }
 }
