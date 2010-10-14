@@ -60,7 +60,8 @@ class KeyRenewer {
     static final private Logger m_log = Logger.getLogger(KeyRenewer.class);
     /**
      * The keystore containing the key to authenticate with.
-     * TODO: should be removed. Makes it circular.
+     * The {@link PrivateKeyContainerKeyStore} object must delete the reference to the {@link KeyRenewer}
+     * object when {@link PrivateKeyContainerKeyStore} is not used any more.
      */
     private final PrivateKeyContainerKeyStore privateKeyContainerKeyStore;
     /**

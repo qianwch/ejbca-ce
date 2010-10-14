@@ -389,7 +389,7 @@ class  SigningEntityContainer {
                     continue;
                 }
                 try {
-                    if ( !this.sessionData.signTest(key, pkf.getCertificate().getPublicKey(), errorComment, providerHandler.getProviderName()) ) {
+                    if ( !SessionData.signTest(key, pkf.getCertificate().getPublicKey(), errorComment, providerHandler.getProviderName()) ) {
                         m_log.debug("Key not working. Not adding signer entity for: "+pkf.getCertificate().getSubjectDN()+"', keystore alias '"+alias+"'");
                         continue;
                     }

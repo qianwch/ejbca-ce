@@ -78,6 +78,15 @@ class SigningEntity {
     void shutDown() {
         this.keyContainer.destroy();
     }
+    /* (non-Javadoc)
+     * @see java.lang.Object#finalize()
+     */
+    @Override
+    protected void finalize() throws Throwable {
+        // break up circular dependence that prevents the keyContainer to be destroyed.
+        shutDown();
+        super.finalize();
+    }
     /**
      * Signs a OCSP response.
      * @param request The response to be signed.

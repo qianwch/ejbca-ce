@@ -144,28 +144,28 @@ class SessionData {
      * @return True if the key is OK.
      * @throws Exception
      */
-    boolean signTest(PrivateKey privateKey, PublicKey publicKey, String alias, String providerName) throws Exception {
+    static boolean signTest(PrivateKey privateKey, PublicKey publicKey, String alias, String providerName) throws Exception {
         final String sigAlgName = "SHA1withRSA";
         final byte signInput[] = "Lillan gick on roaden ut.".getBytes();
         final byte signBA[];
-        final boolean result;{
-            Signature signature = Signature.getInstance(sigAlgName, providerName);
+        {
+            final Signature signature = Signature.getInstance(sigAlgName, providerName);
             signature.initSign( privateKey );
             signature.update( signInput );
             signBA = signature.sign();
         }
         {
-            Signature signature = Signature.getInstance(sigAlgName);
+            final Signature signature = Signature.getInstance(sigAlgName);
             signature.initVerify(publicKey);
             signature.update(signInput);
-            result = signature.verify(signBA);
+            final boolean result = signature.verify(signBA);
             if (m_log.isDebugEnabled()) {
                 m_log.debug("Signature test of key "+alias+
                         ": signature length " + signBA.length +
                         "; first byte " + Integer.toHexString(0xff&signBA[0]) +
                         "; verifying " + result);               
             }
+            return result;
         }
-        return result;
     }
 }

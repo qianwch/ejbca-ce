@@ -238,8 +238,8 @@ class StandAloneSession implements P11SlotUser,  OCSPServletStandAlone.IStandAlo
                             pw.print(errMsg);
                             continue;
                         }
-                        final boolean isOK = !doSignTest || this.sessionData.signTest(privKey, entityCert.getPublicKey(),
-                                                                                      entityCert.getSubjectDN().toString(), providerName);
+                        final boolean isOK = !doSignTest || SessionData.signTest(privKey, entityCert.getPublicKey(),
+                                                                                 entityCert.getSubjectDN().toString(), providerName);
                         if ( !isOK ) {
                             pw.println();
                             pw.print(errMsg);

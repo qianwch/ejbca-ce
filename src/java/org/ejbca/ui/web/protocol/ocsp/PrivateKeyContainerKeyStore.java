@@ -51,6 +51,7 @@ class PrivateKeyContainerKeyStore implements PrivateKeyContainer {
     PrivateKey privateKey;
     /**
      * Object that runs a thread that is renewing a specified period before the certificate expires.
+     * The {@link KeyRenewer} object reference must be deleted when {@link #destroy()} is called.
      */
     private KeyRenewer keyRenewer;
     /**
@@ -188,8 +189,13 @@ class PrivateKeyContainerKeyStore implements PrivateKeyContainer {
      * @see org.ejbca.ui.web.protocol.OCSPServletStandAloneSession.PrivateKeyContainer#destroy()
      */
     public void destroy() {
-        if ( this.keyRenewer!=null ) {
-            this.keyRenewer.shutdown();
+        try {
+            if ( this.keyRenewer!=null ) {
+                this.keyRenewer.shutdown();
+            }
+        } finally {
+            // Let the garbage collector eat the renewer.
+            this.keyRenewer = null;
         }
     }
     /**
