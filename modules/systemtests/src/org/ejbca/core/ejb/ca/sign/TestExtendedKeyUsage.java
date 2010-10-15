@@ -17,7 +17,6 @@ import java.rmi.RemoteException;
 import java.security.KeyPair;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import javax.ejb.DuplicateKeyException;
@@ -34,6 +33,7 @@ import org.ejbca.core.model.ca.caadmin.CADoesntExistsException;
 import org.ejbca.core.model.ca.caadmin.CAInfo;
 import org.ejbca.core.model.ca.certificateprofiles.EndUserCertificateProfile;
 import org.ejbca.core.model.log.Admin;
+import org.ejbca.core.model.ra.UserDataConstants;
 import org.ejbca.core.model.ra.UserDataVO;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfile;
 import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
@@ -54,7 +54,6 @@ public class TestExtendedKeyUsage extends TestCase {
     
     private static KeyPair rsakeys=null;
     private static int rsacaid = 0;    
-    X509Certificate rsacacert = null;
     private final Admin admin = new Admin(Admin.TYPE_BATCHCOMMANDLINE_USER);
 
     /**
@@ -73,9 +72,6 @@ public class TestExtendedKeyUsage extends TestCase {
         CAInfo inforsa = TestTools.getCAAdminSession().getCAInfo(admin, "TEST");
         assertTrue("No active RSA CA! Must have at least one active CA to run tests!", inforsa != null);
         rsacaid = inforsa.getCAId();
-        Collection coll = inforsa.getCertificateChain();
-        Object[] objs = coll.toArray();
-        rsacacert = (X509Certificate)objs[0]; 
     }
 
     protected void setUp() throws Exception {
@@ -85,10 +81,9 @@ public class TestExtendedKeyUsage extends TestCase {
     }
 
     /**
-     * @throws Exception if en error occurs...
+     * @throws Exception if an error occurs...
      */
     public void test01CodeSigning() throws Exception {
-
         TestTools.getCertificateStoreSession().removeCertificateProfile(admin,"EXTKEYUSAGECERTPROFILE");
         final EndUserCertificateProfile certprof = new EndUserCertificateProfile();
         ArrayList list = new ArrayList();
@@ -115,6 +110,58 @@ public class TestExtendedKeyUsage extends TestCase {
         assertTrue(ku.contains("1.3.6.1.4.1.311.2.1.22"));
     }
 
+    /**
+     * @throws Exception if an error occurs...
+     */
+    public void test02SSH() throws Exception {
+        TestTools.getCertificateStoreSession().removeCertificateProfile(admin,"EXTKEYUSAGECERTPROFILE");
+        final EndUserCertificateProfile certprof = new EndUserCertificateProfile();
+        ArrayList list = new ArrayList();
+        certprof.setExtendedKeyUsage(list);
+        TestTools.getCertificateStoreSession().addCertificateProfile(admin, "EXTKEYUSAGECERTPROFILE", certprof);
+        final int fooCertProfile = TestTools.getCertificateStoreSession().getCertificateProfileId(admin,"EXTKEYUSAGECERTPROFILE");
+
+        TestTools.getRaAdminSession().removeEndEntityProfile(admin, "EXTKEYUSAGEEEPROFILE");
+        final EndEntityProfile profile = new EndEntityProfile(true);
+        profile.setValue(EndEntityProfile.AVAILCERTPROFILES,0,Integer.toString(fooCertProfile));
+        TestTools.getRaAdminSession().addEndEntityProfile(admin, "EXTKEYUSAGEEEPROFILE", profile);
+        final int fooEEProfile = TestTools.getRaAdminSession().getEndEntityProfileId(admin, "EXTKEYUSAGEEEPROFILE");
+
+        createOrEditUser(fooCertProfile, fooEEProfile);
+
+        X509Certificate cert = (X509Certificate) TestTools.getSignSession().createCertificate(admin, "extkeyusagefoo", "foo123", rsakeys.getPublic(), -1);
+        assertNotNull("Failed to create certificate", cert);
+        //log.debug("Cert=" + cert.toString());
+        List ku = cert.getExtendedKeyUsage();
+        assertNull(ku);
+
+        // Now add the SSH extended key usages
+        list.add("1.3.6.1.5.5.7.3.21"); // SSH client
+        list.add("1.3.6.1.5.5.7.3.22"); // SSH server
+        certprof.setExtendedKeyUsage(list);
+        TestTools.getCertificateStoreSession().changeCertificateProfile(admin, "EXTKEYUSAGECERTPROFILE", certprof);
+        createOrEditUser(fooCertProfile, fooEEProfile);
+        cert = (X509Certificate) TestTools.getSignSession().createCertificate(admin, "extkeyusagefoo", "foo123", rsakeys.getPublic(), -1);
+        assertNotNull("Failed to create certificate", cert);
+        //log.debug("Cert=" + cert.toString());
+        ku = cert.getExtendedKeyUsage();
+        assertEquals(2, ku.size());
+        assertTrue(ku.contains("1.3.6.1.5.5.7.3.21")); 
+        assertTrue(ku.contains("1.3.6.1.5.5.7.3.22"));     
+    }
+
+    public void test99CleanUp() throws Exception {
+        // Delete test end entity profile
+        TestTools.getRaAdminSession().removeEndEntityProfile(admin, "EXTKEYUSAGECERTPROFILE");
+        TestTools.getCertificateStoreSession().removeCertificateProfile(admin,"EXTKEYUSAGEEEPROFILE");
+        // delete users that we know...
+        try {        	
+        	TestTools.getUserAdminSession().deleteUser(admin, "extkeyusagefoo");
+        	log.debug("deleted user: foo, foo123, C=SE, O=AnaTom, CN=extkeyusagefoo");
+        } catch (Exception e) { /* ignore */ }
+		TestTools.removeTestCA();
+    }
+
 	private void createOrEditUser(final int fooCertProfile,
 			final int fooEEProfile) throws AuthorizationDeniedException,
 			UserDoesntFullfillEndEntityProfile, WaitingForApprovalException,
@@ -122,7 +169,7 @@ public class TestExtendedKeyUsage extends TestCase {
 		// Make user that we know...
         boolean userExists = false;
         UserDataVO user = new UserDataVO("extkeyusagefoo","C=SE,O=AnaTom,CN=extkeyusagefoo",rsacaid,null,"foo@anatom.se",SecConst.USER_ENDUSER,fooEEProfile,fooCertProfile, SecConst.TOKEN_SOFT_BROWSERGEN, 0, null);
-        user.setStatus(SecConst.TOKEN_SOFT_PEM);
+        user.setStatus(UserDataConstants.STATUS_NEW);
         user.setPassword("foo123");
         try {
             TestTools.getUserAdminSession().addUser(admin, user, false);
@@ -138,22 +185,5 @@ public class TestExtendedKeyUsage extends TestCase {
             log.debug("Reset status to NEW");
         }
 	}
-
-
-    public void test99CleanUp() throws Exception {
-        log.trace(">test99CleanUp()");
-
-        // Delete test end entity profile
-        TestTools.getRaAdminSession().removeEndEntityProfile(admin, "EXTKEYUSAGECERTPROFILE");
-        TestTools.getCertificateStoreSession().removeCertificateProfile(admin,"EXTKEYUSAGEEEPROFILE");
-        // delete users that we know...
-        try {        	
-        	TestTools.getUserAdminSession().deleteUser(admin, "extkeyusagefoo");
-        	log.debug("deleted user: foo, foo123, C=SE, O=AnaTom, CN=extkeyusagefoo");
-        } catch (Exception e) { /* ignore */ }
-		TestTools.removeTestCA();
-        log.trace("<test99CleanUp()");
-    }
-
     
 }
