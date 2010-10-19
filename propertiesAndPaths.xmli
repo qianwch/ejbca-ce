@@ -148,8 +148,8 @@
     <property name="ocsphealthcheckwar" value="${va-dist.dir}/ocsphealthcheck.war" />
 	
     <property name="va-statuswar" value="${va-dist.dir}/status.war" />
-
-    <property name="va-storewar" value="${va-dist.dir}/store.war" />
+    <property name="va-certstorewar" value="${va-dist.dir}/certstore.war" />
+    <property name="va-crlstorewar" value="${va-dist.dir}/crlstore.war" />
 
     <property name="adminweb.src" value="${src}/adminweb" />
     <property name="adminweb.build" value="${tmp}/adminweb.war" />    
