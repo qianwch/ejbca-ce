@@ -309,7 +309,9 @@ public class ServiceTimerSessionBean extends BaseSessionBean implements javax.ej
 							log.debug("Service "+serviceName+" will run: "+run);
 						}
 					} else {
-						log.info("Service " + serviceName + " will not run on this node: \"" + hostname + "\", Pinned to: " + Arrays.toString(serviceData.getPinToNodes()));
+						if (log.isDebugEnabled()) {
+							log.debug("Service " + serviceName + " will not run on this node: \"" + hostname + "\", Pinned to: " + Arrays.toString(serviceData.getPinToNodes()));
+						}
 						
 						// Add a random delay within 30 seconds to the interval, just to make sure nodes in a cluster is
 						// not scheduled to run on the exact same second. If the next scheduled run is less than 40 seconds away, 
