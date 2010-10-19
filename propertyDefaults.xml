@@ -57,6 +57,18 @@
 		<equals arg1="true" arg2="${web.renewalenabled}" casesensitive="false" trim="true" />
 	</condition>
 
+	<condition property="status.enabled">
+		<not>
+			<equals arg1="false" arg2="${va.status.enable}" casesensitive="false" trim="true" />
+		</not>
+	</condition>
+	<condition property="crlstore.enabled">
+		<equals arg1="true" arg2="${va.crlstore.enabled}" casesensitive="false" trim="true" />
+	</condition>
+	<condition property="certstore.enabled">
+		<equals arg1="true" arg2="${va.certstore.enabled}" casesensitive="false" trim="true" />
+	</condition>
+
 	<!-- CMP settings -->
 	<property name="cmp.allowraverifypopo" value="false" />
 	<property name="cmp.defaultca" value="" />

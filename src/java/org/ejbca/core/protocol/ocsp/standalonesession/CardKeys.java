@@ -10,31 +10,32 @@
  *  See terms of license at gnu.org.                                     *
  *                                                                       *
  *************************************************************************/
+package org.ejbca.core.protocol.ocsp.standalonesession;
 
-package org.ejbca.ui.web.protocol.ocsp;
-
+import java.security.PrivateKey;
+import java.security.interfaces.RSAPublicKey;
 
 /**
- * Holds information about a provider.
- * Used to be able to reload a provider when a HSM has stoped working.
- * For other sub classes but {@link P11ProviderHandler} nothing is done at reload when {@link #reload()} is called.
- * 
- * @author primelars
- * @version  $Id$
+ * @author lars
+ * @version $Id$
  */
-interface ProviderHandler {
+interface CardKeys {
+
+	/**
+	 * @param publicKey
+	 * @return
+	 * @throws Exception
+	 */
+	PrivateKey getPrivateKey(RSAPublicKey publicKey) throws Exception;
     /**
-     * Gets the name of the provider.
-     * @return the name. null if the provider is not working (reloading).
+     * @param authCode
+     * @throws InterruptedException
      */
-    String getProviderName();
-    /**
-     * Must be called for all {@link PrivateKeyContainer} objects using this object.
-     * @param keyContainer {@link PrivateKeyContainer} to be updated at reload
-     */
-    void addKeyContainer(PrivateKeyContainer keyContainer);
-    /**
-     * Start a threads that tries to reload the provider until it is done or does nothing if reloading does't help.
-     */
-    void reload();
+    void autenticate( String authCode) throws InterruptedException;
+	/**
+	 * Check if key is OK (verifies PIN).
+	 * @param publicKey 
+	 * @return
+	 */
+	boolean isOK(RSAPublicKey publicKey);
 }

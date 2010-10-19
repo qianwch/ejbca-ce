@@ -424,6 +424,7 @@
     			<include name="org/ejbca/core/model/ca/SignRequestException.java"/>
     			<include name="org/ejbca/core/ejb/ca/sign/SernoGenerator.java"/>
     			<include name="org/ejbca/core/ejb/ca/sign/ISernoGenerator.java"/>
+    			<include name="org/ejbca/core/ejb/ca/store/CertificateStatus.java"/>
     			<include name="org/ejbca/util/ValidityDate.java"/>
     			<include name="org/ejbca/util/SimpleTime.java"/>
     			<include name="org/ejbca/util/UnitParser.java"/>
@@ -446,7 +447,8 @@
     			<include name="org/ejbca/core/protocol/ocsp/OCSPUtil.java"/>
     			<include name="org/ejbca/core/protocol/ocsp/OCSPResponseItem.java"/>
     			<include name="org/ejbca/core/protocol/ocsp/CertificateCache.java"/>
-    			<include name="org/ejbca/core/model/ca/NotSupportedException.java"/>
+    			<include name="org/ejbca/core/protocol/ocsp/ICertStore.java"/>
+    		    <include name="org/ejbca/core/model/ca/NotSupportedException.java"/>
     			<!-- RA classes that maybe shouldn't be here.. -->
     			<include name="org/ejbca/core/model/ra/ExtendedInformation.java"/>
     			<include name="org/ejbca/core/model/ra/UserDataVO.java"/>
@@ -511,7 +513,8 @@
     			<include name="org/ejbca/core/ejb/ca/caadmin/*.java"/>
     			<include name="org/ejbca/core/model/ca/caadmin/*.java"/>
     			<include name="org/ejbca/core/model/approval/approvalrequests/ActivateCATokenApprovalRequest.java"/>
-    			<include name="org/ejbca/core/protocol/ocsp/CertificateCacheInternal.java"/>
+    			<include name="org/ejbca/core/protocol/ocsp/CertificateCacheFactory.java"/>
+    			<include name="org/ejbca/core/protocol/ocsp/CertStore.java"/>
     			<include name="org/ejbca/core/protocol/X509ResponseMessage.java"/>
     		</fileset>
     	</copy>

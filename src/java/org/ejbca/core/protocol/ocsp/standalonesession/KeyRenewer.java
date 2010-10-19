@@ -11,7 +11,7 @@
  *                                                                       *
  *************************************************************************/
 
-package org.ejbca.ui.web.protocol.ocsp;
+package org.ejbca.core.protocol.ocsp.standalonesession;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;

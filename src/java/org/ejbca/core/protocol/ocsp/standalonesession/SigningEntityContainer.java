@@ -11,7 +11,7 @@
  *                                                                       *
  *************************************************************************/
 
-package org.ejbca.ui.web.protocol.ocsp;
+package org.ejbca.core.protocol.ocsp.standalonesession;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -412,7 +412,7 @@ class  SigningEntityContainer {
      */
     private List<X509Certificate> getCertificateChain(X509Certificate cert, Admin adm) {
         String issuerDN = CertTools.getIssuerDN(cert);
-        final CertificateStatus status = this.sessionData.data.getStatus(issuerDN, CertTools.getSerialNumber(cert));
+        final CertificateStatus status = this.sessionData.data.certStore.getStatus(issuerDN, CertTools.getSerialNumber(cert));
         if ( status.equals(CertificateStatus.NOT_AVAILABLE) ) {
             m_log.warn(intres.getLocalizedMessage("ocsp.signcertnotindb", CertTools.getSerialNumberAsString(cert), issuerDN));
             return null;

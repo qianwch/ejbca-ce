@@ -11,7 +11,7 @@
  *                                                                       *
  *************************************************************************/
 
-package org.ejbca.ui.web.protocol.ocsp;
+package org.ejbca.core.protocol.ocsp.standalonesession;
 
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -21,7 +21,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.ejbca.config.OcspConfiguration;
-import org.ejbca.ui.web.protocol.OCSPData;
+import org.ejbca.core.protocol.ocsp.OCSPData;
 import org.ejbca.util.keystore.P11Slot;
 
 /**

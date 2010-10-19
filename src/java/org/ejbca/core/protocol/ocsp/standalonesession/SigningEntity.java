@@ -1,4 +1,4 @@
-package org.ejbca.ui.web.protocol.ocsp;
+package org.ejbca.core.protocol.ocsp.standalonesession;
 
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;

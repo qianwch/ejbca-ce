@@ -84,16 +84,17 @@
     </target>
 
     <!-- =================================================================== -->
+    <!-- Compile VA java sources                                  -->
+    <!-- =================================================================== -->
+    <target name="va-compile" depends="va-status-compile, va-certstore-compile, va-crlstore-compile"/>
+
+	<!-- =================================================================== -->
     <!-- Compile ocsp resonder java sources                                  -->
     <!-- =================================================================== -->
-    <target name="ocsp-compile" depends="ejbca-util.jar, ocsp-run-xdoc">
-        <javac destdir="${ocsp-build}" debug="on" includeantruntime="no" encoding="iso8859-1">
+    <target name="va-status-compile" depends="va-common-compile" if="status.enabled">
+        <javac destdir="${va-build}" debug="on" includeantruntime="no" encoding="iso8859-1">
             <classpath refid="compile.classpath" />
             <include name="org/ejbca/ui/web/protocol/OCSPServletStandAlone.java" />
-            <include name="org/ejbca/core/ejb/protect/TableProtect*.java" />
-            <include name="org/ejbca/core/ejb/ca/store/CertificateStoreOnlyDataSessionSession.java" />
-            <include name="org/ejbca/core/ejb/ca/store/ICertificateStoreOnlyDataSessionHome.java" />
-            <include name="org/ejbca/core/ejb/ca/store/CertificateDataBean.java" />
             <include name="org/ejbca/core/protocol/ocsp/OCSPUnidExtension.java" />
             <include name="org/ejbca/ui/web/pub/HealthCheckServlet.java" />
             <include name="org/ejbca/ui/web/pub/cluster/TextResponse.java" />
@@ -103,7 +104,46 @@
             <include name="org/ejbca/util/provider/TrustManagerFactoryImpl.java" />
             <src path="modules/ejbca-ws-cli/src-gen" />
             <src path="modules/ejbca-ws/src" />
-            <src path="${ocsp-src.gen}" />
+            <src path="${va-src.gen}" />
+            <src path="${src.java}" />
+        </javac>
+    </target>
+
+	<!-- =================================================================== -->
+    <!-- Compile cert store java sources                                     -->
+    <!-- =================================================================== -->
+    <target name="va-certstore-compile" depends="va-common-compile" if="certstore.enabled">
+        <javac destdir="${va-build}" debug="on" includeantruntime="no" encoding="iso8859-1">
+            <classpath refid="compile.classpath" />
+            <include name="org/ejbca/ui/web/protocol/CertStoreStandAlone.java" />
+            <src path="${va-src.gen}" />
+            <src path="${src.java}" />
+        </javac>
+    </target>
+
+	<!-- =================================================================== -->
+    <!-- Compile CRL store java sources                                      -->
+    <!-- =================================================================== -->
+    <target name="va-crlstore-compile" depends="va-common-compile" if="crlstore.enabled">
+        <javac destdir="${va-build}" debug="on" includeantruntime="no" encoding="iso8859-1">
+            <classpath refid="compile.classpath" />
+            <include name="org/ejbca/ui/web/protocol/CRLStoreStandAlone.java" />
+            <src path="${va-src.gen}" />
+            <src path="${src.java}" />
+        </javac>
+    </target>
+
+	<!-- =================================================================== -->
+    <!-- Compile VA common java sources                                      -->
+    <!-- =================================================================== -->
+    <target name="va-common-compile" depends="ejbca-util.jar, va-run-xdoc">
+        <javac destdir="${va-build}" debug="on" includeantruntime="no" encoding="iso8859-1">
+            <classpath refid="compile.classpath" />
+            <include name="org/ejbca/core/ejb/protect/TableProtect*.java" />
+            <include name="org/ejbca/core/ejb/ca/store/CertificateStoreOnlyDataSessionSession.java" />
+            <include name="org/ejbca/core/ejb/ca/store/ICertificateStoreOnlyDataSessionHome.java" />
+            <include name="org/ejbca/core/ejb/ca/store/CertificateDataBean.java" />
+            <src path="${va-src.gen}" />
             <src path="${src.java}" />
         </javac>
     </target>
@@ -158,9 +198,27 @@
     <!-- =================================================================== -->
     <!-- Build status part                                                                                                                             -->
     <!-- =================================================================== -->
-    <target name="status.war" depends="compile">
+    <target name="status.war" depends="compile" if="status.enabled">
         <war destfile="${statuswar}" webxml="${src.dd}/status/WEB-INF/web.xml">
             <fileset dir="${status.src}" excludes="WEB-INF/web.xml" />
+        </war>
+    </target>
+	
+    <!-- =================================================================== -->
+    <!-- Build store part                                                                                                                             -->
+    <!-- =================================================================== -->
+    <target name="certstore.war" depends="compile" if="certstore.enabled">
+        <war destfile="${certstorewar}" webxml="${src.dd}/certstore/WEB-INF/web.xml">
+            <fileset dir="${certstore.src}" excludes="WEB-INF/web.xml" />
+        </war>
+    </target>
+	
+    <!-- =================================================================== -->
+    <!-- Build store part                                                                                                                             -->
+    <!-- =================================================================== -->
+    <target name="crlstore.war" depends="compile" if="crlstore.enabled">
+        <war destfile="${crlstorewar}" webxml="${src.dd}/crlstore/WEB-INF/web.xml">
+            <fileset dir="${crlstore.src}" excludes="WEB-INF/web.xml" />
         </war>
     </target>
 	
@@ -228,9 +286,9 @@
     </target>
 		
     <!-- =================================================================== -->
-    <!-- Build ocsp health check part                                                                                                                             -->
+    <!-- Build ocsp health check part                                        -->
     <!-- =================================================================== -->
-    <target name="ocsphealthcheck.war" depends="ocsp-compile">
+    <target name="ocsphealthcheck.war" depends="va-compile">
         <war destfile="${ocsphealthcheckwar}" webxml="${ocsphealthcheck.src}/WEB-INF/web.xml">
             <fileset dir="${ocsphealthcheck.src}" excludes="WEB-INF/web.xml" />
 
@@ -238,11 +296,29 @@
     </target>	
 
     <!-- =================================================================== -->
-    <!-- Build standalone ocsp part                                          -->
+    <!-- Build standalone status part                                        -->
     <!-- =================================================================== -->
-    <target name="ocsp-war" depends="ocsp-compile">
-        <war destfile="${ocspwar}" webxml="${ocsp-src.dd}/status/WEB-INF/web.xml">
+    <target name="va-status.war" depends="va-compile" if="status.enabled">
+        <war destfile="${va-statuswar}" webxml="${va-src.dd}/status/WEB-INF/web.xml">
             <fileset dir="${status.src}" excludes="WEB-INF/web.xml" />
+        </war>
+    </target>
+
+    <!-- =================================================================== -->
+    <!-- Build standalone certstore part                                     -->
+    <!-- =================================================================== -->
+    <target name="va-certstore.war" depends="va-compile" if="certstore.enabled">
+        <war destfile="${va-certstorewar}" webxml="${va-src.dd}/certstore/WEB-INF/web.xml">
+            <fileset dir="${certstore.src}" excludes="WEB-INF/web.xml" />
+        </war>
+    </target>
+
+    <!-- =================================================================== -->
+    <!-- Build standalone crlstore part                                      -->
+    <!-- =================================================================== -->
+    <target name="va-crlstore.war" depends="va-compile" if="crlstore.enabled">
+        <war destfile="${va-crlstorewar}" webxml="${va-src.dd}/crlstore/WEB-INF/web.xml">
+            <fileset dir="${crlstore.src}" excludes="WEB-INF/web.xml" />
         </war>
     </target>
 
@@ -363,6 +439,8 @@
             <fileset dir="${src.dd}">
             	<exclude name="WEB-INF/**"/>
             	<exclude name="status/**"/>
+            	<exclude name="crlstore/**"/>
+            	<exclude name="certstore/**"/>
             	<exclude name="cmp/**"/>
             </fileset>
             <fileset dir="${build}">            	
@@ -390,21 +468,23 @@
 	
     
     <!-- =================================================================== -->
-    <!-- Build ocsp ejb part                                                    -->
+    <!-- Build VA ejb part                                                    -->
     <!-- =================================================================== -->
-    <target name="ocsp-jar" depends="ocsp-compile">
+    <target name="va.jar" depends="va-compile">
         <mkdir dir="${ocsp.hardToken.classes}"/>
-    	<copy file="${dist.dir}/ejbca-util.jar" tofile="${ocsp-dist.dir}/ejbca-ejb.jar" overwrite="true"/>
-        <jar jarfile="${ocsp-dist.dir}/ejbca-ejb.jar" update="true">
+    	<copy file="${dist.dir}/ejbca-util.jar" tofile="${va-dist.dir}/ejbca-ejb.jar" overwrite="true"/>
+        <jar jarfile="${va-dist.dir}/ejbca-ejb.jar" update="true">
             <manifest>
                 <!-- todo: autogenerate this from a fileset -->
                 <attribute name="Class-Path" value="${jar.extclasspath}" />
             </manifest>
-            <fileset dir="${ocsp-src.dd}">
+            <fileset dir="${va-src.dd}">
             	<exclude name="WEB-INF/**"/>
             	<exclude name="status/**"/>
+            	<exclude name="certstore/**"/>
+            	<exclude name="crlstore/**"/>
             </fileset>
-            <fileset dir="${ocsp-build}"/>
+            <fileset dir="${va-build}"/>
             <fileset dir="${ocsp.hardToken.classes}"/>
         	<fileset dir="${src}">
         	    <include name="intresources/*.properties"/>
@@ -535,7 +615,7 @@
 	<target name="ejbca.ear" depends="ca.ear">
 	</target>
 	
-	<target name="ca.ear" depends="jsflibs, publicweb.war, renew.war, scep.war, webdist.war, status.war, cmp.war, healthcheck.war, adminweb.war, ejbca-ejb.jar, ejbca-util.jar, ejbcaws.war, ejbcaws.client, xkms.war, xkms.client, doc.war, externalra-service">
+	<target name="ca.ear" depends="jsflibs, publicweb.war, renew.war, scep.war, webdist.war, status.war, certstore.war, crlstore.war, cmp.war, healthcheck.war, adminweb.war, ejbca-ejb.jar, ejbca-util.jar, ejbcaws.war, ejbcaws.client, xkms.war, xkms.client, doc.war, externalra-service">
 		<condition property="ejbcaws.enabled.replace-string" else="!--@ejbcaws.war@-->" value="module>&lt;web>&lt;web-uri>ejbcaws.war&lt;/web-uri>&lt;context-root>/${app.name}/ejbcaws&lt;/context-root>&lt;/web>&lt;/module>">
 			<istrue value="${ejbcaws.enabled}"/>
 		</condition>
@@ -582,10 +662,10 @@
     </target>
 
     <!-- =================================================================== -->
-    <!-- Build OCSP-ear                                                        -->
+    <!-- Build VA-ear                                                        -->
     <!-- =================================================================== -->
-    <target name="ocsp-ear" depends="ocsp-war, ocsp-jar, ocsphealthcheck.war">
-        <ear destfile="${ocspear}" appxml="${ocsp-eardd.src}/META-INF/application.xml"> 
+    <target name="va.ear" depends="va-status.war, va-certstore.war, va-crlstore.war, va.jar, ocsphealthcheck.war">
+        <ear destfile="${vaear}" appxml="${va-eardd.src}/META-INF/application.xml"> 
             <fileset dir=".">
                 <include name="${lib}/bcmail-jdk${java.ver}.jar" />
                 <include name="${lib}/bcprov-jdk${java.ver}.jar" />
@@ -597,7 +677,7 @@
                 <include name="${lib}/commons-fileupload-1.0.jar" />
                 <include name="${lib}/commons-configuration-1.5.jar" />
             </fileset>
-            <fileset dir="${ocsp-dist.dir}">
+            <fileset dir="${va-dist.dir}">
                 <include name="*-ejb.jar" />
                 <include name="*.war" />
             </fileset>
@@ -757,7 +837,7 @@
         <antcall target="j2ee:deploy" />
         <antcall target="showtime" />
     </target>
-    <target name="ocsp-deploy" depends="failinproduction-ocsp,ocsp-ear" description="Deploy the standalone OCSP reponder" >
+    <target name="ocsp-deploy" depends="failinproduction-ocsp,va.ear" description="Deploy the standalone OCSP reponder" >
         <antcall target="j2ee:deployocsp" />
         <antcall target="showtime" />
     </target>
@@ -832,7 +912,7 @@
 		    	<exclude name="**/CVS/**" />
 		    	<exclude name="tmp/**" />
 		    	<exclude name="dist/**" />
-		    	<exclude name="ocsp-dist/**" />
+		    	<exclude name="va-dist/**" />
 		    	<exclude name="bin/META_INF/**" />
 		    	<exclude name="out/**" />
 		    	<exclude name="p12*/**" />

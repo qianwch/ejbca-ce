@@ -10,35 +10,24 @@
  *  See terms of license at gnu.org.                                     *
  *                                                                       *
  *************************************************************************/
-
 package org.ejbca.core.protocol.ocsp;
 
-import org.ejbca.util.IPatternLogger;
-
 /**
- * OCSP Specific constants used by both {@link org.ejbca.core.protocol.ocsp.IAuditLogger} and {@link org.ejbca.core.protocol.ocsp.ITransactionLogger}
+ * Factory for creating a {@link CertificateCache} object to be used by the OCSP responder of the CA.
+ * 
+ * @author primelars
  * @version $Id$
- *
+ * 
  */
-public interface IOCSPLogger extends IPatternLogger {
+public class CertificateCacheFactory {
+    private static CertificateCache instance = null;
     /**
-     * Hash of the issuer DN
+     * @return  {@link CertificateCache} for the CA.
      */
-    static final String ISSUER_NAME_HASH = "ISSUER_NAME_HASH";
-    /**
-     * The public key of the issuer of a requested certificate
-     */
-    static final String ISSUER_KEY = "ISSUER_KEY";
-    /**
-     * Serial number of the requested certificate.
-     */
-    static final String SERIAL_NOHEX = "SERIAL_NOHEX";
-    /**
-     * IP of the client making the request
-     */
-    static final String CLIENT_IP = "CLIENT_IP";
-    /**
-     * The status of the OCSP-Request. SUCCESSFUL = 0;MALFORMED_REQUEST = 1;INTERNAL_ERROR = 2;
-     */
-    static final String STATUS = "STATUS";
+    public static synchronized CertificateCache getInstance() {
+        if (instance == null) {
+            instance = new CertificateCache(new CertStore());
+        }
+        return instance;
+    }
 }

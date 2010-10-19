@@ -21,7 +21,6 @@ import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -78,6 +77,7 @@ import org.ejbca.core.protocol.ocsp.IOCSPExtension;
 import org.ejbca.core.protocol.ocsp.IOCSPLogger;
 import org.ejbca.core.protocol.ocsp.ISaferAppenderListener;
 import org.ejbca.core.protocol.ocsp.ITransactionLogger;
+import org.ejbca.core.protocol.ocsp.OCSPData;
 import org.ejbca.core.protocol.ocsp.OCSPResponseItem;
 import org.ejbca.core.protocol.ocsp.OCSPUnidResponse;
 import org.ejbca.core.protocol.ocsp.OCSPUtil;
@@ -600,7 +600,7 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 					transactionLogger.paramPut(IPatternLogger.REPLY_TIME, ITransactionLogger.REPLY_TIME);
 					if (OcspConfiguration.getEnforceRequestSigning()) {
 						// If it verifies OK, check if it is revoked
-						final CertificateStatus status = this.data.getStatus(CertTools.getIssuerDN(signercert), CertTools.getSerialNumber(signercert));
+						final CertificateStatus status = this.data.certStore.getStatus(CertTools.getIssuerDN(signercert), CertTools.getSerialNumber(signercert));
 						// If rci == null it means the certificate does not exist in database, we then treat it as ok,
 						// because it may be so that only revoked certificates is in the (external) OCSP database.
 						if ( status.equals(CertificateStatus.REVOKED) ) {
@@ -729,10 +729,10 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 					final org.bouncycastle.ocsp.CertificateStatus certStatus;
 					transactionLogger.paramPut(ITransactionLogger.CERT_STATUS, OCSPUnidResponse.OCSP_GOOD); // it seems to be correct
                     // Check if the cacert (or the default responderid) is revoked
-                    final CertificateStatus cacertStatus = this.data.getStatus(CertTools.getIssuerDN(cacert), CertTools.getSerialNumber(cacert));
+                    final CertificateStatus cacertStatus = this.data.certStore.getStatus(CertTools.getIssuerDN(cacert), CertTools.getSerialNumber(cacert));
 					if ( !cacertStatus.equals(CertificateStatus.REVOKED) ) {
 						// Check if cert is revoked
-						final CertificateStatus status = this.data.getStatus(cacert.getSubjectDN().getName(), certId.getSerialNumber());
+						final CertificateStatus status = this.data.certStore.getStatus(cacert.getSubjectDN().getName(), certId.getSerialNumber());
 						// If we have different maxAge and untilNextUpdate for different certificate profiles, we have to fetch these
 						// values now that we have fetched the certificate status, that includes certificate profile.
                         nextUpdate = OcspConfiguration.getUntilNextUpdate(status.certificateProfileId);
@@ -803,7 +803,7 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 								if (extObj != null) {
 									// Find the certificate from the certId
 									X509Certificate cert = null;
-									cert = (X509Certificate)this.data.findCertificateByIssuerAndSerno(this.data.m_adm, cacert.getSubjectDN().getName(), certId.getSerialNumber());
+									cert = (X509Certificate)this.data.certStore.findCertificateByIssuerAndSerno(this.data.m_adm, cacert.getSubjectDN().getName(), certId.getSerialNumber());
 									if (cert != null) {
 										// Call the OCSP extension
 										Hashtable retext = extObj.process(request, cert, certStatus);

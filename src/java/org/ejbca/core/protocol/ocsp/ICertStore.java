@@ -10,32 +10,44 @@
  *  See terms of license at gnu.org.                                     *
  *                                                                       *
  *************************************************************************/
+package org.ejbca.core.protocol.ocsp;
 
-package org.ejbca.ui.web.protocol.ocsp;
+import java.math.BigInteger;
+import java.security.cert.Certificate;
+import java.util.Collection;
 
-import javax.servlet.ServletException;
-
-import org.ejbca.ui.web.protocol.OCSPData;
-import org.ejbca.ui.web.protocol.OCSPServletStandAlone.IStandAloneSession;
+import org.ejbca.core.ejb.ca.store.CertificateStatus;
+import org.ejbca.core.model.log.Admin;
 
 /**
- * Factory used to create the session.
+ * Interface to the DB
  * 
  * @author primelars
- * @version  $Id$
- * 
+ * @version $Id$
+ *
  */
-public class StandAloneSessionFactory {
-    private static IStandAloneSession instance;
+public interface ICertStore {
     /**
-     * @param ocspServletStandAlone
-     * @return The session
-     * @throws ServletException
+     * Get revocation status of a certificate
+     * @param issuerDN
+     * @param serialNumber
+     * @return the status
      */
-    public static IStandAloneSession getInstance(OCSPData data) throws ServletException {
-        if ( instance==null ) {
-            instance = new StandAloneSession(data);
-        }
-        return instance;
-    }
+    CertificateStatus getStatus(String issuerDN, BigInteger serialNumber);
+    /**
+     * Search for certificate.
+     * @param adm
+     * @param issuerDN
+     * @param serno
+     * @return the certificate
+     */
+    Certificate findCertificateByIssuerAndSerno(Admin adm, String issuerDN, BigInteger serno);
+    /**
+     * 
+     * @param adm
+     * @param type
+     * @param issuerDN
+     * @return Collection of Certificate never null
+     */
+    Collection findCertificatesByType(Admin adm, int type, String issuerDN);
 }

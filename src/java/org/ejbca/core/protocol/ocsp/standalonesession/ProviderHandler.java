@@ -11,31 +11,30 @@
  *                                                                       *
  *************************************************************************/
 
-package org.ejbca.ui.web.protocol.ocsp;
+package org.ejbca.core.protocol.ocsp.standalonesession;
+
 
 /**
- * SW implementation. No reload needed.
+ * Holds information about a provider.
+ * Used to be able to reload a provider when a HSM has stoped working.
+ * For other sub classes but {@link P11ProviderHandler} nothing is done at reload when {@link #reload()} is called.
  * 
  * @author primelars
  * @version  $Id$
  */
-class SWProviderHandler implements ProviderHandler {
-    /* (non-Javadoc)
-     * @see org.ejbca.ui.web.protocol.OCSPServletStandAloneSession.ProviderHandler#getProviderName()
+interface ProviderHandler {
+    /**
+     * Gets the name of the provider.
+     * @return the name. null if the provider is not working (reloading).
      */
-    public String getProviderName() {
-        return "BC";
-    }
-    /* (non-Javadoc)
-     * @see org.ejbca.ui.web.protocol.OCSPServletStandAlone.ProviderHandler#reload()
+    String getProviderName();
+    /**
+     * Must be called for all {@link PrivateKeyContainer} objects using this object.
+     * @param keyContainer {@link PrivateKeyContainer} to be updated at reload
      */
-    public void reload() {
-        // no use reloading a SW provider
-    }
-    /* (non-Javadoc)
-     * @see org.ejbca.ui.web.protocol.OCSPServletStandAloneSession.ProviderHandler#addKeyContainer(org.ejbca.ui.web.protocol.OCSPServletStandAloneSession.PrivateKeyContainer)
+    void addKeyContainer(PrivateKeyContainer keyContainer);
+    /**
+     * Start a threads that tries to reload the provider until it is done or does nothing if reloading does't help.
      */
-    public void addKeyContainer(PrivateKeyContainer keyContainer) {
-        // do nothing
-    }
+    void reload();
 }

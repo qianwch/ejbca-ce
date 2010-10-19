@@ -71,7 +71,7 @@ install: build
 	cp -r bin/                         debian/tmp/usr/share/ejbca/
 	cp -r lib/                         debian/tmp/usr/share/ejbca/
 	cp -r dist/                        debian/tmp/usr/share/ejbca/
-	cp -r ocsp-dist/                   debian/tmp/usr/share/ejbca/
+	cp -r va-dist/                     debian/tmp/usr/share/ejbca/
 
 # debian specific ejbca-setup
 	cp debian/ejbca-setup              debian/tmp/usr/share/ejbca/

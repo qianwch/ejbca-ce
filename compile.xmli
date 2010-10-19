@@ -112,9 +112,9 @@ xkms.serviceport                = ${xkms.serviceport}
         <tstamp/>
         <!-- Create the build directory structure used by compile -->
         <mkdir dir="${build}"/>
-        <mkdir dir="${ocsp-build}"/>
+        <mkdir dir="${va-build}"/>
         <mkdir dir="${dist.dir}/${lib}"/>
-        <mkdir dir="${ocsp-dist.dir}"/>
+        <mkdir dir="${va-dist.dir}"/>
         <mkdir dir="tmp/xkms/gen-classes/server"/>
     </target>
 
@@ -124,14 +124,14 @@ xkms.serviceport                = ${xkms.serviceport}
     <target name="clean">
         <!-- Delete the ${build} and ${dist.dir} directory trees -->
         <delete dir="${build}" />
-        <delete dir="${ocsp-build}" />
+        <delete dir="${va-build}" />
         <delete dir="${dist.dir}" />
-        <delete dir="${ocsp-dist.dir}" />
+        <delete dir="${va-dist.dir}" />
         <delete dir="${clientToolBox-dist.dir}" />
         <delete dir="${src.gen}" />
         <delete dir="${src.dd}" />
-        <delete dir="${ocsp-src.gen}" />
-        <delete dir="${ocsp-src.dd}" />
+        <delete dir="${va-src.gen}" />
+        <delete dir="${va-src.dd}" />
         <delete dir="${clientToolBox.build}" />
         <delete dir="${apidoc}" />
         <delete dir="${tmp}"/>
@@ -150,7 +150,9 @@ xkms.serviceport                = ${xkms.serviceport}
             <classpath refid="compile.classpath" />
             <exclude name="**/appserver/**" />
             <exclude name="org/ejbca/ui/web/protocol/OCSPServletStandAlone.java" />
-            <exclude name="org/ejbca/ui/web/protocol/ocsp/**" />
+            <exclude name="org/ejbca/ui/web/protocol/CertStoreStandAlone.java" />
+            <exclude name="org/ejbca/ui/web/protocol/CRLStoreStandAlone.java" />
+            <exclude name="org/ejbca/core/protocol/ocsp/**" />
             <exclude name="org/ejbca/ui/web/pub/cluster/ExtOCSPHealthCheck.java" />
             <!--
             	Don't include stuff that relies on JPA until EJBCA 4
@@ -364,7 +366,7 @@ xkms.serviceport                = ${xkms.serviceport}
     <!-- =================================================================== -->
     <!-- Autogenerate all ejb interfaces and deployment descriptors for standalone OCSP responder         -->
     <!-- =================================================================== -->
-    <target name="ocsp-run-xdoc" depends="init, preprocess" unless="precompiled">
+    <target name="va-run-xdoc" depends="init, preprocess" unless="precompiled">
         <taskdef name="ejbdoclet" classname="xdoclet.modules.ejb.EjbDocletTask">
             <classpath refid="xdoclet.classpath" />
         </taskdef>
@@ -373,7 +375,7 @@ xkms.serviceport                = ${xkms.serviceport}
         </taskdef>
     	<!-- Copy XDoclet merge files to handle database specific settings -->
         <ejb-merge-copy database="${database.name}" overwrite="true" />
-        <ejbdoclet force="false" destdir="${ocsp-src.gen}" ejbspec="2.0" excludedtags="@version,@author">
+        <ejbdoclet force="false" destdir="${va-src.gen}" ejbspec="2.0" excludedtags="@version,@author">
             <fileset dir="${src.java}">
                 <include name="**/CertificateDataBean.java" />
                 <include name="**/LocalCertificateStoreOnlyDataSessionBean.java" />
@@ -386,18 +388,18 @@ xkms.serviceport                = ${xkms.serviceport}
             <localhomeinterface />
             <entitypk />
             <session />
-            <deploymentdescriptor destdir="${ocsp-src.dd}/META-INF" validatexml="false" />
+            <deploymentdescriptor destdir="${va-src.dd}/META-INF" validatexml="false" />
              <jboss version="3.2" 
                 unauthenticatedPrincipal="nobody" 
                 xmlencoding="UTF-8" 
                 validatexml="false" 
-                destdir="${ocsp-src.dd}/META-INF" 
+                destdir="${va-src.dd}/META-INF" 
                 mergeDir="${ejbdd.src}/merge"
                 datasource="${datasource.jndi-name-prefix}${datasource.jndi-name}" 
                 datasourcemapping="${datasource.mapping}" />
             <weblogic version="8.1" 
                 xmlencoding="UTF-8" 
-                destdir="${ocsp-src.dd}/META-INF" 
+                destdir="${va-src.dd}/META-INF" 
                 validatexml="false" 
                 datasource="${datasource.jndi-name}" 
                 persistence="weblogic"
@@ -405,20 +407,22 @@ xkms.serviceport                = ${xkms.serviceport}
 <!--            
             <sunone version="7.0" 
                 xmlencoding="UTF-8" 
-                destdir="${ocsp-src.dd}/META-INF" 
+                destdir="${va-src.dd}/META-INF" 
                 validatexml="false" />
             <jonas version="3.0" 
                 xmlencoding="UTF-8" 
-                destdir="${ocsp-src.dd}/META-INF" 
+                destdir="${va-src.dd}/META-INF" 
                 validatexml="false" /> 
 -->                
         </ejbdoclet>
-        <webdoclet force="true" destdir="${ocsp-src.gen}" excludedtags="@version,@author">
+        <webdoclet force="true" destdir="${va-src.gen}" excludedtags="@version,@author">
             <fileset dir="${src.java}">
                 <include name="**/protocol/OCSPServletStandAlone.java" />
                 <include name="**/protocol/OCSPServletBase.java" />
+                <include name="**/protocol/CRLStoreStandAlone.java" />
+                <include name="**/protocol/CertStoreStandAlone.java" />
             </fileset>
-            <deploymentdescriptor destdir="${ocsp-src.dd}/status/WEB-INF"
+            <deploymentdescriptor destdir="${va-src.dd}/status/WEB-INF"
              servletspec="2.3"
              sessiontimeout="30" 
              description="OCSP responder standalone" 

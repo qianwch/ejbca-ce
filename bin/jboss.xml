@@ -182,7 +182,7 @@
 		<chmod file="${jboss.farm.dir}/ejbca-ds.xml" perm="600"/>
 		
     	<copy todir="${jboss.farm.dir}">
-    		<fileset dir="${ocsp-dist.dir}" includes="ejbca.ear"/>
+    		<fileset dir="${va-dist.dir}" includes="ejbca.ear"/>
     	</copy>
 		<chmod file="${jboss.farm.dir}/ejbca.ear" perm="600"/>
 	</target>

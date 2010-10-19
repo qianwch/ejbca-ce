@@ -81,7 +81,7 @@
     <property name="tmp" value="./tmp" />
     <property name="bin" value="./${tmp}/bin" />
     <property name="build" value="${bin}/classes" />
-    <property name="ocsp-build" location="${bin}/ocsp-classes"/>
+    <property name="va-build" location="${bin}/va-classes"/>
     <property name="clientToolBox.build" location="${bin}/clientToolBox-classes" />
     <property name="lib" value="lib" />
     <property name="preprocessed" value="${tmp}/preprocessed"/>
@@ -99,13 +99,13 @@
     <property name="src.java" value="${src}/java" />
     <property name="src.gen" value="${bin}/gensrc" />
     <property name="src.dd" value="${bin}/dd" />
-    <property name="ocsp-src.gen" value="${bin}/ocsp-gensrc" />
-    <property name="ocsp-src.dd" value="${bin}/ocsp-dd" />
+    <property name="va-src.gen" value="${bin}/va-gensrc" />
+    <property name="va-src.dd" value="${bin}/va-dd" />
     
     <property name="test.dir" value="${bin}/junit" />
     <property name="test.src.dir" location="${src}/test" />
     <property name="dist.dir" location="dist" />
-    <property name="ocsp-dist.dir" location="ocsp-dist" />
+    <property name="va-dist.dir" location="va-dist" />
     <property name="clientToolBox-dist.dir" location="clientToolBox-dist" />
 	
     <property name="hwtoken_classes" value="hwtoken"/>
@@ -123,7 +123,13 @@
 
     <property name="status.src" value="${src}/publicweb/status" />
     <property name="statuswar" value="${dist.dir}/status.war" />
-	
+
+    <property name="certstore.src" value="${src}/publicweb/certstore" />
+    <property name="certstorewar" value="${dist.dir}/certstore.war" />
+
+    <property name="crlstore.src" value="${src}/publicweb/crlstore" />
+    <property name="crlstorewar" value="${dist.dir}/crlstore.war" />
+
     <property name="doc.src" value="tmp/htdocs" />
     <property name="docwar" value="${dist.dir}/doc.war" />
 	
@@ -139,9 +145,11 @@
     <property name="ejbcawswar" value="${dist.dir}/ejbcaws.war" />
 
     <property name="ocsphealthcheck.src" value="${src}/publicweb/ocsphealthcheck" />
-    <property name="ocsphealthcheckwar" value="${ocsp-dist.dir}/ocsphealthcheck.war" />
+    <property name="ocsphealthcheckwar" value="${va-dist.dir}/ocsphealthcheck.war" />
 	
-    <property name="ocspwar" value="${ocsp-dist.dir}/status.war" />
+    <property name="va-statuswar" value="${va-dist.dir}/status.war" />
+
+    <property name="va-storewar" value="${va-dist.dir}/store.war" />
 
     <property name="adminweb.src" value="${src}/adminweb" />
     <property name="adminweb.build" value="${tmp}/adminweb.war" />    
@@ -159,9 +167,9 @@
     <property name="ejbdd.src" value="${deploy.src}/ejb" />
     <property name="webdd.src" value="${deploy.src}/web" />
     <property name="eardd.src" value="${deploy.src}/ear" />
-    <property name="ocsp-eardd.src" value="${deploy.src}/ocsp-ear" />
+    <property name="va-eardd.src" value="${deploy.src}/ocsp-ear" />
     <property name="caear" value="${dist.dir}/${app.name}.ear" />
-    <property name="ocspear" value="${ocsp-dist.dir}/${app.name}.ear" />
+    <property name="vaear" value="${va-dist.dir}/${app.name}.ear" />
 
 	<property name="cmptcpservice.name" value="cmptcpservice.jar" />
     <property name="cmptcpservice.build" value="${tmp}/${cmptcpservice.name}" />	

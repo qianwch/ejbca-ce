@@ -13,19 +13,11 @@
 
 package org.ejbca.ui.web.protocol;
 
-import java.math.BigInteger;
-import java.security.cert.Certificate;
-
 import javax.ejb.EJBException;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
 
 import org.ejbca.core.ejb.ServiceLocator;
 import org.ejbca.core.ejb.ca.sign.ISignSessionLocal;
 import org.ejbca.core.ejb.ca.sign.ISignSessionLocalHome;
-import org.ejbca.core.ejb.ca.store.CertificateStatus;
-import org.ejbca.core.ejb.ca.store.ICertificateStoreSessionLocal;
-import org.ejbca.core.ejb.ca.store.ICertificateStoreSessionLocalHome;
 import org.ejbca.core.model.ca.caadmin.CADoesntExistsException;
 import org.ejbca.core.model.ca.caadmin.extendedcaservices.ExtendedCAServiceNotActiveException;
 import org.ejbca.core.model.ca.caadmin.extendedcaservices.ExtendedCAServiceRequestException;
@@ -33,8 +25,10 @@ import org.ejbca.core.model.ca.caadmin.extendedcaservices.IllegalExtendedCAServi
 import org.ejbca.core.model.ca.caadmin.extendedcaservices.OCSPCAServiceRequest;
 import org.ejbca.core.model.ca.caadmin.extendedcaservices.OCSPCAServiceResponse;
 import org.ejbca.core.model.log.Admin;
+import org.ejbca.core.protocol.ocsp.CertStore;
+import org.ejbca.core.protocol.ocsp.CertificateCacheFactory;
 import org.ejbca.core.protocol.ocsp.CertificateCache;
-import org.ejbca.core.protocol.ocsp.CertificateCacheInternal;
+import org.ejbca.core.protocol.ocsp.OCSPData;
 
 /** 
  * Servlet implementing server side of the Online Certificate Status Protocol (OCSP)
@@ -82,54 +76,28 @@ public class OCSPServlet extends OCSPServletBase {
     private ISignSessionLocal m_signsession = null;
     
     public OCSPServlet() {
-        super(new LocalOCSPData());
+        super(new OCSPData(new CertStore()));
     }
     
     
     private synchronized ISignSessionLocal getSignSession(){
-    	if(m_signsession == null){	
+    	if(this.m_signsession == null){	
     		try {
     			ISignSessionLocalHome signhome = (ISignSessionLocalHome)ServiceLocator.getInstance().getLocalHome(ISignSessionLocalHome.COMP_NAME);
-    			m_signsession = signhome.create();
+    			this.m_signsession = signhome.create();
     		}catch(Exception e){
     			throw new EJBException(e);      	  	    	  	
     		}
     	}
-    	return m_signsession;
+    	return this.m_signsession;
     }
 
     protected OCSPCAServiceResponse extendedService(Admin adm, int caid, OCSPCAServiceRequest request) throws CADoesntExistsException, ExtendedCAServiceRequestException, IllegalExtendedCAServiceRequestException, ExtendedCAServiceNotActiveException {
         return (OCSPCAServiceResponse)getSignSession().extendedService(adm, caid, request);
     }
-    static private class LocalOCSPData extends OCSPData {
-        private ICertificateStoreSessionLocal m_certStore = null;
-        private synchronized ICertificateStoreSessionLocal getStoreSession(){
-            if(m_certStore == null){    
-                try {
-                    ICertificateStoreSessionLocalHome storehome = (ICertificateStoreSessionLocalHome)ServiceLocator.getInstance().getLocalHome(ICertificateStoreSessionLocalHome.COMP_NAME);
-                    m_certStore = storehome.create();
-                }catch(Exception e){
-                    throw new EJBException(e);
-                }
-            }
-            return m_certStore;
-        }
-        /* (non-Javadoc)
-         * @see org.ejbca.ui.web.protocol.OCSPData#findCertificateByIssuerAndSerno(org.ejbca.core.model.log.Admin, java.lang.String, java.math.BigInteger)
-         */
-        protected Certificate findCertificateByIssuerAndSerno(Admin adm, String issuer, BigInteger serno) {
-            return getStoreSession().findCertificateByIssuerAndSerno(adm, issuer, serno);
-        }
-        /* (non-Javadoc)
-         * @see org.ejbca.ui.web.protocol.OCSPData#getStatus(java.lang.String, java.math.BigInteger)
-         */
-        public CertificateStatus getStatus(String name, BigInteger serialNumber) {
-            return getStoreSession().getStatus(name, serialNumber);
-        }
-    }
 
     protected CertificateCache createCertificateCache() {
-		return CertificateCacheInternal.getInstance();
+		return CertificateCacheFactory.getInstance();
 	}
 
     /* (non-Javadoc)

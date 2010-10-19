@@ -16,7 +16,6 @@ package org.ejbca.core.protocol.ocsp;
 import java.math.BigInteger;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -59,39 +58,47 @@ public class CertificateCache {
     private HashMap certsFromSHA1CertId = null;
     
 	/** The interval in milliseconds on which new OCSP signing certs are loaded. */
-	private int m_valid_time;
+	final private int m_valid_time = OcspConfiguration.getSigningCertsValidTime();
 	
 	/** A collection that can be used to JUnit test this class. Set responder type to OCSPUtil.RESPONDER_TYPE_TEST
 	 * and give a Collection of CA certificate in the initialization properties.
 	 */
-	private Collection testcerts = null;
-	
+	final private Collection testcerts;
+
+	final private ICertStore certStore;
+
 	/** Cache time counter, set and used by loadCertificates */
 	private long m_certValidTo = 0;
 	
 	/** Admin for calling session beans in EJBCA */
-	private Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+	final private Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
 
 	/** We need an object to synchronize around when rebuilding and reading the cache. When rebuilding the cache no thread
 	 * can be allowed to read the cache, since the cache will be in an inconsistent state. In the normal case we want to use 
 	 * as fast objects as possible (HashMap) for reading fast.
 	 */
-	private Object rebuildlock = new Object ();
+	final private Object rebuildlock = new Object ();
 
-    /**  
-     * @param testcerts can be set to null or be a collection of test certificates
+    /**
+     * @param _certStore The DB store to be used.
      */
-	protected CertificateCache(Collection testcerts) {
-		// Default values
-		m_valid_time = OcspConfiguration.getSigningCertsValidTime();
-		if (testcerts == null) {
-			this.testcerts = new ArrayList();
-		} else {
-			this.testcerts = testcerts;
-		}
-		loadCertificates();
-	}    
-	
+    CertificateCache(ICertStore _certStore) {
+        // Default values
+        this.testcerts = null;
+        this.certStore = _certStore;
+        loadCertificates();
+    }    
+    
+    /**  
+     * @param _testcerts can be set to null or be a collection of test certificates
+     */
+    CertificateCache(Collection _testcerts) {
+        // Default values
+        this.certStore = null;
+        this.testcerts = _testcerts;
+        loadCertificates();
+    }    
+    
     /** Returns a certificate from the cache. The latest issued certificate for a subjectDN is returned, if more than one exists for this subjectDN in the cache.
      * 
      * @param subjectDN the subjectDN of the certificate requested.
@@ -328,9 +335,11 @@ public class CertificateCache {
      * @param issuerDN
      * @return Collection of Certificate never null
      */
-    protected Collection findCertificatesByType(Admin adm, int type, String issuerDN) {
-    	// Use classes CertificateCacheStandalone or CertificateCacheInternal for non-test caches
-    	return testcerts;
+    private Collection findCertificatesByType(Admin adm, int type, String issuerDN) {
+        if ( this.certStore==null ) {
+            // Use classes CertificateCacheStandalone or CertificateCacheInternal for non-test caches
+            return this.testcerts;
+        }
+        return this.certStore.findCertificatesByType(adm, type, issuerDN);
     }
-
 }

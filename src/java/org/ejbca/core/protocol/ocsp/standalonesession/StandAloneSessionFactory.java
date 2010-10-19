@@ -11,31 +11,31 @@
  *                                                                       *
  *************************************************************************/
 
-package org.ejbca.ui.web.protocol.ocsp;
+package org.ejbca.core.protocol.ocsp.standalonesession;
+
+import javax.servlet.ServletException;
+
+import org.ejbca.core.protocol.ocsp.OCSPData;
+import org.ejbca.ui.web.protocol.OCSPServletStandAlone.IStandAloneSession;
 
 /**
- * Card implementation. No reload needed.
+ * Factory used to create the session.
  * 
  * @author primelars
  * @version  $Id$
+ * 
  */
-class CardProviderHandler implements ProviderHandler {
-    /* (non-Javadoc)
-     * @see org.ejbca.ui.web.protocol.OCSPServletStandAloneSession.ProviderHandler#getProviderName()
+public class StandAloneSessionFactory {
+    private static IStandAloneSession instance;
+    /**
+     * @param ocspServletStandAlone
+     * @return The session
+     * @throws ServletException
      */
-    public String getProviderName() {
-        return "PrimeKey";
-    }
-    /* (non-Javadoc)
-     * @see org.ejbca.ui.web.protocol.OCSPServletStandAloneSession.ProviderHandler#reload()
-     */
-    public void reload() {
-        // not needed to reload.
-    }
-    /* (non-Javadoc)
-     * @see org.ejbca.ui.web.protocol.OCSPServletStandAloneSession.ProviderHandler#addKeyContainer(org.ejbca.ui.web.protocol.OCSPServletStandAloneSession.PrivateKeyContainer)
-     */
-    public void addKeyContainer(PrivateKeyContainer keyContainer) {
-        // do nothing
+    public static IStandAloneSession getInstance(OCSPData data) throws ServletException {
+        if ( instance==null ) {
+            instance = new StandAloneSession(data);
+        }
+        return instance;
     }
 }
