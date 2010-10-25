@@ -88,17 +88,23 @@
     <!-- =================================================================== -->
     <target name="va-compile" depends="va-status-compile, va-certstore-compile, va-crlstore-compile"/>
 
+    <path id="va-compile.classpath">
+        <path refid="ext.classpath" />
+        <fileset dir="lib" includes="bcprov-jdk${java.ver}.jar"/>
+        <fileset dir="lib" includes="*.jar" excludes="bc*.jar"/>
+        <path refid="j2ee.classpath" />
+    </path>
 	<!-- =================================================================== -->
     <!-- Compile ocsp resonder java sources                                  -->
     <!-- =================================================================== -->
     <target name="va-status-compile" depends="va-common-compile" if="status.enabled">
         <javac destdir="${va-build}" debug="on" includeantruntime="no" encoding="iso8859-1">
-            <classpath refid="compile.classpath" />
+            <classpath refid="va-compile.classpath" />
             <include name="org/ejbca/ui/web/protocol/OCSPServletStandAlone.java" />
             <include name="org/ejbca/core/protocol/ocsp/OCSPUnidExtension.java" />
             <include name="org/ejbca/ui/web/pub/HealthCheckServlet.java" />
             <include name="org/ejbca/ui/web/pub/cluster/TextResponse.java" />
-            <include name="org/ejbca/ui/web/pub/cluster/ExtOCSPHealthCheck.java" />
+            <include name="org/ejbca/ui/web/pub/cluster/VerificationAuthorityHealthCheck.java" />
             <include name="org/ejbca/core/protocol/ws/client/ejbcawsracli.java" />
             <include name="org/ejbca/core/protocol/ws/client/gen/*.java" />
             <include name="org/ejbca/util/provider/TrustManagerFactoryImpl.java" />
@@ -114,7 +120,7 @@
     <!-- =================================================================== -->
     <target name="va-certstore-compile" depends="va-common-compile" if="certstore.enabled">
         <javac destdir="${va-build}" debug="on" includeantruntime="no" encoding="iso8859-1">
-            <classpath refid="compile.classpath" />
+            <classpath refid="va-compile.classpath" />
             <include name="org/ejbca/ui/web/protocol/CertStoreStandAlone.java" />
             <src path="${va-src.gen}" />
             <src path="${src.java}" />
@@ -126,7 +132,7 @@
     <!-- =================================================================== -->
     <target name="va-crlstore-compile" depends="va-common-compile" if="crlstore.enabled">
         <javac destdir="${va-build}" debug="on" includeantruntime="no" encoding="iso8859-1">
-            <classpath refid="compile.classpath" />
+            <classpath refid="va-compile.classpath" />
             <include name="org/ejbca/ui/web/protocol/CRLStoreStandAlone.java" />
             <src path="${va-src.gen}" />
             <src path="${src.java}" />
@@ -136,7 +142,7 @@
 	<!-- =================================================================== -->
     <!-- Compile VA common java sources                                      -->
     <!-- =================================================================== -->
-    <target name="va-common-compile" depends="ejbca-util.jar, va-run-xdoc">
+    <target name="va-common-compile" depends="va-run-xdoc">
         <javac destdir="${va-build}" debug="on" includeantruntime="no" encoding="iso8859-1">
             <classpath refid="compile.classpath" />
             <include name="org/ejbca/core/ejb/protect/TableProtect*.java" />
@@ -288,9 +294,9 @@
     <!-- =================================================================== -->
     <!-- Build ocsp health check part                                        -->
     <!-- =================================================================== -->
-    <target name="ocsphealthcheck.war" depends="va-compile">
-        <war destfile="${ocsphealthcheckwar}" webxml="${ocsphealthcheck.src}/WEB-INF/web.xml">
-            <fileset dir="${ocsphealthcheck.src}" excludes="WEB-INF/web.xml" />
+    <target name="vahealthcheck.war" depends="va-compile">
+        <war destfile="${vahealthcheckwar}" webxml="${vahealthcheck.src}/WEB-INF/web.xml">
+            <fileset dir="${vahealthcheck.src}" excludes="WEB-INF/web.xml" />
 
         </war>
     </target>	
@@ -472,7 +478,6 @@
     <!-- =================================================================== -->
     <target name="va.jar" depends="va-compile">
         <mkdir dir="${ocsp.hardToken.classes}"/>
-    	<copy file="${dist.dir}/ejbca-util.jar" tofile="${va-dist.dir}/ejbca-ejb.jar" overwrite="true"/>
         <jar jarfile="${va-dist.dir}/ejbca-ejb.jar" update="true">
             <manifest>
                 <!-- todo: autogenerate this from a fileset -->
@@ -664,7 +669,7 @@
     <!-- =================================================================== -->
     <!-- Build VA-ear                                                        -->
     <!-- =================================================================== -->
-    <target name="va.ear" depends="va-status.war, va-certstore.war, va-crlstore.war, va.jar, ocsphealthcheck.war">
+    <target name="va.ear" depends="va-status.war, va-certstore.war, va-crlstore.war, va.jar, vahealthcheck.war">
         <ear destfile="${vaear}" appxml="${va-eardd.src}/META-INF/application.xml"> 
             <fileset dir=".">
                 <include name="${lib}/bcmail-jdk${java.ver}.jar" />

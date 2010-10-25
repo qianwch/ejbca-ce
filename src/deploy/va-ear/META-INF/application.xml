@@ -18,8 +18,8 @@
     </module>
     <module>
         <web>
-            <web-uri>ocsphealthcheck.war</web-uri>
-            <context-root>/@ejbca@/publicweb/ocsphealthcheck</context-root>
+            <web-uri>vahealthcheck.war</web-uri>
+            <context-root>/@ejbca@/publicweb/vahealthcheck</context-root>
         </web>
     </module>
 </application>

@@ -153,7 +153,7 @@ xkms.serviceport                = ${xkms.serviceport}
             <exclude name="org/ejbca/ui/web/protocol/CertStoreStandAlone.java" />
             <exclude name="org/ejbca/ui/web/protocol/CRLStoreStandAlone.java" />
             <exclude name="org/ejbca/core/protocol/ocsp/**" />
-            <exclude name="org/ejbca/ui/web/pub/cluster/ExtOCSPHealthCheck.java" />
+            <exclude name="org/ejbca/ui/web/pub/cluster/VerificationAuthorityHealthCheck.java" />
             <!--
             	Don't include stuff that relies on JPA until EJBCA 4
             -->
@@ -545,8 +545,8 @@ xkms.serviceport                = ${xkms.serviceport}
 	    -->
 		<replace file="${healthcheck.src}/WEB-INF/web.xml" token="@datasource.jndi-name-prefix@" value="${datasource.jndi-name-prefix}"/>	
 		<replace file="${healthcheck.src}/WEB-INF/web.xml" token="@datasource.jndi-name@" value="${datasource.jndi-name}"/>	
-		<replace file="${ocsphealthcheck.src}/WEB-INF/web.xml" token="@datasource.jndi-name-prefix@" value="${datasource.jndi-name-prefix}"/>	
-		<replace file="${ocsphealthcheck.src}/WEB-INF/web.xml" token="@datasource.jndi-name@" value="${datasource.jndi-name}"/>	
+		<replace file="${vahealthcheck.src}/WEB-INF/web.xml" token="@datasource.jndi-name-prefix@" value="${datasource.jndi-name-prefix}"/>	
+		<replace file="${vahealthcheck.src}/WEB-INF/web.xml" token="@datasource.jndi-name@" value="${datasource.jndi-name}"/>	
 
 		<!-- 
 		  Copy the correct jndi settings for the selected application server 

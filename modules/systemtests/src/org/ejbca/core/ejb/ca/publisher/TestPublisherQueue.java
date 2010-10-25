@@ -24,7 +24,7 @@ import junit.framework.TestCase;
 import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.ca.crl.RevokedCertInfo;
 import org.ejbca.core.model.ca.publisher.CustomPublisherContainer;
-import org.ejbca.core.model.ca.publisher.ExternalOCSPPublisher;
+import org.ejbca.core.model.ca.publisher.VerificationAuthorityPublisher;
 import org.ejbca.core.model.ca.publisher.PublisherExistsException;
 import org.ejbca.core.model.ca.publisher.PublisherQueueData;
 import org.ejbca.core.model.ca.publisher.PublisherQueueVolatileData;
@@ -143,7 +143,7 @@ public class TestPublisherQueue extends TestCase {
         ret = false;
 		try {
             CustomPublisherContainer publisher = new CustomPublisherContainer();
-            publisher.setClassPath(ExternalOCSPPublisher.class.getName());
+            publisher.setClassPath(VerificationAuthorityPublisher.class.getName());
 		    // We use a datasource that we know don't exist, so we know publishing will fail
             publisher.setPropertyData("dataSource java:/NoExist234DS");
             publisher.setDescription("Used in Junit Test, Remove this one");
@@ -182,7 +182,7 @@ public class TestPublisherQueue extends TestCase {
         ret = false;
 		try {
             CustomPublisherContainer publisher = new CustomPublisherContainer();
-            publisher.setClassPath(ExternalOCSPPublisher.class.getName());
+            publisher.setClassPath(VerificationAuthorityPublisher.class.getName());
 		    // We use a datasource that we know don't exist, so we know publishing will fail
             publisher.setPropertyData("dataSource java:/EjbcaDS");
             publisher.setDescription("Used in Junit Test, Remove this one");
@@ -217,7 +217,7 @@ public class TestPublisherQueue extends TestCase {
         ret = false;
 		try {
 			CustomPublisherContainer publisher = new CustomPublisherContainer();
-            publisher.setClassPath(ExternalOCSPPublisher.class.getName());
+            publisher.setClassPath(VerificationAuthorityPublisher.class.getName());
 		    // We use the default EjbcaDS datasource here, because it probably exists during our junit test run
             publisher.setPropertyData("dataSource java:/EjbcaDS");
             publisher.setDescription("Used in Junit Test, Remove this one");

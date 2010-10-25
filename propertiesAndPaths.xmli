@@ -50,6 +50,8 @@
     <property file="conf/jaxws.properties" />
     <property file="conf/xkms.properties" />
     <property file="conf/externalra.properties" />
+    <property file="conf/va.properties" />
+    <property file="conf/va-publisher.properties" />
 
     <!--
         Start setting default values and classpaths etc here
@@ -144,8 +146,8 @@
 	<property name="ejbcaws.build" value="${tmp}/ejbcaws.war" />  
     <property name="ejbcawswar" value="${dist.dir}/ejbcaws.war" />
 
-    <property name="ocsphealthcheck.src" value="${src}/publicweb/ocsphealthcheck" />
-    <property name="ocsphealthcheckwar" value="${va-dist.dir}/ocsphealthcheck.war" />
+    <property name="vahealthcheck.src" value="${src}/publicweb/vahealthcheck" />
+    <property name="vahealthcheckwar" value="${va-dist.dir}/vahealthcheck.war" />
 	
     <property name="va-statuswar" value="${va-dist.dir}/status.war" />
     <property name="va-certstorewar" value="${va-dist.dir}/certstore.war" />
@@ -167,7 +169,7 @@
     <property name="ejbdd.src" value="${deploy.src}/ejb" />
     <property name="webdd.src" value="${deploy.src}/web" />
     <property name="eardd.src" value="${deploy.src}/ear" />
-    <property name="va-eardd.src" value="${deploy.src}/ocsp-ear" />
+    <property name="va-eardd.src" value="${deploy.src}/va-ear" />
     <property name="caear" value="${dist.dir}/${app.name}.ear" />
     <property name="vaear" value="${va-dist.dir}/${app.name}.ear" />
 

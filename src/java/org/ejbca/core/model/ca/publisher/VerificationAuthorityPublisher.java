@@ -42,15 +42,15 @@ import org.ejbca.util.JDBCUtil;
  * @version $Id$
  *
  */
-public class ExternalOCSPPublisher extends BasePublisher implements ICustomPublisher {
+public class VerificationAuthorityPublisher extends BasePublisher implements ICustomPublisher {
 
-    private static final Logger log = Logger.getLogger(ExternalOCSPPublisher.class);
+    private static final Logger log = Logger.getLogger(VerificationAuthorityPublisher.class);
     /** Internal localization of logs and errors */
     private static final InternalResources intres = InternalResources.getInstance();
     
     public static final float LATEST_VERSION = 1;
     
-    public static final int TYPE_EXTOCSPPUBLISHER = 5;
+    public static final int TYPE_VAPUBLISHER = 5;
     
     protected static final String DATASOURCE 				= "dataSource";
     protected static final String PROTECT 					= "protect";
@@ -65,9 +65,9 @@ public class ExternalOCSPPublisher extends BasePublisher implements ICustomPubli
     /**
      * 
      */
-    public ExternalOCSPPublisher() {
+    public VerificationAuthorityPublisher() {
         super();
-        data.put(TYPE, new Integer(TYPE_EXTOCSPPUBLISHER));
+        data.put(TYPE, new Integer(TYPE_VAPUBLISHER));
         setDataSource(DEFAULT_DATASOURCE);
         setProtect(DEFAULT_PROTECT);
     }
@@ -226,14 +226,14 @@ public class ExternalOCSPPublisher extends BasePublisher implements ICustomPubli
     	    		}
             		fail = false;    				
     			} catch (Exception ue) {
-    				String lmsg = intres.getLocalizedMessage("publisher.errorextocsppubl", prep.getInfoString());
+    				String lmsg = intres.getLocalizedMessage("publisher.errorvapubl", prep.getInfoString());
     	            log.error(lmsg, ue);
     	            PublisherException pe = new PublisherException(lmsg);
     	            pe.initCause(ue);
     	            throw pe;				    				
     			}
 			} else {
-				String lmsg = intres.getLocalizedMessage("publisher.errorextocsppubl", prep.getInfoString());
+				String lmsg = intres.getLocalizedMessage("publisher.errorvapubl", prep.getInfoString());
 	            log.error(lmsg, e);
 	            PublisherException pe = new PublisherException(lmsg);
 	            pe.initCause(e);
@@ -292,7 +292,7 @@ public class ExternalOCSPPublisher extends BasePublisher implements ICustomPubli
     }
 
 	public Object clone() throws CloneNotSupportedException {
-		ExternalOCSPPublisher clone = new ExternalOCSPPublisher();
+		VerificationAuthorityPublisher clone = new VerificationAuthorityPublisher();
 		HashMap clonedata = (HashMap) clone.saveData();
 
 		Iterator i = (data.keySet()).iterator();

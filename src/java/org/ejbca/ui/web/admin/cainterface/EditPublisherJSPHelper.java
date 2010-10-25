@@ -23,7 +23,7 @@ import org.ejbca.core.model.authorization.AuthorizationDeniedException;
 import org.ejbca.core.model.ca.publisher.ActiveDirectoryPublisher;
 import org.ejbca.core.model.ca.publisher.BasePublisher;
 import org.ejbca.core.model.ca.publisher.CustomPublisherContainer;
-import org.ejbca.core.model.ca.publisher.ExternalOCSPPublisher;
+import org.ejbca.core.model.ca.publisher.VerificationAuthorityPublisher;
 import org.ejbca.core.model.ca.publisher.LdapPublisher;
 import org.ejbca.core.model.ca.publisher.LdapSearchPublisher;
 import org.ejbca.core.model.ca.publisher.PublisherConnectionException;
@@ -106,7 +106,7 @@ public class EditPublisherJSPHelper implements java.io.Serializable {
     public static final String TEXTFIELD_LDAPTIMEOUT           = "textfieldldaptimeout";
     public static final String TEXTFIELD_LDAPREADTIMEOUT       = "textfieldldapreadtimeout";
     public static final String TEXTFIELD_LDAPSTORETIMEOUT      = "textfieldldapstoretimeout";
-    public static final String TEXTFIELD_EXTOCSP_DATASOURCE    = "textfieldextocspdatasource";
+    public static final String TEXTFIELD_VA_DATASOURCE         = "textfieldvadatasource";
     public static final String PASSWORD_LDAPLOGINPASSWORD      = "textfieldldaploginpassword";
     public static final String PASSWORD_LDAPCONFIRMLOGINPWD    = "textfieldldaploginconfirmpwd";
     public static final String CHECKBOX_LDAPUSESSL             = "checkboxldapusessl";
@@ -123,7 +123,7 @@ public class EditPublisherJSPHelper implements java.io.Serializable {
     public static final String CHECKBOX_KEEPPUBLISHEDINQUEUE   = "textfieldkeeppublishedinqueue";
     public static final String CHECKBOX_USEQUEUEFORCRLS        = "textfieldusequeueforcrls";
     public static final String CHECKBOX_USEQUEUEFORCERTIFICATES = "textfieldusequeueforcertificates";
-    public static final String CHECKBOX_EXTOCSP_STORECERT      = "textfieldextocspstorecert";
+    public static final String CHECKBOX_VA_STORECERT           = "textfieldvastorecert";
     
     public static final String SELECT_LDAPUSEFIELDINLDAPDN     = "selectldapusefieldsinldapdn";
 
@@ -258,8 +258,8 @@ public class EditPublisherJSPHelper implements java.io.Serializable {
                                 if(tokentype == ActiveDirectoryPublisher.TYPE_ADPUBLISHER) {
                                     publisherdata = new ActiveDirectoryPublisher();
                                 }
-                                if(tokentype == ExternalOCSPPublisher.TYPE_EXTOCSPPUBLISHER) {
-                                    publisherdata = new ExternalOCSPPublisher();
+                                if(tokentype == VerificationAuthorityPublisher.TYPE_VAPUBLISHER) {
+                                    publisherdata = new VerificationAuthorityPublisher();
                                 }
                             }
                             // Save changes.
@@ -497,17 +497,17 @@ public class EditPublisherJSPHelper implements java.io.Serializable {
                                 }
                             }
                             
-                            // Get parameters for ExternalOCSPPublisher
-                            if(publisherdata instanceof ExternalOCSPPublisher){
-                            	ExternalOCSPPublisher extocsppub = (ExternalOCSPPublisher) publisherdata;
+                            // Get parameters for VerificationAuthorityPublisher
+                            if(publisherdata instanceof VerificationAuthorityPublisher){
+                            	final VerificationAuthorityPublisher vaPub = (VerificationAuthorityPublisher) publisherdata;
                             	
-                            	value = request.getParameter(TEXTFIELD_EXTOCSP_DATASOURCE);
+                            	value = request.getParameter(TEXTFIELD_VA_DATASOURCE);
                             	if(value != null){
                             		value = value.trim();
-                            		extocsppub.setDataSource(value);
+                            		vaPub.setDataSource(value);
                             	}
-                            	value = request.getParameter(CHECKBOX_EXTOCSP_STORECERT);
-                            	extocsppub.setStoreCert(value != null && value.equals(CHECKBOX_VALUE));
+                            	value = request.getParameter(CHECKBOX_VA_STORECERT);
+                            	vaPub.setStoreCert(value != null && value.equals(CHECKBOX_VALUE));
                             }
 
 
@@ -555,8 +555,8 @@ public class EditPublisherJSPHelper implements java.io.Serializable {
                     case ActiveDirectoryPublisher.TYPE_ADPUBLISHER :
                         publisherdata =  new ActiveDirectoryPublisher();
                         break;
-                    case ExternalOCSPPublisher.TYPE_EXTOCSPPUBLISHER:
-                        publisherdata =  new ExternalOCSPPublisher();
+                    case VerificationAuthorityPublisher.TYPE_VAPUBLISHER:
+                        publisherdata =  new VerificationAuthorityPublisher();
                         break;
                     }
                 }
@@ -583,8 +583,8 @@ public class EditPublisherJSPHelper implements java.io.Serializable {
         if(publisherdata instanceof ActiveDirectoryPublisher) {
             retval = ActiveDirectoryPublisher.TYPE_ADPUBLISHER;
         }
-        if(publisherdata instanceof ExternalOCSPPublisher) {
-            retval = ExternalOCSPPublisher.TYPE_EXTOCSPPUBLISHER;
+        if(publisherdata instanceof VerificationAuthorityPublisher) {
+            retval = VerificationAuthorityPublisher.TYPE_VAPUBLISHER;
         }
         return retval;
     }

@@ -59,7 +59,7 @@
 
 	<condition property="status.enabled">
 		<not>
-			<equals arg1="false" arg2="${va.status.enable}" casesensitive="false" trim="true" />
+			<equals arg1="false" arg2="${ocsp.enable}" casesensitive="false" trim="true" />
 		</not>
 	</condition>
 	<condition property="crlstore.enabled">
