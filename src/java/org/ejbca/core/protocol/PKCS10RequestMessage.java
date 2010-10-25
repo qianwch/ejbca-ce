@@ -104,10 +104,14 @@ public class PKCS10RequestMessage implements IRequestMessage {
      * @throws IOException if the request can not be parsed.
      */
     public PKCS10RequestMessage(byte[] msg) {
-        log.trace(">PKCS10RequestMessage(byte[])");
+    	if (log.isTraceEnabled()) {
+    		log.trace(">PKCS10RequestMessage(byte[])");
+    	}
         this.p10msg = msg;
         init();
-        log.trace("<PKCS10RequestMessage(byte[])");
+    	if (log.isTraceEnabled()) {
+    		log.trace("<PKCS10RequestMessage(byte[])");
+    	}
     }
 
     /**
@@ -116,10 +120,14 @@ public class PKCS10RequestMessage implements IRequestMessage {
      * @param p10 the PKCS#10 request
      */
     public PKCS10RequestMessage(PKCS10CertificationRequest p10) {
-        log.trace(">PKCS10RequestMessage(ExtendedPKCS10CertificationRequest)");
+    	if (log.isTraceEnabled()) {
+    		log.trace(">PKCS10RequestMessage(ExtendedPKCS10CertificationRequest)");
+    	}
         p10msg = p10.getEncoded();
         pkcs10 = p10;
-        log.trace("<PKCS10RequestMessage(ExtendedPKCS10CertificationRequest)");
+    	if (log.isTraceEnabled()) {
+    		log.trace("<PKCS10RequestMessage(ExtendedPKCS10CertificationRequest)");
+    	}
     }
 
     private void init() {
@@ -200,7 +208,9 @@ public class PKCS10RequestMessage implements IRequestMessage {
             if (attr == null) {
                 return null;                
             }
-            log.debug("got extension request");
+        	if (log.isDebugEnabled()) {
+        		log.debug("got extension request");
+        	}
             ASN1Set values = attr.getAttrValues();
             if (values.size() == 0) {
                 return null;
@@ -208,7 +218,9 @@ public class PKCS10RequestMessage implements IRequestMessage {
             X509Extensions exts = X509Extensions.getInstance(values.getObjectAt(0));
             X509Extension ext = exts.getExtension(PKCSObjectIdentifiers.pkcs_9_at_challengePassword);
             if (ext == null) {
-                log.debug("no challenge password extension");
+            	if (log.isDebugEnabled()) {
+            		log.debug("no challenge password extension");
+            	}
                 return null;
             }
             obj = ext.getValue();
@@ -273,7 +285,9 @@ public class PKCS10RequestMessage implements IRequestMessage {
                 }            	
             }
         }
-        log.debug("UserName='" + ret + "'");
+    	if (log.isDebugEnabled()) {
+    		log.debug("UserName='" + ret + "'");
+    	}
         return ret;
     }
 
@@ -333,7 +347,9 @@ public class PKCS10RequestMessage implements IRequestMessage {
     		dn = dn.replace(" + unstructuredAddress=", ",unstructuredAddress=");
     		ret = dn;
     	}
-        log.debug("getRequestDN: "+ret);
+    	if (log.isDebugEnabled()) {
+    		log.debug("getRequestDN: "+ret);
+    	}
         return ret;
     }
 
@@ -368,11 +384,15 @@ public class PKCS10RequestMessage implements IRequestMessage {
                     // Finally read the value
             		ret = CertTools.getAltNameStringFromExtension(ext);        	
                 } else {
-                	log.debug("no subject altName extension");
+                	if (log.isDebugEnabled()) {
+                		log.debug("no subject altName extension");
+                	}
                 }        		
         	}
         } catch (IllegalArgumentException e) {
-        	log.debug("pkcs_9_extensionRequest does not contain Extensions that it should, ignoring invalid encoded extension request.");
+        	if (log.isDebugEnabled()) {
+        		log.debug("pkcs_9_extensionRequest does not contain Extensions that it should, ignoring invalid encoded extension request.");
+        	}
         }
         return ret;
     }
@@ -419,13 +439,17 @@ public class PKCS10RequestMessage implements IRequestMessage {
             // See if we have it embedded in an extension request instead
             Attribute attr = attributes.get(PKCSObjectIdentifiers.pkcs_9_at_extensionRequest);
             if (attr != null) {
-                log.debug("got request extension");
+            	if (log.isDebugEnabled()) {
+            		log.debug("got request extension");
+            	}
                 ASN1Set values = attr.getAttrValues();
                 if (values.size() > 0) {
                     try {
                         ret = X509Extensions.getInstance(values.getObjectAt(0));
                     } catch (IllegalArgumentException e) {
-                    	log.debug("pkcs_9_extensionRequest does not contain Extensions that it should, ignoring invalid encoded extension request.");
+                    	if (log.isDebugEnabled()) {
+                    		log.debug("pkcs_9_extensionRequest does not contain Extensions that it should, ignoring invalid encoded extension request.");
+                    	}
                     }
                 }
             }
@@ -467,10 +491,10 @@ public class PKCS10RequestMessage implements IRequestMessage {
     }
     public boolean verify(PublicKey pubKey)
             throws InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException {
-        log.trace(">verify()");
-
+    	if (log.isTraceEnabled()) {
+    		log.trace(">verify()");
+    	}
         boolean ret = false;
-
         try {
             if (pkcs10 == null) {
                 init();
@@ -488,9 +512,9 @@ public class PKCS10RequestMessage implements IRequestMessage {
         } catch (SignatureException e) {
             log.error("Error in PKCS10-signature:", e);
         }
-
-        log.trace("<verify()");
-
+    	if (log.isTraceEnabled()) {
+    		log.trace("<verify()");
+    	}
         return ret;
     }
 
