@@ -150,8 +150,8 @@ xkms.serviceport                = ${xkms.serviceport}
             <classpath refid="compile.classpath" />
             <exclude name="**/appserver/**" />
             <exclude name="org/ejbca/ui/web/protocol/OCSPServletStandAlone.java" />
-            <exclude name="org/ejbca/ui/web/protocol/CertStoreStandAlone.java" />
-            <exclude name="org/ejbca/ui/web/protocol/CRLStoreStandAlone.java" />
+            <exclude name="org/ejbca/ui/web/protocol/CertStoreServletStandAlone.java" />
+            <exclude name="org/ejbca/ui/web/protocol/CRLStoreServletStandAlone.java" />
             <exclude name="org/ejbca/core/protocol/ocsp/**" />
             <exclude name="org/ejbca/ui/web/pub/cluster/VerificationAuthorityHealthCheck.java" />
             <!--
@@ -344,6 +344,36 @@ xkms.serviceport                = ${xkms.serviceport}
         </webdoclet>
         <webdoclet force="true" destdir="${src.gen}" excludedtags="@version,@author">
             <fileset dir="${src.java}">
+                <include name="**/protocol/CertStoreServlet.java" />
+            </fileset>
+            <deploymentdescriptor destdir="${src.dd}/certstore/WEB-INF"
+             servletspec="2.3"
+             sessiontimeout="30" 
+             description="Certificate store" 
+             distributable="false" 	
+             validatexml="false" 
+             useIds="true"
+             mergedir="${deploy.src}/web/merge-webdoclet"
+             >
+             </deploymentdescriptor>
+        </webdoclet>
+        <webdoclet force="true" destdir="${src.gen}" excludedtags="@version,@author">
+            <fileset dir="${src.java}">
+                <include name="**/protocol/CRLStoreServlet.java" />
+            </fileset>
+            <deploymentdescriptor destdir="${src.dd}/crlstore/WEB-INF"
+             servletspec="2.3"
+             sessiontimeout="30" 
+             description="CRL store" 
+             distributable="false" 	
+             validatexml="false" 
+             useIds="true"
+             mergedir="${deploy.src}/web/merge-webdoclet"
+             >
+             </deploymentdescriptor>
+        </webdoclet>
+        <webdoclet force="true" destdir="${src.gen}" excludedtags="@version,@author">
+            <fileset dir="${src.java}">
                 <include name="**/protocol/CmpServlet.java" />
             </fileset>
             <deploymentdescriptor destdir="${src.dd}/cmp/WEB-INF"
@@ -419,13 +449,37 @@ xkms.serviceport                = ${xkms.serviceport}
             <fileset dir="${src.java}">
                 <include name="**/protocol/OCSPServletStandAlone.java" />
                 <include name="**/protocol/OCSPServletBase.java" />
-                <include name="**/protocol/CRLStoreStandAlone.java" />
-                <include name="**/protocol/CertStoreStandAlone.java" />
             </fileset>
             <deploymentdescriptor destdir="${va-src.dd}/status/WEB-INF"
              servletspec="2.3"
              sessiontimeout="30" 
              description="OCSP responder standalone" 
+             distributable="false"            	
+             validatexml="false"
+             mergedir="${deploy.src}/web/merge-webdoclet"
+             />
+        </webdoclet>
+        <webdoclet force="true" destdir="${va-src.gen}" excludedtags="@version,@author">
+            <fileset dir="${src.java}">
+                <include name="**/protocol/CRLStoreServletStandAlone.java" />
+            </fileset>
+            <deploymentdescriptor destdir="${va-src.dd}/crlstore/WEB-INF"
+             servletspec="2.3"
+             sessiontimeout="30" 
+             description="CRL store standalone" 
+             distributable="false"            	
+             validatexml="false"
+             mergedir="${deploy.src}/web/merge-webdoclet"
+             />
+        </webdoclet>
+        <webdoclet force="true" destdir="${va-src.gen}" excludedtags="@version,@author">
+            <fileset dir="${src.java}">
+                <include name="**/protocol/CertStoreServletStandAlone.java" />
+            </fileset>
+            <deploymentdescriptor destdir="${va-src.dd}/certstore/WEB-INF"
+             servletspec="2.3"
+             sessiontimeout="30" 
+             description="Certificate store standalone" 
              distributable="false"            	
              validatexml="false"
              mergedir="${deploy.src}/web/merge-webdoclet"

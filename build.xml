@@ -121,7 +121,7 @@
     <target name="va-certstore-compile" depends="va-common-compile" if="certstore.enabled">
         <javac destdir="${va-build}" debug="on" includeantruntime="no" encoding="iso8859-1">
             <classpath refid="va-compile.classpath" />
-            <include name="org/ejbca/ui/web/protocol/CertStoreStandAlone.java" />
+            <include name="org/ejbca/ui/web/protocol/CertStoreServletStandAlone.java" />
             <src path="${va-src.gen}" />
             <src path="${src.java}" />
         </javac>
@@ -133,7 +133,7 @@
     <target name="va-crlstore-compile" depends="va-common-compile" if="crlstore.enabled">
         <javac destdir="${va-build}" debug="on" includeantruntime="no" encoding="iso8859-1">
             <classpath refid="va-compile.classpath" />
-            <include name="org/ejbca/ui/web/protocol/CRLStoreStandAlone.java" />
+            <include name="org/ejbca/ui/web/protocol/CRLStoreServletStandAlone.java" />
             <src path="${va-src.gen}" />
             <src path="${src.java}" />
         </javac>
