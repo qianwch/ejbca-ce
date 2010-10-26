@@ -1,9 +1,9 @@
 # ------------ OCSP responder configuration ---------------------
-# These configurations are used both for EJBCA and 
+# These configurations are used both for EJBCA and the Verification Authority (VA).
 
 # OCSP servlet enabled. If false there will be no servlet.
 # Default is true.
-#ocsp.enable=false
+#ocsp.enabled=false
 
 # Specifies the subject of a certificate which is used to identify the 
 # responder which will generate responses when no real CA can be found from the request. 

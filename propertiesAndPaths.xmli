@@ -45,6 +45,8 @@
     <property file="conf/database.properties" />
     <property file="conf/mail.properties" />
     <property file="conf/ocsp.properties" />
+    <property file="conf/certstore.properties" />
+    <property file="conf/crlstore.properties" />
     <property file="conf/web.properties" />
     <property file="conf/cmp.properties" />
     <property file="conf/jaxws.properties" />
