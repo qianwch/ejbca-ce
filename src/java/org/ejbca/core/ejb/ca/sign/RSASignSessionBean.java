@@ -489,6 +489,8 @@ public class RSASignSessionBean extends BaseSessionBean {
      * @throws IllegalKeyException     if the public key is of wrong type.
      * @ejb.permission unchecked="true"
      * @ejb.interface-method view-type="both"
+     * 
+     * @Deprecated will be removed in EJBCA 4.0
      */
     public Certificate createCertificate(Admin admin, String username, String password, PublicKey pk, boolean[] keyusage) throws EjbcaException, ObjectNotFoundException {
         return createCertificate(admin, username, password, pk, CertTools.sunKeyUsageToBC(keyusage));
@@ -517,6 +519,8 @@ public class RSASignSessionBean extends BaseSessionBean {
      * @throws IllegalKeyException     if the public key is of wrong type.
      * @ejb.permission unchecked="true"
      * @ejb.interface-method view-type="both"
+     * 
+     * @Deprecated will be removed in EJBCA 4.0
      */
     public Certificate createCertificate(Admin admin, String username, String password, PublicKey pk, int keyusage) throws ObjectNotFoundException, EjbcaException {
         return createCertificate(admin, username, password, pk, keyusage, null, null, SecConst.PROFILE_NO_PROFILE, SecConst.CAID_USEUSERDEFINED);
@@ -572,6 +576,8 @@ public class RSASignSessionBean extends BaseSessionBean {
      * @throws IllegalKeyException     if the public key is of wrong type.
      * @ejb.permission unchecked="true"
      * @ejb.interface-method view-type="both"
+     * 
+     * @Deprecated will be removed in EJBCA 4.0
      */
     public Certificate createCertificate(Admin admin, String username, String password, int certType, PublicKey pk) throws EjbcaException, ObjectNotFoundException {
         if (log.isTraceEnabled()) {
@@ -710,6 +716,8 @@ public class RSASignSessionBean extends BaseSessionBean {
      * 
      * @ejb.permission unchecked="true"
      * @ejb.interface-method view-type="both"
+     * 
+     * @Deprecated will be removed in EJBCA 4.0 and replaced with a method with two extra parameters that can be set to null
      */
     public Certificate createCertificate(Admin admin, String username, String password, PublicKey pk, int keyusage, int certificateprofileid, int caid) throws EjbcaException, ObjectNotFoundException {
     	return createCertificate(admin, username, password, pk, keyusage, null, null, certificateprofileid, caid);
@@ -747,6 +755,8 @@ public class RSASignSessionBean extends BaseSessionBean {
      * @see org.ejbca.core.protocol.IRequestMessage
      * @see org.ejbca.core.protocol.IResponseMessage
      * @see org.ejbca.core.protocol.X509ResponseMessage
+     * 
+     * @Deprecated will be removed in EJBCA 4.0, use method without keyUsage parameter and use keyusage extension in request message instead.
      */
     public IResponseMessage createCertificate(Admin admin, IRequestMessage req, int keyUsage, Class responseClass) throws EjbcaException {
     	if (log.isTraceEnabled()) {
