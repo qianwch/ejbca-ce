@@ -192,6 +192,7 @@ public abstract class CertificateProfileDataBean extends BaseEntityBean {
         setId(id);
         setCertificateProfileName(certificateprofilename);
         setCertificateProfile(certificateprofile);
+        setRowVersion(0);
         log.debug("Created certificateprofile " + certificateprofilename);
 
         return id;

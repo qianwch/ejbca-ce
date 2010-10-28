@@ -538,6 +538,7 @@ public abstract class UserDataBean extends BaseEntityBean {
         setHardTokenIssuerId(hardtokenissuerid);
         setExtendedInformation(extendedInformation);
         setCardNumber(cardnumber);
+        setRowVersion(0);
         UserDataPK pk = new UserDataPK(username);
         if (log.isDebugEnabled()) {        
         	log.debug("Created user " + username);

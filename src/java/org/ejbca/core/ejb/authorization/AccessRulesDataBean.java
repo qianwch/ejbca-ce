@@ -127,6 +127,7 @@ public abstract class AccessRulesDataBean extends BaseEntityBean
         setAccessRule(accessrule);
         setRule(rule);
         setIsRecursive(isrecursive);
+        setRowVersion(0);
         debug("Created accessrule : "+ accessrule);
         return ret;
     }

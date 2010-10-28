@@ -168,6 +168,7 @@ public abstract class HardTokenIssuerDataBean extends BaseEntityBean {
         setAlias(alias);
         setAdminGroupId(admingroupid);
         setHardTokenIssuer(issuerdata);
+        setRowVersion(0);
 
         log.debug("Created Hard Token Issuer "+ alias );
         return id;

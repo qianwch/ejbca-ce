@@ -236,6 +236,7 @@ public abstract class PublisherDataBean extends BaseEntityBean {
         if (publisher != null) {
             setPublisher(publisher);
         }
+        setRowVersion(0);
 
         log.debug("Created Publisher " + name);
         return id;

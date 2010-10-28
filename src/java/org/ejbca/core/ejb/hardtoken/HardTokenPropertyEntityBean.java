@@ -121,6 +121,7 @@ public abstract class HardTokenPropertyEntityBean extends BaseEntityBean {
 		setId(id);
 		setProperty(property);
 		setValue(value);
+        setRowVersion(0);
         return null;
 	}
 

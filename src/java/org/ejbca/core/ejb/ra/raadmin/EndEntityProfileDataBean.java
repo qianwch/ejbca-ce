@@ -189,6 +189,7 @@ public abstract class EndEntityProfileDataBean extends BaseEntityBean implements
         setId(id);
         setProfileName(profilename);
         setProfile(profile);
+        setRowVersion(0);
         log.debug("Created profile " + profilename);
 
         return id;

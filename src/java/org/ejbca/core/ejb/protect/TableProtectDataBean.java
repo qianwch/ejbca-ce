@@ -217,6 +217,7 @@ public abstract class TableProtectDataBean extends BaseEntityBean {
         setDbKey(dbKey);
         setDbType(dbType);
         setKeyType(keyType);
+        setRowVersion(0);
         return null;
     }
 

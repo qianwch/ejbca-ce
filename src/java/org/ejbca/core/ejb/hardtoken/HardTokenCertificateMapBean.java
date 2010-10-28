@@ -116,6 +116,7 @@ public abstract class HardTokenCertificateMapBean extends BaseEntityBean {
     public String ejbCreate(String certificateFingerprint, String tokenSN) throws CreateException {
         setCertificateFingerprint(certificateFingerprint);
         setTokenSN(tokenSN);
+        setRowVersion(0);
         log.debug("Created HardTokenCertificateMap for token SN: "+ tokenSN );
         return certificateFingerprint;
     }

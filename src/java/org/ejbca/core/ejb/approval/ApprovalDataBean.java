@@ -639,7 +639,7 @@ public abstract class ApprovalDataBean extends BaseEntityBean {
         setReqDate(new Date());
         setExpireDate((new Date()).getTime() + approvalRequest.getRequestValidity());
         setRemainingApprovals(approvalRequest.getNumOfRequiredApprovals());
-
+        setRowVersion(0);
 
         log.debug("Created approval with id " + id);
         return id;

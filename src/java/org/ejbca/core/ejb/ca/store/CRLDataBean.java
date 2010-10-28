@@ -285,6 +285,7 @@ public abstract class CRLDataBean extends BaseEntityBean {
     	setThisUpdate(thisUpdate);
     	setNextUpdate(nextUpdate);
     	setDeltaCRLIndicator(deltaCRLIndicator);
+        setRowVersion(0);
 
     	CRLDataPK pk = new CRLDataPK(fp);
 

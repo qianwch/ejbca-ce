@@ -1935,8 +1935,9 @@ public class CAAdminSessionBean extends BaseSessionBean {
                     true, // isDoEnforceUniquePublicKeys
                     true, // isDoEnforceUniqueDistinguishedName
                     false, // isDoEnforceUniqueSubjectDNSerialnumber
-                    true // useCertReqHistoru
-    				);
+                    true, // useCertReqHistoru
+    				true, // useUserStorage
+    				true); // useCertificateStorage
     	} else if (StringUtils.equals(caCertificate.getType(), "CVC")) {
     		cainfo = new CVCCAInfo(subjectdn, caname, 0, new Date(),
     				certprofileid, validity, 
@@ -1950,8 +1951,9 @@ public class CAAdminSessionBean extends BaseSessionBean {
                     true, // isDoEnforceUniquePublicKeys
                     true, // isDoEnforceUniqueDistinguishedName
                     false, // isDoEnforceUniqueSubjectDNSerialnumber
-                    true // useCertReqHistory
-                    );
+                    true, // useCertReqHistoru
+    				true, // useUserStorage
+    				true); // useCertificateStorage
     	}
     	if(cainfo instanceof X509CAInfo){
     		log.info("Creating a X509 CA (process request)");
@@ -2720,8 +2722,9 @@ public class CAAdminSessionBean extends BaseSessionBean {
 			                                   true, // isDoEnforceUniquePublicKeys
 			                                   true, // isDoEnforceUniqueDistinguishedName
 			                                   false, // isDoEnforceUniqueSubjectDNSerialnumber
-			                                   true // useCertReqHistory
-			                                   );
+			                                   true, // useCertReqHistoru
+			                                   true, // useUserStorage
+			                                   true); // useCertificateStorage
 			ca = new X509CA((X509CAInfo)cainfo);
 		} else if (caSignatureCertificate.getType().equals("CVC")) {
 			// Create a CVC CA
@@ -2741,8 +2744,9 @@ public class CAAdminSessionBean extends BaseSessionBean {
                     true, // isDoEnforceUniquePublicKeys
                     true, // isDoEnforceUniqueDistinguishedName
                     false, // isDoEnforceUniqueSubjectDNSerialnumber
-                    true // useCertReqHistory
-                    );
+                    true, // useCertReqHistoru
+    				true, // useUserStorage
+    				true); // useCertificateStorage
 			ca = new CVCCA((CVCCAInfo)cainfo);
 		}
 		// We must activate the token, in case it does not have the default password

@@ -339,6 +339,7 @@ public abstract class CADataBean extends BaseEntityBean {
     		// is desired primarily, so make sure we set that
     		ca.setStatus(status);        
     		setCA(ca);
+            setRowVersion(0);
     		if (log.isDebugEnabled()) {
     			log.debug("Created CA "+ name);
     		}

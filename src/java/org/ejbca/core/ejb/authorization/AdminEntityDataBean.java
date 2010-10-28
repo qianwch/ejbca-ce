@@ -149,6 +149,7 @@ public abstract class AdminEntityDataBean extends BaseEntityBean {
         setMatchType(matchtype);
         setMatchValue(matchvalue);
         setCaId(caid);
+        setRowVersion(0);
         log.debug("Created admin entity "+ matchvalue);
         return ret;
     }

@@ -136,6 +136,7 @@ public abstract class ProtectedLogDataBean extends BaseEntityBean {
 	    setProtectionKeyIdentifier(protectionKeyIdentifier);
 	    setProtectionKeyAlgorithm(protectionKeyAlgorithm);
 	    setProtection(protection);
+        setRowVersion(0);
 		return null;
 	}
 

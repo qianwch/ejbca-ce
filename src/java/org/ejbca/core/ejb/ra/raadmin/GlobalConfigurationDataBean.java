@@ -135,6 +135,7 @@ public abstract class GlobalConfigurationDataBean extends BaseEntityBean {
 
         setConfigurationId(configurationId);
         setGlobalConfiguration(globalConfiguration);
+        setRowVersion(0);
 
         log.debug("Created global configuration "+configurationId);
         return configurationId;

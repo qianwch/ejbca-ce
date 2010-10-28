@@ -209,6 +209,7 @@ public abstract class HardTokenDataBean extends BaseEntityBean {
         setTokenType(tokentype);
         setSignificantIssuerDN(significantissuerdn);
         setData(data);
+        setRowVersion(0);
 
         log.debug("Created Hard Token "+ tokensn );
         return tokensn;

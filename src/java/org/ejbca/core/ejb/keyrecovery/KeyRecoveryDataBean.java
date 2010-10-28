@@ -202,6 +202,7 @@ public abstract class KeyRecoveryDataBean extends BaseEntityBean {
         setMarkedAsRecoverable(false);
         setKeyDataFromByteArray(keydata);
         KeyRecoveryDataPK pk = new KeyRecoveryDataPK(getCertSN(), issuerdn);
+        setRowVersion(0);
         log.debug("Created Key Recoverydata for user " + username);
         return pk;
     }

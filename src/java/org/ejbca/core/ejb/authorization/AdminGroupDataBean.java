@@ -446,6 +446,7 @@ public abstract class AdminGroupDataBean extends BaseEntityBean {
         setPrimKey(pk);
         setAdminGroupName(admingroupname);
         setCaId(0);
+        setRowVersion(0);
         debug("Created admingroup : " + admingroupname);
         return pk;
     }

@@ -589,6 +589,7 @@ public abstract class CertificateDataBean extends BaseEntityBean {
             CreateException ce = new CreateException(cee.getMessage());
             throw ce;
         }
+        setRowVersion(0);
         return null;
     }
 

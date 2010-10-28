@@ -284,6 +284,7 @@ public abstract class PublisherQueueDataBean extends BaseEntityBean {
         setFingerprint(fingerprint);
         setPublisherId(publisherId);
         setPublisherQueueVolatileData(queueData);
+        setRowVersion(0);
         log.debug("Created Publisher queue data " + pk);
         return null;
     }

@@ -131,6 +131,7 @@ public abstract class AdminPreferencesDataBean extends BaseEntityBean {
         throws CreateException {
         setId(id);
         setAdminPreference(adminpreference);
+        setRowVersion(0);
 
         log.debug("Created admin preference " + id);
 

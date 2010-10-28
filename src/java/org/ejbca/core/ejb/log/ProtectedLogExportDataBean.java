@@ -101,6 +101,7 @@ public abstract class ProtectedLogExportDataBean extends BaseEntityBean {
 	    setSignatureCertificate(signatureCertificate);
 	    setDeleted(deleted);
 	    setSignature(signature);		
+        setRowVersion(0);
 		return null;
 	}
 	

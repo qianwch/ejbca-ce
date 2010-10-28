@@ -177,6 +177,7 @@ public abstract class LogConfigurationDataBean extends BaseEntityBean {
         setId(id);
         setLogConfiguration(logConfiguration);
         setLogEntryRowNumber(0);
+        setRowVersion(0);
 
         return null;
     }

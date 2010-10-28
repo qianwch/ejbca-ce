@@ -277,6 +277,7 @@ public abstract class CertReqHistoryDataBean extends BaseEntityBean {
         } catch (UnsupportedEncodingException e) {
             throw new EJBException(e);    	                                              
         } 
+        setRowVersion(0);
         return null;
     }
 

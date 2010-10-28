@@ -250,6 +250,7 @@ public abstract class ServiceDataBean extends BaseEntityBean {
         if (serviceConfiguration != null) {
             setServiceConfiguration(serviceConfiguration);
         }
+        setRowVersion(0);
 
         log.debug("Created Service Configuration " + name);
         return id;

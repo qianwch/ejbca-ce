@@ -95,6 +95,7 @@ public abstract class ProtectedLogTokenDataBean extends BaseEntityBean {
        setTokenType(tokenType);
        setTokenCertificate(tokenCertificate);
        setTokenReference(tokenReference);
+       setRowVersion(0);
        return null;
    }
 

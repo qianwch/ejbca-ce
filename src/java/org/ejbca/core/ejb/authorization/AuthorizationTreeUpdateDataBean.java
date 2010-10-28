@@ -106,6 +106,7 @@ public abstract class AuthorizationTreeUpdateDataBean extends BaseEntityBean
     public Integer ejbCreate() throws CreateException {
       setPrimKey(AUTHORIZATIONTREEUPDATEDATA);
       setAuthorizationTreeUpdateNumber(0);
+      setRowVersion(0);
       return null;
     }
 
