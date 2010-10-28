@@ -4,3 +4,7 @@
 # CRL store servlet enabled. If false there will be no servlet.
 # Default is false.
 #crlstore.enabled=true
+
+# Context root (the path in the URL)
+# Default is '/crls'
+#crlstore.contextroot=/ejbca/publicweb/crls

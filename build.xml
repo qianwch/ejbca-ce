@@ -97,7 +97,7 @@
 	<!-- =================================================================== -->
     <!-- Compile ocsp resonder java sources                                  -->
     <!-- =================================================================== -->
-    <target name="va-status-compile" depends="va-common-compile" if="status.enabled">
+    <target name="va-status-compile" depends="va-common-compile" if="ocsp.enabled">
         <javac destdir="${va-build}" debug="on" includeantruntime="no" encoding="iso8859-1">
             <classpath refid="va-compile.classpath" />
             <include name="org/ejbca/ui/web/protocol/OCSPServletStandAlone.java" />
@@ -177,15 +177,19 @@
 	<!-- Dont allow deploy of the wrong thing in production                   -->
     <!-- =================================================================== -->
     <target name="failinproduction-ca">
-		<fail message="You cannot deploy EJBCA as a CA reponder in a OCSP production environment.">
+		<fail message="You cannot deploy EJBCA as a CA in a VA production environment.">
 			<condition>
-				<equals arg1="${ejbca.productionmode}" arg2="ocsp" casesensitive="false"/>
+			    <or>
+					<equals arg1="${ejbca.productionmode}" arg2="ocsp" casesensitive="false"/>
+					<!-- ocsp is depricated. Use va instead. -->
+					<equals arg1="${ejbca.productionmode}" arg2="va" casesensitive="false"/>
+				</or>
 			</condition>
 		</fail>
     </target>
 
-    <target name="failinproduction-ocsp">
-		<fail message="You cannot deploy EJBCA as a OCSP Responder in a CA production environment.">
+    <target name="failinproduction-va">
+		<fail message="You cannot deploy EJBCA as a VA in a CA production environment.">
 			<condition>
 				<equals arg1="${ejbca.productionmode}" arg2="ca" casesensitive="false"/>
 			</condition>
@@ -204,7 +208,7 @@
     <!-- =================================================================== -->
     <!-- Build status part                                                                                                                             -->
     <!-- =================================================================== -->
-    <target name="status.war" depends="compile" if="status.enabled">
+    <target name="status.war" depends="compile" if="ocsp.enabled">
         <war destfile="${statuswar}" webxml="${src.dd}/status/WEB-INF/web.xml">
             <fileset dir="${status.src}" excludes="WEB-INF/web.xml" />
         </war>
@@ -304,7 +308,7 @@
     <!-- =================================================================== -->
     <!-- Build standalone status part                                        -->
     <!-- =================================================================== -->
-    <target name="va-status.war" depends="va-compile" if="status.enabled">
+    <target name="va-status.war" depends="va-compile" if="ocsp.enabled">
         <war destfile="${va-statuswar}" webxml="${va-src.dd}/status/WEB-INF/web.xml">
             <fileset dir="${status.src}" excludes="WEB-INF/web.xml" />
         </war>
@@ -614,6 +618,44 @@
         <property name="jar.jsftaglibs" value="tomahawk-1.1.6.jar" />
 	</target>
 
+    <target name="replacement_in_module">
+        <!--
+        <module>
+            <web>
+                <web-uri>${replacement_web-uri}</web-uri>
+                <context-root>${replacement_context-root}</context-root>
+            </web>
+        </module>
+        -->
+		<condition property="replacement_string" else="${replacement_tag}" value="module>&lt;web>&lt;web-uri>${replacement_web-uri}&lt;/web-uri>&lt;context-root>${replacement_context-root}&lt;/context-root>&lt;/web>&lt;/module>">
+			<istrue value="${replacement_enabled}"/>
+		</condition>
+    	<replace file="${replacement_file}" token="${replacement_tag}" value="${replacement_string}"/>
+    </target>
+    <target name="va_replacings_in_application.xml">
+        <antcall target="replacement_in_module">
+            <param name="replacement_tag" value="!--@status.war@-->"/>
+            <param name="replacement_file" value="${application.xml}"/>
+            <param name="replacement_enabled" value="${ocsp.enabled}"/>
+            <param name="replacement_web-uri" value="status.war"/>
+            <param name="replacement_context-root" value="${ocsp.contextroot}"/>
+        </antcall>
+        <antcall target="replacement_in_module">
+            <param name="replacement_tag" value="!--@certstore.war@-->"/>
+            <param name="replacement_file" value="${application.xml}"/>
+            <param name="replacement_enabled" value="${certstore.enabled}"/>
+            <param name="replacement_web-uri" value="certstore.war"/>
+            <param name="replacement_context-root" value="${certstore.contextroot}"/>
+        </antcall>
+        <antcall target="replacement_in_module">
+            <param name="replacement_tag" value="!--@crlstore.war@-->"/>
+            <param name="replacement_file" value="${application.xml}"/>
+            <param name="replacement_enabled" value="${crlstore.enabled}"/>
+            <param name="replacement_web-uri" value="crlstore.war"/>
+            <param name="replacement_context-root" value="${crlstore.contextroot}"/>
+        </antcall>
+    </target>
+
     <!-- =================================================================== -->
     <!-- Build CA-ear                                                        -->
     <!-- =================================================================== -->
@@ -621,14 +663,23 @@
 	</target>
 	
 	<target name="ca.ear" depends="jsflibs, publicweb.war, renew.war, scep.war, webdist.war, status.war, certstore.war, crlstore.war, cmp.war, healthcheck.war, adminweb.war, ejbca-ejb.jar, ejbca-util.jar, ejbcaws.war, ejbcaws.client, xkms.war, xkms.client, doc.war, externalra-service">
-		<condition property="ejbcaws.enabled.replace-string" else="!--@ejbcaws.war@-->" value="module>&lt;web>&lt;web-uri>ejbcaws.war&lt;/web-uri>&lt;context-root>/${app.name}/ejbcaws&lt;/context-root>&lt;/web>&lt;/module>">
-			<istrue value="${ejbcaws.enabled}"/>
-		</condition>
-    	<replace file="${eardd.src}/META-INF/application.xml" token="!--@ejbcaws.war@-->" value="${ejbcaws.enabled.replace-string}"/>
-		<condition property="xkms.enabled.replace-string" else="!--@xkms.war@-->" value="module>&lt;web>&lt;web-uri>xkms.war&lt;/web-uri>&lt;context-root>/${app.name}/xkms&lt;/context-root>&lt;/web>&lt;/module>">
-			<istrue value="${xkms.enabled}"/>
-		</condition>
-    	<replace file="${eardd.src}/META-INF/application.xml" token="!--@xkms.war@-->" value="${xkms.enabled.replace-string}"/>
+        <antcall target="replacement_in_module">
+            <param name="replacement_tag" value="!--@ejbcaws.war@-->"/>
+            <param name="replacement_file" value="${eardd.src}/META-INF/application.xml"/>
+            <param name="replacement_enabled" value="${ejbcaws.enabled}"/>
+            <param name="replacement_web-uri" value="ejbcaws.war"/>
+            <param name="replacement_context-root" value="/${app.name}/ejbcaws"/>
+        </antcall>
+        <antcall target="replacement_in_module">
+            <param name="replacement_tag" value="!--@xkms.war@-->"/>
+            <param name="replacement_file" value="${eardd.src}/META-INF/application.xml"/>
+            <param name="replacement_enabled" value="${xkms.enabled}"/>
+            <param name="replacement_web-uri" value="xkms.war"/>
+            <param name="replacement_context-root" value="/${app.name}/xkms"/>
+        </antcall>
+	    <antcall target="va_replacings_in_application.xml">
+	        <param name="application.xml" value="${eardd.src}/META-INF/application.xml"/>
+	    </antcall>
         <ear destfile="${caear}" appxml="${eardd.src}/META-INF/application.xml"> 
             <fileset dir="${eardd.src}">
                 <exclude name="META-INF/application.xml" />
@@ -670,6 +721,9 @@
     <!-- Build VA-ear                                                        -->
     <!-- =================================================================== -->
     <target name="va.ear" depends="va-status.war, va-certstore.war, va-crlstore.war, va.jar, vahealthcheck.war">
+	    <antcall target="va_replacings_in_application.xml">
+	        <param name="application.xml" value="${va-eardd.src}/META-INF/application.xml"/>
+	    </antcall>
         <ear destfile="${vaear}" appxml="${va-eardd.src}/META-INF/application.xml"> 
             <fileset dir=".">
                 <include name="${lib}/bcmail-jdk${java.ver}.jar" />
@@ -686,7 +740,7 @@
                 <include name="*-ejb.jar" />
                 <include name="*.war" />
             </fileset>
-	</ear>
+        </ear>
     </target>
 	
     <!-- =================================================================== -->
@@ -842,7 +896,9 @@
         <antcall target="j2ee:deploy" />
         <antcall target="showtime" />
     </target>
-    <target name="ocsp-deploy" depends="failinproduction-ocsp,va.ear" description="Deploy the standalone OCSP reponder" >
+    <target name="ocsp-deploy" depends="va-deploy" description="Deprecated. Use va-deploy." >
+    </target>
+    <target name="va-deploy" depends="failinproduction-va,va.ear" description="Deploy the standalone OCSP reponder" >
         <antcall target="j2ee:deployocsp" />
         <antcall target="showtime" />
     </target>

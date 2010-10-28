@@ -5,17 +5,14 @@
 	"http://java.sun.com/dtd/application_1_3.dtd">
 
 <application>
-    <display-name>OCSP responder</display-name>
-    <description>OCSP responder</description>
+    <display-name>Verification Authority</display-name>
+    <description>applications in the Verification Authority.</description>
     <module>
         <ejb>ejbca-ejb.jar</ejb>
     </module>
-    <module>
-        <web>
-            <web-uri>status.war</web-uri>
-            <context-root>/@ejbca@/publicweb/status</context-root>
-        </web>
-    </module>
+       <!--@status.war@-->
+       <!--@certstore.war@-->
+       <!--@crlstore.war@-->
     <module>
         <web>
             <web-uri>vahealthcheck.war</web-uri>

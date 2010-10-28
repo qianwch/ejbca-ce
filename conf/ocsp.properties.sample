@@ -5,6 +5,10 @@
 # Default is true.
 #ocsp.enabled=false
 
+# Context root (the path in the URL)
+# Default is '/${app.name}/publicweb/status'
+#ocsp.contextroot=/status
+
 # Specifies the subject of a certificate which is used to identify the 
 # responder which will generate responses when no real CA can be found from the request. 
 # This is used to generate 'unknown' responses when a request is received for a certificate 
