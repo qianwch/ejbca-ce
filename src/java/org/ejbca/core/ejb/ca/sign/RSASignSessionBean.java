@@ -669,6 +669,7 @@ public class RSASignSessionBean extends BaseSessionBean {
      *                      created certificate. Currently no additional parameters in requests are considered!
      *                      Currently no additional parameters in the PKCS10 request is considered!
      * @param responseClass The implementation class that will be used as the response message.
+     * @param suppliedUserData Optional (can be null) supplied user data, if we are running without storing UserData
      * @return The newly created response message or null.
      * @throws ObjectNotFoundException       if the user does not exist.
      * @throws AuthStatusException           If the users status is incorrect.
@@ -680,8 +681,8 @@ public class RSASignSessionBean extends BaseSessionBean {
      * @ejb.permission unchecked="true"
      * @ejb.interface-method view-type="both"
      */
-    public IResponseMessage createCertificate(Admin admin, IRequestMessage req, Class responseClass) throws EjbcaException {
-        return createCertificate(admin, req, -1, responseClass);
+    public IResponseMessage createCertificate(Admin admin, IRequestMessage req, Class responseClass, UserDataVO suppliedUserData) throws EjbcaException {
+        return createCertificate(admin, req, -1, responseClass, suppliedUserData);
     }
 
     /**
@@ -740,6 +741,7 @@ public class RSASignSessionBean extends BaseSessionBean {
      *                      | CertificateDataBean.cRLSign; gives keyCertSign and cRLSign. Keyusage < 0 means that default
      *                      keyUsage should be used, or should be taken from extensions in the request.
      * @param responseClass The implementation class that will be used as the response message.
+     * @param suppliedUserData Optional (can be null) supplied user data, if we are running without storing UserData this will be used. Should only be supplied when we isse certificates in a single transaction.
      * @return The newly created response or null.
      * @throws ObjectNotFoundException       if the user does not exist.
      * @throws AuthStatusException           If the users status is incorrect.
@@ -758,14 +760,19 @@ public class RSASignSessionBean extends BaseSessionBean {
      * 
      * @Deprecated will be removed in EJBCA 4.0, use method without keyUsage parameter and use keyusage extension in request message instead.
      */
-    public IResponseMessage createCertificate(Admin admin, IRequestMessage req, int keyUsage, Class responseClass) throws EjbcaException {
+    public IResponseMessage createCertificate(Admin admin, IRequestMessage req, int keyUsage, Class responseClass, UserDataVO suppliedUserData) throws EjbcaException {
     	if (log.isTraceEnabled()) {
     		log.trace(">createCertificate(IRequestMessage)");
     	}
         // Get CA that will receive request
         UserDataVO data = null;
-        IResponseMessage ret = null;            
-        CA ca = getCAFromRequest(admin, req);
+        IResponseMessage ret = null;
+        CA ca;
+        if (suppliedUserData == null) {
+            ca = getCAFromRequest(admin, req);
+        } else {
+            ca = getCaAdminSession().getCA(admin, suppliedUserData.getCAId());	// Take the CAId from the supplied userdata, if any
+        }
         try {
             CATokenContainer catoken = ca.getCAToken();
             
@@ -781,13 +788,13 @@ public class RSASignSessionBean extends BaseSessionBean {
                 throw new SignRequestSignatureException(msg);
             }
             
-            if (req.getUsername() == null) {
+            if (ca.isUseUserStorage() && req.getUsername() == null) {
             	String msg = intres.getLocalizedMessage("signsession.nouserinrequest", req.getRequestDN());
                 getLogSession().log(admin, ca.getCAId(), LogConstants.MODULE_CA, new java.util.Date(), req.getUsername(), null, LogConstants.EVENT_ERROR_CREATECERTIFICATE, msg);
                 throw new SignRequestException(msg);
                 //ret.setFailInfo(FailInfo.BAD_REQUEST);
                 //ret.setStatus(ResponseStatus.FAILURE);
-            } else if (req.getPassword() == null) {
+            } else if (ca.isUseUserStorage() && req.getPassword() == null) {
             	String msg = intres.getLocalizedMessage("signsession.nopasswordinrequest");
                 getLogSession().log(admin, ca.getCAId(), LogConstants.MODULE_CA, new java.util.Date(), req.getUsername(), null, LogConstants.EVENT_ERROR_CREATECERTIFICATE, msg);
                 throw new SignRequestException(msg);
@@ -797,8 +804,12 @@ public class RSASignSessionBean extends BaseSessionBean {
             	String failText = null;
                 Certificate cert = null;
             	try {
-    				// If we haven't done so yet, authenticate user
-            		data = authUser(admin, req.getUsername(), req.getPassword());
+    				// If we haven't done so yet, authenticate user. (Only if we store UserData for this CA.)
+            		if (ca.isUseUserStorage()) {
+                		data = authUser(admin, req.getUsername(), req.getPassword());
+            		} else {
+            			data = suppliedUserData;
+            		}
                     PublicKey reqpk = req.getRequestPublicKey();
                     if (reqpk == null) {
                         getLogSession().log(admin, ca.getCAId(), LogConstants.MODULE_CA, new java.util.Date(), req.getUsername(), null, LogConstants.EVENT_ERROR_CREATECERTIFICATE, intres.getLocalizedMessage("signsession.nokeyinrequest"));
@@ -868,8 +879,8 @@ public class RSASignSessionBean extends BaseSessionBean {
                 }
             }
             ret.create();
-            // Call authentication session and tell that we are finished with this user
-            if ( data!=null ) {
+            // Call authentication session and tell that we are finished with this user. (Only if we store UserData for this CA.)
+            if (ca.isUseUserStorage() && data!=null) {
         		finishUser(ca, data);
             }            	
         } catch (NoUniqueCertSerialNumberIndexException e) {
@@ -1372,21 +1383,29 @@ public class RSASignSessionBean extends BaseSessionBean {
             final ICertificateStoreSessionLocal certificateStore = storeHome.create();
             final Certificate cacert = ca.getCACertificate();
             final String caSubjectDN = CertTools.getSubjectDN(cacert);
-            if ( ca.isDoEnforceUniqueDistinguishedName() ){
-                final Set users = certificateStore.findUsernamesByIssuerDNAndSubjectDN(admin, caSubjectDN, data.getDN());
-                if ( users.size()>0 && !users.contains(data.getUsername()) ) {
-                	String msg = intres.getLocalizedMessage("signsession.subjectdn_exists_for_another_user", "'"+data.getUsername()+"'", listUsers(users));
-                	log.info(msg);
-                    throw new EjbcaException(ErrorCode.CERTIFICATE_WITH_THIS_SUBJECTDN_ALLREADY_EXISTS_FOR_ANOTHER_USER, msg);
-                }
+            if (ca.isDoEnforceUniqueDistinguishedName()) {
+            	if (ca.isUseCertificateStorage()) {
+                    final Set users = certificateStore.findUsernamesByIssuerDNAndSubjectDN(admin, caSubjectDN, data.getDN());
+                    if ( users.size()>0 && !users.contains(data.getUsername()) ) {
+                    	String msg = intres.getLocalizedMessage("signsession.subjectdn_exists_for_another_user", "'"+data.getUsername()+"'", listUsers(users));
+                    	log.info(msg);
+                        throw new EjbcaException(ErrorCode.CERTIFICATE_WITH_THIS_SUBJECTDN_ALLREADY_EXISTS_FOR_ANOTHER_USER, msg);
+                    }
+            	} else {
+            		log.warn("CA configured to enforce unique SubjectDN, but not to store issued certificates. Check will be ignored. Please verify your configuration.");
+            	}
             }
             if ( ca.isDoEnforceUniquePublicKeys() ){
-                final Set users = certificateStore.findUsernamesByIssuerDNAndSubjectKeyId(admin, caSubjectDN, KeyTools.createSubjectKeyId(pk).getKeyIdentifier());
-                if ( users.size()>0 && !users.contains(data.getUsername()) ) {
-                	String msg = intres.getLocalizedMessage("signsession.key_exists_for_another_user", "'"+data.getUsername()+"'", listUsers(users));
-                	log.info(msg);
-                    throw new EjbcaException(ErrorCode.CERTIFICATE_FOR_THIS_KEY_ALLREADY_EXISTS_FOR_ANOTHER_USER, msg);
-                }
+            	if (ca.isUseCertificateStorage()) {
+                    final Set users = certificateStore.findUsernamesByIssuerDNAndSubjectKeyId(admin, caSubjectDN, KeyTools.createSubjectKeyId(pk).getKeyIdentifier());
+                    if ( users.size()>0 && !users.contains(data.getUsername()) ) {
+                    	String msg = intres.getLocalizedMessage("signsession.key_exists_for_another_user", "'"+data.getUsername()+"'", listUsers(users));
+                    	log.info(msg);
+                        throw new EjbcaException(ErrorCode.CERTIFICATE_FOR_THIS_KEY_ALLREADY_EXISTS_FOR_ANOTHER_USER, msg);
+                    }
+            	} else {
+            		log.warn("CA configured to enforce unique entity keys, but not to store issued certificates. Check will be ignored. Please verify your configuration.");
+            	}
             }
             // Retrieve the certificate profile this user should have
 			final int certProfileId;
@@ -1459,7 +1478,7 @@ public class RSASignSessionBean extends BaseSessionBean {
 			}
 			final int maxRetrys;
 			if ( useCustomSN ) {
-				if ( !isUniqueCertificateSerialNumberIndex() ) {
+				if (ca.isUseCertificateStorage() && !isUniqueCertificateSerialNumberIndex()) {
 					final String msg = intres.getLocalizedMessage("signsession.not_unique_certserialnumberindex");
 					this.log.error(msg);
 					throw new NoUniqueCertSerialNumberIndexException(new EjbcaException(msg));
@@ -1476,20 +1495,23 @@ public class RSASignSessionBean extends BaseSessionBean {
             for ( int retrycounter=0; retrycounter<maxRetrys; retrycounter++ ) {
                 cert = ca.generateCertificate(data, requestX509Name, pk, keyusage, notBefore, notAfter, certProfile, extensions, sequence);
                 serialNo = CertTools.getSerialNumberAsString(cert);
-                // Store certificate in the database
                 cafingerprint = CertTools.getFingerprintAsString(cacert);
+                // Store certificate in the database, if this CA is configured to do so.
+                if (!ca.isUseCertificateStorage()) {
+                	break;	// We have our cert and we don't need to store it.. Move on..
+                }
                 try {
-                    certificateStore.storeCertificate(admin, cert, data.getUsername(), cafingerprint, SecConst.CERT_ACTIVE, certProfile.getType(), certProfileId, tag, updateTime);                        
-					storeEx = null;
-					break;
+                	certificateStore.storeCertificate(admin, cert, data.getUsername(), cafingerprint, SecConst.CERT_ACTIVE, certProfile.getType(), certProfileId, tag, updateTime);                        
+                	storeEx = null;
+                	break;
                 } catch (Exception e) {
-                    // If we have created a unique index on (issuerDN,serialNumber) on table CertificateData we can 
-                    // get a CreateException here if we would happen to generate a certificate with the same serialNumber
-                    // as one already existing certificate.
-					if ( retrycounter+1<maxRetrys ) {
-						log.info("Can not store certificate with serNo ("+serialNo+"), will retry (retrycounter="+retrycounter+") with a new certificate with new serialNo: "+e.getMessage());
-					}
-                    storeEx = e;
+                	// If we have created a unique index on (issuerDN,serialNumber) on table CertificateData we can 
+                	// get a CreateException here if we would happen to generate a certificate with the same serialNumber
+                	// as one already existing certificate.
+                	if ( retrycounter+1<maxRetrys ) {
+                		log.info("Can not store certificate with serNo ("+serialNo+"), will retry (retrycounter="+retrycounter+") with a new certificate with new serialNo: "+e.getMessage());
+                	}
+                	storeEx = e;
                 }
             }
 			if ( storeEx!=null ) {
@@ -1513,16 +1535,21 @@ public class RSASignSessionBean extends BaseSessionBean {
             	certificateStore.addCertReqHistoryData(admin,cert,data);
             }
             // Store certificate in certificate profiles publishers.
-            IPublisherSessionLocal pub = publishHome.create();
             Collection publishers = certProfile.getPublisherList();
             if (publishers != null) {
+                IPublisherSessionLocal pub = publishHome.create();
                 pub.storeCertificate(admin, publishers, cert, data.getUsername(), data.getPassword(), data.getDN(), cafingerprint, SecConst.CERT_ACTIVE, certProfile.getType(), -1, RevokedCertInfo.NOT_REVOKED, tag, certProfileId, updateTime, data.getExtendedinformation());
             }
 
             // Finally we check if this certificate should not be issued as active, but revoked directly upon issuance 
             int revreason = getIssuanceRevocationReason(data);
             if (revreason != RevokedCertInfo.NOT_REVOKED) {
-                certificateStore.revokeCertificate(admin, cert, publishers, revreason, data.getDN());
+            	// If we don't store the certificate in the database, we wont support revocation/reactivation so issuing revoked certificates would be really strange. 
+            	if (ca.isUseCertificateStorage()) {
+            		certificateStore.revokeCertificate(admin, cert, publishers, revreason, data.getDN());
+            	} else {
+            		log.warn("CA configured to revoke issued certificates directly, but not to store issued the certificates. Revocation will be ignored. Please verify your configuration.");
+            	}
             }                
 
         	if (log.isTraceEnabled()) {

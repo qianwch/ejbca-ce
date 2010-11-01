@@ -295,7 +295,7 @@ public class AdminCertReqServlet extends HttpServlet {
             p10.setUsername(username);
             p10.setPassword(password);
             ISignSessionLocal ss = getSignSession();
-            IResponseMessage resp = ss.createCertificate(admin, p10, Class.forName(org.ejbca.core.protocol.X509ResponseMessage.class.getName()));
+            IResponseMessage resp = ss.createCertificate(admin, p10, Class.forName(org.ejbca.core.protocol.X509ResponseMessage.class.getName()), null);
             Certificate cert = CertTools.getCertfromByteArray(resp.getResponseMessage());
             pkcs7 = ss.createPKCS7(admin, cert, true);
         } catch (EjbcaException e) {

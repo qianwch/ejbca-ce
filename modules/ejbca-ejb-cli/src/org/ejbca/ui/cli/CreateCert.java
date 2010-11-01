@@ -61,7 +61,7 @@ public class CreateCert extends BaseCommand {
 			}
 			Class responseClass = Class.forName(X509ResponseMessage.class.getName());
 			// Call signsession to create a certificate
-			IResponseMessage resp = getSignSession().createCertificate(getAdmin(), req, responseClass);
+			IResponseMessage resp = getSignSession().createCertificate(getAdmin(), req, responseClass, null);
 			byte[] respBytes = resp.getResponseMessage();
 			// Convert to PEM
 			Certificate cert = CertTools.getCertfromByteArray(respBytes);

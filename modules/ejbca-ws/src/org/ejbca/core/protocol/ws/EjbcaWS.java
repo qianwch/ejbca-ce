@@ -1009,7 +1009,7 @@ public class EjbcaWS implements IEjbcaWS {
 			String hardTokenSN, String responseType, EjbcaWSHelper ejbhelper) throws EjbcaException, CertificateEncodingException, CertificateException, IOException {
 		byte[] retval = null;
 		Class respClass = org.ejbca.core.protocol.X509ResponseMessage.class; 
-		IResponseMessage resp =  ejbhelper.getSignSession().createCertificate(admin, msg, respClass);
+		IResponseMessage resp =  ejbhelper.getSignSession().createCertificate(admin, msg, respClass, null);
 		java.security.cert.Certificate cert = CertTools.getCertfromByteArray(resp.getResponseMessage());
 		if(responseType.equalsIgnoreCase(CertificateHelper.RESPONSETYPE_CERTIFICATE)){
 			retval = cert.getEncoded();

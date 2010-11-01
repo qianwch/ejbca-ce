@@ -324,7 +324,7 @@ public class LocalCertificateRequestSessionBean extends BaseSessionBean {
 				//imsg = reqmsg;
 			}
 			if (imsg != null) {
-				retval = getCertResponseFromPublicKey(admin, imsg, hardTokenSN, responseType);
+				retval = getCertResponseFromPublicKey(admin, imsg, hardTokenSN, responseType, userdata);
 			}
 		} catch (NotFoundException e) {
 			getSessionContext().setRollbackOnly();	// This is an application exception so it wont trigger a roll-back automatically
@@ -384,7 +384,7 @@ public class LocalCertificateRequestSessionBean extends BaseSessionBean {
 		addOrEditUser(admin, userdata, false, true);
 		IResponseMessage retval = null;
 		try {
-			retval = getSignSession().createCertificate(admin, req, -1, responseClass);				
+			retval = getSignSession().createCertificate(admin, req, -1, responseClass, userdata);				
 		} catch (NotFoundException e) {
 			getSessionContext().setRollbackOnly();	// This is an application exception so it wont trigger a roll-back automatically
 			throw e;
@@ -448,11 +448,11 @@ public class LocalCertificateRequestSessionBean extends BaseSessionBean {
 	 * @param responseType is one of SecConst.CERT_RES_TYPE_...
      * @return a encoded certificate of the type specified in responseType 
 	 */
-	private byte[] getCertResponseFromPublicKey(Admin admin, IRequestMessage msg, String hardTokenSN, int responseType)
+	private byte[] getCertResponseFromPublicKey(Admin admin, IRequestMessage msg, String hardTokenSN, int responseType, UserDataVO userData)
 	throws EjbcaException, CertificateEncodingException, CertificateException, IOException {
 		byte[] retval = null;
 		Class respClass = org.ejbca.core.protocol.X509ResponseMessage.class; 
-		IResponseMessage resp =  getSignSession().createCertificate(admin, msg, respClass);
+		IResponseMessage resp =  getSignSession().createCertificate(admin, msg, respClass, userData);
 		java.security.cert.Certificate cert = CertTools.getCertfromByteArray(resp.getResponseMessage());
 		if(responseType == SecConst.CERT_RES_TYPE_CERTIFICATE){
 			retval = cert.getEncoded();

@@ -266,7 +266,7 @@ public class AutoEnrollServlet extends HttpServlet {
 		req.setPassword(password);
 		IResponseMessage resp;
 		try {
-			resp = getSignSession().createCertificate(admin, req,Class.forName(X509ResponseMessage.class.getName()));
+			resp = getSignSession().createCertificate(admin, req,Class.forName(X509ResponseMessage.class.getName()), null);
 			cert = CertTools.getCertfromByteArray(resp.getResponseMessage());
 			result = getSignSession().createPKCS7(admin, cert, true);
 			debugInfo += "Resulting cert: " + new String(Base64.encode(result, true)) + "\n"; 

@@ -441,7 +441,7 @@ public class TestSignSession extends TestCase {
         PKCS10RequestMessage p10 = new PKCS10RequestMessage(bcp10);
         p10.setUsername("foo");
         p10.setPassword("foo123");
-        IResponseMessage resp = TestTools.getSignSession().createCertificate(admin, p10, Class.forName(org.ejbca.core.protocol.X509ResponseMessage.class.getName()));
+        IResponseMessage resp = TestTools.getSignSession().createCertificate(admin, p10, Class.forName(org.ejbca.core.protocol.X509ResponseMessage.class.getName()), null);
         Certificate cert = CertTools.getCertfromByteArray(resp.getResponseMessage());
         assertNotNull("Failed to create certificate", cert);
         log.debug("Cert=" + cert.toString());
@@ -463,7 +463,7 @@ public class TestSignSession extends TestCase {
         p10.setUsername("foo");
         p10.setPassword("foo123");
         IResponseMessage resp = TestTools.getSignSession().createCertificate(admin,
-                p10, Class.forName("org.ejbca.core.protocol.X509ResponseMessage"));
+                p10, Class.forName("org.ejbca.core.protocol.X509ResponseMessage"), null);
         Certificate cert = CertTools.getCertfromByteArray(resp.getResponseMessage());
         assertNotNull("Failed to create certificate", cert);
         log.debug("Cert=" + cert.toString());
@@ -485,7 +485,7 @@ public class TestSignSession extends TestCase {
         p10.setUsername("foo");
         p10.setPassword("foo123");
         IResponseMessage resp = TestTools.getSignSession().createCertificate(admin,
-                p10, Class.forName("org.ejbca.core.protocol.X509ResponseMessage"));
+                p10, Class.forName("org.ejbca.core.protocol.X509ResponseMessage"), null);
         Certificate cert = CertTools.getCertfromByteArray(resp.getResponseMessage());
         assertNotNull("Failed to create certificate", cert);
         log.debug("Cert=" + cert.toString());
@@ -556,7 +556,7 @@ public class TestSignSession extends TestCase {
             p10.setUsername("foo");
             p10.setPassword("foo123");
             IResponseMessage resp = TestTools.getSignSession().createCertificate(admin,
-                    p10, Class.forName("org.ejbca.core.protocol.X509ResponseMessage"));
+                    p10, Class.forName("org.ejbca.core.protocol.X509ResponseMessage"), null);
             Certificate cert = CertTools.getCertfromByteArray(resp.getResponseMessage());
             log.info("cert with DN '"+CertTools.getSubjectDN(cert)+"' should not be issued?");
         } catch (Exception e) {
@@ -962,7 +962,7 @@ public class TestSignSession extends TestCase {
         p10.setUsername("foo");
         p10.setPassword("foo123");
         IResponseMessage resp = TestTools.getSignSession().createCertificate(admin,
-                p10, Class.forName("org.ejbca.core.protocol.X509ResponseMessage"));
+                p10, Class.forName("org.ejbca.core.protocol.X509ResponseMessage"), null);
         Certificate cert = CertTools.getCertfromByteArray(resp.getResponseMessage());
         assertNotNull("Failed to create certificate", cert);
         log.debug("Cert=" + cert.toString());
@@ -1047,7 +1047,7 @@ public class TestSignSession extends TestCase {
         p10.setUsername("fooecdsa");
         p10.setPassword("foo123");
         IResponseMessage resp = TestTools.getSignSession().createCertificate(admin,
-                p10, Class.forName("org.ejbca.core.protocol.X509ResponseMessage"));
+                p10, Class.forName("org.ejbca.core.protocol.X509ResponseMessage"), null);
         Certificate cert = CertTools.getCertfromByteArray(resp.getResponseMessage());
         assertNotNull("Failed to create certificate", cert);
         log.debug("Cert=" + cert.toString());
@@ -1131,7 +1131,7 @@ public class TestSignSession extends TestCase {
         p10.setUsername("fooecdsaimpca");
         p10.setPassword("foo123");
         IResponseMessage resp = TestTools.getSignSession().createCertificate(admin,
-                p10, Class.forName("org.ejbca.core.protocol.X509ResponseMessage"));
+                p10, Class.forName("org.ejbca.core.protocol.X509ResponseMessage"), null);
         Certificate cert = CertTools.getCertfromByteArray(resp.getResponseMessage());
         assertNotNull("Failed to create certificate", cert);
         log.debug("Cert=" + cert.toString());
@@ -1228,7 +1228,7 @@ public class TestSignSession extends TestCase {
         p10.setUsername("foorsamgf1ca");
         p10.setPassword("foo123");
         IResponseMessage resp = TestTools.getSignSession().createCertificate(admin,
-                p10, Class.forName("org.ejbca.core.protocol.X509ResponseMessage"));
+                p10, Class.forName("org.ejbca.core.protocol.X509ResponseMessage"), null);
         X509Certificate cert = (X509Certificate)CertTools.getCertfromByteArray(resp.getResponseMessage());
         //X509Certificate cert = CertTools.getCertfromByteArray(retcert.getEncoded());
         assertNotNull("Failed to create certificate", cert);
@@ -1545,7 +1545,7 @@ public class TestSignSession extends TestCase {
         p10.setUsername("foo");
         p10.setPassword("foo123");
         IResponseMessage resp = TestTools.getSignSession().createCertificate(admin,
-                p10, Class.forName("org.ejbca.core.protocol.X509ResponseMessage"));
+                p10, Class.forName("org.ejbca.core.protocol.X509ResponseMessage"), null);
         Certificate cert = CertTools.getCertfromByteArray(resp.getResponseMessage());
         assertNotNull("Failed to create certificate", cert);
         log.debug("Cert=" + cert.toString());
@@ -1625,7 +1625,7 @@ public class TestSignSession extends TestCase {
         p10.setUsername("foodsa");
         p10.setPassword("foo123");
         IResponseMessage resp = TestTools.getSignSession().createCertificate(admin,
-                p10, Class.forName("org.ejbca.core.protocol.X509ResponseMessage"));
+                p10, Class.forName("org.ejbca.core.protocol.X509ResponseMessage"), null);
         Certificate cert = CertTools.getCertfromByteArray(resp.getResponseMessage());
         assertNotNull("Failed to create certificate", cert);
         log.debug("Cert=" + cert.toString());
@@ -1741,7 +1741,7 @@ public class TestSignSession extends TestCase {
     	//PKCS10RequestMessage p10 = new PKCS10RequestMessage(iep10);
         p10.setUsername("foo");
         p10.setPassword("foo123");
-        IResponseMessage resp = TestTools.getSignSession().createCertificate(admin, p10, Class.forName(org.ejbca.core.protocol.X509ResponseMessage.class.getName()));
+        IResponseMessage resp = TestTools.getSignSession().createCertificate(admin, p10, Class.forName(org.ejbca.core.protocol.X509ResponseMessage.class.getName()), null);
         X509Certificate cert = (X509Certificate)CertTools.getCertfromByteArray(resp.getResponseMessage());
         assertNotNull("Failed to create certificate", cert);
         assertEquals("CN=dnoverride,C=SE", cert.getSubjectDN().getName());
@@ -1752,7 +1752,7 @@ public class TestSignSession extends TestCase {
         TestTools.getCertificateStoreSession().changeCertificateProfile(admin, "TESTDNOVERRIDE", prof);
 
     	TestTools.getUserAdminSession().changeUser(admin, user, false);
-        resp = TestTools.getSignSession().createCertificate(admin, p10, Class.forName(org.ejbca.core.protocol.X509ResponseMessage.class.getName()));
+        resp = TestTools.getSignSession().createCertificate(admin, p10, Class.forName(org.ejbca.core.protocol.X509ResponseMessage.class.getName()), null);
         cert = (X509Certificate)CertTools.getCertfromByteArray(resp.getResponseMessage());
         assertNotNull("Failed to create certificate", cert);
         assertEquals("CN=foo,C=SE,Name=AnaTom,O=My org", cert.getSubjectDN().getName());
@@ -1828,7 +1828,7 @@ public class TestSignSession extends TestCase {
         // See if the request message works...
         X509Extensions p10exts = p10.getRequestExtensions();
         assertNotNull(p10exts);
-        IResponseMessage resp = TestTools.getSignSession().createCertificate(admin, p10, Class.forName(org.ejbca.core.protocol.X509ResponseMessage.class.getName()));
+        IResponseMessage resp = TestTools.getSignSession().createCertificate(admin, p10, Class.forName(org.ejbca.core.protocol.X509ResponseMessage.class.getName()), null);
         X509Certificate cert = (X509Certificate)CertTools.getCertfromByteArray(resp.getResponseMessage());
         assertNotNull("Failed to create certificate", cert);
         assertEquals("CN=extoverride,C=SE", cert.getSubjectDN().getName());
@@ -1842,7 +1842,7 @@ public class TestSignSession extends TestCase {
         TestTools.getCertificateStoreSession().changeCertificateProfile(admin, "TESTEXTENSIONOVERRIDE", prof);
 
     	TestTools.getUserAdminSession().changeUser(admin, user, false);
-        resp = TestTools.getSignSession().createCertificate(admin, p10, Class.forName(org.ejbca.core.protocol.X509ResponseMessage.class.getName()));
+        resp = TestTools.getSignSession().createCertificate(admin, p10, Class.forName(org.ejbca.core.protocol.X509ResponseMessage.class.getName()), null);
         cert = (X509Certificate)CertTools.getCertfromByteArray(resp.getResponseMessage());
         assertNotNull("Failed to create certificate", cert);
         assertEquals("CN=extoverride,C=SE", cert.getSubjectDN().getName());
@@ -1915,7 +1915,7 @@ public class TestSignSession extends TestCase {
         p10.setUsername("foo");
         p10.setPassword("foo123");
         // See if the request message works...
-        IResponseMessage resp = TestTools.getSignSession().createCertificate(admin, p10, Class.forName(org.ejbca.core.protocol.X509ResponseMessage.class.getName()));
+        IResponseMessage resp = TestTools.getSignSession().createCertificate(admin, p10, Class.forName(org.ejbca.core.protocol.X509ResponseMessage.class.getName()), null);
         X509Certificate cert = (X509Certificate)CertTools.getCertfromByteArray(resp.getResponseMessage());
         assertNotNull("Failed to create certificate", cert);
         assertEquals("CN=testsigalg,C=SE", cert.getSubjectDN().getName());
@@ -1927,7 +1927,7 @@ public class TestSignSession extends TestCase {
         TestTools.getCertificateStoreSession().changeCertificateProfile(admin, "TESTSIGALG", prof);
 
     	TestTools.getUserAdminSession().changeUser(admin, user, false);
-        resp = TestTools.getSignSession().createCertificate(admin, p10, Class.forName(org.ejbca.core.protocol.X509ResponseMessage.class.getName()));
+        resp = TestTools.getSignSession().createCertificate(admin, p10, Class.forName(org.ejbca.core.protocol.X509ResponseMessage.class.getName()), null);
         cert = (X509Certificate)CertTools.getCertfromByteArray(resp.getResponseMessage());
         assertNotNull("Failed to create certificate", cert);
         assertEquals("CN=testsigalg,C=SE", cert.getSubjectDN().getName());

@@ -154,7 +154,9 @@ public class TestCAs extends TestCase {
                     true, // isDoEnforceUniquePublicKeys
                     true, // isDoEnforceUniqueDistinguishedName
                     false, // isDoEnforceUniqueSubjectDNSerialnumber
-                    true // useCertReqHistory
+                    true, // useCertReqHistory
+                    true, // useUserStorage
+                    true // useCertificateStorage
             		);
 
             TestTools.getCAAdminSession().createCA(admin, cainfo);
@@ -298,7 +300,9 @@ public class TestCAs extends TestCase {
                     true, // isDoEnforceUniquePublicKeys
                     true, // isDoEnforceUniqueDistinguishedName
                     false, // isDoEnforceUniqueSubjectDNSerialnumber
-                    true // useCertReqHistory
+                    true, // useCertReqHistory
+                    true, // useUserStorage
+                    true // useCertificateStorage
                     );
 
 
@@ -402,7 +406,9 @@ public class TestCAs extends TestCase {
                     true, // isDoEnforceUniquePublicKeys
                     true, // isDoEnforceUniqueDistinguishedName
                     false, // isDoEnforceUniqueSubjectDNSerialnumber
-                    true // useCertReqHistory
+                    true, // useCertReqHistory
+                    true, // useUserStorage
+                    true // useCertificateStorage
             );
 
             TestTools.getCAAdminSession().createCA(admin, cainfo);
@@ -503,7 +509,9 @@ public class TestCAs extends TestCase {
                     true, // isDoEnforceUniquePublicKeys
                     true, // isDoEnforceUniqueDistinguishedName
                     false, // isDoEnforceUniqueSubjectDNSerialnumber
-                    true // useCertReqHistory
+                    true, // useCertReqHistory
+                    true, // useUserStorage
+                    true // useCertificateStorage
                     );
             TestTools.getCAAdminSession().createCA(admin, cainfo);
 
@@ -593,7 +601,9 @@ public class TestCAs extends TestCase {
                     true, // isDoEnforceUniquePublicKeys
                     true, // isDoEnforceUniqueDistinguishedName
                     false, // isDoEnforceUniqueSubjectDNSerialnumber
-                    true // useCertReqHistory
+                    true, // useCertReqHistory
+                    true, // useUserStorage
+                    true // useCertificateStorage
                     );
 
             TestTools.getCAAdminSession().createCA(admin, cainfo);
@@ -688,7 +698,9 @@ public class TestCAs extends TestCase {
                     true, // isDoEnforceUniquePublicKeys
                     true, // isDoEnforceUniqueDistinguishedName
                     false, // isDoEnforceUniqueSubjectDNSerialnumber
-                    true // useCertReqHistory
+                    true, // useCertReqHistory
+                    true, // useUserStorage
+                    true // useCertificateStorage
                     );
 
             TestTools.getCAAdminSession().createCA(admin, cainfo);
@@ -766,7 +778,9 @@ public class TestCAs extends TestCase {
                     true, // isDoEnforceUniquePublicKeys
                     true, // isDoEnforceUniqueDistinguishedName
                     false, // isDoEnforceUniqueSubjectDNSerialnumber
-                    true // useCertReqHistory
+                    true, // useCertReqHistory
+                    true, // useUserStorage
+                    true // useCertificateStorage
                     );
             
             TestTools.getCAAdminSession().createCA(admin, cvccainfo);
@@ -830,7 +844,9 @@ public class TestCAs extends TestCase {
                     true, // isDoEnforceUniquePublicKeys
                     true, // isDoEnforceUniqueDistinguishedName
                     false, // isDoEnforceUniqueSubjectDNSerialnumber
-                    true // useCertReqHistory
+                    true, // useCertReqHistory
+                    true, // useUserStorage
+                    true // useCertificateStorage
                     );
             
             TestTools.getCAAdminSession().createCA(admin, cvccainfo);
@@ -889,7 +905,9 @@ public class TestCAs extends TestCase {
                     true, // isDoEnforceUniquePublicKeys
                     true, // isDoEnforceUniqueDistinguishedName
                     false, // isDoEnforceUniqueSubjectDNSerialnumber
-                    true // useCertReqHistory
+                    true, // useCertReqHistory
+                    true, // useUserStorage
+                    true // useCertificateStorage
                     );
             
             TestTools.getCAAdminSession().createCA(admin, cvccainfo);
@@ -1063,7 +1081,9 @@ public class TestCAs extends TestCase {
                     true, // isDoEnforceUniquePublicKeys
                     true, // isDoEnforceUniqueDistinguishedName
                     false, // isDoEnforceUniqueSubjectDNSerialnumber
-                    true // useCertReqHistory
+                    true, // useCertReqHistory
+                    true, // useUserStorage
+                    true // useCertificateStorage
                     );
             
             TestTools.getCAAdminSession().createCA(admin, cvccainfo);
@@ -1122,7 +1142,9 @@ public class TestCAs extends TestCase {
                     true, // isDoEnforceUniquePublicKeys
                     true, // isDoEnforceUniqueDistinguishedName
                     false, // isDoEnforceUniqueSubjectDNSerialnumber
-                    true // useCertReqHistory
+                    true, // useCertReqHistory
+                    true, // useUserStorage
+                    true // useCertificateStorage
                     );
             
             TestTools.getCAAdminSession().createCA(admin, cvccainfo);
@@ -1181,7 +1203,9 @@ public class TestCAs extends TestCase {
                     true, // isDoEnforceUniquePublicKeys
                     true, // isDoEnforceUniqueDistinguishedName
                     false, // isDoEnforceUniqueSubjectDNSerialnumber
-                    true // useCertReqHistory
+                    true, // useCertReqHistory
+                    true, // useUserStorage
+                    true // useCertificateStorage
                     );
             
             TestTools.getCAAdminSession().createCA(admin, cvccainfo);
@@ -1393,7 +1417,9 @@ public class TestCAs extends TestCase {
                     true, // isDoEnforceUniquePublicKeys
                     true, // isDoEnforceUniqueDistinguishedName
                     false, // isDoEnforceUniqueSubjectDNSerialnumber
-                    true // useCertReqHistory
+                    true, // useCertReqHistory
+                    true, // useUserStorage
+                    true // useCertificateStorage
             		);
 
             info = TestTools.getCAAdminSession().getCAInfo(admin, "TESTSIGNEDBYEXTERNAL");
@@ -1522,7 +1548,9 @@ public class TestCAs extends TestCase {
                     true, // isDoEnforceUniquePublicKeys
                     true, // isDoEnforceUniqueDistinguishedName
                     false, // isDoEnforceUniqueSubjectDNSerialnumber
-                    true // useCertReqHistory
+                    true, // useCertReqHistory
+                    true, // useUserStorage
+                    true // useCertificateStorage
             		);
 
             TestTools.getCAAdminSession().createCA(admin, cainfo);

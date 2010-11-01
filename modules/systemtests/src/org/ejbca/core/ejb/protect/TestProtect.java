@@ -220,7 +220,7 @@ public class TestProtect extends TestCase {
         entry.setFingerprint("2");
         tableProtectSession.protectExternal(entry, dataSource);        	        
         TableVerifyResult res = tableProtectSession.verify(entry);
-        assertEquals(res.getResultCode(), TableVerifyResult.VERIFY_SUCCESS);
+        assertEquals("Verification should be successful.", TableVerifyResult.VERIFY_SUCCESS, res.getResultCode());
         entry.setStatus(RevokedCertInfo.REVOKATION_REASON_AACOMPROMISE);
         res = tableProtectSession.verify(entry);
         assertEquals(res.getResultCode(), TableVerifyResult.VERIFY_FAILED);

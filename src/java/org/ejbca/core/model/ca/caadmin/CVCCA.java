@@ -25,7 +25,6 @@ import java.security.SignatureException;
 import java.security.cert.CRL;
 import java.security.cert.CRLException;
 import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -113,7 +112,7 @@ public class CVCCA extends CA implements Serializable {
 				getCRLPublishers(), getFinishUser(), externalcaserviceinfos, 
 				getApprovalSettings(), getNumOfRequiredApprovals(),
 				getIncludeInHealthCheck(), isDoEnforceUniquePublicKeys(), isDoEnforceUniqueDistinguishedName(), isDoEnforceUniqueSubjectDNSerialnumber(),
-				isUseCertReqHistory());
+				isUseCertReqHistory(), isUseUserStorage(), isUseCertificateStorage());
 		super.setCAInfo(info);
 	}
 
