@@ -185,11 +185,10 @@ class CertificateCache implements ICertificateCache {
     		final Iterator<Map.Entry<String,X509Certificate>> iter = certs.iterator();
     		while (iter.hasNext()) {
     			final Map.Entry<String,X509Certificate> entry = iter.next();
-    			final X509Certificate cert = entry.getValue();
     			// OCSP only supports X509 certificates
-    			final X509Certificate cacert = cert;
+    			final X509Certificate cacert = entry.getValue();
     			try {
-    				CertificateID issuerId = new CertificateID(certId.getHashAlgOID(), cacert, CertTools.getSerialNumber(cacert));
+    				final CertificateID issuerId = new CertificateID(certId.getHashAlgOID(), cacert, CertTools.getSerialNumber(cacert));
     				if (log.isDebugEnabled()) {
     					log.debug("Comparing the following certificate hashes:\n"
     					          + " Hash algorithm : '" + certId.getHashAlgOID() + "'\n"
