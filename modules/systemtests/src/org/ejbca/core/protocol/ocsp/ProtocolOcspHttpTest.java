@@ -338,9 +338,9 @@ public class ProtocolOcspHttpTest extends TestCase {
         OCSPReq req = gen.generate("SHA1WithRSA", keys.getPrivate(), chain, "BC");
 
         // First test with a signed OCSP request that can be verified
-        Collection cacerts = new ArrayList();
+        Collection<Certificate> cacerts = new ArrayList<Certificate>();
         cacerts.add(cacert);
-        CertificateCache certcache = new CertificateCache(cacerts);
+        ICertificateCache certcache = new CertificateCache(cacerts);
         X509Certificate signer = OCSPUtil.checkRequestSignature("127.0.0.1", req, certcache);
         assertNotNull(signer);
         assertEquals(ocspTestCert.getSerialNumber().toString(16), signer.getSerialNumber().toString(16));

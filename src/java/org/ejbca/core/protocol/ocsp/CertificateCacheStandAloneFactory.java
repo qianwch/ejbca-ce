@@ -20,11 +20,11 @@ package org.ejbca.core.protocol.ocsp;
  * 
  */
 public class CertificateCacheStandAloneFactory {
-    private static CertificateCache instance = null;
+    private static ICertificateCache instance = null;
     /**
      * @return  {@link CertificateCache} for the VA.
      */
-    public static synchronized CertificateCache getInstance() {
+    public static synchronized ICertificateCache getInstance() {
         if (instance == null) {
             instance = new CertificateCache(new CertStoreStandAlone());
         }

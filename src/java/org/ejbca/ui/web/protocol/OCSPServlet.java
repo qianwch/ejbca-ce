@@ -27,7 +27,7 @@ import org.ejbca.core.model.ca.caadmin.extendedcaservices.OCSPCAServiceResponse;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.protocol.ocsp.CertStore;
 import org.ejbca.core.protocol.ocsp.CertificateCacheFactory;
-import org.ejbca.core.protocol.ocsp.CertificateCache;
+import org.ejbca.core.protocol.ocsp.ICertificateCache;
 import org.ejbca.core.protocol.ocsp.OCSPData;
 
 /** 
@@ -96,7 +96,7 @@ public class OCSPServlet extends OCSPServletBase {
         return (OCSPCAServiceResponse)getSignSession().extendedService(adm, caid, request);
     }
 
-    protected CertificateCache createCertificateCache() {
+    protected ICertificateCache createCertificateCache() {
 		return CertificateCacheFactory.getInstance();
 	}
 

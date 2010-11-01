@@ -71,8 +71,8 @@ import org.ejbca.core.model.ca.caadmin.extendedcaservices.OCSPCAServiceRequest;
 import org.ejbca.core.model.ca.caadmin.extendedcaservices.OCSPCAServiceResponse;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.protocol.ocsp.AuditLogger;
-import org.ejbca.core.protocol.ocsp.CertificateCache;
 import org.ejbca.core.protocol.ocsp.IAuditLogger;
+import org.ejbca.core.protocol.ocsp.ICertificateCache;
 import org.ejbca.core.protocol.ocsp.IOCSPExtension;
 import org.ejbca.core.protocol.ocsp.IOCSPLogger;
 import org.ejbca.core.protocol.ocsp.ISaferAppenderListener;
@@ -187,7 +187,7 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 	abstract OCSPCAServiceResponse extendedService(Admin m_adm2, int caid, OCSPCAServiceRequest request) throws CADoesntExistsException, ExtendedCAServiceRequestException, IllegalExtendedCAServiceRequestException, ExtendedCAServiceNotActiveException;
 
 	/** returns a CertificateCache of appropriate type */
-	abstract CertificateCache createCertificateCache();
+	abstract ICertificateCache createCertificateCache();
 
 
 	private BasicOCSPResp signOCSPResponse(OCSPReq req, ArrayList responseList, X509Extensions exts, X509Certificate cacert)

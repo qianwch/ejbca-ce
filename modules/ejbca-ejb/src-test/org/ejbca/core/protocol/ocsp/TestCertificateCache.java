@@ -42,7 +42,7 @@ public class TestCertificateCache extends TestCase {
 	public void test01CACertificates() throws Exception {
 		// Prepare the certificate cache with some test certificates
 		ConfigurationHolder.updateConfiguration("ocspSigningCertsValidTime", "15");
-		Collection certs = new ArrayList();
+		Collection<Certificate> certs = new ArrayList<Certificate>();
 		X509Certificate testrootcert = (X509Certificate)CertTools.getCertfromByteArray(testroot);
 		certs.add(testrootcert);
 		X509Certificate testrootnewcert = (X509Certificate)CertTools.getCertfromByteArray(testrootnew);
@@ -53,7 +53,7 @@ public class TestCertificateCache extends TestCase {
 		certs.add(testcvccert);
 		X509Certificate testscepcert = (X509Certificate)CertTools.getCertfromByteArray(testscepca);
 		certs.add(testscepcert);
-		CertificateCache cache = new CertificateCache(certs);
+		ICertificateCache cache = new CertificateCache(certs);
 		
 		// Test lookup of not existing cert
 		X509Certificate cert = cache.findLatestBySubjectDN("CN=Foo,C=SE");
@@ -121,7 +121,7 @@ public class TestCertificateCache extends TestCase {
 	public static Throwable threadException = null;
 	public void test02loadCertificates() throws Exception {
 		ConfigurationHolder.updateConfiguration("ocspSigningCertsValidTime", "1");
-		Collection certs = new ArrayList();
+		Collection<Certificate> certs = new ArrayList<Certificate>();
 		X509Certificate testrootcert = (X509Certificate)CertTools.getCertfromByteArray(testroot);
 		certs.add(testrootcert);
 		X509Certificate testrootnewcert = (X509Certificate)CertTools.getCertfromByteArray(testrootnew);
@@ -132,7 +132,7 @@ public class TestCertificateCache extends TestCase {
 		certs.add(testcvccert);
 		X509Certificate testscepcert = (X509Certificate)CertTools.getCertfromByteArray(testscepca);
 		certs.add(testscepcert);
-		CertificateCache cache = new CertificateCache(certs);
+		ICertificateCache cache = new CertificateCache(certs);
 		
 		Thread no1 = new Thread(new CacheTester(cache, CertTools.getSubjectDN(testscepcert)),"no1");
 		Thread no2 = new Thread(new CacheTester(cache, CertTools.getSubjectDN(testrootcert)),"no2");

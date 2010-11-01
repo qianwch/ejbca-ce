@@ -279,7 +279,7 @@ public class OCSPUtil {
      * @throws NoSuchAlgorithmException if the certificate contains an unsupported algorithm
      * @throws InvalidKeyException if the certificate, or CA key is invalid
      */
-    public static X509Certificate checkRequestSignature(String clientRemoteAddr, OCSPReq req, CertificateCache cacerts)
+    public static X509Certificate checkRequestSignature(String clientRemoteAddr, OCSPReq req, ICertificateCache cacerts)
     throws SignRequestException, OCSPException,
     NoSuchProviderException, CertificateException,
     NoSuchAlgorithmException, InvalidKeyException,

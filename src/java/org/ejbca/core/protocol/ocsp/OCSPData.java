@@ -38,7 +38,7 @@ public class OCSPData {
     public long mKeysValidTo = 0;
 
     /** Cache of CA certificates (and chain certs) for CAs handles by this responder */
-    public CertificateCache m_caCertCache = null;
+    public ICertificateCache m_caCertCache = null;
 
     /** String used to identify default responder id, used to generate responses when a request
      * for a certificate not signed by a CA on this server is received.

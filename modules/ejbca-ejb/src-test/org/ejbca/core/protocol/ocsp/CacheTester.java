@@ -22,9 +22,9 @@ import org.apache.commons.lang.StringUtils;
  * @version $Id$
  */
 public class CacheTester implements Runnable {
-	private CertificateCache cache = null;
+	private ICertificateCache cache = null;
 	private String dn;
-	public CacheTester(CertificateCache cache, String lookfor) {
+	public CacheTester(ICertificateCache cache, String lookfor) {
 		this.cache = cache;
 		this.dn = lookfor;
 	}

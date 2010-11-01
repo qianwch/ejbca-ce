@@ -25,8 +25,8 @@ import org.ejbca.core.model.ca.caadmin.extendedcaservices.OCSPCAServiceResponse;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.model.ra.raadmin.GlobalConfiguration;
 import org.ejbca.core.protocol.ocsp.CertStoreStandAlone;
-import org.ejbca.core.protocol.ocsp.CertificateCache;
 import org.ejbca.core.protocol.ocsp.CertificateCacheStandAloneFactory;
+import org.ejbca.core.protocol.ocsp.ICertificateCache;
 import org.ejbca.core.protocol.ocsp.OCSPData;
 import org.ejbca.core.protocol.ocsp.standalonesession.StandAloneSessionFactory;
 import org.ejbca.ui.web.pub.cluster.VerificationAuthorityHealthCheck;
@@ -146,7 +146,7 @@ public class OCSPServletStandAlone extends OCSPServletBase implements IHealtChec
     /* (non-Javadoc)
      * @see org.ejbca.ui.web.protocol.OCSPServletBase#createCertificateCache()
      */
-    protected CertificateCache createCertificateCache() {
+    protected ICertificateCache createCertificateCache() {
 		return CertificateCacheStandAloneFactory.getInstance();
 	}
 }
