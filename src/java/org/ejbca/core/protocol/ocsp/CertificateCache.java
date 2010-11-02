@@ -52,11 +52,11 @@ class CertificateCache implements ICertificateCache {
 
 	/** Registry of certificates. HashMap is not synchronized, so when updating the HashMap, no read operations should be allowed
 	 * The key in this HashMap is the fingerprint of the certificate. */
-	final private Map<String, X509Certificate> certCache = new HashMap<String, X509Certificate>();
+	final private Map<Integer, X509Certificate> certCache = new HashMap<Integer, X509Certificate>();
 	/** Mapping from subjectDN to key in the certs HashMap. */
-	final private Map<String, String> certsFromSubjectDN = new HashMap<String, String>();
+	final private Map<String, Integer> certsFromSubjectDN = new HashMap<String, Integer>();
 	/** Mapping from CertificateID to key in the certs HashMap. */
-	final private  Map<String, String> certsFromSHA1CertId = new HashMap<String, String>();
+	final private  Map<Integer, Integer> certsFromSHA1CertId = new HashMap<Integer, Integer>();
 
 	/** The interval in milliseconds on which new OCSP signing certs are loaded. */
 	final private int m_valid_time = OcspConfiguration.getSigningCertsValidTime();
@@ -119,7 +119,7 @@ class CertificateCache implements ICertificateCache {
 		// Keep the lock as small as possible, but do not try to read the cache while it is being rebuilt
 		this.rebuildlock.lock();
 		try {
-			final String key = this.certsFromSubjectDN.get(dn);
+			final Integer key = this.certsFromSubjectDN.get(dn);
 			if (key != null) {
 				ret = this.certCache.get(key);
 			} else {
@@ -148,82 +148,26 @@ class CertificateCache implements ICertificateCache {
 		}
 		loadCertificates(); // refresh cache?
 
-		final X509Certificate ret;
-
 		// See if we have it in one of the certificate caches
-		final String key = new String(Hex.encode(certId.getIssuerNameHash()))+new String(Hex.encode(certId.getIssuerKeyHash()));
+		final Integer key =  keyFromCertificateID(certId);
 		// Keep the lock as small as possible, but do not try to read the cache while it is being rebuilt
 		try {
 			this.rebuildlock.lock();
-			String fp = this.certsFromSHA1CertId.get(key);
-			if (fp != null) {
-				ret = this.certCache.get(fp);
+			final Integer fp = this.certsFromSHA1CertId.get(key);
+			if (fp == null) {
 				if (log.isDebugEnabled()) {
-					log.debug("Found certificate from CertificateID in cache. SubjectDN='"+ CertTools.getSubjectDN(ret)+"', serno="+CertTools.getSerialNumberAsString(ret) + ", IssuerKeyHash=" + new String(Hex.encode(certId.getIssuerKeyHash())));
+					log.debug("Certificate not found from CertificateID in SHA1CertId map.");
 				}
-			} else {
-				ret = findByHashNotInCache(certId);
+				return null;
 			}
+			final X509Certificate ret = this.certCache.get(fp);
+			if (log.isDebugEnabled()) {
+				log.debug("Found certificate from CertificateID in cache. SubjectDN='"+ CertTools.getSubjectDN(ret)+"', serno="+CertTools.getSerialNumberAsString(ret) + ", IssuerKeyHash=" + new String(Hex.encode(certId.getIssuerKeyHash())));
+			}
+			return ret;
 		} finally {
 			this.rebuildlock.unlock();
 		}
-		return ret;
-	}
-	private X509Certificate findByHashNotInCache(CertificateID certId) {
-		X509Certificate ret = null;
-		// If we did not find it in the cache, lets look for it the hard way.
-		// This also requires a much larger synchronization lock
-		if (log.isDebugEnabled()) {
-			log.debug("Certificate not found from CertificateID in SHA1CertId map, looking for it the hard way.");
-		}
-		final Set<Map.Entry<String,X509Certificate>> certs = this.certCache.entrySet();
-		if (null == certs || certs.isEmpty()) {
-			// No certs in collection, no point in continuing
-			final String iMsg = intres.getLocalizedMessage("ocsp.certcollectionempty");
-			log.info(iMsg);
-		} else {
-			final Iterator<Map.Entry<String,X509Certificate>> iter = certs.iterator();
-			while (iter.hasNext()) {
-				final Map.Entry<String,X509Certificate> entry = iter.next();
-				// OCSP only supports X509 certificates
-				final X509Certificate cacert = entry.getValue();
-				try {
-					final CertificateID issuerId = new CertificateID(certId.getHashAlgOID(), cacert, CertTools.getSerialNumber(cacert));
-					if (log.isDebugEnabled()) {
-						log.debug("Comparing the following certificate hashes:\n"
-						          + " Hash algorithm : '" + certId.getHashAlgOID() + "'\n"
-						          + " CA certificate\n"
-						          + "      CA SubjectDN: '" + CertTools.getSubjectDN(cacert) + "'\n"
-						          + "      SerialNumber: '" + CertTools.getSerialNumberAsString(cacert) + "'\n"
-						          + " CA certificate hashes\n"
-						          + "      Name hash : '" + new String(Hex.encode(issuerId.getIssuerNameHash())) + "'\n"
-						          + "      Key hash  : '" + new String(Hex.encode(issuerId.getIssuerKeyHash())) + "'\n"
-						          + " OCSP certificate hashes\n"
-						          + "      Name hash : '" + new String(Hex.encode(certId.getIssuerNameHash())) + "'\n"
-						          + "      Key hash  : '" + new String(Hex.encode(certId.getIssuerKeyHash())) + "'\n");
-					}
-					if ((issuerId.toASN1Object().getIssuerNameHash().equals(certId.toASN1Object().getIssuerNameHash()))
-							&& (issuerId.toASN1Object().getIssuerKeyHash().equals(certId.toASN1Object().getIssuerKeyHash()))) {
-						if (log.isDebugEnabled()) {
-							log.debug("Found matching CA-cert with:\n"
-							          + "      Name hash : '" + new String(Hex.encode(issuerId.getIssuerNameHash())) + "'\n"
-							          + "      Key hash  : '" + new String(Hex.encode(issuerId.getIssuerKeyHash())) + "'\n");
-						}
-						ret = cacert;
-						break; // don't continue the while loop if we found it
-					}
-				} catch (OCSPException e) {
-					String infoMsg = intres.getLocalizedMessage("ocsp.errorcomparehash", cacert.getIssuerDN());
-					log.info(infoMsg, e);
-				}
-			}
-			if (log.isDebugEnabled()) {
-				log.debug("Did not find matching CA-cert for:\n"
-				          + "      Name hash : '" + new String(Hex.encode(certId.getIssuerNameHash())) + "'\n"
-				          + "      Key hash  : '" + new String(Hex.encode(certId.getIssuerKeyHash())) + "'\n");
-			}
-		}
-		return ret;
 	}
 
 	/* (non-Javadoc)
@@ -236,6 +180,12 @@ class CertificateCache implements ICertificateCache {
 
 	/* private helper methods */
 
+	private Integer keyFromCertificate(Certificate cert) {
+		return new Integer(cert.hashCode());
+	}
+	private Integer keyFromCertificateID(CertificateID certID) {
+		return new Integer(new BigInteger(certID.getIssuerNameHash()).hashCode()^new BigInteger(certID.getIssuerKeyHash()).hashCode());
+	}
 	/** Loads CA certificates but holds a cache so it's reloaded only every five minutes (configurable).
 	 *
 	 * We keep this method as synchronized, it should not take more than a few microseconds to complete if the cache does not have
@@ -264,12 +214,12 @@ class CertificateCache implements ICertificateCache {
 				final Certificate tmp = i.next();
 				if (tmp instanceof X509Certificate) {
 					final X509Certificate cert = (X509Certificate)tmp;
-					final String fp = CertTools.getFingerprintAsString(cert);
+					final Integer fp = keyFromCertificate(cert);
 					this.certCache.put(fp, cert);
 					final String subjectDN = CertTools.getSubjectDN(cert);
 					// Check if we already have a certificate from this issuer in the HashMap.
 					// We only want to store the latest cert from each issuer in this map
-					final String lfp = this.certsFromSubjectDN.get(subjectDN);
+					final Integer lfp = this.certsFromSubjectDN.get(subjectDN);
 					if (lfp != null) {
 						final X509Certificate pcert = this.certCache.get(lfp);
 						if (CertTools.getNotBefore(cert).after(CertTools.getNotBefore(pcert))) {
@@ -281,8 +231,7 @@ class CertificateCache implements ICertificateCache {
 					// We only need issuerNameHash and issuerKeyHash from certId
 					try {
 						final CertificateID certId = new CertificateID(CertificateID.HASH_SHA1, cert, new BigInteger("1"));
-						final String key = new String(Hex.encode(certId.getIssuerNameHash()))+new String(Hex.encode(certId.getIssuerKeyHash()));
-						this.certsFromSHA1CertId.put(key, fp);
+						this.certsFromSHA1CertId.put(keyFromCertificateID(certId), fp);
 					} catch (OCSPException e) {
 						log.info(e);
 					}
@@ -294,10 +243,10 @@ class CertificateCache implements ICertificateCache {
 			// Log what we have stored in the cache
 			if (log.isDebugEnabled()) {
 				final StringBuffer certInfo = new StringBuffer();
-				final Set<String> keys = this.certCache.keySet();
-				final Iterator<String> iter = keys.iterator();
+				final Set<Integer> keys = this.certCache.keySet();
+				final Iterator<Integer> iter = keys.iterator();
 				while (iter.hasNext()) {
-					final String key = iter.next();
+					final Integer key = iter.next();
 					final Certificate cert = this.certCache.get(key);
 					certInfo.append(CertTools.getSubjectDN(cert));
 					certInfo.append(',');
@@ -320,8 +269,7 @@ class CertificateCache implements ICertificateCache {
 		if (cert != null && cert instanceof X509Certificate) {
 			this.rebuildlock.lock();
 			try {
-				String fp = CertTools.getFingerprintAsString(cert);
-				this.certCache.put(fp, (X509Certificate)cert);
+				this.certCache.put(keyFromCertificate(cert), (X509Certificate)cert);
 			} finally {
 				this.rebuildlock.unlock();
 			}
