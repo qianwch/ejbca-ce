@@ -28,10 +28,16 @@ public interface ICertificateCache {
 
 	/** Returns a certificate from the cache. The latest issued certificate for a subjectDN is returned, if more than one exists for this subjectDN in the cache.
 	 * 
-	 * @param subjectDN the subjectDN of the certificate requested.
+	 * @param subjectDN the subjectDN of the certificate requested in readable form.
 	 * @return X509Certificate or null if the certificate does not exist in the cache.
 	 */
-	X509Certificate findLatestBySubjectDN(String subjectDN);
+	X509Certificate findLatestByReadableSubjectDN(String subjectDN);
+
+	/**
+	 * @param subjectDN identified with the base64 encoded hash of the subject DN asn1 object.
+	 * @return X509Certificate or null if the certificate does not exist in the cache.
+	 */
+	X509Certificate findLatestByHashedSubjectDN(String subjectDN);
 
 	/** Finds a certificate in a collection based on the OCSP issuerNameHash and issuerKeyHash
 	 * 

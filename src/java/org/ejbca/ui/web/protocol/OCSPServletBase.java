@@ -619,7 +619,7 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 									throw new SignRequestSignatureException(infoMsg);
 								}
 							} else if (m_reqRestrictMethod == OcspConfiguration.RESTRICTONISSUER) {
-								X509Certificate signerca = this.data.m_caCertCache.findLatestBySubjectDN(signercertIssuerName);
+								X509Certificate signerca = this.data.m_caCertCache.findLatestByReadableSubjectDN(signercertIssuerName);
 								if ((signerca == null) || (!OCSPUtil.checkCertInList(signerca, mTrustedReqSigIssuers)) ) {
 									String infoMsg = intres.getLocalizedMessage("ocsp.infosigner.notallowed", signercertSubjectName, signercertIssuerName, signercertSerNo.toString(16));
 									m_log.info(infoMsg);
@@ -645,7 +645,7 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 					m_log.info(infoMsg);
 					{
 						// All this just so we can create an error response
-						cacert = this.data.m_caCertCache.findLatestBySubjectDN(this.data.m_defaultResponderId);
+						cacert = this.data.m_caCertCache.findLatestByReadableSubjectDN(this.data.m_defaultResponderId);
 					}
 					throw new MalformedRequestException(infoMsg);
 				}
@@ -655,7 +655,7 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 					m_log.info(infoMsg);
 					{
 						// All this just so we can create an error response
-						cacert = this.data.m_caCertCache.findLatestBySubjectDN(this.data.m_defaultResponderId);
+						cacert = this.data.m_caCertCache.findLatestByReadableSubjectDN(this.data.m_defaultResponderId);
 					}
 					throw new MalformedRequestException(infoMsg);
 				}
@@ -698,7 +698,7 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 					cacert = this.data.m_caCertCache.findByOcspHash(certId);	// Get the issuer of certId
 					if (cacert == null) {
 						// We could not find certificate for this request so get certificate for default responder
-						cacert = this.data.m_caCertCache.findLatestBySubjectDN(this.data.m_defaultResponderId);
+						cacert = this.data.m_caCertCache.findLatestByReadableSubjectDN(this.data.m_defaultResponderId);
 						unknownCA = true;
 					}
 					if (cacert == null) {

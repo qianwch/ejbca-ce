@@ -32,6 +32,7 @@ import org.apache.log4j.Logger;
 import org.bouncycastle.jce.X509Principal;
 import org.bouncycastle.ocsp.CertificateID;
 import org.bouncycastle.ocsp.OCSPException;
+import org.bouncycastle.util.encoders.Base64;
 import org.bouncycastle.util.encoders.Hex;
 import org.ejbca.config.OcspConfiguration;
 import org.ejbca.core.model.SecConst;
@@ -55,7 +56,7 @@ class CertificateCache implements ICertificateCache {
 	 * The key in this HashMap is the fingerprint of the certificate. */
 	final private Map<Integer, X509Certificate> certCache = new HashMap<Integer, X509Certificate>();
 	/** Mapping from subjectDN to key in the certs HashMap. */
-	final private Map<Integer, Integer> certsFromSubjectDNString = new HashMap<Integer, Integer>();
+	final private Map<Integer, Integer> certsFromSubjectDN = new HashMap<Integer, Integer>();
 	/** Mapping from OCSP CertificateID to key in the certs HashMap. */
 	final private Map<Integer, Integer> certsFromOcspCertId = new HashMap<Integer, Integer>();
 	/** Mapping from issuerDN to key in the certs HashMap. */
@@ -108,7 +109,7 @@ class CertificateCache implements ICertificateCache {
 	/* (non-Javadoc)
 	 * @see org.ejbca.core.protocol.ocsp.ICertificateCache#findLatestBySubjectDN(java.lang.String)
 	 */
-	public X509Certificate findLatestBySubjectDN(String subjectDN) {
+	public X509Certificate findLatestByReadableSubjectDN(String subjectDN) {
 		if (null == subjectDN) {
 			throw new IllegalArgumentException();
 		}
@@ -119,7 +120,7 @@ class CertificateCache implements ICertificateCache {
 		// Keep the lock as small as possible, but do not try to read the cache while it is being rebuilt
 		this.rebuildlock.lock();
 		try {
-			final Integer key = this.certsFromSubjectDNString.get(keyFromDNHash(subjectDN));
+			final Integer key = this.certsFromSubjectDN.get(keyFromDNString(subjectDN));
 			ret = key!=null ? this.certCache.get(key) : null;
 		} finally {
 			this.rebuildlock.unlock();
@@ -132,6 +133,21 @@ class CertificateCache implements ICertificateCache {
 			}
 		}
 		return ret;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.ejbca.core.protocol.ocsp.ICertificateCache#findLatestByHashedSubjectDN(java.lang.String)
+	 */
+	@Override
+	public X509Certificate findLatestByHashedSubjectDN(String subjectDN) {
+		// Keep the lock as small as possible, but do not try to read the cache while it is being rebuilt
+		this.rebuildlock.lock();
+		try {
+			final Integer key = this.certsFromSubjectDN.get(keyFromHashString(subjectDN));
+			return key!=null ? this.certCache.get(key) : null;
+		} finally {
+			this.rebuildlock.unlock();
+		}
 	}
 
 	/* (non-Javadoc)
@@ -164,7 +180,6 @@ class CertificateCache implements ICertificateCache {
 			this.rebuildlock.unlock();
 		}
 	}
-
 	/* (non-Javadoc)
 	 * @see org.ejbca.core.protocol.ocsp.ICertificateCache#forceReload()
 	 */
@@ -182,12 +197,17 @@ class CertificateCache implements ICertificateCache {
 		return new Integer(new BigInteger(certID.getIssuerNameHash()).hashCode()^new BigInteger(certID.getIssuerKeyHash()).hashCode());
 	}
 	private Integer keyFromSubjectDNHash(X509Certificate cert) {
-		return keyFromBA( CertTools.generateSHA1Fingerprint(cert.getSubjectX500Principal().getEncoded()) );
+		final byte hash[] = CertTools.generateSHA1Fingerprint(cert.getSubjectX500Principal().getEncoded());
+		log.info("The certificate with subject DN '"+CertTools.getSubjectDN(cert)+"' will be encoded to '"+new String(Base64.encode(hash))+"' when fetched from the VA.");
+		return keyFromBA( hash );
 	}
 	private Integer keyFromIssuerDNHash(X509Certificate cert) {
 		return keyFromBA( CertTools.generateSHA1Fingerprint(cert.getIssuerX500Principal().getEncoded()) );
 	}
-	private Integer keyFromDNHash(String orgDN) {
+	private Integer keyFromHashString( String s ) {
+		return keyFromBA( Base64.decode(s) );
+	}
+	private Integer keyFromDNString(String orgDN) {
 		final String ejbcaDN = CertTools.stringToBCDNString(orgDN);
 		return  keyFromBA( CertTools.generateSHA1Fingerprint(new X509Principal(ejbcaDN).getEncoded()) );
 	}
@@ -218,7 +238,7 @@ class CertificateCache implements ICertificateCache {
 			}
 			// Set up certsFromSubjectDN, certsFromSHA1CertId and certCache
 			this.certCache.clear();
-			this.certsFromSubjectDNString.clear();
+			this.certsFromSubjectDN.clear();
 			this.certsFromOcspCertId.clear();
 			this.certsFromIssuerDN.clear();
 			this.certsFromSubjectKeyIdentifier.clear();
@@ -235,7 +255,7 @@ class CertificateCache implements ICertificateCache {
 				final Integer subjectDNKey = keyFromSubjectDNHash(cert);
 				// Check if we already have a certificate from this issuer in the HashMap.
 				// We only want to store the latest cert from each issuer in this map
-				final Integer pastCertCachKey = this.certsFromSubjectDNString.get(subjectDNKey);
+				final Integer pastCertCachKey = this.certsFromSubjectDN.get(subjectDNKey);
 				final boolean isLatest;
 				if ( pastCertCachKey!=null ) {
 					final X509Certificate pastCert = this.certCache.get(pastCertCachKey);
@@ -248,7 +268,7 @@ class CertificateCache implements ICertificateCache {
 					isLatest = true;
 				}
 				if ( isLatest ) {
-					this.certsFromSubjectDNString.put(subjectDNKey, certCachKey);
+					this.certsFromSubjectDN.put(subjectDNKey, certCachKey);
 					final Integer issuerDNKey = keyFromIssuerDNHash(cert);
 					Set<Integer> sIssuer = this.certsFromIssuerDN.get(issuerDNKey);
 					if ( sIssuer==null ) {

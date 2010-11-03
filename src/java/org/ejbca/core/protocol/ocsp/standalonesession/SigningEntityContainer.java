@@ -428,7 +428,7 @@ class  SigningEntityContainer {
                 return list;
             }
             // Is there a CA certificate?
-            final X509Certificate target = this.sessionData.data.m_caCertCache.findLatestBySubjectDN(CertTools.getIssuerDN(current));
+            final X509Certificate target = this.sessionData.data.m_caCertCache.findLatestByReadableSubjectDN(CertTools.getIssuerDN(current));
             if (target != null) {
                 current = target;
                 list.add(current);

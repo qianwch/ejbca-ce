@@ -97,7 +97,7 @@ public class OCSPServlet extends OCSPServletBase {
     }
 
     protected ICertificateCache createCertificateCache() {
-		return CertificateCacheFactory.getInstance();
+		return CertificateCacheFactory.getInstance(new CertStore());
 	}
 
     /* (non-Javadoc)

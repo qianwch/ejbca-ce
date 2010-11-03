@@ -313,7 +313,7 @@ public class OCSPUtil {
     			verifyOK = true;
     			// Also check that the signer certificate can be verified by one of the CA-certificates
     			// that we answer for
-    			Certificate signerca = cacerts.findLatestBySubjectDN(CertTools.getIssuerDN(certs[i]));
+    			Certificate signerca = cacerts.findLatestByReadableSubjectDN(CertTools.getIssuerDN(certs[i]));
     			String subject = signer;
     			String issuer = signerissuer;
     			if (signerca != null) {

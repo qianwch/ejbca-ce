@@ -125,6 +125,7 @@ import org.ejbca.core.protocol.IRequestMessage;
 import org.ejbca.core.protocol.IResponseMessage;
 import org.ejbca.core.protocol.PKCS10RequestMessage;
 import org.ejbca.core.protocol.X509ResponseMessage;
+import org.ejbca.core.protocol.ocsp.CertStore;
 import org.ejbca.core.protocol.ocsp.CertificateCacheFactory;
 import org.ejbca.cvc.AuthorizationRoleEnum;
 import org.ejbca.cvc.CardVerifiableCertificate;
@@ -609,7 +610,7 @@ public class CAAdminSessionBean extends BaseSessionBean {
         	throw new EJBException(e);
         }
         // Update local OCSP's CA certificate cache
-        CertificateCacheFactory.getInstance().forceReload();
+        CertificateCacheFactory.getInstance(new CertStore()).forceReload();
     } // createCA
 
     private void createCRLs(Admin admin, CA ca, CAInfo cainfo) throws CATokenOfflineException {

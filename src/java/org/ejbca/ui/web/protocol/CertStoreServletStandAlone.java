@@ -14,6 +14,7 @@
 package org.ejbca.ui.web.protocol;
 
 import org.ejbca.core.protocol.ocsp.CertStoreStandAlone;
+import org.ejbca.core.protocol.ocsp.CertificateCacheFactory;
 
 
 /** 
@@ -44,6 +45,6 @@ import org.ejbca.core.protocol.ocsp.CertStoreStandAlone;
  */
 public class CertStoreServletStandAlone extends CertStoreServletBase {
     public CertStoreServletStandAlone() {
-        super( new CertStoreStandAlone() );
+        super( CertificateCacheFactory.getInstance(new CertStoreStandAlone()) );
     }
 } // CertStoreServletStandAlone

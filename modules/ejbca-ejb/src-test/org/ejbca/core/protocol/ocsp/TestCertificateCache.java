@@ -56,12 +56,12 @@ public class TestCertificateCache extends TestCase {
 		ICertificateCache cache = new CertificateCache(certs);
 		
 		// Test lookup of not existing cert
-		X509Certificate cert = cache.findLatestBySubjectDN("CN=Foo,C=SE");
+		X509Certificate cert = cache.findLatestByReadableSubjectDN("CN=Foo,C=SE");
 		assertNull(cert);
 		// Old root cert should not be found, we only store the latest to be found by subjectDN
-		X509Certificate rootcert = cache.findLatestBySubjectDN(CertTools.getSubjectDN(testrootnewcert));
+		X509Certificate rootcert = cache.findLatestByReadableSubjectDN(CertTools.getSubjectDN(testrootnewcert));
 		assertNotNull(rootcert);
-		X509Certificate subcert = cache.findLatestBySubjectDN(CertTools.getSubjectDN(testsubcert));
+		X509Certificate subcert = cache.findLatestByReadableSubjectDN(CertTools.getSubjectDN(testsubcert));
 		// This old subcert should not be possible to verify with the new root cert
 		boolean failed = false;
 		try {
@@ -71,9 +71,9 @@ public class TestCertificateCache extends TestCase {
 		}
 		assertTrue(failed);
 		// CVC certificate should not be part of OCSP certificate cache
-		cert = cache.findLatestBySubjectDN(CertTools.getSubjectDN(testcvccert));
+		cert = cache.findLatestByReadableSubjectDN(CertTools.getSubjectDN(testcvccert));
 		assertNull(cert);
-		cert = cache.findLatestBySubjectDN(CertTools.getSubjectDN(testscepcert));
+		cert = cache.findLatestByReadableSubjectDN(CertTools.getSubjectDN(testscepcert));
 		assertEquals(CertTools.getSubjectDN(testscepcert), CertTools.getSubjectDN(cert));
 		
 		// Test lookup based on CertID
@@ -99,7 +99,7 @@ public class TestCertificateCache extends TestCase {
 		subcert = cache.findByOcspHash(new CertificateID(CertificateID.HASH_SHA1, testsubcertnew, BigInteger.valueOf(0)));
 		assertNotNull(subcert);
 		subcert.verify(cert.getPublicKey());
-		subcert = cache.findLatestBySubjectDN(CertTools.getSubjectDN(testsubcertnew));
+		subcert = cache.findLatestByReadableSubjectDN(CertTools.getSubjectDN(testsubcertnew));
 		assertNotNull(subcert);
 		subcert.verify(cert.getPublicKey());
 
@@ -111,7 +111,7 @@ public class TestCertificateCache extends TestCase {
 		assertNotNull(cert);
 		cert.verify(testsnindncert.getPublicKey());
 		//log.debug(testsnindncert.getIssuerDN().getName());
-		cert = cache.findLatestBySubjectDN(testsnindncert.getIssuerDN().getName());
+		cert = cache.findLatestByReadableSubjectDN(testsnindncert.getIssuerDN().getName());
 		assertNotNull(cert);
 		cert.verify(testsnindncert.getPublicKey());
 		

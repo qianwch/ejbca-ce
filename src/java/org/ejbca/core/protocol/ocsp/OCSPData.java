@@ -57,7 +57,7 @@ public class OCSPData {
         X509Certificate cert = cacert;
         if (cacert == null) {
             m_log.debug("No correct CA-certificate available to sign response, signing with default CA: "+this.m_defaultResponderId);
-            cert = this.m_caCertCache.findLatestBySubjectDN(this.m_defaultResponderId);           
+            cert = this.m_caCertCache.findLatestByReadableSubjectDN(this.m_defaultResponderId);           
         }
 
         int result = CertTools.stringToBCDNString(cert.getSubjectDN().toString()).hashCode();

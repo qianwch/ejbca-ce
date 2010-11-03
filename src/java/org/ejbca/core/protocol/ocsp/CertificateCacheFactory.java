@@ -12,6 +12,9 @@
  *************************************************************************/
 package org.ejbca.core.protocol.ocsp;
 
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 /**
  * Factory for creating a {@link CertificateCache} object to be used by the OCSP responder of the CA.
  * 
@@ -21,13 +24,22 @@ package org.ejbca.core.protocol.ocsp;
  */
 public class CertificateCacheFactory {
     private static ICertificateCache instance = null;
+    private static final Lock lock = new ReentrantLock();
     /**
      * @return  {@link CertificateCache} for the CA.
      */
-    public static synchronized ICertificateCache getInstance() {
-        if (instance == null) {
-            instance = new CertificateCache(new CertStore());
+    public static ICertificateCache getInstance(ICertStore certStore) {
+        if (instance != null) {
+        	return instance;
         }
-        return instance;
+        lock.lock();
+        try {
+        	if ( instance==null ) {
+        		instance = new CertificateCache(certStore);
+        	}
+    		return instance;
+        } finally {
+        	lock.unlock();
+        }
     }
 }

@@ -30,7 +30,7 @@ public class CacheTester implements Runnable {
 	}
 	public void run() {
 		for (int i=0; i<1000;i++) {
-			X509Certificate cert = cache.findLatestBySubjectDN(dn);
+			X509Certificate cert = cache.findLatestByReadableSubjectDN(dn);
 			// The cache tests will not return any CV Certificates because this OCSP cache 
 			// only handles X.509 Certificates.
 			if (!StringUtils.contains(dn, "CVCTest")) {
