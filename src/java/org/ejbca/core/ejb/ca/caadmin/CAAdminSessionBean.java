@@ -609,7 +609,7 @@ public class CAAdminSessionBean extends BaseSessionBean {
         	throw new EJBException(e);
         }
         // Update local OCSP's CA certificate cache
-        CertificateCacheFactory.getInstance().update(ca.getCACertificate());
+        CertificateCacheFactory.getInstance().forceReload();
     } // createCA
 
     private void createCRLs(Admin admin, CA ca, CAInfo cainfo) throws CATokenOfflineException {

@@ -12,7 +12,6 @@
  *************************************************************************/
 package org.ejbca.core.protocol.ocsp;
 
-import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 
 import org.bouncycastle.ocsp.CertificateID;
@@ -40,15 +39,10 @@ public interface ICertificateCache {
 	 * @param certs the collection of CA certificate to search through
 	 * @return X509Certificate A CA certificate or null of not found in the collection
 	 */
-	X509Certificate findByHash(CertificateID certId);
+	X509Certificate findByOcspHash(CertificateID certId);
 
 	/** Method used to force reloading of the certificate cache. Can be triggered by an external event for example.
 	 */
 	void forceReload();
-
-	/**
-	 * Add or update a certificate manually. 
-	 */
-	 void update(Certificate cert);
 
 }

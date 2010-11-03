@@ -695,7 +695,7 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 					// on this server, we sign the response with the default responderId (from params in web.xml).
 					// We have to look up the ca-certificate for each certId in the request though, as we will check
 					// for revocation on the ca-cert as well when checking for revocation on the certId. 
-					cacert = this.data.m_caCertCache.findByHash(certId);	// Get the issuer of certId
+					cacert = this.data.m_caCertCache.findByOcspHash(certId);	// Get the issuer of certId
 					if (cacert == null) {
 						// We could not find certificate for this request so get certificate for default responder
 						cacert = this.data.m_caCertCache.findLatestBySubjectDN(this.data.m_defaultResponderId);
@@ -753,7 +753,7 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 							// OR
 							// we don't actually handle requests for the CA issuing the certificate asked about
 							// then we return unknown
-							if ( (!m_nonExistingIsGood) || (this.data.m_caCertCache.findByHash(certId) == null) ) {
+							if ( (!m_nonExistingIsGood) || (this.data.m_caCertCache.findByOcspHash(certId) == null) ) {
 								sStatus = "unknown";
 								certStatus = new UnknownStatus();
 								transactionLogger.paramPut(ITransactionLogger.CERT_STATUS, OCSPUnidResponse.OCSP_UNKNOWN);

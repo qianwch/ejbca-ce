@@ -77,12 +77,12 @@ public class TestCertificateCache extends TestCase {
 		assertEquals(CertTools.getSubjectDN(testscepcert), CertTools.getSubjectDN(cert));
 		
 		// Test lookup based on CertID
-		cert = cache.findByHash(new CertificateID(CertificateID.HASH_SHA1, testrootcert, BigInteger.valueOf(0)));
+		cert = cache.findByOcspHash(new CertificateID(CertificateID.HASH_SHA1, testrootcert, BigInteger.valueOf(0)));
 		assertNotNull(cert);
 		// The old subcert should verify with this old rootcert
 		subcert.verify(cert.getPublicKey());
 		// But not with the new rootcert
-		cert = cache.findByHash(new CertificateID(CertificateID.HASH_SHA1, testrootnewcert, BigInteger.valueOf(0)));
+		cert = cache.findByOcspHash(new CertificateID(CertificateID.HASH_SHA1, testrootnewcert, BigInteger.valueOf(0)));
 		assertNotNull(cert);
 		failed = false;
 		try {
@@ -96,7 +96,7 @@ public class TestCertificateCache extends TestCase {
 		X509Certificate testsubcertnew = (X509Certificate)CertTools.getCertfromByteArray(testsubnew);
 		certs.add(testsubcertnew);
 		cache = new CertificateCache(certs);
-		subcert = cache.findByHash(new CertificateID(CertificateID.HASH_SHA1, testsubcertnew, BigInteger.valueOf(0)));
+		subcert = cache.findByOcspHash(new CertificateID(CertificateID.HASH_SHA1, testsubcertnew, BigInteger.valueOf(0)));
 		assertNotNull(subcert);
 		subcert.verify(cert.getPublicKey());
 		subcert = cache.findLatestBySubjectDN(CertTools.getSubjectDN(testsubcertnew));
@@ -107,7 +107,7 @@ public class TestCertificateCache extends TestCase {
 		X509Certificate testsnindncert = (X509Certificate)CertTools.getCertfromByteArray(testsnindn);
 		certs.add(testsnindncert);
 		cache = new CertificateCache(certs);
-		cert = cache.findByHash(new CertificateID(CertificateID.HASH_SHA1, testsnindncert, BigInteger.valueOf(0)));
+		cert = cache.findByOcspHash(new CertificateID(CertificateID.HASH_SHA1, testsnindncert, BigInteger.valueOf(0)));
 		assertNotNull(cert);
 		cert.verify(testsnindncert.getPublicKey());
 		//log.debug(testsnindncert.getIssuerDN().getName());
