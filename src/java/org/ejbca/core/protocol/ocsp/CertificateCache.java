@@ -200,15 +200,14 @@ class CertificateCache implements ICertificateCache {
 	 * to be reloaded. If the cache must be reloaded, we must wait for it anyway to not have ConcurrentModificationException.
 	 * We also only want one single thread to do the rebuilding.
 	 */
-	private synchronized void loadCertificates() {
-		// Check if we have a cached collection that is not too old
-		if (this.certCache != null && this.m_certValidTo > new Date().getTime()) {
-			// The other HashMaps are always created as well, if this one is created
-			return;
-		}
-
+	private void loadCertificates() {
 		this.rebuildlock.lock();
 		try {
+			// Check if we have a cached collection that is not too old
+			if (this.certCache != null && this.m_certValidTo > new Date().getTime()) {
+				// The other HashMaps are always created as well, if this one is created
+				return;
+			}
 			final Collection<Certificate> certs = findCertificatesByType(this.admin, SecConst.CERTTYPE_SUBCA + SecConst.CERTTYPE_ROOTCA, null);
 			if (log.isDebugEnabled()) {
 				log.debug("Loaded "+(certs == null ? "0":Integer.toString(certs.size()))+" ca certificates");
@@ -284,11 +283,11 @@ class CertificateCache implements ICertificateCache {
 				}
 				log.debug(sw);
 			}
+			// If m_valid_time == 0 we set reload time to Long.MAX_VALUE, which should be forever, so the cache is never refreshed
+			this.m_certValidTo = this.m_valid_time>0 ? new Date().getTime()+this.m_valid_time : Long.MAX_VALUE;
 		} finally {
 			this.rebuildlock.unlock();
 		}
-		// If m_valid_time == 0 we set reload time to Long.MAX_VALUE, which should be forever, so the cache is never refreshed
-		this.m_certValidTo = this.m_valid_time>0 ? new Date().getTime()+this.m_valid_time : Long.MAX_VALUE;
 	} // loadCertificates
 
 	/**
