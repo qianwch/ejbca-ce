@@ -26,18 +26,23 @@ import org.bouncycastle.ocsp.CertificateID;
  */
 public interface ICertificateCache {
 
-	/** Returns a certificate from the cache. The latest issued certificate for a subjectDN is returned, if more than one exists for this subjectDN in the cache.
-	 * 
-	 * @param subjectDN the subjectDN of the certificate requested in readable form.
+	/**
+	 * @param id The ID of the subject DN.
 	 * @return X509Certificate or null if the certificate does not exist in the cache.
 	 */
-	X509Certificate findLatestByReadableSubjectDN(String subjectDN);
+	X509Certificate findLatestBySubjectDN(HashID id);
 
 	/**
-	 * @param subjectDN identified with the base64 encoded hash of the subject DN asn1 object.
+	 * @param id The ID of the issuer DN.
+	 * @return  array of X509Certificate or null if no certificates exist in the cache.
+	 */
+	X509Certificate[] findLatestByIssuerDN(HashID id);
+
+	/**
+	 * @param id The ID of the subject key identifier.
 	 * @return X509Certificate or null if the certificate does not exist in the cache.
 	 */
-	X509Certificate findLatestByHashedSubjectDN(String subjectDN);
+	X509Certificate findBySubjectKeyIdentifier(HashID id);
 
 	/** Finds a certificate in a collection based on the OCSP issuerNameHash and issuerKeyHash
 	 * 
@@ -46,6 +51,11 @@ public interface ICertificateCache {
 	 * @return X509Certificate A CA certificate or null of not found in the collection
 	 */
 	X509Certificate findByOcspHash(CertificateID certId);
+
+	/**
+	 * @return All root certificates.
+	 */
+	X509Certificate[] getRootCertificates();
 
 	/** Method used to force reloading of the certificate cache. Can be triggered by an external event for example.
 	 */

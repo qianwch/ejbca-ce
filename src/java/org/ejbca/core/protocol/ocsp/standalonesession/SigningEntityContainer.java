@@ -40,6 +40,7 @@ import org.ejbca.config.OcspConfiguration;
 import org.ejbca.core.ejb.ca.store.CertificateStatus;
 import org.ejbca.core.model.InternalResources;
 import org.ejbca.core.model.log.Admin;
+import org.ejbca.core.protocol.ocsp.HashID;
 import org.ejbca.ui.web.protocol.OCSPServletStandAlone;
 import org.ejbca.util.CertTools;
 
@@ -428,7 +429,7 @@ class  SigningEntityContainer {
                 return list;
             }
             // Is there a CA certificate?
-            final X509Certificate target = this.sessionData.data.m_caCertCache.findLatestByReadableSubjectDN(CertTools.getIssuerDN(current));
+            final X509Certificate target = this.sessionData.data.m_caCertCache.findLatestBySubjectDN(HashID.getFromIssuerDN(current));
             if (target != null) {
                 current = target;
                 list.add(current);

@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
-import java.util.Iterator;
 import java.util.Random;
 
 import javax.servlet.ServletException;
@@ -25,7 +24,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.ejbca.core.model.log.Admin;
+import org.ejbca.core.protocol.ocsp.HashID;
 import org.ejbca.core.protocol.ocsp.ICertificateCache;
 
 /**
@@ -33,7 +32,6 @@ import org.ejbca.core.protocol.ocsp.ICertificateCache;
  * @version  $Id$
  */
 class CertStoreServletBase extends HttpServlet {
-    private final Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
     private final static String BOUNDARY = "\"BOUNDARY\"";
 
     private final ICertificateCache certCashe;
@@ -48,11 +46,22 @@ class CertStoreServletBase extends HttpServlet {
      */
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, java.io.IOException {
     	final String sHash = req.getParameter("sHash");
-    	final X509Certificate cert = this.certCashe.findLatestByHashedSubjectDN(sHash);
-    	if (cert==null) {
-    		resp.sendError(HttpServletResponse.SC_NO_CONTENT, "No certificate with hash DN: "+sHash);
+    	if ( sHash!=null ) {
+    		final X509Certificate cert = this.certCashe.findLatestBySubjectDN(HashID.getFromB64(sHash));
+    		returnCert( cert, resp, sHash);
     		return;
     	}
+    	final String iHash = req.getParameter("iHash");
+    	if ( iHash!=null ) {
+    		returnCerts( this.certCashe.findLatestByIssuerDN(HashID.getFromB64(iHash)), resp, iHash );
+    		return;
+    	}
+    }
+    private void returnCert( X509Certificate cert, HttpServletResponse resp, String name ) throws IOException, ServletException {
+		if (cert==null) {
+			resp.sendError(HttpServletResponse.SC_NO_CONTENT, "No certificate with hash DN: "+name);
+			return;
+		}
     	final byte encoded[];
     	try {
 			encoded = cert.getEncoded();
@@ -60,24 +69,27 @@ class CertStoreServletBase extends HttpServlet {
 			throw new ServletException(e);
 		}
         resp.setContentType("application/pkix-cert");
-    	resp.setHeader("Content-disposition", "attachment; filename=cert" + sHash + ".der");
+    	resp.setHeader("Content-disposition", "attachment; filename=cert" + name + ".der");
     	resp.setContentLength(encoded.length);
     	resp.getOutputStream().write(encoded);
     }
-    private void returnCerts( Iterator i, HttpServletResponse resp ) throws IOException, ServletException {
+    private void returnCerts( X509Certificate certs[], HttpServletResponse resp, String name ) throws IOException, ServletException {
+		if (certs==null) {
+			resp.sendError(HttpServletResponse.SC_NO_CONTENT, "No certificate with issuer hash DN: "+name);
+			return;
+		}
         resp.setContentType("multipart/mixed; boundary="+BOUNDARY);
         final PrintStream ps = new PrintStream(resp.getOutputStream());
         ps.println("This is a multi-part message in MIME format.");
         final Random r = new Random();
-        while( i.hasNext() ) {
-            final X509Certificate cert = (X509Certificate)i.next();
+        for( int i=0; i<certs.length; i++ ) {
             // Upload the certificates with mime-header for user certificates.
             ps.println("--"+BOUNDARY);
             ps.println("Content-type: application/pkix-cert");
             ps.println("Content-disposition: attachment; filename=cert" + r.nextInt(1000) + ".der");
             ps.println();
             try {
-                ps.write(cert.getEncoded());
+                ps.write(certs[i].getEncoded());
             } catch (CertificateEncodingException e) {
                 throw new ServletException(e);
             }

@@ -453,6 +453,7 @@
     			<include name="org/ejbca/core/protocol/ocsp/OCSPUtil.java"/>
     			<include name="org/ejbca/core/protocol/ocsp/OCSPResponseItem.java"/>
     			<include name="org/ejbca/core/protocol/ocsp/ICertificateCache.java"/>
+    			<include name="org/ejbca/core/protocol/ocsp/HashID.java"/>
     			<include name="org/ejbca/core/protocol/ocsp/ICertStore.java"/>
     		    <include name="org/ejbca/core/model/ca/NotSupportedException.java"/>
     			<!-- RA classes that maybe shouldn't be here.. -->
@@ -520,6 +521,7 @@
     			<include name="org/ejbca/core/model/ca/caadmin/*.java"/>
     			<include name="org/ejbca/core/model/approval/approvalrequests/ActivateCATokenApprovalRequest.java"/>
     			<include name="org/ejbca/core/protocol/ocsp/CertificateCacheFactory.java"/>
+    			<include name="org/ejbca/core/protocol/ocsp/HashID.java"/>
     			<include name="org/ejbca/core/protocol/ocsp/CertificateCache.java"/>
     			<include name="org/ejbca/core/protocol/ocsp/CertStore.java"/>
     			<include name="org/ejbca/core/protocol/X509ResponseMessage.java"/>

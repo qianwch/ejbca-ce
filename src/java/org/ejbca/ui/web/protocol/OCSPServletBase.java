@@ -71,6 +71,7 @@ import org.ejbca.core.model.ca.caadmin.extendedcaservices.OCSPCAServiceRequest;
 import org.ejbca.core.model.ca.caadmin.extendedcaservices.OCSPCAServiceResponse;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.protocol.ocsp.AuditLogger;
+import org.ejbca.core.protocol.ocsp.HashID;
 import org.ejbca.core.protocol.ocsp.IAuditLogger;
 import org.ejbca.core.protocol.ocsp.ICertificateCache;
 import org.ejbca.core.protocol.ocsp.IOCSPExtension;
@@ -619,7 +620,7 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 									throw new SignRequestSignatureException(infoMsg);
 								}
 							} else if (m_reqRestrictMethod == OcspConfiguration.RESTRICTONISSUER) {
-								X509Certificate signerca = this.data.m_caCertCache.findLatestByReadableSubjectDN(signercertIssuerName);
+								X509Certificate signerca = this.data.m_caCertCache.findLatestBySubjectDN(HashID.getFromDN(signercertIssuerName));
 								if ((signerca == null) || (!OCSPUtil.checkCertInList(signerca, mTrustedReqSigIssuers)) ) {
 									String infoMsg = intres.getLocalizedMessage("ocsp.infosigner.notallowed", signercertSubjectName, signercertIssuerName, signercertSerNo.toString(16));
 									m_log.info(infoMsg);
@@ -645,7 +646,7 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 					m_log.info(infoMsg);
 					{
 						// All this just so we can create an error response
-						cacert = this.data.m_caCertCache.findLatestByReadableSubjectDN(this.data.m_defaultResponderId);
+						cacert = this.data.m_caCertCache.findLatestBySubjectDN(HashID.getFromDN(this.data.m_defaultResponderId));
 					}
 					throw new MalformedRequestException(infoMsg);
 				}
@@ -655,7 +656,7 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 					m_log.info(infoMsg);
 					{
 						// All this just so we can create an error response
-						cacert = this.data.m_caCertCache.findLatestByReadableSubjectDN(this.data.m_defaultResponderId);
+						cacert = this.data.m_caCertCache.findLatestBySubjectDN(HashID.getFromDN(this.data.m_defaultResponderId));
 					}
 					throw new MalformedRequestException(infoMsg);
 				}
@@ -698,7 +699,7 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 					cacert = this.data.m_caCertCache.findByOcspHash(certId);	// Get the issuer of certId
 					if (cacert == null) {
 						// We could not find certificate for this request so get certificate for default responder
-						cacert = this.data.m_caCertCache.findLatestByReadableSubjectDN(this.data.m_defaultResponderId);
+						cacert = this.data.m_caCertCache.findLatestBySubjectDN(HashID.getFromDN(this.data.m_defaultResponderId));
 						unknownCA = true;
 					}
 					if (cacert == null) {

@@ -21,7 +21,6 @@ import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SignatureException;
-import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
@@ -313,7 +312,7 @@ public class OCSPUtil {
     			verifyOK = true;
     			// Also check that the signer certificate can be verified by one of the CA-certificates
     			// that we answer for
-    			Certificate signerca = cacerts.findLatestByReadableSubjectDN(CertTools.getIssuerDN(certs[i]));
+    			X509Certificate signerca = cacerts.findLatestBySubjectDN(HashID.getFromIssuerDN(certs[i]));
     			String subject = signer;
     			String issuer = signerissuer;
     			if (signerca != null) {
