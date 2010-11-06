@@ -243,13 +243,14 @@ class CertificateCache implements ICertificateCache {
 				if ( isLatest ) {
 					this.certsFromSubjectDN.put(subjectDNKey, cert);
 					final Integer issuerDNKey = HashID.getFromIssuerDN(cert).key;
-					Set<X509Certificate> sIssuer = this.certsFromIssuerDN.get(issuerDNKey);
-					if ( sIssuer==null ) {
-						sIssuer = new HashSet<X509Certificate>();
-						this.certsFromIssuerDN.put(issuerDNKey, sIssuer);
-					}
-					sIssuer.add(cert);
-					if ( issuerDNKey.equals(subjectDNKey) ) {
+					if ( !issuerDNKey.equals(subjectDNKey) ) { // don't add root to them self
+						Set<X509Certificate> sIssuer = this.certsFromIssuerDN.get(issuerDNKey);
+						if ( sIssuer==null ) {
+							sIssuer = new HashSet<X509Certificate>();
+							this.certsFromIssuerDN.put(issuerDNKey, sIssuer);
+						}
+						sIssuer.add(cert);
+					} else {
 						this.rootCertificates.add(cert);
 					}
 				}
