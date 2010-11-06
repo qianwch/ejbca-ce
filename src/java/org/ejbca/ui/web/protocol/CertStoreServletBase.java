@@ -20,7 +20,6 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
-import java.util.Random;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -66,7 +65,6 @@ class CertStoreServletBase extends HttpServlet {
 		}
 		final StringWriter sw = new StringWriter();
 		final PrintWriter pw = new MyPrintWriter(sw);
-		final StringBuffer url = req.getRequestURL();
 		printCerts(this.certCashe.getRootCertificates(), "", pw, req.getRequestURL().toString());
 		pw.flush();
 		pw.close();
@@ -121,12 +119,11 @@ class CertStoreServletBase extends HttpServlet {
 		resp.setContentType("multipart/mixed; boundary="+BOUNDARY);
 		final PrintStream ps = new PrintStream(resp.getOutputStream());
 		ps.println("This is a multi-part message in MIME format.");
-		final Random r = new Random();
 		for( int i=0; i<certs.length; i++ ) {
 			// Upload the certificates with mime-header for user certificates.
 			ps.println("--"+BOUNDARY);
 			ps.println("Content-type: application/pkix-cert");
-			ps.println("Content-disposition: attachment; filename=cert" + r.nextInt(1000) + ".der");
+			ps.println("Content-disposition: attachment; filename=cert" + name + '-' + i + ".der");
 			ps.println();
 			try {
 				ps.write(certs[i].getEncoded());
@@ -144,8 +141,9 @@ class CertStoreServletBase extends HttpServlet {
 		for ( int i=0; i<certs.length; i++ ) {
 			pw.println(indent+certs[i].getSubjectX500Principal());
 			pw.println(indent+" "+RFC4387URL.sHash.getRef(url, HashID.getFromSubjectDN(certs[i])));
-			pw.println(indent+" "+RFC4387URL.iHash.getRef(url, HashID.getFromIssuerDN(certs[i])));
+			pw.println(indent+" "+RFC4387URL.iHash.getRef(url, HashID.getFromSubjectDN(certs[i])));
 			pw.println(indent+" "+RFC4387URL.sKIDHash.getRef(url, HashID.getFromKeyID(certs[i])));
+			pw.println();
 			final X509Certificate issuedCerts[] = this.certCashe.findLatestByIssuerDN(HashID.getFromSubjectDN(certs[i]));
 			if ( issuedCerts==null || issuedCerts.length<1 ) {
 				continue;
