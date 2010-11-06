@@ -250,6 +250,7 @@ class CertificateCache implements ICertificateCache {
 							this.certsFromIssuerDN.put(issuerDNKey, sIssuer);
 						}
 						sIssuer.add(cert);
+						sIssuer.remove(pastCert);
 					} else {
 						this.rootCertificates.add(cert);
 					}
