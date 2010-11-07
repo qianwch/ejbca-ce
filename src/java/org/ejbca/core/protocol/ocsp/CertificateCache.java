@@ -253,6 +253,7 @@ class CertificateCache implements ICertificateCache {
 						sIssuer.remove(pastCert);
 					} else {
 						this.rootCertificates.add(cert);
+						this.rootCertificates.remove(pastCert);
 					}
 				}
 				this.certsFromSubjectKeyIdentifier.put(HashID.getFromKeyID(cert).key, cert);
