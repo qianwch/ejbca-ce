@@ -262,7 +262,7 @@ class CertificateCache implements ICertificateCache {
 					final CertificateID certId = new CertificateID(CertificateID.HASH_SHA1, cert, new BigInteger("1"));
 					this.certsFromOcspCertId.put(keyFromCertificateID(certId), cert);
 				} catch (OCSPException e) {
-					log.info(e);
+					log.warn(e);
 				}
 			} // while (i.hasNext()) {
 

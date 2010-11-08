@@ -107,7 +107,9 @@ public class HashID {
 	public static HashID getFromKeyID(X509Certificate cert) {
 		final HashID id  = new HashID( KeyTools.createSubjectKeyId(cert.getPublicKey()).getKeyIdentifier() );
 		if ( id.isOK ) {
-			log.info("The certificate with subject DN '"+cert.getSubjectX500Principal().getName()+"' could be fetched with 'search.cgi?sKIDHash="+id.b64+"' from the VA.");
+			if ( log.isDebugEnabled() ) {
+				log.debug("The certificate with subject DN '"+cert.getSubjectX500Principal().getName()+"' could be fetched with 'search.cgi?sKIDHash="+id.b64+"' from the VA.");
+			}
 		} else {
 			log.error("The certificate with subject DN '"+cert.getSubjectX500Principal().getName()+"' gives a sKIDHash with a not valid format: "+id.b64);
 		}
