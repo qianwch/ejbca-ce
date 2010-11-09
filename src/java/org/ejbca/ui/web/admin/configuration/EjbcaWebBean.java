@@ -13,7 +13,10 @@
  
 package org.ejbca.ui.web.admin.configuration;
 
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
 import java.net.InetAddress;
+import java.net.URL;
 import java.net.URLDecoder;
 import java.net.UnknownHostException;
 import java.security.cert.X509Certificate;
@@ -25,6 +28,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Locale;
+import java.util.Set;
 
 import javax.ejb.EJBException;
 import javax.servlet.ServletContext;
@@ -55,7 +59,6 @@ import org.ejbca.core.model.authorization.AuthenticationFailedException;
 import org.ejbca.core.model.authorization.AuthorizationDeniedException;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.model.log.LogConstants;
-import org.ejbca.core.model.ra.UserDataVO;
 import org.ejbca.core.model.ra.raadmin.AdminPreference;
 import org.ejbca.core.model.ra.raadmin.GlobalConfiguration;
 import org.ejbca.util.CertTools;
@@ -753,4 +756,38 @@ public class EjbcaWebBean implements java.io.Serializable {
     	throw new Exception("Trying to set an invalid option.");
     }
 
+    public void clearClusterCache() throws Exception{
+    	
+ 	   Set nodes = globalconfiguration.getNodesInCluster();
+	   final java.util.Iterator itr = nodes.iterator();
+	   String host = null;
+	   while(itr.hasNext()){
+		   host = (String) itr.next();
+		   if(host!=null) {
+			   String requestUrl = "http://" + host + ":8080/ejbca/clearcache";
+			   URL url = new URL(requestUrl);
+			   HttpURLConnection con = (HttpURLConnection) url.openConnection();
+			   if (log.isDebugEnabled()) {
+				   log.debug("Contacting host with url:"+requestUrl);
+			   }
+
+			   con.setRequestMethod("POST");
+			   con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+			   con.setDoOutput(true);
+
+			   OutputStreamWriter wr = new OutputStreamWriter(con.getOutputStream()); 
+			   wr.write("command=clearcaches");
+			   wr.flush();
+		   
+			   int responseCode = con.getResponseCode();
+			   if(responseCode != 200){
+				   if (log.isDebugEnabled()) {
+					   log.debug("Failed to clear caches for host: " + host + ", responseCode="+responseCode);
+				   }
+				   throw new Exception("Failed to clear caches for host: " + host + ", responseCode="+responseCode);
+			   }		   
+			   wr.close(); 
+		   }
+	   }
+    }
 }
