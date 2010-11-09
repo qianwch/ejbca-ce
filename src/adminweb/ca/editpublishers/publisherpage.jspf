@@ -114,6 +114,10 @@ function checkallfields(){
 	if(document.editpublisher.<%=EditPublisherJSPHelper.CHECKBOX_VA_STORECERT%>.value == ""){
       alert("<%= ejbcawebbean.getText("YOUAREREQUIRED", true) + " " + ejbcawebbean.getText("STORECERT", true)%>");
       illegalfields++;
+	}
+	if(document.editpublisher.<%=EditPublisherJSPHelper.CHECKBOX_VA_STORECRL%>.value == ""){
+      alert("<%= ejbcawebbean.getText("YOUAREREQUIRED", true) + " " + ejbcawebbean.getText("STORECRL", true)%>");
+      illegalfields++;
     }
 <% } %>
  <% if( publisherdata instanceof CustomPublisherContainer){ %>

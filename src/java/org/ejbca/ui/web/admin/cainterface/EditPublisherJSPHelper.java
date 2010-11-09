@@ -124,6 +124,7 @@ public class EditPublisherJSPHelper implements java.io.Serializable {
     public static final String CHECKBOX_USEQUEUEFORCRLS        = "textfieldusequeueforcrls";
     public static final String CHECKBOX_USEQUEUEFORCERTIFICATES = "textfieldusequeueforcertificates";
     public static final String CHECKBOX_VA_STORECERT           = "textfieldvastorecert";
+    public static final String CHECKBOX_VA_STORECRL            = "textfieldvastorecrl";
     
     public static final String SELECT_LDAPUSEFIELDINLDAPDN     = "selectldapusefieldsinldapdn";
 
@@ -506,8 +507,11 @@ public class EditPublisherJSPHelper implements java.io.Serializable {
                             		value = value.trim();
                             		vaPub.setDataSource(value);
                             	}
-                            	value = request.getParameter(CHECKBOX_VA_STORECERT);
-                            	vaPub.setStoreCert(value != null && value.equals(CHECKBOX_VALUE));
+                            	final String vCert = request.getParameter(CHECKBOX_VA_STORECERT);
+                            	final boolean isCert = vCert!=null && vCert.equals(CHECKBOX_VALUE);
+                            	vaPub.setStoreCert( isCert );
+                            	final String vCRL = request.getParameter(CHECKBOX_VA_STORECRL);
+                            	vaPub.setStoreCRL( isCert && vCRL!=null && vCRL.equals(CHECKBOX_VALUE) );
                             }
 
 

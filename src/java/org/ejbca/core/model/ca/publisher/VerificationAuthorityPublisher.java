@@ -14,6 +14,7 @@
 package org.ejbca.core.model.ca.publisher;
 
 import java.security.cert.Certificate;
+import java.security.cert.X509CRL;
 import java.security.cert.X509Certificate;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -23,6 +24,8 @@ import java.util.Properties;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.bouncycastle.asn1.x509.X509Extensions;
+import org.bouncycastle.jce.X509Principal;
 import org.ejbca.core.ejb.ServiceLocator;
 import org.ejbca.core.ejb.protect.TableProtectSessionHome;
 import org.ejbca.core.ejb.protect.TableProtectSessionRemote;
@@ -34,6 +37,7 @@ import org.ejbca.core.model.ra.ExtendedInformation;
 import org.ejbca.util.Base64;
 import org.ejbca.util.CertTools;
 import org.ejbca.util.JDBCUtil;
+import org.ejbca.util.JDBCUtil.Preparer;
 
 /**
  * Publisher writing certificates to an external Database, used by external OCSP responder.
@@ -55,19 +59,20 @@ public class VerificationAuthorityPublisher extends BasePublisher implements ICu
 	protected static final String DATASOURCE 				= "dataSource";
 	protected static final String PROTECT 					= "protect";
 	protected static final String STORECERT					= "storeCert";
+	protected static final String STORECRL					= "storeCRL";
 
 	// Default values
 	public static final String DEFAULT_DATASOURCE 			= "java:/OcspDS";
 	public static final boolean DEFAULT_PROTECT 			= false;
 
-	private final static String insertSQL = "INSERT INTO CertificateData (base64Cert,subjectDN,issuerDN,cAFingerprint,serialNumber,status,type,username,expireDate,revocationDate,revocationReason,tag,certificateProfileId,updateTime,fingerprint) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-	private final static String updateSQL = "UPDATE CertificateData SET base64Cert=?,subjectDN=?,issuerDN=?,cAFingerprint=?,serialNumber=?,status=?,type=?,username=?,expireDate=?,revocationDate=?,revocationReason=?,tag=?,certificateProfileId=?,updateTime=? WHERE fingerprint=?";
+	private final static String insertCertificateSQL = "INSERT INTO CertificateData (base64Cert,subjectDN,issuerDN,cAFingerprint,serialNumber,status,type,username,expireDate,revocationDate,revocationReason,tag,certificateProfileId,updateTime,fingerprint) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+	private final static String updateCertificateSQL = "UPDATE CertificateData SET base64Cert=?,subjectDN=?,issuerDN=?,cAFingerprint=?,serialNumber=?,status=?,type=?,username=?,expireDate=?,revocationDate=?,revocationReason=?,tag=?,certificateProfileId=?,updateTime=? WHERE fingerprint=?";
 	/**
 	 *
 	 */
 	public VerificationAuthorityPublisher() {
 		super();
-		data.put(TYPE, new Integer(TYPE_VAPUBLISHER));
+		this.data.put(TYPE, new Integer(TYPE_VAPUBLISHER));
 		setDataSource(DEFAULT_DATASOURCE);
 		setProtect(DEFAULT_PROTECT);
 	}
@@ -76,46 +81,62 @@ public class VerificationAuthorityPublisher extends BasePublisher implements ICu
 	 *  Sets the data source property for the publisher.
 	 */
 	public void setDataSource(String dataSource) {
-		data.put(DATASOURCE, dataSource);
+		this.data.put(DATASOURCE, dataSource);
 	}
 
 	/**
 	 *  Sets the property protect for the publisher.
 	 */
 	public void setProtect(boolean protect) {
-		data.put(PROTECT, Boolean.valueOf(protect));
+		this.data.put(PROTECT, Boolean.valueOf(protect));
 	}
 
 	/**
 	 * @return The value of the property data source
 	 */
 	public String getDataSource() {
-		return (String) data.get(DATASOURCE);
+		return (String) this.data.get(DATASOURCE);
 	}
 
 	/**
 	 * @return The value of the property protect
 	 */
 	public boolean getProtect() {
-		return ((Boolean) data.get(PROTECT)).booleanValue();
+		return ((Boolean) this.data.get(PROTECT)).booleanValue();
 	}
 
 	/**
-	 *  Sets the property protect for the publisher.
+	 *  Set to false if the certificate should not be published.
 	 */
 	public void setStoreCert(boolean storecert) {
-		data.put(STORECERT, Boolean.valueOf(storecert));
+		this.data.put(STORECERT, Boolean.valueOf(storecert));
 	}
 	/**
-	 * @return The value of the property protect
+	 * @return Should the certificate be published
 	 */
 	public boolean getStoreCert() {
-		Object o = data.get(STORECERT);
-		boolean ret = true; // default value is true
-		if (o != null) {
-			ret = ((Boolean)o).booleanValue();
+		final Object o = this.data.get(STORECERT);
+		if ( o==null ) {
+			return true; // default value is true
 		}
-		return ret;
+		return ((Boolean)o).booleanValue();
+	}
+
+	/**
+	 *  Set to true if the CRL should be published.
+	 */
+	public void setStoreCRL(boolean storecert) {
+		this.data.put(STORECRL, Boolean.valueOf(storecert));
+	}
+	/**
+	 * @return Should the CRL be published.
+	 */
+	public boolean getStoreCRL() {
+		final Object o = this.data.get(STORECRL);
+		if ( o==null ) {
+			return false; // default value is true
+		}
+		return ((Boolean)o).booleanValue();
 	}
 
 	/* (non-Javadoc)
@@ -132,17 +153,17 @@ public class VerificationAuthorityPublisher extends BasePublisher implements ICu
 		log.debug("storeCert='"+getStoreCert()+"'.");
 	}
 
-	private class StoreCertPreparer implements JDBCUtil.Preparer {
-		final Certificate incert;
-		final String username;
-		final String cafp;
-		final int status;
-		final int type;
-		final long revocationDate;
-		final int reason;
-		final String tag;
-		final int certificateProfileId;
-		final long updateTime;
+	private class StoreCertPreparer implements Preparer {
+		private final Certificate incert;
+		private final String username;
+		private final String cafp;
+		private final int status;
+		private final int type;
+		private final long revocationDate;
+		private final int reason;
+		private final String tag;
+		private final int certificateProfileId;
+		private final long updateTime;
 		StoreCertPreparer(Certificate ic,
 		                  String un, String cfp, int s, long d, int r, int t, String tag, int profid, long utime) {
 			super();
@@ -165,26 +186,26 @@ public class VerificationAuthorityPublisher extends BasePublisher implements ICu
 			// A regular OCSP responder works fine without the certificate.
 			String cert = null;
 			if (getStoreCert()) {
-				cert = new String(Base64.encode(incert.getEncoded(), true));
+				cert = new String(Base64.encode(this.incert.getEncoded(), true));
 			}
 			ps.setString(1, cert);
-			ps.setString(2, CertTools.getSubjectDN(incert));
-			ps.setString(3, CertTools.getIssuerDN(incert));
-			ps.setString(4, cafp);
-			ps.setString(5, ((X509Certificate)incert).getSerialNumber().toString());
-			ps.setInt(6, status);
-			ps.setInt(7, type);
-			ps.setString(8, username);
-			ps.setLong(9, ((X509Certificate)incert).getNotAfter().getTime());
-			ps.setLong(10, revocationDate);
-			ps.setInt(11, reason);
-			ps.setString(12, tag);
-			ps.setInt(13, certificateProfileId);
-			ps.setLong(14, updateTime);
-			ps.setString(15,CertTools.getFingerprintAsString(incert));
+			ps.setString(2, CertTools.getSubjectDN(this.incert));
+			ps.setString(3, CertTools.getIssuerDN(this.incert));
+			ps.setString(4, this.cafp);
+			ps.setString(5, ((X509Certificate)this.incert).getSerialNumber().toString());
+			ps.setInt(6, this.status);
+			ps.setInt(7, this.type);
+			ps.setString(8, this.username);
+			ps.setLong(9, ((X509Certificate)this.incert).getNotAfter().getTime());
+			ps.setLong(10, this.revocationDate);
+			ps.setInt(11, this.reason);
+			ps.setString(12, this.tag);
+			ps.setInt(13, this.certificateProfileId);
+			ps.setLong(14, this.updateTime);
+			ps.setString(15,CertTools.getFingerprintAsString(this.incert));
 		}
 		public String getInfoString() {
-			return "Store:, Username: "+username+", Issuer:"+CertTools.getIssuerDN(incert)+", Serno: "+CertTools.getSerialNumberAsString(incert)+", Subject: "+CertTools.getSubjectDN(incert);
+			return "Store:, Username: "+this.username+", Issuer:"+CertTools.getIssuerDN(this.incert)+", Serno: "+CertTools.getSerialNumberAsString(this.incert)+", Subject: "+CertTools.getSubjectDN(this.incert);
 		}
 	}
 
@@ -205,40 +226,29 @@ public class VerificationAuthorityPublisher extends BasePublisher implements ICu
 		try {
 			if (status == SecConst.CERT_REVOKED) {
 				// If this is a revocation we assume that the certificate already exists in the database. In that case we will try an update first and if that fails an insers.
-				JDBCUtil.execute(updateSQL, prep, getDataSource());
+				JDBCUtil.execute(updateCertificateSQL, prep, getDataSource());
 			} else {
-				JDBCUtil.execute(insertSQL, prep, getDataSource());    
+				JDBCUtil.execute(insertCertificateSQL, prep, getDataSource());    
 			}
 			fail = false;
-		} catch (Exception e) {
-			// If it is an SQL exception, we probably had a duplicate key, so we are actually trying to re-publish
-			if (e instanceof SQLException) {
-				if (log.isDebugEnabled()) {
-					String msg = intres.getLocalizedMessage("publisher.entryexists", e.getMessage());
-					log.debug(msg);
-				}
-				try {
-					if (status == SecConst.CERT_REVOKED) {
-						// If this is a revocation we tried an update below, if thart failed we have to do an insert here
-						JDBCUtil.execute(insertSQL, prep, getDataSource());    
-					} else {
-						JDBCUtil.execute(updateSQL, prep, getDataSource());
-					}
-					fail = false;    
-				} catch (Exception ue) {
-					String lmsg = intres.getLocalizedMessage("publisher.errorvapubl", prep.getInfoString());
-					log.error(lmsg, ue);
-					PublisherException pe = new PublisherException(lmsg);
-					pe.initCause(ue);
-					throw pe;				    
-				}
-			} else {
-				String lmsg = intres.getLocalizedMessage("publisher.errorvapubl", prep.getInfoString());
-				log.error(lmsg, e);
-				PublisherException pe = new PublisherException(lmsg);
-				pe.initCause(e);
-				throw pe;
+		} catch (SQLException e) {
+			if (log.isDebugEnabled()) {
+				String msg = intres.getLocalizedMessage("publisher.entryexists", e.getMessage());
+				log.debug(msg);
 			}
+			try {
+				if (status == SecConst.CERT_REVOKED) {
+					// If this is a revocation we tried an update below, if thart failed we have to do an insert here
+					JDBCUtil.execute(insertCertificateSQL, prep, getDataSource());    
+				} else {
+					JDBCUtil.execute(updateCertificateSQL, prep, getDataSource());
+				}
+				fail = false;    
+			} catch (Exception ue) {
+				throwPublisherException(ue, prep);
+			}
+		} catch (Exception e) {
+			throwPublisherException(e, prep);
 		}
 		// If we managed to update the OCSP database, and protection is enabled, we have to update the protection database
 		if (!fail && getProtect()) {
@@ -261,17 +271,95 @@ public class VerificationAuthorityPublisher extends BasePublisher implements ICu
 		}
 		return true;
 	}
+	private class StoreCRLPreparer implements Preparer {
+		private final String base64Crl;
+		private final String cAFingerprint;
+		private final int cRLNumber;
+		private final int deltaCRLIndicator;
+		private final String issuerDN;
+		private final String fingerprint;
+		private final long thisUpdate;
+		private final long nextUpdate;
+		StoreCRLPreparer(byte[] incrl, String cafp, int number) throws PublisherException{
+			super();
+			final X509CRL crl;
+			try {
+				crl = CertTools.getCRLfromByteArray(incrl);
+				// Is it a delta CRL?
+				this.deltaCRLIndicator = crl.getExtensionValue(X509Extensions.DeltaCRLIndicator.getId())!=null ? 1 : -1;
+				this.issuerDN = new X509Principal(crl.getIssuerX500Principal().getEncoded()).getName();// getName() the BC way
+				this.cRLNumber = number;
+				this.cAFingerprint = cafp;
+				this.base64Crl = new String(Base64.encode(incrl));
+				this.fingerprint = CertTools.getFingerprintAsString(incrl);
+				this.thisUpdate = crl.getThisUpdate().getTime();
+				this.nextUpdate = crl.getNextUpdate().getTime();
+				if (log.isDebugEnabled()) {
+					log.debug("Publishing CRL with fingerprint "+this.fingerprint+", number "+number+" to external CRL store for the CA "+this.issuerDN+(this.deltaCRLIndicator>0 ? ". It is a delta CRL." : "."));
+				}
+			} catch (Exception e) {
+				String msg = intres.getLocalizedMessage("publisher.errorldapdecode", "CRL");
+				log.error(msg, e);        	
+				throw new PublisherException(msg);            
+			}
+		}
+		public void prepare(PreparedStatement ps) throws Exception {
+			ps.setString(1, this.base64Crl);
+			ps.setString(2, this.cAFingerprint);
+			ps.setInt(3, this.cRLNumber);
+			ps.setInt(4, this.deltaCRLIndicator);
+			ps.setString(5, this.issuerDN);
+			ps.setString(6, this.fingerprint);
+			ps.setLong(7, this.thisUpdate);
+			ps.setLong(8, this.nextUpdate);
+		}
+		public String getInfoString() {
+			return "Store CRL:, Issuer:"+this.issuerDN+", Number: "+this.cRLNumber+", Is delta: "+(this.deltaCRLIndicator>0);
+		}
+	}
+	private final static String insertCRLSQL = "INSERT INTO CRLData (base64Crl,cAFingerprint,cRLNumber,deltaCRLIndicator,issuerDN,fingerprint,thisUpdate,nextUpdate) VALUES (?,?,?,?,?,?,?,?)";
+	private final static String updateCRLSQL = "UPDATE CRLData SET base64Crl=?,cAFingerprint=?,cRLNumber=?,deltaCRLIndicator=?,issuerDN=?,thisUpdate=?,nextUpdate=? WHERE fingerprint=?";
 
-	/* Does nothing, this publisher only publishes Certificates.
-	 * @see se.anatom.ejbca.ca.publisher.ICustomPublisher#storeCRL(se.anatom.ejbca.log.Admin, byte[], java.lang.String, int)
+	/* (non-Javadoc)
+	 * @see org.ejbca.core.model.ca.publisher.BasePublisher#storeCRL(org.ejbca.core.model.log.Admin, byte[], java.lang.String, int)
 	 */
-	public boolean storeCRL(Admin admin, byte[] incrl, String cafp, int number)
-	throws PublisherException {
+	public boolean storeCRL(Admin admin, byte[] incrl, String cafp, int number)	throws PublisherException {
+		if (!getStoreCRL() ) {
+			if (log.isDebugEnabled()) {
+				log.debug("No CRL published. The VA publisher is not configured to do it.");
+			}
+			return true;
+		}
+		final Preparer prep = new StoreCRLPreparer(incrl,cafp,number);
+		try {
+			JDBCUtil.execute(insertCRLSQL, prep, getDataSource());    
+		} catch (SQLException e) {
+			if (log.isDebugEnabled()) {
+				final String msg = intres.getLocalizedMessage("publisher.entryexists", e.getMessage());
+				log.debug(msg,e);
+			}
+			try {
+				JDBCUtil.execute(updateCRLSQL, prep, getDataSource());
+			} catch (Exception ue) {
+				throwPublisherException(ue, prep);
+			}
+		} catch (Exception e) {
+			// If it is an SQL exception, we probably had a duplicate key, so we are actually trying to re-publish
+			throwPublisherException(e, prep);
+		}
 		return true;
 	}
+	void throwPublisherException(Exception e, Preparer prep) throws PublisherException {
+		final String lmsg = intres.getLocalizedMessage("publisher.errorvapubl", prep.getInfoString());
+		log.error(lmsg, e);
+		final PublisherException pe = new PublisherException(lmsg);
+		pe.initCause(e);
+		throw pe;		
+	}
 
-	protected class DoNothingPreparer implements JDBCUtil.Preparer {
+	protected class DoNothingPreparer implements Preparer {
 		public void prepare(PreparedStatement ps) {
+			// do nothing
 		}
 		public String getInfoString() {
 			return null;
@@ -295,10 +383,10 @@ public class VerificationAuthorityPublisher extends BasePublisher implements ICu
 		VerificationAuthorityPublisher clone = new VerificationAuthorityPublisher();
 		HashMap clonedata = (HashMap) clone.saveData();
 
-		Iterator i = (data.keySet()).iterator();
+		Iterator i = (this.data.keySet()).iterator();
 		while(i.hasNext()){
 			Object key = i.next();
-			clonedata.put(key, data.get(key));
+			clonedata.put(key, this.data.get(key));
 		}
 		clone.loadData(clonedata);
 		return clone;

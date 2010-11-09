@@ -34,5 +34,17 @@
            } %>>
       </td>
     </tr>
+    <tr id="Row<%=row++%2%>"> 
+      <td width="50%" valign="top" align="right"> 
+         <%= ejbcawebbean.getText("STORECRL") %>
+      </td>
+      <td width="50%" valign="top"> 
+          <input type="checkbox" name="<%= EditPublisherJSPHelper.CHECKBOX_VA_STORECRL %>" value="<%=EditPublisherJSPHelper.CHECKBOX_VALUE %>" 
+           <%  if(vapublisher.getStoreCRL()) {
+                 out.write(" CHECKED ");
+           } %>>
+           <%= ejbcawebbean.getText("STORECRLNOTE") %>
+      </td>
+   </tr>
 
         
