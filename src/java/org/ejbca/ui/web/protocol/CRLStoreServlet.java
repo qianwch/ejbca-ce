@@ -13,7 +13,7 @@
 
 package org.ejbca.ui.web.protocol;
 
-import org.ejbca.core.protocol.certificatestore.CertStoreStandAlone;
+import org.ejbca.core.protocol.certificatestore.CertStore;
 import org.ejbca.core.protocol.certificatestore.CertificateCacheFactory;
 
 
@@ -22,18 +22,18 @@ import org.ejbca.core.protocol.certificatestore.CertificateCacheFactory;
  * For a detailed description see rfc4378.
  * 
  * @web.servlet name = "CertificateStore"
- *              display-name = "CertStoreServletStandAlone"
+ *              display-name = "CRLStoreServlet"
  *              description="Fetches certificates according to rfc4378"
  *              load-on-startup = "99"
  *
  * @web.servlet-mapping url-pattern = "/search.cgi"
  *
  * @web.ejb-local-ref
- *  name="ejb/CertificateStoreOnlyDataSessionLocal"
+ *  name="ejb/CertificateStoreSessionLocal"
  *  type="Session"
- *  link="CertificateStoreOnlyDataSession"
- *  home="org.ejbca.core.ejb.ca.store.ICertificateStoreOnlyDataSessionLocalHome"
- *  local="org.ejbca.core.ejb.ca.store.ICertificateStoreOnlyDataSessionLocal"
+ *  link="CertificateStoreSession"
+ *  home="org.ejbca.core.ejb.ca.store.ICertificateStoreSessionLocalHome"
+ *  local="org.ejbca.core.ejb.ca.store.ICertificateStoreSessionLocal"
  *
  * @web.resource-ref
  *  name="${datasource.jndi-name-prefix}${datasource.jndi-name}"
@@ -43,8 +43,8 @@ import org.ejbca.core.protocol.certificatestore.CertificateCacheFactory;
  * @author Lars Silven PrimeKey
  * @version  $Id$
  */
-public class CertStoreServletStandAlone extends CertStoreServletBase {
-    public CertStoreServletStandAlone() {
-        super( CertificateCacheFactory.getInstance(new CertStoreStandAlone()) );
+public class CRLStoreServlet extends CRLStoreServletBase {
+    public CRLStoreServlet() {
+        super( CertificateCacheFactory.getInstance(new CertStore()) );
     }
-} // CertStoreServletStandAlone
+} // CRLStoreServlet

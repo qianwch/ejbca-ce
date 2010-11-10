@@ -10,7 +10,7 @@
  *  See terms of license at gnu.org.                                     *
  *                                                                       *
  *************************************************************************/
-package org.ejbca.core.protocol.ocsp;
+package org.ejbca.core.protocol.certificatestore;
 
 import java.security.cert.X509Certificate;
 

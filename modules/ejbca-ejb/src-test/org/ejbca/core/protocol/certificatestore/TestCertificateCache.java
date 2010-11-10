@@ -10,7 +10,7 @@
  *  See terms of license at gnu.org.                                     *
  *                                                                       *
  *************************************************************************/
-package org.ejbca.core.protocol.ocsp;
+package org.ejbca.core.protocol.certificatestore;
 
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
@@ -25,6 +25,9 @@ import junit.framework.TestCase;
 import org.apache.log4j.Logger;
 import org.bouncycastle.ocsp.CertificateID;
 import org.ejbca.config.ConfigurationHolder;
+import org.ejbca.core.protocol.certificatestore.CertificateCache;
+import org.ejbca.core.protocol.certificatestore.HashID;
+import org.ejbca.core.protocol.certificatestore.ICertificateCache;
 import org.ejbca.util.Base64;
 import org.ejbca.util.CertTools;
 

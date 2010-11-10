@@ -25,9 +25,9 @@ import org.ejbca.core.model.ca.caadmin.extendedcaservices.IllegalExtendedCAServi
 import org.ejbca.core.model.ca.caadmin.extendedcaservices.OCSPCAServiceRequest;
 import org.ejbca.core.model.ca.caadmin.extendedcaservices.OCSPCAServiceResponse;
 import org.ejbca.core.model.log.Admin;
-import org.ejbca.core.protocol.ocsp.CertStore;
-import org.ejbca.core.protocol.ocsp.CertificateCacheFactory;
-import org.ejbca.core.protocol.ocsp.ICertificateCache;
+import org.ejbca.core.protocol.certificatestore.CertStore;
+import org.ejbca.core.protocol.certificatestore.CertificateCacheFactory;
+import org.ejbca.core.protocol.certificatestore.ICertificateCache;
 import org.ejbca.core.protocol.ocsp.OCSPData;
 
 /** 

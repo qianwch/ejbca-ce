@@ -10,36 +10,15 @@
  *  See terms of license at gnu.org.                                     *
  *                                                                       *
  *************************************************************************/
-package org.ejbca.core.protocol.ocsp;
+package org.ejbca.core.protocol.certificatestore;
 
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
-/**
- * Factory for creating a {@link CertificateCache} object to be used by the OCSP responder of the CA.
- * 
- * @author primelars
+/** class used from TestCertificateCache, depends on TestCertificateCache
+ * @author tomas
  * @version $Id$
- * 
  */
-public class CertificateCacheFactory {
-    private static ICertificateCache instance = null;
-    private static final Lock lock = new ReentrantLock();
-    /**
-     * @return  {@link CertificateCache} for the CA.
-     */
-    public static ICertificateCache getInstance(ICertStore certStore) {
-        if (instance != null) {
-        	return instance;
-        }
-        lock.lock();
-        try {
-        	if ( instance==null ) {
-        		instance = new CertificateCache(certStore);
-        	}
-    		return instance;
-        } finally {
-        	lock.unlock();
-        }
-    }
+public class CacheExceptionHandler implements Thread.UncaughtExceptionHandler {
+	public void uncaughtException(Thread t, Throwable e) {
+		TestCertificateCache.threadException = e;
+	}
 }

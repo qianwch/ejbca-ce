@@ -12,7 +12,7 @@
  *************************************************************************/
 package org.ejbca.ui.web.protocol;
 
-import org.ejbca.core.protocol.ocsp.HashID;
+import org.ejbca.core.protocol.certificatestore.HashID;
 
 
 /**

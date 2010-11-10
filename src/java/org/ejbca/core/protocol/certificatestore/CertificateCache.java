@@ -11,7 +11,7 @@
  *                                                                       *
  *************************************************************************/
 
-package org.ejbca.core.protocol.ocsp;
+package org.ejbca.core.protocol.certificatestore;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;

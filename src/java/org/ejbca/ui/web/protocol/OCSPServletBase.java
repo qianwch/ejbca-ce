@@ -70,10 +70,10 @@ import org.ejbca.core.model.ca.caadmin.extendedcaservices.IllegalExtendedCAServi
 import org.ejbca.core.model.ca.caadmin.extendedcaservices.OCSPCAServiceRequest;
 import org.ejbca.core.model.ca.caadmin.extendedcaservices.OCSPCAServiceResponse;
 import org.ejbca.core.model.log.Admin;
+import org.ejbca.core.protocol.certificatestore.HashID;
+import org.ejbca.core.protocol.certificatestore.ICertificateCache;
 import org.ejbca.core.protocol.ocsp.AuditLogger;
-import org.ejbca.core.protocol.ocsp.HashID;
 import org.ejbca.core.protocol.ocsp.IAuditLogger;
-import org.ejbca.core.protocol.ocsp.ICertificateCache;
 import org.ejbca.core.protocol.ocsp.IOCSPExtension;
 import org.ejbca.core.protocol.ocsp.IOCSPLogger;
 import org.ejbca.core.protocol.ocsp.ISaferAppenderListener;

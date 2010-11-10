@@ -17,6 +17,9 @@ import java.security.cert.X509Certificate;
 import org.apache.log4j.Logger;
 import org.ejbca.config.OcspConfiguration;
 import org.ejbca.core.model.log.Admin;
+import org.ejbca.core.protocol.certificatestore.HashID;
+import org.ejbca.core.protocol.certificatestore.ICertStore;
+import org.ejbca.core.protocol.certificatestore.ICertificateCache;
 import org.ejbca.util.CertTools;
 
 /**

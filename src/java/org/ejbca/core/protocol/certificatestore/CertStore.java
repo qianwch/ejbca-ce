@@ -10,7 +10,7 @@
  *  See terms of license at gnu.org.                                     *
  *                                                                       *
  *************************************************************************/
-package org.ejbca.core.protocol.ocsp;
+package org.ejbca.core.protocol.certificatestore;
 
 import java.math.BigInteger;
 import java.security.cert.Certificate;

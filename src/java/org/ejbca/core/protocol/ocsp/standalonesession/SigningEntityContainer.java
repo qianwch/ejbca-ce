@@ -40,7 +40,7 @@ import org.ejbca.config.OcspConfiguration;
 import org.ejbca.core.ejb.ca.store.CertificateStatus;
 import org.ejbca.core.model.InternalResources;
 import org.ejbca.core.model.log.Admin;
-import org.ejbca.core.protocol.ocsp.HashID;
+import org.ejbca.core.protocol.certificatestore.HashID;
 import org.ejbca.ui.web.protocol.OCSPServletStandAlone;
 import org.ejbca.util.CertTools;
 

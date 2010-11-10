@@ -33,14 +33,14 @@ import org.ejbca.core.protocol.certificatestore.ICertificateCache;
  * @author Lars Silven PrimeKey
  * @version  $Id$
  */
-class CertStoreServletBase extends HttpServlet {
+class CRLStoreServletBase extends HttpServlet {
 	private final static String BOUNDARY = "\"BOUNDARY\"";
 
 	private final ICertificateCache certCashe;
 	/**
 	 * Sets the object to get certificates from.
 	 */
-	CertStoreServletBase(ICertificateCache _certCache ) {
+	CRLStoreServletBase(ICertificateCache _certCache ) {
 		this.certCashe = _certCache;
 	}
 	/* (non-Javadoc)

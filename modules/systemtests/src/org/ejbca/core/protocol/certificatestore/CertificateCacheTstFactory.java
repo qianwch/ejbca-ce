@@ -10,44 +10,39 @@
  *  See terms of license at gnu.org.                                     *
  *                                                                       *
  *************************************************************************/
-package org.ejbca.core.protocol.ocsp;
+package org.ejbca.core.protocol.certificatestore;
 
-import java.math.BigInteger;
 import java.security.cert.Certificate;
 import java.util.Collection;
-
-import org.ejbca.core.ejb.ca.store.CertificateStatus;
-import org.ejbca.core.model.log.Admin;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Interface to the DB
+ * Factory for creating a {@link CertificateCache} object to be used by the OCSP responder of the CA.
+ * This is class is just used for system testing.
  * 
  * @author primelars
  * @version $Id$
- *
+ * 
  */
-public interface ICertStore {
+public class CertificateCacheTstFactory {
+    private static ICertificateCache instance = null;
+    private static final Lock lock = new ReentrantLock();
     /**
-     * Get revocation status of a certificate
-     * @param issuerDN
-     * @param serialNumber
-     * @return the status
+     * @return  {@link CertificateCache} for the CA.
      */
-    CertificateStatus getStatus(String issuerDN, BigInteger serialNumber);
-    /**
-     * Search for certificate.
-     * @param adm
-     * @param issuerDN
-     * @param serno
-     * @return the certificate
-     */
-    Certificate findCertificateByIssuerAndSerno(Admin adm, String issuerDN, BigInteger serno);
-    /**
-     * 
-     * @param adm
-     * @param type
-     * @param issuerDN
-     * @return Collection of Certificate never null
-     */
-    Collection findCertificatesByType(Admin adm, int type, String issuerDN);
+    public static ICertificateCache getInstance(Collection<Certificate> testcerts) {
+        if (instance != null) {
+        	return instance;
+        }
+        lock.lock();
+        try {
+        	if ( instance==null ) {
+        		instance = new CertificateCache(testcerts);
+        	}
+    		return instance;
+        } finally {
+        	lock.unlock();
+        }
+    }
 }

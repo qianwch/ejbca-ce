@@ -13,8 +13,8 @@
 
 package org.ejbca.ui.web.protocol;
 
-import org.ejbca.core.protocol.ocsp.CertStore;
-import org.ejbca.core.protocol.ocsp.CertificateCacheFactory;
+import org.ejbca.core.protocol.certificatestore.CertStore;
+import org.ejbca.core.protocol.certificatestore.CertificateCacheFactory;
 
 
 /** 
