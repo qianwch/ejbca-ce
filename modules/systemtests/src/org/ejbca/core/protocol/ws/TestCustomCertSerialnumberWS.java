@@ -31,7 +31,7 @@ import org.ejbca.core.protocol.ws.client.gen.UserDataVOWS;
 import org.ejbca.core.protocol.ws.client.gen.UserDoesntFullfillEndEntityProfile_Exception;
 import org.ejbca.core.protocol.ws.client.gen.WaitingForApprovalException_Exception;
 import org.ejbca.core.protocol.ws.common.KeyStoreHelper;
-import org.jboss.logging.Logger;
+import org.apache.log4j.Logger;
 
 /** This test requires that "Enable End Entity Profile Limitations" in syste configuration is turned of.
  * 
