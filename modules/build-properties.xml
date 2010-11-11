@@ -280,6 +280,10 @@
             <include name="jta-1.1.jar"/>
             <include name="dom4j-*.jar"/>
         </fileset>
+	<fileset dir="${appserver.home}">
+		<include name="javadb/lib/derbyclient.jar"/>
+		<include name="lib/appserv-cmp.jar"/>
+	</fileset>
 	</path>
 
 	<path id="lib.clientToolBox.classpath">
