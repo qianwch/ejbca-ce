@@ -1,0 +1,108 @@
+/*************************************************************************
+ *                                                                       *
+ *  EJBCA: The OpenSource Certificate Authority                          *
+ *                                                                       *
+ *  This software is free software; you can redistribute it and/or       *
+ *  modify it under the terms of the GNU Lesser General Public           *
+ *  License as published by the Free Software Foundation; either         *
+ *  version 2.1 of the License, or any later version.                    *
+ *                                                                       *
+ *  See terms of license at gnu.org.                                     *
+ *                                                                       *
+ *************************************************************************/
+
+package org.ejbca.core.protocol.crlstore;
+
+import java.security.cert.X509Certificate;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+import org.ejbca.core.model.ca.store.CRLInfo;
+import org.ejbca.core.model.log.Admin;
+import org.ejbca.core.protocol.certificatestore.HashID;
+import org.ejbca.core.protocol.certificatestore.ICertificateCache;
+import org.ejbca.util.CertTools;
+
+
+
+/**
+ * See {@link ICRLCache} to see what this is.
+ * @author lars
+ * @version $Id$
+ *
+ */
+class CRLCache implements ICRLCache {
+	private final ICRLStore crlStore;
+	private final ICertificateCache certCache;
+	final private Map<Integer, CRLEntity> crls = new HashMap<Integer, CRLEntity>();
+	final private Map<Integer, CRLEntity> deltaCrls = new HashMap<Integer, CRLEntity>();
+	private class CRLEntity {
+		final CRLInfo crlInfo;
+		final byte encoded[];
+		/**
+		 * @param crlInfo
+		 * @param encoded
+		 */
+		CRLEntity(CRLInfo crlInfo, byte[] encoded) {
+			super();
+			this.crlInfo = crlInfo;
+			this.encoded = encoded;
+		}
+	}
+	/** We need an object to synchronize around when rebuilding and reading the cache. When rebuilding the cache no thread
+	 * can be allowed to read the cache, since the cache will be in an inconsistent state. In the normal case we want to use
+	 * as fast objects as possible (HashMap) for reading fast.
+	 */
+	final private Lock rebuildlock = new ReentrantLock();
+
+	/** Admin for calling session beans in EJBCA */
+	final private Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+	/**
+	 * @param crlStore DB connections
+	 * @param certStore references to needed CA certificates.
+	 */
+	CRLCache(ICRLStore crlStore, ICertificateCache certCache) {
+		super();
+		this.crlStore = crlStore;
+		this.certCache = certCache;
+	}
+	/* (non-Javadoc)
+	 * @see org.ejbca.core.protocol.crlstore.ICRLCache#findBySubjectKeyIdentifier(org.ejbca.core.protocol.certificatestore.HashID, boolean)
+	 */
+	@Override
+	public byte[] findBySubjectKeyIdentifier(HashID id, boolean isDelta) {
+		return findLatest(this.certCache.findBySubjectKeyIdentifier(id), id, isDelta);
+	}
+	/* (non-Javadoc)
+	 * @see org.ejbca.core.protocol.crlstore.ICRLCache#findLatestByIssuerDN(org.ejbca.core.protocol.certificatestore.HashID, boolean)
+	 */
+	@Override
+	public byte[] findLatestByIssuerDN(HashID id, boolean isDelta) {
+		return findLatest(this.certCache.findLatestBySubjectDN(id), id, isDelta);
+	}
+	private byte[] findLatest(X509Certificate cert, HashID id, boolean isDelta) {
+		if ( cert==null ) {
+			return null;
+		}
+		final String issuerDN = CertTools.getSubjectDN(cert);
+		this.rebuildlock.lock();
+		try {
+			final CRLInfo crlInfo = this.crlStore.getLastCRLInfo(this.admin, issuerDN, isDelta);
+			if ( crlInfo==null ) {
+				return null;
+			}
+			final Map<Integer, CRLEntity> usedCrls = isDelta ? this.deltaCrls : this.crls;
+			final CRLEntity cachedCRL = usedCrls.get(id.key);
+			if ( cachedCRL!=null && !crlInfo.getCreateDate().after(cachedCRL.crlInfo.getCreateDate()) ) {
+				return cachedCRL.encoded;
+			}
+			final CRLEntity entry = new CRLEntity( crlInfo, this.crlStore.getLastCRL(this.admin, issuerDN, isDelta) );
+			usedCrls.put(id.key, entry);
+			return entry.encoded;
+		} finally {
+			this.rebuildlock.unlock();
+		}
+	}
+}
