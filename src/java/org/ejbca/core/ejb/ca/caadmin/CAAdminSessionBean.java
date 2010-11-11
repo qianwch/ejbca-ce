@@ -1938,7 +1938,9 @@ public class CAAdminSessionBean extends BaseSessionBean {
                     false, // isDoEnforceUniqueSubjectDNSerialnumber
                     true, // useCertReqHistoru
     				true, // useUserStorage
-    				true); // useCertificateStorage
+    				true, // useCertificateStorage
+    				null //cmpRaAuthSecret
+    				);
     	} else if (StringUtils.equals(caCertificate.getType(), "CVC")) {
     		cainfo = new CVCCAInfo(subjectdn, caname, 0, new Date(),
     				certprofileid, validity, 
@@ -2725,7 +2727,9 @@ public class CAAdminSessionBean extends BaseSessionBean {
 			                                   false, // isDoEnforceUniqueSubjectDNSerialnumber
 			                                   true, // useCertReqHistoru
 			                                   true, // useUserStorage
-			                                   true); // useCertificateStorage
+			                   				   true, // useCertificateStorage
+			                				   null //cmpRaAuthSecret
+			                				   );
 			ca = new X509CA((X509CAInfo)cainfo);
 		} else if (caSignatureCertificate.getType().equals("CVC")) {
 			// Create a CVC CA

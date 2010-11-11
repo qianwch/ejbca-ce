@@ -411,7 +411,10 @@ public class CmpTestCase extends TestCase {
     }
 
 	
-	protected void checkCmpResponseGeneral(byte[] retMsg, String issuerDN, String userDN, X509Certificate cacert, byte[] senderNonce, byte[] transId, boolean signed, boolean pbe) throws Exception {
+	protected void checkCmpResponseGeneral(byte[] retMsg, String issuerDN, String userDN, X509Certificate cacert, byte[] senderNonce, byte[] transId, boolean signed, String pbeSecret) throws Exception {
+		assertNotNull("No response from server.", retMsg);
+		assertTrue("Response was of 0 length.", retMsg.length > 0);
+		boolean pbe = (pbeSecret!=null);
         //
         // Parse response message
         //
@@ -429,7 +432,7 @@ public class CmpTestCase extends TestCase {
 		}
 		if (pbe) {
 			AlgorithmIdentifier algId = header.getProtectionAlg();
-			assertNotNull(algId);
+			assertNotNull("Protection algorithm was null.", algId);
 			assertEquals(CMPObjectIdentifiers.passwordBasedMac.getId(), algId.getObjectId().getId());						
 		}
 
@@ -484,8 +487,7 @@ public class CmpTestCase extends TestCase {
 				log.debug("Mac type is: "+macAlg.getObjectId().getId());
 				byte[] salt = pp.getSalt().getOctets();
 				//log.info("Salt is: "+new String(salt));
-				String raAuthenticationSecret = "password";
-				byte[] raSecret = raAuthenticationSecret.getBytes();
+				byte[] raSecret = pbeSecret.getBytes();
 				byte[] basekey = new byte[raSecret.length + salt.length];
 				for (int i = 0; i < raSecret.length; i++) {
 					basekey[i] = raSecret[i];
@@ -672,9 +674,9 @@ public class CmpTestCase extends TestCase {
 		assertNotNull(n);
 		PKIStatusInfo info = n.getPKIStatusInfo(0);
 		if (success) {
-			assertEquals(info.getStatus().getValue().intValue(), 0);
+			assertEquals("If the revocation was successful, status should be 0.", 0, info.getStatus().getValue().intValue());
 		} else {
-			assertEquals(info.getStatus().getValue().intValue(), 2);			
+			assertEquals("If the revocation was unsuccessful, status should be 2.", 2, info.getStatus().getValue().intValue());			
 		}
 		
     }

@@ -34,7 +34,6 @@ import org.ejbca.config.CmpConfiguration;
 import org.ejbca.core.EjbcaException;
 import org.ejbca.core.model.AlgorithmConstants;
 import org.ejbca.core.model.SecConst;
-import org.ejbca.core.model.approval.ApprovalException;
 import org.ejbca.core.model.approval.WaitingForApprovalException;
 import org.ejbca.core.model.authorization.AuthorizationDeniedException;
 import org.ejbca.core.model.ca.caadmin.CAInfo;
@@ -138,9 +137,7 @@ public class CrmfRequestTest extends CmpTestCase {
 		fos.close();
 		*/
 		byte[] resp = sendCmpHttp(ba, 200);
-		assertNotNull(resp);
-		assertTrue(resp.length > 0);
-		checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, true, false);
+		checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, true, null);
 		checkCmpFailMessage(resp, "User "+user+" not found.", 1, reqId, 7); // Expects a CertificateResponse (reject) message with error FailInfo.INCORRECT_DATA
 	}
 	
@@ -161,9 +158,7 @@ public class CrmfRequestTest extends CmpTestCase {
 		byte[] ba = bao.toByteArray();
 		// Send request and receive response
 		byte[] resp = sendCmpHttp(ba, 200);
-		assertNotNull(resp);
-		assertTrue(resp.length > 0);
-		checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, true, false);
+		checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, true, null);
 		X509Certificate cert = checkCmpCertRepMessage(userDN, cacert, resp, reqId);
 		String altNames = CertTools.getSubjectAlternativeName(cert);
 		assertNull("AltNames was not null ("+altNames+").", altNames);
@@ -178,9 +173,7 @@ public class CrmfRequestTest extends CmpTestCase {
 		ba = bao.toByteArray();
 		// Send request and receive response
 		resp = sendCmpHttp(ba, 200);
-		assertNotNull(resp);
-		assertTrue(resp.length > 0);
-		checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, false, false);
+		checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, false, null);
 		checkCmpPKIConfirmMessage(userDN, cacert, resp);
 		
 		// Now revoke the bastard!
@@ -192,9 +185,7 @@ public class CrmfRequestTest extends CmpTestCase {
 		ba = bao.toByteArray();
 		// Send request and receive response
 		resp = sendCmpHttp(ba, 200);
-		assertNotNull(resp);
-		assertTrue(resp.length > 0);
-		checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, false, false);
+		checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, false, null);
 		checkCmpFailMessage(resp, "No PKI protection to verify.", 23, reqId, 1);
 	}
 

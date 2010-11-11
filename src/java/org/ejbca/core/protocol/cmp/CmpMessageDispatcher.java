@@ -117,12 +117,9 @@ public class CmpMessageDispatcher {
 				break;
 			case 19:
 				// PKI confirm
-				handler = new ConfirmationMessageHandler();
-				cmpMessage = new GeneralCmpMessage(req);
-				break;
 			case 24:
 				// Certificate confirmation
-				handler = new ConfirmationMessageHandler();
+				handler = new ConfirmationMessageHandler(this.admin);
 				cmpMessage = new GeneralCmpMessage(req);
 				break;
 			case 11:

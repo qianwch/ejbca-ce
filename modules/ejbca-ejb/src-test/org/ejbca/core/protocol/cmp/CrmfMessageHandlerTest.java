@@ -109,7 +109,7 @@ public class CrmfMessageHandlerTest extends TestCase {
          * constructor, instead using the empty default one.
          */
 
-        Field adminField = CrmfMessageHandler.class.getDeclaredField("admin");
+        Field adminField = BaseCmpMessageHandler.class.getDeclaredField("admin");
         adminField.setAccessible(true);
         adminField.set(crmfMessageHandler, admin);
 

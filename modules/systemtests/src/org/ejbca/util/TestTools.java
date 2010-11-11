@@ -460,7 +460,8 @@ public class TestTools {
                 false, // isDoEnforceUniqueSubjectDNSerialnumber
                 true, // useCertReqHistory
                 true, // useUserStorage
-                true // useCertificateStorage
+                true, // useCertificateStorage
+                null // cmpRaAuthSecret
         		);
 
         try {

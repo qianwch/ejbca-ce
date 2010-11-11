@@ -120,6 +120,9 @@ public class CrmfRARequestTest extends CmpTestCase {
         TestTools.getConfigurationSession().updateProperty(CmpConfiguration.CONFIG_ALLOWRAVERIFYPOPO, "true");
         TestTools.getConfigurationSession().updateProperty(CmpConfiguration.CONFIG_RESPONSEPROTECTION, "signature");
         TestTools.getConfigurationSession().updateProperty(CmpConfiguration.CONFIG_RA_AUTHENTICATIONSECRET, "password");
+        TestTools.getConfigurationSession().updateProperty(CmpConfiguration.CONFIG_RA_ENDENTITYPROFILE, "EMPTY");
+        TestTools.getConfigurationSession().updateProperty(CmpConfiguration.CONFIG_RA_CERTIFICATEPROFILE, "ENDUSER");
+        TestTools.getConfigurationSession().updateProperty(CmpConfiguration.CONFIG_RACANAME, "AdminCA1");
     }
 
     /**
@@ -151,10 +154,8 @@ public class CrmfRARequestTest extends CmpTestCase {
             final byte[] ba = bao.toByteArray();
             // Send request and receive response
             final byte[] resp = sendCmpHttp(ba, 200);
-            assertNotNull(resp);
-            assertTrue(resp.length > 0);
             // do not check signing if we expect a failure (sFailMessage==null)
-            checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, sFailMessage == null, false);
+            checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, sFailMessage == null, null);
             if (sFailMessage == null) {
                 checkCmpCertRepMessage(userDN, cacert, resp, reqId);
             } else {
@@ -173,9 +174,7 @@ public class CrmfRARequestTest extends CmpTestCase {
             final byte[] ba = bao.toByteArray();
             // Send request and receive response
             final byte[] resp = sendCmpHttp(ba, 200);
-            assertNotNull(resp);
-            assertTrue(resp.length > 0);
-            checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, false, false);
+            checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, false, null);
             checkCmpPKIConfirmMessage(userDN, cacert, resp);
         }
     }
