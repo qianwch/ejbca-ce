@@ -142,6 +142,9 @@
 	
     <property name="healthcheck.src" value="${src}/publicweb/healthcheck" />
     <property name="healthcheckwar" value="${dist.dir}/healthcheck.war" />
+
+    <property name="clearcache.src" value="${src}/publicweb/clearcache" />
+    <property name="clearcachewar" value="${dist.dir}/clearcache.war" />
 	
 	<property name="ejbcaws.enabled" value="true" />
     <property name="ejbcaws.src" value="${src}/wsee" />

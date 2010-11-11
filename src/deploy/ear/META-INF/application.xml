@@ -47,6 +47,12 @@ applications for enrollment, distribution and administration.
     </module>
     <module>
         <web>
+            <web-uri>clearcache.war</web-uri>
+            <context-root>/@ejbca@/clearcache</context-root>
+        </web>
+    </module>
+    <module>
+        <web>
             <web-uri>adminweb.war</web-uri>
             <context-root>/@ejbca@/adminweb</context-root>
         </web>

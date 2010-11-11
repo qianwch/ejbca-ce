@@ -46,17 +46,7 @@ import org.ejbca.core.model.ra.raadmin.GlobalConfiguration;
  * Servlet used to clear all caches (Global Configuration Cache, End Entity Profile Cache, 
  * Certificate Profile Cache, Log Configuration Cache, Authorization Cache and CA Cache).
  *
- * 
- *
- * @web.servlet name = "ClearCacheServlet"
- *              display-name = "ClearCacheServlet"
- *              description="Servlet used to clear caches"
- *              load-on-startup = "99"
- *
- * @web.servlet-mapping url-pattern = "/clearcache"
- * 
- * @author aveen Ismail
- * 
+ * @author Aveen Ismail
  * @version $Id$
  */
 public class ClearCacheServlet extends HttpServlet {
@@ -75,123 +65,102 @@ public class ClearCacheServlet extends HttpServlet {
 
 	public void doGet(HttpServletRequest req, HttpServletResponse res)
         throws IOException, ServletException {
-        log.trace(">doGet()");
+		if (log.isTraceEnabled()) {
+			log.trace(">doGet()");
+		}
         
         if (StringUtils.equals(req.getParameter("command"), "clearcaches")) {
-
             if(!acceptedHost(req.getRemoteHost())) {
         		if (log.isDebugEnabled()) {
         			log.debug("Clear cache request denied from host "+req.getRemoteHost());
         		}
-        		res.sendError(HttpServletResponse.SC_BAD_REQUEST, "The remote host "+req.getRemoteHost()+" is unknown");
-        	} else {
-        	
-        		IRaAdminSessionLocal raadminsession = null;
-        		IRaAdminSessionLocalHome raadminsessionhome = (IRaAdminSessionLocalHome) ServiceLocator.getInstance().getLocalHome(IRaAdminSessionLocalHome.COMP_NAME);
+        		res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "The remote host "+req.getRemoteHost()+" is unknown");
+        	} else {        	
         		try {
-        			raadminsession = raadminsessionhome.create();
+        			IRaAdminSessionLocalHome raadminsessionhome = (IRaAdminSessionLocalHome) ServiceLocator.getInstance().getLocalHome(IRaAdminSessionLocalHome.COMP_NAME);
+        			IRaAdminSessionLocal raadminsession = raadminsessionhome.create();
         			raadminsession.flushGlobalConfigurationCache();
         			if(log.isDebugEnabled()){
         				log.debug("Global Configuration cache cleared");
         			}
-        			
         			raadminsession.flushProfileCache();
         			if(log.isDebugEnabled()) {
         				log.debug("RA Profile cache cleared");
         			}
-        		} catch (CreateException e) {
-        			if (log.isDebugEnabled()) {
-        				log.debug("Error flushing global configuration cache:", e);
-        			}
-        			res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Failed to create the RA Session instance.");
-        		}
-        	
-        		ICertificateStoreSessionLocal certstoresession = null;
-        		ICertificateStoreSessionLocalHome certstoresessionhome = (ICertificateStoreSessionLocalHome) ServiceLocator.getInstance().getLocalHome(ICertificateStoreSessionLocalHome.COMP_NAME);
-        		try {
-        			certstoresession = certstoresessionhome.create();
+
+        			ICertificateStoreSessionLocalHome certstoresessionhome = (ICertificateStoreSessionLocalHome) ServiceLocator.getInstance().getLocalHome(ICertificateStoreSessionLocalHome.COMP_NAME);
+        			ICertificateStoreSessionLocal certstoresession = certstoresessionhome.create();
         			certstoresession.flushProfileCache();
         			if(log.isDebugEnabled()) {
         				log.debug("Cert Profile cache cleared");
         			}
-        		} catch (CreateException e) {
-        			if (log.isDebugEnabled()) {
-        				log.debug("Error flushing cert profile cache:", e);
-        			}
-        			res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Failed to create the Certificate Store Session instance.");
-        		}
-        	
-        		IAuthorizationSessionLocal authorizationsession = null;
-        		IAuthorizationSessionLocalHome authorizationsessionhome = (IAuthorizationSessionLocalHome) ServiceLocator.getInstance().getLocalHome(IAuthorizationSessionLocalHome.COMP_NAME);
-        		try {
-        			authorizationsession = authorizationsessionhome.create();
+
+        			IAuthorizationSessionLocalHome authorizationsessionhome = (IAuthorizationSessionLocalHome) ServiceLocator.getInstance().getLocalHome(IAuthorizationSessionLocalHome.COMP_NAME);
+        			IAuthorizationSessionLocal authorizationsession = authorizationsessionhome.create();
         			authorizationsession.flushAuthorizationRuleCache();
         			if(log.isDebugEnabled()) {
         				log.debug("Authorization Rule cache cleared");
         			}
-        		} catch (CreateException e) {
-        			if (log.isDebugEnabled()) {
-        				log.debug("Error flushing authorization cache:", e);
-        			}
-        			res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Failed to create the Authorization Session instance.");
-        		}
-			
-        		ILogSessionLocal logsession = null;
-        		ILogSessionLocalHome logsessionhome = (ILogSessionLocalHome) ServiceLocator.getInstance().getLocalHome(ILogSessionLocalHome.COMP_NAME);
-        		try {
-        			logsession = logsessionhome.create();
+
+        			ILogSessionLocalHome logsessionhome = (ILogSessionLocalHome) ServiceLocator.getInstance().getLocalHome(ILogSessionLocalHome.COMP_NAME);
+        			ILogSessionLocal logsession = logsessionhome.create();
         			logsession.flushConfigurationCache();
         			if(log.isDebugEnabled()) {
         				log.debug("Log Configuration cache cleared");
         			}
-        		} catch (CreateException e) {
-        			if (log.isDebugEnabled()) {
-        				log.debug("Error flushing log configuration cache:", e);
-        			}
-        			res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Failed to create the Log Session instance.");
-        		}
-        	
-        		ICAAdminSessionLocal caadminsession = null;
-        		ICAAdminSessionLocalHome caadminsessionhome = (ICAAdminSessionLocalHome) ServiceLocator.getInstance().getLocalHome(ICAAdminSessionLocalHome.COMP_NAME);
-        		try {
-        			caadminsession = caadminsessionhome.create();
+
+        			ICAAdminSessionLocalHome caadminsessionhome = (ICAAdminSessionLocalHome) ServiceLocator.getInstance().getLocalHome(ICAAdminSessionLocalHome.COMP_NAME);
+        			ICAAdminSessionLocal caadminsession = caadminsessionhome.create();
         			caadminsession.flushCACache();
         			if(log.isDebugEnabled()) {
         				log.debug("CA cache cleared");
         			}
         		} catch (CreateException e) {
-        			if (log.isDebugEnabled()) {
-        				log.debug("Error flushing CA cache:", e);
-        			}
-        			res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Failed to create the CA Session instance.");
+        			log.info("Error flushing cache:", e);
+        			res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to create Session instance, see server.log");
         		}
         	}
+        } else {
+    		if (log.isDebugEnabled()) {
+    			log.debug("No clearcaches command (?command=clearcaches) received, returning bad request.");
+    		}
+			res.sendError(HttpServletResponse.SC_BAD_REQUEST, "No command.");
         }
-        log.trace("<doGet()");
+		if (log.isTraceEnabled()) {
+			log.trace("<doGet()");
+		}
     }
 
     private boolean acceptedHost(String remotehost) {
-    	
-    	IRaAdminSessionLocal raadminsession = null;
-    	IRaAdminSessionLocalHome raadminsessionhome = (IRaAdminSessionLocalHome) ServiceLocator.getInstance().getLocalHome(IRaAdminSessionLocalHome.COMP_NAME);
-		try {
-    		raadminsession = raadminsessionhome.create();
-
-		} catch (CreateException e1) {
-			log.error("Failed to create RAAdminSession instance");
-			return false;
-		}
-		
-		GlobalConfiguration gc = raadminsession.loadGlobalConfiguration(new Admin(Admin.TYPE_INTERNALUSER));
-    	Set nodes = gc.getNodesInCluster();
-		Iterator itr = nodes.iterator();
-		String nodename = null;
-		while(itr.hasNext()){
-			nodename = (String) itr.next();
-			try {
-				if(StringUtils.equals(remotehost, InetAddress.getByName(nodename).getHostAddress()))	return true;
-			} catch (UnknownHostException e) {}
-		}
-		return false;
+    	if (log.isTraceEnabled()) {
+    		log.trace(">acceptedHost: "+remotehost);
+    	}
+    	boolean ret = false;
+    	try {
+    		IRaAdminSessionLocalHome raadminsessionhome = (IRaAdminSessionLocalHome) ServiceLocator.getInstance().getLocalHome(IRaAdminSessionLocalHome.COMP_NAME);
+    		IRaAdminSessionLocal raadminsession = raadminsessionhome.create();
+    		GlobalConfiguration gc = raadminsession.loadGlobalConfiguration(new Admin(Admin.TYPE_INTERNALUSER));
+    		Set nodes = gc.getNodesInCluster();
+    		Iterator itr = nodes.iterator();
+    		String nodename = null;
+    		while(itr.hasNext()){
+    			nodename = (String) itr.next();
+    			try {
+    				if(StringUtils.equals(remotehost, InetAddress.getByName(nodename).getHostAddress())) {
+    					ret = true;
+    				}
+    			} catch (UnknownHostException e) {
+    				if (log.isDebugEnabled()) {
+    					log.debug("Unknown host '"+nodename+"': "+e.getMessage());
+    				}
+    			}
+    		}
+    	} catch (CreateException e) {
+    		log.error("Failed to create RAAdminSession instance: ", e);
+    	}
+    	if (log.isTraceEnabled()) {
+    		log.trace("<acceptedHost: "+ret);
+    	}
+    	return ret;
     }
 }

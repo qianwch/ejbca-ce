@@ -8,6 +8,7 @@
 	<web-module id="status" path="status.war" />
 	<web-module id="cmp" path="cmp.war" />
 	<web-module id="healthcheck" path="healthcheck.war" />
+	<web-module id="clearcache" path="clearcache.war" />
 	<web-module id="webdist" path="webdist.war" />
 	<web-module id="adminweb" path="adminweb.war" />
 	<web-module id="ejbcaws" path="ejbcaws.war" />

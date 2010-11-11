@@ -291,17 +291,24 @@
     <target name="healthcheck.war" depends="compile">
         <war destfile="${healthcheckwar}" webxml="${healthcheck.src}/WEB-INF/web.xml">
             <fileset dir="${healthcheck.src}" excludes="WEB-INF/web.xml" />
-
         </war>
     </target>
-		
+
+    <!-- =================================================================== -->
+    <!-- Build clear cache part                                                                                                                             -->
+    <!-- =================================================================== -->
+    <target name="clearcache.war" depends="compile">
+        <war destfile="${clearcachewar}" webxml="${clearcache.src}/WEB-INF/web.xml">
+            <fileset dir="${clearcache.src}" excludes="WEB-INF/web.xml" />
+        </war>
+    </target>
+
     <!-- =================================================================== -->
     <!-- Build ocsp health check part                                        -->
     <!-- =================================================================== -->
     <target name="vahealthcheck.war" depends="va-compile">
         <war destfile="${vahealthcheckwar}" webxml="${vahealthcheck.src}/WEB-INF/web.xml">
             <fileset dir="${vahealthcheck.src}" excludes="WEB-INF/web.xml" />
-
         </war>
     </target>	
 
@@ -662,7 +669,7 @@
 	<target name="ejbca.ear" depends="ca.ear">
 	</target>
 	
-	<target name="ca.ear" depends="jsflibs, publicweb.war, renew.war, scep.war, webdist.war, status.war, certstore.war, crlstore.war, cmp.war, healthcheck.war, adminweb.war, ejbca-ejb.jar, ejbca-util.jar, ejbcaws.war, ejbcaws.client, xkms.war, xkms.client, doc.war, externalra-service">
+	<target name="ca.ear" depends="jsflibs, publicweb.war, renew.war, scep.war, webdist.war, status.war, certstore.war, crlstore.war, cmp.war, healthcheck.war, clearcache.war, adminweb.war, ejbca-ejb.jar, ejbca-util.jar, ejbcaws.war, ejbcaws.client, xkms.war, xkms.client, doc.war, externalra-service">
         <antcall target="replacement_in_module">
             <param name="replacement_tag" value="!--@ejbcaws.war@-->"/>
             <param name="replacement_file" value="${eardd.src}/META-INF/application.xml"/>
