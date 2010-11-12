@@ -65,12 +65,16 @@ public class EJBCAHealthCheck extends CommonHealthCheck {
 		if(config.getInitParameter("CheckPublishers") != null){
 			checkPublishers = config.getInitParameter("CheckPublishers").equalsIgnoreCase("TRUE");
 		}
-		log.debug("CheckPublishers: "+checkPublishers);
-		log.debug("CaTokenSignTest: "+caTokenSignTest);
+		if (log.isDebugEnabled()) {
+			log.debug("CheckPublishers: "+checkPublishers);
+			log.debug("CaTokenSignTest: "+caTokenSignTest);
+		}
 	}
 
 	public String checkHealth(HttpServletRequest request) {
-		log.debug("Starting HealthCheck requested by : " + request.getRemoteAddr());
+		if (log.isDebugEnabled()) {
+			log.debug("Starting HealthCheck requested by : " + request.getRemoteAddr());
+		}
 		String errormessage = "";
 		
 		errormessage += checkMaintenance();
@@ -97,7 +101,9 @@ public class EJBCAHealthCheck extends CommonHealthCheck {
 	}
 		
 	private String checkCAs(){
-		log.debug("Checking CAs.");
+		if (log.isDebugEnabled()) {
+			log.debug("Checking CAs.");
+		}
 		String retval = "";
 		Iterator iter = getCAAdminSession().getAvailableCAs().iterator();
 		while(iter.hasNext()){
@@ -115,7 +121,9 @@ public class EJBCAHealthCheck extends CommonHealthCheck {
 	}
 	
 	private String checkPublishers(){
-		log.debug("Checking publishers.");
+		if (log.isDebugEnabled()) {
+			log.debug("Checking publishers.");
+		}
 		String retval = "";
 		Iterator iter = getCAAdminSession().getAuthorizedPublisherIds(admin).iterator();
 		while(iter.hasNext()){
