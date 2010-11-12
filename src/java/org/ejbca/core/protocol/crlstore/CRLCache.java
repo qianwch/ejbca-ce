@@ -73,20 +73,21 @@ class CRLCache implements ICRLCache {
 	 */
 	@Override
 	public byte[] findBySubjectKeyIdentifier(HashID id, boolean isDelta) {
-		return findLatest(this.certCache.findBySubjectKeyIdentifier(id), id, isDelta);
+		return findLatest(this.certCache.findBySubjectKeyIdentifier(id), isDelta);
 	}
 	/* (non-Javadoc)
 	 * @see org.ejbca.core.protocol.crlstore.ICRLCache#findLatestByIssuerDN(org.ejbca.core.protocol.certificatestore.HashID, boolean)
 	 */
 	@Override
 	public byte[] findLatestByIssuerDN(HashID id, boolean isDelta) {
-		return findLatest(this.certCache.findLatestBySubjectDN(id), id, isDelta);
+		return findLatest(this.certCache.findLatestBySubjectDN(id), isDelta);
 	}
-	private byte[] findLatest(X509Certificate cert, HashID id, boolean isDelta) {
-		if ( cert==null ) {
+	private byte[] findLatest(X509Certificate caCert, boolean isDelta) {
+		final HashID id = HashID.getFromSubjectDN(caCert);
+		if ( caCert==null ) {
 			return null;
 		}
-		final String issuerDN = CertTools.getSubjectDN(cert);
+		final String issuerDN = CertTools.getSubjectDN(caCert);
 		this.rebuildlock.lock();
 		try {
 			final CRLInfo crlInfo = this.crlStore.getLastCRLInfo(this.admin, issuerDN, isDelta);
