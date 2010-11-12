@@ -151,7 +151,7 @@
 			<socket server="127.0.0.1" port="5587"/>
 		</waitfor>
 		<junit printsummary="yes" haltonfailure="no">
-        	<jvmarg value="-Djava.endorsed.dirs=${lib.jaxws.dir}"/>	<!-- Use our bundled JAX-WS implementation instead of the one from the JDK -->
+			<jvmarg value="${jvmendorsedproperty}"/>	<!-- Use our bundled JAX-WS implementation instead of the one from the JDK -->
 			<classpath>
 				<path location="${build.dir}" />
 				<path refid="systemtests.classpath" />
