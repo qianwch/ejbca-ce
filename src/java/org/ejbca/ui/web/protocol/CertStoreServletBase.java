@@ -26,7 +26,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.ejbca.core.protocol.certificatestore.CertificateCacheFactory;
 import org.ejbca.core.protocol.certificatestore.HashID;
+import org.ejbca.core.protocol.certificatestore.ICertStore;
 import org.ejbca.core.protocol.certificatestore.ICertificateCache;
 
 /**
@@ -40,8 +42,8 @@ class CertStoreServletBase extends HttpServlet {
 	/**
 	 * Sets the object to get certificates from.
 	 */
-	CertStoreServletBase(ICertificateCache _certCache ) {
-		this.certCashe = _certCache;
+	CertStoreServletBase( ICertStore certStore ) {
+		this.certCashe = CertificateCacheFactory.getInstance(certStore);
 	}
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServlet#doGet(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)

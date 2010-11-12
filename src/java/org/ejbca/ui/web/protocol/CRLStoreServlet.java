@@ -14,7 +14,7 @@
 package org.ejbca.ui.web.protocol;
 
 import org.ejbca.core.protocol.certificatestore.CertStore;
-import org.ejbca.core.protocol.certificatestore.CertificateCacheFactory;
+import org.ejbca.core.protocol.crlstore.CRLStore;
 
 
 /** 
@@ -45,6 +45,6 @@ import org.ejbca.core.protocol.certificatestore.CertificateCacheFactory;
  */
 public class CRLStoreServlet extends CRLStoreServletBase {
     public CRLStoreServlet() {
-        super( CertificateCacheFactory.getInstance(new CertStore()) );
+        super( new CertStore(), new CRLStore() );
     }
 } // CRLStoreServlet

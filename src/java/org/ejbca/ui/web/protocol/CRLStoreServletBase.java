@@ -26,8 +26,13 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.ejbca.core.protocol.certificatestore.CertificateCacheFactory;
 import org.ejbca.core.protocol.certificatestore.HashID;
+import org.ejbca.core.protocol.certificatestore.ICertStore;
 import org.ejbca.core.protocol.certificatestore.ICertificateCache;
+import org.ejbca.core.protocol.crlstore.CRLCacheFactory;
+import org.ejbca.core.protocol.crlstore.ICRLCache;
+import org.ejbca.core.protocol.crlstore.ICRLStore;
 
 /**
  * @author Lars Silven PrimeKey
@@ -37,11 +42,13 @@ class CRLStoreServletBase extends HttpServlet {
 	private final static String BOUNDARY = "\"BOUNDARY\"";
 
 	private final ICertificateCache certCashe;
+	private final ICRLCache crlCache;
 	/**
 	 * Sets the object to get certificates from.
 	 */
-	CRLStoreServletBase(ICertificateCache _certCache ) {
-		this.certCashe = _certCache;
+	CRLStoreServletBase( ICertStore certStore, ICRLStore crlStore ) {
+		this.certCashe = CertificateCacheFactory.getInstance(certStore);
+		this.crlCache = CRLCacheFactory.getInstance(crlStore, this.certCashe);
 	}
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServlet#doGet(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
