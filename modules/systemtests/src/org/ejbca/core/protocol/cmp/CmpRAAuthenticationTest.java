@@ -96,11 +96,6 @@ public class CmpRAAuthenticationTest extends CmpTestCase {
 		return ret;
 	}
 
-	private void updatePropertyOnServer(String property, String value) throws Exception {
-		LOG.debug("Setting property on server: " + property + "=" + value);
-		assertTrue("Failed to set property \"" + property + "\" to \"" + value + "\"", TestTools.getConfigurationSession().updateProperty(property, value));
-	}
-
 	/** Test that a CA specific secret. */
 	public void test01IssueConfirmRevoke1() throws Exception {
 		LOG.trace(">test01IssueConfirmRevoke1");

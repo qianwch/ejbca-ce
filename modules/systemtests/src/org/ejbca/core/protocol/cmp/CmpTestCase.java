@@ -73,6 +73,7 @@ import org.bouncycastle.jce.X509KeyUsage;
 import org.ejbca.core.protocol.FailInfo;
 import org.ejbca.core.protocol.ResponseStatus;
 import org.ejbca.util.CertTools;
+import org.ejbca.util.TestTools;
 
 import com.novosec.pkix.asn1.cmp.CMPObjectIdentifiers;
 import com.novosec.pkix.asn1.cmp.CertConfirmContent;
@@ -766,6 +767,11 @@ public class CmpTestCase extends TestCase {
 			assertEquals(errorMsg, utf.getString());
 		}
     }
+
+	protected void updatePropertyOnServer(String property, String value) throws Exception {
+		log.debug("Setting property on server: " + property + "=" + value);
+		assertTrue("Failed to set property \"" + property + "\" to \"" + value + "\"", TestTools.getConfigurationSession().updateProperty(property, value));
+	}
 
 	//
 	// Private methods
