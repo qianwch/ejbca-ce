@@ -11,25 +11,58 @@
 	<property name="src.dir" location="${this.dir}/src"/>
 	<property name="reports.base.dir" location="${this.dir}/build/reports/"/>
 	
-	<path id="systemtests.classpath">
-    	<path refid="lib.servlet.classpath"/>
-    	<path refid="lib.junit.classpath"/>
-    	<path refid="lib.utils.classpath"/>
-    	<path refid="lib.jee.classpath"/>
-    	<path refid="lib.jpa.classpath"/>
-    	<path refid="lib.bouncycastle.classpath"/>
-    	<path refid="lib.ldap.classpath"/>	<!-- TestPublisher uses this -->
-    	<path refid="lib.jaxws.classpath"/>
-    	<path refid="lib.xmlsec.classpath"/>	<!-- To parse XML Exceptions -->
-    	<pathelement location="${mod.ejbca-ejb-interface.lib}"/>
-    	<pathelement location="${mod.ejbca-entity.lib}"/>
-    	<pathelement location="${mod.ejbca-ws-cli.lib}"/>
-    	<pathelement location="${mod.ejbca-xkms-cli.lib}"/>
-    	<pathelement location="${mod.clientToolBox.lib}"/>
-    	<pathelement location="${mod.ejbca-ejb-cli.lib}"/>
-    	<pathelement location="${mod.ejbca-util.lib}"/>
-    	<pathelement location="${mod.ejbca-ejb.lib}"/>
-	</path>
+	<!-- Setup systemtests.classpath. If appserver is GlassFish, don't include JAX-WS. -->
+	<target name="-init-classpath" depends="-init-classpath-bundledws, -init-classpath-nows"/>
+	<condition property="appserverisglassfish">
+		<equals arg1="${appserver.type}" arg2="glassfish"/>
+	</condition>
+	<target name="-init-classpath-bundledws" unless="appserverisglassfish">
+		<echo message="Using bundled JAX-WS"/>
+		<property name="jvmendorsedproperty" value="-Djava.endorsed.dirs=${lib.jaxws.dir}"/>
+		<path id="systemtests.classpath">
+		    	<path refid="lib.servlet.classpath"/>
+		    	<path refid="lib.junit.classpath"/>
+		    	<path refid="lib.utils.classpath"/>
+		    	<path refid="lib.jee.classpath"/>
+		    	<path refid="lib.jpa.classpath"/>
+		    	<path refid="lib.bouncycastle.classpath"/>
+		    	<path refid="lib.ldap.classpath"/>	<!-- TestPublisher uses this -->
+		    	<path refid="lib.jaxws.classpath"/>
+		    	<path refid="lib.xmlsec.classpath"/>	<!-- To parse XML Exceptions -->
+		    	<pathelement location="${mod.ejbca-ejb-interface.lib}"/>
+		    	<pathelement location="${mod.ejbca-entity.lib}"/>
+		    	<pathelement location="${mod.ejbca-ws-cli.lib}"/>
+		    	<pathelement location="${mod.ejbca-xkms-cli.lib}"/>
+		    	<pathelement location="${mod.clientToolBox.lib}"/>
+		    	<pathelement location="${mod.ejbca-ejb-cli.lib}"/>
+		    	<pathelement location="${mod.ejbca-util.lib}"/>
+		    	<pathelement location="${mod.ejbca-ejb.lib}"/>
+			</path>
+	</target>
+	<target name="-init-classpath-nows" if="appserverisglassfish">
+		<echo message="Not using bundled JAX-WS"/>
+		<property name="jvmendorsedproperty" value="-Dunusedproperty123=unset"/>
+		<path id="systemtests.classpath">
+		    	<path refid="lib.servlet.classpath"/>
+		    	<path refid="lib.junit.classpath"/>
+		    	<path refid="lib.utils.classpath"/>
+		    	<path refid="lib.jee.classpath"/>
+		    	<path refid="lib.jpa.classpath"/>
+		    	<path refid="lib.bouncycastle.classpath"/>
+		    	<path refid="lib.ldap.classpath"/>	<!-- TestPublisher uses this -->
+		    	<!-- Removed: lib.jaxws.classpath -->
+		    	<path refid="lib.xmlsec.classpath"/>	<!-- To parse XML Exceptions -->
+		    	<pathelement location="${mod.ejbca-ejb-interface.lib}"/>
+		    	<pathelement location="${mod.ejbca-entity.lib}"/>
+		    	<pathelement location="${mod.ejbca-ws-cli.lib}"/>
+		    	<pathelement location="${mod.ejbca-xkms-cli.lib}"/>
+		    	<pathelement location="${mod.clientToolBox.lib}"/>
+		    	<pathelement location="${mod.ejbca-ejb-cli.lib}"/>
+		    	<pathelement location="${mod.ejbca-util.lib}"/>
+		    	<pathelement location="${mod.ejbca-ejb.lib}"/>
+			</path>
+	</target>
+
 	
     <target name="build" description="Build this module" depends="ejbca-util, ejbca-ws-cli, ejbca-xkms-cli, ejbca-ejb-cli, ejbca-ejb, compile"/>
 
@@ -38,7 +71,7 @@
 		<delete dir="${this.dir}/reports" />
     </target>
 
-    <target name="compile" depends="assert-notinproduction, ejbca-entity, ejbca-ejb-interface, clientToolBox">
+    <target name="compile" depends="-init-classpath, assert-notinproduction, ejbca-entity, ejbca-ejb-interface, clientToolBox">
     	<mkdir dir="${build.dir}" />
         <javac srcdir="${src.dir}" destdir="${build.dir}" debug="on" includeantruntime="no"
         	encoding="iso8859-1" classpathref="systemtests.classpath" target="${java.target.version}">
@@ -86,7 +119,7 @@
 		<mkdir dir="${build.dir}/conf"/>	<!-- Workaround for tests TestCertificateProfile -->
     	<copy todir="${build.dir}/conf" file="${ejbca.home}/conf/extendedkeyusage.properties" />	<!-- Workaround for tests TestCertificateProfile -->
 		<junit printsummary="yes" haltonfailure="no" >
-        	<jvmarg value="-Djava.endorsed.dirs=${lib.jaxws.dir}"/>	<!-- Use our bundled JAX-WS implementation instead of the one from the JDK -->
+        	<jvmarg value="${jvmendorsedproperty}"/>	<!-- Use our bundled JAX-WS implementation instead of the one from the JDK -->
 			<classpath>
 				<path location="${build.dir}" />
 				<path refid="systemtests.classpath" />
