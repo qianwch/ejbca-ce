@@ -65,7 +65,7 @@ class CRLStoreServletBase extends StoreServletBase {
 		pw.println(indent+cert.getSubjectX500Principal());
 		pw.println(indent+" "+RFC4387URL.iHash.getRef(url, HashID.getFromSubjectDN(cert)));
 		pw.println(indent+" "+RFC4387URL.sKIDHash.getRef(url, HashID.getFromKeyID(cert)));
-		final String deltaParam = "%26delta";
+		final String deltaParam = "&amp;delta=";
 		pw.println(indent+" "+RFC4387URL.iHash.getRef(url, HashID.getFromSubjectDN(cert), deltaParam));
 		pw.println(indent+" "+RFC4387URL.sKIDHash.getRef(url, HashID.getFromKeyID(cert), deltaParam));
 	}
@@ -73,6 +73,9 @@ class CRLStoreServletBase extends StoreServletBase {
 		return req.getParameterMap().get("delta")!=null;
 	}
 	private void returnCrl( byte crl[], HttpServletResponse resp, String name ) throws IOException {
+		if ( crl==null || crl.length<1 ) {
+			return;
+		}
 		resp.setContentType("application/pkix-crl");
 		resp.setHeader("Content-disposition", "attachment; filename=crl" + name + ".der");
 		resp.setContentLength(crl.length);
