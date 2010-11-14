@@ -14,22 +14,14 @@
 package org.ejbca.ui.web.protocol;
 
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.ejbca.core.protocol.certificatestore.CertificateCacheFactory;
 import org.ejbca.core.protocol.certificatestore.HashID;
 import org.ejbca.core.protocol.certificatestore.ICertStore;
-import org.ejbca.core.protocol.certificatestore.ICertificateCache;
 import org.ejbca.core.protocol.crlstore.CRLCacheFactory;
 import org.ejbca.core.protocol.crlstore.ICRLCache;
 import org.ejbca.core.protocol.crlstore.ICRLStore;
@@ -38,147 +30,67 @@ import org.ejbca.core.protocol.crlstore.ICRLStore;
  * @author Lars Silven PrimeKey
  * @version  $Id$
  */
-class CRLStoreServletBase extends HttpServlet {
-	private final static String BOUNDARY = "\"BOUNDARY\"";
-
-	private final ICertificateCache certCashe;
+class CRLStoreServletBase extends StoreServletBase {
 	private final ICRLCache crlCache;
 	/**
 	 * Sets the object to get certificates from.
 	 */
 	CRLStoreServletBase( ICertStore certStore, ICRLStore crlStore ) {
-		this.certCashe = CertificateCacheFactory.getInstance(certStore);
+		super(certStore);
 		this.crlCache = CRLCacheFactory.getInstance(crlStore, this.certCashe);
 	}
 	/* (non-Javadoc)
-	 * @see javax.servlet.http.HttpServlet#doGet(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
+	 * @see org.ejbca.ui.web.protocol.StoreServletBase#sHash(java.lang.String, javax.servlet.http.HttpServletResponse)
 	 */
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, java.io.IOException {
-		final String sHash = req.getParameter(RFC4387URL.sHash.toString());
-		if ( sHash!=null ) {
-			final X509Certificate cert = this.certCashe.findLatestBySubjectDN(HashID.getFromB64(sHash));
-			returnCert( cert, resp, sHash);
-			return;
-		}
-		final String iHash = req.getParameter(RFC4387URL.iHash.toString());
-		if ( iHash!=null ) {
-			returnCerts( this.certCashe.findLatestByIssuerDN(HashID.getFromB64(iHash)), resp, iHash );
-			return;
-		}
-		final String sKIDHash = req.getParameter(RFC4387URL.sKIDHash.toString());
-		if ( sKIDHash!=null ) {
-			returnCert( this.certCashe.findBySubjectKeyIdentifier(HashID.getFromB64(sKIDHash)), resp, sKIDHash );
-			return;
-		}
-		final StringWriter sw = new StringWriter();
-		final PrintWriter pw = new MyPrintWriter(sw);
-		printCerts(this.certCashe.getRootCertificates(), "", pw, req.getRequestURL().toString());
-		pw.flush();
-		pw.close();
-		sw.flush();
-		returnInfoPage(resp, sw.toString());
-		sw.close();
+	void sHash(String iHash, HttpServletResponse resp) throws IOException, ServletException {
+		// do nothing for CRLs
 	}
-	private class MyPrintWriter extends PrintWriter {
-
-		/**
-		 * @param out
-		 */
-		public MyPrintWriter(Writer out) {
-			super(out);
-		}
-		/* (non-Javadoc)
-		 * @see java.io.PrintWriter#println()
-		 */
-		public void println() {
-			super.print("<br/>");
-			super.println();
-		}
-		/* (non-Javadoc)
-		 * @see java.io.PrintWriter#println(java.lang.String)
-		 */
-		public void println(String s) {
-			super.print(s);
-			println();
-		}
+	/* (non-Javadoc)
+	 * @see org.ejbca.ui.web.protocol.StoreServletBase#iHash(java.lang.String, javax.servlet.http.HttpServletResponse)
+	 */
+	void iHash(String iHash, HttpServletResponse resp) throws IOException, ServletException {
+		final SearchInfo info = new SearchInfo(iHash);
+		returnCrl( this.crlCache.findBySubjectKeyIdentifier(info.hashID, info.isDelta), resp, iHash );		
 	}
-	private void returnCert( X509Certificate cert, HttpServletResponse resp, String name ) throws IOException, ServletException {
-		if (cert==null) {
-			resp.sendError(HttpServletResponse.SC_NO_CONTENT, "No certificate with hash DN: "+name);
-			return;
-		}
-		final byte encoded[];
-		try {
-			encoded = cert.getEncoded();
-		} catch (CertificateEncodingException e) {
-			throw new ServletException(e);
-		}
-		resp.setContentType("application/pkix-cert");
-		resp.setHeader("Content-disposition", "attachment; filename=cert" + name + ".der");
-		resp.setContentLength(encoded.length);
-		resp.getOutputStream().write(encoded);
+	/* (non-Javadoc)
+	 * @see org.ejbca.ui.web.protocol.StoreServletBase#sKIDHash(java.lang.String, javax.servlet.http.HttpServletResponse)
+	 */
+	void sKIDHash(String sKIDHash, HttpServletResponse resp) throws IOException, ServletException {
+		final SearchInfo info = new SearchInfo(sKIDHash);
+		returnCrl( this.crlCache.findBySubjectKeyIdentifier(info.hashID, info.isDelta), resp, sKIDHash );
 	}
-	private void returnCerts( X509Certificate certs[], HttpServletResponse resp, String name ) throws IOException, ServletException {
-		if (certs==null) {
-			resp.sendError(HttpServletResponse.SC_NO_CONTENT, "No certificate with issuer hash DN: "+name);
-			return;
-		}
-		resp.setContentType("multipart/mixed; boundary="+BOUNDARY);
-		final PrintStream ps = new PrintStream(resp.getOutputStream());
-		ps.println("This is a multi-part message in MIME format.");
-		for( int i=0; i<certs.length; i++ ) {
-			// Upload the certificates with mime-header for user certificates.
-			ps.println("--"+BOUNDARY);
-			ps.println("Content-type: application/pkix-cert");
-			ps.println("Content-disposition: attachment; filename=cert" + name + '-' + i + ".der");
-			ps.println();
-			try {
-				ps.write(certs[i].getEncoded());
-			} catch (CertificateEncodingException e) {
-				throw new ServletException(e);
+	/* (non-Javadoc)
+	 * @see org.ejbca.ui.web.protocol.StoreServletBase#printInfo(java.security.cert.X509Certificate, java.lang.String, java.io.PrintWriter, java.lang.String)
+	 */
+	void printInfo(X509Certificate cert, String indent, PrintWriter pw, String url) {
+		pw.println(indent+cert.getSubjectX500Principal());
+		pw.println(indent+" "+RFC4387URL.iHash.getRef(url, HashID.getFromSubjectDN(cert)));
+		pw.println(indent+" "+RFC4387URL.sKIDHash.getRef(url, HashID.getFromKeyID(cert)));
+	}
+	private class SearchInfo {
+		private static final String DELTA_PREFIX="d";
+		final private boolean isDelta;
+		final private HashID hashID;
+		SearchInfo(String param) {
+			if ( !param.startsWith(DELTA_PREFIX) ) {
+				this.isDelta = false;
+				this.hashID = HashID.getFromB64(param);
+				return;
 			}
-			ps.println();
-		}
-		// ready
-		ps.println("--"+BOUNDARY+"--");
-		ps.flush();
-	}
-	final String space = "|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"; // 5 html spaces
-	private void printCerts(X509Certificate certs[], String indent, PrintWriter pw, String url) {
-		for ( int i=0; i<certs.length; i++ ) {
-			pw.println(indent+certs[i].getSubjectX500Principal());
-			pw.println(indent+" "+RFC4387URL.sHash.getRef(url, HashID.getFromSubjectDN(certs[i])));
-			pw.println(indent+" "+RFC4387URL.iHash.getRef(url, HashID.getFromSubjectDN(certs[i])));
-			pw.println(indent+" "+RFC4387URL.sKIDHash.getRef(url, HashID.getFromKeyID(certs[i])));
-			pw.println();
-			final X509Certificate issuedCerts[] = this.certCashe.findLatestByIssuerDN(HashID.getFromSubjectDN(certs[i]));
-			if ( issuedCerts==null || issuedCerts.length<1 ) {
-				continue;
+			final HashID tmpID =  HashID.getFromB64(param);
+			if ( tmpID.isOK ) {
+				this.isDelta=false;
+				this.hashID=tmpID;
+				return;
 			}
-			printCerts(issuedCerts, this.space+indent, pw, url);
+			this.isDelta=true;
+			this.hashID= HashID.getFromB64(param.substring(DELTA_PREFIX.length()));
 		}
 	}
-	private void returnInfoPage( HttpServletResponse response, String info ) throws IOException {
-		response.setContentType("text/html");
-		final PrintWriter writer = response.getWriter();
-		final String title = "CA certificates";
-
-		writer.println("<html>");
-		writer.println("<head>");
-		writer.println("<title>"+title+"</title>");
-		writer.println("</head>");
-
-		writer.println("<table border=\"0\">");
-		writer.println("<tr>");
-		writer.println("<td>");
-		writer.println("<h1>"+title+"</h1>");
-		writer.println(info);
-		writer.println("</td>");
-		writer.println("</tr>");
-		writer.println("</table>");
-
-		writer.println("</body>");
-		writer.println("</html>");
-		
+	private void returnCrl( byte crl[], HttpServletResponse resp, String name ) throws IOException {
+		resp.setContentType("application/pkix-crl");
+		resp.setHeader("Content-disposition", "attachment; filename=crl" + name + ".der");
+		resp.setContentLength(crl.length);
+		resp.getOutputStream().write(crl);
 	}
 }
