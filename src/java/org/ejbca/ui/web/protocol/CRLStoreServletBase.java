@@ -50,7 +50,7 @@ class CRLStoreServletBase extends StoreServletBase {
 	 */
 	void iHash(String iHash, HttpServletResponse resp) throws IOException, ServletException {
 		final SearchInfo info = new SearchInfo(iHash);
-		returnCrl( this.crlCache.findBySubjectKeyIdentifier(info.hashID, info.isDelta), resp, iHash );		
+		returnCrl( this.crlCache.findLatestByIssuerDN(info.hashID, info.isDelta), resp, iHash );		
 	}
 	/* (non-Javadoc)
 	 * @see org.ejbca.ui.web.protocol.StoreServletBase#sKIDHash(java.lang.String, javax.servlet.http.HttpServletResponse)
