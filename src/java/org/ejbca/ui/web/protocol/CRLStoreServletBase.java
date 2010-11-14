@@ -50,13 +50,13 @@ class CRLStoreServletBase extends StoreServletBase {
 	 * @see org.ejbca.ui.web.protocol.StoreServletBase#iHash(java.lang.String, javax.servlet.http.HttpServletResponse)
 	 */
 	void iHash(String iHash, HttpServletResponse resp, HttpServletRequest req) throws IOException, ServletException {
-		returnCrl( this.crlCache.findLatestByIssuerDN(HashID.getFromB64(iHash), isDelta(req)), resp, iHash );		
+		returnCrl( this.crlCache.findLatestByIssuerDN(HashID.getFromB64(iHash), isDelta(req)), resp, iHash, isDelta(req) );		
 	}
 	/* (non-Javadoc)
 	 * @see org.ejbca.ui.web.protocol.StoreServletBase#sKIDHash(java.lang.String, javax.servlet.http.HttpServletResponse)
 	 */
 	void sKIDHash(String sKIDHash, HttpServletResponse resp, HttpServletRequest req) throws IOException, ServletException {
-		returnCrl( this.crlCache.findBySubjectKeyIdentifier(HashID.getFromB64(sKIDHash), isDelta(req)), resp, sKIDHash );
+		returnCrl( this.crlCache.findBySubjectKeyIdentifier(HashID.getFromB64(sKIDHash), isDelta(req)), resp, sKIDHash, isDelta(req) );
 	}
 	/* (non-Javadoc)
 	 * @see org.ejbca.ui.web.protocol.StoreServletBase#printInfo(java.security.cert.X509Certificate, java.lang.String, java.io.PrintWriter, java.lang.String)
@@ -72,12 +72,13 @@ class CRLStoreServletBase extends StoreServletBase {
 	private boolean isDelta(HttpServletRequest req) {
 		return req.getParameterMap().get("delta")!=null;
 	}
-	private void returnCrl( byte crl[], HttpServletResponse resp, String name ) throws IOException {
+	private void returnCrl( byte crl[], HttpServletResponse resp, String name, boolean isDelta ) throws IOException {
 		if ( crl==null || crl.length<1 ) {
+			resp.sendError(HttpServletResponse. SC_NO_CONTENT, "No CRL with hash: "+name);
 			return;
 		}
 		resp.setContentType("application/pkix-crl");
-		resp.setHeader("Content-disposition", "attachment; filename=crl" + name + ".der");
+		resp.setHeader("Content-disposition", "attachment; filename="+(isDelta?"delta":"")+"crl" + name + ".der");
 		resp.setContentLength(crl.length);
 		resp.getOutputStream().write(crl);
 	}

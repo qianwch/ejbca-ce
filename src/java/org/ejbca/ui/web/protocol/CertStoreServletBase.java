@@ -69,7 +69,7 @@ class CertStoreServletBase extends StoreServletBase {
 	}
 	private void returnCert(X509Certificate cert, HttpServletResponse resp, String name) throws IOException, ServletException {
 		if (cert==null) {
-			resp.sendError(HttpServletResponse.SC_NO_CONTENT, "No certificate with hash DN: "+name);
+			resp.sendError(HttpServletResponse.SC_NO_CONTENT, "No certificate with hash: "+name);
 			return;
 		}
 		final byte encoded[];
@@ -85,7 +85,7 @@ class CertStoreServletBase extends StoreServletBase {
 	}
 	private void returnCerts(X509Certificate certs[], HttpServletResponse resp, String name) throws IOException, ServletException {
 		if (certs==null) {
-			resp.sendError(HttpServletResponse.SC_NO_CONTENT, "No certificate with issuer hash DN: "+name);
+			resp.sendError(HttpServletResponse.SC_NO_CONTENT, "No certificates with issuer hash DN: "+name);
 			return;
 		}
 		resp.setContentType("multipart/mixed; boundary="+BOUNDARY);
