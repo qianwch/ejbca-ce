@@ -65,7 +65,7 @@ class CRLStoreServletBase extends StoreServletBase {
 		pw.println(indent+cert.getSubjectX500Principal());
 		pw.println(indent+" "+RFC4387URL.iHash.getRef(url, HashID.getFromSubjectDN(cert)));
 		pw.println(indent+" "+RFC4387URL.sKIDHash.getRef(url, HashID.getFromKeyID(cert)));
-		final String deltaParam = "%2Bdelta";
+		final String deltaParam = "%26delta";
 		pw.println(indent+" "+RFC4387URL.iHash.getRef(url, HashID.getFromSubjectDN(cert), deltaParam));
 		pw.println(indent+" "+RFC4387URL.sKIDHash.getRef(url, HashID.getFromKeyID(cert), deltaParam));
 	}
