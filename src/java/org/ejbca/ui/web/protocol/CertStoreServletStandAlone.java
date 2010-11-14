@@ -27,6 +27,13 @@ import org.ejbca.core.protocol.certificatestore.CertStoreStandAlone;
  *
  * @web.servlet-mapping url-pattern = "/search.cgi"
  *
+ * @web.ejb-local-ref
+ *  name="ejb/CertificateStoreOnlyDataSessionLocal"
+ *  type="Session"
+ *  link="CertificateStoreOnlyDataSession"
+ *  home="org.ejbca.core.ejb.ca.store.ICertificateStoreOnlyDataSessionLocalHome"
+ *  local="org.ejbca.core.ejb.ca.store.ICertificateStoreOnlyDataSessionLocal"
+ *
  * @web.resource-ref
  *  name="${datasource.jndi-name-prefix}${datasource.jndi-name}"
  *  type="javax.sql.DataSource"
