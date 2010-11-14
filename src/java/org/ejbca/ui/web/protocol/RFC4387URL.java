@@ -26,20 +26,36 @@ enum RFC4387URL {
 	sKIDHash;
 	/**
 	 * @param url The URL except the query
-	 * @param hash
+	 * @param hash of the object to fetch
+	 * @return URL to fetch certificate or CRL.
+	 */
+	String appendQueryToURL(String url, HashID hash, String extraParams) {
+		return url+"?"+this.toString()+"="+hash.b64+extraParams;
+	}
+	/**
+	 * @param url The URL except the query
+	 * @param hash of the object to fetch
 	 * @return URL to fetch certificate or CRL.
 	 */
 	String appendQueryToURL(String url, HashID hash) {
-		return url+"?"+this.toString()+"="+hash.b64;
+		return appendQueryToURL(url, hash, "");
 	}
 	/**
 	 * HTML string that show the reference to fetch a certificate or CRL.
-	 * @param url
-	 * @param hash
-	 * @return
+	 * @param url The URL except the query
+	 * @param hash of the object to fetch
+	 * @return URL to fetch certificate or CRL.
+	 */
+	String getRef(String url, HashID hash, String extraParams) {
+		final String resURL = appendQueryToURL(url, hash, extraParams);
+		return "<a href=\""+resURL+"\">"+resURL+"</a>";
+	}
+	/**
+	 * @param url The URL except the query
+	 * @param hash of the object to fetch
+	 * @return URL to fetch certificate or CRL.
 	 */
 	String getRef(String url, HashID hash) {
-		final String resURL = appendQueryToURL(url, hash);
-		return "<a href=\""+resURL+"\">"+resURL+"</a>";
+		return getRef(url, hash, "");
 	}
 }

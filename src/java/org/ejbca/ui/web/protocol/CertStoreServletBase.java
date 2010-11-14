@@ -20,6 +20,7 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.ejbca.core.protocol.certificatestore.HashID;
@@ -39,21 +40,21 @@ class CertStoreServletBase extends StoreServletBase {
 	/* (non-Javadoc)
 	 * @see org.ejbca.ui.web.protocol.StoreServletBase#iHash(java.lang.String, javax.servlet.http.HttpServletResponse)
 	 */
-	void iHash(String iHash, HttpServletResponse resp) throws IOException, ServletException {
+	void iHash(String iHash, HttpServletResponse resp, HttpServletRequest req) throws IOException, ServletException {
 		returnCerts( this.certCashe.findLatestByIssuerDN(HashID.getFromB64(iHash)), resp, iHash );
 		return;
 	}
 	/* (non-Javadoc)
 	 * @see org.ejbca.ui.web.protocol.StoreServletBase#sKIDHash(java.lang.String, javax.servlet.http.HttpServletResponse)
 	 */
-	void sKIDHash(String sKIDHash, HttpServletResponse resp) throws IOException, ServletException {
+	void sKIDHash(String sKIDHash, HttpServletResponse resp, HttpServletRequest req) throws IOException, ServletException {
 		returnCert( this.certCashe.findBySubjectKeyIdentifier(HashID.getFromB64(sKIDHash)), resp, sKIDHash );
 		return;
 	}
 	/* (non-Javadoc)
 	 * @see org.ejbca.ui.web.protocol.StoreServletBase#sHash(java.lang.String, javax.servlet.http.HttpServletResponse)
 	 */
-	void sHash(String sHash, HttpServletResponse resp) throws IOException, ServletException {
+	void sHash(String sHash, HttpServletResponse resp, HttpServletRequest req) throws IOException, ServletException {
 		final X509Certificate cert = this.certCashe.findLatestBySubjectDN(HashID.getFromB64(sHash));
 		returnCert( cert, resp, sHash);
 	}

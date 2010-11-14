@@ -43,9 +43,9 @@ public abstract class StoreServletBase extends HttpServlet {
 		this.certCashe = CertificateCacheFactory.getInstance(certStore);
 	}
 
-	abstract void sHash(String iHash, HttpServletResponse resp) throws IOException, ServletException;
-	abstract void iHash(String iHash, HttpServletResponse resp) throws IOException, ServletException;
-	abstract void sKIDHash(String sKIDHash, HttpServletResponse resp) throws IOException, ServletException;
+	abstract void sHash(String iHash, HttpServletResponse resp, HttpServletRequest req) throws IOException, ServletException;
+	abstract void iHash(String iHash, HttpServletResponse resp, HttpServletRequest req) throws IOException, ServletException;
+	abstract void sKIDHash(String sKIDHash, HttpServletResponse resp, HttpServletRequest req) throws IOException, ServletException;
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServlet#doGet(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
 	 */
@@ -53,19 +53,19 @@ public abstract class StoreServletBase extends HttpServlet {
 		{
 			final String sHash = req.getParameter(RFC4387URL.sHash.toString());
 			if ( sHash!=null ) {
-				sHash( sHash, resp);
+				sHash( sHash, resp, req );
 				return;
 			}
 		}{
 			final String iHash = req.getParameter(RFC4387URL.iHash.toString());
 			if ( iHash!=null ) {
-				iHash( iHash, resp);
+				iHash( iHash, resp, req );
 				return;
 			}
 		}{
 			final String sKIDHash = req.getParameter(RFC4387URL.sKIDHash.toString());
 			if ( sKIDHash!=null ) {
-				sKIDHash(sKIDHash, resp);
+				sKIDHash(sKIDHash, resp, req );
 				return;
 			}
 		}
