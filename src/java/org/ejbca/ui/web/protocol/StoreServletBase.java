@@ -84,21 +84,21 @@ public abstract class StoreServletBase extends HttpServlet {
 	}
 
 	abstract void printInfo(X509Certificate cert, String indent, PrintWriter pw, String url);
+	abstract String getTitle();
 
 	private void returnInfoPage(HttpServletResponse response, String info) throws IOException {
 		response.setContentType("text/html");
 		final PrintWriter writer = response.getWriter();
-		final String title = "CA certificates";
 
 		writer.println("<html>");
 		writer.println("<head>");
-		writer.println("<title>"+title+"</title>");
+		writer.println("<title>"+getTitle()+"</title>");
 		writer.println("</head>");
 
 		writer.println("<table border=\"0\">");
 		writer.println("<tr>");
 		writer.println("<td>");
-		writer.println("<h1>"+title+"</h1>");
+		writer.println("<h1>"+getTitle()+"</h1>");
 		writer.println(info);
 		writer.println("</td>");
 		writer.println("</tr>");
@@ -106,7 +106,6 @@ public abstract class StoreServletBase extends HttpServlet {
 
 		writer.println("</body>");
 		writer.println("</html>");
-
 	}
 	private void printInfo(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		final StringWriter sw = new StringWriter();

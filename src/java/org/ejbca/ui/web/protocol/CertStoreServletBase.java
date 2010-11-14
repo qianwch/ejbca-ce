@@ -67,6 +67,12 @@ class CertStoreServletBase extends StoreServletBase {
 		pw.println(indent+" "+RFC4387URL.iHash.getRef(url, HashID.getFromSubjectDN(cert)));
 		pw.println(indent+" "+RFC4387URL.sKIDHash.getRef(url, HashID.getFromKeyID(cert)));
 	}
+	/* (non-Javadoc)
+	 * @see org.ejbca.ui.web.protocol.StoreServletBase#getTitle()
+	 */
+	String getTitle() {
+		return "CA certificates";
+	}
 	private void returnCert(X509Certificate cert, HttpServletResponse resp, String name) throws IOException, ServletException {
 		if (cert==null) {
 			resp.sendError(HttpServletResponse.SC_NO_CONTENT, "No certificate with hash: "+name);
