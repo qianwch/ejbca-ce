@@ -28,13 +28,6 @@ import org.ejbca.core.protocol.crlstore.CRLStore;
  *
  * @web.servlet-mapping url-pattern = "/search.cgi"
  *
- * @web.ejb-local-ref
- *  name="ejb/CertificateStoreSessionLocal"
- *  type="Session"
- *  link="CertificateStoreSession"
- *  home="org.ejbca.core.ejb.ca.store.ICertificateStoreSessionLocalHome"
- *  local="org.ejbca.core.ejb.ca.store.ICertificateStoreSessionLocal"
- *
  * @web.resource-ref
  *  name="${datasource.jndi-name-prefix}${datasource.jndi-name}"
  *  type="javax.sql.DataSource"
@@ -44,7 +37,7 @@ import org.ejbca.core.protocol.crlstore.CRLStore;
  * @version  $Id$
  */
 public class CRLStoreServlet extends CRLStoreServletBase {
-    public CRLStoreServlet() {
-        super( new CertStore(), new CRLStore() );
-    }
+	public CRLStoreServlet() {
+		super( new CertStore(), new CRLStore() );
+	}
 } // CRLStoreServlet

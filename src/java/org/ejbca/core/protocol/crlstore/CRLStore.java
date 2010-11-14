@@ -19,28 +19,26 @@ import org.ejbca.core.ejb.ca.crl.ICreateCRLSessionLocal;
 import org.ejbca.core.ejb.ca.crl.ICreateCRLSessionLocalHome;
 import org.ejbca.core.model.ca.store.CRLInfo;
 import org.ejbca.core.model.log.Admin;
-
 /**
  * DB store of data to be used by the CA
- * 
+ *
  * @author primelars
  * @version $Id$
  *
  */
 public class CRLStore implements ICRLStore {
-
-    private static ICreateCRLSessionLocal crlStore = null;
-    synchronized ICreateCRLSessionLocal getCRLSession(){
-        if(crlStore == null){   
-            try {
-            	ICreateCRLSessionLocalHome storehome = (ICreateCRLSessionLocalHome)ServiceLocator.getInstance().getLocalHome(ICreateCRLSessionLocalHome.COMP_NAME);
-            	crlStore = storehome.create();
-            }catch(Exception e){
-                throw new EJBException(e);
-            }
-        }
-        return crlStore;
-    }
+	private static ICreateCRLSessionLocal crlStore = null;
+	synchronized ICreateCRLSessionLocal getCRLSession(){
+		if(crlStore == null){
+			try {
+				ICreateCRLSessionLocalHome storehome = (ICreateCRLSessionLocalHome)ServiceLocator.getInstance().getLocalHome(ICreateCRLSessionLocalHome.COMP_NAME);
+				crlStore = storehome.create();
+			}catch(Exception e){
+				throw new EJBException(e);
+			}
+		}
+		return crlStore;
+	}
 	/* (non-Javadoc)
 	 * @see org.ejbca.core.protocol.crlstore.ICRLStore#getCRLInfo(org.ejbca.core.model.log.Admin, java.lang.String)
 	 */
