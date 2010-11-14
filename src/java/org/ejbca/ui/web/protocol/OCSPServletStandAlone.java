@@ -43,11 +43,6 @@ import org.ejbca.ui.web.pub.cluster.VerificationAuthorityHealthCheck;
  * @web.servlet-mapping url-pattern = "/ocsp"
  * @web.servlet-mapping url-pattern = "/ocsp/*"
  *
- * @web.resource-ref
- *  name="${datasource.jndi-name-prefix}${datasource.jndi-name}"
- *  type="javax.sql.DataSource"
- *  auth="Container"
- *  
  * @web.ejb-local-ref
  *  name="ejb/CertificateStoreOnlyDataSessionLocal"
  *  type="Session"

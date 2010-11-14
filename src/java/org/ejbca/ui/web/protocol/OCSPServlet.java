@@ -42,27 +42,6 @@ import org.ejbca.core.protocol.ocsp.OCSPData;
  * @web.servlet-mapping url-pattern = "/ocsp"
  * @web.servlet-mapping url-pattern = "/ocsp/*"
  *
- * @web.ejb-local-ref
- *  name="ejb/CertificateStoreSessionLocal"
- *  type="Session"
- *  link="CertificateStoreSession"
- *  home="org.ejbca.core.ejb.ca.store.ICertificateStoreSessionLocalHome"
- *  local="org.ejbca.core.ejb.ca.store.ICertificateStoreSessionLocal"
- *
- * @web.ejb-local-ref
- *  name="ejb/RSASignSessionLocal"
- *  type="Session"
- *  link="RSASignSession"
- *  home="org.ejbca.core.ejb.ca.sign.ISignSessionLocalHome"
- *  local="org.ejbca.core.ejb.ca.sign.ISignSessionLocal"
- *
- * @web.ejb-local-ref
- *  name="ejb/CAAdminSessionLocal"
- *  type="Session"
- *  link="CAAdminSession"
- *  home="org.ejbca.core.ejb.ca.caadmin.ICAAdminSessionLocalHome"
- *  local="org.ejbca.core.ejb.ca.caadmin.ICAAdminSessionLocal"
- *
  * @web.resource-ref
  *  name="${datasource.jndi-name-prefix}${datasource.jndi-name}"
  *  type="javax.sql.DataSource"
