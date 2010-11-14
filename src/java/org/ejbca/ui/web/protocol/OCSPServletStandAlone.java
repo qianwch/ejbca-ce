@@ -48,6 +48,13 @@ import org.ejbca.ui.web.pub.cluster.VerificationAuthorityHealthCheck;
  *  type="javax.sql.DataSource"
  *  auth="Container"
  *  
+ * @web.ejb-local-ref
+ *  name="ejb/CertificateStoreOnlyDataSessionLocal"
+ *  type="Session"
+ *  link="CertificateStoreOnlyDataSession"
+ *  home="org.ejbca.core.ejb.ca.store.ICertificateStoreOnlyDataSessionLocalHome"
+ *  local="org.ejbca.core.ejb.ca.store.ICertificateStoreOnlyDataSessionLocal"
+ *
  * @author Lars Silven PrimeKey
  * @version  $Id$
  */
