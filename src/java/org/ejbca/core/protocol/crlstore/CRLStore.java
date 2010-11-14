@@ -34,7 +34,7 @@ public class CRLStore implements ICRLStore {
     synchronized ICreateCRLSessionLocal getCRLSession(){
         if(crlStore == null){    
             try {
-            	ICreateCRLSessionLocalHome storehome = (ICreateCRLSessionLocalHome)ServiceLocator.getInstance().getLocalHome(ICertificateStoreSessionLocalHome.COMP_NAME);
+            	ICreateCRLSessionLocalHome storehome = (ICreateCRLSessionLocalHome)ServiceLocator.getInstance().getLocalHome(ICreateCRLSessionLocalHome.COMP_NAME);
             	crlStore = storehome.create();
             }catch(Exception e){
                 throw new EJBException(e);
