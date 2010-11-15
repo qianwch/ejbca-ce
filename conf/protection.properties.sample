@@ -3,6 +3,8 @@
 #
 # See section about Log signing in EJBCA Administrator section at wiki.ejbca.org for more information about these properties.
 
+# NOTE: This feature is DEPRECATED and will disappear in EJBCA 4.0.
+
 # This is a sample file to override properties used
 # during development (or deployment) of EJBCA
 # 

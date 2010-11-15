@@ -76,6 +76,8 @@ import org.ejbca.util.StringTools;
  *   remote-class="org.ejbca.core.ejb.protect.TableProtectSessionRemote"
  *
  * @version $Id$
+ * 
+ * @deprecated Will be replaced by a better protection mechanism in EJBCA 4.0.
  */
 public class TableProtectSessionBean extends BaseSessionBean {
 

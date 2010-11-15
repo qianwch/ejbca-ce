@@ -16,6 +16,7 @@ package org.ejbca.config;
 
 /**
  * This file handles configuration from protection.properties
+ * @deprecated Will be replaced by a better protection mechanism in EJBCA 4.0.
  */
 public class ProtectConfiguration {
 	

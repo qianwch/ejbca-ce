@@ -70,8 +70,9 @@ import org.ejbca.core.ejb.BaseEntityBean;
  * @ejb.finder description="findByDbTypeAndKey"
  * signature="org.ejbca.core.ejb.protect.TableProtectDataLocal findByDbTypeAndKey(java.lang.String dbType, java.lang.String dbKey)"
  * query="SELECT OBJECT(a) from TableProtectDataBean a WHERE a.dbType=?1 AND a.dbKey=?2"
+ * 
+ * @deprecated Will be replaced by a better protection mechanism in EJBCA 4.0.
  *
-
  * @version $Id$
  */
 public abstract class TableProtectDataBean extends BaseEntityBean {

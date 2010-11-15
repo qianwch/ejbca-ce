@@ -19,6 +19,7 @@ import java.io.Serializable;
  * 
  * @author tomas
  * @version $Id$
+ * @deprecated Will be replaced by a better protection mechanism in EJBCA 4.0.
  */
 public class TableVerifyResult implements Serializable {
 
