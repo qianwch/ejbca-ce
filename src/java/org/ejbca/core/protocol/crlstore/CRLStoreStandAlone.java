@@ -15,11 +15,10 @@ package org.ejbca.core.protocol.crlstore;
 import javax.ejb.EJBException;
 
 import org.ejbca.core.ejb.ServiceLocator;
-import org.ejbca.core.ejb.ca.crl.ICreateCRLSessionLocal;
-import org.ejbca.core.ejb.ca.crl.ICreateCRLSessionLocalHome;
+import org.ejbca.core.ejb.ca.crl.IOnlyDataCRLSessionLocal;
+import org.ejbca.core.ejb.ca.crl.IOnlyDataCRLSessionLocalHome;
 import org.ejbca.core.model.ca.store.CRLInfo;
 import org.ejbca.core.model.log.Admin;
-
 /**
  * DB store of data to be used by the VA
  *
@@ -28,11 +27,11 @@ import org.ejbca.core.model.log.Admin;
  *
  */
 public class CRLStoreStandAlone implements ICRLStore {
-	private static ICreateCRLSessionLocal crlStore = null;
-	synchronized ICreateCRLSessionLocal getCRLSession(){
+	private static IOnlyDataCRLSessionLocal crlStore = null;
+	synchronized IOnlyDataCRLSessionLocal getCRLSession(){
 		if(crlStore == null){
 			try {
-				ICreateCRLSessionLocalHome storehome = (ICreateCRLSessionLocalHome)ServiceLocator.getInstance().getLocalHome(ICreateCRLSessionLocalHome.COMP_NAME);
+				IOnlyDataCRLSessionLocalHome storehome = (IOnlyDataCRLSessionLocalHome)ServiceLocator.getInstance().getLocalHome(IOnlyDataCRLSessionLocalHome.COMP_NAME);
 				crlStore = storehome.create();
 			}catch(Exception e){
 				throw new EJBException(e);

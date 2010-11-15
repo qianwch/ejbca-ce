@@ -14,6 +14,7 @@
 package org.ejbca.ui.web.protocol;
 
 import org.ejbca.core.protocol.certificatestore.CertStoreStandAlone;
+import org.ejbca.core.protocol.crlstore.CRLStoreStandAlone;
 
 
 /** 
@@ -21,7 +22,7 @@ import org.ejbca.core.protocol.certificatestore.CertStoreStandAlone;
  * For a detailed description see rfc4378.
  * 
  * @web.servlet name = "CertificateStore"
- *              display-name = "CertStoreServletStandAlone"
+ *              display-name = "CRLStoreServletStandAlone"
  *              description="Fetches certificates according to rfc4378"
  *              load-on-startup = "1"
  *
@@ -42,8 +43,8 @@ import org.ejbca.core.protocol.certificatestore.CertStoreStandAlone;
  * @author Lars Silven PrimeKey
  * @version  $Id$
  */
-public class CertStoreServletStandAlone extends CertStoreServletBase {
-	public CertStoreServletStandAlone() {
-		super( new CertStoreStandAlone() );
+public class CRLStoreServletStandAlone extends CRLStoreServletBase {
+	public CRLStoreServletStandAlone() {
+		super( new CertStoreStandAlone(), new CRLStoreStandAlone() );
 	}
-} // CertStoreServletStandAlone
+} // CRLStoreServletStandAlone

@@ -15,9 +15,6 @@ package org.ejbca.core.ejb.ca.crl;
 
 import java.security.cert.Certificate;
 import java.security.cert.X509CRL;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -28,12 +25,9 @@ import javax.ejb.EJBException;
 import javax.ejb.FinderException;
 
 import org.ejbca.core.ejb.BaseSessionBean;
-import org.ejbca.core.ejb.JNDINames;
 import org.ejbca.core.ejb.ca.publisher.IPublisherSessionLocal;
 import org.ejbca.core.ejb.ca.publisher.IPublisherSessionLocalHome;
-import org.ejbca.core.ejb.ca.store.CRLDataLocal;
 import org.ejbca.core.ejb.ca.store.CRLDataLocalHome;
-import org.ejbca.core.ejb.ca.store.CRLDataPK;
 import org.ejbca.core.ejb.ca.store.CertificateDataLocal;
 import org.ejbca.core.ejb.ca.store.CertificateDataLocalHome;
 import org.ejbca.core.ejb.ca.store.CertificateDataPK;
@@ -52,7 +46,6 @@ import org.ejbca.core.model.ca.store.CRLInfo;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.model.log.LogConstants;
 import org.ejbca.util.CertTools;
-import org.ejbca.util.JDBCUtil;
 
 
 /**
@@ -158,6 +151,26 @@ public class CreateCRLSessionBean extends BaseSessionBean {
     /** The local interface of the log session bean */
     private ILogSessionLocal logsession;
 
+    private final CRLUtil.Adapter adapter;
+    private class MyAdapter implements CRLUtil.Adapter {
+    	/* (non-Javadoc)
+    	 * @see org.ejbca.core.ejb.ca.crl.CRLUtil.Adapter#log(org.ejbca.core.model.log.Admin, int, int, java.util.Date, java.lang.String, java.security.cert.X509Certificate, int, java.lang.String)
+    	 */
+    	public void log(Admin admin, int caid, int module, Date time, String username, Certificate certificate, int event, String comment) {
+    		CreateCRLSessionBean.this.logsession.log(admin, caid, module, new java.util.Date(),
+    		                                         username, certificate, event, comment);
+    	}
+		/* (non-Javadoc)
+		 * @see org.ejbca.core.ejb.ca.crl.CRLUtil.Adapter#getCRLDataLocalHome()
+		 */
+		public CRLDataLocalHome getCRLDataLocalHome() {
+			return CreateCRLSessionBean.this.crlDataHome;
+		}
+    }
+    public CreateCRLSessionBean() {
+    	super();
+    	this.adapter = new MyAdapter();
+    }
     /** Default create for SessionBean without any creation Arguments.
      * @throws CreateException if bean instance can't be created
      */
@@ -660,32 +673,7 @@ public class CreateCRLSessionBean extends BaseSessionBean {
      * @ejb.transaction type="Supports"
      */
     public byte[] getLastCRL(Admin admin, String issuerdn, boolean deltaCRL) {
-    	if (log.isTraceEnabled()) {
-        	log.trace(">getLastCRL(" + issuerdn + ", "+deltaCRL+")");
-    	}
-        try {
-            int maxnumber = getLastCRLNumber(admin, issuerdn, deltaCRL);
-            X509CRL crl = null;
-            try {
-                CRLDataLocal data = crlDataHome.findByIssuerDNAndCRLNumber(issuerdn, maxnumber);
-                crl = data.getCRL();
-            } catch (FinderException e) {
-                crl = null;
-            }
-            trace("<getLastCRL()");
-            if (crl == null) {
-            	String msg = intres.getLocalizedMessage("store.errorgetcrl", issuerdn, maxnumber);            	
-                logsession.log(admin, admin.getCaId(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_ERROR_GETLASTCRL, msg);
-                return null;
-            }
-        	String msg = intres.getLocalizedMessage("store.getcrl", issuerdn, new Integer(maxnumber));            	
-            logsession.log(admin, crl.getIssuerDN().toString().hashCode(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_INFO_GETLASTCRL, msg);
-            return crl.getEncoded();
-        } catch (Exception e) {
-        	String msg = intres.getLocalizedMessage("store.errorgetcrl", issuerdn);            	
-            logsession.log(admin, admin.getCaId(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_ERROR_GETLASTCRL, msg);
-            throw new EJBException(e);
-        }
+    	return CRLUtil.getLastCRL(admin, issuerdn, deltaCRL, this.adapter);
     } //getLastCRL
 
     /**
@@ -699,34 +687,7 @@ public class CreateCRLSessionBean extends BaseSessionBean {
      * @ejb.transaction type="Supports"
      */
     public CRLInfo getLastCRLInfo(Admin admin, String issuerdn, boolean deltaCRL) {
-    	if (log.isTraceEnabled()) {
-        	log.trace(">getLastCRLInfo(" + issuerdn + ", "+deltaCRL+")");
-    	}
-        int crlnumber = 0;
-        try {
-            crlnumber = getLastCRLNumber(admin, issuerdn, deltaCRL);
-            CRLInfo crlinfo = null;
-            try {
-                CRLDataLocal data = crlDataHome.findByIssuerDNAndCRLNumber(issuerdn, crlnumber);
-                crlinfo = new CRLInfo(data.getIssuerDN(), crlnumber, data.getThisUpdate(), data.getNextUpdate());
-            } catch (FinderException e) {
-            	if (deltaCRL && (crlnumber == 0)) {
-            		log.debug("No delta CRL exists for CA with dn '"+issuerdn+"'");
-            	} else if (crlnumber == 0) {
-            		log.debug("No CRL exists for CA with dn '"+issuerdn+"'");
-            	} else {
-                	String msg = intres.getLocalizedMessage("store.errorgetcrl", issuerdn, new Integer(crlnumber));            	
-                    log.error(msg, e);            		
-            	}
-                crlinfo = null;
-            }
-            trace("<getLastCRLInfo()");
-            return crlinfo;
-        } catch (Exception e) {
-        	String msg = intres.getLocalizedMessage("store.errorgetcrlinfo", issuerdn);            	
-            logsession.log(admin, issuerdn.hashCode(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_ERROR_GETLASTCRL, msg);
-            throw new EJBException(e);
-        }
+    	return CRLUtil.getLastCRLInfo(admin, issuerdn, deltaCRL, adapter);
     } //getLastCRLInfo
 
     /**
@@ -739,27 +700,7 @@ public class CreateCRLSessionBean extends BaseSessionBean {
      * @ejb.transaction type="Supports"
      */
     public CRLInfo getCRLInfo(Admin admin, String fingerprint) {
-    	if (log.isTraceEnabled()) {
-        	log.trace(">getCRLInfo(" + fingerprint+")");
-    	}
-        try {
-            CRLInfo crlinfo = null;
-            try {
-                CRLDataLocal data = crlDataHome.findByPrimaryKey(new CRLDataPK(fingerprint));
-                crlinfo = new CRLInfo(data.getIssuerDN(), data.getCrlNumber(), data.getThisUpdate(), data.getNextUpdate());
-            } catch (FinderException e) {
-            	log.debug("No CRL exists with fingerprint '"+fingerprint+"'");
-            	String msg = intres.getLocalizedMessage("store.errorgetcrl", fingerprint, 0);            	
-            	log.error(msg, e);            		
-                crlinfo = null;
-            }
-            trace("<getCRLInfo()");
-            return crlinfo;
-        } catch (Exception e) {
-        	String msg = intres.getLocalizedMessage("store.errorgetcrlinfo", fingerprint);            	
-            logsession.log(admin, fingerprint.hashCode(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_ERROR_GETLASTCRL, msg);
-            throw new EJBException(e);
-        }
+    	return CRLUtil.getCRLInfo(admin, fingerprint, adapter);
     } //getCRLInfo
 
     /**
@@ -772,39 +713,7 @@ public class CreateCRLSessionBean extends BaseSessionBean {
      * @ejb.transaction type="Supports"
      */
     public int getLastCRLNumber(Admin admin, String issuerdn, boolean deltaCRL) {
-    	if (log.isTraceEnabled()) {
-        	log.trace(">getLastCRLNumber(" + issuerdn + ", "+deltaCRL+")");
-    	}
-        Connection con = null;
-        PreparedStatement ps = null;
-        ResultSet result = null;
-        try {
-            con = JDBCUtil.getDBConnection(JNDINames.DATASOURCE);
-            String sql = "select MAX(cRLNumber) from CRLData where issuerDN=? and deltaCRLIndicator=?";
-            String deltaCRLSql = "select MAX(cRLNumber) from CRLData where issuerDN=? and deltaCRLIndicator>?";
-            int deltaCRLIndicator = -1;
-            if (deltaCRL) {
-            	sql = deltaCRLSql;
-            	deltaCRLIndicator = 0;
-            }
-            ps = con.prepareStatement(sql);
-            ps.setString(1, issuerdn);
-            ps.setInt(2, deltaCRLIndicator);            	
-            result = ps.executeQuery();
-
-            int maxnumber = 0;
-            if (result.next()) {
-                maxnumber = result.getInt(1);
-            }
-        	if (log.isTraceEnabled()) {
-                log.trace("<getLastCRLNumber(" + maxnumber + ")");
-        	}
-            return maxnumber;
-        } catch (Exception e) {
-            throw new EJBException(e);
-        } finally {
-            JDBCUtil.close(con, ps, result);
-        }
+    	return CRLUtil.getLastCRLNumber(admin, issuerdn, deltaCRL);
     } //getLastCRLNumber
 
 
