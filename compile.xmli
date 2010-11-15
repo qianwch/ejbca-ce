@@ -409,6 +409,8 @@ xkms.serviceport                = ${xkms.serviceport}
             <fileset dir="${src.java}">
                 <include name="**/CertificateDataBean.java" />
                 <include name="**/LocalCertificateStoreOnlyDataSessionBean.java" />
+                <include name="**/CRLDataBean.java" />
+                <include name="**/OnlyDataCRLSessionBean.java" />
                 <include name="**/TableProtectDataBean.java" />
                 <include name="**/TableProtectSessionBean.java" />
             </fileset>

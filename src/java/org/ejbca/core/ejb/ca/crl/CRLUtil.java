@@ -30,10 +30,15 @@ import org.ejbca.core.model.InternalResources;
 import org.ejbca.core.model.ca.store.CRLInfo;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.model.log.LogConstants;
-import org.ejbca.ui.web.protocol.OCSPServletBase;
 import org.ejbca.util.JDBCUtil;
+/**
+ * Common methods to both EJBCA and standalone VA.
+ * 
+ * @author Lars Silven PrimeKey
+ * @version $Id$
+ */
 class CRLUtil {
-	private static final Logger log = Logger.getLogger(OCSPServletBase.class);
+	private static final Logger log = Logger.getLogger(CRLUtil.class);
 	/** Internal localization of logs and errors */
 	private static final InternalResources intres = InternalResources.getInstance();
 	static interface Adapter {

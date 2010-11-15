@@ -134,6 +134,9 @@
         <javac destdir="${va-build}" debug="on" includeantruntime="no" encoding="iso8859-1">
             <classpath refid="va-compile.classpath" />
             <include name="org/ejbca/ui/web/protocol/CRLStoreServletStandAlone.java" />
+            <include name="org/ejbca/core/ejb/ca/crl/OnlyDataCRLSessionSession.java" />
+            <include name="org/ejbca/core/ejb/ca/crl/IOnlyDataCRLSessionHome.java" />
+            <include name="org/ejbca/core/ejb/ca/store/CRLDataBean.java" />
             <src path="${va-src.gen}" />
             <src path="${src.java}" />
         </javac>
