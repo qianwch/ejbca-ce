@@ -35,6 +35,13 @@ import org.ejbca.core.protocol.crlstore.CRLStore;
  *  home="org.ejbca.core.ejb.ca.store.ICertificateStoreSessionLocalHome"
  *  local="org.ejbca.core.ejb.ca.store.ICertificateStoreSessionLocal"
  *
+ * @web.ejb-local-ref
+ *  name="ejb/CreateCRLSessionLocal"
+ *  type="Session"
+ *  link="CreateCRLSession"
+ *  home="org.ejbca.core.ejb.ca.crl.ICreateCRLSessionLocalHome"
+ *  local="org.ejbca.core.ejb.ca.crl.ICreateCRLSessionLocal"
+ *
  * @web.resource-ref
  *  name="${datasource.jndi-name-prefix}${datasource.jndi-name}"
  *  type="javax.sql.DataSource"
