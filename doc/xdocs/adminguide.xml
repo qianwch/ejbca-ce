@@ -4343,7 +4343,7 @@ OldLogDevice stores log-events in the database. Viewed events can
 be exported from the Admin GUI.
 </p><p>
 By using the addon HMAC-protection, alterations in a log event can be detected.
-The HMAC protection is <b><i>deprecated</i></b> and will no loger be available
+The HMAC protection is <b><i>deprecated</i></b> and will no longer be available
 in EJBCA 4.0. 
 </p>
 </subsection>
