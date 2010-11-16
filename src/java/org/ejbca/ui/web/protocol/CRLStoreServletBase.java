@@ -65,9 +65,8 @@ class CRLStoreServletBase extends StoreServletBase {
 		pw.println(indent+cert.getSubjectX500Principal());
 		pw.println(indent+" "+RFC4387URL.iHash.getRef(url, HashID.getFromSubjectDN(cert)));
 		pw.println(indent+" "+RFC4387URL.sKIDHash.getRef(url, HashID.getFromKeyID(cert)));
-		final String deltaParam = "&amp;delta=";
-		pw.println(indent+" "+RFC4387URL.iHash.getRef(url, HashID.getFromSubjectDN(cert), deltaParam));
-		pw.println(indent+" "+RFC4387URL.sKIDHash.getRef(url, HashID.getFromKeyID(cert), deltaParam));
+		pw.println(indent+" "+RFC4387URL.iHash.getRef(url, HashID.getFromSubjectDN(cert), true));
+		pw.println(indent+" "+RFC4387URL.sKIDHash.getRef(url, HashID.getFromKeyID(cert), true));
 	}
 	/* (non-Javadoc)
 	 * @see org.ejbca.ui.web.protocol.StoreServletBase#getTitle()

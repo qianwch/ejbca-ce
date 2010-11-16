@@ -20,34 +20,37 @@ import org.ejbca.core.protocol.certificatestore.HashID;
  * @author Lars Silven PrimeKey
  * @version  $Id$
  */
-enum RFC4387URL {
+public enum RFC4387URL {
 	sHash,
 	iHash,
 	sKIDHash;
 	/**
 	 * @param url The URL except the query
 	 * @param hash of the object to fetch
+	 * @param isDelta true if it is a link to a delta CRL.
 	 * @return URL to fetch certificate or CRL.
 	 */
-	String appendQueryToURL(String url, HashID hash, String extraParams) {
-		return url+"?"+this.toString()+"="+hash.b64+extraParams;
+	public String appendQueryToURL(String url, HashID hash, boolean isDelta) {
+		final String deltaParam = isDelta ?"&amp;delta=" : "";
+		return url+"?"+this.toString()+"="+hash.b64+deltaParam;
 	}
 	/**
 	 * @param url The URL except the query
 	 * @param hash of the object to fetch
 	 * @return URL to fetch certificate or CRL.
 	 */
-	String appendQueryToURL(String url, HashID hash) {
-		return appendQueryToURL(url, hash, "");
+	public String appendQueryToURL(String url, HashID hash) {
+		return appendQueryToURL(url, hash, false);
 	}
 	/**
 	 * HTML string that show the reference to fetch a certificate or CRL.
 	 * @param url The URL except the query
 	 * @param hash of the object to fetch
+	 * @param isDelta true if it is a link to a delta CRL.
 	 * @return URL to fetch certificate or CRL.
 	 */
-	String getRef(String url, HashID hash, String extraParams) {
-		final String resURL = appendQueryToURL(url, hash, extraParams);
+	public String getRef(String url, HashID hash, boolean isDelta) {
+		final String resURL = appendQueryToURL(url, hash, isDelta);
 		return "<a href=\""+resURL+"\">"+resURL+"</a>";
 	}
 	/**
@@ -55,7 +58,7 @@ enum RFC4387URL {
 	 * @param hash of the object to fetch
 	 * @return URL to fetch certificate or CRL.
 	 */
-	String getRef(String url, HashID hash) {
-		return getRef(url, hash, "");
+	public String getRef(String url, HashID hash) {
+		return getRef(url, hash, false);
 	}
 }
