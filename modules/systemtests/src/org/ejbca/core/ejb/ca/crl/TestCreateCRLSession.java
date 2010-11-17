@@ -493,25 +493,42 @@ public class TestCreateCRLSession extends TestCase {
         log.trace("<test07CRLFreshestCRL()");
     }
     public void test08TestCRLStore() throws Exception {
-    	final String sEnabled = TestTools.getConfigurationSession().getProperty("crlstore.enabled", null);
+    	final String pKey="crlstore.enabled";
+    	final String sEnabled = TestTools.getConfigurationSession().getProperty(pKey, null);
     	if ( sEnabled==null || sEnabled.toLowerCase().indexOf("false")>=0 ) {
-    		log.info("crlstore test not done crlstore not enabled");
+    		assertTrue("crlstore test not done because crlstore not enabled. To run the test set '"+pKey+"' in ./conf/crl.properties and then 'ant deploy' and restart appserver.", false);
     		return;
     	}
         log.trace(">test08TestCRLStore()");
+    	testCRLStore( RFC4387URL.sKIDHash, false );
+    	testCRLStore( RFC4387URL.iHash, false );
+    	testCRLStore( RFC4387URL.sKIDHash, true );
+    	testCRLStore( RFC4387URL.iHash, true );
+        log.trace("<test08TestCRLStore()");
+    }
+    private void testCRLStore( RFC4387URL urlType, boolean isDelta ) throws Exception {
     	final X509Certificate caCert = (X509Certificate)ca.getCACertificate();
-    	caCert.getPublicKey();
-    	final String sURI = RFC4387URL.sKIDHash.appendQueryToURL("http://localhost:8080/crls/search.cgi", HashID.getFromKeyID(caCert));
+    	final HashID id;
+    	switch( urlType ) {
+    	case sKIDHash:
+    		id = HashID.getFromKeyID(caCert);
+    		break;
+    	case iHash:
+    		id = HashID.getFromSubjectDN(caCert);
+    		break;
+    	default:
+    		throw new Error("this should never happend");
+    	}
+    	final String sURI = urlType.appendQueryToURL("http://localhost:8080/crls/search.cgi", id, isDelta);
     	log.debug("URL: '"+sURI+"'.");
     	final HttpURLConnection connection = (HttpURLConnection)new URI(sURI).toURL().openConnection();
     	connection.connect();
     	assertEquals( HttpURLConnection.HTTP_OK, connection.getResponseCode() );
 
-    	final byte fromBean[] = TestTools.getCreateCRLSession().getLastCRL(admin, ca.getCAInfo().getSubjectDN(), false);
+    	final byte fromBean[] = TestTools.getCreateCRLSession().getLastCRL(admin, ca.getCAInfo().getSubjectDN(), isDelta);
     	final byte fromURL[] = new byte[connection.getContentLength()];
     	connection.getInputStream().read(fromURL);
     	assertTrue("CRL from URL and bean not equal.", Arrays.areEqual(fromBean, fromURL));
-        log.trace("<test08TestCRLStore()");
     }
 
     public void test99CleanUp() throws Exception {

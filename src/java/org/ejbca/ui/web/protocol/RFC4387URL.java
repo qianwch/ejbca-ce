@@ -24,6 +24,11 @@ public enum RFC4387URL {
 	sHash,
 	iHash,
 	sKIDHash;
+	private String appendQueryToURL(String url, HashID hash, boolean isDelta, boolean isWeb) {
+		final String theAmp = isWeb ? "&amp;" : "&";
+		final String deltaParam = isDelta ? theAmp+"delta=" : "";
+		return url+"?"+this.toString()+"="+hash.b64+deltaParam;
+	}
 	/**
 	 * @param url The URL except the query
 	 * @param hash of the object to fetch
@@ -31,8 +36,7 @@ public enum RFC4387URL {
 	 * @return URL to fetch certificate or CRL.
 	 */
 	public String appendQueryToURL(String url, HashID hash, boolean isDelta) {
-		final String deltaParam = isDelta ?"&amp;delta=" : "";
-		return url+"?"+this.toString()+"="+hash.b64+deltaParam;
+		return appendQueryToURL(url, hash, isDelta, false);
 	}
 	/**
 	 * @param url The URL except the query
@@ -50,7 +54,7 @@ public enum RFC4387URL {
 	 * @return URL to fetch certificate or CRL.
 	 */
 	public String getRef(String url, HashID hash, boolean isDelta) {
-		final String resURL = appendQueryToURL(url, hash, isDelta);
+		final String resURL = appendQueryToURL(url, hash, isDelta, true);
 		return "<a href=\""+resURL+"\">"+resURL+"</a>";
 	}
 	/**
