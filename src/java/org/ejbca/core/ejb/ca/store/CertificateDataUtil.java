@@ -64,18 +64,22 @@ public class CertificateDataUtil {
     public static Certificate findCertificateByFingerprint(Admin admin, String fingerprint,
                                                            CertificateDataLocalHome certHome,
                                                            Adapter adapter) {
-        adapter.getLogger().trace(">findCertificateByFingerprint()");
+        if (adapter.getLogger().isTraceEnabled()) {
+        	adapter.getLogger().trace(">findCertificateByFingerprint()");
+        }
         Certificate ret = null;
 
         try {
             CertificateDataLocal res = certHome.findByPrimaryKey(new CertificateDataPK(fingerprint));
             ret = res.getCertificate();
-            adapter.getLogger().trace("<findCertificateByFingerprint()");
         } catch (FinderException fe) {
             // Return null;
         } catch (Exception e) {
             adapter.getLogger().error("Error finding certificate with fp: " + fingerprint);
             throw new EJBException(e);
+        }
+        if (adapter.getLogger().isTraceEnabled()) {
+        	adapter.getLogger().trace("<findCertificateByFingerprint()");
         }
         return ret;
     } // findCertificateByFingerprint
@@ -124,7 +128,9 @@ public class CertificateDataUtil {
     public static Collection findCertificatesByType(Admin admin, int type, String issuerDN,
                                                     CertificateDataLocalHome certHome,
                                                     Adapter adapter) {
-        adapter.getLogger().trace(">findCertificatesByType()");
+        if (adapter.getLogger().isTraceEnabled()) {
+        	adapter.getLogger().trace(">findCertificatesByType()");
+        }
         if (null == admin
                 || type <= 0
                 || type > SecConst.CERTTYPE_SUBCA + SecConst.CERTTYPE_ENDENTITY + SecConst.CERTTYPE_ROOTCA) {
@@ -184,7 +190,9 @@ public class CertificateDataUtil {
                 }
             }
 
-            adapter.getLogger().trace("<findCertificatesByType()");
+            if (adapter.getLogger().isTraceEnabled()) {
+            	adapter.getLogger().trace("<findCertificatesByType()");
+            }
             return vect;
         } catch (Exception e) {
             throw new EJBException(e);
