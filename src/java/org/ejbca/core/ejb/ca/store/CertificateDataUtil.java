@@ -13,6 +13,8 @@
 
 package org.ejbca.core.ejb.ca.store;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.math.BigInteger;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
@@ -39,9 +41,11 @@ import org.ejbca.core.model.ca.store.CertificateInfo;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.model.log.LogConstants;
 import org.ejbca.core.model.protect.TableVerifyResult;
+import org.ejbca.util.Base64;
 import org.ejbca.util.CertTools;
 import org.ejbca.util.JDBCUtil;
 import org.ejbca.util.StringTools;
+import org.jfree.util.Log;
 
 /** Common code between CertificateStoreSessionBean and CertificateStoreOnlyDataSessionBean
  * 
@@ -65,19 +69,37 @@ public class CertificateDataUtil {
                                                            CertificateDataLocalHome certHome,
                                                            Adapter adapter) {
         adapter.getLogger().trace(">findCertificateByFingerprint()");
-        Certificate ret = null;
-
         try {
-            CertificateDataLocal res = certHome.findByPrimaryKey(new CertificateDataPK(fingerprint));
-            ret = res.getCertificate();
-            adapter.getLogger().trace("<findCertificateByFingerprint()");
+            final CertificateDataLocal res = certHome.findByPrimaryKey(new CertificateDataPK(fingerprint));
+            final Certificate certificate = res.getCertificate();
+            try { // test if certificate is OK. we have experienced that BC could decode a certificate that later on could not be used.
+            	certificate.getPublicKey();
+            } catch ( Throwable t ) {
+            	if ( !Log.isDebugEnabled() ) {
+            		return null;
+            	}
+            	final String b64encoded = new String( Base64.encode(certificate.getEncoded()) );
+            	final StringWriter sw = new StringWriter();
+            	final PrintWriter pw = new PrintWriter(sw);
+            	pw.println("Erroneous certificate fetched from database.");
+            	pw.println("The public key can not be extracted from the certificate.");
+            	pw.println("Here follows a base64 encoding of the certificate:");
+            	pw.println(CertTools.BEGIN_CERTIFICATE);
+            	pw.println(b64encoded);
+            	pw.println(CertTools.END_CERTIFICATE);
+            	pw.flush();
+            	adapter.debug(sw.toString());
+            	return null;
+            }
+            return certificate;
         } catch (FinderException fe) {
-            // Return null;
+            return null;
         } catch (Exception e) {
             adapter.getLogger().error("Error finding certificate with fp: " + fingerprint);
             throw new EJBException(e);
+        } finally {
+            adapter.getLogger().trace("<findCertificateByFingerprint()");
         }
-        return ret;
     } // findCertificateByFingerprint
 
     public static Certificate findCertificateByIssuerAndSerno(Admin admin, String issuerDN, BigInteger serno, CertificateDataLocalHome certHome, Adapter adapter) {
