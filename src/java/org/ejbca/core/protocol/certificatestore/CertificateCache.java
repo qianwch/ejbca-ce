@@ -227,26 +227,23 @@ class CertificateCache implements ICertificateCache {
 	            try { // test if certificate is OK. we have experienced that BC could decode a certificate that later on could not be used.
 					this.certsFromSubjectKeyIdentifier.put(HashID.getFromKeyID(cert).key, cert);
 	            } catch ( Throwable t ) {
-	            	if ( !log.isDebugEnabled() ) {
-	            		continue;
+	            	if ( log.isDebugEnabled() ) {
+		            	final StringWriter sw = new StringWriter();
+		            	final PrintWriter pw = new PrintWriter(sw);
+		            	pw.println("Erroneous certificate fetched from database.");
+		            	pw.println("The public key can not be extracted from the certificate.");
+		            	pw.println("Here follows a base64 encoding of the certificate:");
+						try {
+			            	final String b64encoded = new String( Base64.encode(cert.getEncoded()) );
+			            	pw.println(CertTools.BEGIN_CERTIFICATE);
+			            	pw.println(b64encoded);
+			            	pw.println(CertTools.END_CERTIFICATE);
+						} catch (CertificateEncodingException e) {
+							pw.println("Not possible to encode certificate.");
+						}
+		            	pw.flush();
+		            	log.debug(sw.toString());
 	            	}
-	            	final String b64encoded;
-					try {
-						b64encoded = new String( Base64.encode(cert.getEncoded()) );
-					} catch (CertificateEncodingException e) {
-						log.debug("Not possible to encode certificate.");
-						continue;
-					}
-	            	final StringWriter sw = new StringWriter();
-	            	final PrintWriter pw = new PrintWriter(sw);
-	            	pw.println("Erroneous certificate fetched from database.");
-	            	pw.println("The public key can not be extracted from the certificate.");
-	            	pw.println("Here follows a base64 encoding of the certificate:");
-	            	pw.println(CertTools.BEGIN_CERTIFICATE);
-	            	pw.println(b64encoded);
-	            	pw.println(CertTools.END_CERTIFICATE);
-	            	pw.flush();
-	            	log.debug(sw.toString());
             		continue;
 	            }
 				final Integer subjectDNKey = HashID.getFromSubjectDN(cert).key;
