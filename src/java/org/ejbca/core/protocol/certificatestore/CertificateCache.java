@@ -45,10 +45,6 @@ import org.ejbca.util.CertTools;
  * @version $Id$
  *
  */
-/**
- * @author lars
- *
- */
 class CertificateCache implements ICertificateCache {
 
 	/** Log4j instance for Base */
