@@ -431,6 +431,7 @@ public class LocalCertificateRequestSessionBean extends BaseSessionBean {
 				if (log.isDebugEnabled()) {
 					log.debug("New User " + username + ", adding userdata. New status of user '"+userdata.getStatus()+"'." );
 				}
+				// addUserfromWS also checks useUserStorage internally, so don't dupliace the check
 				getUserAdminSession().addUserFromWS(admin,userdata,clearpwd);
 			}
 		} catch (WaitingForApprovalException e) {
