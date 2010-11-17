@@ -416,11 +416,13 @@ public class LocalCertificateRequestSessionBean extends BaseSessionBean {
 		int caid = userdata.getCAId();
 		getAuthorizationSession().isAuthorizedNoLog(admin,AccessRulesConstants.CAPREFIX +caid);
 		getAuthorizationSession().isAuthorizedNoLog(admin,AccessRulesConstants.REGULAR_CREATECERTIFICATE);
-		
+		// First we need to fetch the CA configuration to see if we save UserData, if not, we still run addUserFromWS to
+		// get all the proper authentication checks for CA and end entity profile.
+		boolean useUserStorage = getCAAdminSession().getCAInfo(admin, caid).isUseUserStorage();
 		// Add or edit user
 		try {
 			String username = userdata.getUsername();
-			if (getUserAdminSession().existsUser(admin, username)) {
+			if (useUserStorage && getUserAdminSession().existsUser(admin, username)) {
 				if (log.isDebugEnabled()) {
 					log.debug("User " + username + " exists, update the userdata. New status of user '"+userdata.getStatus()+"'." );
 				}
