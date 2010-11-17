@@ -17,6 +17,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.math.BigInteger;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.Date;
@@ -36,6 +37,7 @@ import org.bouncycastle.util.encoders.Hex;
 import org.ejbca.config.OcspConfiguration;
 import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.log.Admin;
+import org.ejbca.util.Base64;
 import org.ejbca.util.CertTools;
 
 
@@ -222,6 +224,31 @@ class CertificateCache implements ICertificateCache {
 					continue;
 				}
 				final X509Certificate cert = (X509Certificate)tmp;
+	            try { // test if certificate is OK. we have experienced that BC could decode a certificate that later on could not be used.
+					this.certsFromSubjectKeyIdentifier.put(HashID.getFromKeyID(cert).key, cert);
+	            } catch ( Throwable t ) {
+	            	if ( !log.isDebugEnabled() ) {
+	            		continue;
+	            	}
+	            	final String b64encoded;
+					try {
+						b64encoded = new String( Base64.encode(cert.getEncoded()) );
+					} catch (CertificateEncodingException e) {
+						log.debug("Not possible to encode certificate.");
+						continue;
+					}
+	            	final StringWriter sw = new StringWriter();
+	            	final PrintWriter pw = new PrintWriter(sw);
+	            	pw.println("Erroneous certificate fetched from database.");
+	            	pw.println("The public key can not be extracted from the certificate.");
+	            	pw.println("Here follows a base64 encoding of the certificate:");
+	            	pw.println(CertTools.BEGIN_CERTIFICATE);
+	            	pw.println(b64encoded);
+	            	pw.println(CertTools.END_CERTIFICATE);
+	            	pw.flush();
+	            	log.debug(sw.toString());
+            		continue;
+	            }
 				final Integer subjectDNKey = HashID.getFromSubjectDN(cert).key;
 				// Check if we already have a certificate from this issuer in the HashMap.
 				// We only want to store the latest cert from each issuer in this map
@@ -252,7 +279,6 @@ class CertificateCache implements ICertificateCache {
 						this.rootCertificates.remove(pastCert);
 					}
 				}
-				this.certsFromSubjectKeyIdentifier.put(HashID.getFromKeyID(cert).key, cert);
 				// We only need issuerNameHash and issuerKeyHash from certId
 				try {
 					final CertificateID certId = new CertificateID(CertificateID.HASH_SHA1, cert, new BigInteger("1"));
