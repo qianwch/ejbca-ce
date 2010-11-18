@@ -21,8 +21,8 @@ import junit.framework.TestCase;
  *
  */
 public class TestCertStore extends TestCase {
-	private final Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
-	private class CA {
+	private final static Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+	private static class CA {
 		final String name;
 		final Set<CA> subs;
 		CA( String _name ) {
@@ -34,7 +34,7 @@ public class TestCertStore extends TestCase {
 		}
 		private void createCA( int signedBy, Collection certificateChain ) throws RemoteException {
 			assertTrue("Failed to created certificate.", TestTools.createTestCA(this.name, 2048, "CN="+this.name+",O=EJBCA junit,OU=TestCertStore", signedBy, certificateChain) );
-			final CAInfo info = TestTools.getCAAdminSession().getCAInfo(TestCertStore.this.admin, this.name);
+			final CAInfo info = TestTools.getCAAdminSession().getCAInfo(admin, this.name);
 			final Iterator<CA> i = this.subs.iterator();
 			while ( i.hasNext() ) {
 				i.next().createCA( info.getCAId(), info.getCertificateChain() );
