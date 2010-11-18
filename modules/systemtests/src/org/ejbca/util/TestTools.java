@@ -379,9 +379,20 @@ public class TestTools {
 	 * @return true if successful
 	 */
 	public static boolean createTestCA(String caName, int keyStrength) {
+		return createTestCA( caName, keyStrength, "CN="+caName, CAInfo.SELFSIGNED, null);
+	}
+	/**
+	 * Make sure testCA exist.
+	 * @param caName The CA name
+	 * @param keyStrength
+	 * @param dn DN of the CA
+	 * @param signedBy id of the signing CA
+	 * @return
+	 */
+	public static boolean createTestCA(String caName, int keyStrength, String dn, int signedBy, Collection certificateChain) {
         log.trace(">createTestCA");
     	try {
-			getAuthorizationSession().initialize(admin, ("CN="+caName).hashCode(), TestTools.defaultSuperAdminCN);
+			getAuthorizationSession().initialize(admin, (dn).hashCode(), TestTools.defaultSuperAdminCN);
 		} catch (RemoteException e) {
 			log.error("",e);
 		} catch (AdminGroupExistsException e) {
@@ -409,25 +420,25 @@ public class TestTools {
         ArrayList extendedcaservices = new ArrayList();
         extendedcaservices.add(new OCSPCAServiceInfo(ExtendedCAServiceInfo.STATUS_ACTIVE));
         extendedcaservices.add(new XKMSCAServiceInfo(ExtendedCAServiceInfo.STATUS_ACTIVE,
-                "CN=XKMSCertificate, " + "CN="+caName,
+                "CN=XKMSCertificate, " + dn,
                 "",
                 ""+keyStrength,
                 AlgorithmConstants.KEYALGORITHM_RSA));
         /*
         extendedcaservices.add(new CmsCAServiceInfo(ExtendedCAServiceInfo.STATUS_ACTIVE,
-        		"CN=CMSCertificate, " + "CN="+caName,
+        		"CN=CMSCertificate, " + dn,
         		"",
         		""+keyStrength,
                 AlgorithmConstants.KEYALGORITHM_RSA));
         */
-        X509CAInfo cainfo = new X509CAInfo("CN="+caName,
+        X509CAInfo cainfo = new X509CAInfo(dn,
                 caName, SecConst.CA_ACTIVE, new Date(),
-                "", SecConst.CERTPROFILE_FIXED_ROOTCA,
+                "", signedBy==CAInfo.SELFSIGNED ? SecConst.CERTPROFILE_FIXED_ROOTCA : SecConst.CERTPROFILE_FIXED_SUBCA,
                 3650,
                 null, // Expiretime
                 CAInfo.CATYPE_X509,
-                CAInfo.SELFSIGNED,
-                (Collection) null,
+                signedBy,
+                certificateChain,
                 catokeninfo,
                 "JUnit RSA CA",
                 -1, null,
@@ -470,19 +481,21 @@ public class TestTools {
 			log.error("", e);
 			return false;
 		}
-        CAInfo info;
+        final CAInfo info;
 		try {
 			info = getCAAdminSession().getCAInfo(admin, caName);
 		} catch (RemoteException e) {
 			log.error("", e);
 			return false;
 		}
-        X509Certificate cert = (X509Certificate) info.getCertificateChain().iterator().next();
-        if (!cert.getSubjectDN().toString().equals("CN="+caName)) {
-        	log.error("Error in created CA certificate!");
+		final String normalizedDN = CertTools.stringToBCDNString(dn);
+        final X509Certificate cert = (X509Certificate) info.getCertificateChain().iterator().next();
+        final String normalizedCertDN = CertTools.stringToBCDNString(cert.getSubjectDN().toString());
+        if ( !normalizedCertDN.equals(normalizedDN) ) {
+        	log.error("CA certificate DN is not what it should. Is '"+normalizedDN+"'. Should be '"+normalizedCertDN+"'.");
 			return false;
         }
-        if (!info.getSubjectDN().equals("CN="+caName)) {
+        if (!info.getSubjectDN().equals(normalizedCertDN)) {
         	log.error("Creating CA failed!");
 			return false;
         }
@@ -519,17 +532,20 @@ public class TestTools {
 	 */
 	public static boolean removeTestCA(String caName) {
 		// Search for requested CA
+        log.trace(">removeTestCA");
         try {
-			CAInfo caInfo = getCAAdminSession().getCAInfo(admin, caName);
+			final CAInfo caInfo = getCAAdminSession().getCAInfo(admin, caName);
 			if (caInfo == null) {
 				return true;
 			}
-			getCAAdminSession().removeCA(admin, ("CN=" + caName).hashCode());
+			getCAAdminSession().removeCA(admin, caInfo.getCAId());
+			return true;
 		} catch (Exception e) {
 			log.error("", e);
 			return false;
+		} finally {
+	        log.trace("<removeTestCA");
 		}
-		return true;
 	}
 
 	/**
