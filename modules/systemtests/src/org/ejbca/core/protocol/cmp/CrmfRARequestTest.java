@@ -123,6 +123,8 @@ public class CrmfRARequestTest extends CmpTestCase {
         TestTools.getConfigurationSession().updateProperty(CmpConfiguration.CONFIG_RA_ENDENTITYPROFILE, "EMPTY");
         TestTools.getConfigurationSession().updateProperty(CmpConfiguration.CONFIG_RA_CERTIFICATEPROFILE, "ENDUSER");
         TestTools.getConfigurationSession().updateProperty(CmpConfiguration.CONFIG_RACANAME, "AdminCA1");
+        TestTools.getConfigurationSession().updateProperty(CmpConfiguration.CONFIG_RA_NAMEGENERATIONSCHEME, "DN");
+        TestTools.getConfigurationSession().updateProperty(CmpConfiguration.CONFIG_RA_NAMEGENERATIONPARAMS, "CN");
     }
 
     /**
@@ -195,41 +197,45 @@ public class CrmfRARequestTest extends CmpTestCase {
         final String userName2 = "cmptest2";
         final String userDN1 = "C=SE,O=PrimeKey,CN=" + userName1;
         final String userDN2 = "C=SE,O=PrimeKey,CN=" + userName2;
-        // check that several certificates could be created for one user and one
-        // key.
-        crmfHttpUserTest(userDN1, key1, null);
-        crmfHttpUserTest(userDN2, key2, null);
-        // check that the request fails when asking for certificate for another
-        // user with same key.
-        crmfHttpUserTest(userDN2, key1, InternalResources.getInstance().getLocalizedMessage("signsession.key_exists_for_another_user", "'" + userName2 + "'",
-                "'" + userName1 + "'"));
-        crmfHttpUserTest(userDN1, key2, InternalResources.getInstance().getLocalizedMessage("signsession.key_exists_for_another_user", "'" + userName1 + "'",
-                "'" + userName2 + "'"));
-        // check that you can not issue a certificate with same DN as another
-        // user.
-        crmfHttpUserTest("CN=AdminCA1,O=EJBCA Sample,C=SE", key3, InternalResources.getInstance().getLocalizedMessage(
-                "signsession.subjectdn_exists_for_another_user", "'AdminCA1'", "'SYSTEMCA'"));
-        String hostname;
+        String hostname=null;
         try {
-            hostname = TestTools.getConfigurationSession().getProperty(WebConfiguration.CONFIG_HTTPSSERVERHOSTNAME, "localhost");
-        } catch (RemoteException e) {
-            hostname = "localhost";
-            log.error("Not possible to get property " + WebConfiguration.CONFIG_HTTPSSERVERHOSTNAME, e);
-        }
-        crmfHttpUserTest("CN=" + hostname + ",O=EJBCA Sample,C=SE", key4, InternalResources.getInstance().getLocalizedMessage(
-                "signsession.subjectdn_exists_for_another_user", "'" + hostname + "'", "'tomcat'"));
-
-        TestTools.getUserAdminSession().deleteUser(admin, userName1);
-        TestTools.getUserAdminSession().deleteUser(admin, userName2);
-        try {
-            TestTools.getUserAdminSession().deleteUser(admin, "AdminCA1");
-        } catch (NotFoundException e) {
-        }
-        try {
-            TestTools.getUserAdminSession().deleteUser(admin, hostname);
-        } catch (NotFoundException e) {
+            // check that several certificates could be created for one user and one key.
+        	crmfHttpUserTest(userDN1, key1, null);
+        	crmfHttpUserTest(userDN2, key2, null);
+        	// check that the request fails when asking for certificate for another
+        	// user with same key.
+        	crmfHttpUserTest(userDN2, key1, InternalResources.getInstance().getLocalizedMessage("signsession.key_exists_for_another_user", "'" + userName2 + "'",
+        			"'" + userName1 + "'"));
+        	crmfHttpUserTest(userDN1, key2, InternalResources.getInstance().getLocalizedMessage("signsession.key_exists_for_another_user", "'" + userName1 + "'",
+        			"'" + userName2 + "'"));
+        	// check that you can not issue a certificate with same DN as another
+        	// user.
+        	crmfHttpUserTest("CN=AdminCA1,O=EJBCA Sample,C=SE", key3, InternalResources.getInstance().getLocalizedMessage(
+        			"signsession.subjectdn_exists_for_another_user", "'AdminCA1'", "'SYSTEMCA'"));
+        	try {
+        		hostname = TestTools.getConfigurationSession().getProperty(WebConfiguration.CONFIG_HTTPSSERVERHOSTNAME, "localhost");
+        	} catch (RemoteException e) {
+        		hostname = "localhost";
+        		log.error("Not possible to get property " + WebConfiguration.CONFIG_HTTPSSERVERHOSTNAME, e);
+        	}
+        	crmfHttpUserTest("CN=" + hostname + ",O=EJBCA Sample,C=SE", key4, InternalResources.getInstance().getLocalizedMessage(
+        			"signsession.subjectdn_exists_for_another_user", "'" + hostname + "'", "'tomcat'"));
+        } finally {
+        	try {
+        		TestTools.getUserAdminSession().deleteUser(admin, userName1);
+        	} catch (NotFoundException e) {}
+        	try {
+        		TestTools.getUserAdminSession().deleteUser(admin, userName2);        	
+        	} catch (NotFoundException e) {}
+        	try {
+        		TestTools.getUserAdminSession().deleteUser(admin, "AdminCA1");
+        	} catch (NotFoundException e) {}
+        	try {
+        		TestTools.getUserAdminSession().deleteUser(admin, hostname);
+        	} catch (NotFoundException e) {}
         }
     }
+
 
     public void testZZZCleanUp() throws Exception {
         TestTools.getConfigurationSession().restoreConfiguration();
