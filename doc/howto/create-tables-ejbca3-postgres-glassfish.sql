@@ -287,7 +287,6 @@ CREATE TABLE protectedlogdata (
   protectionKeyIdentifier INT4 NOT NULL, 
   protectionKeyAlgorithm TEXT, 
   b64Protection TEXT, 
-  rowVersion INT4 DEFAULT 0, 
 CONSTRAINT pk_protectedlogdata PRIMARY KEY (pk)
 );
 
@@ -304,7 +303,6 @@ CREATE TABLE protectedlogexportdata (
   b64SignatureCertificate TEXT, 
   deleted INT2 NOT NULL, 
   b64Signature TEXT, 
-  rowVersion INT4 DEFAULT 0, 
 CONSTRAINT pk_protectedlogexportdata PRIMARY KEY (pk)
 );
 
@@ -316,7 +314,6 @@ CREATE TABLE protectedlogtokendata (
   tokenType INT4 NOT NULL, 
   b64TokenCertificate TEXT, 
   tokenReference TEXT, 
-  rowVersion INT4 DEFAULT 0, 
 CONSTRAINT pk_protectedlogtokendata PRIMARY KEY (pk)
 );
 
@@ -372,7 +369,6 @@ CREATE TABLE tableprotectdata (
   dbKey TEXT, 
   dbType TEXT, 
   keyType TEXT, 
-  rowVersion INT4 DEFAULT 0, 
 CONSTRAINT pk_tableprotectdata PRIMARY KEY (id)
 );
 

@@ -266,7 +266,6 @@ CREATE TABLE ProtectedLogData (
     protectionKeyIdentifier int(11) NOT NULL DEFAULT '0',
     protectionKeyAlgorithm varchar(250) binary NULL DEFAULT NULL,
     b64Protection text NULL DEFAULT NULL,
-    rowVersion int(11) DEFAULT 0,
     PRIMARY KEY (pk)
 ) TABLESPACE ejbca_ts STORAGE DISK ENGINE=NDB;
 
@@ -282,7 +281,6 @@ CREATE TABLE ProtectedLogExportData (
     b64SignatureCertificate text NULL DEFAULT NULL,
     deleted tinyint(4) NOT NULL DEFAULT '0',
     b64Signature text NULL DEFAULT NULL,
-    rowVersion int(11) DEFAULT 0,
 	PRIMARY KEY (pk)
 ) TABLESPACE ejbca_ts STORAGE DISK ENGINE=NDB;
 
@@ -293,7 +291,6 @@ CREATE TABLE ProtectedLogTokenData (
     tokenType int(11) NOT NULL DEFAULT '0',
     b64TokenCertificate text NULL DEFAULT NULL,
     tokenReference text NULL DEFAULT NULL,
-    rowVersion int(11) DEFAULT 0,
     PRIMARY KEY (pk)
 ) TABLESPACE ejbca_ts STORAGE DISK ENGINE=NDB;
 
@@ -345,7 +342,6 @@ CREATE TABLE TableProtectData (
     dbKey varchar(250) binary NULL DEFAULT NULL,
     dbType varchar(250) binary NULL DEFAULT NULL,
     keyType varchar(250) binary NULL DEFAULT NULL,
-    rowVersion int(11) DEFAULT 0,
     PRIMARY KEY (id)
 ) TABLESPACE ejbca_ts STORAGE DISK ENGINE=NDB;
 

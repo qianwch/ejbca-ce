@@ -238,7 +238,6 @@ CREATE TABLE ProtectedLogData (
     protectionKeyIdentifier int NOT NULL DEFAULT '0',
     protectionKeyAlgorithm varchar(250) NULL DEFAULT NULL,
     b64Protection text NULL DEFAULT NULL,
-    rowVersion INTEGER NOT NULL DEFAULT '0',
     PRIMARY KEY (pk)
 );
 
@@ -253,7 +252,6 @@ CREATE TABLE ProtectedLogExportData (
     b64SignatureCertificate text NULL DEFAULT NULL,
     deleted tinyint NOT NULL DEFAULT '0',
     b64Signature text NULL DEFAULT NULL,
-    rowVersion INTEGER NOT NULL DEFAULT '0',
 	PRIMARY KEY (pk)
 );
 
@@ -263,7 +261,6 @@ CREATE TABLE ProtectedLogTokenData (
     tokenType int NOT NULL DEFAULT '0',
     b64TokenCertificate text NULL DEFAULT NULL,
     tokenReference text NULL DEFAULT NULL,
-    rowVersion INTEGER NOT NULL DEFAULT '0',
     PRIMARY KEY (pk)
 );
 
@@ -311,7 +308,6 @@ CREATE TABLE TableProtectData (
     dbKey varchar(250) NULL DEFAULT NULL,
     dbType varchar(250) NULL DEFAULT NULL,
     keyType varchar(250) NULL DEFAULT NULL,
-    rowVersion INTEGER NOT NULL DEFAULT '0',
     PRIMARY KEY (id)
 );
 

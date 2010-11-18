@@ -264,7 +264,6 @@ create table protectedlogdata (
     protectionkeyidentifier int(11) not null default '0',
     protectionkeyalgorithm varchar(250) binary null default null,
     b64protection text null default null,
-    rowversion int(11) DEFAULT 0,
     primary key (pk)
 );
 
@@ -280,7 +279,6 @@ create table protectedlogexportdata (
     b64signaturecertificate text null default null,
     deleted tinyint(4) not null default '0',
     b64signature text null default null,
-    rowversion int(11) DEFAULT 0,
 	primary key (pk)
 );
 
@@ -291,7 +289,6 @@ create table protectedlogtokendata (
     tokentype int(11) not null default '0',
     b64tokencertificate text null default null,
     tokenreference text null default null,
-    rowversion int(11) DEFAULT 0,
     primary key (pk)
 );
 
@@ -343,7 +340,6 @@ create table tableprotectdata (
     dbkey varchar(250) binary null default null,
     dbtype varchar(250) binary null default null,
     keytype varchar(250) binary null default null,
-    rowversion int(11) DEFAULT 0,
     primary key (id)
 );
 
