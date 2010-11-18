@@ -78,8 +78,8 @@ public class TestCreateCRLSession extends TestCase {
 	private final static Logger log = Logger.getLogger(TestCreateCRLSession.class);
 	private final static Admin admin =  new Admin(Admin.TYPE_INTERNALUSER);
 	
-	private static int caid;
-	private static CA ca;
+	private static final int caid;
+	private static final CA ca;
 	private static final String TESTUSERNAME = "TestCreateCRLSessionUser";
 	private static final String TESTPROFILE = "TestCreateCRLSessionProfile";	
 
@@ -90,6 +90,8 @@ public class TestCreateCRLSession extends TestCase {
 	 */
 	public TestCreateCRLSession(String name) throws Exception {
 		super(name);
+	}
+	static {
 		try {
 			CryptoProviderTools.installBCProviderIfNotAvailable();
 			assertTrue("Could not create TestCA.", TestTools.createTestCA());
