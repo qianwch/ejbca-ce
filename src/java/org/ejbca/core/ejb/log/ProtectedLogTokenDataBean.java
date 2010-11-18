@@ -95,7 +95,6 @@ public abstract class ProtectedLogTokenDataBean extends BaseEntityBean {
        setTokenType(tokenType);
        setTokenCertificate(tokenCertificate);
        setTokenReference(tokenReference);
-       setRowVersion(0);
        return null;
    }
 
@@ -109,12 +108,6 @@ public abstract class ProtectedLogTokenDataBean extends BaseEntityBean {
      */
     public abstract String getPk();
     public abstract void setPk(String pk);
-
-    /**
-     * @ejb.persistence column-name="rowVersion"
-     */
-    public abstract int getRowVersion();
-    public abstract void setRowVersion(int rowVersion);
 
     /**
      * @ejb.persistence column-name="tokenIdentifier"

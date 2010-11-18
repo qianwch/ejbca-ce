@@ -16,7 +16,7 @@ ALTER TABLE ServiceData MODIFY data longtext DEFAULT NULL;
 ALTER TABLE ServiceData ADD nextRunTimeStamp bigint(20) NOT NULL DEFAULT '0';
 ALTER TABLE ServiceData ADD runTimeStamp bigint(20) NOT NULL DEFAULT '0';
 
--- Add rowVersion column to all tables
+-- Add rowVersion column to all tables that will exist in EJBCA 4.0
 ALTER TABLE AccessRulesData ADD COLUMN rowVersion int(11) DEFAULT 0; 
 ALTER TABLE AdminEntityData ADD COLUMN rowVersion int(11) DEFAULT 0;
 ALTER TABLE AdminGroupData ADD COLUMN rowVersion int(11) DEFAULT 0;
@@ -38,11 +38,7 @@ ALTER TABLE HardTokenPropertyData ADD COLUMN rowVersion int(11) DEFAULT 0;
 ALTER TABLE KeyRecoveryData ADD COLUMN rowVersion int(11) DEFAULT 0;
 ALTER TABLE LogConfigurationData ADD COLUMN rowVersion int(11) DEFAULT 0;
 ALTER TABLE LogEntryData ADD COLUMN rowVersion int(11) DEFAULT 0;
-ALTER TABLE ProtectedLogData ADD COLUMN rowVersion int(11) DEFAULT 0;
-ALTER TABLE ProtectedLogExportData ADD COLUMN rowVersion int(11) DEFAULT 0;
-ALTER TABLE ProtectedLogTokenData ADD COLUMN rowVersion int(11) DEFAULT 0;
 ALTER TABLE PublisherData ADD COLUMN rowVersion int(11) DEFAULT 0;
 ALTER TABLE ServiceData ADD COLUMN rowVersion int(11) DEFAULT 0;
-ALTER TABLE TableProtectData ADD COLUMN rowVersion int(11) DEFAULT 0;
 ALTER TABLE UserData ADD COLUMN rowVersion int(11) DEFAULT 0;
 ALTER TABLE UserDataSourceData ADD COLUMN rowVersion int(11) DEFAULT 0;

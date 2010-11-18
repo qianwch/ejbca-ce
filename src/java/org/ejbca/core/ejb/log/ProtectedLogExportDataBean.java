@@ -101,7 +101,6 @@ public abstract class ProtectedLogExportDataBean extends BaseEntityBean {
 	    setSignatureCertificate(signatureCertificate);
 	    setDeleted(deleted);
 	    setSignature(signature);		
-        setRowVersion(0);
 		return null;
 	}
 	
@@ -116,12 +115,6 @@ public abstract class ProtectedLogExportDataBean extends BaseEntityBean {
      */
     public abstract String getPk();
     public abstract void setPk(String pk);
-
-    /**
-     * @ejb.persistence column-name="rowVersion"
-     */
-    public abstract int getRowVersion();
-    public abstract void setRowVersion(int rowVersion);
 
     /**
      * @ejb.persistence column-name="timeOfExport"

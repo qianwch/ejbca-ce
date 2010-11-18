@@ -30,14 +30,6 @@ ALTER TABLE PublisherData ADD data CLOB DEFAULT NULL;
 UPDATE PublisherData SET data=tmpdata;
 ALTER TABLE PublisherData DROP COLUMN tmpdata;
 
---  PublisherQueueData.volatileData is currently LONG VARCHAR, but is defined as CLOB on other databases
-ALTER TABLE PublisherQueueData ADD tmpvolatileData CLOB DEFAULT NULL;
-UPDATE PublisherQueueData SET tmpvolatileData=volatileData;
-ALTER TABLE PublisherQueueData DROP COLUMN volatileData;
-ALTER TABLE PublisherQueueData ADD volatileData CLOB DEFAULT NULL;
-UPDATE PublisherQueueData SET volatileData=tmpvolatileData;
-ALTER TABLE PublisherQueueData DROP COLUMN tmpvolatileData;
-
 --  ServiceData.data is currently LONG VARCHAR, but is defined as CLOB on other databases
 ALTER TABLE ServiceData ADD tmpdata CLOB DEFAULT NULL;
 UPDATE ServiceData SET tmpdata=data;
@@ -80,11 +72,7 @@ ALTER TABLE HardTokenPropertyData ADD COLUMN rowVersion INTEGER NOT NULL WITH DE
 ALTER TABLE KeyRecoveryData ADD COLUMN rowVersion INTEGER NOT NULL WITH DEFAULT 0;
 ALTER TABLE LogConfigurationData ADD COLUMN rowVersion INTEGER NOT NULL WITH DEFAULT 0;
 ALTER TABLE LogEntryData ADD COLUMN rowVersion INTEGER NOT NULL WITH DEFAULT 0;
-ALTER TABLE ProtectedLogData ADD COLUMN rowVersion INTEGER NOT NULL WITH DEFAULT 0;
-ALTER TABLE ProtectedLogExportData ADD COLUMN rowVersion INTEGER NOT NULL WITH DEFAULT 0;
-ALTER TABLE ProtectedLogTokenData ADD COLUMN rowVersion INTEGER NOT NULL WITH DEFAULT 0;
 ALTER TABLE PublisherData ADD COLUMN rowVersion INTEGER NOT NULL WITH DEFAULT 0;
 ALTER TABLE ServiceData ADD COLUMN rowVersion INTEGER NOT NULL WITH DEFAULT 0;
-ALTER TABLE TableProtectData ADD COLUMN rowVersion INTEGER NOT NULL WITH DEFAULT 0;
 ALTER TABLE UserData ADD COLUMN rowVersion INTEGER NOT NULL WITH DEFAULT 0;
 ALTER TABLE UserDataSourceData ADD COLUMN rowVersion INTEGER NOT NULL WITH DEFAULT 0;

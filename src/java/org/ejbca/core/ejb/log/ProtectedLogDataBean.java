@@ -136,7 +136,6 @@ public abstract class ProtectedLogDataBean extends BaseEntityBean {
 	    setProtectionKeyIdentifier(protectionKeyIdentifier);
 	    setProtectionKeyAlgorithm(protectionKeyAlgorithm);
 	    setProtection(protection);
-        setRowVersion(0);
 		return null;
 	}
 
@@ -152,12 +151,6 @@ public abstract class ProtectedLogDataBean extends BaseEntityBean {
      */
     public abstract String getPk();
     public abstract void setPk(String pk);
-
-    /**
-     * @ejb.persistence column-name="rowVersion"
-     */
-    public abstract int getRowVersion();
-    public abstract void setRowVersion(int rowVersion);
 
     /**
      * @ejb.persistence column-name="adminType"
