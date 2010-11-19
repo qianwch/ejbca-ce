@@ -212,6 +212,8 @@
 					<!-- Tests that require unique index in the database to work -->
 					<exclude name="org/ejbca/core/ejb/ca/sign/TestCustomCertSerialnumber.class" />
 					<exclude name="org/ejbca/core/protocol/ws/TestCustomCertSerialnumberWS.class" />
+					<exclude name="org/ejbca/core/protocol/cmp/CrmfRARequestCustomSerialNoTest.class" />
+					
 				</fileset>
 			</batchtest>
 			<!-- Tests that require the CMP TCP listener -->
