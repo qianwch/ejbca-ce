@@ -359,7 +359,8 @@ public class LocalCertificateRequestSessionBean extends BaseSessionBean {
 
 	/**
 	 * Edits or adds a user and generates a certificate for that user in a single transaction.
-     * 
+     * Username and password in userdata and req message must match.
+     *  
 	 * @param admin is the requesting administrator
 	 * @param userdata contains information about the user that is about to get a certificate
 	 * @param req is the certificate request, base64 encoded binary request, in the format specified in the reqType parameter
