@@ -143,7 +143,7 @@ public class TableProtectSessionBean extends BaseSessionBean {
 				info(msg);
 				ProtectPreparer uprep = new ProtectPreparer(id, TableProtectDataBean.CURRENT_VERSION, hashVersion, HMAC_ALG, hash, signature, (new Date()).getTime(), dbKey, dbType, keyType);
     			try {
-    				JDBCUtil.execute( "UPDATE TableProtectData SET version=?,hashVersion=?,protectionAlg=?,hash=?,signature=?,time=?,dbKey=?,dbType=?,keyType=?,rowVersion=(rowVersion+1) WHERE id=?",
+    				JDBCUtil.execute( "UPDATE TableProtectData SET version=?,hashVersion=?,protectionAlg=?,hash=?,signature=?,time=?,dbKey=?,dbType=?,keyType=? WHERE id=?",
     						uprep, dataSource );
     			} catch (Exception ue) {
     				error("PROTECT ERROR: can not create protection row for entry type: "+dbType+", with key: "+dbKey, ue);
@@ -152,7 +152,7 @@ public class TableProtectSessionBean extends BaseSessionBean {
 	    		id = GUIDGenerator.generateGUID(this);
 	        	try {
 	        		ProtectPreparer prep = new ProtectPreparer(id, TableProtectDataBean.CURRENT_VERSION, hashVersion, HMAC_ALG, hash, signature, (new Date()).getTime(), dbKey, dbType, keyType);
-	        		JDBCUtil.execute( "INSERT INTO TableProtectData (version,hashVersion,protectionAlg,hash,signature,time,dbKey,dbType,keyType,id,rowVersion) VALUES (?,?,?,?,?,?,?,?,?,?,0)",
+	        		JDBCUtil.execute( "INSERT INTO TableProtectData (version,hashVersion,protectionAlg,hash,signature,time,dbKey,dbType,keyType,id) VALUES (?,?,?,?,?,?,?,?,?,?)",
 	        				prep, dataSource );
 	        	} catch (Exception e) {
 	                String msg = intres.getLocalizedMessage("protect.errorcreate", dbType, dbKey);            	
