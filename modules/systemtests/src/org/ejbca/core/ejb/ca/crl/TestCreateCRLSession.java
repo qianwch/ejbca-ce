@@ -15,8 +15,6 @@ package org.ejbca.core.ejb.ca.crl;
 
 import java.io.ByteArrayInputStream;
 import java.math.BigInteger;
-import java.net.HttpURLConnection;
-import java.net.URI;
 import java.rmi.RemoteException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -43,7 +41,6 @@ import org.bouncycastle.asn1.x509.DistributionPointName;
 import org.bouncycastle.asn1.x509.GeneralNames;
 import org.bouncycastle.asn1.x509.IssuingDistributionPoint;
 import org.bouncycastle.asn1.x509.X509Extensions;
-import org.bouncycastle.util.Arrays;
 import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.ca.caadmin.CA;
 import org.ejbca.core.model.ca.caadmin.CADoesntExistsException;
@@ -60,8 +57,6 @@ import org.ejbca.core.model.ra.UserDataConstants;
 import org.ejbca.core.model.ra.UserDataVO;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfile;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfileExistsException;
-import org.ejbca.core.protocol.certificatestore.HashID;
-import org.ejbca.ui.web.protocol.RFC4387URL;
 import org.ejbca.util.CertTools;
 import org.ejbca.util.CryptoProviderTools;
 import org.ejbca.util.TestTools;
@@ -491,39 +486,10 @@ public class TestCreateCRLSession extends TestCase {
     		assertTrue("crlstore test not done because crlstore not enabled. To run the test set '"+pKey+"' in ./conf/crl.properties and then 'ant deploy' and restart appserver.", false);
     		return;
     	}
-    	testCRLStore();
-    }
-    private static void testCRLStore() throws Exception {
         log.trace(">test08TestCRLStore()");
-    	testCRLStore( RFC4387URL.sKIDHash, false );
-    	testCRLStore( RFC4387URL.iHash, false );
-    	testCRLStore( RFC4387URL.sKIDHash, true );
-    	testCRLStore( RFC4387URL.iHash, true );
+    	final String result = VerificationAuthorityTst.testCRLStore(ca);
+    	assertNull(result, result);
         log.trace("<test08TestCRLStore()");
-    }
-    private static void testCRLStore( RFC4387URL urlType, boolean isDelta ) throws Exception {
-    	final X509Certificate caCert = (X509Certificate)ca.getCACertificate();
-    	final HashID id;
-    	switch( urlType ) {
-    	case sKIDHash:
-    		id = HashID.getFromKeyID(caCert);
-    		break;
-    	case iHash:
-    		id = HashID.getFromSubjectDN(caCert);
-    		break;
-    	default:
-    		throw new Error("this should never happen");
-    	}
-    	final String sURI = urlType.appendQueryToURL("http://localhost:8080/crls/search.cgi", id, isDelta);
-    	log.debug("URL: '"+sURI+"'.");
-    	final HttpURLConnection connection = (HttpURLConnection)new URI(sURI).toURL().openConnection();
-    	connection.connect();
-    	assertEquals( HttpURLConnection.HTTP_OK, connection.getResponseCode() );
-
-    	final byte fromBean[] = TestTools.getCreateCRLSession().getLastCRL(admin, ca.getCAInfo().getSubjectDN(), isDelta);
-    	final byte fromURL[] = new byte[connection.getContentLength()];
-    	connection.getInputStream().read(fromURL);
-    	assertTrue("CRL from URL and bean not equal.", Arrays.areEqual(fromBean, fromURL));
     }
 
     public void test99CleanUp() throws Exception {
