@@ -24,12 +24,11 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.math.RandomUtils;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.DEROutputStream;
 import org.ejbca.config.CmpConfiguration;
-import org.ejbca.config.WebConfiguration;
 import org.ejbca.core.model.AlgorithmConstants;
-import org.ejbca.core.model.InternalResources;
 import org.ejbca.core.model.ca.caadmin.CAInfo;
 import org.ejbca.core.model.ca.certificateprofiles.CertificateProfile;
 import org.ejbca.core.model.ca.certificateprofiles.CertificateProfileExistsException;
@@ -51,9 +50,9 @@ import com.novosec.pkix.asn1.cmp.PKIMessage;
  * @author tomas
  * @version $Id$
  */
-public class CrmfRARequestTest extends CmpTestCase {
+public class CrmfRARequestCustomSerialNoTest extends CmpTestCase {
 
-    final private static Logger log = Logger.getLogger(CrmfRARequestTest.class);
+    final private static Logger log = Logger.getLogger(CrmfRARequestCustomSerialNoTest.class);
 
     final private static String PBEPASSWORD = "password";
 
@@ -120,7 +119,7 @@ public class CrmfRARequestTest extends CmpTestCase {
         issuerDN = cacert != null ? cacert.getIssuerDN().getName() : "CN=AdminCA1,O=EJBCA Sample,C=SE";
     }
 
-    public CrmfRARequestTest(String arg0) throws RemoteException, CertificateEncodingException, CertificateException {
+    public CrmfRARequestCustomSerialNoTest(String arg0) throws RemoteException, CertificateEncodingException, CertificateException {
         super(arg0);
         // Configure CMP for this test, we allow custom certificate serial numbers
     	CertificateProfile profile = new EndUserCertificateProfile();
@@ -215,59 +214,28 @@ public class CrmfRARequestTest extends CmpTestCase {
         }
     }
 
-    public void test01CrmfHttpOkUser() throws Exception {
-        final CAInfo caInfo = TestTools.getCAAdminSession().getCAInfo(admin, "AdminCA1");
-        // make sure same keys for different users is prevented
-        caInfo.setDoEnforceUniquePublicKeys(true);
-        // make sure same DN for different users is prevented
-        caInfo.setDoEnforceUniqueDistinguishedName(true);
-        TestTools.getCAAdminSession().editCA(admin, caInfo);
-
-        final KeyPair key1 = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
-        final KeyPair key2 = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
-        final KeyPair key3 = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
-        final KeyPair key4 = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
-        final String userName1 = "cmptest1";
-        final String userName2 = "cmptest2";
-        final String userDN1 = "C=SE,O=PrimeKey,CN=" + userName1;
-        final String userDN2 = "C=SE,O=PrimeKey,CN=" + userName2;
-        String hostname=null;
-        try {
-            // check that several certificates could be created for one user and one key.
-        	crmfHttpUserTest(userDN1, key1, null, null);
-        	crmfHttpUserTest(userDN2, key2, null, null);
-        	// check that the request fails when asking for certificate for another
-        	// user with same key.
-        	crmfHttpUserTest(userDN2, key1, InternalResources.getInstance().getLocalizedMessage("signsession.key_exists_for_another_user", "'" + userName2 + "'",
-        			"'" + userName1 + "'"), null);
-        	crmfHttpUserTest(userDN1, key2, InternalResources.getInstance().getLocalizedMessage("signsession.key_exists_for_another_user", "'" + userName1 + "'",
-        			"'" + userName2 + "'"), null);
-        	// check that you can not issue a certificate with same DN as another
-        	// user.
-        	crmfHttpUserTest("CN=AdminCA1,O=EJBCA Sample,C=SE", key3, InternalResources.getInstance().getLocalizedMessage(
-        			"signsession.subjectdn_exists_for_another_user", "'AdminCA1'", "'SYSTEMCA'"), null);
-        	try {
-        		hostname = TestTools.getConfigurationSession().getProperty(WebConfiguration.CONFIG_HTTPSSERVERHOSTNAME, "localhost");
-        	} catch (RemoteException e) {
-        		hostname = "localhost";
-        		log.error("Not possible to get property " + WebConfiguration.CONFIG_HTTPSSERVERHOSTNAME, e);
-        	}
-        	crmfHttpUserTest("CN=" + hostname + ",O=EJBCA Sample,C=SE", key4, InternalResources.getInstance().getLocalizedMessage(
-        			"signsession.subjectdn_exists_for_another_user", "'" + hostname + "'", "'tomcat'"), null);
-        } finally {
-        	try {
-        		TestTools.getUserAdminSession().deleteUser(admin, userName1);
-        	} catch (NotFoundException e) {}
-        	try {
-        		TestTools.getUserAdminSession().deleteUser(admin, userName2);        	
-        	} catch (NotFoundException e) {}
-        	try {
-        		TestTools.getUserAdminSession().deleteUser(admin, "AdminCA1");
-        	} catch (NotFoundException e) {}
-        	try {
-        		TestTools.getUserAdminSession().deleteUser(admin, hostname);
-        	} catch (NotFoundException e) {}
-        }
+    public void test01CustomCertificateSerialNumber() throws Exception {
+    	final KeyPair key1 = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
+    	final String userName1 = "cmptest1";
+    	final String userDN1 = "C=SE,O=PrimeKey,CN=" + userName1;
+    	try {
+    		// check that several certificates could be created for one user and one key.
+    		long serno = RandomUtils.nextLong();
+    		BigInteger bint = BigInteger.valueOf(serno);
+            int cpId = TestTools.getCertificateStoreSession().getCertificateProfileId(admin, "CMPTESTPROFILE");
+            // First it should fail when the certificate profile does not allow serial number override
+            // crmfHttpUserTest checks the returned serno if bint parameter is not null 
+    		crmfHttpUserTest(userDN1, key1, "Used certificate profile ('"+cpId+"') is not allowing certificate serial number override.", bint);
+    		CertificateProfile cp = TestTools.getCertificateStoreSession().getCertificateProfile(admin, "CMPTESTPROFILE");
+    		cp.setAllowCertSerialNumberOverride(true);
+    		// Now when the profile allows serial number override it should work
+    		TestTools.getCertificateStoreSession().changeCertificateProfile(admin, "CMPTESTPROFILE", cp);
+    		crmfHttpUserTest(userDN1, key1, null, bint);
+    	} finally {
+    		try {
+    			TestTools.getUserAdminSession().deleteUser(admin, userName1);
+    		} catch (NotFoundException e) {}
+    	}
     }
 
     public void testZZZCleanUp() throws Exception {
