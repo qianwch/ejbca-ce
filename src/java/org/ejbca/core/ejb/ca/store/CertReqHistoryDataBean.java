@@ -100,6 +100,12 @@ public abstract class CertReqHistoryDataBean extends BaseEntityBean {
     public abstract void setRowVersion(int rowVersion);
 
     /**
+     * @ejb.persistence column-name="rowProtection"
+     */
+    public abstract String getRowProtection();
+    public abstract void setRowProtection(String rowProtection);
+
+    /**
      * DN of issuer of certificate
      * Should be used outside of entity bean, use getCertReqHistory instead
      *

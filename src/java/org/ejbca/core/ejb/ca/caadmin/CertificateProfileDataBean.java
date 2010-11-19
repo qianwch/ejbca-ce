@@ -98,6 +98,12 @@ public abstract class CertificateProfileDataBean extends BaseEntityBean {
     public abstract void setRowVersion(int rowVersion);
 
     /**
+     * @ejb.persistence column-name="rowProtection"
+     */
+    public abstract String getRowProtection();
+    public abstract void setRowProtection(String rowProtection);
+
+    /**
      * @ejb.persistence column-name="certificateProfileName"
      * @ejb.interface-method
      */

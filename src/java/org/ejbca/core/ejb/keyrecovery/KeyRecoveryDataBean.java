@@ -117,6 +117,12 @@ public abstract class KeyRecoveryDataBean extends BaseEntityBean {
     public abstract void setRowVersion(int rowVersion);
 
     /**
+     * @ejb.persistence column-name="rowProtection"
+     */
+    public abstract String getRowProtection();
+    public abstract void setRowProtection(String rowProtection);
+
+    /**
      * @ejb.persistence column-name="username"
      * @ejb.interface-method view-type="local"
      */

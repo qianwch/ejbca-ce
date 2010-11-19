@@ -3,7 +3,6 @@
 ALTER TABLE HardTokenProfileData MODIFY id int(11) DEFAULT 0;
 
 -- MySQL specific: CLOBs are mapped to "longtext" and not "text". According to http://opensource.atlassian.com/projects/hibernate/browse/HHH-2669 there is no performance gain from using "text".
--- These might be kind of optional.
 ALTER TABLE CAData MODIFY data longtext DEFAULT NULL;
 ALTER TABLE PublisherData MODIFY data longtext DEFAULT NULL;
 ALTER TABLE PublisherQueueData MODIFY volatileData longtext DEFAULT NULL;
@@ -42,3 +41,30 @@ ALTER TABLE PublisherData ADD COLUMN rowVersion int(11) DEFAULT 0;
 ALTER TABLE ServiceData ADD COLUMN rowVersion int(11) DEFAULT 0;
 ALTER TABLE UserData ADD COLUMN rowVersion int(11) DEFAULT 0;
 ALTER TABLE UserDataSourceData ADD COLUMN rowVersion int(11) DEFAULT 0;
+
+-- Add rowProtection column to all tables
+ALTER TABLE AccessRulesData ADD COLUMN rowProtection longtext DEFAULT NULL; 
+ALTER TABLE AdminEntityData ADD COLUMN rowProtection longtext DEFAULT NULL;
+ALTER TABLE AdminGroupData ADD COLUMN rowProtection longtext DEFAULT NULL;
+ALTER TABLE AdminPreferencesData ADD COLUMN rowProtection longtext DEFAULT NULL;
+ALTER TABLE ApprovalData ADD COLUMN rowProtection longtext DEFAULT NULL;
+ALTER TABLE AuthorizationTreeUpdateData ADD COLUMN rowProtection longtext DEFAULT NULL;
+ALTER TABLE CAData ADD COLUMN rowProtection longtext DEFAULT NULL;
+ALTER TABLE CRLData ADD COLUMN rowProtection longtext DEFAULT NULL;
+ALTER TABLE CertReqHistoryData ADD COLUMN rowProtection longtext DEFAULT NULL;
+ALTER TABLE CertificateData ADD COLUMN rowProtection longtext DEFAULT NULL;
+ALTER TABLE CertificateProfileData ADD COLUMN rowProtection longtext DEFAULT NULL;
+ALTER TABLE EndEntityProfileData ADD COLUMN rowProtection longtext DEFAULT NULL;
+ALTER TABLE GlobalConfigurationData ADD COLUMN rowProtection longtext DEFAULT NULL;
+ALTER TABLE HardTokenCertificateMap ADD COLUMN rowProtection longtext DEFAULT NULL;
+ALTER TABLE HardTokenData ADD COLUMN rowProtection longtext DEFAULT NULL;
+ALTER TABLE HardTokenIssuerData ADD COLUMN rowProtection longtext DEFAULT NULL;
+ALTER TABLE HardTokenProfileData ADD COLUMN rowProtection longtext DEFAULT NULL;
+ALTER TABLE HardTokenPropertyData ADD COLUMN rowProtection longtext DEFAULT NULL;
+ALTER TABLE KeyRecoveryData ADD COLUMN rowProtection longtext DEFAULT NULL;
+ALTER TABLE LogConfigurationData ADD COLUMN rowProtection longtext DEFAULT NULL;
+ALTER TABLE LogEntryData ADD COLUMN rowProtection longtext DEFAULT NULL;
+ALTER TABLE PublisherData ADD COLUMN rowProtection longtext DEFAULT NULL;
+ALTER TABLE ServiceData ADD COLUMN rowProtection longtext DEFAULT NULL;
+ALTER TABLE UserData ADD COLUMN rowProtection longtext DEFAULT NULL;
+ALTER TABLE UserDataSourceData ADD COLUMN rowProtection longtext DEFAULT NULL;

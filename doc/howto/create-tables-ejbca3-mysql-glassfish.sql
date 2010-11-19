@@ -10,6 +10,7 @@ create table accessrulesdata (
     isrecursive tinyint(4) not null default '0',
     `admingroupdata_accessrules` int(11) null default null,
     rowversion int(11) DEFAULT 0,
+    rowprotection longtext default null,
     primary key (pk)
 );
 
@@ -22,6 +23,7 @@ create table adminentitydata (
     `admingroupdata_adminentities` int(11) null default null,
     caid int(11) not null default '0',
     rowversion int(11) DEFAULT 0,
+    rowprotection longtext default null,
     primary key (pk)
 );
 
@@ -31,6 +33,7 @@ create table admingroupdata (
     admingroupname varchar(250) binary null default null,
     caid int(11) not null default '0',
     rowversion int(11) DEFAULT 0,
+    rowprotection longtext default null,
     primary key (pk)
 );
 
@@ -39,6 +42,7 @@ create table adminpreferencesdata (
     id varchar(250) binary not null default '',
     data longblob null default null,
     rowversion int(11) DEFAULT 0,
+    rowprotection longtext default null,
     primary key (id)
 );
 
@@ -58,6 +62,7 @@ create table approvaldata (
     expiredate bigint(20) not null default '0',    
     remainingapprovals int(11) not null default '0',
     rowversion int(11) DEFAULT 0,
+    rowprotection longtext default null,
     primary key (id)
 );
 
@@ -66,6 +71,7 @@ create table authorizationtreeupdatedata (
     pk int(11) not null default '0',
     authorizationtreeupdatenumber int(11) not null default '0',
     rowversion int(11) DEFAULT 0,
+    rowprotection longtext default null,
     primary key (pk)
 );
 
@@ -79,6 +85,7 @@ create table cadata (
     updatetime bigint(20) not null default '0',
     data longtext null default null,
     rowversion int(11) DEFAULT 0,
+    rowprotection longtext default null,
     primary key (caid)
 );
 
@@ -93,6 +100,7 @@ create table crldata (
     deltacrlindicator int(11) not null default '-1',
     base64crl longtext null default null,
     rowversion int(11) DEFAULT 0,
+    rowprotection longtext default null,
     primary key (fingerprint)
 );
 
@@ -105,6 +113,7 @@ create table certreqhistorydata (
     userdatavo longtext null default null,
     username varchar(250) binary null default null,
     rowversion int(11) DEFAULT 0,
+    rowprotection longtext default null,
     primary key (fingerprint)
 );
 
@@ -127,6 +136,7 @@ create table certificatedata (
     updatetime bigint(20) not null default '0',
     subjectkeyid varchar(250) binary null default null,
     rowversion int(11) DEFAULT 0,
+    rowprotection longtext default null,
     primary key (fingerprint)
 );
 
@@ -136,6 +146,7 @@ create table certificateprofiledata (
     certificateprofilename varchar(250) binary null default null,
     data longblob null default null,
     rowversion int(11) DEFAULT 0,
+    rowprotection longtext default null,
     primary key (id)
 );
 
@@ -145,6 +156,7 @@ create table endentityprofiledata (
     profilename varchar(250) binary null default null,
     data longblob null default null,
     rowversion int(11) DEFAULT 0,
+    rowprotection longtext default null,
     primary key (id)
 );
 
@@ -153,6 +165,7 @@ create table globalconfigurationdata (
     configurationid varchar(250) binary not null default '',
     data longblob null default null,
     rowversion int(11) DEFAULT 0,
+    rowprotection longtext default null,
     primary key (configurationid)
 );
 
@@ -161,6 +174,7 @@ create table hardtokencertificatemap (
     certificatefingerprint varchar(250) binary not null default '',
     tokensn varchar(250) binary null default null,
     rowversion int(11) DEFAULT 0,
+    rowprotection longtext default null,
     primary key (certificatefingerprint)
 );
 
@@ -174,6 +188,7 @@ create table hardtokendata (
     significantissuerdn varchar(250) binary null default null,
     data longblob null default null,
     rowversion int(11) DEFAULT 0,
+    rowprotection longtext default null,
     primary key (tokensn)
 );
 
@@ -184,6 +199,7 @@ create table hardtokenissuerdata (
     admingroupid int(11) not null default '0',
     data longblob null default null,
     rowversion int(11) DEFAULT 0,
+    rowprotection longtext default null,
     primary key (id)
 );
 
@@ -194,6 +210,7 @@ create table hardtokenprofiledata (
     updatecounter int(11) not null default '0',
     data longtext null default null,
     rowversion int(11) DEFAULT 0,
+    rowprotection longtext default null,
     primary key (id)
 );
 
@@ -203,6 +220,7 @@ create table hardtokenpropertydata (
     property varchar(250) binary not null default '',
     value varchar(250) binary null default null,
     rowversion int(11) DEFAULT 0,
+    rowprotection longtext default null,
     primary key (id, property)
 );
 
@@ -214,6 +232,7 @@ create table keyrecoverydata (
     markedasrecoverable tinyint(4) not null default '0',
     keydata longtext null default null,
     rowversion int(11) DEFAULT 0,
+    rowprotection longtext default null,
     primary key (certsn, issuerdn)
 );
 
@@ -223,6 +242,7 @@ create table logconfigurationdata (
     logconfiguration longblob null default null,
     logentryrownumber int(11) not null default '0',
     rowversion int(11) DEFAULT 0,
+    rowprotection longtext default null,
     primary key (id)
 );
 
@@ -239,6 +259,7 @@ create table logentrydata (
     event int(11) not null default '0',
     logcomment varchar(250) binary null default null,
     rowversion int(11) DEFAULT 0,
+    rowprotection longtext default null,
     primary key (id)
 );
 
@@ -299,6 +320,7 @@ create table publisherdata (
     updatecounter int(11) not null default '0',
     data longtext null default null,
     rowversion int(11) DEFAULT 0,
+    rowprotection longtext default null,
     primary key (id)
 );
 
@@ -314,6 +336,7 @@ create table publisherqueuedata (
     publisherid int(11) not null default '0',
     volatiledata longtext null default null,
     rowversion int(11) DEFAULT 0,
+    rowprotection longtext default null,
     primary key (pk)
 );
 
@@ -325,6 +348,7 @@ create table servicedata (
     nextruntimestamp bigint(20) NOT NULL DEFAULT '0',
     runtimestamp bigint(20) NOT NULL DEFAULT '0',
     rowversion int(11) DEFAULT 0,
+    rowprotection longtext default null,
     primary key (id)
 );
 
@@ -364,6 +388,7 @@ create table userdata (
     keystorepassword varchar(250) binary null default null,
     cardnumber varchar(19) binary null default null,
     rowversion int(11) DEFAULT 0,
+    rowprotection longtext default null,
     primary key (username)
 );
 
@@ -374,5 +399,6 @@ create table userdatasourcedata (
     updatecounter int(11) not null default '0',
     data longtext null default null,
     rowversion int(11) DEFAULT 0,
+    rowprotection longtext default null,
     primary key (id)
 );

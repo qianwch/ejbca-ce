@@ -106,6 +106,12 @@ public abstract class UserDataSourceDataBean extends BaseEntityBean {
     public abstract void setRowVersion(int rowVersion);
 
     /**
+     * @ejb.persistence column-name="rowProtection"
+     */
+    public abstract String getRowProtection();
+    public abstract void setRowProtection(String rowProtection);
+
+    /**
      * @ejb.persistence column-name="name"
      * @ejb.interface-method view-type="local"
      */

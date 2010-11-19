@@ -87,6 +87,12 @@ public abstract class CRLDataBean extends BaseEntityBean {
     public abstract void setRowVersion(int rowVersion);
 
     /**
+     * @ejb.persistence column-name="rowProtection"
+     */
+    public abstract String getRowProtection();
+    public abstract void setRowProtection(String rowProtection);
+
+    /**
      * @ejb.persistence column-name="cRLNumber"
      * @ejb.interface-method
      */

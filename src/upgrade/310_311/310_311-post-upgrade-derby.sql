@@ -11,3 +11,5 @@ ALTER TABLE PublisherQueueData ADD volatileData CLOB DEFAULT NULL;
 UPDATE PublisherQueueData SET volatileData=tmpvolatileData;
 ALTER TABLE PublisherQueueData DROP COLUMN tmpvolatileData;
 
+-- Add rowProtection column to all tables
+ALTER TABLE PublisherQueueData ADD COLUMN rowProtection CLOB(10 K) DEFAULT NULL;

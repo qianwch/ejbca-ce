@@ -153,6 +153,12 @@ public abstract class CertificateDataBean extends BaseEntityBean {
     public abstract void setRowVersion(int rowVersion);
 
     /**
+     * @ejb.persistence column-name="rowProtection"
+     */
+    public abstract String getRowProtection();
+    public abstract void setRowProtection(String rowProtection);
+
+    /**
      * DN of issuer of certificate
      *
      * @return issuer dn

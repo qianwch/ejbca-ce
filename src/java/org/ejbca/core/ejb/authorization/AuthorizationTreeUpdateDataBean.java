@@ -86,6 +86,12 @@ public abstract class AuthorizationTreeUpdateDataBean extends BaseEntityBean
     public abstract int getRowVersion();
     public abstract void setRowVersion(int rowVersion);
 
+    /**
+     * @ejb.persistence column-name="rowProtection"
+     */
+    public abstract String getRowProtection();
+    public abstract void setRowProtection(String rowProtection);
+
 	/**
      * Method returning the newest authorizationtreeupdatenumber. Should be used after each
      * time the authorization tree is built.

@@ -1,0 +1,14 @@
+<cmp-field>
+  <field-name>configurationId</field-name>
+</cmp-field>
+<cmp-field>
+  <field-name>data</field-name>
+</cmp-field>
+<cmp-field>
+  <field-name>rowVersion</field-name>
+</cmp-field>
+<cmp-field>
+  <field-name>rowProtection</field-name>
+  <jdbc-type>CLOB</jdbc-type>
+  <sql-type>CLOB(10 K)</sql-type>
+</cmp-field>

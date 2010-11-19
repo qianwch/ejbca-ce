@@ -152,6 +152,12 @@ public abstract class ApprovalDataBean extends BaseEntityBean {
     public abstract void setRowVersion(int rowVersion);
 
     /**
+     * @ejb.persistence column-name="rowProtection"
+     */
+    public abstract String getRowProtection();
+    public abstract void setRowProtection(String rowProtection);
+
+    /**
      * Constructed from action data as actiontype, admin, username etc. It should
      * result in the same approvalid if the admin tries to request the same action twice.
      * 

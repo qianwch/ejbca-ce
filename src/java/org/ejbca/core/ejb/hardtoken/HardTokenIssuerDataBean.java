@@ -102,6 +102,12 @@ public abstract class HardTokenIssuerDataBean extends BaseEntityBean {
     public abstract void setRowVersion(int rowVersion);
 
     /**
+     * @ejb.persistence column-name="rowProtection"
+     */
+    public abstract String getRowProtection();
+    public abstract void setRowProtection(String rowProtection);
+
+    /**
      * @ejb.persistence column-name="alias"
      * @ejb.interface-method view-type="local"
      */

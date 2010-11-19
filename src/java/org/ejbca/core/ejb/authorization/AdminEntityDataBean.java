@@ -90,6 +90,12 @@ public abstract class AdminEntityDataBean extends BaseEntityBean {
     public abstract int getRowVersion();
     public abstract void setRowVersion(int rowVersion);
 
+    /**
+     * @ejb.persistence column-name="rowProtection"
+     */
+    public abstract String getRowProtection();
+    public abstract void setRowProtection(String rowProtection);
+
 	/**
 	 * @ejb.persistence column-name="matchWith"
      * @ejb.interface-method view-type="local"
