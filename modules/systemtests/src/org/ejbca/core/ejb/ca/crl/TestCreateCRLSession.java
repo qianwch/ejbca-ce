@@ -491,6 +491,9 @@ public class TestCreateCRLSession extends TestCase {
     		assertTrue("crlstore test not done because crlstore not enabled. To run the test set '"+pKey+"' in ./conf/crl.properties and then 'ant deploy' and restart appserver.", false);
     		return;
     	}
+    	testCRLStore();
+    }
+    private static void testCRLStore() throws Exception {
         log.trace(">test08TestCRLStore()");
     	testCRLStore( RFC4387URL.sKIDHash, false );
     	testCRLStore( RFC4387URL.iHash, false );
@@ -498,7 +501,7 @@ public class TestCreateCRLSession extends TestCase {
     	testCRLStore( RFC4387URL.iHash, true );
         log.trace("<test08TestCRLStore()");
     }
-    private void testCRLStore( RFC4387URL urlType, boolean isDelta ) throws Exception {
+    private static void testCRLStore( RFC4387URL urlType, boolean isDelta ) throws Exception {
     	final X509Certificate caCert = (X509Certificate)ca.getCACertificate();
     	final HashID id;
     	switch( urlType ) {
