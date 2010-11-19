@@ -48,7 +48,7 @@
 	<classpathentry kind="lib" path="lib/jline-0.9.94.jar"/>
 	<classpathentry kind="lib" path="lib/quickserver/QuickServer.jar"/>
 	<classpathentry kind="lib" path="lib/quickserver/commons-pool.jar"/>
-	<classpathentry kind="lib" path="lib/bcprov-jdk15.jar" sourcepath="/home/tomas/Dev/bcprov-jdk15-145/src"/>
+	<classpathentry kind="lib" path="lib/bcprov-jdk15.jar"/>
 	<classpathentry kind="lib" path="lib/bcmail-jdk15.jar"/>
 	<classpathentry kind="lib" path="lib/bctsp-jdk15.jar"/>
 	<classpathentry kind="lib" path="lib/cert-cvc.jar"/>
@@ -82,6 +82,31 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="var" path="JBOSS_HOME/client/jboss-j2ee.jar">
+		<attributes>
+			<attribute name="optional" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="var" path="JBOSS_HOME/client/jboss-logging-log4j.jar">
+		<attributes>
+			<attribute name="optional" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="var" path="JBOSS_HOME/lib/jboss-system-jmx.jar">
+		<attributes>
+			<attribute name="optional" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="var" path="JBOSS_HOME/lib/jboss-j2se.jar">
+		<attributes>
+			<attribute name="optional" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="var" path="JBOSS_HOME/lib/jboss-kernel.jar">
+		<attributes>
+			<attribute name="optional" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="var" path="JBOSS_HOME/client/jboss-javaee.jar">
 		<attributes>
 			<attribute name="optional" value="true"/>
 		</attributes>
