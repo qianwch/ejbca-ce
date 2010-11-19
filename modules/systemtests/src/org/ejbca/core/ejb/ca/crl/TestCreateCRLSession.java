@@ -83,14 +83,6 @@ public class TestCreateCRLSession extends TestCase {
 	private static final String TESTUSERNAME = "TestCreateCRLSessionUser";
 	private static final String TESTPROFILE = "TestCreateCRLSessionProfile";	
 
-	/**
-	 * Creates a new TestCreateCRLSession object.
-	 *
-	 * @param name name
-	 */
-	public TestCreateCRLSession(String name) {
-		super(name);
-	}
 	static {
 		try {
 			CryptoProviderTools.installBCProviderIfNotAvailable();
@@ -517,7 +509,7 @@ public class TestCreateCRLSession extends TestCase {
     		id = HashID.getFromSubjectDN(caCert);
     		break;
     	default:
-    		throw new Error("this should never happend");
+    		throw new Error("this should never happen");
     	}
     	final String sURI = urlType.appendQueryToURL("http://localhost:8080/crls/search.cgi", id, isDelta);
     	log.debug("URL: '"+sURI+"'.");
