@@ -34,7 +34,6 @@ import org.ejbca.core.protocol.certificatestore.ICertificateCache;
  */
 public abstract class StoreServletBase extends HttpServlet {
 
-	protected static final String BOUNDARY = "\"BOUNDARY\"";
 	final ICertificateCache certCashe;
 	final String space = "|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
 

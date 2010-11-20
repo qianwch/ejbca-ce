@@ -14,15 +14,20 @@
 package org.ejbca.ui.web.protocol;
 
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 
+import javax.mail.MessagingException;
+import javax.mail.Multipart;
+import javax.mail.internet.InternetHeaders;
+import javax.mail.internet.MimeBodyPart;
+import javax.mail.internet.MimeMultipart;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.log4j.Logger;
 import org.ejbca.core.protocol.certificatestore.HashID;
 import org.ejbca.core.protocol.certificatestore.ICertStore;
 
@@ -31,6 +36,7 @@ import org.ejbca.core.protocol.certificatestore.ICertStore;
  * @version  $Id$
  */
 class CertStoreServletBase extends StoreServletBase {
+	private final static Logger log = Logger.getLogger(CertStoreServletBase.class);
 	/**
 	 * Sets the object to get certificates from.
 	 */
@@ -94,7 +100,25 @@ class CertStoreServletBase extends StoreServletBase {
 			resp.sendError(HttpServletResponse.SC_NO_CONTENT, "No certificates with issuer hash DN: "+name);
 			return;
 		}
-		resp.setContentType("multipart/mixed; boundary="+BOUNDARY);
+		final Multipart mp = new MimeMultipart();// mixed is default
+		try {
+			resp.setContentType(mp.getContentType());
+			for( int i=0; i<certs.length; i++ ) {
+				final InternetHeaders headers = new InternetHeaders();
+				headers.addHeader("Content-type", "application/pkix-cert");
+				headers.addHeader("Content-disposition", "attachment; filename=cert" + name + '-' + i + ".der");
+				mp.addBodyPart(new MimeBodyPart(headers,certs[i].getEncoded()));
+			}
+			log.info("content type: "+mp.getContentType());
+			mp.writeTo(resp.getOutputStream());
+			resp.flushBuffer();
+		} catch (CertificateEncodingException e) {
+			throw new ServletException(e);
+		} catch (MessagingException e) {
+			throw new ServletException(e);
+		}/* old implementation that works.
+		final String BOUNDARY = "BOUNDARY";
+		resp.setContentType("multipart/mixed; boundary=\""+BOUNDARY+'"');
 		final PrintStream ps = new PrintStream(resp.getOutputStream());
 		ps.println("This is a multi-part message in MIME format.");
 		for( int i=0; i<certs.length; i++ ) {
@@ -112,6 +136,6 @@ class CertStoreServletBase extends StoreServletBase {
 		}
 		// ready
 		ps.println("--"+BOUNDARY+"--");
-		ps.flush();
+		ps.flush();*/
 	}
 }
