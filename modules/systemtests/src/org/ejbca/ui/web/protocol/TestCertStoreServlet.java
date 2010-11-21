@@ -35,6 +35,7 @@ import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
 import org.ejbca.core.ejb.ca.crl.TestCreateCRLSession;
+import org.ejbca.util.TestTools;
 
 /**
  * Testing of CertStoreServlet
@@ -63,6 +64,12 @@ public class TestCertStoreServlet extends TestCase {
 	 * @throws RemoteException
 	 */
 	public void test00CreateCAs() throws RemoteException {
+		final String pKey="certstore.enabled";
+		final String sEnabled = TestTools.getConfigurationSession().getProperty(pKey, null);
+		if ( sEnabled==null || sEnabled.toLowerCase().indexOf("false")>=0 ) {
+			assertTrue("crlstore test not done because crlstore not enabled. To run the test set '"+pKey+"' in ./conf/crl.properties and then 'ant deploy' and restart appserver.", false);
+			return;
+		}
 		final String result = rootCA.createCA();
 		assertNull(result, result);
 	}
