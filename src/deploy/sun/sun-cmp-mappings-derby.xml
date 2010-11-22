@@ -161,12 +161,6 @@
             <table-name>TABLEPROTECTDATA</table-name>
 
             <cmp-field-mapping>
-                <field-name>rowVersion</field-name>
-                <column-name>ROWVERSION</column-name>
-
-            </cmp-field-mapping>
-
-            <cmp-field-mapping>
                 <field-name>id</field-name>
                 <column-name>ID</column-name>
 
@@ -1333,12 +1327,6 @@
             <table-name>PROTECTEDLOGDATA</table-name>
 
             <cmp-field-mapping>
-                <field-name>rowVersion</field-name>
-                <column-name>ROWVERSION</column-name>
-
-            </cmp-field-mapping>
-
-            <cmp-field-mapping>
                 <field-name>pk</field-name>
                 <column-name>PK</column-name>
             </cmp-field-mapping>
@@ -1425,12 +1413,6 @@
             <table-name>PROTECTEDLOGTOKENDATA</table-name>
 
             <cmp-field-mapping>
-                <field-name>rowVersion</field-name>
-                <column-name>ROWVERSION</column-name>
-
-            </cmp-field-mapping>
-
-            <cmp-field-mapping>
                 <field-name>pk</field-name>
                 <column-name>PK</column-name>
             </cmp-field-mapping>
@@ -1456,12 +1438,6 @@
         <entity-mapping>
             <ejb-name>ProtectedLogExportData</ejb-name>
             <table-name>PROTECTEDLOGEXPORTDATA</table-name>
-
-            <cmp-field-mapping>
-                <field-name>rowVersion</field-name>
-                <column-name>ROWVERSION</column-name>
-
-            </cmp-field-mapping>
 
             <cmp-field-mapping>
                 <field-name>pk</field-name>
