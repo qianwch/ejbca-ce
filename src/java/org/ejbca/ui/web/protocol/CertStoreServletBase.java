@@ -109,7 +109,7 @@ class CertStoreServletBase extends StoreServletBase {
 				headers.addHeader("Content-disposition", "attachment; filename=cert" + name + '-' + i + ".der");
 				mp.addBodyPart(new MimeBodyPart(headers,certs[i].getEncoded()));
 			}
-			log.info("content type: "+mp.getContentType());
+			log.trace("content type: "+mp.getContentType());
 			mp.writeTo(resp.getOutputStream());
 			resp.flushBuffer();
 		} catch (CertificateEncodingException e) {

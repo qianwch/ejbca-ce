@@ -12,6 +12,7 @@
  *************************************************************************/
 package org.ejbca.core.protocol.certificatestore;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.security.cert.X509Certificate;
 
@@ -112,6 +113,17 @@ public class HashID {
 			}
 		} else {
 			log.error("The certificate with subject DN '"+cert.getSubjectX500Principal().getName()+"' gives a sKIDHash with a not valid format: "+id.b64);
+		}
+		return id;
+	}
+	public static HashID getFromAuthorityKeyId(X509Certificate cert) throws IOException {
+		final byte hash[]  = CertTools.getAuthorityKeyId(cert);
+		if ( hash==null ) {
+			return null;
+		}
+		final HashID id  = new HashID( CertTools.getAuthorityKeyId(cert) );
+		if ( !id.isOK ) {
+			log.error("The certificate with subject DN '"+cert.getSubjectX500Principal().getName()+"' don't have a valid AuthorityKeyId: "+id.b64);
 		}
 		return id;
 	}
