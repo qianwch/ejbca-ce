@@ -1172,7 +1172,7 @@ throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, Waiting
     					log.debug("No (optional) request counter exists for end entity: "+username);
     				}
         		}
-				if ( !serialNumberCleared && ei.getCertificateSerialNumber()!=null ) {
+				if ( !serialNumberCleared && ei.certificateSerialNumber()!=null ) {
 					ei.setCertificateSerialNumber(null);// cert serial number should also be cleared after successfull command.
 					data1.setExtendedInformation(ei);
 				}
