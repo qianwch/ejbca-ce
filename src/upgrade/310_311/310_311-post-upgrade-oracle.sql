@@ -3,4 +3,4 @@
 ALTER TABLE PublisherQueueData ADD rowVersion NUMBER(10) DEFAULT 0 NOT NULL;
 
 -- Add rowProtection column to all tables
-ALTER TABLE PublisherQueueData ADD COLUMN rowProtection CLOB DEFAULT NULL;
+ALTER TABLE PublisherQueueData ADD rowProtection CLOB DEFAULT NULL;
