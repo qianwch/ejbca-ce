@@ -11,6 +11,10 @@
       <table-map>
       <table-name>ServiceData</table-name>
       <field-map>
+         <cmp-field>rowProtection</cmp-field>
+         <dbms-column>rowProtection</dbms-column>
+      </field-map>
+      <field-map>
          <cmp-field>rowVersion</cmp-field>
          <dbms-column>rowVersion</dbms-column>
       </field-map>
@@ -43,6 +47,10 @@
       <table-map>
       <table-name>EndEntityProfileData</table-name>
       <field-map>
+         <cmp-field>rowProtection</cmp-field>
+         <dbms-column>rowProtection</dbms-column>
+      </field-map>
+      <field-map>
          <cmp-field>rowVersion</cmp-field>
          <dbms-column>rowVersion</dbms-column>
       </field-map>
@@ -67,6 +75,10 @@
       <table-map>
       <table-name>GlobalConfigurationData</table-name>
       <field-map>
+         <cmp-field>rowProtection</cmp-field>
+         <dbms-column>rowProtection</dbms-column>
+      </field-map>
+      <field-map>
          <cmp-field>rowVersion</cmp-field>
          <dbms-column>rowVersion</dbms-column>
       </field-map>
@@ -86,6 +98,10 @@
       <data-source-jndi-name>EjbcaDS</data-source-jndi-name>
       <table-map>
       <table-name>AccessRulesData</table-name>
+      <field-map>
+         <cmp-field>rowProtection</cmp-field>
+         <dbms-column>rowProtection</dbms-column>
+      </field-map>
       <field-map>
          <cmp-field>rowVersion</cmp-field>
          <dbms-column>rowVersion</dbms-column>
@@ -114,6 +130,10 @@
       <data-source-jndi-name>EjbcaDS</data-source-jndi-name>
       <table-map>
       <table-name>CertReqHistoryData</table-name>
+      <field-map>
+         <cmp-field>rowProtection</cmp-field>
+         <dbms-column>rowProtection</dbms-column>
+      </field-map>
       <field-map>
          <cmp-field>rowVersion</cmp-field>
          <dbms-column>rowVersion</dbms-column>
@@ -150,6 +170,10 @@
       <data-source-jndi-name>EjbcaDS</data-source-jndi-name>
       <table-map>
       <table-name>CRLData</table-name>
+      <field-map>
+         <cmp-field>rowProtection</cmp-field>
+         <dbms-column>rowProtection</dbms-column>
+      </field-map>
       <field-map>
          <cmp-field>rowVersion</cmp-field>
          <dbms-column>rowVersion</dbms-column>
@@ -195,6 +219,10 @@
       <table-map>
       <table-name>AuthorizationTreeUpdateData</table-name>
       <field-map>
+         <cmp-field>rowProtection</cmp-field>
+         <dbms-column>rowProtection</dbms-column>
+      </field-map>
+      <field-map>
          <cmp-field>rowVersion</cmp-field>
          <dbms-column>rowVersion</dbms-column>
       </field-map>
@@ -214,6 +242,10 @@
       <data-source-jndi-name>EjbcaDS</data-source-jndi-name>
       <table-map>
       <table-name>UserDataSourceData</table-name>
+      <field-map>
+         <cmp-field>rowProtection</cmp-field>
+         <dbms-column>rowProtection</dbms-column>
+      </field-map>
       <field-map>
          <cmp-field>rowVersion</cmp-field>
          <dbms-column>rowVersion</dbms-column>
@@ -243,6 +275,10 @@
       <table-map>
       <table-name>LogConfigurationData</table-name>
       <field-map>
+         <cmp-field>rowProtection</cmp-field>
+         <dbms-column>rowProtection</dbms-column>
+      </field-map>
+      <field-map>
          <cmp-field>rowVersion</cmp-field>
          <dbms-column>rowVersion</dbms-column>
       </field-map>
@@ -266,6 +302,10 @@
       <data-source-jndi-name>EjbcaDS</data-source-jndi-name>
       <table-map>
       <table-name>HardTokenIssuerData</table-name>
+      <field-map>
+         <cmp-field>rowProtection</cmp-field>
+         <dbms-column>rowProtection</dbms-column>
+      </field-map>
       <field-map>
          <cmp-field>rowVersion</cmp-field>
          <dbms-column>rowVersion</dbms-column>
@@ -295,6 +335,10 @@
       <table-map>
       <table-name>AdminPreferencesData</table-name>
       <field-map>
+         <cmp-field>rowProtection</cmp-field>
+         <dbms-column>rowProtection</dbms-column>
+      </field-map>
+      <field-map>
          <cmp-field>rowVersion</cmp-field>
          <dbms-column>rowVersion</dbms-column>
       </field-map>
@@ -314,10 +358,6 @@
       <data-source-jndi-name>EjbcaDS</data-source-jndi-name>
       <table-map>
       <table-name>ProtectedLogExportData</table-name>
-      <field-map>
-         <cmp-field>rowVersion</cmp-field>
-         <dbms-column>rowVersion</dbms-column>
-      </field-map>
       <field-map>
          <cmp-field>pk</cmp-field>
          <dbms-column>pk</dbms-column>
@@ -367,6 +407,10 @@
       <table-map>
       <table-name>KeyRecoveryData</table-name>
       <field-map>
+         <cmp-field>rowProtection</cmp-field>
+         <dbms-column>rowProtection</dbms-column>
+      </field-map>
+      <field-map>
          <cmp-field>rowVersion</cmp-field>
          <dbms-column>rowVersion</dbms-column>
       </field-map>
@@ -398,6 +442,10 @@
       <data-source-jndi-name>EjbcaDS</data-source-jndi-name>
       <table-map>
       <table-name>LogEntryData</table-name>
+      <field-map>
+         <cmp-field>rowProtection</cmp-field>
+         <dbms-column>rowProtection</dbms-column>
+      </field-map>
       <field-map>
          <cmp-field>rowVersion</cmp-field>
          <dbms-column>rowVersion</dbms-column>
@@ -450,10 +498,6 @@
       <data-source-jndi-name>EjbcaDS</data-source-jndi-name>
       <table-map>
       <table-name>ProtectedLogData</table-name>
-      <field-map>
-         <cmp-field>rowVersion</cmp-field>
-         <dbms-column>rowVersion</dbms-column>
-      </field-map>
       <field-map>
          <cmp-field>pk</cmp-field>
          <dbms-column>pk</dbms-column>
@@ -543,6 +587,10 @@
       <table-map>
       <table-name>CertificateData</table-name>
       <field-map>
+         <cmp-field>rowProtection</cmp-field>
+         <dbms-column>rowProtection</dbms-column>
+      </field-map>
+      <field-map>
          <cmp-field>rowVersion</cmp-field>
          <dbms-column>rowVersion</dbms-column>
       </field-map>
@@ -619,6 +667,10 @@
       <table-map>
       <table-name>HardTokenPropertyData</table-name>
       <field-map>
+         <cmp-field>rowProtection</cmp-field>
+         <dbms-column>rowProtection</dbms-column>
+      </field-map>
+      <field-map>
          <cmp-field>rowVersion</cmp-field>
          <dbms-column>rowVersion</dbms-column>
       </field-map>
@@ -642,6 +694,10 @@
       <data-source-jndi-name>EjbcaDS</data-source-jndi-name>
       <table-map>
       <table-name>ApprovalData</table-name>
+      <field-map>
+         <cmp-field>rowProtection</cmp-field>
+         <dbms-column>rowProtection</dbms-column>
+      </field-map>
       <field-map>
          <cmp-field>rowVersion</cmp-field>
          <dbms-column>rowVersion</dbms-column>
@@ -707,6 +763,10 @@
       <table-map>
       <table-name>HardTokenProfileData</table-name>
       <field-map>
+         <cmp-field>rowProtection</cmp-field>
+         <dbms-column>rowProtection</dbms-column>
+      </field-map>
+      <field-map>
          <cmp-field>rowVersion</cmp-field>
          <dbms-column>rowVersion</dbms-column>
       </field-map>
@@ -734,6 +794,10 @@
       <data-source-jndi-name>EjbcaDS</data-source-jndi-name>
       <table-map>
       <table-name>UserData</table-name>
+      <field-map>
+         <cmp-field>rowProtection</cmp-field>
+         <dbms-column>rowProtection</dbms-column>
+      </field-map>
       <field-map>
          <cmp-field>rowVersion</cmp-field>
          <dbms-column>rowVersion</dbms-column>
@@ -820,6 +884,10 @@
       <table-map>
       <table-name>HardTokenData</table-name>
       <field-map>
+         <cmp-field>rowProtection</cmp-field>
+         <dbms-column>rowProtection</dbms-column>
+      </field-map>
+      <field-map>
          <cmp-field>rowVersion</cmp-field>
          <dbms-column>rowVersion</dbms-column>
       </field-map>
@@ -860,10 +928,6 @@
       <table-map>
       <table-name>ProtectedLogTokenData</table-name>
       <field-map>
-         <cmp-field>rowVersion</cmp-field>
-         <dbms-column>rowVersion</dbms-column>
-      </field-map>
-      <field-map>
          <cmp-field>pk</cmp-field>
          <dbms-column>pk</dbms-column>
       </field-map>
@@ -891,6 +955,10 @@
       <data-source-jndi-name>EjbcaDS</data-source-jndi-name>
       <table-map>
       <table-name>CAData</table-name>
+      <field-map>
+         <cmp-field>rowProtection</cmp-field>
+         <dbms-column>rowProtection</dbms-column>
+      </field-map>
       <field-map>
          <cmp-field>rowVersion</cmp-field>
          <dbms-column>rowVersion</dbms-column>
@@ -931,10 +999,6 @@
       <data-source-jndi-name>EjbcaDS</data-source-jndi-name>
       <table-map>
       <table-name>TableProtectData</table-name>
-      <field-map>
-         <cmp-field>rowVersion</cmp-field>
-         <dbms-column>rowVersion</dbms-column>
-      </field-map>
       <field-map>
          <cmp-field>id</cmp-field>
          <dbms-column>id</dbms-column>
@@ -984,6 +1048,10 @@
       <table-map>
       <table-name>AdminGroupData</table-name>
       <field-map>
+         <cmp-field>rowProtection</cmp-field>
+         <dbms-column>rowProtection</dbms-column>
+      </field-map>
+      <field-map>
          <cmp-field>rowVersion</cmp-field>
          <dbms-column>rowVersion</dbms-column>
       </field-map>
@@ -1008,6 +1076,10 @@
       <table-map>
       <table-name>HardTokenCertificateMap</table-name>
       <field-map>
+         <cmp-field>rowProtection</cmp-field>
+         <dbms-column>rowProtection</dbms-column>
+      </field-map>
+      <field-map>
          <cmp-field>rowVersion</cmp-field>
          <dbms-column>rowVersion</dbms-column>
       </field-map>
@@ -1027,6 +1099,10 @@
       <data-source-jndi-name>EjbcaDS</data-source-jndi-name>
       <table-map>
       <table-name>AdminEntityData</table-name>
+      <field-map>
+         <cmp-field>rowProtection</cmp-field>
+         <dbms-column>rowProtection</dbms-column>
+      </field-map>
       <field-map>
          <cmp-field>rowVersion</cmp-field>
          <dbms-column>rowVersion</dbms-column>
@@ -1060,6 +1136,10 @@
       <table-map>
       <table-name>PublisherData</table-name>
       <field-map>
+         <cmp-field>rowProtection</cmp-field>
+         <dbms-column>rowProtection</dbms-column>
+      </field-map>
+      <field-map>
          <cmp-field>rowVersion</cmp-field>
          <dbms-column>rowVersion</dbms-column>
       </field-map>
@@ -1087,6 +1167,10 @@
       <data-source-jndi-name>EjbcaDS</data-source-jndi-name>
       <table-map>
       <table-name>PublisherQueueData</table-name>
+      <field-map>
+         <cmp-field>rowProtection</cmp-field>
+         <dbms-column>rowProtection</dbms-column>
+      </field-map>
       <field-map>
          <cmp-field>rowVersion</cmp-field>
          <dbms-column>rowVersion</dbms-column>
@@ -1135,6 +1219,10 @@
       <data-source-jndi-name>EjbcaDS</data-source-jndi-name>
       <table-map>
       <table-name>CertificateProfileData</table-name>
+      <field-map>
+         <cmp-field>rowProtection</cmp-field>
+         <dbms-column>rowProtection</dbms-column>
+      </field-map>
       <field-map>
          <cmp-field>rowVersion</cmp-field>
          <dbms-column>rowVersion</dbms-column>
