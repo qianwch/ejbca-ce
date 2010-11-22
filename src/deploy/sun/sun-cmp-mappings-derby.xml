@@ -13,6 +13,11 @@
             <table-name>PUBLISHERDATA</table-name>
 
             <cmp-field-mapping>
+                <field-name>rowProtection</field-name>
+                <column-name>ROWPROTECTION</column-name>
+            </cmp-field-mapping>
+
+            <cmp-field-mapping>
                 <field-name>rowVersion</field-name>
                 <column-name>ROWVERSION</column-name>
 
@@ -48,6 +53,11 @@
         <entity-mapping>
             <ejb-name>PublisherQueueData</ejb-name>
             <table-name>PUBLISHERQUEUEDATA</table-name>
+
+            <cmp-field-mapping>
+                <field-name>rowProtection</field-name>
+                <column-name>ROWPROTECTION</column-name>
+            </cmp-field-mapping>
 
             <cmp-field-mapping>
                 <field-name>rowVersion</field-name>
@@ -110,6 +120,11 @@
         <entity-mapping>
             <ejb-name>CertReqHistoryData</ejb-name>
             <table-name>CERTREQHISTORYDATA</table-name>
+
+            <cmp-field-mapping>
+                <field-name>rowProtection</field-name>
+                <column-name>ROWPROTECTION</column-name>
+            </cmp-field-mapping>
 
             <cmp-field-mapping>
                 <field-name>rowVersion</field-name>
@@ -227,6 +242,11 @@
             <table-name>LOGENTRYDATA</table-name>
 
             <cmp-field-mapping>
+                <field-name>rowProtection</field-name>
+                <column-name>ROWPROTECTION</column-name>
+            </cmp-field-mapping>
+
+            <cmp-field-mapping>
                 <field-name>rowVersion</field-name>
                 <column-name>ROWVERSION</column-name>
 
@@ -299,6 +319,11 @@
             <table-name>ENDENTITYPROFILEDATA</table-name>
 
             <cmp-field-mapping>
+                <field-name>rowProtection</field-name>
+                <column-name>ROWPROTECTION</column-name>
+            </cmp-field-mapping>
+
+            <cmp-field-mapping>
                 <field-name>rowVersion</field-name>
                 <column-name>ROWVERSION</column-name>
 
@@ -328,6 +353,11 @@
         <entity-mapping>
             <ejb-name>HardTokenIssuerData</ejb-name>
             <table-name>HARDTOKENISSUERDATA</table-name>
+
+            <cmp-field-mapping>
+                <field-name>rowProtection</field-name>
+                <column-name>ROWPROTECTION</column-name>
+            </cmp-field-mapping>
 
             <cmp-field-mapping>
                 <field-name>rowVersion</field-name>
@@ -367,6 +397,11 @@
             <table-name>LOGCONFIGURATIONDATA</table-name>
 
             <cmp-field-mapping>
+                <field-name>rowProtection</field-name>
+                <column-name>ROWPROTECTION</column-name>
+            </cmp-field-mapping>
+
+            <cmp-field-mapping>
                 <field-name>rowVersion</field-name>
                 <column-name>ROWVERSION</column-name>
 
@@ -398,6 +433,11 @@
             <table-name>HARDTOKENCERTIFICATEMAP</table-name>
 
             <cmp-field-mapping>
+                <field-name>rowProtection</field-name>
+                <column-name>ROWPROTECTION</column-name>
+            </cmp-field-mapping>
+
+            <cmp-field-mapping>
                 <field-name>rowVersion</field-name>
                 <column-name>ROWVERSION</column-name>
 
@@ -421,6 +461,11 @@
         <entity-mapping>
             <ejb-name>CAData</ejb-name>
             <table-name>CADATA</table-name>
+
+            <cmp-field-mapping>
+                <field-name>rowProtection</field-name>
+                <column-name>ROWPROTECTION</column-name>
+            </cmp-field-mapping>
 
             <cmp-field-mapping>
                 <field-name>rowVersion</field-name>
@@ -477,6 +522,11 @@
             <table-name>USERDATASOURCEDATA</table-name>
 
             <cmp-field-mapping>
+                <field-name>rowProtection</field-name>
+                <column-name>ROWPROTECTION</column-name>
+            </cmp-field-mapping>
+
+            <cmp-field-mapping>
                 <field-name>rowVersion</field-name>
                 <column-name>ROWVERSION</column-name>
 
@@ -513,6 +563,11 @@
             <table-name>HARDTOKENPROPERTYDATA</table-name>
 
             <cmp-field-mapping>
+                <field-name>rowProtection</field-name>
+                <column-name>ROWPROTECTION</column-name>
+            </cmp-field-mapping>
+
+            <cmp-field-mapping>
                 <field-name>rowVersion</field-name>
                 <column-name>ROWVERSION</column-name>
 
@@ -541,6 +596,11 @@
         <entity-mapping>
             <ejb-name>AdminGroupData</ejb-name>
             <table-name>ADMINGROUPDATA</table-name>
+
+            <cmp-field-mapping>
+                <field-name>rowProtection</field-name>
+                <column-name>ROWPROTECTION</column-name>
+            </cmp-field-mapping>
 
             <cmp-field-mapping>
                 <field-name>rowVersion</field-name>
@@ -592,6 +652,11 @@
             <table-name>SERVICEDATA</table-name>
 
             <cmp-field-mapping>
+                <field-name>rowProtection</field-name>
+                <column-name>ROWPROTECTION</column-name>
+            </cmp-field-mapping>
+
+            <cmp-field-mapping>
                 <field-name>rowVersion</field-name>
                 <column-name>ROWVERSION</column-name>
 
@@ -633,6 +698,11 @@
         <entity-mapping>
             <ejb-name>CRLData</ejb-name>
             <table-name>CRLDATA</table-name>
+
+            <cmp-field-mapping>
+                <field-name>rowProtection</field-name>
+                <column-name>ROWPROTECTION</column-name>
+            </cmp-field-mapping>
 
             <cmp-field-mapping>
                 <field-name>rowVersion</field-name>
@@ -695,6 +765,11 @@
             <table-name>KEYRECOVERYDATA</table-name>
 
             <cmp-field-mapping>
+                <field-name>rowProtection</field-name>
+                <column-name>ROWPROTECTION</column-name>
+            </cmp-field-mapping>
+
+            <cmp-field-mapping>
                 <field-name>rowVersion</field-name>
                 <column-name>ROWVERSION</column-name>
 
@@ -737,6 +812,11 @@
             <table-name>ADMINPREFERENCESDATA</table-name>
 
             <cmp-field-mapping>
+                <field-name>rowProtection</field-name>
+                <column-name>ROWPROTECTION</column-name>
+            </cmp-field-mapping>
+
+            <cmp-field-mapping>
                 <field-name>rowVersion</field-name>
                 <column-name>ROWVERSION</column-name>
 
@@ -759,6 +839,11 @@
         <entity-mapping>
             <ejb-name>AdminEntityData</ejb-name>
             <table-name>ADMINENTITYDATA</table-name>
+
+            <cmp-field-mapping>
+                <field-name>rowProtection</field-name>
+                <column-name>ROWPROTECTION</column-name>
+            </cmp-field-mapping>
 
             <cmp-field-mapping>
                 <field-name>rowVersion</field-name>
@@ -804,6 +889,11 @@
             <table-name>ACCESSRULESDATA</table-name>
 
             <cmp-field-mapping>
+                <field-name>rowProtection</field-name>
+                <column-name>ROWPROTECTION</column-name>
+            </cmp-field-mapping>
+
+            <cmp-field-mapping>
                 <field-name>rowVersion</field-name>
                 <column-name>ROWVERSION</column-name>
 
@@ -839,6 +929,11 @@
         <entity-mapping>
             <ejb-name>HardTokenData</ejb-name>
             <table-name>HARDTOKENDATA</table-name>
+
+            <cmp-field-mapping>
+                <field-name>rowProtection</field-name>
+                <column-name>ROWPROTECTION</column-name>
+            </cmp-field-mapping>
 
             <cmp-field-mapping>
                 <field-name>rowVersion</field-name>
@@ -893,6 +988,11 @@
         <entity-mapping>
             <ejb-name>UserData</ejb-name>
             <table-name>USERDATA</table-name>
+
+            <cmp-field-mapping>
+                <field-name>rowProtection</field-name>
+                <column-name>ROWPROTECTION</column-name>
+            </cmp-field-mapping>
 
             <cmp-field-mapping>
                 <field-name>rowVersion</field-name>
@@ -1015,6 +1115,11 @@
             <table-name>CERTIFICATEPROFILEDATA</table-name>
 
             <cmp-field-mapping>
+                <field-name>rowProtection</field-name>
+                <column-name>ROWPROTECTION</column-name>
+            </cmp-field-mapping>
+
+            <cmp-field-mapping>
                 <field-name>rowVersion</field-name>
                 <column-name>ROWVERSION</column-name>
 
@@ -1045,6 +1150,11 @@
             <table-name>GLOBALCONFIGURATIONDATA</table-name>
 
             <cmp-field-mapping>
+                <field-name>rowProtection</field-name>
+                <column-name>ROWPROTECTION</column-name>
+            </cmp-field-mapping>
+
+            <cmp-field-mapping>
                 <field-name>rowVersion</field-name>
                 <column-name>ROWVERSION</column-name>
 
@@ -1067,6 +1177,11 @@
         <entity-mapping>
             <ejb-name>ApprovalData</ejb-name>
             <table-name>APPROVALDATA</table-name>
+
+            <cmp-field-mapping>
+                <field-name>rowProtection</field-name>
+                <column-name>ROWPROTECTION</column-name>
+            </cmp-field-mapping>
 
             <cmp-field-mapping>
                 <field-name>rowVersion</field-name>
@@ -1159,6 +1274,11 @@
             <table-name>AUTHORIZATIONTREEUPDATEDATA</table-name>
 
             <cmp-field-mapping>
+                <field-name>rowProtection</field-name>
+                <column-name>ROWPROTECTION</column-name>
+            </cmp-field-mapping>
+
+            <cmp-field-mapping>
                 <field-name>rowVersion</field-name>
                 <column-name>ROWVERSION</column-name>
 
@@ -1181,6 +1301,11 @@
         <entity-mapping>
             <ejb-name>CertificateData</ejb-name>
             <table-name>CERTIFICATEDATA</table-name>
+
+            <cmp-field-mapping>
+                <field-name>rowProtection</field-name>
+                <column-name>ROWPROTECTION</column-name>
+            </cmp-field-mapping>
 
             <cmp-field-mapping>
                 <field-name>rowVersion</field-name>
@@ -1289,6 +1414,11 @@
         <entity-mapping>
             <ejb-name>HardTokenProfileData</ejb-name>
             <table-name>HARDTOKENPROFILEDATA</table-name>
+
+            <cmp-field-mapping>
+                <field-name>rowProtection</field-name>
+                <column-name>ROWPROTECTION</column-name>
+            </cmp-field-mapping>
 
             <cmp-field-mapping>
                 <field-name>rowVersion</field-name>
