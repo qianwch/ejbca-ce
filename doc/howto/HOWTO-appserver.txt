@@ -45,6 +45,9 @@ Example for PostgreSQL:
 export CLASSPATH=../lib/postgresql-8.4-702.jdbc4.jar:$CLASSPATH 
 ./capture-schema -username ejbca -password ejbca -dburl jdbc:postgresql://127.0.0.1/ejbca -driver org.postgresql.Driver -out ejbca-ejb
 
+Example for Oracle:
+export CLASSPATH=../lib/ojdbc14.jar:$CLASSPATH
+capture-schema -username ejbca -password ejbca -schemaname EJBCA -dburl jdbc:oracle:thin:@127.0.0.1:1521:xe -driver oracle.jdbc.driver.OracleDriver -out ejbca-ejb
 Copy the generated ejbca-ejb.dbcschema file to src/deploy/sun/schema/<database>
 
 Weblogic
