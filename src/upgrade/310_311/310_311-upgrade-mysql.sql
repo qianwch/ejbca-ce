@@ -3,6 +3,8 @@
 ALTER TABLE HardTokenProfileData MODIFY id int(11) DEFAULT 0;
 
 -- MySQL specific: CLOBs are mapped to "longtext" and not "text". According to http://opensource.atlassian.com/projects/hibernate/browse/HHH-2669 there is no performance gain from using "text".
+ALTER TABLE ApprovalData MODIFY approvaldata longtext DEFAULT NULL;
+ALTER TABLE ApprovalData MODIFY requestdata longtext DEFAULT NULL;
 ALTER TABLE CAData MODIFY data longtext DEFAULT NULL;
 ALTER TABLE PublisherData MODIFY data longtext DEFAULT NULL;
 ALTER TABLE PublisherQueueData MODIFY volatileData longtext DEFAULT NULL;
@@ -14,6 +16,10 @@ ALTER TABLE ServiceData MODIFY data longtext DEFAULT NULL;
 -- ServiceData gets two new columns
 ALTER TABLE ServiceData ADD nextRunTimeStamp bigint(20) NOT NULL DEFAULT '0';
 ALTER TABLE ServiceData ADD runTimeStamp bigint(20) NOT NULL DEFAULT '0';
+
+-- KeyRecoveryData had two nonstandard lengths for regular fields in the CMP mapping on JBoss
+ALTER TABLE KeyRecoveryData MODIFY certSN varchar(250) binary NOT NULL DEFAULT '';
+ALTER TABLE KeyRecoveryData MODIFY issuerDN varchar(250) binary NOT NULL DEFAULT '';
 
 -- Add rowVersion column to all tables that will exist in EJBCA 4.0
 ALTER TABLE AccessRulesData ADD COLUMN rowVersion int(11) DEFAULT 0; 
