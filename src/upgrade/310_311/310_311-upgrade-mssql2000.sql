@@ -1,7 +1,7 @@
 
 -- ServiceData gets two new columns
--- ALTER TABLE ServiceData ADD nextRunTimeStamp BIGINT NOT NULL DEFAULT '0';
--- ALTER TABLE ServiceData ADD runTimeStamp BIGINT NOT NULL DEFAULT '0';
+ALTER TABLE ServiceData ADD nextRunTimeStamp BIGINT NOT NULL DEFAULT '0';
+ALTER TABLE ServiceData ADD runTimeStamp BIGINT NOT NULL DEFAULT '0';
 
 -- Add rowVersion column to all tables
 ALTER TABLE AccessRulesData ADD rowVersion INTEGER NOT NULL DEFAULT '0';
