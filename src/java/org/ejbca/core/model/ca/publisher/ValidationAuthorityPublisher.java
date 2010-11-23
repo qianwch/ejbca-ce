@@ -46,9 +46,9 @@ import org.ejbca.util.JDBCUtil.Preparer;
  * @version $Id$
  *
  */
-public class VerificationAuthorityPublisher extends BasePublisher implements ICustomPublisher {
+public class ValidationAuthorityPublisher extends BasePublisher implements ICustomPublisher {
 
-	private static final Logger log = Logger.getLogger(VerificationAuthorityPublisher.class);
+	private static final Logger log = Logger.getLogger(ValidationAuthorityPublisher.class);
 	/** Internal localization of logs and errors */
 	private static final InternalResources intres = InternalResources.getInstance();
 
@@ -70,7 +70,7 @@ public class VerificationAuthorityPublisher extends BasePublisher implements ICu
 	/**
 	 *
 	 */
-	public VerificationAuthorityPublisher() {
+	public ValidationAuthorityPublisher() {
 		super();
 		this.data.put(TYPE, new Integer(TYPE_VAPUBLISHER));
 		setDataSource(DEFAULT_DATASOURCE);
@@ -380,7 +380,7 @@ public class VerificationAuthorityPublisher extends BasePublisher implements ICu
 	}
 
 	public Object clone() throws CloneNotSupportedException {
-		VerificationAuthorityPublisher clone = new VerificationAuthorityPublisher();
+		ValidationAuthorityPublisher clone = new ValidationAuthorityPublisher();
 		HashMap clonedata = (HashMap) clone.saveData();
 
 		Iterator i = (this.data.keySet()).iterator();

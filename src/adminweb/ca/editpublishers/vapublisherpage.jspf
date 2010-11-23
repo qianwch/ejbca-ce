@@ -1,10 +1,10 @@
 <%               
 
-   VerificationAuthorityPublisher vapublisher = (VerificationAuthorityPublisher) publisherhelper.publisherdata;
+	ValidationAuthorityPublisher vapublisher = (ValidationAuthorityPublisher) publisherhelper.publisherdata;
 
 %>
    
-<%@page import="org.ejbca.core.model.ca.publisher.VerificationAuthorityPublisher"%>
+<%@page import="org.ejbca.core.model.ca.publisher.ValidationAuthorityPublisher"%>
     <tr id="Row<%=row++%2%>"> 
       <td width="50%" valign="top" align="right"> 
          <strong><%= ejbcawebbean.getText("VASETTINGS") %> :</strong>

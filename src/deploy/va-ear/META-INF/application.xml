@@ -5,8 +5,8 @@
 	"http://java.sun.com/dtd/application_1_3.dtd">
 
 <application>
-    <display-name>Verification Authority</display-name>
-    <description>applications in the Verification Authority.</description>
+    <display-name>Validation Authority</display-name>
+    <description>applications in the Validation Authority.</description>
     <module>
         <ejb>ejbca-ejb.jar</ejb>
     </module>

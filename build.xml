@@ -104,7 +104,7 @@
             <include name="org/ejbca/core/protocol/ocsp/OCSPUnidExtension.java" />
             <include name="org/ejbca/ui/web/pub/HealthCheckServlet.java" />
             <include name="org/ejbca/ui/web/pub/cluster/TextResponse.java" />
-            <include name="org/ejbca/ui/web/pub/cluster/VerificationAuthorityHealthCheck.java" />
+            <include name="org/ejbca/ui/web/pub/cluster/ValidationAuthorityHealthCheck.java" />
             <include name="org/ejbca/core/protocol/ws/client/ejbcawsracli.java" />
             <include name="org/ejbca/core/protocol/ws/client/gen/*.java" />
             <include name="org/ejbca/util/provider/TrustManagerFactoryImpl.java" />

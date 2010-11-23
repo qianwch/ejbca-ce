@@ -23,7 +23,7 @@ import org.ejbca.core.model.authorization.AuthorizationDeniedException;
 import org.ejbca.core.model.ca.publisher.ActiveDirectoryPublisher;
 import org.ejbca.core.model.ca.publisher.BasePublisher;
 import org.ejbca.core.model.ca.publisher.CustomPublisherContainer;
-import org.ejbca.core.model.ca.publisher.VerificationAuthorityPublisher;
+import org.ejbca.core.model.ca.publisher.ValidationAuthorityPublisher;
 import org.ejbca.core.model.ca.publisher.LdapPublisher;
 import org.ejbca.core.model.ca.publisher.LdapSearchPublisher;
 import org.ejbca.core.model.ca.publisher.PublisherConnectionException;
@@ -259,8 +259,8 @@ public class EditPublisherJSPHelper implements java.io.Serializable {
                                 if(tokentype == ActiveDirectoryPublisher.TYPE_ADPUBLISHER) {
                                     publisherdata = new ActiveDirectoryPublisher();
                                 }
-                                if(tokentype == VerificationAuthorityPublisher.TYPE_VAPUBLISHER) {
-                                    publisherdata = new VerificationAuthorityPublisher();
+                                if(tokentype == ValidationAuthorityPublisher.TYPE_VAPUBLISHER) {
+                                    publisherdata = new ValidationAuthorityPublisher();
                                 }
                             }
                             // Save changes.
@@ -498,9 +498,9 @@ public class EditPublisherJSPHelper implements java.io.Serializable {
                                 }
                             }
                             
-                            // Get parameters for VerificationAuthorityPublisher
-                            if(publisherdata instanceof VerificationAuthorityPublisher){
-                            	final VerificationAuthorityPublisher vaPub = (VerificationAuthorityPublisher) publisherdata;
+                            // Get parameters for ValidationAuthorityPublisher
+                            if(publisherdata instanceof ValidationAuthorityPublisher){
+                            	final ValidationAuthorityPublisher vaPub = (ValidationAuthorityPublisher) publisherdata;
                             	
                             	value = request.getParameter(TEXTFIELD_VA_DATASOURCE);
                             	if(value != null){
@@ -559,8 +559,8 @@ public class EditPublisherJSPHelper implements java.io.Serializable {
                     case ActiveDirectoryPublisher.TYPE_ADPUBLISHER :
                         publisherdata =  new ActiveDirectoryPublisher();
                         break;
-                    case VerificationAuthorityPublisher.TYPE_VAPUBLISHER:
-                        publisherdata =  new VerificationAuthorityPublisher();
+                    case ValidationAuthorityPublisher.TYPE_VAPUBLISHER:
+                        publisherdata =  new ValidationAuthorityPublisher();
                         break;
                     }
                 }
@@ -587,8 +587,8 @@ public class EditPublisherJSPHelper implements java.io.Serializable {
         if(publisherdata instanceof ActiveDirectoryPublisher) {
             retval = ActiveDirectoryPublisher.TYPE_ADPUBLISHER;
         }
-        if(publisherdata instanceof VerificationAuthorityPublisher) {
-            retval = VerificationAuthorityPublisher.TYPE_VAPUBLISHER;
+        if(publisherdata instanceof ValidationAuthorityPublisher) {
+            retval = ValidationAuthorityPublisher.TYPE_VAPUBLISHER;
         }
         return retval;
     }

@@ -1,5 +1,5 @@
 # ------------ OCSP responder configuration ---------------------
-# These configurations are used both for EJBCA and the Verification Authority (VA).
+# These configurations are used both for EJBCA and the Validation Authority (VA).
 
 # OCSP servlet enabled. If false there will be no servlet.
 # Default is true.

@@ -33,8 +33,8 @@ import org.ejbca.util.TestTools;
  * @author Lars Silven PrimeKey
  * @version $Id$
  */
-class VerificationAuthorityTst {
-	private final static Logger log = Logger.getLogger(VerificationAuthorityTst.class);
+class ValidationAuthorityTst {
+	private final static Logger log = Logger.getLogger(ValidationAuthorityTst.class);
 	private final static Admin admin =  new Admin(Admin.TYPE_INTERNALUSER);
 	static String testCRLStore(CA ca) throws Exception {
 		String problems = new String();

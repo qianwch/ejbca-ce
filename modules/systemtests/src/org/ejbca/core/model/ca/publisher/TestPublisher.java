@@ -477,7 +477,7 @@ public class TestPublisher extends TestCase {
         ret = false;
 		try {
             CustomPublisherContainer publisher = new CustomPublisherContainer();
-            publisher.setClassPath(VerificationAuthorityPublisher.class.getName());
+            publisher.setClassPath(ValidationAuthorityPublisher.class.getName());
 		    // We use the default EjbcaDS datasource here, because it probably exists during our junit test run
             publisher.setPropertyData("dataSource java:/EjbcaDS");
             publisher.setDescription("Used in Junit Test, Remove this one");
@@ -507,7 +507,7 @@ public class TestPublisher extends TestCase {
 
         ret = false;
 		try {
-			VerificationAuthorityPublisher publisher = new VerificationAuthorityPublisher();
+			ValidationAuthorityPublisher publisher = new ValidationAuthorityPublisher();
 		    // We use the default EjbcaDS datasource here, because it probably exists during our junit test run
             publisher.setDataSource("java:/EjbcaDS");
             publisher.setDescription("Used in Junit Test, Remove this one");

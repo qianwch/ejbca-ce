@@ -8,7 +8,7 @@
   int[] publishertypes = {LdapPublisher.TYPE_LDAPPUBLISHER, 
                           LdapSearchPublisher.TYPE_LDAPSEARCHPUBLISHER,
                           ActiveDirectoryPublisher.TYPE_ADPUBLISHER,
-                          VerificationAuthorityPublisher.TYPE_VAPUBLISHER,
+                          ValidationAuthorityPublisher.TYPE_VAPUBLISHER,
                           CustomPublisherContainer.TYPE_CUSTOMPUBLISHERCONTAINER};
   String[] publishertypetexts = {"LDAPPUBLISHER", "LDAPSEARCHPUBLISHER", "ACTIVEDIRECTORYPUBLISHER", "VAPUBLISHER", "CUSTOMPUBLISHER"};
 
@@ -105,7 +105,7 @@ function checkallfields(){
       }
     
  <% } %>
- <% if( publisherdata instanceof VerificationAuthorityPublisher){ %>
+ <% if( publisherdata instanceof ValidationAuthorityPublisher){ %>
 
 	if(document.editpublisher.<%=EditPublisherJSPHelper.TEXTFIELD_VA_DATASOURCE%>.value == ""){
       alert("<%= ejbcawebbean.getText("YOUAREREQUIRED", true) + " " + ejbcawebbean.getText("DATASOURCE", true)%>");
@@ -217,7 +217,7 @@ function checkallfields(){
       if(publisherhelper.publisherdata instanceof ActiveDirectoryPublisher){%>
          <%@ include file="adpublisherpage.jspf" %> 
     <% }
-       if(publisherhelper.publisherdata instanceof VerificationAuthorityPublisher){%>
+       if(publisherhelper.publisherdata instanceof ValidationAuthorityPublisher){%>
          <%@ include file="vapublisherpage.jspf" %>
     <% }
        if(publisherhelper.publisherdata instanceof CustomPublisherContainer){%>

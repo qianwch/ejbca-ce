@@ -1,7 +1,7 @@
-#------------------- Verification Authority(VA) publisher db configuration------------------------------
+#------------------- Validation Authority(VA) publisher db configuration------------------------------
 # All these "ocsp-database.*" properties is used to configure the connection to the database that the
-# VerificationAuthorityPublisher will publish to. Please read the VA web-docs for information.
-# If no VerificationAuthorityPublisher will be used these properties should not be configured.
+# ValidationAuthorityPublisher will publish to. Please read the VA web-docs for information.
+# If no ValidationAuthorityPublisher will be used these properties should not be configured.
 # Note that the VA responder itself uses the configuration options database.*.
 #
 # Configure these options if you are configuring EJBCA that will publish certificates to a VA.

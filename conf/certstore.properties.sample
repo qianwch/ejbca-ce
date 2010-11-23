@@ -1,5 +1,5 @@
 # ------------ Certificate store configuration ---------------------
-# These configurations are used both for EJBCA and the Verification Authority (VA).
+# These configurations are used both for EJBCA and the Validation Authority (VA).
 
 # Certificate store servlet enabled. If false there will be no servlet.
 # Default is false.

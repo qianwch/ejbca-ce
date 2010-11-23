@@ -487,7 +487,7 @@ public class TestCreateCRLSession extends TestCase {
     		return;
     	}
         log.trace(">test08TestCRLStore()");
-    	final String result = VerificationAuthorityTst.testCRLStore(ca);
+    	final String result = ValidationAuthorityTst.testCRLStore(ca);
     	assertNull(result, result);
         log.trace("<test08TestCRLStore()");
     }

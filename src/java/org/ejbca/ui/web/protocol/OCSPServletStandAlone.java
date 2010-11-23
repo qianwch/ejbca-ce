@@ -29,7 +29,7 @@ import org.ejbca.core.protocol.certificatestore.CertificateCacheFactory;
 import org.ejbca.core.protocol.certificatestore.ICertificateCache;
 import org.ejbca.core.protocol.ocsp.OCSPData;
 import org.ejbca.core.protocol.ocsp.standalonesession.StandAloneSessionFactory;
-import org.ejbca.ui.web.pub.cluster.VerificationAuthorityHealthCheck;
+import org.ejbca.ui.web.pub.cluster.ValidationAuthorityHealthCheck;
 
 /** 
  * Servlet implementing server side of the Online Certificate Status Protocol (OCSP)
@@ -111,7 +111,7 @@ public class OCSPServletStandAlone extends OCSPServletBase implements IHealtChec
 
         this.session = StandAloneSessionFactory.getInstance(this.data);
         // session must be created before health check could be done
-        VerificationAuthorityHealthCheck.setHealtChecker(this);
+        ValidationAuthorityHealthCheck.setHealtChecker(this);
     }
     
     /**

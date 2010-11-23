@@ -1,4 +1,4 @@
-#------------------- Verification Authority (VA) Healthcheck settings -------------
+#------------------- Validation Authority (VA) Healthcheck settings -------------
 # Specifies the basic settings of the VA healthcheck
 # (i.e. health check servlet that is running on the VA).
 # for more detailed configuration edit the file src/publicweb/healthcheck/WEB-INF/web.xml

@@ -35,9 +35,9 @@ import org.ejbca.ui.web.protocol.IHealtChecker;
  * @version $Id$
  */
 
-public class VerificationAuthorityHealthCheck extends CommonHealthCheck {
+public class ValidationAuthorityHealthCheck extends CommonHealthCheck {
 	
-	private static final Logger log = Logger.getLogger(VerificationAuthorityHealthCheck.class);
+	private static final Logger log = Logger.getLogger(ValidationAuthorityHealthCheck.class);
 	private static IHealtChecker healthChecker;
 
 	private boolean doSignTest = OcspConfiguration.getHealthCheckSignTest();

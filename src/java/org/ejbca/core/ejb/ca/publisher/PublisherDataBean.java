@@ -18,7 +18,7 @@ import org.ejbca.core.ejb.BaseEntityBean;
 import org.ejbca.core.model.ca.publisher.ActiveDirectoryPublisher;
 import org.ejbca.core.model.ca.publisher.BasePublisher;
 import org.ejbca.core.model.ca.publisher.CustomPublisherContainer;
-import org.ejbca.core.model.ca.publisher.VerificationAuthorityPublisher;
+import org.ejbca.core.model.ca.publisher.ValidationAuthorityPublisher;
 import org.ejbca.core.model.ca.publisher.LdapPublisher;
 import org.ejbca.core.model.ca.publisher.LdapSearchPublisher;
 import org.ejbca.util.Base64GetHashMap;
@@ -178,8 +178,8 @@ public abstract class PublisherDataBean extends BaseEntityBean {
                 case CustomPublisherContainer.TYPE_CUSTOMPUBLISHERCONTAINER:
                     publisher = new CustomPublisherContainer();
                     break;
-                case VerificationAuthorityPublisher.TYPE_VAPUBLISHER:
-                    publisher = new VerificationAuthorityPublisher();
+                case ValidationAuthorityPublisher.TYPE_VAPUBLISHER:
+                    publisher = new ValidationAuthorityPublisher();
                     break;
             }
 
