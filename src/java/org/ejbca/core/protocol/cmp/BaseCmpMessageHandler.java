@@ -94,20 +94,20 @@ public class BaseCmpMessageHandler {
 	}
 
 	/** @return the end entity profile id to use for a request based on the current configuration and keyId. */
-	protected int getUsedEndEntityProfileId(String keyId) throws RemoteException, NotFoundException {
+	protected int getUsedEndEntityProfileId(final String keyId) throws RemoteException, NotFoundException {
 		int ret = 0;
 		String endEntityProfile = CmpConfiguration.getRAEndEntityProfile();
 		if (StringUtils.equals(endEntityProfile, "KeyId")) {
 			if (LOG.isDebugEnabled()) {
 				LOG.debug("Using End Entity Profile with same name as KeyId in request: "+keyId);
 			}
-			ret = rasession.getEndEntityProfileId(admin, keyId);
-		} else {
-			ret = rasession.getEndEntityProfileId(admin, endEntityProfile);
+			endEntityProfile = keyId;
 		}
+		ret = rasession.getEndEntityProfileId(admin, endEntityProfile);
 		if (ret == 0) {
-			LOG.info("No end entity profile found matching keyId: "+keyId);
-			throw new NotFoundException("End entity profile with name '"+keyId+"' not found.");
+			final String msg = "No end entity profile found with name: "+endEntityProfile;
+			LOG.info(msg);
+			throw new NotFoundException(msg);
 		}
 		return ret;
 	}
@@ -155,20 +155,20 @@ public class BaseCmpMessageHandler {
 	}
 
 	/** @return the certificate profile to use for a request based on the current configuration and keyId. */
-	protected int getUsedCertProfileId(String keyId) throws NotFoundException, RemoteException {
+	protected int getUsedCertProfileId(final String keyId) throws NotFoundException, RemoteException {
 		int ret = 0;
-		final String certificateProfile = CmpConfiguration.getRACertificateProfile();
+		String certificateProfile = CmpConfiguration.getRACertificateProfile();
 		if (StringUtils.equals(certificateProfile, "KeyId")) {
 			if (LOG.isDebugEnabled()) {
 				LOG.debug("Using Certificate Profile with same name as KeyId in request: " + keyId);
 			}
-			ret = storesession.getCertificateProfileId(admin, keyId);
-		} else {
-			ret = storesession.getCertificateProfileId(admin, certificateProfile);					
-		}
+			certificateProfile = keyId;
+		} 
+		ret = storesession.getCertificateProfileId(admin, certificateProfile);					
 		if (ret == 0) {
-			LOG.info("No certificate profile found matching keyId: "+keyId);
-			throw new NotFoundException("Certificate profile with name '"+keyId+"' not found.");
+			final String msg = "No certificate profile found with name: "+certificateProfile;
+			LOG.info(msg);
+			throw new NotFoundException(msg);
 		}
 		return ret;
 	}
