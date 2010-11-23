@@ -379,7 +379,6 @@ public class CmpTestCase extends TestCase {
         final String resource = resourceCmp;
         final String urlString = getProperty("httpCmpProxyURL", httpReqPath + '/' + resource);
         log.info("http URL: "+urlString);
-        System.out.println("http URL: "+urlString);
         URL url = new URL(urlString);
         final HttpURLConnection con = (HttpURLConnection)url.openConnection();
         con.setDoOutput(true);
