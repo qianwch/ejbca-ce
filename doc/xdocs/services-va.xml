@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<document>
+  <properties>
+    <title>VA Services</title>
+  </properties>
+<body>
+<section name="VA Services">
+<p>
+The validation authority (VA) part of EJBCA provides services used to validate a certificate:
+</p>
+<subsection name="CA certificate store">
+<p>
+ is used to get a certificate chain to the root CA in order to verify that the certificate is signed by a trusted CA.
+</p>
+</subsection>
+<subsection name="CRL store">
+<p>
+ is used to get a signed list of revoked certificates for a CA.
+</p>
+</subsection>
+<subsection name="OCSP responder">
+<p>
+Is used to ask if a certificate is revoked or not.
+See <a href="architecture-ocsp.html">OCSP Architecture</a>
+</p>
+</subsection>
+</section>
+</body>
+
+</document>
+

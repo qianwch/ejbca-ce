@@ -93,6 +93,7 @@ public abstract class StoreServletBase extends HttpServlet {
 		writer.println("<head>");
 		writer.println("<title>"+getTitle()+"</title>");
 		writer.println("</head>");
+		writer.println("<body>");
 
 		writer.println("<table border=\"0\">");
 		writer.println("<tr>");
