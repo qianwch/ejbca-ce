@@ -15,85 +15,18 @@
   external OCSP responder. 
   </p><p>If you are not using the responder with EJBCA you can skip the section about building and configuring EJBCA.
   </p>
-  <subsection name="Building and configuring EJBCA">
-  <p>
-EJBCA should be configured as for any other installation but you must also set all preferences
-(ocsp-database.*) of the responder database in conf/ocsp.properties. 
-The responder database is the master database of all the responders, and it is there that EJBCA will 
-publish certificates when they are issued or revoked. 
-</p><p>
-After this configuration EJBCA is built and deployed as usual with the command 'ant deploy', as described in the EJBCA installation guide.
-</p><p>
-The deploy command sets up a datasource <b>java:/OcspDS</b> in JBoss, if you use another application server 
-you must set up this datasource manually. It should be a datasource that is not involved in transactions
-(a <i>no-tx-datasource</i> in JBoss), and is should have autocommit (should be default in JBoss).
-</p><p>
-When EJBCA has been started you have to add a new publisher. As a superadministrator you add this publisher
-on the "Edit Publishers" page in the admin GUI. Use publisher type "External OCSP Publisher". 
-</p>
-<p>
-External OCSP Settings:
-</p>
-<ul>
-<li>'Data Source' - is the database of the external OCSP where this publisher will publish certificates. Use java:/OcspDS if ocsp-datasource.jndi-name=OcspDS.</li>
-<li>'Store certificate on responder' - stores the complete certificate on the responder. If this is unchecked only the information needed to answer OCSP requests are stored, but not the certificate itself.
-There are good reasons not to publish the whole certificate. It is large, thus making it a bit of heavy insert and it may contain sensitive information. 
-On the other hand some OCSP Extension plug-ins may not work without the certificate. A regular OCSP responder works fine without the certificate.
-</li>
-</ul>
-<p>
-All certificate profiles for certificates that should be available to the OCSP responder should
-have a reference to this publisher. To configure this you must be a superadministrator.
-</p>
-<p>
-When all settings above have been done then all created certificates issued with a certificate
-profile that has the ValidationAuthorityPublisher as publisher should be published in the responder
-database as well as in the EJBCA database. 
-When a certificate is revoked it will be revoked in
-the responder database as well.
-If the publishing is not working it is important to notice this and synchronize the databases again, 
-see 'Error publishing to OCSP database' below.
-  </p>
-  </subsection>
-
   <subsection name="Building and configuring the Responder">
-  <p>
-The responder is configured using the same configuration files as EJBCA. 
-Only the preferences ocsp.*, httpsserver.*, datasource.* and database.* are relevant to the responder but you may keep conf/*.properties
-from the EJBCA setup since definitions of other properties does no harm.<br/>
-</p>
-<note> 
-Note that the External OCSP responder uses the configuration options database.* and not the ocsp-database.* options to access the OCSP responder database.
-</note>
+<subsubsection name="General configuration">
 <p>
-Please read description of the configuration properties in conf/ocsp.properties.sample, conf/database.properties.sample and perhaps 
-conf/web.properties.sample (if ssl or different ports should be configured).
-</p>
-<p>
+You should first read the <a href="installation-va.html">Standalone VA installation</a> that specifies the general configuration for a VA.
+</p><p>
 All options for the OCSP responders OCSP behavior is set in conf/ocsp.properties. All options are documented in this file.
 <br/>
 The ocsp.keys.* preferences (that has no meaning for EJBCA) has also to be configured.<br/> 
 ocsp.usecasigningcert should be set to false.<br/> 
 If card keys (see below) should be used then the property 'ocspHardTokenClasses' must be set to the corresponding directory of PrimeCard.
-</p><p>
-The responder is then built and deployed with:
-</p><source>
-ant ocsp-deploy
-</source>
-<p>
-on the external OCSP responder.
-</p>
-
-<subsubsection name="Responder database">
-<p>
-The external OCSP responder database (that OcspDS in EJBCA and EjbcaDS in OCSP responder) points to only have to contain the CertificateData table. This table is 
-created automatically by JBoss when it starts on the external OCSP responder.
-</p><p>
-The database connection settings on the external OCSP responder is configured and deployed in JBoss in the file 
-JBOSS_HOME/server/default/deploy/ejbca-ds.xml.
 </p>
 </subsubsection>
-
 <subsubsection name="Responder signing keys">
 <p>
 The keys used to sign the OCSP response could either be stored on as a PKCS#12 file in the file system of the host, 

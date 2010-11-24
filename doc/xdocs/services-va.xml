@@ -50,8 +50,11 @@ To be able to specify that a delta CRL should be fetched an extra parameter 'del
 Example:
 </p>
 <source>
-http://milton.vpn.primekey.se:8080/crls/search.cgi?sKIDHash=X4NX3VF9u/tzkkGZU6M6OEffhFc&amp;delta=
+http://myhost:8080/crls/search.cgi?sKIDHash=X4NX3VF9u/tzkkGZU6M6OEffhFc&amp;delta=
 </source>
+<p>
+If you want to implement your own application accessing the VA you could look at the ejbca junit test class org.ejbca.ui.web.protocol.TestCertStoreServlet
+</p>
 </section>
 
 </body>

@@ -34,7 +34,7 @@
 
             <menu name="Validation Authority (VA)">
                 <item name="VA Services"		  href="/services-va.html"/>
-                <item name="VA Installation"	  href="/installation-va.html"/>
+                <item name="Standalone VA Installation"	  href="/installation-va.html"/>
             </menu>
 
             <menu name="EJBCA OCSP Docs">
