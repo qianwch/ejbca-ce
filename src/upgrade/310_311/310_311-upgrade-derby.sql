@@ -30,6 +30,14 @@ ALTER TABLE PublisherData ADD data CLOB DEFAULT NULL;
 UPDATE PublisherData SET data=tmpdata;
 ALTER TABLE PublisherData DROP COLUMN tmpdata;
 
+--  PublisherQueueData.volatileData is currently LONG VARCHAR, but is defined as CLOB on other databases
+ALTER TABLE PublisherQueueData ADD tmpdata CLOB DEFAULT NULL;
+UPDATE PublisherQueueData SET tmpdata=volatileData;
+ALTER TABLE PublisherQueueData DROP COLUMN volatileData;
+ALTER TABLE PublisherQueueData ADD volatileData CLOB DEFAULT NULL;
+UPDATE PublisherQueueData SET volatileData=tmpdata;
+ALTER TABLE PublisherQueueData DROP COLUMN tmpdata;
+
 --  ServiceData.data is currently LONG VARCHAR, but is defined as CLOB on other databases
 ALTER TABLE ServiceData ADD tmpdata CLOB DEFAULT NULL;
 UPDATE ServiceData SET tmpdata=data;
