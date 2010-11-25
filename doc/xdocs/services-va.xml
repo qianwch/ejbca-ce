@@ -54,6 +54,10 @@ Example:
 http://myhost:8080/crls/search.cgi?sKIDHash=X4NX3VF9u/tzkkGZU6M6OEffhFc&amp;delta=
 </source>
 <p>
+When searching for certificates you can use iHash, sHash and sKIDHash. iHash is the ASN1 encoded DN of the issuer in a certificate. If you search with it you get all certificates that has the same issuer, except for the root certificate.
+You do not find a root certificate if you search with the iHash of the root. It has been assumed that sHash should be used when searching for a root.
+</p>
+<p>
 If you want to implement your own application accessing the VA you could look at the ejbca junit test class org.ejbca.ui.web.protocol.TestCertStoreServlet
 </p>
 </section>
