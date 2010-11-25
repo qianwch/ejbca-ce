@@ -30,6 +30,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.ejbca.core.protocol.certificatestore.HashID;
 import org.ejbca.core.protocol.certificatestore.ICertStore;
+import org.ejbca.util.CertTools;
 
 /**
  * @author Lars Silven PrimeKey
@@ -104,12 +105,18 @@ class CertStoreServletBase extends StoreServletBase {
 		try {
 			resp.setContentType(mp.getContentType());
 			for( int i=0; i<certs.length; i++ ) {
+				final String filename = "cert" + name + '-' + i + ".der";
+				if (log.isDebugEnabled()) {
+					log.debug("Returning certificate with issuerDN '"+CertTools.getIssuerDN(certs[i])+"' and subjectDN '"+CertTools.getSubjectDN(certs[i])+"'. Filename="+filename);
+				}
 				final InternetHeaders headers = new InternetHeaders();
 				headers.addHeader("Content-type", "application/pkix-cert");
-				headers.addHeader("Content-disposition", "attachment; filename=cert" + name + '-' + i + ".der");
+				headers.addHeader("Content-disposition", "attachment; filename="+filename);
 				mp.addBodyPart(new MimeBodyPart(headers,certs[i].getEncoded()));
 			}
-			log.trace("content type: "+mp.getContentType());
+			if (log.isTraceEnabled()) {
+				log.trace("content type: "+mp.getContentType());				
+			}
 			mp.writeTo(resp.getOutputStream());
 			resp.flushBuffer();
 		} catch (CertificateEncodingException e) {
