@@ -19,7 +19,14 @@ You can find them under src/upgrade/310_311, with an individual sql file for you
 Note 2:
 The external OCSP responder module have many added features in this release. This has caused some configuration file changes. See VA Installation documentation.
 Specifically the CA Publisher datasource configuration has moved from ocsp.properties to va-publisher.properties, a much better location. 
-Health check settings has moved from ocsp.properties to va.properties. 
+Health check settings has moved from ocsp.properties to va.properties.
+
+Note 4:
+the database schema has changed. If you run an external OCSP responder the database schema on that must also be updated for the VA/OCSP publisher to work.
+The two new columns rowVersion and rowProtection does not have to be set to any specific value. 
+
+Note 4:
+The error message when publishing fails has changed from "EXTERNAL OCSP ERROR" to "Validation Authority ERROR". If you have scripts monitoring this, they must be updated. 
 
 EJBCA 3.10.6
 -----------

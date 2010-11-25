@@ -86,20 +86,20 @@ JBOSS_HOME/server/default/deploy/ejbca-ds.xml.
 
 <section name="Error handling">
 <p>
-If there is an error publishing to the OCSP database, the OCSP responder will be out of sync with the CA.
+If there is an error publishing to the VA database, the VA/OCSP Responder will be out of sync with the CA.
 It is very important to re-synchronize the databases in that case.
 </p>
 <p>
-In case of failure to publish to the OCSP database the following error message will appear in the server.log:
+In case of failure to publish to the VA database the following error message will appear in the server.log:
 </p>
 <source>
-EXTERNAL OCSP ERROR, publishing is not working
+Validation Authority ERROR, publishing is not working
 </source>
 <p>
 This will be followed by more details of the error.
 </p><p>
 The log must be monitored to discover such a fault and if such a fault is discovered an alarm should notify 
-the operator that he has to fix whatever is wrong and then synchronise the OCSP database with the EJBCA 
+the operator that he has to fix whatever is wrong and then synchronise the VA database with the EJBCA 
 database (see 'Synchronise the database of the responder').
   </p>
   
