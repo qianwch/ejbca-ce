@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.apache.log4j.Logger;
 import org.ejbca.core.model.ca.store.CRLInfo;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.protocol.certificatestore.HashID;
@@ -34,6 +35,8 @@ import org.ejbca.util.CertTools;
  *
  */
 class CRLCache implements ICRLCache {
+	private static final Logger log = Logger.getLogger(CRLCache.class);
+	
 	private final ICRLStore crlStore;
 	private final ICertificateCache certCache;
 	final private Map<Integer, CRLEntity> crls = new HashMap<Integer, CRLEntity>();
@@ -92,15 +95,24 @@ class CRLCache implements ICRLCache {
 		try {
 			final CRLInfo crlInfo = this.crlStore.getLastCRLInfo(this.admin, issuerDN, isDelta);
 			if ( crlInfo==null ) {
+				if (log.isDebugEnabled()) {
+					log.debug("No CRL found, returning null.");
+				}
 				return null;
 			}
 			final Map<Integer, CRLEntity> usedCrls = isDelta ? this.deltaCrls : this.crls;
 			final CRLEntity cachedCRL = usedCrls.get(id.key);
 			if ( cachedCRL!=null && !crlInfo.getCreateDate().after(cachedCRL.crlInfo.getCreateDate()) ) {
+				if (log.isDebugEnabled()) {
+					log.debug("Retrieved CRL (from cache) with issuerDN '"+issuerDN+"', with CRL number "+crlInfo.getLastCRLNumber());
+				}
 				return cachedCRL.encoded;
 			}
 			final CRLEntity entry = new CRLEntity( crlInfo, this.crlStore.getLastCRL(this.admin, issuerDN, isDelta) );
 			usedCrls.put(id.key, entry);
+			if (log.isDebugEnabled()) {
+				log.debug("Retrieved CRL (not from cache) with issuerDN '"+issuerDN+"', with CRL number "+crlInfo.getLastCRLNumber());
+			}
 			return entry.encoded;
 		} finally {
 			this.rebuildlock.unlock();

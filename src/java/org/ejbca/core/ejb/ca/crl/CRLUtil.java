@@ -69,14 +69,23 @@ class CRLUtil {
 			} catch (FinderException e) {
 				crl = null;
 			}
-			log.trace("<getLastCRL()");
 			if (crl == null) {
 				String msg = intres.getLocalizedMessage("store.errorgetcrl", issuerdn, maxnumber);
 				adapter.log(admin, admin.getCaId(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_ERROR_GETLASTCRL, msg);
+				if (log.isTraceEnabled()) {
+					log.trace("<getLastCRL()");
+				}
 				return null;
 			}
-			String msg = intres.getLocalizedMessage("store.getcrl", issuerdn, new Integer(maxnumber));
-			adapter.log(admin, crl.getIssuerDN().toString().hashCode(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_INFO_GETLASTCRL, msg);
+			if (log.isDebugEnabled()) {
+				final String msg = intres.getLocalizedMessage("store.getcrl", issuerdn, new Integer(maxnumber));
+				log.debug(msg);
+			}
+			// No need to log to audit log (database, file etc) when retrieving CRLs, it is not a security auditable event.
+			//adapter.log(admin, crl.getIssuerDN().toString().hashCode(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_INFO_GETLASTCRL, msg);
+			if (log.isTraceEnabled()) {
+				log.trace("<getLastCRL()");
+			}
 			return crl.getEncoded();
 		} catch (Exception e) {
 			String msg = intres.getLocalizedMessage("store.errorgetcrl", issuerdn);
@@ -117,7 +126,9 @@ class CRLUtil {
 			adapter.log(admin, issuerdn.hashCode(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_ERROR_GETLASTCRL, msg);
 			throw new EJBException(e);
 		} finally {
-			log.trace("<getLastCRLInfo()");
+			if (log.isTraceEnabled()) {
+				log.trace("<getLastCRLInfo()");
+			}
 		}
 	} //getLastCRLInfo
 	/**
@@ -145,7 +156,9 @@ class CRLUtil {
 			adapter.log(admin, fingerprint.hashCode(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_ERROR_GETLASTCRL, msg);
 			throw new EJBException(e);
 		} finally {
-			log.trace("<getCRLInfo()");
+			if (log.isTraceEnabled()) {
+				log.trace("<getCRLInfo()");
+			}
 		}
 	} //getCRLInfo
 	/**
