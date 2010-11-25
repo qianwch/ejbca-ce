@@ -180,66 +180,13 @@ To be able to define this set of keys that should be used there is a property ca
 </p>
 </subsection>
 </section>
+
 <section name="Error handling">
 <p>
 If there is an error publishing to the OCSP database, the OCSP responder will be out of sync with the CA.
-It is very important to re-synchronize the databases in that case.
+It is very important to re-synchronize the databases in that case. Read about error handling and synchronization of the database in the <a href="installation-va.html#Error%20handling">VA installation</a> guide.
 </p>
-<p>
-In case of failure to publish to the OCSP database the following error message will appear in the server.log:
-</p>
-<source>
-EXTERNAL OCSP ERROR, publishing is not working
-</source>
-<p>
-This will be followed by more details of the error.
-</p><p>
-The log must be monitored to discover such a fault and if such a fault is discovered an alarm should notify 
-the operator that he has to fix whatever is wrong and then synchronise the OCSP database with the EJBCA 
-database (see 'Synchronise the database of the responder').
-  </p>
   
-  <subsection name="Synchronise the database of the responder">
-  <p>
-At the beginning and after failure in publishing to the responder, the master database of the
-publishers must be synchronised with the CertificateData table of the database of EJBCA.
-</p><p>
-If there is a single certificate out of sync you can re-sync it by doing a 'Republish' from the admin-GUI.
-</p><p>
-The following procedure may be used to synchronise the database of EJBCA with the database of the
-responder:
-</p><p>
-<b>1.</b> Prevent any further issuing of new certificates and revocation of old certificates until the
-synchronisation is finished. This might be done by simply blocking the port to the adminweb.
-<br/>
-<b>2.</b> On the host of ejbca the following commands can be used to make the synchronisation:
-Run on the OCSP responder machine (as root user in mysql):
-</p>
-<source>
-mysqladmin drop ocsp_db;
-mysqladmin create ocsp_db;
-</source><p>
-This drops and re-creates the ocsp database to clean it. Replace ocsp_db with the database name of your database.
-<br/>
-Run on the CA server:
-</p>
-<source>
-mysqldump -u ejbca -p --compress ejbca_db CertificateData > CertificateData.dat
-mysqldump -u ejbca -p --compress ejbca_db TableProtectData > TableProtectData.dat
-cat CertificateData.dat | mysql -h ocspresponder ocsp_db
-cat TableProtectData.dat | mysql -h ocspresponder ocsp_db
-</source>
-<p>
-Replace your the username ejbca with your username.
-ocspresponder is the external OCSP responder host.
-</p>
-<note>
-Note, that this can usually not be done from a windows machine, to a Linux machine, because windows is not case sensitive.
-</note>
-<p>
-<b>3.</b> Check that the publishing is working before allowing issuing and revoking.
-  </p>
-  </subsection>
   </section>
 
   <section name="Running several responders">
