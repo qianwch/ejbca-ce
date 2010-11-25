@@ -66,7 +66,7 @@ public class ValidationAuthorityPublisher extends BasePublisher implements ICust
 	public static final boolean DEFAULT_PROTECT 			= false;
 
 	private final static String insertCertificateSQL = "INSERT INTO CertificateData (base64Cert,subjectDN,issuerDN,cAFingerprint,serialNumber,status,type,username,expireDate,revocationDate,revocationReason,tag,certificateProfileId,updateTime,fingerprint,rowVersion) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0)";
-	private final static String updateCertificateSQL = "UPDATE CertificateData SET base64Cert=?,subjectDN=?,issuerDN=?,cAFingerprint=?,serialNumber=?,status=?,type=?,username=?,expireDate=?,revocationDate=?,revocationReason=?,tag=?,certificateProfileId=?,updateTime=?, rowVersion=(rowVersion+1) WHERE fingerprint=?";
+	private final static String updateCertificateSQL = "UPDATE CertificateData SET base64Cert=?,subjectDN=?,issuerDN=?,cAFingerprint=?,serialNumber=?,status=?,type=?,username=?,expireDate=?,revocationDate=?,revocationReason=?,tag=?,certificateProfileId=?,updateTime=?,rowVersion=(rowVersion+1) WHERE fingerprint=?";
 	/**
 	 *
 	 */
@@ -309,16 +309,16 @@ public class ValidationAuthorityPublisher extends BasePublisher implements ICust
 			ps.setInt(3, this.cRLNumber);
 			ps.setInt(4, this.deltaCRLIndicator);
 			ps.setString(5, this.issuerDN);
-			ps.setString(6, this.fingerprint);
-			ps.setLong(7, this.thisUpdate);
-			ps.setLong(8, this.nextUpdate);
+			ps.setLong(6, this.thisUpdate);
+			ps.setLong(7, this.nextUpdate);
+			ps.setString(8, this.fingerprint);
 		}
 		public String getInfoString() {
 			return "Store CRL:, Issuer:"+this.issuerDN+", Number: "+this.cRLNumber+", Is delta: "+(this.deltaCRLIndicator>0);
 		}
 	}
-	private final static String insertCRLSQL = "INSERT INTO CRLData (base64Crl,cAFingerprint,cRLNumber,deltaCRLIndicator,issuerDN,fingerprint,thisUpdate,nextUpdate,rowVersion) VALUES (?,?,?,?,?,?,?,?,0)";
-	private final static String updateCRLSQL = "UPDATE CRLData SET base64Crl=?,cAFingerprint=?,cRLNumber=?,deltaCRLIndicator=?,issuerDN=?,thisUpdate=?,nextUpdate=?, rowVersion=(rowVersion+1) WHERE fingerprint=?";
+	private final static String insertCRLSQL = "INSERT INTO CRLData (base64Crl,cAFingerprint,cRLNumber,deltaCRLIndicator,issuerDN,thisUpdate,nextUpdate,fingerprint,rowVersion) VALUES (?,?,?,?,?,?,?,?,0)";
+	private final static String updateCRLSQL = "UPDATE CRLData SET base64Crl=?,cAFingerprint=?,cRLNumber=?,deltaCRLIndicator=?,issuerDN=?,thisUpdate=?,nextUpdate=?,rowVersion=(rowVersion+1) WHERE fingerprint=?";
 
 	/* (non-Javadoc)
 	 * @see org.ejbca.core.model.ca.publisher.BasePublisher#storeCRL(org.ejbca.core.model.log.Admin, byte[], java.lang.String, int)
