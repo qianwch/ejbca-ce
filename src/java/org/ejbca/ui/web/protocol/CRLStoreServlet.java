@@ -42,11 +42,6 @@ import org.ejbca.core.protocol.crlstore.CRLStore;
  *  home="org.ejbca.core.ejb.ca.crl.ICreateCRLSessionLocalHome"
  *  local="org.ejbca.core.ejb.ca.crl.ICreateCRLSessionLocal"
  *
- * @web.resource-ref
- *  name="${datasource.jndi-name-prefix}${datasource.jndi-name}"
- *  type="javax.sql.DataSource"
- *  auth="Container"
- *
  * @author Lars Silven PrimeKey
  * @version  $Id$
  */

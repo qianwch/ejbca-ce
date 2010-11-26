@@ -34,11 +34,6 @@ import org.ejbca.core.protocol.certificatestore.CertStore;
  *  home="org.ejbca.core.ejb.ca.store.ICertificateStoreSessionLocalHome"
  *  local="org.ejbca.core.ejb.ca.store.ICertificateStoreSessionLocal"
  *
- * @web.resource-ref
- *  name="${datasource.jndi-name-prefix}${datasource.jndi-name}"
- *  type="javax.sql.DataSource"
- *  auth="Container"
- *
  * @author Lars Silven PrimeKey
  * @version  $Id$
  */
