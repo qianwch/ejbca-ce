@@ -14,7 +14,6 @@ package org.ejbca.core.protocol.ws.client.gen;
 
 import java.io.Serializable;
 import java.math.BigInteger;
-import java.util.HashMap;
 import java.util.List;
 
 import org.ejbca.core.model.SecConst;
@@ -36,10 +35,16 @@ import org.ejbca.core.model.ra.UserDataConstants;
  *   user.setTokenType (UserDataVOWS.TOKEN_TYPE_USERGENERATED);
  *   user.setEndEntityProfileName ("EMPTY");
  *   user.setCertificateProfileName ("ENDUSER");
+ *   
+ *   List<ExtendedInformationWS> ei = new ArrayList<ExtendedInformationWS> ();
+ *   ei.add(new ExtendedInformationWS (ExtendedInformation.CUSTOMDATA+ExtendedInformation.CUSTOM_REVOCATIONREASON,
+ *                                     Integer.toString(RevokedCertInfo.REVOKATION_REASON_CERTIFICATEHOLD)));
+ *   ei.add(new ExtendedInformationWS (ExtendedInformation.SUBJECTDIRATTRIBUTES, "DATEOFBIRTH=19761123"));
+ *   user.setExtendedInformation(ei);
  *</pre>
  * 
  * @author Philip Vendil
- * @version $Id: UserDataVOWS.java 9298 2010-06-28 09:46:44Z primelars $
+ * @version $Id$
  */
 public class UserDataVOWS implements Serializable{
 	
