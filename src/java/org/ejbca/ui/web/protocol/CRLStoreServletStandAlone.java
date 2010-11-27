@@ -21,7 +21,7 @@ import org.ejbca.core.protocol.crlstore.CRLStoreStandAlone;
  * Servlet implementing server side of the Certificate Store.
  * For a detailed description see rfc4378.
  * 
- * @web.servlet name = "CertificateStore"
+ * @web.servlet name = "CRLStore"
  *              display-name = "CRLStoreServletStandAlone"
  *              description="Fetches certificates according to rfc4378"
  *              load-on-startup = "1"
@@ -41,11 +41,6 @@ import org.ejbca.core.protocol.crlstore.CRLStoreStandAlone;
  *  link="OnlyDataCRLSession"
  *  home="org.ejbca.core.ejb.ca.crl.IOnlyDataCRLSessionLocalHome"
  *  local="org.ejbca.core.ejb.ca.crl.IOnlyDataCRLSessionLocal"
- *
- * @web.resource-ref
- *  name="${datasource.jndi-name-prefix}${datasource.jndi-name}"
- *  type="javax.sql.DataSource"
- *  auth="Container"
  *
  * @author Lars Silven PrimeKey
  * @version  $Id$
