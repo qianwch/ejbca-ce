@@ -65,7 +65,7 @@ class ValidationAuthorityTst {
 		final HttpURLConnection connection = (HttpURLConnection)new URI(sURI).toURL().openConnection();
 		connection.connect();
 		if ( HttpURLConnection.HTTP_OK!=connection.getResponseCode() ) {
-			return " Fetching CRL with '"+sURI+"' is not working.";
+			return " Fetching CRL with '"+sURI+"' is not working. responseCode="+connection.getResponseCode();
 		}
 
 		final byte fromBean[] = TestTools.getCreateCRLSession().getLastCRL(admin, ca.getCAInfo().getSubjectDN(), isDelta);
