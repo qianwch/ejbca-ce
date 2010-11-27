@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.security.cert.X509Certificate;
 
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -32,14 +33,24 @@ import org.ejbca.core.protocol.crlstore.ICRLStore;
  * @version  $Id$
  */
 class CRLStoreServletBase extends StoreServletBase {
-	private final ICRLCache crlCache;
+	private ICRLCache crlCache;
+	private final ICRLStore crlStore;
 	/**
 	 * Sets the object to get certificates from.
 	 */
 	CRLStoreServletBase( ICertStore certStore, ICRLStore crlStore ) {
 		super(certStore);
-		this.crlCache = CRLCacheFactory.getInstance(crlStore, this.certCashe);
+		this.crlStore = crlStore;
 	}
+	
+	/* (non-Javadoc)
+	 * @see javax.servlet.GenericServlet#init(javax.servlet.ServletConfig)
+	 */
+	public void init(ServletConfig config) throws ServletException {
+		super.init(config);
+		this.crlCache = CRLCacheFactory.getInstance(crlStore, this.certCashe);		
+	}
+
 	/* (non-Javadoc)
 	 * @see org.ejbca.ui.web.protocol.StoreServletBase#sHash(java.lang.String, javax.servlet.http.HttpServletResponse)
 	 */

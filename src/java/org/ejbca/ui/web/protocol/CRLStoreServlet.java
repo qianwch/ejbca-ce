@@ -18,10 +18,10 @@ import org.ejbca.core.protocol.crlstore.CRLStore;
 
 
 /** 
- * Servlet implementing server side of the Certificate Store.
+ * Servlet implementing server side of the CRL Store.
  * For a detailed description see rfc4378.
  * 
- * @web.servlet name = "CertificateStore"
+ * @web.servlet name = "CRLStore"
  *              display-name = "CRLStoreServlet"
  *              description="Fetches certificates according to rfc4378"
  *              load-on-startup = "99"

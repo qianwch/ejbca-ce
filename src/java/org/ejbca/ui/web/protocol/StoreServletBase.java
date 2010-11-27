@@ -18,6 +18,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.security.cert.X509Certificate;
 
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -34,11 +35,20 @@ import org.ejbca.core.protocol.certificatestore.ICertificateCache;
  */
 public abstract class StoreServletBase extends HttpServlet {
 
-	final ICertificateCache certCashe;
+	protected ICertificateCache certCashe;
+	private final ICertStore certStore;
 	final String space = "|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
 
 	StoreServletBase(ICertStore certStore) {
 		super();
+		this.certStore = certStore;
+	}
+
+	/* (non-Javadoc)
+	 * @see javax.servlet.GenericServlet#init(javax.servlet.ServletConfig)
+	 */
+	public void init(ServletConfig config) throws ServletException {
+		super.init(config);
 		this.certCashe = CertificateCacheFactory.getInstance(certStore);
 	}
 
