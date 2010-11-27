@@ -3,6 +3,10 @@
 
 <sun-web-app>
 
+     <ejb-ref>
+        <ejb-ref-name>ejb/CertificateStoreSessionLocal</ejb-ref-name>
+        <jndi-name>CertificateStoreSession</jndi-name>
+    </ejb-ref>
     <ejb-ref>
         <ejb-ref-name>ejb/CreateCRLSessionLocal</ejb-ref-name>
         <jndi-name>CreateCRLSession</jndi-name>
