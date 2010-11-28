@@ -149,6 +149,15 @@ class CertFetchAndVerify {
 	 * @throws MessagingException
 	 */
 	void doIt(X509Certificate theCert, Set<Integer> setOfSubjectKeyIDs) throws MalformedURLException, IOException, URISyntaxException, CertificateException, MessagingException {
+        // Before running this we need to make sure the certificate cache is refreshed, there may be a cache delay which is acceptable in real life, 
+        // but not when running JUnit tests  
+		final String reloadURI = "http://localhost:8080/certificates/search.cgi?reloadcache=true";
+		log.debug("Reload cache URL: '"+reloadURI+"'.");
+		final HttpURLConnection connection = (HttpURLConnection)new URI(reloadURI).toURL().openConnection();
+		connection.connect();
+		log.debug("reloadcache returned code: "+connection.getResponseCode());
+		
+		// Now on to the actual tests, with fresh caches
 		log.info("Testing certificate: "+theCert.getSubjectX500Principal().getName());
 
 		final HashID subjectID = HashID.getFromSubjectDN(theCert);

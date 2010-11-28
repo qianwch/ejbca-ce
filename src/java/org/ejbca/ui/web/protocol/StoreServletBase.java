@@ -24,6 +24,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 import org.ejbca.core.protocol.certificatestore.CertificateCacheFactory;
 import org.ejbca.core.protocol.certificatestore.HashID;
 import org.ejbca.core.protocol.certificatestore.ICertStore;
@@ -34,8 +36,9 @@ import org.ejbca.core.protocol.certificatestore.ICertificateCache;
  * @version  $Id$
  */
 public abstract class StoreServletBase extends HttpServlet {
+    private static final Logger log = Logger.getLogger(StoreServletBase.class);
 
-	protected ICertificateCache certCashe;
+	protected ICertificateCache certCache;
 	private final ICertStore certStore;
 	final String space = "|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
 
@@ -49,7 +52,7 @@ public abstract class StoreServletBase extends HttpServlet {
 	 */
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
-		this.certCashe = CertificateCacheFactory.getInstance(certStore);
+		this.certCache = CertificateCacheFactory.getInstance(certStore);
 	}
 
 	abstract void sHash(String iHash, HttpServletResponse resp, HttpServletRequest req) throws IOException, ServletException;
@@ -59,32 +62,55 @@ public abstract class StoreServletBase extends HttpServlet {
 	 * @see javax.servlet.http.HttpServlet#doGet(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
 	 */
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, java.io.IOException {
-		{
-			final String sHash = req.getParameter(RFC4387URL.sHash.toString());
-			if ( sHash!=null ) {
-				sHash( sHash, resp, req );
-				return;
-			}
-		}{
-			final String iHash = req.getParameter(RFC4387URL.iHash.toString());
-			if ( iHash!=null ) {
-				iHash( iHash, resp, req );
-				return;
-			}
-		}{
-			final String sKIDHash = req.getParameter(RFC4387URL.sKIDHash.toString());
-			if ( sKIDHash!=null ) {
-				sKIDHash(sKIDHash, resp, req );
-				return;
-			}
+		if (log.isTraceEnabled()) {
+			log.trace(">doGet()");			
 		}
-		printInfo(req, resp);
+		// We have a command to force reloading of the certificate cache that can only be run from localhost
+		// http://localhost:8080/crls/search.cgi?reloadcache=true
+		final boolean doReload = StringUtils.equals(req.getParameter("reloadcache"), "true");
+		if ( doReload ) {
+			final String remote = req.getRemoteAddr();
+			// localhost in either ipv4 and ipv6
+			if (StringUtils.equals(remote, "127.0.0.1") || (StringUtils.equals(remote, "0:0:0:0:0:0:0:1"))) {
+				log.info("Reloading certificate and CRL caches due to request from "+remote);
+				// Reload CA certificates
+				certCache.forceReload();
+			} else {
+				log.info("Got reloadcache command from unauthorized ip: "+remote);
+				resp.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+			}
+		} else {
+			// Do actual processing of the protocol
+			{
+				final String sHash = req.getParameter(RFC4387URL.sHash.toString());
+				if ( sHash!=null ) {
+					sHash( sHash, resp, req );
+					return;
+				}
+			}{
+				final String iHash = req.getParameter(RFC4387URL.iHash.toString());
+				if ( iHash!=null ) {
+					iHash( iHash, resp, req );
+					return;
+				}
+			}{
+				final String sKIDHash = req.getParameter(RFC4387URL.sKIDHash.toString());
+				if ( sKIDHash!=null ) {
+					sKIDHash(sKIDHash, resp, req );
+					return;
+				}
+			}
+			printInfo(req, resp);
+		}
+		if (log.isTraceEnabled()) {
+			log.trace("<doGet()");			
+		}
 	}
 	private void printInfo(X509Certificate certs[], String indent, PrintWriter pw, String url) {
 		for ( int i=0; i<certs.length; i++ ) {
 			printInfo(certs[i], indent, pw, url);
 			pw.println();
-			final X509Certificate issuedCerts[] = this.certCashe.findLatestByIssuerDN(HashID.getFromSubjectDN(certs[i]));
+			final X509Certificate issuedCerts[] = this.certCache.findLatestByIssuerDN(HashID.getFromSubjectDN(certs[i]));
 			if ( issuedCerts==null || issuedCerts.length<1 ) {
 				continue;
 			}
@@ -123,7 +149,7 @@ public abstract class StoreServletBase extends HttpServlet {
 	private void printInfo(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		final StringWriter sw = new StringWriter();
 		final PrintWriter pw = new MyPrintWriter(sw);
-		printInfo(this.certCashe.getRootCertificates(), "", pw, req.getRequestURL().toString());
+		printInfo(this.certCache.getRootCertificates(), "", pw, req.getRequestURL().toString());
 		pw.flush();
 		pw.close();
 		sw.flush();

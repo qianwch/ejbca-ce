@@ -64,10 +64,10 @@ public class HashID {
 		final HashID id = new HashID(hashFromPrincipalDN(principal));
 		if ( id.isOK ) {
 			if ( log.isDebugEnabled() ) {
-				log.debug("The DN '"+principal.getName()+"' is identified by the string '"+id.b64+"' when accessing the VA.");
+				log.debug("The DN '"+principal.getName()+"' is identified by the Hash string '"+id.b64+"' when accessing the VA.");
 			}
 		} else {
-			log.error("The DN '"+principal.getName()+"' has a non valid identification string: "+id.b64);
+			log.error("The DN '"+principal.getName()+"' has a non valid Hash identification string: "+id.b64);
 		}
 		return id;
 	}

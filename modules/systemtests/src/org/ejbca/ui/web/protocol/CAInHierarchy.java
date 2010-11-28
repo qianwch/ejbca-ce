@@ -49,7 +49,7 @@ class CAInHierarchy {
 	}
 	private X509Certificate createCA( int signedBy, Collection certificateChain, Set<Integer> setOfSubjectKeyIDs ) throws RemoteException {
 		Assert.assertTrue( "Failed to created certificate.",
-		                   TestTools.createTestCA(this.name, 2048, "CN="+this.name+",O=EJBCA junit,OU=TestCertStoreServlet",
+		                   TestTools.createTestCA(this.name, 1024, "CN="+this.name+",O=EJBCA junit,OU=TestCertStoreServlet",
 		                                          signedBy, certificateChain) );
 		final CAInfo info = getCAInfo();
 		final Collection newCertificateChain = info.getCertificateChain();

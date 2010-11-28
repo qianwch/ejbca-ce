@@ -48,7 +48,7 @@ class CRLStoreServletBase extends StoreServletBase {
 	 */
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
-		this.crlCache = CRLCacheFactory.getInstance(crlStore, this.certCashe);		
+		this.crlCache = CRLCacheFactory.getInstance(crlStore, this.certCache);		
 	}
 
 	/* (non-Javadoc)

@@ -37,6 +37,14 @@ class ValidationAuthorityTst {
 	private final static Logger log = Logger.getLogger(ValidationAuthorityTst.class);
 	private final static Admin admin =  new Admin(Admin.TYPE_INTERNALUSER);
 	static String testCRLStore(CA ca) throws Exception {
+        // Before running this we need to make sure the certificate cache is refreshed, there may be a cache delay which is acceptable in real life, 
+        // but not when running JUnit tests  
+		final String sURI = "http://localhost:8080/crls/search.cgi?reloadcache=true";
+		log.debug("Reload cache URL: '"+sURI+"'.");
+		final HttpURLConnection connection = (HttpURLConnection)new URI(sURI).toURL().openConnection();
+		connection.connect();
+		log.debug("reloadcache returned code: "+connection.getResponseCode());
+		// Now on to the actual tests, with fresh caches
 		String problems = new String();
 		problems += testCRLStore( RFC4387URL.sKIDHash, false, ca );
 		problems += testCRLStore( RFC4387URL.iHash, false, ca );
