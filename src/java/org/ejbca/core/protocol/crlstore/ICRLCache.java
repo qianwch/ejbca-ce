@@ -15,8 +15,8 @@ package org.ejbca.core.protocol.crlstore;
 import org.ejbca.core.protocol.certificatestore.HashID;
 
 /**
- * An implementation of this is managing a cache of Certificates. The implementation should be optimized for quick lookups of CA certificates that the 
- * OCSP responder needs to fetch.
+ * An implementation of this is managing a cache of Certificates. The implementation should be optimized for quick lookups of CRLs that the 
+ * VA responder needs to fetch.
  * 
  * @author Lars Silven PrimeKey
  * 
@@ -27,14 +27,14 @@ public interface ICRLCache {
 	/**
 	 * @param id The ID of the issuer DN.
 	 * @param isDelta true if delta CRL
-	 * @return  array of X509Certificate or null if no certificates exist in the cache.
+	 * @return  array of X509Certificate or null if no CRLs exist in the cache.
 	 */
 	byte[] findLatestByIssuerDN(HashID id, boolean isDelta);
 
 	/**
 	 * @param id The ID of the subject key identifier.
 	 * @param isDelta true if delta CRL
-	 * @return CRL or null if the certificate does not exist in the cache.
+	 * @return CRL or null if the CRL does not exist in the cache.
 	 */
 	byte[] findBySubjectKeyIdentifier(HashID id, boolean isDelta);
 }

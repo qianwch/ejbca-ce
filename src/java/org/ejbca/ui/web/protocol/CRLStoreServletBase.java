@@ -90,7 +90,7 @@ class CRLStoreServletBase extends StoreServletBase {
 	}
 	private void returnCrl( byte crl[], HttpServletResponse resp, String name, boolean isDelta ) throws IOException {
 		if ( crl==null || crl.length<1 ) {
-			resp.sendError(HttpServletResponse. SC_NO_CONTENT, "No CRL with hash: "+name);
+			resp.sendError(HttpServletResponse.SC_NO_CONTENT, "No CRL with hash: "+name);
 			return;
 		}
 		resp.setContentType("application/pkix-crl");

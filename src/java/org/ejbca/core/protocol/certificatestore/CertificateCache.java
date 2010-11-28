@@ -113,7 +113,11 @@ class CertificateCache implements ICertificateCache {
 		// Keep the lock as small as possible, but do not try to read the cache while it is being rebuilt
 		this.rebuildlock.lock();
 		try {
-			return this.certsFromSubjectDN.get(id.key);
+			X509Certificate ret = this.certsFromSubjectDN.get(id.key);
+			if ((ret == null) && log.isDebugEnabled()) {
+				log.debug("Certificate not found from SubjectDN HashId in certsFromSubjectDN map. HashID="+id.b64);
+			}
+			return ret;
 		} finally {
 			this.rebuildlock.unlock();
 		}
@@ -129,6 +133,9 @@ class CertificateCache implements ICertificateCache {
 		try {
 			final Set<X509Certificate> sCert = this.certsFromIssuerDN.get(id.key);
 			if ( sCert==null || sCert.size()<1 ) {
+				if (log.isDebugEnabled()) {
+					log.debug("Certificate not found from IssuerDN HashId in certsFromIssuerDN map. HashID="+id.b64);
+				}
 				return null;
 			}
 			return sCert.toArray(new X509Certificate[0]);
@@ -181,7 +188,11 @@ class CertificateCache implements ICertificateCache {
 	 */
 	@Override
 	public X509Certificate findBySubjectKeyIdentifier(HashID id) {
-		return this.certsFromSubjectKeyIdentifier.get(id.key);
+		X509Certificate ret = this.certsFromSubjectKeyIdentifier.get(id.key);
+		if ((ret == null) && log.isDebugEnabled()) {
+			log.debug("Certificate not found from SubjectKeyIdentifier HashId in certsFromSubjectKeyIdentifier map. HashID="+id.b64);
+		}
+		return ret;
 	}
 	/* private helper methods */
 
