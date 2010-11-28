@@ -87,6 +87,9 @@ class CRLCache implements ICRLCache {
 	}
 	private byte[] findLatest(X509Certificate caCert, boolean isDelta) {
 		if ( caCert==null ) {
+			if (log.isDebugEnabled()) {
+				log.debug("No caCert, returning null.");
+			}
 			return null;
 		}
 		final HashID id = HashID.getFromSubjectDN(caCert);
@@ -96,7 +99,7 @@ class CRLCache implements ICRLCache {
 			final CRLInfo crlInfo = this.crlStore.getLastCRLInfo(this.admin, issuerDN, isDelta);
 			if ( crlInfo==null ) {
 				if (log.isDebugEnabled()) {
-					log.debug("No CRL found, returning null.");
+					log.debug("No CRL found with issuerDN '"+issuerDN+"', returning null.");
 				}
 				return null;
 			}

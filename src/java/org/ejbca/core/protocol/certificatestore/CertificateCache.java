@@ -105,7 +105,7 @@ class CertificateCache implements ICertificateCache {
 		loadCertificates();
 	}
 	/* (non-Javadoc)
-	 * @see org.ejbca.core.protocol.ocsp.ICertificateCache#findLatestBySubjectDN(org.ejbca.core.protocol.ocsp.HashID)
+	 * @see org.ejbca.core.protocol.certificatestore.ICertificateCache#findLatestBySubjectDN(org.ejbca.core.protocol.ocsp.HashID)
 	 */
 	public X509Certificate findLatestBySubjectDN(HashID id) {
 		loadCertificates(); // refresh cache?
@@ -123,7 +123,7 @@ class CertificateCache implements ICertificateCache {
 		}
 	}
 	/* (non-Javadoc)
-	 * @see org.ejbca.core.protocol.ocsp.ICertificateCache#findLatestByIssuerDN(org.ejbca.core.protocol.ocsp.HashID)
+	 * @see org.ejbca.core.protocol.certificatestore.ICertificateCache#findLatestByIssuerDN(org.ejbca.core.protocol.ocsp.HashID)
 	 */
 	public X509Certificate[] findLatestByIssuerDN(HashID id) {
 		loadCertificates(); // refresh cache?
@@ -144,7 +144,7 @@ class CertificateCache implements ICertificateCache {
 		}
 	}
 	/* (non-Javadoc)
-	 * @see org.ejbca.core.protocol.ocsp.ICertificateCache#findByHash(org.bouncycastle.ocsp.CertificateID)
+	 * @see org.ejbca.core.protocol.certificatestore.ICertificateCache#findByHash(org.bouncycastle.ocsp.CertificateID)
 	 */
 	public X509Certificate findByOcspHash(CertificateID certId) {
 		if (null == certId) {
@@ -172,28 +172,48 @@ class CertificateCache implements ICertificateCache {
 			this.rebuildlock.unlock();
 		}
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejbca.core.protocol.certificatestore.ICertificateCache#getRootCertificates()
+	 */
 	@Override
 	public X509Certificate[] getRootCertificates() {
-		return this.rootCertificates.toArray(new X509Certificate[0]);
+		loadCertificates(); // refresh cache?
+		// Keep the lock as small as possible, but do not try to read the cache while it is being rebuilt
+		this.rebuildlock.lock();
+		try {
+			return this.rootCertificates.toArray(new X509Certificate[0]);
+		} finally {
+			this.rebuildlock.unlock();
+		}
+		
 	}
 	/* (non-Javadoc)
-	 * @see org.ejbca.core.protocol.ocsp.ICertificateCache#forceReload()
+	 * @see org.ejbca.core.protocol.certificatestore.ICertificateCache#forceReload()
 	 */
 	public void forceReload() {
 		this.m_certValidTo = 0;
 		loadCertificates();
 	}
 	/* (non-Javadoc)
-	 * @see org.ejbca.core.protocol.ocsp.ICertificateCache#findBySubjectKeyIdentifier(org.ejbca.core.protocol.ocsp.HashID)
+	 * @see org.ejbca.core.protocol.certificatestore.ICertificateCache#findBySubjectKeyIdentifier(org.ejbca.core.protocol.certificatestore.HashID)
 	 */
 	@Override
 	public X509Certificate findBySubjectKeyIdentifier(HashID id) {
-		X509Certificate ret = this.certsFromSubjectKeyIdentifier.get(id.key);
-		if ((ret == null) && log.isDebugEnabled()) {
-			log.debug("Certificate not found from SubjectKeyIdentifier HashId in certsFromSubjectKeyIdentifier map. HashID="+id.b64);
+		loadCertificates(); // refresh cache?
+		// Keep the lock as small as possible, but do not try to read the cache while it is being rebuilt
+		this.rebuildlock.lock();
+		try {
+			X509Certificate ret = this.certsFromSubjectKeyIdentifier.get(id.key);
+			if ((ret == null) && log.isDebugEnabled()) {
+				log.debug("Certificate not found from SubjectKeyIdentifier HashId in certsFromSubjectKeyIdentifier map. HashID="+id.b64);
+			}
+			return ret;
+		} finally {
+			this.rebuildlock.unlock();
 		}
-		return ret;
 	}
+	
 	/* private helper methods */
 
 	private Integer keyFromCertificateID(CertificateID certID) {
