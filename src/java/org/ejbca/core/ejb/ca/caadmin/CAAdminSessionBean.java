@@ -420,6 +420,9 @@ public class CAAdminSessionBean extends BaseSessionBean {
      * @jboss.method-attributes transaction-timeout="900"
      */
     public void createCA(Admin admin, CAInfo cainfo) throws CAExistsException, AuthorizationDeniedException, CATokenOfflineException, CATokenAuthenticationFailedException {
+    	if (log.isTraceEnabled()) {
+    		log.trace(">createCA: "+cainfo.getName());
+    	}
     	int castatus = SecConst.CA_OFFLINE;
         // Check that administrat has superadminsitrator rights.
         try{
@@ -611,6 +614,9 @@ public class CAAdminSessionBean extends BaseSessionBean {
         }
         // Update local OCSP's CA certificate cache
         CertificateCacheFactory.getInstance(new CertStore()).forceReload();
+    	if (log.isTraceEnabled()) {
+    		log.trace("<createCA: "+cainfo.getName());
+    	}
     } // createCA
 
     private void createCRLs(Admin admin, CA ca, CAInfo cainfo) throws CATokenOfflineException {
