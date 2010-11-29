@@ -42,18 +42,6 @@ ALTER TABLE ServiceData ADD COLUMN nextRunTimeStamp BIGINT NOT NULL WITH DEFAULT
 ALTER TABLE ServiceData ADD COLUMN runTimeStamp BIGINT NOT NULL WITH DEFAULT 0;
 CALL SYSPROC.ADMIN_CMD('REORG TABLE ServiceData');
 
--- HardTokenPropertyData.id is limited to VARCHAR(80), but regular VARCHAR on other databases.
-ALTER TABLE HardTokenPropertyData ADD tmpid VARCHAR(254) NOT NULL DEFAULT '';
-UPDATE HardTokenPropertyData SET tmpid=id;
-ALTER TABLE HardTokenPropertyData DROP PRIMARY KEY;
-ALTER TABLE HardTokenPropertyData DROP COLUMN id;
-ALTER TABLE HardTokenPropertyData ADD id VARCHAR(254) NOT NULL DEFAULT '';
-CALL SYSPROC.ADMIN_CMD('REORG TABLE HardTokenPropertyData');
-ALTER TABLE HardTokenPropertyData ADD PRIMARY KEY(id);
-UPDATE HardTokenPropertyData SET id=tmpid;
-ALTER TABLE HardTokenPropertyData DROP COLUMN tmpid;
-CALL SYSPROC.ADMIN_CMD('REORG TABLE HardTokenPropertyData');
-
 -- Add rowVersion column to all tables
 ALTER TABLE AccessRulesData ADD COLUMN rowVersion INTEGER WITH DEFAULT 0;
 ALTER TABLE AdminEntityData ADD COLUMN rowVersion INTEGER WITH DEFAULT 0;

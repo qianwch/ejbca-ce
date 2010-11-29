@@ -21,9 +21,6 @@ ALTER TABLE ServiceData ADD runTimeStamp bigint(20) NOT NULL DEFAULT '0';
 ALTER TABLE KeyRecoveryData MODIFY certSN varchar(250) binary NOT NULL DEFAULT '';
 ALTER TABLE KeyRecoveryData MODIFY issuerDN varchar(250) binary NOT NULL DEFAULT '';
 
--- HardTokenPropertyData.id is limited to VARCHAR(80), but regular VARCHAR on other databases.
-ALTER TABLE HardTokenPropertyData MODIFY id VARCHAR(250) BINARY NOT NULL DEFAULT '';
-
 -- Add rowVersion column to all tables that will exist in EJBCA 4.0
 ALTER TABLE AccessRulesData ADD COLUMN rowVersion int(11) DEFAULT 0; 
 ALTER TABLE AdminEntityData ADD COLUMN rowVersion int(11) DEFAULT 0;

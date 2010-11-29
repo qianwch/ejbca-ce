@@ -216,7 +216,7 @@ create table hardtokenprofiledata (
 
 drop table if exists hardtokenpropertydata;
 create table hardtokenpropertydata (
-    id varchar(250) binary not null default '',
+    id varchar(80) binary not null default '',
     property varchar(250) binary not null default '',
     value varchar(250) binary null default null,
     rowversion int(11) DEFAULT 0,
