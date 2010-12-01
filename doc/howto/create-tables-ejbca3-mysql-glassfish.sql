@@ -226,7 +226,7 @@ create table hardtokenpropertydata (
 
 drop table if exists keyrecoverydata;
 create table keyrecoverydata (
-    certsn varchar(250) binary not null default '',
+    certsn varchar(80) binary not null default '',
     issuerdn varchar(250) binary not null default '',
     username varchar(250) binary null default null,
     markedasrecoverable tinyint(4) not null default '0',

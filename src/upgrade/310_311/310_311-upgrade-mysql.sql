@@ -18,7 +18,7 @@ ALTER TABLE ServiceData ADD nextRunTimeStamp bigint(20) NOT NULL DEFAULT '0';
 ALTER TABLE ServiceData ADD runTimeStamp bigint(20) NOT NULL DEFAULT '0';
 
 -- KeyRecoveryData had two nonstandard lengths for regular fields in the CMP mapping on JBoss
-ALTER TABLE KeyRecoveryData MODIFY certSN varchar(250) binary NOT NULL DEFAULT '';
+ALTER TABLE KeyRecoveryData MODIFY certSN varchar(80) binary NOT NULL DEFAULT '';
 ALTER TABLE KeyRecoveryData MODIFY issuerDN varchar(250) binary NOT NULL DEFAULT '';
 
 -- Add rowVersion column to all tables that will exist in EJBCA 4.0
