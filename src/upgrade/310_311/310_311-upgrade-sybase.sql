@@ -1,6 +1,6 @@
 -- ServiceData gets two new columns
-ALTER TABLE ServiceData ADD nextRunTimeStamp NUMERIC(38,0) DEFAULT 0 NOT NULL;
-ALTER TABLE ServiceData ADD runTimeStamp NUMERIC(38,0) DEFAULT 0 NOT NULL;
+ALTER TABLE ServiceData ADD nextRunTimeStamp DECIMAL(20,0) DEFAULT 0 NOT NULL;
+ALTER TABLE ServiceData ADD runTimeStamp DECIMAL(20,0) DEFAULT 0 NOT NULL;
 
 -- Add rowVersion column to all tables
 ALTER TABLE AccessRulesData ADD COLUMN rowVersion INTEGER DEFAULT 0; 

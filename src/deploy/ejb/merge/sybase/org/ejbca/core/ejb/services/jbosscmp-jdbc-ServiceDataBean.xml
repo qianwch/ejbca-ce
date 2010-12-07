@@ -6,9 +6,13 @@
 </cmp-field>
 <cmp-field>
   <field-name>runTimeStamp</field-name>
+  <jdbc-type>BIGINT</jdbc-type>
+  <sql-type>decimal(20, 0)</sql-type>
 </cmp-field>
 <cmp-field>
   <field-name>nextRunTimeStamp</field-name>
+  <jdbc-type>BIGINT</jdbc-type>
+  <sql-type>decimal(20, 0)</sql-type>
 </cmp-field>
 <cmp-field>
   <field-name>data</field-name>
