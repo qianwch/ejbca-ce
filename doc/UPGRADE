@@ -26,10 +26,11 @@ INSERT and DELETE. The SQL executed by database upgrades code is available in
 From EJBCA 3.11.0 to EJBCA 3.11.x
 --------------------------------
 The database mapping for KeyRecoveryData.certSN on MySQL in 3.11.0 was wrong and can be corrected by running:
-
     ALTER TABLE KeyRecoveryData MODIFY certSN varchar(80) binary NOT NULL DEFAULT '';
+The database mapping for UserData.cardNumber in the table create script on MySQL in 3.11.0 was wrong and can be corrected by running:
+    ALTER TABLE UserData MODIFY cardNumber varchar(250) binary NOT NULL DEFAULT '';
 
-This only affects installations upgraded to or freshly installed on EJBCA 3.11.0. 
+These only affects installations upgraded to or freshly installed on EJBCA 3.11.0. 
 
 From EJBCA 3.10.x to EJBCA 3.11.x
 --------------------------------

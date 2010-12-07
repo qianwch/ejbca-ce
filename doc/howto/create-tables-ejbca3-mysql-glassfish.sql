@@ -386,7 +386,7 @@ create table userdata (
     hardtokenissuerid int(11) not null default '0',
     extendedinformationdata longtext null default null,
     keystorepassword varchar(250) binary null default null,
-    cardnumber varchar(19) binary null default null,
+    cardnumber varchar(250) binary null default null,
     rowversion int(11) DEFAULT 0,
     rowprotection longtext default null,
     primary key (username)
