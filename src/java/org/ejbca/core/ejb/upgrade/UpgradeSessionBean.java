@@ -37,6 +37,7 @@ import javax.ejb.EJBException;
 import javax.ejb.FinderException;
 import javax.ejb.RemoveException;
 
+import org.apache.commons.lang.StringUtils;
 import org.ejbca.core.ejb.BaseSessionBean;
 import org.ejbca.core.ejb.JNDINames;
 import org.ejbca.core.ejb.ServiceLocator;
@@ -252,7 +253,7 @@ public class UpgradeSessionBean extends BaseSessionBean {
     			oldVersion = Integer.parseInt(oldVersionArray[0]) * 100 + Integer.parseInt(oldVersionArray[1]);
     		}
     		if ( isPost ) {
-    			return postUpgrade(dbtype, oldVersion);
+    			return postUpgrade(admin, dbtype, oldVersion);
     		}
     		return upgrade(admin, dbtype, oldVersion);
     	} finally {
@@ -260,9 +261,14 @@ public class UpgradeSessionBean extends BaseSessionBean {
     	}
     }
     
-    private boolean postUpgrade(String dbtype, int oldVersion) {
+    private boolean postUpgrade(Admin admin, String dbtype, int oldVersion) {
     	boolean ret = true; // unusual but the default is to return true, if no post upgrades are run
-    	
+
+    	// Upgrade database change between ejbca 3.7.x and 3.8.x if needed
+        if (oldVersion <= 307) {
+        	ret = postMigrateDatabase38(admin);
+        }
+
     	// Upgrade database change between ejbca 3.9.x and 3.10.x if needed
         if (oldVersion <= 309) {
         	ret = postMigrateDatabase310();
@@ -373,7 +379,17 @@ public class UpgradeSessionBean extends BaseSessionBean {
 	private boolean migrateDatabase38(String dbtype, Admin administrator) {
 		error("(this is not an error) Starting upgrade from ejbca 3.7.x to ejbca 3.8.x");
 		boolean ret = migradeDatabase("/37_38/37_38-upgrade-"+dbtype+".sql");
-		
+        error("(this is not an error) Finished migrating database.");
+        return ret;
+	}
+
+	/** In 3.10 we can upgrade and set subject key id on all certificate entry rows.
+	 * On large installations this may not be possible to do in reasonable time.
+	 * 
+	 */
+	private boolean postMigrateDatabase38(Admin administrator) {
+		error("(this is not an error) Starting post upgrade from ejbca 3.7.x to ejbca 3.8.x");
+		boolean ret = false;
 		AdminGroupDataLocalHome adminGroupHome = (AdminGroupDataLocalHome) ServiceLocator.getInstance().getLocalHome(AdminGroupDataLocalHome.COMP_NAME);
 		// Change the name of AdminGroups with conflicting names
 		try {
@@ -435,11 +451,10 @@ public class UpgradeSessionBean extends BaseSessionBean {
 		} catch (FinderException e) {
 			throw new EJBException(e);	// There should be at least one group..
 		}
-	
-        error("(this is not an error) Finished migrating database.");
+		error("(this is not an error) Finished post upgrade from ejbca 3.7.x to ejbca 3.8.x with result: "+ret);
         return ret;
-	}
-
+	} // postMigrateDatabase38
+	
 	private boolean migrateDatabase39(String dbtype) {
 		error("(this is not an error) Starting upgrade from ejbca 3.8.x to ejbca 3.9.x");
 		boolean ret = migradeDatabase("/38_39/38_39-upgrade-"+dbtype+".sql");
@@ -454,60 +469,63 @@ public class UpgradeSessionBean extends BaseSessionBean {
 	private boolean migrateDatabase310(String dbtype) {
 		error("(this is not an error) Starting upgrade from ejbca 3.9.x to ejbca 3.10.x");
 		boolean ret = migradeDatabase("/39_310/39_310-upgrade-"+dbtype+".sql");
-		if (ret) {
-			List approvalIds = getApprovalSession().getAllPendingApprovalIds();
-			ApprovalDataLocalHome approvalHome = (ApprovalDataLocalHome) getLocator().getLocalHome(ApprovalDataLocalHome.COMP_NAME);
-			for (int i=0; i<approvalIds.size(); i++) {
-				Integer approvalId = (Integer)approvalIds.get(i);
-				try {
-					Collection approvalDataLocals = approvalHome.findByApprovalId(approvalId.intValue());
-					if (approvalDataLocals.size() < 1 || approvalDataLocals.size() > 1) {
-						warn("There is an error in the database. You have " + approvalDataLocals.size() + " entries w approvalId " + approvalId.intValue());
-					}
-					final Iterator iterator = approvalDataLocals.iterator();
-					while (iterator.hasNext()) {
-						final ApprovalDataLocal approvalDataLocal = (ApprovalDataLocal) iterator.next();
-						final ApprovalRequest approvalRequest = approvalDataLocal.getApprovalRequest();
-						final Admin requestAdmin = approvalRequest.getRequestAdmin();
-						if (requestAdmin.getAdminType() == Admin.TYPE_CLIENTCERT_USER) {
-							// Upgrade the request admin if it of type CLIENT_CERT_USER
-							final Certificate adminCert = requestAdmin.getAdminInformation().getX509Certificate();
-							approvalRequest.setRequestAdmin(getUserAdminSession().getAdmin(adminCert));
-							approvalDataLocal.setApprovalRequest(approvalRequest);
-							
-						} else {
-							log.debug("Ignoring upgrade of approval request initialed by admin of type " + requestAdmin.getAdminType());
-						}
-						final Collection approvals = approvalDataLocal.getApprovals();
-						final Iterator iterator2 = approvals.iterator();
-						while (iterator2.hasNext()) {
-							final Approval approval = (Approval) iterator2.next();
-							// Lookup admin certificate that was used to approve this request and set a proper Admin that includes the admin certificate
-							final String issuerDN = approval.getAdminCertIssuerDN();
-							final BigInteger serialNumber = approval.getAdminCertSerialNumber();
-							if (issuerDN != null && serialNumber != null) {
-								final Certificate certificate = getCertificateStoreSession().findCertificateByIssuerAndSerno(new Admin(Admin.TYPE_INTERNALUSER), issuerDN, serialNumber);
-								if (certificate == null) {
-									// The approval was created with a certificate does not exist in the EJBCA database (an external Admin)
-									log.warn("External Admin with issuerDN '" + issuerDN + "' and serialNumer '" + serialNumber + "' does not have a certificate in the EJBCA database. Approval Admin will be set to Admin.TYPE_INTERNALUSER as a workaround.");
-									approval.setApprovalAdmin(approval.isApproved(), new Admin(Admin.TYPE_INTERNALUSER));
-								} else {
-									// Create a new Admin object from the certificate
-									approval.setApprovalAdmin(approval.isApproved(), getUserAdminSession().getAdmin(certificate));
-								}
-							} else {
-								error("Approval in ApprovalData w approvalId " + approvalId + " lacks issuerDN or serialNumber");
-							}
-						}
-					}
-				} catch (FinderException e) {
-			        error("Could not fetch pending approval with id " + ((Integer)approvalIds.get(i)).intValue());
-			        return false;
-				}
-			}
-		}
         error("(this is not an error) Finished migrating database.");
         return ret;
+	}
+
+	/** this is run from postMigrateDatabase310 */
+	private boolean postMigrateDatabase310Approvals() {
+		List approvalIds = getApprovalSession().getAllPendingApprovalIds();
+		ApprovalDataLocalHome approvalHome = (ApprovalDataLocalHome) getLocator().getLocalHome(ApprovalDataLocalHome.COMP_NAME);
+		for (int i=0; i<approvalIds.size(); i++) {
+			Integer approvalId = (Integer)approvalIds.get(i);
+			try {
+				Collection approvalDataLocals = approvalHome.findByApprovalId(approvalId.intValue());
+				if (approvalDataLocals.size() < 1 || approvalDataLocals.size() > 1) {
+					warn("There is an error in the database. You have " + approvalDataLocals.size() + " entries w approvalId " + approvalId.intValue());
+				}
+				final Iterator iterator = approvalDataLocals.iterator();
+				while (iterator.hasNext()) {
+					final ApprovalDataLocal approvalDataLocal = (ApprovalDataLocal) iterator.next();
+					final ApprovalRequest approvalRequest = approvalDataLocal.getApprovalRequest();
+					final Admin requestAdmin = approvalRequest.getRequestAdmin();
+					if (requestAdmin.getAdminType() == Admin.TYPE_CLIENTCERT_USER) {
+						// Upgrade the request admin if it of type CLIENT_CERT_USER
+						final Certificate adminCert = requestAdmin.getAdminInformation().getX509Certificate();
+						approvalRequest.setRequestAdmin(getUserAdminSession().getAdmin(adminCert));
+						approvalDataLocal.setApprovalRequest(approvalRequest);
+						
+					} else {
+						log.debug("Ignoring upgrade of approval request initialed by admin of type " + requestAdmin.getAdminType());
+					}
+					final Collection approvals = approvalDataLocal.getApprovals();
+					final Iterator iterator2 = approvals.iterator();
+					while (iterator2.hasNext()) {
+						final Approval approval = (Approval) iterator2.next();
+						// Lookup admin certificate that was used to approve this request and set a proper Admin that includes the admin certificate
+						final String issuerDN = approval.getAdminCertIssuerDN();
+						final BigInteger serialNumber = approval.getAdminCertSerialNumber();
+						if (issuerDN != null && serialNumber != null) {
+							final Certificate certificate = getCertificateStoreSession().findCertificateByIssuerAndSerno(new Admin(Admin.TYPE_INTERNALUSER), issuerDN, serialNumber);
+							if (certificate == null) {
+								// The approval was created with a certificate does not exist in the EJBCA database (an external Admin)
+								log.warn("External Admin with issuerDN '" + issuerDN + "' and serialNumer '" + serialNumber + "' does not have a certificate in the EJBCA database. Approval Admin will be set to Admin.TYPE_INTERNALUSER as a workaround.");
+								approval.setApprovalAdmin(approval.isApproved(), new Admin(Admin.TYPE_INTERNALUSER));
+							} else {
+								// Create a new Admin object from the certificate
+								approval.setApprovalAdmin(approval.isApproved(), getUserAdminSession().getAdmin(certificate));
+							}
+						} else {
+							error("Approval in ApprovalData w approvalId " + approvalId + " lacks issuerDN or serialNumber");
+						}
+					}
+				}
+			} catch (FinderException e) {
+		        error("Could not fetch pending approval with id " + ((Integer)approvalIds.get(i)).intValue());
+		        return false;
+			}
+		}
+		return true;
 	}
 	/** In 3.10 we can upgrade and set subject key id on all certificate entry rows.
 	 * On large installations this may not be possible to do in reasonable time.
@@ -515,49 +533,55 @@ public class UpgradeSessionBean extends BaseSessionBean {
 	 */
 	private boolean postMigrateDatabase310() {
 		error("(this is not an error) Starting post upgrade from ejbca 3.9.x to ejbca 3.10.x");
-		final String lKeyID = "subjectKeyId";
-		final String lCert = "base64Cert";
-		final String lFingerPrint = "fingerprint";
 		boolean ret = false;
-		final Connection connection = JDBCUtil.getDBConnection(JNDINames.DATASOURCE);
-		try {
-			final Statement stmt = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
-			final ResultSet srs = stmt.executeQuery("select "+lFingerPrint+","+lKeyID+","+lCert+" from CertificateData where "+lKeyID+" IS NULL");
-			final int iKeyID; // it should be faster to use column number instead of column label.
-			final int iCert;
-			{
-				final ResultSetMetaData rsmd= srs.getMetaData();
-				final Map map = new HashMap();
-				for (int i=1; i<=rsmd.getColumnCount(); i++) {
-					map.put(rsmd.getColumnLabel(i).toLowerCase(), new Integer(i));
-				}
-				iKeyID=((Integer)map.get(lKeyID.toLowerCase())).intValue();
-				iCert=((Integer)map.get(lCert.toLowerCase())).intValue();
-			}
-			while ( srs.next() ) {
-				final Certificate cert;
+		ret = postMigrateDatabase310Approvals();
+		if (ret) {
+			String doEnforce = System.getProperty("skip.enforce_unique_public_keys", "true");
+			if (StringUtils.equals(doEnforce, "true")) {
+				final String lKeyID = "subjectKeyId";
+				final String lCert = "base64Cert";
+				final String lFingerPrint = "fingerprint";
+				final Connection connection = JDBCUtil.getDBConnection(JNDINames.DATASOURCE);
 				try {
-					cert = CertTools.getCertfromByteArray(Base64.decode(srs.getString(iCert).getBytes()));
-				} catch (CertificateException e) {
-					this.log.error("Certificate could not be parsed.", e);
-					continue;
-				}
-				srs.updateString(iKeyID, new String(Base64.encode(KeyTools.createSubjectKeyId(cert.getPublicKey()).getKeyIdentifier(), false)));
-				srs.updateRow();
-			}
-			srs.close();
-			stmt.close();
-			error("(this is not an error) Finished post upgrade.");
-			ret = true;
-		} catch (SQLException e) {
-			error("post upgrade failed. See exception:", e);
-		} finally {
-			if ( connection!=null ) {
-				try {
-					connection.close();
+					final Statement stmt = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+					final ResultSet srs = stmt.executeQuery("select "+lFingerPrint+","+lKeyID+","+lCert+" from CertificateData where "+lKeyID+" IS NULL");
+					final int iKeyID; // it should be faster to use column number instead of column label.
+					final int iCert;
+					{
+						final ResultSetMetaData rsmd= srs.getMetaData();
+						final Map map = new HashMap();
+						for (int i=1; i<=rsmd.getColumnCount(); i++) {
+							map.put(rsmd.getColumnLabel(i).toLowerCase(), new Integer(i));
+						}
+						iKeyID=((Integer)map.get(lKeyID.toLowerCase())).intValue();
+						iCert=((Integer)map.get(lCert.toLowerCase())).intValue();
+					}
+					while ( srs.next() ) {
+						final Certificate cert;
+						try {
+							cert = CertTools.getCertfromByteArray(Base64.decode(srs.getString(iCert).getBytes()));
+						} catch (CertificateException e) {
+							this.log.error("Certificate could not be parsed.", e);
+							continue;
+						}
+						srs.updateString(iKeyID, new String(Base64.encode(KeyTools.createSubjectKeyId(cert.getPublicKey()).getKeyIdentifier(), false)));
+						srs.updateRow();
+					}
+					srs.close();
+					stmt.close();
+					error("(this is not an error) Finished post upgrade.");
+					ret = true;
 				} catch (SQLException e) {
-					// just ignore. other exception has been thrown before for the problem
-				}
+					error("post upgrade failed. See exception:", e);
+				} finally {
+					if ( connection!=null ) {
+						try {
+							connection.close();
+						} catch (SQLException e) {
+							// just ignore. other exception has been thrown before for the problem
+						}
+					}
+				}				
 			}
 		}
 		error("(this is not an error) Finished post upgrade from ejbca 3.9.x to ejbca 3.10.x with result: "+ret);
