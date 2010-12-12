@@ -731,25 +731,32 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
      /**
      * Finds a end entity profile by id.
      * 
-     * @return EndEntityProfile or null if it does not exist
+     * @return EndEntityProfile (cloned) or null if it does not exist
      * 
      * @ejb.transaction type="Supports"
      * @ejb.interface-method
      */
     public EndEntityProfile getEndEntityProfile(Admin admin, int id){
     	if (log.isTraceEnabled()) {
-            log.trace(">getEndEntityProfile("+id+")");    		
+    		log.trace(">getEndEntityProfile("+id+")");    		
     	}
-        EndEntityProfile returnval=null;
-        if(id==SecConst.EMPTY_ENDENTITYPROFILE) {
-        	returnval = new EndEntityProfile(true);
-        } else {
-        	returnval = (EndEntityProfile)getProfileCacheInternal().get(Integer.valueOf(id));
-        }
-        if (log.isTraceEnabled()) {
-            log.trace("<getEndEntityProfile(id): "+(returnval == null ? "null":"not null"));        	
-        }
-        return returnval;
+    	EndEntityProfile returnval=null;
+    	if(id==SecConst.EMPTY_ENDENTITYPROFILE) {
+    		returnval = new EndEntityProfile(true);
+    	} else {
+    		// We need to clone the profile, otherwise the cache contents will be modifyable from the outside
+    		EndEntityProfile eep = (EndEntityProfile)getProfileCacheInternal().get(Integer.valueOf(id));
+    		try {
+    			returnval = (EndEntityProfile)eep.clone();
+    		} catch (CloneNotSupportedException e) {
+    			log.error("Should never happen: ", e);
+    			throw new RuntimeException(e);
+    		}
+    	}
+    	if (log.isTraceEnabled()) {
+    		log.trace("<getEndEntityProfile(id): "+(returnval == null ? "null":"not null"));        	
+    	}
+    	return returnval;
     } // getEndEntityProfile
 
      /**
@@ -769,7 +776,7 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
     		returnval = new EndEntityProfile(true);
     	} else {
     		Integer id = (Integer)getEndEntityProfileNameIdMapInternal().get(profilename);
-    		returnval = (EndEntityProfile)getProfileCacheInternal().get(id);
+    		returnval = getEndEntityProfile(admin, id);
     	}
     	if (log.isTraceEnabled()) {
     		log.trace("<getEndEntityProfile("+profilename+"): "+(returnval == null ? "null":"not null"));        	

@@ -1940,7 +1940,7 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
      * Finds a certificate profile by id.
      *
      * @param admin Administrator performing the operation
-     * @return CertificateProfiles or null if it can not be found.
+     * @return CertificateProfile (cloned) or null if it can not be found.
      * @ejb.interface-method
      */
     public CertificateProfile getCertificateProfile(Admin admin, int id) {
@@ -1981,7 +1981,14 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
                     returnval = new EndUserCertificateProfile();
             }
         } else {
-        	returnval = (CertificateProfile)getProfileCacheInternal().get(Integer.valueOf(id));
+    		// We need to clone the profile, otherwise the cache contents will be modifyable from the outside
+        	CertificateProfile cprofile = (CertificateProfile)getProfileCacheInternal().get(Integer.valueOf(id));
+    		try {
+    			returnval = (CertificateProfile)cprofile.clone();
+    		} catch (CloneNotSupportedException e) {
+    			log.error("Should never happen: ", e);
+    			throw new RuntimeException(e);
+    		}
         }
     	if (log.isTraceEnabled()) {
             log.trace("<getCertificateProfile("+id+"): "+(returnval == null ? "null":"not null"));     
