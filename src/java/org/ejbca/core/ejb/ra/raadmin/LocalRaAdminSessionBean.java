@@ -778,7 +778,9 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
     		returnval = new EndEntityProfile(true);
     	} else {
     		Integer id = (Integer)getEndEntityProfileNameIdMapInternal().get(profilename);
-    		returnval = getEndEntityProfile(admin, id);
+    		if (id != null) {
+        		returnval = getEndEntityProfile(admin, id);    			
+    		}
     	}
     	if (log.isTraceEnabled()) {
     		log.trace("<getEndEntityProfile("+profilename+"): "+(returnval == null ? "null":"not null"));        	
