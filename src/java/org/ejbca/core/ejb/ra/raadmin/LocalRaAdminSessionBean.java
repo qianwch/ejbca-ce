@@ -747,7 +747,9 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
     		// We need to clone the profile, otherwise the cache contents will be modifyable from the outside
     		EndEntityProfile eep = (EndEntityProfile)getProfileCacheInternal().get(Integer.valueOf(id));
     		try {
-    			returnval = (EndEntityProfile)eep.clone();
+    			if (eep != null) {
+        			returnval = (EndEntityProfile)eep.clone();    				
+    			}
     		} catch (CloneNotSupportedException e) {
     			log.error("Should never happen: ", e);
     			throw new RuntimeException(e);

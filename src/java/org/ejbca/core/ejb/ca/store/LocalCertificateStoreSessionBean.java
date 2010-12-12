@@ -1984,7 +1984,9 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
     		// We need to clone the profile, otherwise the cache contents will be modifyable from the outside
         	CertificateProfile cprofile = (CertificateProfile)getProfileCacheInternal().get(Integer.valueOf(id));
     		try {
-    			returnval = (CertificateProfile)cprofile.clone();
+    			if (cprofile != null) {
+        			returnval = (CertificateProfile)cprofile.clone();    				
+    			}
     		} catch (CloneNotSupportedException e) {
     			log.error("Should never happen: ", e);
     			throw new RuntimeException(e);
