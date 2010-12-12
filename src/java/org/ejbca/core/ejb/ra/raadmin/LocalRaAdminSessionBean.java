@@ -177,7 +177,6 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
 
     private static final String DEFAULTUSERPREFERENCE = "default";
 
-    public static final String EMPTY_ENDENTITYPROFILE = LocalRaAdminSessionBean.EMPTY_ENDENTITYPROFILENAME;
     public static final int EMPTY_ENDENTITYPROFILEID  = SecConst.EMPTY_ENDENTITYPROFILE;
 
     /**

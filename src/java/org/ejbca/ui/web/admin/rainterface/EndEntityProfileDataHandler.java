@@ -45,7 +45,7 @@ public class EndEntityProfileDataHandler implements java.io.Serializable {
     private ICAAdminSessionLocal caadminsession;
     private InformationMemory info;
 
-    public static final String EMPTY_PROFILE        = LocalRaAdminSessionBean.EMPTY_ENDENTITYPROFILE;    
+    public static final String EMPTY_PROFILE        = LocalRaAdminSessionBean.EMPTY_ENDENTITYPROFILENAME;    
     /** Creates a new instance of EndEntityProfileDataHandler */
     public EndEntityProfileDataHandler(Admin administrator, IRaAdminSessionLocal raadminsession, IAuthorizationSessionLocal authorizationsession, ICAAdminSessionLocal caadminsession, InformationMemory info) {
        this.raadminsession = raadminsession;        
@@ -132,7 +132,7 @@ public class EndEntityProfileDataHandler implements java.io.Serializable {
      */
     private boolean authorizedToProfileName(String profilename, boolean editcheck){
        EndEntityProfile profile = null;	
-		if(profilename.equals(LocalRaAdminSessionBean.EMPTY_ENDENTITYPROFILE)) {
+		if(profilename.equals(LocalRaAdminSessionBean.EMPTY_ENDENTITYPROFILENAME)) {
 		  profile = null;
 		} else {    	
           profile = raadminsession.getEndEntityProfile(administrator, profilename);
