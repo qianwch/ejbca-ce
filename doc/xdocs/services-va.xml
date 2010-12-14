@@ -37,6 +37,8 @@ If you view the page http://vahost:8080/crls/search.cgi you will get links to al
 The OCSP responder is used to ask if a certificate is revoked or not. The OCSP protocol is specified in <a href="http://www.ietf.org/rfc/rfc2560.txt">RFC 2560</a>.
 See <a href="architecture-ocsp.html">OCSP Architecture</a>
 </p>
+<p>The url for OCSP services is http://vahost:8080/ejbca/publicweb/status/ocsp
+</p>
 </subsection>
 </section>
 
