@@ -185,7 +185,7 @@ public class EndEntityProfile extends UpgradeableDataHashMap implements java.io.
     	dataConstants.put(ALLOWEDREQUESTS, new Integer(97));
     	dataConstants.put(STARTTIME, new Integer(98));
     	dataConstants.put(ENDTIME, new Integer(99));
-    	dataConstants.put(CARDNUMBER, new Integer(39));
+    	dataConstants.put(CARDNUMBER, new Integer(91));
     	dataConstants.put(MAXFAILEDLOGINS, new Integer(93));
     	dataConstants.put(CERTSERIALNR, new Integer(92));
     }
@@ -1149,6 +1149,14 @@ public class EndEntityProfile extends UpgradeableDataHashMap implements java.io.
     	  }    	  
       }
 	  
+      //Checking if the cardnumber is required and set
+      String cardnumber;
+      if(isRequired(CARDNUMBER,0)){
+          if(getValue(CARDNUMBER,0).equals("")){
+             throw new UserDoesntFullfillEndEntityProfile("Cardnumber is not set");
+          }
+       }
+      
       String allowedRequests = null;
       if ( ei != null ) {
     	  allowedRequests = ei.getCustomData(ExtendedInformation.CUSTOM_REQUESTCOUNTER);
