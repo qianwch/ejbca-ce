@@ -33,6 +33,7 @@ import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.UpgradeableDataHashMap;
 import org.ejbca.core.model.ca.crl.RevokedCertInfo;
 import org.ejbca.core.model.ra.ExtendedInformation;
+import org.ejbca.core.model.ra.UserDataVO;
 import org.ejbca.util.Base64;
 import org.ejbca.util.StringTools;
 import org.ejbca.util.dn.DNFieldExtractor;
@@ -855,8 +856,19 @@ public class EndEntityProfile extends UpgradeableDataHashMap implements java.io.
     	data.put(PRINTINGSVGDATA, new String(Base64.encode(sVGData.getBytes())));
     }
     
-    
-        
+    public void doesUserFullfillEndEntityProfile(UserDataVO userdata, boolean clearpwd) throws UserDoesntFullfillEndEntityProfile {
+    	doesUserFullfillEndEntityProfile(userdata.getUsername(), userdata.getPassword(), userdata.getDN(), userdata.getSubjectAltName(), "", userdata.getEmail(), 
+    											userdata.getCertificateProfileId(), clearpwd, userdata.getKeyRecoverable(), userdata.getSendNotification(), 
+    											userdata.getTokenType(), userdata.getHardTokenIssuerId(), userdata.getCAId(), userdata.getExtendedinformation());
+    	
+        //Checking if the cardnumber is required and set
+        if(isRequired(CARDNUMBER,0)){
+            if((userdata.getCardNumber() == null) || userdata.getCardNumber().equals("") || (userdata.getCardNumber().length() <= 0) ){
+               throw new UserDoesntFullfillEndEntityProfile("Cardnumber is not set");
+            }
+         }
+    }
+      
     
     public void doesUserFullfillEndEntityProfile(String username, String password, String dn, String subjectaltname, String subjectdirattr, String email,  int certificateprofileid,
                                                  boolean clearpwd, boolean keyrecoverable, boolean sendnotification,
@@ -898,7 +910,7 @@ public class EndEntityProfile extends UpgradeableDataHashMap implements java.io.
       doesUserFullfillEndEntityProfileWithoutPassword(username, dn, subjectaltname, subjectdirattr, email,
     		  certificateprofileid, keyrecoverable, sendnotification, tokentype, hardwaretokenissuerid, caid, ei);
     }
-
+    
     public void doesUserFullfillEndEntityProfileWithoutPassword(String username,  String dn, String subjectaltname, String subjectdirattr,
     		String email,  int certificateprofileid, boolean keyrecoverable, boolean sendnotification,
     		int tokentype, int hardwaretokenissuerid, int caid, ExtendedInformation ei)
@@ -1148,14 +1160,6 @@ public class EndEntityProfile extends UpgradeableDataHashMap implements java.io.
     				  DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT, Locale.US).format(endTimeDate));
     	  }    	  
       }
-	  
-      //Checking if the cardnumber is required and set
-      String cardnumber;
-      if(isRequired(CARDNUMBER,0)){
-          if(getValue(CARDNUMBER,0).equals("")){
-             throw new UserDoesntFullfillEndEntityProfile("Cardnumber is not set");
-          }
-       }
       
       String allowedRequests = null;
       if ( ei != null ) {
