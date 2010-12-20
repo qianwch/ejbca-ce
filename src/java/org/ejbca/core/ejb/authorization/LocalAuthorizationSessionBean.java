@@ -848,7 +848,9 @@ public class LocalAuthorizationSessionBean extends BaseSessionBean {
      * @ejb.transaction type="Supports"
      */
     public boolean existsEndEntityProfileInRules(Admin admin, int profileid) {
-    	trace(">existsEndEntityProfileInRules()");
+    	if (log.isTraceEnabled()) {
+        	trace(">existsEndEntityProfileInRules("+profileid+")");
+    	}
         Connection con = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -866,9 +868,10 @@ public class LocalAuthorizationSessionBean extends BaseSessionBean {
             if (rs.next()) {
                 count = rs.getInt(1);
             }
-            trace("<existsEndEntityProfileInRules()");
+        	if (log.isTraceEnabled()) {
+            	trace("<existsEndEntityProfileInRules("+profileid+"): "+count);
+        	}
             return count > 0;
-
         } catch (Exception e) {
             throw new EJBException(e);
         } finally {
@@ -921,7 +924,9 @@ public class LocalAuthorizationSessionBean extends BaseSessionBean {
      * Help function to existsCAInRules, checks if caid axists among entities in admingroups.
      */
     private boolean existsCAInAdminGroups(int caid) {
-    	trace(">existsCAInAdminGroups()");
+    	if (log.isTraceEnabled()) {
+            log.trace(">existsCAInAdminGroups("+caid+")");
+    	}
         Connection con = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -937,9 +942,10 @@ public class LocalAuthorizationSessionBean extends BaseSessionBean {
             if (rs.next()) {
                 count = rs.getInt(1);
             }
-            boolean exists = count > 0;
-            trace("<existsCAInAdminGroups(): "+exists);
-            return exists;
+        	if (log.isTraceEnabled()) {
+                log.trace("<existsCAInAdminGroups("+caid+"): "+count);
+        	}
+            return count > 0;
         } catch (Exception e) {
             throw new EJBException(e);
         } finally {
@@ -951,7 +957,9 @@ public class LocalAuthorizationSessionBean extends BaseSessionBean {
      * Help function to existsCAInRules, checks if caid axists among accessrules.
      */
     private boolean existsCAInAccessRules(int caid) {
-    	trace(">existsCAInAccessRules()");
+    	if (log.isTraceEnabled()) {
+            log.trace(">existsCAInAccessRules("+caid+")");
+    	}
         Connection con = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -969,9 +977,10 @@ public class LocalAuthorizationSessionBean extends BaseSessionBean {
             if (rs.next()) {
                 count = rs.getInt(1);
             }
-            boolean exists = count > 0;
-            trace("<existsCAInAccessRules(): "+exists);
-            return exists;
+        	if (log.isTraceEnabled()) {
+                log.trace("<existsCAInAccessRules("+caid+"): "+count);
+        	}
+            return count > 0;
         } catch (Exception e) {
             throw new EJBException(e);
         } finally {

@@ -2271,7 +2271,7 @@ throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, Waiting
      */
     public boolean checkForEndEntityProfileId(Admin admin, int endentityprofileid) {
         if (log.isTraceEnabled()) {
-        	log.trace(">checkForEndEntityProfileId()");
+        	log.trace(">checkForEndEntityProfileId("+endentityprofileid+")");
         }
         Connection con = null;
         PreparedStatement ps = null;
@@ -2292,7 +2292,7 @@ throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, Waiting
                 count = rs.getInt(1);
             }
             if (log.isTraceEnabled()) {
-            	log.trace("<checkForEndEntityProfileId()");
+            	log.trace("<checkForEndEntityProfileId("+endentityprofileid+"): "+count);
             }
             return count > 0;
         } catch (Exception e) {
@@ -2313,7 +2313,7 @@ throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, Waiting
      */
     public boolean checkForCertificateProfileId(Admin admin, int certificateprofileid) {
         if (log.isTraceEnabled()) {
-        	log.trace(">checkForCertificateProfileId()");
+        	log.trace(">checkForCertificateProfileId("+certificateprofileid+")");
         }
         Connection con = null;
         PreparedStatement ps = null;
@@ -2334,10 +2334,9 @@ throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, Waiting
                 count = rs.getInt(1);
             }
             if (log.isTraceEnabled()) {
-            	log.trace("<checkForCertificateProfileId()");
+            	log.trace("<checkForCertificateProfileId("+certificateprofileid+"): "+count);
             }
             return count > 0;
-
         } catch (Exception e) {
             throw new EJBException(e);
         } finally {
