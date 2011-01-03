@@ -2191,13 +2191,14 @@ throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, Waiting
 
 
         if (globalconfiguration.getEnableEndEntityProfileLimitations()) {
-            if (caauthstring.trim().equals("") && query == null) {
-                sqlquery = sqlquery + endentityauth;
-            } else {
-                sqlquery = sqlquery + " AND " + endentityauth;
-            }
             if (endentityauth == null || endentityauth.trim().equals("")) {
                 authorizedtoanyprofile = false;
+            } else {
+                if (caauthstring.trim().equals("") && query == null) {
+                    sqlquery = sqlquery + endentityauth;
+                } else {
+                    sqlquery = sqlquery + " AND " + endentityauth;
+                }            	
             }
         }
 		// Finally order the return values
