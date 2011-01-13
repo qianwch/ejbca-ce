@@ -166,7 +166,9 @@ public class CmpServlet extends HttpServlet {
 	 */
 	public void doPost(HttpServletRequest request, HttpServletResponse response)
 	throws IOException, ServletException {
-		log.trace(">doPost()");
+		if (log.isTraceEnabled()) {
+			log.trace(">doPost()");
+		}
 		/* 
 		 POST
 		 <binary CMP message>
@@ -181,7 +183,9 @@ public class CmpServlet extends HttpServlet {
 			return;
 		}
 		service(message, request.getRemoteAddr(), response);
-		log.trace("<doPost()");
+		if (log.isTraceEnabled()) {
+			log.trace("<doPost()");
+		}
 	} //doPost
 	
 	/**
@@ -195,12 +199,14 @@ public class CmpServlet extends HttpServlet {
 	 */
 	public void doGet(HttpServletRequest request, HttpServletResponse response)
 	throws java.io.IOException, ServletException {
-		log.trace(">doGet()");
-		
+		if (log.isTraceEnabled()) {
+			log.trace(">doGet()");
+		}		
 		log.info("Received un-allowed method GET in CMP servlet: query string=" + request.getQueryString());
 		response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, "You can only use POST!");
-		
-		log.trace("<doGet()");
+		if (log.isTraceEnabled()) {
+			log.trace("<doGet()");
+		}
 	} // doGet
 
 	private void service(DERObject message, String remoteAddr, HttpServletResponse response) throws IOException {
@@ -208,6 +214,7 @@ public class CmpServlet extends HttpServlet {
 			// We must use an administrator with rights to create users
 			final Admin administrator = new Admin(Admin.TYPE_RA_USER, remoteAddr);
 			log.info( intres.getLocalizedMessage("cmp.receivedmsg", remoteAddr) );
+			long startTime = System.currentTimeMillis();
 			final CmpMessageDispatcher dispatcher = new CmpMessageDispatcher(administrator);
 			final IResponseMessage resp = dispatcher.dispatch(message);
 			if ( resp==null ) { // If resp is null, it means that the dispatcher failed to process the message.
@@ -218,7 +225,8 @@ public class CmpServlet extends HttpServlet {
 			ServletUtils.addCacheHeaders(response);
 			// Send back CMP response
 			RequestHelper.sendBinaryBytes(resp.getResponseMessage(), response, "application/pkixcmp", null);
-			log.info( intres.getLocalizedMessage("cmp.sentresponsemsg", remoteAddr) );
+			long endTime = System.currentTimeMillis();
+			log.info( intres.getLocalizedMessage("cmp.sentresponsemsg", remoteAddr, Long.valueOf(endTime - startTime)) );
 		} catch (Exception e) {
 			log.error("Error in CmpServlet:", e);
 			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
