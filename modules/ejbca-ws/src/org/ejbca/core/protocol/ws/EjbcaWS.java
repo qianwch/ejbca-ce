@@ -2598,4 +2598,42 @@ public class EjbcaWS implements IEjbcaWS {
         }
 	}
 
+	@Override
+	public List<Certificate> getLastCAChain(String caname)
+			throws AuthorizationDeniedException, CADoesntExistsException, EjbcaException {
+		if (log.isTraceEnabled()) {
+			log.trace(">getLastCAChain: "+caname);
+		}
+		final List<Certificate> retval = new ArrayList<Certificate>();
+		EjbcaWSHelper ejbhelper = new EjbcaWSHelper();
+		Admin admin = ejbhelper.getAdmin(wsContext);
+        final IPatternLogger logger = TransactionLogger.getPatternLogger();
+        logAdminName(admin,logger);
+		try {
+			CAInfo info = ejbhelper.getCAAdminSession().getCAInfoOrThrowException(admin, caname);
+     		Collection certs = info.getCertificateChain();
+			Iterator iter = certs.iterator();
+			while (iter.hasNext()){
+				retval.add(new Certificate ((java.security.cert.Certificate)iter.next ()));
+			}
+
+		} catch (RemoteException e) {
+            throw EjbcaWSHelper.getInternalException(e, logger);
+		} catch (EJBException e) {
+            throw EjbcaWSHelper.getInternalException(e, logger);
+		} catch (CertificateEncodingException e) {
+            throw EjbcaWSHelper.getInternalException(e, logger);
+        } catch( RuntimeException t ) {
+            logger.paramPut(TransactionTags.ERROR_MESSAGE.toString(), t.toString());
+            throw t;
+        } finally {
+            logger.writeln();
+            logger.flush();
+        }
+		if (log.isTraceEnabled()) {
+			log.trace("<getLastCAChain: "+caname);
+		}
+		return retval;
+	}
+
 }

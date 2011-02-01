@@ -135,6 +135,28 @@ public interface IEjbcaWS {
 			boolean onlyValid) throws AuthorizationDeniedException, EjbcaException;
 
 	/**
+	 * Retrieves the latest CA path
+	 * 
+	 *  Note: the whole certificate chain is returned.
+	 * 
+	 * Authorization requirements:<pre>
+	 * - Administrator flag set
+	 * - /administrator
+	 * - /ca/&lt;ca in question&gt;
+	 * </pre>
+	 * 
+	 * @param caname a unique caname 
+	 * @return a collection of X509Certificates or CVCCertificates with CA certificate in pos 0, and possible higer-level CA in pos 1 and upwards
+	 * @throws AuthorizationDeniedException if client isn't authorized to request
+	 * @throws EjbcaException
+	 * @throws AuthorizationDeniedException
+	 * @throws CADoesntExistsException 
+	 */
+
+	public abstract List<Certificate> getLastCAChain(String caname) 
+	throws AuthorizationDeniedException, CADoesntExistsException, EjbcaException;
+
+	/**
 	 * Retrieves the latest certificate issued to the user.
 	 * 
 	 *  Note the whole certificate chain is returned.
@@ -176,6 +198,7 @@ public interface IEjbcaWS {
 			String crmf, String hardTokenSN, String responseType)
 			throws CADoesntExistsException, AuthorizationDeniedException, NotFoundException,
 			EjbcaException;
+
 
 	/**
 	 *  Generates a certificate for a user.

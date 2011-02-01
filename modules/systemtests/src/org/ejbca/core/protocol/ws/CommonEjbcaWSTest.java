@@ -22,6 +22,7 @@ import java.security.SignatureException;
 import java.security.cert.CertStore;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Enumeration;
@@ -1785,8 +1786,16 @@ public class CommonEjbcaWSTest extends TestCase {
 		if(performSetup){
 			setUpAdmin();
 		}
-
+		try
+		{
+			ejbcaraws.getLastCAChain("sorry-no-such-ca-here");
+			fail ("Should not happen");
+		}
+		catch (CADoesntExistsException_Exception e){
+		}
         createCVCCA(rootcadn, rootcaname, subcadn, subcaname, keyspec, keyalg, signalg);
+        List<Certificate> ca_path = ejbcaraws.getLastCAChain(subcaname);
+        assertEquals ("Must be two", 2, ca_path.size());
 
         // 
         // create a set of requests for WS test
@@ -1858,6 +1867,8 @@ public class CommonEjbcaWSTest extends TestCase {
         parsedObject = CertificateParser.parseCertificate(Base64.decode(b64cert));
         CVCertificate dvcert = (CVCertificate) parsedObject;
         b64cert = wscvcacert.getCertificateData();
+        assertTrue ("CVCA", Arrays.equals(wscvcacert.getRawCertificateData(), ca_path.get(1).getRawCertificateData()));
+        assertTrue ("DVCA", Arrays.equals(wsdvcert.getRawCertificateData(), ca_path.get(0).getRawCertificateData()));
         parsedObject = CertificateParser.parseCertificate(Base64.decode(b64cert));
         CVCertificate cvcacert = (CVCertificate) parsedObject;
         assertEquals(AuthorizationRoleEnum.DV_D, dvcert.getCertificateBody().getAuthorizationTemplate().getAuthorizationField().getRole());
@@ -2289,7 +2300,18 @@ public class CommonEjbcaWSTest extends TestCase {
 		caMakeRequestAndFindCA(dvcaName, cvcacert);
 	} // test34_2CaRenewCertRequestECC
 	
-	/** Private method used for both RSA and ECC tests */
+	/** private method for CA path testing */ 
+    private void checkGetLastCAChain (Collection dvcerts, String caname) throws Exception{
+        List<Certificate> ca_path = ejbcaraws.getLastCAChain(caname);
+        assertEquals ("Must be two", 2, ca_path.size());
+        Iterator in_path = dvcerts.iterator();
+        assertTrue ("DV", Arrays.equals(ca_path.get(0).getRawCertificateData(),
+        		((CardVerifiableCertificate)in_path.next()).getEncoded()));
+        assertTrue ("CVCA", Arrays.equals(ca_path.get(1).getRawCertificateData(),
+        		((CardVerifiableCertificate)in_path.next()).getEncoded()));
+    }
+
+    /** Private method used for both RSA and ECC tests */
 	private CardVerifiableCertificate caRenewCertRequest(final String cvcaMnemonic, final String dvcaName, final String dvcaMnemonic, final String keyspec, final String keyalg, final String signalg) throws Exception {
 		List<byte[]> cachain = new ArrayList<byte[]>();
 		String pwd = "foo123"; // use default hard coded soft CA token password 
@@ -2345,6 +2367,7 @@ public class CommonEjbcaWSTest extends TestCase {
         assertEquals(SecConst.CA_ACTIVE, dvinfo.getStatus());
         Collection dvcerts = dvinfo.getCertificateChain();
         assertEquals(2, dvcerts.size());
+        checkGetLastCAChain (dvcerts, caname);
         CardVerifiableCertificate dvcertactive = (CardVerifiableCertificate)dvcerts.iterator().next();
         obj = CertificateParser.parseCVCObject(dvcertactive.getEncoded());
         //System.out.println(obj.getAsText());
@@ -2393,6 +2416,7 @@ public class CommonEjbcaWSTest extends TestCase {
         assertEquals(SecConst.CA_ACTIVE, dvinfo.getStatus());
         dvcerts = dvinfo.getCertificateChain();
         assertEquals(2, dvcerts.size());
+        checkGetLastCAChain (dvcerts, caname);
         dvcertactive = (CardVerifiableCertificate)dvcerts.iterator().next();
         obj = CertificateParser.parseCVCObject(dvcertactive.getEncoded());
         //System.out.println(obj.getAsText());
@@ -2428,6 +2452,7 @@ public class CommonEjbcaWSTest extends TestCase {
         assertEquals(SecConst.CA_ACTIVE, dvinfo.getStatus());
         // Check to see that is really is a new keypair
         dvcerts = dvinfo.getCertificateChain();
+        checkGetLastCAChain (dvcerts, caname);
         assertEquals(2, dvcerts.size());
         dvcertactive = (CardVerifiableCertificate)dvcerts.iterator().next();
         String sequence4 = dvcertactive.getCVCertificate().getCertificateBody().getHolderReference().getSequence();
