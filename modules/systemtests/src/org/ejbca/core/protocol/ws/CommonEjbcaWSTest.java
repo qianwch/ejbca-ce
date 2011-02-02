@@ -2345,6 +2345,7 @@ public class CommonEjbcaWSTest extends TestCase {
         // Now test our WS API to generate a request, setting status to "WAITING_FOR_CERTIFICATE_RESPONSE"
         CAInfo dvinfo = getCAAdminSession().getCAInfo(intAdmin, caname);
         assertEquals(SecConst.CA_WAITING_CERTIFICATE_RESPONSE, dvinfo.getStatus());
+        assertEquals ("DV should not be available", ejbcaraws.getLastCAChain(caname).size (),0);
         cachain.add(cvcacert.getEncoded());
         // Create the request with WS API
         request = ejbcaraws.caRenewCertRequest(caname, cachain, false, false, false, pwd);
@@ -2402,6 +2403,7 @@ public class CommonEjbcaWSTest extends TestCase {
         // Now test our WS API that it has set status to "WAITING_FOR_CERTIFICATE_RESPONSE"
         dvinfo = getCAAdminSession().getCAInfo(intAdmin, caname);
         assertEquals(SecConst.CA_WAITING_CERTIFICATE_RESPONSE, dvinfo.getStatus());
+        assertEquals ("DV should not be available", ejbcaraws.getLastCAChain(caname).size (),0);
         // Check to see that is really is a new keypair
         pubk1 = new String(Base64.encode(dvcertactive.getPublicKey().getEncoded(), false));
         pubk2 = new String(Base64.encode(cert.getCertificateBody().getPublicKey().getEncoded(), false));

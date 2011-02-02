@@ -146,11 +146,11 @@ public interface IEjbcaWS {
 	 * </pre>
 	 * 
 	 * @param caname a unique caname 
-	 * @return a collection of X509Certificates or CVCCertificates with CA certificate in pos 0, and possible higer-level CA in pos 1 and upwards
+	 * @return a collection of X509Certificates or CVCCertificates with CA certificate in pos 0, and possible higer-level CA in pos 1 and upwards.
+	 * <i>If CA status is CA_WAITING_CERTIFICATE_RESPONSE the list will be of zero length</i>
 	 * @throws AuthorizationDeniedException if client isn't authorized to request
-	 * @throws EjbcaException
-	 * @throws AuthorizationDeniedException
 	 * @throws CADoesntExistsException 
+	 * @throws EjbcaException
 	 */
 
 	public abstract List<Certificate> getLastCAChain(String caname) 

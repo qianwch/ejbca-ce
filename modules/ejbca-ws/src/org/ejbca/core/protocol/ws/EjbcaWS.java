@@ -2611,6 +2611,9 @@ public class EjbcaWS implements IEjbcaWS {
         logAdminName(admin,logger);
 		try {
 			CAInfo info = ejbhelper.getCAAdminSession().getCAInfoOrThrowException(admin, caname);
+			if (info.getStatus() == SecConst.CA_WAITING_CERTIFICATE_RESPONSE){
+				return retval;
+			}
      		Collection certs = info.getCertificateChain();
 			Iterator iter = certs.iterator();
 			while (iter.hasNext()){
