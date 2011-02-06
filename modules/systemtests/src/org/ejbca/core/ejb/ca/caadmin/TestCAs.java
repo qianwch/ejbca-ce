@@ -14,6 +14,7 @@
 package org.ejbca.core.ejb.ca.caadmin;
 
 import java.math.BigInteger;
+import java.rmi.RemoteException;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
@@ -23,7 +24,10 @@ import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map.Entry;
 
 import junit.framework.TestCase;
 
@@ -31,6 +35,7 @@ import org.apache.log4j.Logger;
 import org.bouncycastle.jce.provider.JCEECPublicKey;
 import org.ejbca.core.model.AlgorithmConstants;
 import org.ejbca.core.model.SecConst;
+import org.ejbca.core.model.authorization.AuthorizationDeniedException;
 import org.ejbca.core.model.ca.caadmin.CAExistsException;
 import org.ejbca.core.model.ca.caadmin.CAInfo;
 import org.ejbca.core.model.ca.caadmin.CVCCAInfo;
@@ -1665,4 +1670,53 @@ public class TestCAs extends TestCase {
     	TestTools.getCAAdminSession().editCA(admin, info); // need active status in order to do renew
         TestTools.getCAAdminSession().renewCA(admin, TestTools.getTestCAId(), "foo123", false);
     } // test13RenewCA
+    
+    public void test15ExternalExpiredCA() throws Exception {
+        final String caname = "TestExternalExpiredCA";
+        byte[] testcert = Base64.decode(("MIICDjCCAXegAwIBAgIIaXCEunuPDowwDQYJKoZIhvcNAQEFBQAwFzEVMBMGA1UE"+
+        		"AwwMc2hvcnQgZXhwaXJlMB4XDTExMDIwNTE3MjI1MloXDTExMDIwNTE4MjIxM1ow"+
+        		"FzEVMBMGA1UEAwwMc2hvcnQgZXhwaXJlMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCB"+
+        		"iQKBgQCNAygw3H9WuThxxFAv2oc5SzijHLUdvgD+Y9E3nKWWgRq1ECcKo0d60U24"+
+        		"gJiuSkH+PcC300a1AnfWAac/MkuFS9F58J6vjud+AA0MzoD5Tlc9lbxQy6qoKF29"+
+        		"87VMITZjISSdfnlfWbXVeNqTrqeTBreOS34TTZ7bLzBCvGcq1wIDAQABo2MwYTAd"+
+        		"BgNVHQ4EFgQUfLHTt9G8cdsVxZR9gOsHUqqh/1wwDwYDVR0TAQH/BAUwAwEB/zAf"+
+        		"BgNVHSMEGDAWgBR8sdO30bxx2xXFlH2A6wdSqqH/XDAOBgNVHQ8BAf8EBAMCAYYw"+
+        		"DQYJKoZIhvcNAQEFBQADgYEAS4PvelI9Fmxxcbs0Nrx8qk+TlREOeDX+rsXvKcJ2"+
+        		"gGEhtMX1yCNn0uSQuc/mM4Dz5faxCCQQMZl8Vp07d1MrTMYcka+P6RtEKneXfLim"+
+        		"fXnqR22xd2P7ssXE52/tTnAyJbYUrOOCI6iiek3dZN8oTmGhZUBHIgFzxC/8MgHa"+
+        "G6Y=").getBytes());
+        Certificate cert = CertTools.getCertfromByteArray(testcert);
+        removeOldCa(caname); // for the test
+        List<Certificate> certs = new ArrayList<Certificate>();
+        certs.add(cert);
+
+        try {
+        	// Import the CA certificate
+        	TestTools.getCAAdminSession().importCACertificate(admin, caname, certs);
+        	CAInfo info = TestTools.getCAAdminSession().getCAInfo(admin, caname);
+        	// The CA must not get stats SecConst.CA_EXPIRED when it is an external CA
+        	assertEquals(SecConst.CA_EXTERNAL, info.getStatus());
+        } finally {
+        	removeOldCa(caname); // for the test        	
+        }
+    } // test15ExternalExpiredCA
+
+    /**
+     * Preemtively remove CA in case it was created by a previous run:
+     * @throws AuthorizationDeniedException 
+     * @throws RemoteException 
+     */
+    private void removeOldCa(String caName) throws AuthorizationDeniedException, RemoteException {     
+        HashMap<Integer, String> nameMap = TestTools.getCAAdminSession().getCAIdToNameMap(admin);
+        if(nameMap.containsValue(caName)){
+            for(Entry<Integer, String> entry: nameMap.entrySet()) {
+                if(entry.getValue().equals(caName)) {
+                	TestTools.getCAAdminSession().removeCA(admin, entry.getKey());
+                    break;
+                }
+            }
+            
+        }
+    }
+
 }

@@ -1107,7 +1107,8 @@ public class CAAdminSessionBean extends BaseSessionBean {
         	CertTools.checkValidity(ca.getCACertificate(), new Date());
         } catch (CertificateExpiredException cee) {
         	// Signers Certificate has expired, we want to make sure that the status in the database is correctly EXPIRED for this CA
-            if (ca.getStatus() != SecConst.CA_EXPIRED) {
+        	// Don't set external CAs to expired though, because they should always be treated as external CAs
+        	if ( (ca.getStatus() != SecConst.CA_EXPIRED) && (ca.getStatus() != SecConst.CA_EXTERNAL) ) {
                 ca.setStatus(SecConst.CA_EXPIRED); // update the value object
                 // Also try to update the database with new "expired" status
                 if (cadata == null) {
