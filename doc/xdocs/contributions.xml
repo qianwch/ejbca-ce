@@ -10,16 +10,22 @@
     <p>
     EJBCA is an open source project and appreciates community contributions:
     <ul>
-    <li>Contribute code, joint the EJBCA Team!<br></br>We are generous with CVS access once you have proven yourself with a few patches and have longer-term intentions.</li>
+    <li>Contribute code - we love patches! If you have a new feature or bug-fix, this is the absolute fastest way get it implemented.<br/>
+        A well written feature or bug-fix with proper JUnit tests have a very high probability of living on,
+        thus removing the maintenance burden of patching EJBCA every time you upgrade.</li>
     <li>Contribute documentation. Documentation can always be improved.</li>
+    <li>Contribute translations. Translations can always be improved.</li>
     <li>Report bugs, suggest new features and improvements. You can do it all through the <a href="http://jira.primekey.se/">Bug Database</a>.</li>
+    <li>Join the EJBCA Team!</li>
+    <li>Due to Common Criteria certification we can not be very generous with SVN commit access. We may get SVN access if you prove yourself, have long-term intentions and sign of on our Development Policy.</li>
     </ul>
-    See <a href="contact.html">contact &amp; support</a> for ways to contact EJBCA.
+    See <a href="contact.html">contact &amp; support</a> for ways to contact the EJBCA Team.
     </p>  
     <p>
-    If you contribute code, read the file doc/developer/DEVELOP in the distribution for developer information.
+    The <a href="http://wiki.ejbca.org/developers">EJBCA Wiki</a> have all the information you need to get started developing EJBCA.
     </p>
   </section>
+
   <section name="Donations">
     <p>
     You can donate to EJBCA in a number of ways:
@@ -29,6 +35,17 @@
     <li>Through <a href="donations.html">Donations</a>.</li>
     </ul>
     </p>
+  </section>
+
+  <section name="Commit privileges policy">
+	<p>The purpose of the commit privileges policy is to maintain assurance that unauthorized modifications are not being done.</p>
+	<p>The policy for determining who have commit rights to the repositories are:</p>
+	<ul>
+	<li>Only trusted staff or partners who are active in development have commit right to the repository.</li> 
+	<li>All persons have previously undergone code review of their work, to ensure they produce good code.</li>
+	<li>After 6 months without repository activity, commit privileges will be withdrawn. To be added again if needed.</li>
+	<li>All commits are monitored in irc-channel, fisheye, release diffs and using a QA review process.</li>
+    </ul>
   </section>
 
 </body>
