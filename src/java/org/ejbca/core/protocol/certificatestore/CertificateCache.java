@@ -176,7 +176,6 @@ class CertificateCache implements ICertificateCache {
 	/* (non-Javadoc)
 	 * @see org.ejbca.core.protocol.certificatestore.ICertificateCache#getRootCertificates()
 	 */
-	@Override
 	public X509Certificate[] getRootCertificates() {
 		loadCertificates(); // refresh cache?
 		// Keep the lock as small as possible, but do not try to read the cache while it is being rebuilt
@@ -198,7 +197,6 @@ class CertificateCache implements ICertificateCache {
 	/* (non-Javadoc)
 	 * @see org.ejbca.core.protocol.certificatestore.ICertificateCache#findBySubjectKeyIdentifier(org.ejbca.core.protocol.certificatestore.HashID)
 	 */
-	@Override
 	public X509Certificate findBySubjectKeyIdentifier(HashID id) {
 		loadCertificates(); // refresh cache?
 		// Keep the lock as small as possible, but do not try to read the cache while it is being rebuilt

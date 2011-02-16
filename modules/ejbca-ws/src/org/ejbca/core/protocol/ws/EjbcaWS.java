@@ -2598,7 +2598,6 @@ public class EjbcaWS implements IEjbcaWS {
         }
 	}
 
-	@Override
 	public List<Certificate> getLastCAChain(String caname)
 			throws AuthorizationDeniedException, CADoesntExistsException, EjbcaException {
 		if (log.isTraceEnabled()) {

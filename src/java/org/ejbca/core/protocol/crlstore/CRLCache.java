@@ -74,14 +74,12 @@ class CRLCache implements ICRLCache {
 	/* (non-Javadoc)
 	 * @see org.ejbca.core.protocol.crlstore.ICRLCache#findBySubjectKeyIdentifier(org.ejbca.core.protocol.certificatestore.HashID, boolean)
 	 */
-	@Override
 	public byte[] findBySubjectKeyIdentifier(HashID id, boolean isDelta) {
 		return findLatest(this.certCache.findBySubjectKeyIdentifier(id), isDelta);
 	}
 	/* (non-Javadoc)
 	 * @see org.ejbca.core.protocol.crlstore.ICRLCache#findLatestByIssuerDN(org.ejbca.core.protocol.certificatestore.HashID, boolean)
 	 */
-	@Override
 	public byte[] findLatestByIssuerDN(HashID id, boolean isDelta) {
 		return findLatest(this.certCache.findLatestBySubjectDN(id), isDelta);
 	}
