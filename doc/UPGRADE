@@ -23,8 +23,8 @@ All database upgrades require CREATE and ALTER TABLE privileges besides the regu
 INSERT and DELETE. The SQL executed by database upgrades code is available in
 "src/upgrade/<oldversion>_<newversion>/<oldversion>_<newversion>-upgrade-<database>.sql".
 
-From EJBCA 3.11.0 to EJBCA 3.11.x
---------------------------------
+From EJBCA 3.11.0 or 3.11.1 to EJBCA 3.11.x
+-------------------------------------------
 Read RELEASE_NOTES carefully in order to see if any particular changes might effect your upgrade.
 
 Normally upgrades within a major release are plug-in upgrades.
@@ -42,9 +42,9 @@ The database mapping for KeyRecoveryData.certSN on _MySQL_ in 3.11.0 was wrong a
 by running:
     ALTER TABLE KeyRecoveryData MODIFY certSN varchar(80) binary NOT NULL DEFAULT '';
 
-The database mapping for UserData.cardNumber in the table create script on _MySQL_ in 3.11.0 was
-wrong and can be corrected by running:
-    ALTER TABLE UserData MODIFY cardNumber varchar(250) binary NOT NULL DEFAULT '';
+The database mapping for UserData.cardNumber in the table create script on _MySQL_ in 3.11.0 and
+UPGRADE notes in 3.11.1 was wrong and can be corrected by running:
+        ALTER TABLE UserData MODIFY cardNumber varchar(250) binary NULL DEFAULT NULL;
 
 The database mapping for ServiceData.nextRunTimeStamp and runTimeStamp was inconsistent on _Sybase_
 in 3.11.0 and can be corrected by running:
