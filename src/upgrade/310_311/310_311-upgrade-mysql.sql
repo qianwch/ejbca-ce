@@ -21,6 +21,9 @@ ALTER TABLE ServiceData ADD runTimeStamp bigint(20) NOT NULL DEFAULT '0';
 ALTER TABLE KeyRecoveryData MODIFY certSN varchar(80) binary NOT NULL DEFAULT '';
 ALTER TABLE KeyRecoveryData MODIFY issuerDN varchar(250) binary NOT NULL DEFAULT '';
 
+-- UserData.cardNumber defined as carchar(19) in the table-create scripts
+ALTER TABLE UserData MODIFY cardNumber varchar(250) binary NULL DEFAULT NULL;
+
 -- Add rowVersion column to all tables that will exist in EJBCA 4.0
 ALTER TABLE AccessRulesData ADD COLUMN rowVersion int(11) DEFAULT 0; 
 ALTER TABLE AdminEntityData ADD COLUMN rowVersion int(11) DEFAULT 0;
