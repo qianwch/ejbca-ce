@@ -42,7 +42,6 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Vector;
 
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.ASN1EncodableVector;
@@ -392,8 +391,7 @@ public class X509CA extends CA implements Serializable {
         } else {
         	converter = new X509DefaultEntryConverter();
         }
-        Vector dnorder = CertTools.getX509FieldOrder(getUseLdapDNOrder());
-        X509Name x509dn = CertTools.stringToBcX509Name(getSubjectDN(), converter, dnorder);
+        X509Name x509dn = CertTools.stringToBcX509Name(getSubjectDN(), converter, getUseLdapDNOrder());
         PKCS10CertificationRequest req;
 		try {
 			CATokenContainer catoken = getCAToken();
@@ -488,8 +486,7 @@ public class X509CA extends CA implements Serializable {
         if ((getUseLdapDNOrder() == false) || (certProfile.getUseLdapDnOrder() == false)) {
         	ldapdnorder = false;
         }
-        Vector dnorder = CertTools.getX509FieldOrder(ldapdnorder);
-        X509Name subjectDNName = CertTools.stringToBcX509Name(dn, converter, dnorder);
+        X509Name subjectDNName = CertTools.stringToBcX509Name(dn, converter, ldapdnorder);
         if (certProfile.getAllowDNOverride() && (requestX509Name != null) ) {
         	subjectDNName = requestX509Name;
         	log.debug("Using X509Name from request instead of user's registered.");
@@ -505,7 +502,7 @@ public class X509CA extends CA implements Serializable {
         	if (log.isDebugEnabled()) {
         		log.debug("Using subject DN also as issuer DN, because it is a root CA");
         	}
-            X509Name caname = CertTools.stringToBcX509Name(getSubjectDN(), converter, dnorder);
+            X509Name caname = CertTools.stringToBcX509Name(getSubjectDN(), converter, getUseLdapDNOrder());
             certgen.setIssuerDN(caname);
         } else {
         	javax.security.auth.x500.X500Principal issuerPrincipal = cacert.getSubjectX500Principal();
@@ -708,7 +705,7 @@ public class X509CA extends CA implements Serializable {
             	converter = new X509DefaultEntryConverter();
             }
 
-            X509Name caname = CertTools.stringToBcX509Name(getSubjectDN(), converter, CertTools.getX509FieldOrder(getUseLdapDNOrder()));
+            X509Name caname = CertTools.stringToBcX509Name(getSubjectDN(), converter, getUseLdapDNOrder());
             crlgen.setIssuerDN(caname);
         } else {
         	crlgen.setIssuerDN(cacert.getSubjectX500Principal());
