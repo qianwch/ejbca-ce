@@ -453,6 +453,10 @@ public class CrmfMessageHandlerTest extends TestCase {
 
         }
 
+        public void revokeCert(Admin admin, BigInteger certserno, Date revocationdate, String issuerdn, String username, int reason) throws AuthorizationDeniedException,
+        FinderException, ApprovalException, WaitingForApprovalException, AlreadyRevokedException, RemoteException {
+
+}
         public void revokeUser(Admin admin, String username, int reason) throws AuthorizationDeniedException, FinderException, ApprovalException,
                 WaitingForApprovalException, AlreadyRevokedException, RemoteException {
 

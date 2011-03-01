@@ -1617,7 +1617,24 @@ throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, Waiting
      * @ejb.interface-method
      */
     public void revokeCert(Admin admin, BigInteger certserno, String issuerdn, String username, int reason) throws AuthorizationDeniedException,
-    		FinderException, ApprovalException, WaitingForApprovalException, AlreadyRevokedException {
+		FinderException, ApprovalException, WaitingForApprovalException, AlreadyRevokedException {
+    	revokeCert (admin, certserno, new Date (), issuerdn, username, reason);
+    }
+
+    /**
+     * Method that revokes a certificate for a user.
+     * It can also be used to un-revoke a certificate that has been revoked with reason ON_HOLD. This is done by giving reason RevokedCertInfo.NOT_REVOKED (or RevokedCertInfo.REVOKATION_REASON_REMOVEFROMCRL).
+     *
+     * @param admin the administrator performing the action
+     * @param certserno the serno of certificate to revoke.
+     * @param revocationdate the revokation date
+     * @param username  the username to revoke.
+     * @param reason    the reason of revokation, one of the RevokedCertInfo.XX constants.
+	 * @throws AlreadyRevokedException if the certificate was already revoked
+     * @ejb.interface-method
+     */
+    public void revokeCert(Admin admin, BigInteger certserno, Date revocationdate, String issuerdn, String username, int reason) throws AuthorizationDeniedException,
+		FinderException, ApprovalException, WaitingForApprovalException, AlreadyRevokedException {
         if (log.isTraceEnabled()) {
             log.trace(">revokeCert(" + certserno + ", IssuerDN: " + issuerdn + ", username, " + username + ")");
         }
@@ -1706,7 +1723,7 @@ throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, Waiting
         }
         
         // Revoke certificate in database and all publishers
-        certificatesession.setRevokeStatus(admin, issuerdn, certserno, publishers, reason, userDataDN);
+        certificatesession.setRevokeStatus(admin, issuerdn, certserno, revocationdate, publishers, reason, userDataDN);
         // Reset the revocation code identifier used in XKMS
         ExtendedInformation inf = data.getExtendedInformation();
         if (inf != null) {

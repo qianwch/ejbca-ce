@@ -1082,6 +1082,7 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
     	}
     }
     
+    
     /**
      * Set the status of certificate with given serno to revoked, or unrevoked (re-activation).
      *
@@ -1101,13 +1102,35 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
      * @ejb.interface-method
      */
     public void setRevokeStatus(Admin admin, String issuerdn, BigInteger serno, Collection publishers, int reason, String userDataDN) {
+    	setRevokeStatus (admin, issuerdn, serno, new Date (), publishers, reason, userDataDN);
+    }
+    /**
+     * Set the status of certificate with given serno to revoked, or unrevoked (re-activation).
+     *
+     * Re-activating (unrevoking) a certificate have two limitations.
+     * 1. A password (for for example AD) will not be restored if deleted, only the certificate and certificate status and associated info will be restored
+     * 2. ExtendedInformation, if used by a publisher will not be used when re-activating a certificate 
+     *
+     * The method leaves up to the caller to find the correct publishers and userDataDN.
+     * 
+     * @param admin      Administrator performing the operation
+     * @param issuerdn   Issuer of certificate to be removed.
+     * @param serno      the serno of certificate to revoke.
+     * @param revokedate when it was revoked
+     * @param publishers and array of publiserids (Integer) of publishers to revoke the certificate in.
+     * @param reason     the reason of the revokation. (One of the RevokedCertInfo.REVOKATION_REASON constants.)
+     * @param userDataDN if an DN object is not found in the certificate, the object could be taken from user data instead.
+     * @ejb.transaction type="Required"
+     * @ejb.interface-method
+     */
+    public void setRevokeStatus(Admin admin, String issuerdn, BigInteger serno, Date revokedate, Collection publishers, int reason, String userDataDN) {
     	if (log.isTraceEnabled()) {
         	log.trace(">setRevokeStatus(),  issuerdn=" + issuerdn + ", serno=" + serno.toString(16)+", reason="+reason);
     	}
         Certificate certificate = null;
         try {
             certificate = (Certificate) this.findCertificateByIssuerAndSerno(admin, issuerdn, serno);
-	        setRevokeStatus(admin, certificate, publishers, reason, userDataDN);
+	        setRevokeStatus(admin, certificate, publishers, revokedate, reason, userDataDN);
         } catch (FinderException e) {
         	String msg = intres.getLocalizedMessage("store.errorfindcertserno", serno.toString(16));            	
             getLogSession().log(admin, issuerdn.hashCode(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_ERROR_REVOKEDCERT, msg);
@@ -1128,11 +1151,12 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
      * @param admin      Administrator performing the operation
      * @param certificate the certificate to revoke or activate.
      * @param publishers and array of publiserids (Integer) of publishers to revoke/re-publish the certificate in.
+     * @param revokedate
      * @param reason     the reason of the revokation. (One of the RevokedCertInfo.REVOKATION_REASON constants.)
      * @param userDataDN if an DN object is not found in the certificate use object from user data instead.
      * @throws FinderException 
      */
-    private void setRevokeStatus(Admin admin, Certificate certificate, Collection publishers, int reason, String userDataDN) throws FinderException {
+    private void setRevokeStatus(Admin admin, Certificate certificate, Collection publishers, Date revokedate, int reason, String userDataDN) throws FinderException {
     	if (certificate == null) {
     		return;
     	}
@@ -1152,13 +1176,13 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
     	if ( (rev.getStatus() != SecConst.CERT_REVOKED) 
     			&& (reason != RevokedCertInfo.NOT_REVOKED) && (reason != RevokedCertInfo.REVOKATION_REASON_REMOVEFROMCRL) ) {
     		rev.setStatus(SecConst.CERT_REVOKED);
-    		rev.setRevocationDate(now);
+    		rev.setRevocationDate(revokedate);
     		rev.setUpdateTime(now.getTime());
     		rev.setRevocationReason(reason);            	  
     		String msg = intres.getLocalizedMessage("store.revokedcert", new Integer(reason));            	
     		getLogSession().log(admin, certificate, LogConstants.MODULE_CA, new java.util.Date(), null, certificate, LogConstants.EVENT_INFO_REVOKEDCERT, msg);
     		// Revoke in all related publishers
-    		getPublisherSession().revokeCertificate(admin, publishers, certificate, username, userDataDN, cafp, type, reason, now.getTime(), rev.getTag(), rev.getCertificateProfileId(), now.getTime());
+    		getPublisherSession().revokeCertificate(admin, publishers, certificate, username, userDataDN, cafp, type, reason, revokedate.getTime(), rev.getTag(), rev.getCertificateProfileId(), now.getTime());
         // Unrevoke, can only be done when the certificate was previously revoked with reason CertificateHold
     	} else if ( ((reason == RevokedCertInfo.NOT_REVOKED) || (reason == RevokedCertInfo.REVOKATION_REASON_REMOVEFROMCRL)) 
     			&& (rev.getRevocationReason() == RevokedCertInfo.REVOKATION_REASON_CERTIFICATEHOLD) ) {
