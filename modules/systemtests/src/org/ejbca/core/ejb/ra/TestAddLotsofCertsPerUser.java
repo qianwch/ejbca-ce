@@ -98,7 +98,7 @@ public class TestAddLotsofCertsPerUser extends TestCase {
      */
     public void test01Create2000Users() throws Exception {
         log.trace(">test01Create2000Users()");
-        final Admin administrator = new Admin(Admin.TYPE_INTERNALUSER);
+        final Admin administrator = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
         final String baseUsername = "lotsacertsperuser-" + System.currentTimeMillis() + "-";
         final int NUMBER_OF_USERS = 10;
         final int CERTS_OF_EACH_KIND = 50;

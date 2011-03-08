@@ -37,7 +37,7 @@ import org.ejbca.util.TestTools;
 public class TestUserPasswordExpire extends TestCase {
 
     private static final Logger log = Logger.getLogger(TestUserPasswordExpire.class);
-    private static final Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+    private static final Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
     private static final int caid = TestTools.getTestCAId();
 
     private static String username;

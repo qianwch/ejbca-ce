@@ -38,7 +38,7 @@ public class TestUserDataSource extends TestCase {
     private static final Logger log = Logger.getLogger(TestUserDataSource.class);
     private static IUserDataSourceSessionRemote userDataSourceSession = TestTools.getUserDataSourceSession();
     
-    private static final Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+    private static final Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
     
     /**
      * Creates a new TestUserDataSource object.

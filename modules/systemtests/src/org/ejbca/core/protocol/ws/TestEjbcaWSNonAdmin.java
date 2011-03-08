@@ -59,7 +59,7 @@ public class TestEjbcaWSNonAdmin extends CommonEjbcaWSTest {
 	private static GlobalConfiguration gc = null;
 
     private ArrayList adminentities;
-	private Admin intadmin = new Admin(Admin.TYPE_INTERNALUSER);
+	private Admin intadmin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
 	private Admin reqadmin;
 	
 	public void test00SetupAccessRights() throws Exception {

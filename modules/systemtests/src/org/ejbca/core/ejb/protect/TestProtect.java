@@ -48,7 +48,7 @@ public class TestProtect extends TestCase {
 
     private static ArrayList entrys = null;
 
-    private final Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+    private final Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
 
     /**
      * Creates a new TestLog object.
@@ -76,11 +76,11 @@ public class TestProtect extends TestCase {
     private void createLogEntrys() {
     	entrys = new ArrayList();
         Random rand = new Random();
-        LogEntry le1 = new LogEntry(rand.nextInt(),Admin.TYPE_INTERNALUSER, "12345", -1, LogConstants.MODULE_CA, new Date(2), "foo", "123456", LogConstants.EVENT_ERROR_ADDEDENDENTITY, "foo comment 1");
-        LogEntry le2 = new LogEntry(rand.nextInt(),Admin.TYPE_INTERNALUSER, "12345", -1, LogConstants.MODULE_CA, new Date(3), "foo", "123456", LogConstants.EVENT_ERROR_ADDEDENDENTITY, "foo comment 2");
-        LogEntry le3 = new LogEntry(rand.nextInt(),Admin.TYPE_INTERNALUSER, "12345", -1, LogConstants.MODULE_CA, new Date(4), "foo", "123456", LogConstants.EVENT_ERROR_ADDEDENDENTITY, "foo comment 3");
-        LogEntry le4 = new LogEntry(rand.nextInt(),Admin.TYPE_INTERNALUSER, "12345", -1, LogConstants.MODULE_CA, new Date(5), "foo", "123456", LogConstants.EVENT_ERROR_ADDEDENDENTITY, "foo comment 4");
-        LogEntry le5 = new LogEntry(rand.nextInt(),Admin.TYPE_INTERNALUSER, "12345", -1, LogConstants.MODULE_CA, new Date(6), "foo", "123456", LogConstants.EVENT_ERROR_ADDEDENDENTITY, "foo comment 5");
+        LogEntry le1 = new LogEntry(rand.nextInt(),Admin.TYPE_CACOMMANDLINE_USER, "12345", -1, LogConstants.MODULE_CA, new Date(2), "foo", "123456", LogConstants.EVENT_ERROR_ADDEDENDENTITY, "foo comment 1");
+        LogEntry le2 = new LogEntry(rand.nextInt(),Admin.TYPE_CACOMMANDLINE_USER, "12345", -1, LogConstants.MODULE_CA, new Date(3), "foo", "123456", LogConstants.EVENT_ERROR_ADDEDENDENTITY, "foo comment 2");
+        LogEntry le3 = new LogEntry(rand.nextInt(),Admin.TYPE_CACOMMANDLINE_USER, "12345", -1, LogConstants.MODULE_CA, new Date(4), "foo", "123456", LogConstants.EVENT_ERROR_ADDEDENDENTITY, "foo comment 3");
+        LogEntry le4 = new LogEntry(rand.nextInt(),Admin.TYPE_CACOMMANDLINE_USER, "12345", -1, LogConstants.MODULE_CA, new Date(5), "foo", "123456", LogConstants.EVENT_ERROR_ADDEDENDENTITY, "foo comment 4");
+        LogEntry le5 = new LogEntry(rand.nextInt(),Admin.TYPE_CACOMMANDLINE_USER, "12345", -1, LogConstants.MODULE_CA, new Date(6), "foo", "123456", LogConstants.EVENT_ERROR_ADDEDENDENTITY, "foo comment 5");
         entrys.add(le1);
         entrys.add(le2);
         entrys.add(le3);

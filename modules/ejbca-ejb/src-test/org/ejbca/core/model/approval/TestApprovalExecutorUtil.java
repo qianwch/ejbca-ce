@@ -24,7 +24,7 @@ import org.ejbca.core.model.ra.UserDataConstants;
  */
 public class TestApprovalExecutorUtil extends TestCase {
 
-    private static final Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+    private static final Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
     
 	protected void setUp() throws Exception {
 		super.setUp();

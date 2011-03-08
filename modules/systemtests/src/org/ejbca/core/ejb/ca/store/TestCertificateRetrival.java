@@ -113,7 +113,7 @@ public class TestCertificateRetrival extends TestCase {
         CertTools.installBCProvider();
         ICertificateStoreSessionRemote certificateStoreSession = TestTools.getCertificateStoreSession();
         Certificate cert;
-        Admin adm = new Admin(Admin.TYPE_INTERNALUSER);
+        Admin adm = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
         m_certs = new HashSet();
         m_certfps = new HashSet();
         cert = CertTools.getCertfromByteArray(testrootcert);
@@ -160,7 +160,7 @@ public class TestCertificateRetrival extends TestCase {
             log.error("Error: ", e);
             assertTrue("Error seting up tests: " + e.getMessage(), false);
         }
-        admin = new Admin(Admin.TYPE_INTERNALUSER);
+        admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
         log.trace("<setUp()");
     }
 

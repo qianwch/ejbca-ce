@@ -37,7 +37,7 @@ import org.ejbca.util.TestTools;
  *
  */
 class CAInHierarchy {
-	private final static Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+	private final static Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
 	final String name;
 	final Set<CAInHierarchy> subs;
 	CAInHierarchy( String _name ) {

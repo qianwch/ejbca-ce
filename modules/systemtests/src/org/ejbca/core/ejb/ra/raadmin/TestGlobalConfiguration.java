@@ -79,7 +79,7 @@ public class TestGlobalConfiguration extends TestCase {
     public void test01AddGlobalConfiguration() throws Exception {
         log.trace(">test01AddGlobalConfiguration()");
 
-        Admin administrator = new Admin(Admin.TYPE_INTERNALUSER);
+        Admin administrator = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
 
         // First save the original
         original = this.cacheAdmin.loadGlobalConfiguration(administrator);
@@ -99,7 +99,7 @@ public class TestGlobalConfiguration extends TestCase {
     public void test02ModifyGlobalConfiguration() throws Exception {
         log.trace(">test01ModifyGlobalConfiguration()");
 
-        Admin administrator = new Admin(Admin.TYPE_INTERNALUSER);
+        Admin administrator = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
 
         GlobalConfiguration conf = this.cacheAdmin.loadGlobalConfiguration(administrator);
         assertTrue("Error Retreiving Global Configuration.", conf.getEjbcaTitle().equals("TESTTITLE"));

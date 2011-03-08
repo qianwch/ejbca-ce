@@ -34,7 +34,7 @@ import org.ejbca.util.query.Query;
 public class TestLog extends TestCase {
     private static final Logger log = Logger.getLogger(TestLog.class);
 
-    private final Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+    private final Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
 
     /**
      * Creates a new TestLog object.

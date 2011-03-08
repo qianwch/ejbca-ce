@@ -48,7 +48,7 @@ import org.ejbca.util.keystore.KeyTools;
 public class TestDeltaCRL extends TestCase {
 
     private static final Logger log = Logger.getLogger(TestDeltaCRL.class);
-    private static final Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+    private static final Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
     private static int caid;
     private static CA ca;
     private static KeyPair keys;

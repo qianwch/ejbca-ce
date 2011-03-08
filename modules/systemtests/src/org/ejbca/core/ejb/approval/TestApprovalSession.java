@@ -59,7 +59,7 @@ public class TestApprovalSession extends TestCase {
     private static ArrayList adminentities;
 	private static GlobalConfiguration gc = null;
     
-    private static final Admin intadmin = new Admin(Admin.TYPE_INTERNALUSER);
+    private static final Admin intadmin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
     
     public TestApprovalSession(String name) {
         super(name);

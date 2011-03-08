@@ -166,10 +166,28 @@
     		<fileset dir="${ejbca.home}/tmp/bin/gensrc">
     			<include name="org/ejbca/core/ejb/authorization/*Local.java"/>
     			<include name="org/ejbca/core/ejb/authorization/*LocalHome.java"/>
+    			<!-- ECA-2018: This is an unwanted dependency that will not be introduced in EJBCA 4. -->
+    			<include name="org/ejbca/core/ejb/ra/raadmin/IRaAdminSession*.java"/>
     		</fileset>
     		<fileset dir="${src.dir}">
     			<include name="org/ejbca/core/ejb/authorization/*.java"/>
     			<include name="org/ejbca/core/model/authorization/*.java"/>
+    			
+    			<!-- ECA-2018: This are unwanted dependencies that will not be introduced in EJBCA 4. -->
+    			<include name="org/ejbca/core/model/ra/raadmin/GlobalConfiguration.java"/>
+    			<include name="org/ejbca/core/model/ra/raadmin/AdminPreference.java"/>
+    			<include name="org/ejbca/core/model/ra/raadmin/UserNotification.java"/>
+    			<include name="org/ejbca/core/model/ra/raadmin/EndEntityProfile.java"/>
+    			<include name="org/ejbca/core/model/ra/raadmin/EndEntityProfileExistsException.java"/>
+    			<include name="org/ejbca/core/model/ra/raadmin/UserDoesntFullfillEndEntityProfile.java"/>
+    			<include name="org/ejbca/core/model/ra/ExtendedInformation.java"/>
+    			<include name="org/ejbca/core/model/ra/UserDataVO.java"/>
+    			<include name="org/ejbca/core/model/ra/UserDataConstants.java"/>
+    			<include name="org/ejbca/config/InternalConfiguration.java"/>
+    			<include name="org/ejbca/config/WebConfiguration.java"/>
+    			<include name="org/ejbca/util/dn/DNFieldsUtil.java"/>
+    			<include name="org/ejbca/util/dn/DNFields.java"/>
+    			<include name="org/ejbca/util/passgen/*.java"/>
     		</fileset>
     	</copy>
         <javac srcdir="${src-temp.dir}/authorization" destdir="${build-temp.dir}/authorization" debug="on" includeantruntime="no"

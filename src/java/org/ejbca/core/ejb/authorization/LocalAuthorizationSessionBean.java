@@ -33,6 +33,8 @@ import org.ejbca.core.ejb.JNDINames;
 import org.ejbca.core.ejb.ServiceLocator;
 import org.ejbca.core.ejb.log.ILogSessionLocal;
 import org.ejbca.core.ejb.log.ILogSessionLocalHome;
+import org.ejbca.core.ejb.ra.raadmin.IRaAdminSessionLocal;
+import org.ejbca.core.ejb.ra.raadmin.IRaAdminSessionLocalHome;
 import org.ejbca.core.model.InternalResources;
 import org.ejbca.core.model.authorization.AccessRule;
 import org.ejbca.core.model.authorization.AccessRulesConstants;
@@ -44,6 +46,7 @@ import org.ejbca.core.model.authorization.Authorizer;
 import org.ejbca.core.model.authorization.AvailableAccessRules;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.model.log.LogConstants;
+import org.ejbca.core.model.ra.raadmin.GlobalConfiguration;
 import org.ejbca.util.JDBCUtil;
 
 
@@ -86,6 +89,15 @@ import org.ejbca.util.JDBCUtil;
  *   home="org.ejbca.core.ejb.log.ILogSessionLocalHome"
  *   business="org.ejbca.core.ejb.log.ILogSessionLocal"
  *   link="LogSession"
+ * 
+ * @ejb.ejb-external-ref 
+ *   description="The Ra Admin session bean"
+ *   view-type="local"
+ *   ref-name="ejb/RaAdminSessionLocal"
+ *   type="Session"
+ *   home="org.ejbca.core.ejb.ra.raadmin.IRaAdminSessionLocalHome"
+ *   business="org.ejbca.core.ejb.ra.raadmin.IRaAdminSessionLocal"
+ *   link="RaAdminSession"
  *
  * @ejb.ejb-external-ref
  *   description="Authorization Tree Update Bean"
@@ -153,6 +165,11 @@ public class LocalAuthorizationSessionBean extends BaseSessionBean {
      */
     private ILogSessionLocal logsession = null;
 
+    /**
+	 * The local interface ra admin session bean.
+     */
+    private IRaAdminSessionLocal raAdminSession;
+
     /** Cache for authorization data */
     private static volatile Authorizer authorizer = null;
     /**
@@ -187,7 +204,8 @@ public class LocalAuthorizationSessionBean extends BaseSessionBean {
     
     private Authorizer getAuthorizer() {
     	if (authorizer == null) {
-            authorizer = new Authorizer(getAdminGroups(), getLogSession(), LogConstants.MODULE_AUTHORIZATION);
+			final GlobalConfiguration config = getRaAdminSession().loadGlobalConfiguration(new Admin(Admin.TYPE_INTERNALUSER));
+            authorizer = new Authorizer(getAdminGroups(), config.getEnableCommandLineInterface(), getLogSession(), LogConstants.MODULE_AUTHORIZATION);
     	}
     	return authorizer;
     }
@@ -209,6 +227,23 @@ public class LocalAuthorizationSessionBean extends BaseSessionBean {
         }
         return logsession;
     } //getLogSession
+	
+	/**
+     * Gets connection to ra admin session bean.
+     *
+     * @return Connection
+     */
+	private IRaAdminSessionLocal getRaAdminSession() {
+        if (raAdminSession == null) {
+	        try {
+	            final IRaAdminSessionLocalHome raadminsessionhome = (IRaAdminSessionLocalHome) getLocator().getLocalHome(IRaAdminSessionLocalHome.COMP_NAME);
+	            raAdminSession = raadminsessionhome.create();
+	        } catch(Exception e) {
+	             throw new EJBException(e);
+	        }
+        }
+        return raAdminSession;
+    } 
 
     // Methods used with AdminGroupData Entity Beans
 
@@ -908,6 +943,7 @@ public class LocalAuthorizationSessionBean extends BaseSessionBean {
      * @ejb.interface-method
      */
     public void flushAuthorizationRuleCache()  {
+    	authorizer = null;
     	if (log.isTraceEnabled()) {
     		trace(">flushAuthorizationRuleCache()");
     	}

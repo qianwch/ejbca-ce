@@ -236,9 +236,9 @@ public class TestCAImportExport extends TestCase  {
         String capassword = "foo123";
         String keyFingerPrint = null;
         cainfo = getNewCAInfo(caname, catokeninfo);
-    	Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+    	Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
     	boolean defaultRetValue = false;
-        if ( admin.getAdminType() == Admin.TYPE_INTERNALUSER ) {
+        if ( admin.getAdminType() == Admin.TYPE_CACOMMANDLINE_USER ) {
         	defaultRetValue = true;
         }
 		try {
@@ -301,7 +301,7 @@ public class TestCAImportExport extends TestCase  {
         String capassword = "foo123";
         String keyFingerPrint = null;
         cainfo = getNewCAInfo(caname, catokeninfo);
-        Admin internalAdmin = new Admin(Admin.TYPE_INTERNALUSER);
+        Admin internalAdmin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
 		try {
 			caadminsession.removeCA(internalAdmin, cainfo.getCAId());
 		} catch (Exception e) { }

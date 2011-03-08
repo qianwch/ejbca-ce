@@ -37,7 +37,7 @@ import org.ejbca.util.keystore.KeyTools;
  */
 public class TestKeyRecovery extends TestCase {
     private final static Logger log = Logger.getLogger(TestKeyRecovery.class);
-    private final static Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+    private final static Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
     private static final String user = genRandomUserName();
 
     private static KeyPair keypair = null;

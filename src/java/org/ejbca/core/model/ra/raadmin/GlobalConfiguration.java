@@ -79,6 +79,9 @@ public class GlobalConfiguration extends UpgradeableDataHashMap implements java.
     private static final  boolean  AUTOENROLL_DEFAULT_SSLCONNECTION = false;
     private static final  boolean  AUTOENROLL_DEFAULT_USE = false;
     
+    /** Default value for Enable Command Line Interface. */
+    private static final boolean DEFAULTENABLECOMMANDLINEINTERFACE = true;
+    
     // Language codes. Observe the order is important
     public static final  int      EN                 = 0;
     public static final  int      SE                 = 1;
@@ -425,6 +428,12 @@ public class GlobalConfiguration extends UpgradeableDataHashMap implements java.
     	   Set ret = (Set) data.get(NODESINCLUSTER);
     	   return (ret == null ? NODESINCLUSTER_DEFAULT : ret);
        }
+       
+       public void setEnableCommandLineInterface(final boolean enable) { data.put(ENABLECOMMANDLINEINTERFACE, Boolean.valueOf(enable)); }
+       public boolean getEnableCommandLineInterface() {
+    	   final Boolean ret = (Boolean) data.get(ENABLECOMMANDLINEINTERFACE);
+    	   return (ret == null ? DEFAULTENABLECOMMANDLINEINTERFACE : ret);
+       }
 
     /** Implementation of UpgradableDataHashMap function getLatestVersion */
     public float getLatestVersion(){
@@ -477,6 +486,8 @@ public class GlobalConfiguration extends UpgradeableDataHashMap implements java.
     private static final   String APPROVALNOTIFICATIONFROMADDR = "approvalnotificationfromaddr";
     
     private static final   String NODESINCLUSTER               = "nodesincluster";
+    
+    private static final   String ENABLECOMMANDLINEINTERFACE   = "enablecommandlineinterface";
 
     // Configuration for Auto Enrollment
     private static final   String AUTOENROLL_USE = "autoenroll.use";

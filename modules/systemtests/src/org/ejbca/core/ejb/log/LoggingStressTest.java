@@ -62,7 +62,7 @@ public class LoggingStressTest extends TestCase {
     	}
     	
     	private ILogSessionRemote logSession = TestTools.getLogSession();
-    	Admin internalAdmin = new Admin(Admin.TYPE_INTERNALUSER);
+    	Admin internalAdmin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
     	public void run() {
             try {
             	int i = 0;

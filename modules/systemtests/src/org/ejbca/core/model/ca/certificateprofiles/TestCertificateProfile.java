@@ -42,7 +42,7 @@ public class TestCertificateProfile extends TestCase {
 
     private static ICertificateStoreSessionRemote certificateStoreSession;
 
-    private static final Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+    private static final Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
 
     /**
      * Creates a new TestCertificateProfile object.

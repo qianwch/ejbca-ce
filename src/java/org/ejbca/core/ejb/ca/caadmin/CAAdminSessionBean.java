@@ -3292,9 +3292,6 @@ public class CAAdminSessionBean extends BaseSessionBean {
     
     private boolean authorizedToCA(Admin admin, int caid){
       boolean returnval = false;
-      if (admin.getAdminType() == Admin.TYPE_INTERNALUSER) {
-    	  return true;	// Skip database seach since this is always ok
-      }
       try{
         returnval = getAuthorizationSession().isAuthorizedNoLog(admin, AccessRulesConstants.CAPREFIX + caid);
       }catch(AuthorizationDeniedException e){}

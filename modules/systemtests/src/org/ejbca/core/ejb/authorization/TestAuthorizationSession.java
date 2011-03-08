@@ -35,7 +35,7 @@ public class TestAuthorizationSession extends TestCase {
     private static final Logger log = Logger.getLogger(TestAuthorizationSession.class);
 
     private static int caid="CN=TEST Authorization,O=PrimeKey,C=SE".hashCode();
-    private final static Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+    private final static Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
 
     /**
      * Creates a new TestAuthenticationSession object.

@@ -41,7 +41,7 @@ import org.ejbca.util.keystore.KeyTools;
 public class TestCertificateExpire extends TestCase {
 
     private static final Logger log = Logger.getLogger(TestCertificateExpire.class);
-    private static final Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+    private static final Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
     private static final String CA_NAME = "CertExpNotifCA";
     private static final int caid = TestTools.getTestCAId(CA_NAME);
 

@@ -82,7 +82,7 @@ import org.ejbca.core.model.log.Admin;
 public class TestTools {
 
 	private static final Logger log = Logger.getLogger(TestTools.class);
-	private static final Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+	private static final Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
 	public static final String defaultSuperAdminCN = "SuperAdmin";
 
 	private static IApprovalSessionRemote approvalSession;

@@ -34,7 +34,7 @@ public class TestProtectedLog extends TestCase {
 	private final static String ERROR_BADEXPORT   = "Exported log does not contain any log-data";
 
 	private static final Logger log = Logger.getLogger(TestProtectedLog.class);
-	private final Admin internalAdmin = new Admin(Admin.TYPE_INTERNALUSER);
+	private final Admin internalAdmin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
 
 	/**
 	 * Creates a new TestProtectedLog object.

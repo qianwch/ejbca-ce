@@ -71,7 +71,7 @@ import org.ejbca.util.keystore.KeyTools;
  */
 public class TestCAs extends TestCase {
     private static final Logger log = Logger.getLogger(TestCAs.class);
-    private static final Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+    private static final Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
     
     private static Collection rootcacertchain = null;
 

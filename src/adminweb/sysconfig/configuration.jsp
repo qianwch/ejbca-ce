@@ -48,6 +48,7 @@
   static final String CHECKBOX_APPROVALUSEEMAILNOTIFICATIONS = "checkboxapprovaluseemailnotifications";
   static final String CHECKBOX_AUTOENROLL_SSLCONNECTION      = "checkboxautoenrollsslconnection";
   static final String CHECKBOX_AUTOENROLL_USE                = "checkboxautoenrolluse";
+  static final String CHECKBOX_ENABLECOMMANDLINEINTERFACE	 = "checkboxenablecommandlineinterface"; 
 
 // Lists used in defaultuserprefereces.jsp
   static final String LIST_PREFEREDLANGUAGE                  = "listpreferedlanguage";
@@ -142,6 +143,12 @@
        }
        else{
          gc.setIssueHardwareTokens(false);
+       }
+       
+       if(request.getParameter(CHECKBOX_ENABLECOMMANDLINEINTERFACE) != null){
+         gc.setEnableCommandLineInterface(request.getParameter(CHECKBOX_ENABLECOMMANDLINEINTERFACE).equals(CHECKBOX_VALUE));
+       } else {
+       	 gc.setEnableCommandLineInterface(false);
        }
 
        if(request.getParameter(CHECKBOX_APPROVALUSEEMAILNOTIFICATIONS) != null && request.getParameter(CHECKBOX_APPROVALUSEEMAILNOTIFICATIONS).equals(CHECKBOX_VALUE)){

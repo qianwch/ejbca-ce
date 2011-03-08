@@ -44,7 +44,7 @@ public class TestHardTokenProfile extends TestCase {
 
     private static IHardTokenSessionHome cacheHome;
 
-    private static final Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+    private static final Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
 
     /**
      * Creates a new TestHardTokenProfile object.

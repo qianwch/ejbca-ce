@@ -157,7 +157,7 @@ public class TestCAKeystoreExportRemoveRestore extends TestCase  {
 	public void test05RestoreWrong() throws Exception {
 		log.trace(">test05RestoreWrong()");
 
-		Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+		Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
 		String capassword = "foo123";
 		byte[] keystorebytes1 = null;
 		byte[] keystorebytes2 = null;
@@ -308,7 +308,7 @@ public class TestCAKeystoreExportRemoveRestore extends TestCase  {
 	public void test06RestoreNotRemoved() throws Exception {
 		log.trace(">test06RestoreNotRemoved()");
 
-		Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+		Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
 		String capassword = "foo123";
 		byte[] keystorebytes1 = null;
 		
@@ -379,7 +379,7 @@ public class TestCAKeystoreExportRemoveRestore extends TestCase  {
         String keyFingerPrint = null;
         
         X509CAInfo cainfo = getNewCAInfo(caname, catokeninfo);
-    	Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+    	Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
     	
     	
     	// Remove if it already exists

@@ -40,7 +40,7 @@ import org.ejbca.util.dn.DnComponents;
 public class TestUserData extends TestCase {
 
     private static final Logger log = Logger.getLogger(TestUserData.class);
-    private static final Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+    private static final Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
     private static final int caid = TestTools.getTestCAId();
 
     private static String username;
@@ -187,16 +187,16 @@ public class TestUserData extends TestCase {
     public void test05ListNewUser() throws Exception {
         log.trace(">test05ListNewUser()");
 
-        Collection coll = TestTools.getUserAdminSession().findAllUsersByStatus(new Admin(Admin.TYPE_INTERNALUSER), UserDataConstants.STATUS_NEW);
+        Collection coll = TestTools.getUserAdminSession().findAllUsersByStatus(new Admin(Admin.TYPE_CACOMMANDLINE_USER), UserDataConstants.STATUS_NEW);
         Iterator iter = coll.iterator();
         while (iter.hasNext()) {
 
             UserDataVO data = (UserDataVO) iter.next();
             log.debug("New user: " + data.getUsername() + ", " + data.getDN() + ", " + data.getEmail() + ", " + data.getStatus() + ", " + data.getType());
-            TestTools.getUserAdminSession().setUserStatus(new Admin(Admin.TYPE_INTERNALUSER), data.getUsername(), UserDataConstants.STATUS_GENERATED);
+            TestTools.getUserAdminSession().setUserStatus(new Admin(Admin.TYPE_CACOMMANDLINE_USER), data.getUsername(), UserDataConstants.STATUS_GENERATED);
         }
 
-        Collection coll1 = TestTools.getUserAdminSession().findAllUsersByStatus(new Admin(Admin.TYPE_INTERNALUSER), UserDataConstants.STATUS_NEW);
+        Collection coll1 = TestTools.getUserAdminSession().findAllUsersByStatus(new Admin(Admin.TYPE_CACOMMANDLINE_USER), UserDataConstants.STATUS_NEW);
         assertTrue("found NEW users though there should be none!", coll1.isEmpty());
         log.trace("<test05ListNewUser()");
     }

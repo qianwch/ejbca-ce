@@ -27,7 +27,7 @@ import org.ejbca.util.TestTools;
  */
 public class TestRemoveCA extends TestCase {
     private static final Logger log = Logger.getLogger(TestCAs.class);
-    private static final Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+    private static final Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
 
     /**
      * Creates a new TestCAs object.

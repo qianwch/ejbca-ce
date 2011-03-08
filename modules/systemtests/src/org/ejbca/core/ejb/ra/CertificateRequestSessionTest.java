@@ -39,7 +39,7 @@ import org.ejbca.util.TestTools;
 public class CertificateRequestSessionTest extends TestCase {
 
 	private static final Logger log = Logger.getLogger(CertificateRequestSessionTest.class);
-	private final Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+	private final Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
 	private final Random random= new Random();
 
 	public void test000Setup() {

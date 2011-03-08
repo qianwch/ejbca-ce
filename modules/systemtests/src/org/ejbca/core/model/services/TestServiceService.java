@@ -46,7 +46,7 @@ import org.ejbca.util.TestTools;
 public class TestServiceService extends TestCase {
 
     private static final Logger log = Logger.getLogger(TestServiceService.class);
-    private static final Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+    private static final Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
     
     private static final String NOT_THIS_HOST1 = "notthishost.nodomain";
     private static final String NOT_THIS_HOST2 = "notthishost2.nodomain";

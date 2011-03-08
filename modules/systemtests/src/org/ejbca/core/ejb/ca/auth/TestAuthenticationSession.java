@@ -49,7 +49,7 @@ import org.ejbca.util.keystore.KeyTools;
  */
 public class TestAuthenticationSession extends TestCase {
     private static final Logger log = Logger.getLogger(TestAuthenticationSession.class);
-    private static final Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+    private static final Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
     private static final int caid = TestTools.getTestCAId();
 
     private static final int MAXFAILEDLOGINS = 4;

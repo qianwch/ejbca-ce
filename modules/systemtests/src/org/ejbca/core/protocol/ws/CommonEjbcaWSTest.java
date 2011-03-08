@@ -134,7 +134,7 @@ public class CommonEjbcaWSTest extends TestCase {
     private final static Random random = new Random();
     protected final static String wsTestAdminUsername = "wstest";
 	protected final static String wsTestNonAdminUsername = "wsnonadmintest";
-    protected final static Admin intAdmin = new Admin(Admin.TYPE_INTERNALUSER);
+    protected final static Admin intAdmin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
 	protected final static String hostname;
 	protected final static String httpsPort;
 	private static final String BADCANAME = "BadCaName";
@@ -627,7 +627,7 @@ public class CommonEjbcaWSTest extends TestCase {
 		if(performSetup){
 			setUpAdmin();
 		}
-		final Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+		final Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
 		final UserDataVOWS ca1userData1 = getUserData(CA1_WSTESTUSER1);
 		final UserDataVOWS ca1userData2 = getUserData(CA1_WSTESTUSER2);
 		final UserDataVOWS ca2userData1 = getUserData(CA2_WSTESTUSER1);
@@ -670,7 +670,7 @@ public class CommonEjbcaWSTest extends TestCase {
 		if(performSetup){
 			setUpAdmin();
 		}
-		final Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+		final Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
 		final UserDataVOWS ca1userData1 = getUserData(CA1_WSTESTUSER1);
 		final UserDataVOWS ca1userData2 = getUserData(CA1_WSTESTUSER2);
 		final UserDataVOWS ca2userData1 = getUserData(CA2_WSTESTUSER1);
@@ -2247,7 +2247,7 @@ public class CommonEjbcaWSTest extends TestCase {
 			setUpAdmin();
 		}
 		final String PUBLISHER_NAME = "myPublisher";
-		final Admin admin = new Admin(Admin.TYPE_INTERNALUSER);
+		final Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
 		try {
 			assertEquals( -4, ejbcaraws.getPublisherQueueLength(PUBLISHER_NAME) );
 			final CustomPublisherContainer publisher = new CustomPublisherContainer();
