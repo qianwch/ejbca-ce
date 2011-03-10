@@ -237,6 +237,8 @@
            	<include name="org/ejbca/util/IPatternLogger.java"/>
         	<!-- General test helpers -->
            	<include name="org/ejbca/util/NonEjbTestTools.java"/>
+			<!-- EJBCA CLI dependency on CRL Extensions -->
+			<include name="org/ejbca/util/cert/CrlExtensions.java"/>
     	</javac>
     </target>
 
