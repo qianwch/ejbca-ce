@@ -113,5 +113,25 @@ public class TestGlobalConfiguration extends TestCase {
         log.trace("<test01ModifyGlobalConfiguration()");
     }
 
+    public void test03SaveGlobalConfigurationAuth() throws Exception {
+		final Admin administrator = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
+	
+		final GlobalConfiguration globalConfig = cacheAdmin.loadGlobalConfiguration(administrator);
+	
+		// First test that we can save with an privileged user
+		try {
+			cacheAdmin.saveGlobalConfiguration(administrator, globalConfig);
+		} catch (Exception ex) {
+			fail("Could not store configuration:" + ex.getMessage());
+		}
+		
+		final Admin nonSystemConfigAdmin = new Admin(Admin.TYPE_PUBLIC_WEB_USER, "192.168.47.11");
+		
+		// Now the real test: make sure we don't have access without edit_systemconfiguration privilege
+		try {
+			cacheAdmin.saveGlobalConfiguration(nonSystemConfigAdmin, globalConfig);
+			fail("Authorization should have been denied!");
+		} catch (Exception ignored) {}
+    }
 
 }

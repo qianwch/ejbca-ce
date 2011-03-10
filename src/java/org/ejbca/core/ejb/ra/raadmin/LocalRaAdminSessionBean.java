@@ -922,7 +922,15 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
                 }
             }catch (ObjectNotFoundException t) {
                 log.debug("No default GlobalConfiguration exists. Trying to create a new one.");
-                saveGlobalConfiguration(admin, new GlobalConfiguration());
+                final GlobalConfiguration newGlobalConfiguration = new GlobalConfiguration();
+                try {
+                	saveGlobalConfiguration(admin, newGlobalConfiguration);
+                } catch (AuthorizationDeniedException ex) {
+                	globalconfiguration = newGlobalConfiguration;
+                	if (log.isDebugEnabled()) {
+                		log.debug("Could not store initial GlobalConfiguration: " + ex.getMessage());
+                	}
+                }
                 lastupdatetime = new Date().getTime();
             }catch (Throwable t) {
                 log.error("Failed to load global configuration", t);
@@ -944,10 +952,16 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
      * @throws EJBException if a communication or other error occurs.
      * @ejb.interface-method
      */
-    public void saveGlobalConfiguration(Admin admin, GlobalConfiguration globconf)  {
+    public void saveGlobalConfiguration(Admin admin, GlobalConfiguration globconf) throws AuthorizationDeniedException {
     	if (log.isTraceEnabled()) {
     		trace(">saveGlobalConfiguration()");
     	}
+    	
+    	// Check administrator authorized to edit system configuration
+        if (!getAuthorizationSession().isAuthorizedNoLog(admin, "/system_functionality/edit_systemconfiguration")) {
+        	throw new AuthorizationDeniedException("Administrator not authorized to edit system configuration.");
+        }
+        
     	String pk = "0";
     	try {
     		GlobalConfigurationDataLocal gcdata = globalconfigurationhome.findByPrimaryKey(pk);
