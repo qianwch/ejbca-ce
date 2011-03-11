@@ -950,9 +950,11 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
     	}
     	
     	// Check administrator authorized to edit system configuration
-        if (!getAuthorizationSession().isAuthorizedNoLog(admin, "/system_functionality/edit_systemconfiguration")) {
+        /* TODO: ECA-2018
+         * if (!getAuthorizationSession().isAuthorizedNoLog(admin, "/system_functionality/edit_systemconfiguration")) {
+        	log.debug("Administrator not authorized to edit system configuration.");
         	throw new AuthorizationDeniedException("Administrator not authorized to edit system configuration.");
-        }
+        }*/
     	saveGlobalConfigurationNoAuth(admin, globconf);
     	
     	if (log.isTraceEnabled()) {
