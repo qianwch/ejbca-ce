@@ -285,7 +285,7 @@ public class StartServicesServlet extends HttpServlet {
         	ICAAdminSessionLocalHome casessionhome = (ICAAdminSessionLocalHome)ServiceLocator.getInstance().getLocalHome(ICAAdminSessionLocalHome.COMP_NAME);
         	ICAAdminSessionLocal casession;
         	casession = casessionhome.create();
-        	Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER, "StartServicesServlet");
+        	Admin admin = new Admin(Admin.TYPE_INTERNALUSER, "StartServicesServlet");
         	casession.initializeAndUpgradeCAs(admin);
         } catch (Exception e) {
         	log.error("Error creating CAAdminSession: ", e);
@@ -384,7 +384,7 @@ public class StartServicesServlet extends HttpServlet {
         try {
         	IRaAdminSessionLocalHome rasessionhome = (IRaAdminSessionLocalHome)ServiceLocator.getInstance().getLocalHome(IRaAdminSessionLocalHome.COMP_NAME);
         	IRaAdminSessionLocal rasession = rasessionhome.create();
-        	Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER, "StartServicesServlet");
+        	Admin admin = new Admin(Admin.TYPE_INTERNALUSER, "StartServicesServlet");
         	rasession.initializeAndUpgradeProfiles(admin);
         	
         	// Add this node's hostname to list of nodes
