@@ -100,6 +100,7 @@ public class CaImportCRLCommand extends BaseCaAdminCommand {
 	        int miss_count = 0;
 	        int revoked = 0;
 	        int already_revoked = 0;
+	        String missing_user_name = null;
 	        while ( i.hasNext() ) {
 	        	X509CRLEntry entry = i.next();
 	        	Date date = entry.getRevocationDate();
@@ -128,38 +129,43 @@ public class CaImportCRLCommand extends BaseCaAdminCommand {
 	        		certGen.setSignatureAlgorithm("SHA1withRSA");
 	        		X509Certificate certificate = certGen.generate(key_pair.getPrivate(), "BC");
 	        		String fingerprint = CertTools.getFingerprintAsString(certificate);
-	        		username ="***MISSING DURING CRL IMPORT***";
-	        		String password="foo123";
-	        		UserDataVO userdata = getUserAdminSession().findUser(getAdmin(), username);
-	        		getLogger().debug("Loading/updating user " + username);
-	        		if (userdata == null) {
-	        			getUserAdminSession().addUser(getAdmin(),
-	        					username, password,
-	        					CertTools.getSubjectDN(certificate),
-	        					null, null,
-	        					false,
-	        					SecConst.EMPTY_ENDENTITYPROFILE,
-	        					SecConst.CERTPROFILE_FIXED_ENDUSER,
-	        					SecConst.USER_ENDUSER,
-	        					SecConst.TOKEN_SOFT_BROWSERGEN,
-	        					SecConst.NO_HARDTOKENISSUER,
-	        					cainfo.getCAId());
-	        			getLogger().info("User '" + username + "' has been added.");
-	        		}
-	        		getUserAdminSession().changeUser(getAdmin(),
-	        					username, password,
-	        					CertTools.getSubjectDN(certificate),
-	        					null, null,
-	        					false,
-	        					SecConst.EMPTY_ENDENTITYPROFILE,
-	        					SecConst.CERTPROFILE_FIXED_ENDUSER,
-	        					SecConst.USER_ENDUSER,
-	        					SecConst.TOKEN_SOFT_BROWSERGEN,
-	        					SecConst.NO_HARDTOKENISSUER,
-	        					UserDataConstants.STATUS_GENERATED,
-	        				    cainfo.getCAId());
-	        		if (userdata != null){
-	        			getLogger().info("User '" + username + "' has been updated.");
+	        		if (missing_user_name == null) {
+		        		username ="*** Missing During CRL Import to: " + caname;
+		        		String password="foo123";
+		        		UserDataVO userdata = getUserAdminSession().findUser(getAdmin(), username);
+		        		getLogger().debug("Loading/updating user " + username);
+		        		if (userdata == null) {
+		        			getUserAdminSession().addUser(getAdmin(),
+		        					username, password,
+		        					CertTools.getSubjectDN(certificate),
+		        					null, null,
+		        					false,
+		        					SecConst.EMPTY_ENDENTITYPROFILE,
+		        					SecConst.CERTPROFILE_FIXED_ENDUSER,
+		        					SecConst.USER_ENDUSER,
+		        					SecConst.TOKEN_SOFT_BROWSERGEN,
+		        					SecConst.NO_HARDTOKENISSUER,
+		        					cainfo.getCAId());
+		        			getLogger().info("User '" + username + "' has been added.");
+		        		}
+		        		getUserAdminSession().changeUser(getAdmin(),
+		        					username, password,
+		        					CertTools.getSubjectDN(certificate),
+		        					null, null,
+		        					false,
+		        					SecConst.EMPTY_ENDENTITYPROFILE,
+		        					SecConst.CERTPROFILE_FIXED_ENDUSER,
+		        					SecConst.USER_ENDUSER,
+		        					SecConst.TOKEN_SOFT_BROWSERGEN,
+		        					SecConst.NO_HARDTOKENISSUER,
+		        					UserDataConstants.STATUS_GENERATED,
+		        				    cainfo.getCAId());
+		        		if (userdata != null){
+		        			getLogger().info("User '" + username + "' has been updated.");
+		        		}
+		        		missing_user_name = username;
+	        		} else {
+	        			username = missing_user_name;
 	        		}
 	        		getCertificateStoreSession().storeCertificate(getAdmin(),
 	        				certificate, username,
