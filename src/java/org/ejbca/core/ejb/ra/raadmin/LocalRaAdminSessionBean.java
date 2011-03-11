@@ -922,15 +922,7 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
                 }
             }catch (ObjectNotFoundException t) {
                 log.debug("No default GlobalConfiguration exists. Trying to create a new one.");
-                final GlobalConfiguration newGlobalConfiguration = new GlobalConfiguration();
-                try {
-                	saveGlobalConfiguration(admin, newGlobalConfiguration);
-                } catch (AuthorizationDeniedException ex) {
-                	globalconfiguration = newGlobalConfiguration;
-                	if (log.isDebugEnabled()) {
-                		log.debug("Could not store initial GlobalConfiguration: " + ex.getMessage());
-                	}
-                }
+            	saveGlobalConfigurationNoAuth(admin, new GlobalConfiguration());
                 lastupdatetime = new Date().getTime();
             }catch (Throwable t) {
                 log.error("Failed to load global configuration", t);
@@ -961,7 +953,14 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
         if (!getAuthorizationSession().isAuthorizedNoLog(admin, "/system_functionality/edit_systemconfiguration")) {
         	throw new AuthorizationDeniedException("Administrator not authorized to edit system configuration.");
         }
-        
+    	saveGlobalConfigurationNoAuth(admin, globconf);
+    	
+    	if (log.isTraceEnabled()) {
+    		trace("<saveGlobalConfiguration()");
+    	}
+    } // saveGlobalConfiguration
+    
+    private void saveGlobalConfigurationNoAuth(final Admin admin, final GlobalConfiguration globconf) {
     	String pk = "0";
     	try {
     		GlobalConfigurationDataLocal gcdata = globalconfigurationhome.findByPrimaryKey(pk);
@@ -980,10 +979,7 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
     		}
     	}
     	globalconfiguration=globconf;
-    	if (log.isTraceEnabled()) {
-    		trace("<saveGlobalConfiguration()");
-    	}
-    } // saveGlobalConfiguration
+    }
 
     /**
      * Clear and load global configuration cache.
