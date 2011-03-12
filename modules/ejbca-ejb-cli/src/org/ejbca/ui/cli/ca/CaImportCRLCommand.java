@@ -158,7 +158,7 @@ public class CaImportCRLCommand extends BaseCaAdminCommand {
 		        					SecConst.USER_ENDUSER,
 		        					SecConst.TOKEN_SOFT_BROWSERGEN,
 		        					SecConst.NO_HARDTOKENISSUER,
-		        					UserDataConstants.STATUS_GENERATED,
+		        					UserDataConstants.STATUS_REVOKED,
 		        				    cainfo.getCAId());
 		        		if (userdata != null){
 		        			getLogger().info("User '" + username + "' has been updated.");
