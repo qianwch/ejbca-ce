@@ -922,7 +922,7 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
                 }
             }catch (ObjectNotFoundException t) {
                 log.debug("No default GlobalConfiguration exists. Trying to create a new one.");
-            	saveGlobalConfigurationNoAuth(admin, new GlobalConfiguration());
+            	saveGlobalConfiguration(admin, new GlobalConfiguration());
                 lastupdatetime = new Date().getTime();
             }catch (Throwable t) {
                 log.error("Failed to load global configuration", t);
@@ -944,7 +944,7 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
      * @throws EJBException if a communication or other error occurs.
      * @ejb.interface-method
      */
-    public void saveGlobalConfiguration(Admin admin, GlobalConfiguration globconf) throws AuthorizationDeniedException {
+    public void saveGlobalConfiguration(Admin admin, GlobalConfiguration globconf) {
     	if (log.isTraceEnabled()) {
     		trace(">saveGlobalConfiguration()");
     	}
