@@ -22,7 +22,6 @@ import javax.persistence.PersistenceContext;
 
 import org.apache.log4j.Logger;
 import org.cesecore.core.ejb.log.LogSessionLocal;
-import org.ejbca.core.ejb.authorization.AuthorizationSessionLocal;
 import org.ejbca.core.ejb.ra.raadmin.GlobalConfigurationData;
 import org.ejbca.core.model.InternalResources;
 import org.ejbca.core.model.authorization.AuthorizationDeniedException;
@@ -56,9 +55,6 @@ public class GlobalConfigurationSessionBean implements GlobalConfigurationSessio
 
     @EJB
     private LogSessionLocal logSession;
-    
-    @EJB
-    private AuthorizationSessionLocal authorizationSession;
 
    
     @Override
@@ -119,12 +115,7 @@ public class GlobalConfigurationSessionBean implements GlobalConfigurationSessio
         if (log.isTraceEnabled()) {
             log.trace(">saveGlobalConfiguration()");
         }
-        
-        // Check administrator authorized to edit system configuration
-        if (!authorizationSession.isAuthorizedNoLog(admin, "/system_functionality/edit_systemconfiguration")) {
-        	throw new AuthorizationDeniedException("Administrator not authorized to edit system configuration.");
-        }
-        
+
         String pk = "0";
         GlobalConfigurationData gcdata = GlobalConfigurationData.findByConfigurationId(entityManager, pk);
         if (gcdata != null) {
