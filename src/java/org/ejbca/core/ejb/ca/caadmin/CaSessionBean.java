@@ -93,18 +93,14 @@ public class CaSessionBean implements CaSessionLocal, CaSessionRemote {
     
     @Override
     public CA getCA(Admin admin, String name) throws CADoesntExistsException {
-    	System.out.println(">CaSessionBean.getCA");
         CA ca = getCAInternal(-1, name);
-        System.out.println("After getCAInternal for: " + ca.getCAId());
         if (!authorizedToCA(admin, ca.getCAId())) {
-        	System.out.println("Not authorizedToCA");
             if (log.isDebugEnabled()) {
                 log.debug("Admin (" + admin.toString() + ") is not authorized to CA with name: " + name);
             }
             String msg = intres.getLocalizedMessage("caadmin.canotexistsid", name);
             throw new CADoesntExistsException(msg);
         }
-        System.out.println("No Exception in getCA");
         return ca;
     }
 
@@ -190,7 +186,6 @@ public class CaSessionBean implements CaSessionLocal, CaSessionRemote {
         if (log.isTraceEnabled()) {
             log.trace(">getCAInternal: " + caid + ", " + name);
         }
-        System.out.println(">getCAInternal");
         
         // First check if we already have a cached instance of the CA
         // This should only be done if we have enabled caching, meaning that
