@@ -1219,7 +1219,7 @@ public class CommonEjbcaWSTest extends TestCase {
     	GlobalConfiguration gc = getRAAdmin().loadGlobalConfiguration(intAdmin);
     	boolean originalProfileSetting = gc.getEnableEndEntityProfileLimitations();
     	gc.setEnableEndEntityProfileLimitations(false);
-    	getRAAdmin().saveGlobalConfiguration(intAdmin, gc);
+    	getRAAdmin().saveGlobalConfigurationRemote(intAdmin, gc);
     	if(getCertStore().getCertificateProfileId(intAdmin, "WSTESTPROFILE") != 0){
         	getCertStore().removeCertificateProfile(intAdmin, "WSTESTPROFILE");
         }
@@ -1306,7 +1306,7 @@ public class CommonEjbcaWSTest extends TestCase {
 		
 		getCertStore().removeCertificateProfile(intAdmin, "WSTESTPROFILE");
 		gc.setEnableEndEntityProfileLimitations(originalProfileSetting);
-    	getRAAdmin().saveGlobalConfiguration(intAdmin, gc);
+    	getRAAdmin().saveGlobalConfigurationRemote(intAdmin, gc);
 		//hardTokenAdmin.removeHardToken(intAdmin, "12345678");
 		
 		
@@ -1596,7 +1596,7 @@ public class CommonEjbcaWSTest extends TestCase {
 		boolean krenabled = gc.getEnableKeyRecovery();
 		if (krenabled == true) {
 			gc.setEnableKeyRecovery(false);
-			getRAAdmin().saveGlobalConfiguration(intAdmin, gc);
+			getRAAdmin().saveGlobalConfigurationRemote(intAdmin, gc);
 		}
 
 		boolean trows = false;
@@ -1612,7 +1612,7 @@ public class CommonEjbcaWSTest extends TestCase {
 
 		// Set key recovery enabled
 		gc.setEnableKeyRecovery(true);
-		getRAAdmin().saveGlobalConfiguration(intAdmin, gc);
+		getRAAdmin().saveGlobalConfigurationRemote(intAdmin, gc);
 
 		trows = false;
 		try{
@@ -2910,7 +2910,7 @@ public class CommonEjbcaWSTest extends TestCase {
     	GlobalConfiguration gc = getRAAdmin().loadGlobalConfiguration(intAdmin);
     	boolean originalProfileSetting = gc.getEnableEndEntityProfileLimitations();
     	gc.setEnableEndEntityProfileLimitations(false);
-    	getRAAdmin().saveGlobalConfiguration(intAdmin, gc);
+    	getRAAdmin().saveGlobalConfigurationRemote(intAdmin, gc);
     	if(getCertStore().getCertificateProfileId(intAdmin, "WSTESTPROFILE") != 0){
         	getCertStore().removeCertificateProfile(intAdmin, "WSTESTPROFILE");
         }
@@ -2965,6 +2965,6 @@ public class CommonEjbcaWSTest extends TestCase {
 		assertTrue(responses.size() == 2);
 		getCertStore().removeCertificateProfile(intAdmin, "WSTESTPROFILE");
 		gc.setEnableEndEntityProfileLimitations(originalProfileSetting);
-    	getRAAdmin().saveGlobalConfiguration(intAdmin, gc);
+    	getRAAdmin().saveGlobalConfigurationRemote(intAdmin, gc);
 	} // createHardToken
 }

@@ -212,7 +212,7 @@ public class TestAuthenticationSession extends TestCase {
     	GlobalConfiguration config = TestTools.getRaAdminSession().loadGlobalConfiguration(admin);
     	boolean orgkeyrecconfig = config.getEnableKeyRecovery();
     	config.setEnableKeyRecovery(true);
-    	TestTools.getRaAdminSession().saveGlobalConfiguration(admin,config);
+    	TestTools.getRaAdminSession().saveGlobalConfigurationRemote(admin,config);
     	
         // create certificate for user
         //    	 Set status to NEW        
@@ -240,7 +240,7 @@ public class TestAuthenticationSession extends TestCase {
 		TestTools.getKeyRecoverySession().removeAllKeyRecoveryData(admin,username1);
 		
 		config.setEnableKeyRecovery(orgkeyrecconfig);
-    	TestTools.getRaAdminSession().saveGlobalConfiguration(admin,config);
+    	TestTools.getRaAdminSession().saveGlobalConfigurationRemote(admin,config);
     	log.trace("<test05UnmarkKeyRecoveryOnFinish()");
     }
     

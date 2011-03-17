@@ -86,7 +86,7 @@ public class TestGlobalConfiguration extends TestCase {
 
         GlobalConfiguration conf = new GlobalConfiguration();
         conf.setEjbcaTitle("TESTTITLE");
-        this.cacheAdmin.saveGlobalConfiguration(administrator, conf);
+        this.cacheAdmin.saveGlobalConfigurationRemote(administrator, conf);
 
         log.trace("<test01AddGlobalConfiguration()");
     }
@@ -105,10 +105,10 @@ public class TestGlobalConfiguration extends TestCase {
         assertTrue("Error Retreiving Global Configuration.", conf.getEjbcaTitle().equals("TESTTITLE"));
 
         conf.setEjbcaTitle("TESTTITLE2");
-        this.cacheAdmin.saveGlobalConfiguration(administrator, conf);
+        this.cacheAdmin.saveGlobalConfigurationRemote(administrator, conf);
 
         // Replace with original
-        this.cacheAdmin.saveGlobalConfiguration(administrator, original);
+        this.cacheAdmin.saveGlobalConfigurationRemote(administrator, original);
 
         log.trace("<test01ModifyGlobalConfiguration()");
     }

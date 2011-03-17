@@ -942,7 +942,7 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
      * Saves the globalconfiguration
      *
      * @throws EJBException if a communication or other error occurs.
-     * @ejb.interface-method
+     * @ejb.interface-method view-type="local"
      */
     public void saveGlobalConfiguration(Admin admin, GlobalConfiguration globconf) {
     	if (log.isTraceEnabled()) {
@@ -972,6 +972,38 @@ public class LocalRaAdminSessionBean extends BaseSessionBean  {
     		trace("<saveGlobalConfiguration()");
     	}
     } // saveGlobalConfiguration
+    
+    /** 
+     * Saves the GlobalConfiguration but not when in production mode.
+     * @ejb.interface-method view-type="remote" 
+     */
+    public void saveGlobalConfigurationRemote(Admin admin, GlobalConfiguration globconf) {
+    	if (log.isTraceEnabled()) {
+            log.trace(">saveGlobalConfigurationRemote()");
+        }
+    	if (EjbcaConfiguration.getIsInProductionMode()) {
+    		throw new EJBException("Configuration can not be altered in production mode.");
+    	} else {
+    		saveGlobalConfiguration(admin, globconf);
+    	}
+    	if (log.isTraceEnabled()) {
+            log.trace("<saveGlobalConfigurationRemote()");
+        }
+    }
+
+    /**
+     * Sets the value for the setting IssueHardwareTokens. This is used by the 
+     * CLI command initializehardtokenissuing and therefor needs remote 
+     * access.
+     * @param admin The administrator.
+     * @param value The value to set.
+     * @ejb.interface-method view-type="remote"
+     */
+    public void setSettingIssueHardwareTokens(Admin admin, boolean value) {
+    	final GlobalConfiguration config = loadGlobalConfiguration(admin);
+    	config.setIssueHardwareTokens(value);
+    	saveGlobalConfiguration(admin, config);
+    }
 
     /**
      * Clear and load global configuration cache.

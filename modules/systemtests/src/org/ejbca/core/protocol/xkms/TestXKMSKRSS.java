@@ -176,7 +176,7 @@ public class TestXKMSKRSS extends TestCase {
 
     	final GlobalConfiguration newGlobalConfig = TestTools.getRaAdminSession().loadGlobalConfiguration(administrator);
     	newGlobalConfig.setEnableKeyRecovery(true);
-    	TestTools.getRaAdminSession().saveGlobalConfiguration(administrator, newGlobalConfig);
+    	TestTools.getRaAdminSession().saveGlobalConfigurationRemote(administrator, newGlobalConfig);
     	
     	
     	// Setup with two new Certificate profiles.
@@ -1120,7 +1120,7 @@ public class TestXKMSKRSS extends TestCase {
     	TestTools.getCertificateStoreSession().removeCertificateProfile(administrator, certprofilename1);
     	TestTools.getCertificateStoreSession().removeCertificateProfile(administrator, certprofilename2);
     	
-    	TestTools.getRaAdminSession().saveGlobalConfiguration(administrator, orgGlobalConfig);
+    	TestTools.getRaAdminSession().saveGlobalConfigurationRemote(administrator, orgGlobalConfig);
         TestTools.getCAAdminSession().editCA(administrator, orgCaInfo);
     }
 

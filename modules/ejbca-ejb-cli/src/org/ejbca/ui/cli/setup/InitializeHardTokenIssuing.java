@@ -24,7 +24,6 @@ import org.ejbca.core.model.hardtoken.HardTokenIssuer;
 import org.ejbca.core.model.hardtoken.profiles.IPINEnvelopeSettings;
 import org.ejbca.core.model.hardtoken.profiles.SwedishEIDProfile;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfile;
-import org.ejbca.core.model.ra.raadmin.GlobalConfiguration;
 import org.ejbca.ui.cli.BaseCommand;
 import org.ejbca.ui.cli.ErrorAdminCommandException;
 
@@ -105,9 +104,7 @@ public class InitializeHardTokenIssuing extends BaseCommand {
      * @throws Exception
      */
 	private void configureGlobalConfiguration() throws Exception{
-	  GlobalConfiguration config = getRaAdminSession().loadGlobalConfiguration(getAdmin());
-	  config.setIssueHardwareTokens(true);
-	  this.getRaAdminSession().saveGlobalConfiguration(getAdmin(), config);
+	  getRaAdminSession().setSettingIssueHardwareTokens(getAdmin(), true);
 	}
 	
     /**

@@ -84,7 +84,7 @@ public class TestHardToken extends TestCase {
         GlobalConfiguration gc = TestTools.getRaAdminSession().loadGlobalConfiguration(admin);
         orgEncryptCAId = gc.getHardTokenEncryptCA();
         gc.setHardTokenEncryptCA(0);
-        TestTools.getRaAdminSession().saveGlobalConfiguration(admin, gc);
+        TestTools.getRaAdminSession().saveGlobalConfigurationRemote(admin, gc);
         
 
         SwedishEIDHardToken token = new SwedishEIDHardToken("1234", "1234", "123456", "123456", 1);
@@ -161,7 +161,7 @@ public class TestHardToken extends TestCase {
 
         GlobalConfiguration gc = TestTools.getRaAdminSession().loadGlobalConfiguration(admin);
         gc.setHardTokenEncryptCA(TestTools.getTestCAId());
-        TestTools.getRaAdminSession().saveGlobalConfiguration(admin, gc);
+        TestTools.getRaAdminSession().saveGlobalConfigurationRemote(admin, gc);
         boolean ret = false;
 
         // Make sure the old data can be read
@@ -199,7 +199,7 @@ public class TestHardToken extends TestCase {
         log.trace(">test05removeHardTokens()");
         GlobalConfiguration gc = TestTools.getRaAdminSession().loadGlobalConfiguration(admin);
         gc.setHardTokenEncryptCA(orgEncryptCAId);
-        TestTools.getRaAdminSession().saveGlobalConfiguration(admin, gc);
+        TestTools.getRaAdminSession().saveGlobalConfigurationRemote(admin, gc);
         boolean ret = false;
         try {
             TestTools.getHardTokenSession().removeHardToken(admin, "1234");
