@@ -2456,9 +2456,10 @@ public class EjbcaWS implements IEjbcaWS {
 	    		log.debug("CertReq for user '" + userdata.getUsername() + "'.");
 	    	}
 	        setUserDataVOWS (userdata);
-	    	EjbcaWSHelper ejbcawshelper = new EjbcaWSHelper ();
-	    	Admin admin = ejbcawshelper.getAdmin(false, wsContext);
-	        UserDataVO userdatavo = ejbcawshelper.convertUserDataVOWS(admin, userdata);
+	    	final EjbcaWSHelper ejbcawshelper = new EjbcaWSHelper ();
+	    	final Admin admin = ejbcawshelper.getAdmin(false, this.wsContext);
+	    	logAdminName(admin,logger);
+	        final UserDataVO userdatavo = ejbcawshelper.convertUserDataVOWS(admin, userdata);
 	        int responseTypeInt = SecConst.CERT_RES_TYPE_CERTIFICATE;
 	        if (!responseType.equalsIgnoreCase(CertificateHelper.RESPONSETYPE_CERTIFICATE)) {
 		        if (responseType.equalsIgnoreCase(CertificateHelper.RESPONSETYPE_PKCS7)) {
@@ -2471,8 +2472,8 @@ public class EjbcaWS implements IEjbcaWS {
 		        	throw new NoSuchAlgorithmException ("Bad responseType:" + responseType);
 		        }
 	        }
-	        	
-	    	ICertificateRequestSessionRemote certreqsession = ejbcawshelper.getCertficateRequestSession();
+
+	        final ICertificateRequestSessionRemote certreqsession = ejbcawshelper.getCertficateRequestSession();
 	        return new CertificateResponse(responseType, 
 	        		                       certreqsession.processCertReq(admin, userdatavo, requestData, requestType, hardTokenSN, responseTypeInt));
         } catch( CADoesntExistsException t ) {
@@ -2533,14 +2534,15 @@ public class EjbcaWS implements IEjbcaWS {
 	        log.debug("Soft token req for user '" + userdata.getUsername() + "'.");
 	        userdata.setStatus(UserDataVOWS.STATUS_NEW);
 	        userdata.setClearPwd(true);
-	    	EjbcaWSHelper ejbcawshelper = new EjbcaWSHelper ();
-	    	Admin admin = ejbcawshelper.getAdmin(false, wsContext);
-	        UserDataVO userdatavo = ejbcawshelper.convertUserDataVOWS(admin, userdata);
-	        boolean createJKS = userdata.getTokenType().equals(UserDataVOWS.TOKEN_TYPE_JKS);
-	    	ICertificateRequestSessionRemote certreqsession = ejbcawshelper.getCertficateRequestSession();
-	        byte[] encodedKeyStore = certreqsession.processSoftTokenReq(admin, userdatavo, hardTokenSN, keyspec, keyalg, createJKS);
+	    	final EjbcaWSHelper ejbcawshelper = new EjbcaWSHelper ();
+	    	final Admin admin = ejbcawshelper.getAdmin(false, this.wsContext);
+	    	logAdminName(admin,logger);
+	        final UserDataVO userdatavo = ejbcawshelper.convertUserDataVOWS(admin, userdata);
+	        final boolean createJKS = userdata.getTokenType().equals(UserDataVOWS.TOKEN_TYPE_JKS);
+	    	final ICertificateRequestSessionRemote certreqsession = ejbcawshelper.getCertficateRequestSession();
+	        final byte[] encodedKeyStore = certreqsession.processSoftTokenReq(admin, userdatavo, hardTokenSN, keyspec, keyalg, createJKS);
 	        // Convert encoded KeyStore to the proper return type
-	        java.security.KeyStore ks;
+	        final java.security.KeyStore ks;
 	        if (createJKS) {
 	        	ks = java.security.KeyStore.getInstance("JKS");
 	        } else {
