@@ -13,14 +13,24 @@
 
 package org.ejbca.core.ejb.ra.raadmin;
 
+import java.rmi.RemoteException;
+import java.util.Collection;
+import java.util.Iterator;
+
 import javax.naming.Context;
 import javax.naming.NamingException;
 
 import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
+import org.ejbca.core.ejb.authorization.IAuthorizationSessionHome;
+import org.ejbca.core.ejb.authorization.IAuthorizationSessionRemote;
+import org.ejbca.core.ejb.ca.caadmin.ICAAdminSessionHome;
+import org.ejbca.core.ejb.ca.caadmin.ICAAdminSessionRemote;
+import org.ejbca.core.model.ca.caadmin.CAInfo;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.model.ra.raadmin.GlobalConfiguration;
+import org.ejbca.util.TestTools;
 
 /**
  * Tests the global configuration entity bean.
@@ -29,13 +39,24 @@ import org.ejbca.core.model.ra.raadmin.GlobalConfiguration;
  */
 public class TestGlobalConfiguration extends TestCase {
     private static Logger log = Logger.getLogger(TestGlobalConfiguration.class);
+    
+    private static final Admin[] NON_CLI_ADMINS = new Admin[] {
+		new Admin(Admin.TYPE_INTERNALUSER),
+		new Admin(Admin.TYPE_PUBLIC_WEB_USER)
+	};
+
+	private Collection/*Integer*/ caids;
 
     private IRaAdminSessionRemote cacheAdmin;
+//    private ICaSessionRemote caSession = InterfaceCache.getCaSession();
+	private ICAAdminSessionRemote caAdminSession;
+	private IAuthorizationSessionRemote authorizationSession;
 
     private static IRaAdminSessionHome cacheHome;
 
     private static GlobalConfiguration original = null;
 
+    private Admin administrator = new Admin(Admin.TYPE_CACOMMANDLINE_USER);;
 
     /**
      * Creates a new TestGlobalConfiguration object.
@@ -57,10 +78,26 @@ public class TestGlobalConfiguration extends TestCase {
             }
             cacheAdmin = cacheHome.create();
         }
+        if (caAdminSession == null) {
+            Context jndiContext = getInitialContext();
+            Object obj1 = jndiContext.lookup("CAAdminSession");
+            caAdminSession = ((ICAAdminSessionHome) javax.rmi.PortableRemoteObject.narrow(obj1, ICAAdminSessionHome.class)).create();
+        }
+        if (authorizationSession == null) {
+            Context jndiContext = getInitialContext();
+            Object obj1 = jndiContext.lookup("AuthorizationSession");
+            authorizationSession = ((IAuthorizationSessionHome) javax.rmi.PortableRemoteObject.narrow(obj1, IAuthorizationSessionHome.class)).create();
+        }
+        enableCLI(true);
+        TestTools.createTestCA();
+        caids = caAdminSession.getAvailableCAs(administrator);
+    	assertFalse("No CAs exists so this test will not work", caids.isEmpty());
         log.trace("<setUp()");
     }
 
     protected void tearDown() throws Exception {
+        enableCLI(true);
+        TestTools.removeTestCA();
     }
 
     private Context getInitialContext() throws NamingException {
@@ -111,6 +148,97 @@ public class TestGlobalConfiguration extends TestCase {
         this.cacheAdmin.saveGlobalConfigurationRemote(administrator, original);
 
         log.trace("<test01ModifyGlobalConfiguration()");
+    }
+
+    /**
+     * Tests that we can not pretend to be something other than command line
+     * user and call the method getAvailableCAs.
+     * @throws Exception
+     */
+    public void test03NonCLIUser_getAvailableCAs() throws Exception {
+    	enableCLI(true);
+    	for (Admin admin : NON_CLI_ADMINS) {
+    		operationGetAvailabeCAs(admin);
+    	}
+    }
+    /**
+     * Tests that we can disable the CLI and then that we can not call the
+     * method getAvailableCAs.
+     * @throws Exception
+     */
+    public void test04DisabledCLI_getAvailableCAs() throws Exception {
+    	enableCLI(false);
+    	operationGetAvailabeCAs(administrator);
+    }
+
+    /**
+     * Tests that we can not pretend to be something other than command line
+     * user and call the method getAvailableCAs.
+     * @throws Exception
+     */
+    public void test05NonCLIUser_getCAInfo() throws Exception {
+    	enableCLI(true);
+    	for (Admin admin : NON_CLI_ADMINS) {
+    		operationGetCAInfo(admin, caids);
+    	}
+    }
+    /**
+     * Tests that we can disable the CLI and then that we can not call the
+     * method getAvailableCAs.
+     * @throws Exception
+     */
+    public void test06DisabledCLI_getCAInfo() throws Exception {
+    	enableCLI(false);
+    	operationGetCAInfo(administrator, caids);
+    }
+
+    /**
+     * Enables/disables CLI and flushes caches unless the property does not
+     * aready have the right value.
+     * @param enable
+     */
+    private void enableCLI(final boolean enable) throws Exception {
+    	final GlobalConfiguration config = cacheAdmin.loadGlobalConfiguration(administrator);
+    	final GlobalConfiguration newConfig;
+    	if (config.getEnableCommandLineInterface() == enable) {
+    		newConfig = config;
+    	} else {
+	    	config.setEnableCommandLineInterface(enable);
+	    	cacheAdmin.saveGlobalConfigurationRemote(administrator, config);
+	    	cacheAdmin.flushGlobalConfigurationCache();
+	    	newConfig = cacheAdmin.loadGlobalConfiguration(administrator);
+    	}
+    	assertEquals("CLI should have been enabled/disabled",
+    			enable, newConfig.getEnableCommandLineInterface());
+    	authorizationSession.flushAuthorizationRuleCache();
+    }
+
+    /**
+     * Try to get available CAs. Test assumes the CLI is disabled or that the admin
+     *  is not authorized.
+     * @param admin To perform the operation with.
+     */
+    private void operationGetAvailabeCAs(final Admin admin) throws RemoteException {
+    	// Get some CA ids: should be empty now
+    	final Collection emptyCaids = caAdminSession.getAvailableCAs(admin);
+    	assertTrue("Should not have got any CAs as admin of type "
+    			+ admin.getAdminType(), emptyCaids.isEmpty());
+    }
+
+    /**
+     * Try to get CA infos. Test assumes the CLI is disabled or that the admin
+     *  is not authorized.
+     * @param admin to perform the operation with.
+     * @param knownCaids IDs to test with.
+     */
+    private void operationGetCAInfo(final Admin admin, final Collection knownCaids) throws RemoteException {
+    	// Get CA infos: We should not get any CA infos even if we know the IDs
+    	final Iterator iter = knownCaids.iterator();
+    	while (iter.hasNext())  {
+    		final Integer caid = (Integer) iter.next();
+    		final CAInfo ca = caAdminSession.getCAInfo(admin, caid);
+    		assertNull("Got CA " + caid + " as admin of type " + admin.getAdminType(), ca);
+    	}
     }
 
 }
