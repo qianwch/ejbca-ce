@@ -621,6 +621,8 @@ public class CommonEjbcaWSTest extends TestCase {
 		assertNull("CRMF request resulted in error code: " + (errorCode==null?"":errorCode.getInternalErrorCode()), errorCode);
 		errorCode = certreqInternal(userData1, spkac, CertificateHelper.CERT_REQ_TYPE_SPKAC);
 		assertNull("SPKAC request resulted in error code: " + (errorCode==null?"":errorCode.getInternalErrorCode()), errorCode);
+		errorCode = certreqInternal(userData1, publickey, CertificateHelper.CERT_REQ_TYPE_PUBLICKEY);
+		assertNull("PUBLICKEY request resulted in error code: " + (errorCode==null?"":errorCode.getInternalErrorCode()), errorCode);
 	}
 
 	protected void test03EnforcementOfUniquePublicKeys(boolean performSetup) throws Exception {
@@ -772,6 +774,13 @@ public class CommonEjbcaWSTest extends TestCase {
 		"EkXFB6zflvR1fRrIxhDD0EnylHP1fz2p2kj2nOaQI6vQBH9CgTwkrAGEhy/Iq8aU"+
 		"slAJUoE1+eCkUN/RHm/Z5XaZ2Le4BnjaDRTWJIglAUvFhuCEm7qCi1/bMof8V9Md"+
 		"IP7NsueJRV9KvzdA7y0=";
+	
+	private static final String publickey = "-----BEGIN PUBLIC KEY-----\n"
+		  + "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDC/kSfVJ/hyq96xwRRwVdO0ltD\n"
+		  + "glRyKhVhA0OyI/4ux4a0NIxD4OVstfQmoyt/X7olMG29mZGpinQC6wuaaL0JJ9To\n"
+		  + "ejr41IwvDrkLKQKdY+mAJ8zUUWFWYqbcurTXrYJCYeG/ETAJZLfD4EKMNCd/lC/r\n"
+		  + "G4yg9pzLOMjNr2tQ4wIDAQAB\n"
+		  + "-----END PUBLIC KEY-----";
 
 	protected void test03GenerateSpkac(boolean performSetup) throws Exception{
 		if(performSetup){
