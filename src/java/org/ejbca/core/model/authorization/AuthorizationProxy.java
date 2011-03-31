@@ -59,7 +59,7 @@ public class AuthorizationProxy implements Serializable {
   
     public boolean isAuthorized(AdminInformation admin, String resource){
       Boolean returnval = null;
-      int adm = 0;
+      int adm = admin.getSpecialUser();
       
       // Check that the admin object was not created outside of EJBCA
       if (ArrayUtils.isEquals(admin.getLocalAuthToken(), AdminInformation.randomToken)) {
