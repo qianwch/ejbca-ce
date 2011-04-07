@@ -377,7 +377,8 @@ public class CAInterfaceBean implements java.io.Serializable {
 	   String password = null;
 	   String dn = null;
 	   ExtendedInformation ei = null;
-	   final CertReqHistory certreqhist = certificatesession.getCertReqHistory(administrator, certificatedata.getSerialNumberBigInt(), certificatedata.getIssuerDN());
+	   final Certificate certificate = certificatedata.getCertificate();
+	   final CertReqHistory certreqhist = certificatesession.getCertReqHistory(administrator, CertTools.getSerialNumber(certificate), CertTools.getIssuerDN(certificate));
 	   if (certreqhist != null) {
 		   // First try to look up all info using the Certificate Request History from when the certificate was issued
 		   // We need this since the certificate subjectDN might be a subset of the subjectDN in the template
@@ -387,7 +388,7 @@ public class CAInterfaceBean implements java.io.Serializable {
 		   dn = certreqhist.getUserDataVO().getDN();
 		   ei = certreqhist.getUserDataVO().getExtendedinformation();
 	   }
-	   final CertificateInfo certinfo = certificatesession.getCertificateInfo(administrator, CertTools.getFingerprintAsString(certificatedata.getCertificate()));
+	   final CertificateInfo certinfo = certificatesession.getCertificateInfo(administrator, CertTools.getFingerprintAsString(certificate));
 	   if (certinfo != null) {
 		   // If we are missing Certificate Request History for this certificate, we can at least recover some of this info
 		   if (certificateProfileId == SecConst.CERTPROFILE_NO_PROFILE) {
