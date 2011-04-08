@@ -13,6 +13,12 @@
  
 package org.ejbca.core.ejb.ca.store;
 
+import java.beans.XMLDecoder;
+import java.beans.XMLEncoder;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.security.cert.Certificate;
 import java.util.Date;
@@ -225,23 +231,143 @@ public abstract class CertReqHistoryDataBean extends BaseEntityBean {
      * @ejb.interface-method
      */
     public CertReqHistory getCertReqHistory() {
-    	
-	    java.beans.XMLDecoder decoder;
-		try {
-		  decoder =
-			new java.beans.XMLDecoder(
-					new java.io.ByteArrayInputStream(getUserDataVO().getBytes("UTF8")));
-		} catch (UnsupportedEncodingException e) {
-		  throw new EJBException(e);
+
+		return new CertReqHistory(this.getFingerprint(),this.getSerialNumber(),
+		                          this.getIssuerDN(),this.getUsername(),new Date(this.getTimestamp()),
+		                          decodeXML(getUserDataVO(), false));
+	}
+	private class NotPossibleToFixXML extends Exception {
+		// just used internally in the this class to indicate that the XML can not be fixed.
+		public NotPossibleToFixXML() {
+			// do nothing
 		}
-		UserDataVO useradmindata  = (UserDataVO) decoder.readObject();	
-		decoder.close();
-
-        return new CertReqHistory(this.getFingerprint(),this.getSerialNumber(),
-        		this.getIssuerDN(),this.getUsername(),new Date(this.getTimestamp()),
-				useradmindata);
-    }
-
+	}
+	static private class FixEndOfXML {
+		final private String sXML;
+		final private String sTag;
+		final private String sTail;
+		private int position = 0;
+		private int level = 0;
+		private FixEndOfXML( String s, String l, String t ) {
+			this.sXML = s;
+			this.sTag = l;
+			this.sTail = t;
+		}
+		private void next() {
+			final int pLabel = this.sXML.indexOf(this.sTag, this.position);
+			if ( pLabel<this.position ) {
+				return;
+			}
+			boolean noHit = true;
+			if ( pLabel>2 && this.sXML.substring(pLabel-2, pLabel).equals("</") ) {
+				this.position = pLabel-2;
+				this.level--;
+				noHit = false;
+			}
+			if ( this.level<0 ) {
+				return;
+			}
+			if ( pLabel>1 && this.sXML.substring(pLabel-1, pLabel).equals("<") ) {
+				this.position = pLabel-1;
+				this.level++;
+				noHit = false;
+			}
+			if ( noHit ) {
+				this.position += this.sTag.length();
+				next();
+				return;
+			}
+			final int pEnd = this.sXML.indexOf('>', pLabel);
+			if ( pEnd<pLabel+this.sTag.length() ) {
+				this.level++;
+				return;
+			}
+			if ( this.sXML.charAt(pEnd-1)=='/' ) {
+				this.level--;
+			}
+			this.position = pEnd+1;
+			next();
+		}
+		private String getFixedString() {
+			next();
+			if ( this.level<0 ) {
+				return null;
+			}
+			String result = this.sXML.substring(0, this.position);
+			for ( int i=0; i<this.level; i++) {
+				result += "</"+this.sTag+">";
+			}
+			result += this.sTail;
+			return result;
+		}
+		static String fixXML(String s) {
+			return new FixEndOfXML(s, "string", "</void></object></java>").getFixedString();
+		}
+	}
+	private UserDataVO decodeXML(final String sXML, final boolean lastTry) {
+		final byte baXML[];
+		try {
+			baXML = sXML.getBytes("UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			throw new EJBException(e);
+		}
+		final XMLDecoder decoder = new XMLDecoder(new ByteArrayInputStream(baXML));
+		final UserDataVO useradmindata;
+		try {
+			useradmindata  = (UserDataVO) decoder.readObject();
+		} catch( Throwable t ) {
+			// try to repair the end of the XML string.
+			// this will only succeed if a limited number of chars is lost in the end of the string
+			// note that this code will not make anything worse and that it will not be run if the XML can be encoded.
+			// 
+			try {
+				if ( lastTry ) {
+					return null;
+				}
+				final String sFixedXML = FixEndOfXML.fixXML(sXML);
+				if ( sFixedXML==null ) {
+					throw new NotPossibleToFixXML();					
+				}
+				final UserDataVO userDataVO = decodeXML(sFixedXML, true);
+				if ( userDataVO==null ) {
+					throw new NotPossibleToFixXML();
+				}
+				storeUserDataVO(userDataVO); // store it right so it does not have to be repaired again.
+				log.warn(printUserDataVOXML("XML has been repaired. Trailing tags fixed. DB updated with correct XML.", sXML));
+				return userDataVO;
+			} catch ( NotPossibleToFixXML e ) {
+				log.error(printUserDataVOXML("Not possible to decode UserDataVO. No way to fix the XML.", sXML), t);
+				return null;
+			}
+		} finally {
+			decoder.close();
+		}
+		if (log.isTraceEnabled() ) {
+			log.trace(printUserDataVOXML("Successfully decoded UserDataVO XML.",sXML));
+		}
+		/* Code that fixes broken XML that has actually been parsed. It seems that the decoder is not checking for the java end tag.
+		 * Currently this is left out in order to not mess with working but broken XML.
+		if ( sXML.indexOf("<java")>0 && sXML.indexOf("</java>")<0 ) {
+			storeUserDataVO(useradmindata); // store it right				
+		}
+		 */
+		return useradmindata;
+	}
+	private String printUserDataVOXML(String sComment, String sXML) {
+		final StringWriter sw = new StringWriter();
+		final PrintWriter pw = new PrintWriter(sw);
+		pw.println(sComment);
+		pw.println("XMLDATA start on next line:");
+		pw.print(sXML);
+		pw.println("| end of XMLDATA. The char before '|' was the last XML.");
+		pw.println();
+		pw.println("Issuer DN: "+getIssuerDN());
+		pw.println("Serial #"+getSerialNumber());
+		pw.println("User name: "+getUsername());
+		pw.println("Certificate fingerprint: "+getFingerprint());
+		pw.println();
+		return sw.toString();
+	}
     //
     // Fields required by Container
     //
@@ -268,25 +394,28 @@ public abstract class CertReqHistoryDataBean extends BaseEntityBean {
         setTimestamp(new Date().getTime());
                 	
     	setUsername(useradmindata.getUsername());
-    	try {
-            // Save the user admin data in xml encoding.
-    		java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
-
-    		java.beans.XMLEncoder encoder = new java.beans.XMLEncoder(baos);
-    		encoder.writeObject(useradmindata);
-    		encoder.close();
-
-            if (log.isDebugEnabled()) {
-               log.debug("useradmindata: \n" + baos.toString("UTF8"));
-            }
-   			setUserDataVO(baos.toString("UTF8"));            
-        } catch (UnsupportedEncodingException e) {
-            throw new EJBException(e);    	                                              
-        } 
+    	storeUserDataVO(useradmindata);
         setRowVersion(0);
         return null;
     }
+	private void storeUserDataVO(UserDataVO userDataVO) {
+		try {
+			// Save the user admin data in xml encoding.
+			final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
+			final XMLEncoder encoder = new XMLEncoder(baos);
+			encoder.writeObject(userDataVO);
+			encoder.close();
+
+			final String s = baos.toString("UTF-8");
+			if (log.isDebugEnabled()) {
+				log.debug(printUserDataVOXML("useradmindata:",s));
+			}
+	        setUserDataVO(s);
+		} catch (UnsupportedEncodingException e) {
+			throw new EJBException(e);
+		}
+	}
     /**
      * required method, does nothing
      *

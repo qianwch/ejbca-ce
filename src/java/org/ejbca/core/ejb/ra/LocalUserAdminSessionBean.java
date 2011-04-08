@@ -1720,6 +1720,11 @@ throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, Waiting
         CertificateProfile prof = certificatesession.getCertificateProfile(admin, certificateProfileId);
         if (prof != null) {
         	publishers = prof.getPublisherList();
+        	if ( publishers==null || publishers.size()==0 ) {
+        		log.debug("No publishers defined for certificate with serial #"+certserno+ " issued by "+issuerdn);
+        	}
+        } else {
+        	log.warn("No certificate profile for certificate with serial #"+certserno+" issued by "+issuerdn);
         }
         
         // Revoke certificate in database and all publishers
