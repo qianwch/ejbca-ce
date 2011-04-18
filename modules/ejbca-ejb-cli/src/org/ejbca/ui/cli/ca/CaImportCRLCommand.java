@@ -13,14 +13,10 @@
 
 package org.ejbca.ui.cli.ca;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.security.GeneralSecurityException;
 import java.security.KeyPair;
-import java.security.cert.Certificate;
 import java.security.cert.X509CRL;
 import java.security.cert.X509CRLEntry;
 import java.security.cert.X509Certificate;
@@ -31,25 +27,17 @@ import java.util.Set;
 
 import javax.security.auth.x500.X500Principal;
 
-import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.ASN1Sequence;
-import org.bouncycastle.asn1.DERInteger;
-import org.bouncycastle.asn1.DEROctetString;
-import org.bouncycastle.asn1.x509.AuthorityKeyIdentifier;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
 import org.ejbca.core.model.AlgorithmConstants;
 import org.ejbca.core.model.SecConst;
-import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.core.model.ca.caadmin.CAInfo;
 import org.ejbca.core.model.ca.crl.RevokedCertInfo;
-import org.ejbca.core.model.log.Admin;
-import org.ejbca.core.model.ra.ExtendedInformation;
+import org.ejbca.core.model.ra.AlreadyRevokedException;
 import org.ejbca.core.model.ra.UserDataConstants;
 import org.ejbca.core.model.ra.UserDataVO;
 import org.ejbca.ui.cli.ErrorAdminCommandException;
 import org.ejbca.util.CertTools;
 import org.ejbca.util.CryptoProviderTools;
-import org.ejbca.util.FileTools;
 import org.ejbca.util.cert.CrlExtensions;
 import org.ejbca.util.keystore.KeyTools;
 
@@ -173,19 +161,20 @@ public class CaImportCRLCommand extends BaseCaAdminCommand {
 	        				SecConst.CERT_ACTIVE, SecConst.USER_ENDUSER, SecConst.CERTPROFILE_FIXED_ENDUSER, null, new Date().getTime());
         			getLogger().info("Dummy certificate  '" + serialHex + "' has been stored.");
 	        	}
+	        	// This check will not catch a certificate with status SecConst.CERT_ARCHIVED
 	        	if (!strict && getCertificateStoreSession().isRevoked(issuer, serialNr)) {
 		        	getLogger ().info("Certificate '" + serialHex +"' is already revoked");
 		        	already_revoked++;
 		        	continue;
 	        	}
 	        	getLogger ().info("Revoking '" + serialHex +"'");
-	        	revoked++;
-				getUserAdminSession().revokeCert(getAdmin(),
-							serialNr,
-							entry.getRevocationDate(),
-				           issuer,
-				           username, 
-				           RevokedCertInfo.REVOKATION_REASON_UNSPECIFIED);
+	        	try {
+	        		getUserAdminSession().revokeCert(getAdmin(), serialNr, entry.getRevocationDate(), issuer, username, RevokedCertInfo.REVOKATION_REASON_UNSPECIFIED);
+	        		revoked++;
+	        	} catch (AlreadyRevokedException e) {
+		        	already_revoked++;
+		        	getLogger().warn("Failed to revoke '" + serialHex +"'. (Status might be 'Archived'.) Error message was: " + e.getMessage());
+	        	}
 	        }
         	String crl_summary = "CRL #" + crl_no + " stored in the database";
 	        if (getCreateCRLSession().getLastCRLNumber(getAdmin(), issuer, false) < crl_no) {
@@ -224,6 +213,7 @@ public class CaImportCRLCommand extends BaseCaAdminCommand {
 		getLogger().info("Description: " + getDescription());
 		getLogger().info("Usage: " + getCommand() + " <caname> <crl file> <" + STRICT_OP + "|" + LENIENT_OP + "|" + ADAPTIVE_OP + ">");
 		getLogger().info(STRICT_OP + " means that all certificates must be in the database\nand that the CRL must not already be in the database");
+		getLogger().info(LENIENT_OP + " means not strict and not adaptive");
 		getLogger().info(ADAPTIVE_OP + " means that missing certficates will be replaced by\ndummy certificates to cater for proper CRLs for missing certificates");
 		String existingCas = "";
 		Collection cas = null;
