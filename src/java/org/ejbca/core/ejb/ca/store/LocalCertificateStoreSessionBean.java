@@ -1151,7 +1151,7 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
      * @param admin      Administrator performing the operation
      * @param certificate the certificate to revoke or activate.
      * @param publishers and array of publiserids (Integer) of publishers to revoke/re-publish the certificate in.
-     * @param revokedate
+     * @param revokedate when it was revoked.
      * @param reason     the reason of the revokation. (One of the RevokedCertInfo.REVOKATION_REASON constants.)
      * @param userDataDN if an DN object is not found in the certificate use object from user data instead.
      * @throws FinderException 
