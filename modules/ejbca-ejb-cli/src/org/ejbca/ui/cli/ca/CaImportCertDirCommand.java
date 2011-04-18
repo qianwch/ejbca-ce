@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.Date;
@@ -42,12 +43,10 @@ public class CaImportCertDirCommand extends BaseCaAdminCommand {
 
 	public String getMainCommand() { return MAINCOMMAND; }
 	public String getSubCommand() { return "importcertdir"; }
-	public String getDescription() { return "Imports a directory with certficate files to the database"; }
+	public String getDescription() { return "Imports a directory with PEM encoded certficate file(s) to the database"; }
 	
 	int count;
-	
 	int redundant;
-	
 	int rejected;
 
     public void execute(String[] args) throws ErrorAdminCommandException {
@@ -236,9 +235,8 @@ public class CaImportCertDirCommand extends BaseCaAdminCommand {
 
 	protected void usage() {
 		getLogger().info("Description: " + getDescription());
-		getLogger().info("Usage: " + getCommand() + " <username-source> <caname> <status> "
-				+ "<certificate dir> <endentityprofile> <certificateprofile>");
-		getLogger().info(" Username-source must be DN or FILE which denote subject DN or actual file name");
+		getLogger().info("Usage: " + getCommand() + " <username-source> <caname> <status> <certificate dir> <endentityprofile> <certificateprofile>");
+		getLogger().info(" Username-source: \"DN\" means use certificate's SubjectDN as username and \"FILE\" means user the file's name as username");
 		String existingCas = "";
 		Collection cas = null;
 		try {
@@ -252,9 +250,9 @@ public class CaImportCertDirCommand extends BaseCaAdminCommand {
 		} catch (Exception e) {
 			existingCas += "<unable to fetch available CA(s)>";
 		}
-		getLogger().info(" Existing CAs: " + existingCas);
+		getLogger().info(" Available CAs: " + existingCas);
 		getLogger().info(" Status: ACTIVE, REVOKED");
-		getLogger().info(" Certificate: must be PEM encoded");
+		getLogger().info(" Certificate dir: A directory where all files are PEM encoded certificates");
 		String endEntityProfiles = "";
 		try {
 			Collection eps = getRaAdminSession().getAuthorizedEndEntityProfileIds(getAdmin());
@@ -267,7 +265,7 @@ public class CaImportCertDirCommand extends BaseCaAdminCommand {
 		catch (Exception e) {
 			endEntityProfiles += "<unable to fetch available end entity profiles>";
 		}
-		getLogger().info(" End entity profiles: " + endEntityProfiles);
+		getLogger().info(" Available end entity profiles: " + endEntityProfiles);
 		String certificateProfiles = "";
 		try {
 			Collection cps = getCertificateStoreSession().getAuthorizedCertificateProfileIds(getAdmin(), SecConst.CERTTYPE_ENDENTITY, cas);
@@ -285,23 +283,17 @@ public class CaImportCertDirCommand extends BaseCaAdminCommand {
 		} catch (Exception e) {
 			certificateProfiles += "<unable to fetch available certificate profile>";
 		}
-		getLogger().info(" Certificate profiles: " + certificateProfiles);
+		getLogger().info(" Available certificate profiles: " + certificateProfiles);
 	}
 	
-	protected Certificate loadcert(String filename) throws Exception {
-		File certfile = new File(filename);
-		if (!certfile.exists()) {
-			throw new Exception(filename + " is not a file.");
-		}
+	/** Load a PEM encoded certificate from the specified file. */
+	private Certificate loadcert(final String filename) throws Exception {
 		try {
-			byte[] bytes = FileTools.getBytesFromPEM(
-					FileTools.readFiletoBuffer(filename),
-					"-----BEGIN CERTIFICATE-----", "-----END CERTIFICATE-----");
-			Certificate cert = CertTools.getCertfromByteArray(bytes);
-			return cert;
-		} catch (java.io.IOException ioe) {
+			final byte[] bytes = FileTools.getBytesFromPEM(FileTools.readFiletoBuffer(filename), "-----BEGIN CERTIFICATE-----", "-----END CERTIFICATE-----");
+			return CertTools.getCertfromByteArray(bytes);
+		} catch (IOException ioe) {
 			throw new Exception("Error reading " + filename + ": " + ioe.toString());
-		} catch (java.security.cert.CertificateException ce) {
+		} catch (CertificateException ce) {
 			throw new Exception(filename + " is not a valid X.509 certificate: " + ce.toString());
 		} catch (Exception e) {
 			throw new Exception("Error parsing certificate from " + filename + ": " + e.toString());
