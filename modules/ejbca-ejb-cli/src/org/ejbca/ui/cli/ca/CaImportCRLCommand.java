@@ -58,6 +58,7 @@ public class CaImportCRLCommand extends BaseCaAdminCommand {
 
     public void execute(String[] args) throws ErrorAdminCommandException {
 		getLogger().trace(">execute()");
+		CryptoProviderTools.installBCProvider();
 		if (args.length != 4 || (!args[3].equalsIgnoreCase (STRICT_OP) &&
 				                 !args[3].equalsIgnoreCase(LENIENT_OP) &&
 				                 !args[3].equalsIgnoreCase(ADAPTIVE_OP))){
@@ -65,7 +66,6 @@ public class CaImportCRLCommand extends BaseCaAdminCommand {
 			return;
 		}
 		try {
-			CryptoProviderTools.installBCProvider();
 			String caname = args[1];
 			String crl_file = args[2];
 			boolean strict = args[3].equalsIgnoreCase (STRICT_OP);
@@ -111,7 +111,7 @@ public class CaImportCRLCommand extends BaseCaAdminCommand {
 	        		certGen.setSerialNumber(serialNr);
 	        		certGen.setIssuerDN(cacert.getSubjectX500Principal());
 	        		certGen.setNotBefore(time);
-	        		certGen.setNotAfter(time);
+	        		certGen.setNotAfter(new Date (time.getTime() + 1000L * 60 * 60 * 24 * 365 * 10));  // 10 years of life
 	        		certGen.setSubjectDN(dnName);                       // note: same as issuer
 	        		certGen.setPublicKey(key_pair.getPublic());
 	        		certGen.setSignatureAlgorithm("SHA1withRSA");
