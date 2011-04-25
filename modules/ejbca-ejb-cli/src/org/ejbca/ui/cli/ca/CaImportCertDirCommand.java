@@ -51,12 +51,12 @@ public class CaImportCertDirCommand extends BaseCaAdminCommand {
 
     public void execute(String[] args) throws ErrorAdminCommandException {
 		getLogger().trace(">execute()");
+		CryptoProviderTools.installBCProvider();
 		if (args.length != 7) {
 			usage();
 			return;
 		}
 		try {
-			CryptoProviderTools.installBCProvider();
 			String username_filter = args[1];
 			String caname = args[2];
 			String active = args[3];
@@ -77,8 +77,9 @@ public class CaImportCertDirCommand extends BaseCaAdminCommand {
 				throw new Exception("Invalid certificate status.");
 			}
 			if (!username_filter.equalsIgnoreCase ("DN") &&
+			    !username_filter.equalsIgnoreCase ("CN") &&
 			    !username_filter.equalsIgnoreCase ("FILE")){
-				throw new Exception ("Currently only DN and FILE username-source are implemented");
+				throw new Exception ("Currently only DN, CN and FILE username-source are implemented");
 			}
 			
 			File dir = new File(certificate_dir);
@@ -163,8 +164,17 @@ public class CaImportCertDirCommand extends BaseCaAdminCommand {
 		if (CertTools.getNotAfter(certificate).compareTo(new java.util.Date()) < 0) {
 			status = SecConst.CERT_ARCHIVED;
 		}
-		String username = username_filter.equalsIgnoreCase("DN") ? 
-				 CertTools.getSubjectDN(certificate) : file_name;
+		String username = username_filter.equalsIgnoreCase("FILE") ? 
+				 file_name : CertTools.getSubjectDN(certificate);
+		if (username_filter.equalsIgnoreCase("CN")) {
+			String cn = CertTools.getPartFromDN(username, "CN");
+			// Workaround for "difficult" certificates lacking CNs
+			if (cn == null || cn.length () == 0) {
+				getLogger ().info("Certificate '" + CertTools.getSerialNumberAsString(certificate) + "' lacks CN, DN used instead, file: " +file_name);
+			} else {
+				username = cn;
+			}
+		}
 		
 		// Check if username already exists.
 		UserDataVO userdata = getUserAdminSession().findUser(getAdmin(), username);
@@ -236,7 +246,7 @@ public class CaImportCertDirCommand extends BaseCaAdminCommand {
 	protected void usage() {
 		getLogger().info("Description: " + getDescription());
 		getLogger().info("Usage: " + getCommand() + " <username-source> <caname> <status> <certificate dir> <endentityprofile> <certificateprofile>");
-		getLogger().info(" Username-source: \"DN\" means use certificate's SubjectDN as username and \"FILE\" means user the file's name as username");
+		getLogger().info(" Username-source: \"DN\" means use certificate's SubjectDN as username, \"CN\" means use certificate subject's common name as username and \"FILE\" means user the file's name as username");
 		String existingCas = "";
 		Collection cas = null;
 		try {
