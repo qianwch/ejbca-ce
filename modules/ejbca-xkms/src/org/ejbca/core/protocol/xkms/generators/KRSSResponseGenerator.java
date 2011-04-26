@@ -174,7 +174,7 @@ public class KRSSResponseGenerator extends
 		if((!recover && userDataVO.getStatus() == UserDataConstants.STATUS_NEW) || (recover && userDataVO.getStatus() == UserDataConstants.STATUS_KEYRECOVERY)){
 				
 			try{		
-				boolean usekeyrecovery = !reissue && (getRAAdminSession().loadGlobalConfiguration(pubAdmin)).getEnableKeyRecovery();
+				boolean usekeyrecovery = !reissue && getRAAdminSession().loadGlobalConfiguration(pubAdmin).getEnableKeyRecovery();
 
 				boolean savekeys = userDataVO.getKeyRecoverable() && usekeyrecovery &&  (userDataVO.getStatus() != UserDataConstants.STATUS_KEYRECOVERY);
 				boolean loadkeys = (userDataVO.getStatus() == UserDataConstants.STATUS_KEYRECOVERY) && usekeyrecovery;

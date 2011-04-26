@@ -123,7 +123,7 @@ public class BatchMakeP12 extends BaseCommand {
 
     private boolean getUseKeyRecovery() throws RemoteException {
     	if (usekeyrecovery == null) {
-            usekeyrecovery = (getRaAdminSession().loadGlobalConfiguration(getAdmin())).getEnableKeyRecovery();
+            usekeyrecovery = getRaAdminSession().loadGlobalConfiguration(getAdmin()).getEnableKeyRecovery();
     	}
     	return usekeyrecovery;
     }

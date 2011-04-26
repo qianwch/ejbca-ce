@@ -116,7 +116,7 @@ public class TestApprovalSession extends TestCase {
 			admin2 = new Admin(admincert2, adminusername2, null);
 			reqadmin = new Admin(reqadmincert, reqadminusername, null);
 			
-			gc = TestTools.getRaAdminSession().loadGlobalConfiguration(new Admin(Admin.INTERNALCAID));
+			gc = TestTools.getRaAdminSession().loadGlobalConfiguration(intadmin);
 		}
 	}
 

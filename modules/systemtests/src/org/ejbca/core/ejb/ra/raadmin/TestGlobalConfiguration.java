@@ -56,7 +56,7 @@ public class TestGlobalConfiguration extends TestCase {
 
     private static GlobalConfiguration original = null;
 
-    private Admin administrator = new Admin(Admin.TYPE_CACOMMANDLINE_USER);;
+    private Admin administrator = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
 
     /**
      * Creates a new TestGlobalConfiguration object.
@@ -72,7 +72,7 @@ public class TestGlobalConfiguration extends TestCase {
         if (cacheAdmin == null) {
             if (cacheHome == null) {
                 Context jndiContext = getInitialContext();
-                Object obj1 = jndiContext.lookup("RaAdminSession");
+                Object obj1 = jndiContext.lookup(IRaAdminSessionHome.JNDI_NAME);
                 cacheHome = (IRaAdminSessionHome) javax.rmi.PortableRemoteObject.narrow(obj1, IRaAdminSessionHome.class);
 
             }
@@ -80,12 +80,12 @@ public class TestGlobalConfiguration extends TestCase {
         }
         if (caAdminSession == null) {
             Context jndiContext = getInitialContext();
-            Object obj1 = jndiContext.lookup("CAAdminSession");
+            Object obj1 = jndiContext.lookup(ICAAdminSessionHome.JNDI_NAME);
             caAdminSession = ((ICAAdminSessionHome) javax.rmi.PortableRemoteObject.narrow(obj1, ICAAdminSessionHome.class)).create();
         }
         if (authorizationSession == null) {
             Context jndiContext = getInitialContext();
-            Object obj1 = jndiContext.lookup("AuthorizationSession");
+            Object obj1 = jndiContext.lookup(IAuthorizationSessionHome.JNDI_NAME);
             authorizationSession = ((IAuthorizationSessionHome) javax.rmi.PortableRemoteObject.narrow(obj1, IAuthorizationSessionHome.class)).create();
         }
         enableCLI(true);
