@@ -1636,7 +1636,7 @@ throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, Waiting
     public void revokeCert(Admin admin, BigInteger certserno, Date revocationdate, String issuerdn, String username, int reason) throws AuthorizationDeniedException,
 		FinderException, ApprovalException, WaitingForApprovalException, AlreadyRevokedException {
         if (log.isTraceEnabled()) {
-            log.trace(">revokeCert(" + certserno + ", IssuerDN: " + issuerdn + ", username, " + username + ")");
+            log.trace(">revokeCert(" + certserno.toString(16) + ", IssuerDN: " + issuerdn + ", username, " + username + ")");
         }
         UserDataPK pk = new UserDataPK(username);	// TODO: Fetch this from certstoresession instead
         UserDataLocal data;
@@ -1721,10 +1721,10 @@ throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, Waiting
         if (prof != null) {
         	publishers = prof.getPublisherList();
         	if ( publishers==null || publishers.size()==0 ) {
-        		log.debug("No publishers defined for certificate with serial #"+certserno+ " issued by "+issuerdn);
+        		log.debug("No publishers defined for certificate with serial #"+certserno.toString(16)+ " issued by "+issuerdn);
         	}
         } else {
-        	log.warn("No certificate profile for certificate with serial #"+certserno+" issued by "+issuerdn);
+        	log.warn("No certificate profile for certificate with serial #"+certserno.toString(16)+" issued by "+issuerdn);
         }
         
         // Revoke certificate in database and all publishers
