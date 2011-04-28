@@ -1721,7 +1721,9 @@ throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, Waiting
         if (prof != null) {
         	publishers = prof.getPublisherList();
         	if ( publishers==null || publishers.size()==0 ) {
-        		log.debug("No publishers defined for certificate with serial #"+certserno.toString(16)+ " issued by "+issuerdn);
+            	if (log.isDebugEnabled()) {
+            		log.debug("No publishers defined for certificate with serial #"+certserno.toString(16)+ " issued by "+issuerdn);
+            	}
         	}
         } else {
         	log.warn("No certificate profile for certificate with serial #"+certserno.toString(16)+" issued by "+issuerdn);
