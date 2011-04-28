@@ -316,6 +316,7 @@
     			<include name="org/ejbca/core/model/ca/store/CertReqHistory*.java"/>
     			<include name="org/ejbca/util/dn/DNFieldsUtil.java"/>
     			<include name="org/ejbca/util/dn/DNFields.java"/>
+    			<include name="org/ejbca/util/FixEndOfBrokenXML.java"/>
     			<!-- RA classes that maybe shouldn't be here.. -->
     			<include name="org/ejbca/core/model/ra/ExtendedInformation.java"/>
     			<include name="org/ejbca/core/model/ra/UserDataVO.java"/>

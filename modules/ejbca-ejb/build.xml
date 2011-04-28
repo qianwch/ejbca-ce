@@ -257,6 +257,9 @@
 			<fileset dir="${ejbca.home}/src">
 				<include name="intresources/**"/>
 			</fileset>
+			<fileset dir="${src-test.dir}">
+				<include name="**/*.xml"/>
+			</fileset>
 		</copy>
     </target>
 
