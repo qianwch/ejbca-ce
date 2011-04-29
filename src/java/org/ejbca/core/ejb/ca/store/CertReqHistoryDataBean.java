@@ -228,6 +228,9 @@ public abstract class CertReqHistoryDataBean extends BaseEntityBean {
      * This is the method that should be used to retreive cert req history 
      * correctly.
      *
+	 * NOTE: This method will under some circumstances update the database and
+	 * must always run in a transaction! 
+	 * 
      * @return certificate request history object
      * @ejb.interface-method
      */
