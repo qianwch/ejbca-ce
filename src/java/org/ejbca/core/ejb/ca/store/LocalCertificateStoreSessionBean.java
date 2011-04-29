@@ -1521,6 +1521,10 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
     /**
      * Retrieves the certificate request data belonging to given certificate serialnumber and issuerdn
      * 
+	 * NOTE: This method will try to repair broken XML and will in that case
+	 * update the database. This means that this method must always run in a
+	 * transaction! 
+	 * 
      * @param admin
      * @param certificateSN serial number of the certificate
      * @param issuerDN
@@ -1545,6 +1549,11 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
     
     /**
      * Retrieves all cert request datas belonging to a user.
+     * 
+	 * NOTE: This method will try to repair broken XML and will in that case
+	 * update the database. This means that this method must always run in a
+	 * transaction! 
+	 * 
      * @param admin
      * @param username
      * @return a collection of CertReqHistory
