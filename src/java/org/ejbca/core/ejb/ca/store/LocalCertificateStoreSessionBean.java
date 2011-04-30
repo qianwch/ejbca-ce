@@ -1142,6 +1142,17 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
     } // setRevokeStatus
 
     /**
+     * Just used locally to catch exceptions thrown in the class.
+     * This exception class must be used instead of the "Exception" when trowing an Exception that should be caught by this class.
+     * Throwing just an exception will cause other exceptions not thrown by this class and null pointers to be caught as well which
+     * is not the intention.
+     */
+    private class LocalException extends Exception {
+    	LocalException(String s) {
+    		super(s);
+    	}
+    }
+    /**
      * Helper method to set the status of certificate to revoked or active. Re-activating (unrevoking) a certificate have two limitations.
      * 1. A password (for for example AD) will not be restored if deleted, only the certificate and certificate status and associated info will be restored
      * 2. ExtendedInformation, if used by a publisher will not be used when re-activating a certificate 
@@ -1199,14 +1210,14 @@ public class LocalCertificateStoreSessionBean extends BaseSessionBean {
     		try {
     			// Republishing will not restore a password, for example in AD, it will only re-activate the certificate.
     			String password = null;
-    			boolean published = publishersession.storeCertificate(admin, publishers, certificate, username, password, userDataDN,
+    			boolean published = getPublisherSession().storeCertificate(admin, publishers, certificate, username, password, userDataDN,
     					cafp, status, type, revocationDate, revocationReason, rev.getTag(), rev.getCertificateProfileId(), now.getTime(), null);
     			if ( !published ) {
-    				throw new Exception("Unrevoked cert:" + serialNo + " reason: " + reason + " Could not be republished.");
+    				throw new LocalException("Unrevoked cert:" + serialNo + " reason: " + reason + " Could not be republished.");
     			}                	  
     			String msg = intres.getLocalizedMessage("store.republishunrevokedcert", new Integer(reason));            	
     			getLogSession().log(admin, CertTools.getIssuerDN(certificate).hashCode(), LogConstants.MODULE_CA, new java.util.Date(), null, certificate, LogConstants.EVENT_INFO_NOTIFICATION, msg);
-    		} catch (Exception ex) {
+    		} catch (LocalException ex) {
     			// We catch the exception thrown above, to log the message, but it is only informational, so we dont re-throw anything
     			getLogSession().log(admin, CertTools.getIssuerDN(certificate).hashCode(), LogConstants.MODULE_CA, new java.util.Date(), null, certificate, LogConstants.EVENT_INFO_NOTIFICATION, ex.getMessage());
     		}
