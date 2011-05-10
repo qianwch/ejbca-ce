@@ -19,6 +19,8 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import org.apache.commons.lang.time.DateUtils;
+import org.apache.commons.lang.time.FastDateFormat;
 import org.apache.log4j.Logger;
 
 /**
@@ -32,10 +34,11 @@ public class ValidityDate {
 	final private static Locale defaultLocale = Locale.getDefault();
 	final private static int dateStyle = DateFormat.SHORT;
 	final private static int timeStyle = DateFormat.MEDIUM;
-	final private static DateFormat defaultDateFormat = DateFormat.getDateTimeInstance(dateStyle, timeStyle);
+	final private static DateFormat oldDateFormat = DateFormat.getDateTimeInstance(dateStyle, timeStyle);
+	final private static String[] timePatterns = {"yyyy-MM-dd HH:mm"};
 	final private static TimeZone utcTimeZone = TimeZone.getTimeZone("UTC");
 	static {
-		defaultDateFormat.setTimeZone(utcTimeZone);
+		oldDateFormat.setTimeZone(utcTimeZone);
 	}
 
 	/**
@@ -49,8 +52,16 @@ public class ValidityDate {
 	 */
 	public static Date getDateFromString(String sDate) {
 		
+        // First try to parse the time in the format yyyy-MM-dd HH:mm
 		try {
-			final Date date = defaultDateFormat.parse(sDate);
+            return DateUtils.parseDate(sDate, timePatterns);
+		} catch (ParseException e) {
+            // just try next
+		}
+		
+        // For backward compatibility, try parsing the time in the local time format.
+		try {
+			final Date date = oldDateFormat.parse(sDate);
 			if ( date!=null ) {
 				log.debug("Date string '"+sDate+"' with default local '"+defaultLocale.getDisplayName()+"' gives '"+date+"' when decoded." );
 				return date;
@@ -67,17 +78,17 @@ public class ValidityDate {
 				dateFormat.setTimeZone(utcTimeZone);
 				final Date date = dateFormat.parse(sDate);
 				if ( date!=null ) {
-					log.warn("Default local '"+defaultLocale.getDisplayName()+"' not possible to use. Date string '"+sDate+"' in locale '"+locale.getDisplayName()+"' gives '"+date+"' when decoded. This date will be used. To use the default locale '"+defaultLocale.getDisplayName()+"' specify the date as '"+defaultDateFormat.format(date)+"'." );
-					return date;
-				}
+					log.warn("Default local '"+defaultLocale.getDisplayName()+"' not possible to use. Date string '"+sDate+"' in locale '"+locale.getDisplayName()+"' gives '"+date+"' when decoded. This date will be used. To use the default locale '"+defaultLocale.getDisplayName()+"' specify the date as '"+oldDateFormat.format(date)+"'." );
+                    return date;
+                }
 			} catch (ParseException e1) {
 				// just try next
 			}
 			log.debug("Locale '"+locale.getDisplayName()+"' can not decode the date string '"+sDate+"'.");
 		}
 		final Date exampleDate=new Date();
-		log.info("Not possible to decode the date '"+sDate+"'. Example: The date '"+exampleDate+"' should be encoded as '"+defaultDateFormat.format(exampleDate)+"' in the default local '"+defaultLocale.getDisplayName()+"'.");
-		return null;
+		log.info("Not possible to decode the date '"+sDate+"'. Example: The date '"+exampleDate+"' should be encoded as '"+FastDateFormat.getInstance(timePatterns[0]).format(exampleDate)+"'");
+        return null;
 	}
 	/**
 	 * Encoding of the validity for a CA. Either delta time or end date.
@@ -111,7 +122,7 @@ public class ValidityDate {
 		if ( isDeltaTime(lEncoded) ) {
 			return "" + lEncoded + YearMonthDayTime.TYPE_DAYS;
 		}
-		return defaultDateFormat.format(new Date(lEncoded));
+		return FastDateFormat.getInstance(timePatterns[0]).format(new Date(lEncoded));
 	}
 	/**
 	 * Decodes encoded value to Date.
@@ -129,6 +140,6 @@ public class ValidityDate {
 	 * @return locale name and current date.
 	 */
 	public static String getDateExample() {
-		return "(" + defaultLocale.getDisplayName() + "): '" +  defaultDateFormat.format(new Date()) + "'.";
+		return "(" + timePatterns[0] + "): '" +  FastDateFormat.getInstance(timePatterns[0]).format(new Date()) + "'.";
 	}
 }

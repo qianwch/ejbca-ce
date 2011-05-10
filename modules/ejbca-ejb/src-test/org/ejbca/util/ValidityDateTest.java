@@ -15,12 +15,18 @@ package org.ejbca.util;
 import java.util.Calendar;
 import java.util.Date;
 
+import org.apache.commons.lang.time.FastDateFormat;
+
 import junit.framework.TestCase;
 
 /**
  * @version $Id$
  */
 public class ValidityDateTest extends TestCase {
+	
+	private String[] timePatterns = {"yyyy-MM-dd HH:mm"};
+	private FastDateFormat fastDateFormat = FastDateFormat.getInstance(timePatterns[0]);
+	
     public ValidityDateTest(String name) { super(name); }
 
     public void setUp() throws Exception { }
@@ -46,5 +52,12 @@ public class ValidityDateTest extends TestCase {
 		assertNull(ValidityDate.getDateFromString(hexTime));
 	}
 
-
+    public void test02FormatStringDates() {
+    	
+    	Date date = new Date();
+    	String dateStr = fastDateFormat.format(date);
+    	assertEquals(dateStr, ValidityDate.getString(date.getTime()));
+    	 	  	 
+    }
+	
 }
