@@ -29,7 +29,7 @@ import org.ejbca.util.passgen.LettersAndDigitsPasswordGenerator;
 /**
  * Adds items to the Unid-Fnr DB.
  * @author primelars
- * @version $Id: UnidFnrHandler.java 12009 2011-05-17 16:52:14Z primelars $
+ * @version $Id$
  */
 public class UnidFnrHandler implements ExtendedUserDataHandler {
 	private static final Logger LOG = Logger.getLogger(UnidFnrHandler.class);

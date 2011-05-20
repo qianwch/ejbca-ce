@@ -36,7 +36,7 @@ import org.ejbca.util.CertTools;
 /**
  * Changes the DN in an IRequestMessage
  * @author primelars
- * @version $Id: RequestMessageSubjectDnAdapter.java 12038 2011-05-19 17:18:59Z primelars $
+ * @version $Id$
  *
  */
 class RequestMessageSubjectDnAdapter implements ICrmfRequestMessage {

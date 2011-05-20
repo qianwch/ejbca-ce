@@ -37,7 +37,7 @@ import org.ejbca.core.protocol.unid.UnidFnrHandler.Storage;
 /**
  * Testing of {@link UnidFnrHandler} .
  * @author primelars
- * @version $Id: UnidFnrHandlerTest.java 12041 2011-05-19 18:46:18Z primelars $
+ * @version $Id$
  */
 public class UnidFnrHandlerTest extends TestCase {
     public void test01() throws Exception {
