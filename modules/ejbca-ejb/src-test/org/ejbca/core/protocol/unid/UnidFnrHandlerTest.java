@@ -11,7 +11,7 @@
  *                                                                       *
  *************************************************************************/
 
-package org.ejbca.util.unid;
+package org.ejbca.core.protocol.unid;
 
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
@@ -23,21 +23,21 @@ import java.security.cert.Certificate;
 import java.util.Date;
 import java.util.Vector;
 
+import junit.framework.TestCase;
+
 import org.bouncycastle.asn1.DERObjectIdentifier;
 import org.bouncycastle.asn1.x509.X509Extensions;
 import org.bouncycastle.asn1.x509.X509Name;
-import org.ejbca.core.protocol.ExtendedUserDataHandler.HandlerException;
 import org.ejbca.core.protocol.IRequestMessage;
 import org.ejbca.core.protocol.IResponseMessage;
+import org.ejbca.core.protocol.ExtendedUserDataHandler.HandlerException;
 import org.ejbca.core.protocol.cmp.ICrmfRequestMessage;
-import org.ejbca.util.unid.UnidFnrHandler.Storage;
-
-import junit.framework.TestCase;
+import org.ejbca.core.protocol.unid.UnidFnrHandler.Storage;
 
 /**
  * Testing of {@link UnidFnrHandler} .
  * @author primelars
- * @version $Id$
+ * @version $Id: UnidFnrHandlerTest.java 12041 2011-05-19 18:46:18Z primelars $
  */
 public class UnidFnrHandlerTest extends TestCase {
     public void test01() throws Exception {

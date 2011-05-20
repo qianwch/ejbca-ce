@@ -11,7 +11,7 @@
  *                                                                       *
  *************************************************************************/
 
-package org.ejbca.util.unid;
+package org.ejbca.core.protocol.unid;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -36,7 +36,7 @@ import org.ejbca.util.CertTools;
 /**
  * Changes the DN in an IRequestMessage
  * @author primelars
- * @version $Id$
+ * @version $Id: RequestMessageSubjectDnAdapter.java 12038 2011-05-19 17:18:59Z primelars $
  *
  */
 class RequestMessageSubjectDnAdapter implements ICrmfRequestMessage {
