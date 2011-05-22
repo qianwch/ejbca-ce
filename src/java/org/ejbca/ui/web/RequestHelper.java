@@ -126,12 +126,14 @@ public class RequestHelper {
             throw new SignRequestSignatureException(
                 "Invalid signature in NetscapeCertRequest, popo-verification failed.");
         }
-
-        log.debug("POPO verification successful");
-
+        if (log.isDebugEnabled()) {
+        	log.debug("POPO verification successful");
+        }
         X509Certificate cert = (X509Certificate) signsession.createCertificate(administrator,
                 username, password, nscr.getPublicKey());
-        log.debug("Created certificate for " + username);
+        if (log.isDebugEnabled()) {
+        	log.debug("Created certificate for " + username);
+        }
         return cert.getEncoded();
 
 /*      ECA-2065 - fix for Chrome, Safari and Android
