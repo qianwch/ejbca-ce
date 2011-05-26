@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 
 import org.cesecore.core.ejb.authorization.AdminEntitySessionRemote;
 import org.cesecore.core.ejb.authorization.AdminGroupSessionRemote;
@@ -295,7 +296,6 @@ public class AuthorizationSessionTest extends CaTestCase {
      * 
      * @throws AdminGroupExistsException
      */
-    
     public void testIsAuthorizedToGroup_Failure() throws AdminGroupExistsException {
         // Set up
         final String testCaName = "FailureTestCA";
@@ -326,4 +326,33 @@ public class AuthorizationSessionTest extends CaTestCase {
             removeTestCA(testCaName);
         }
     }
+    
+    public void testExistsEndEntityProfileInRules() {
+        Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
+        // profile id, random, should not exist in any rules
+        Random rand = new Random();
+        int id = rand.nextInt(100000);
+    	boolean result = authorizationSession.existsEndEntityProfileInRules(admin, id);
+    	assertFalse("Id "+id+" exists in access rules, did we generate a real existing id?", result);
+    	// Add the id to access rules
+        try {
+            List<AccessRule> accessrules = new ArrayList<AccessRule>();
+            accessrules.add(new AccessRule(AccessRulesConstants.ENDENTITYPROFILEPREFIX + id, AccessRule.RULE_ACCEPT, false));
+            cleanUpAdminGroupTests(admin, TEST_GROUPNAME, accessrules);
+            try {
+				adminGroupSession.addAdminGroup(admin, TEST_GROUPNAME);
+			} catch (AdminGroupExistsException e) {
+				// NOPMD: do nothing
+			}
+            adminGroupSession.addAccessRules(admin, TEST_GROUPNAME, accessrules);
+            // Try again, not it should exist
+        	result = authorizationSession.existsEndEntityProfileInRules(admin, id);
+        	assertTrue("Id "+id+" should have existed in an access rule", result);
+        } finally {
+            // Clean up
+            adminGroupSession.removeAdminGroup(admin, TEST_GROUPNAME);
+        }
+
+    }
+    
 }
