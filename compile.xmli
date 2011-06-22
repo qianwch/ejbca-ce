@@ -223,8 +223,8 @@ xkms.serviceport                = ${xkms.serviceport}
     	<!-- Automate workaround for ECA-1563 -->
 		<copy file="${src.dd}/META-INF/jboss.xml" tofile="${src.dd}/META-INF/jboss.xml-new" encoding="ISO-8859-1" overwrite="true">
 			<filterchain>
-    			<tokenfilter>			    
-    		    	<replacestring from="&lt;jboss&gt;" to='&lt;jboss&gt;&lt;jmx-name&gt;jboss.j2ee:module="ejbca-ejb.jar",service=EjbModule&lt;/jmx-name&gt;'/>
+    			<tokenfilter>
+    				<replaceregex pattern="&lt;jboss&gt;.*" replace='&lt;jboss&gt;&lt;jmx-name&gt;jboss.j2ee:module="ejbca-ejb.jar",service=EjbModule&lt;/jmx-name&gt;'/>
     			</tokenfilter>
     		</filterchain>
 		</copy>
