@@ -1,3 +1,13 @@
+EJBCA 3.11.3
+------------
+This is a maintenance release containing 3 bug fixes.
+
+* Noteworthy changes: 
+- Certificate enrollment now works also with Safari and Chrome browsers. (Backport from EJBCA 4.0.2.)
+
+Read the full Changelog for details.
+For upgrade instructions, please see UPGRADE.
+
 EJBCA 3.11.2 
 ------------
 This is a maintenance release containing 11 bug fixes, and 12 new features/improvements.
