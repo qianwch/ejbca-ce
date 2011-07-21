@@ -149,8 +149,8 @@ public class ScepServlet extends HttpServlet {
              */
             String operation = request.getParameter("operation");
             String message = request.getParameter("message");
-        	// Some clients don't url encode the + sign in the request
-            if (message != null) {
+        	// Some clients don't url encode the + sign in the request for Base64 data
+            if (message != null && operation != null && operation.equals("PKIOperation")) {
             	message = message.replace(' ', '+');
             }
 
