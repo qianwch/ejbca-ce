@@ -265,7 +265,7 @@ public class ValidationAuthorityPublisher extends BasePublisher implements ICust
 				crl = CertTools.getCRLfromByteArray(incrl);
 				// Is it a delta CRL?
 				this.deltaCRLIndicator = crl.getExtensionValue(X509Extensions.DeltaCRLIndicator.getId())!=null ? 1 : -1;
-				this.issuerDN = new X509Principal(crl.getIssuerX500Principal().getEncoded()).getName();// getName() the BC way
+			    this.issuerDN = CertTools.getIssuerDN(crl);
 				this.cRLNumber = number;
 				this.cAFingerprint = cafp;
 				this.base64Crl = new String(Base64.encode(incrl));
