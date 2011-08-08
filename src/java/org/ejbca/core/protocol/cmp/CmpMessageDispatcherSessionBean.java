@@ -142,11 +142,11 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
 			switch (tagno) {
 			case 0:
 				// 0 (ir, Initialization Request) and 2 (cr, Certification Req) are both certificate requests
-				handler = new CrmfMessageHandler(admin, caAdminSession,  certificateProfileSession, certificateRequestSession, endEntityProfileSession, signSession, userAdminSession);
+				handler = new CrmfMessageHandler(admin, caAdminSession,  certificateProfileSession, certificateRequestSession, endEntityProfileSession, signSession, userAdminSession, certificateStoreSession);
 				cmpMessage = new CrmfRequestMessage(req, CmpConfiguration.getDefaultCA(), CmpConfiguration.getAllowRAVerifyPOPO(), CmpConfiguration.getExtractUsernameComponent());
 				break;
 			case 2:
-				handler = new CrmfMessageHandler(admin, caAdminSession, certificateProfileSession, certificateRequestSession, endEntityProfileSession, signSession, userAdminSession);
+				handler = new CrmfMessageHandler(admin, caAdminSession, certificateProfileSession, certificateRequestSession, endEntityProfileSession, signSession, userAdminSession, certificateStoreSession);
 				cmpMessage = new CrmfRequestMessage(req, CmpConfiguration.getDefaultCA(), CmpConfiguration.getAllowRAVerifyPOPO(), CmpConfiguration.getExtractUsernameComponent());
 				break;
 			case 19:

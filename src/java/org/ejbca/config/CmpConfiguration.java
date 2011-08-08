@@ -18,6 +18,8 @@ public class CmpConfiguration {
 	public static final String CONFIG_DEFAULTCA               = "cmp.defaultca";
 	public static final String CONFIG_ALLOWRAVERIFYPOPO       = "cmp.allowraverifypopo";
 	public static final String CONFIG_OPERATIONMODE           = "cmp.operationmode";
+	public static final String CONFIG_AUTHENTICATIONMODULE	  = "cmp.client.authmodule";
+	public static final String CONFIG_AUTHENTICATIONPARAMETERS= "cmp.client.authparameters";
 	public static final String CONFIG_RA_ALLOWCUSTOMCERTSERNO = "cmp.ra.allowcustomcertserno";
 	public static final String CONFIG_RA_NAMEGENERATIONSCHEME = "cmp.ra.namegenerationscheme";
 	public static final String CONFIG_RA_NAMEGENERATIONPARAMS = "cmp.ra.namegenerationparameters";
@@ -29,6 +31,12 @@ public class CmpConfiguration {
 	public static final String CONFIG_CERTREQHANDLER_CLASS    = "cmp.certreqhandler.class";
 	public static final String CONFIG_UNIDDATASOURCE		  = "cmp.uniddatasource";
 
+
+	public static final String AUTHMODULE_REG_TOKEN_PWD = "RegTokenPwd";
+	public static final String AUTHMODULE_DN_PART_PWD = "DnPartPwd";
+	public static final String AUTHMODULE_HMAC = "HMAC";
+	public static final String AUTHMODULE_ENDENTITY_CERTIFICATE = "EndEntityCertificate";
+	
 	/**
 	 * This defines if we allows messages that has a POPO setting of raVerify. 
 	 * If this variable is true, and raVerify is the POPO defined in the message, no POPO check will be done.
@@ -48,6 +56,14 @@ public class CmpConfiguration {
 	 */
 	public static String getExtractUsernameComponent() {
 		return ConfigurationHolder.getString("cmp.extractusernamecomponent", null);
+	}
+	
+	public static String getAuthenticationModule() {
+		return ConfigurationHolder.getString(CONFIG_AUTHENTICATIONMODULE, AUTHMODULE_REG_TOKEN_PWD);
+	}
+	
+	public static String getAuthenticationParameters() {
+		return ConfigurationHolder.getString(CONFIG_AUTHENTICATIONPARAMETERS, "-");
 	}
 	
 	public static boolean getRAOperationMode() {

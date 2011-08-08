@@ -31,6 +31,7 @@ import org.ejbca.config.CmpConfiguration;
 import org.ejbca.core.EjbcaException;
 import org.ejbca.core.ejb.ca.caadmin.CAAdminSession;
 import org.ejbca.core.ejb.ca.sign.SignSession;
+import org.ejbca.core.ejb.ca.store.CertificateStoreSession;
 import org.ejbca.core.ejb.ra.CertificateRequestSession;
 import org.ejbca.core.ejb.ra.UserAdminSession;
 import org.ejbca.core.model.InternalResources;
@@ -53,6 +54,11 @@ import org.ejbca.core.model.ra.UsernameGeneratorParams;
 import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
 import org.ejbca.core.protocol.ExtendedUserDataHandler;
 import org.ejbca.core.protocol.ExtendedUserDataHandler.HandlerException;
+import org.ejbca.core.protocol.cmp.Authentication.DnPartAuthenticationModule;
+import org.ejbca.core.protocol.cmp.Authentication.EndEntityCertificateAuthenticationModule;
+import org.ejbca.core.protocol.cmp.Authentication.HMACAuthenticationModule;
+import org.ejbca.core.protocol.cmp.Authentication.ICMPAuthenticationModule;
+import org.ejbca.core.protocol.cmp.Authentication.RegTokenAuthenticationModule;
 import org.ejbca.core.protocol.FailInfo;
 import org.ejbca.core.protocol.IRequestMessage;
 import org.ejbca.core.protocol.IResponseMessage;
@@ -60,6 +66,8 @@ import org.ejbca.core.protocol.ResponseStatus;
 import org.ejbca.util.CertTools;
 import org.ejbca.util.passgen.IPasswordGenerator;
 import org.ejbca.util.passgen.PasswordGeneratorFactory;
+
+import com.novosec.pkix.asn1.cmp.PKIMessage;
 
 /**
  * Message handler for certificate request messages in the CRMF format
@@ -92,6 +100,7 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 	private final SignSession signSession;
 	private final UserAdminSession userAdminSession;
 	private final CertificateRequestSession certificateRequestSession;
+	private final CertificateStoreSession certificateStoreSession;
 	
 	/**
 	 * Used only by unit test.
@@ -107,6 +116,7 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 		this.userAdminSession = null;
 		this.certificateRequestSession = null;
 		this.extendedUserDataHandler = null;
+		this.certificateStoreSession = null;
 	}
 	
 	/**
@@ -120,12 +130,13 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 	 * @param userAdminSession
 	 */
 	public CrmfMessageHandler(final Admin admin, CAAdminSession caAdminSession, CertificateProfileSession certificateProfileSession, CertificateRequestSession certificateRequestSession,
-			EndEntityProfileSession endEntityProfileSession, SignSession signSession, UserAdminSession userAdminSession) {
+			EndEntityProfileSession endEntityProfileSession, SignSession signSession, UserAdminSession userAdminSession, CertificateStoreSession certStoreSession) {
 		super(admin, caAdminSession, endEntityProfileSession, certificateProfileSession);
 		// Get EJB beans, we can not use local beans here because the TCP listener does not work with that
 		this.signSession = signSession;
 		this.userAdminSession = userAdminSession;
 		this.certificateRequestSession = certificateRequestSession;
+		this.certificateStoreSession = certStoreSession;
 
 		if (CmpConfiguration.getRAOperationMode()) {
 			// create UsernameGeneratorParams
@@ -216,6 +227,9 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 						final String errMsg = INTRES.getLocalizedMessage("cmp.infonouserfordn", dn);
 						LOG.info(errMsg);
 					}
+					
+					//Extracting and setting the password
+					setPassword(crmfreq);
 				}
 			} else {
 				final String errMsg = INTRES.getLocalizedMessage("cmp.errornocmrfreq");
@@ -441,5 +455,45 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 			resp = CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_MESSAGE_CHECK, e.getMessage());
 		}
 		return resp;
+	}
+	
+	private void setPassword(CrmfRequestMessage req) {
+
+		String authmodules = CmpConfiguration.getAuthenticationModule();
+		String authparameters = CmpConfiguration.getAuthenticationParameters();
+
+		LOG.debug("CMP Authentication Module: " + authmodules);
+		LOG.debug("CMP Authentication Module: " + authparameters);
+
+		String[] modules = authmodules.split(";");
+		String[] parameters = authparameters.split(";");
+			
+		ICMPAuthenticationModule authModule;
+		int i=0;
+		String password = null;
+		while((password == null) && (i<modules.length)) {
+			authModule = getAuthModule(modules[i], parameters[i], req.getPKIMessage());
+			password = authModule.extractPassword(req);
+			req.setPassword(password);
+			i++;		
+		}
+	}
+	
+	private ICMPAuthenticationModule getAuthModule(String module, String parameter, PKIMessage pkimsg) {
+		if(StringUtils.equals(module, CmpConfiguration.AUTHMODULE_REG_TOKEN_PWD)) {
+			return new RegTokenAuthenticationModule(parameter);
+		} else if(StringUtils.equals(module, CmpConfiguration.AUTHMODULE_DN_PART_PWD)) {
+			return new DnPartAuthenticationModule(parameter);
+		} else if(StringUtils.equals(module, CmpConfiguration.AUTHMODULE_HMAC)) {
+			HMACAuthenticationModule hmacmodule = new HMACAuthenticationModule(parameter);
+			hmacmodule.setPkiMessage(pkimsg);
+			hmacmodule.setSession(this.admin, this.userAdminSession);
+			return hmacmodule;
+		} else if(StringUtils.equals(module, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE)) {
+			EndEntityCertificateAuthenticationModule eemodule = new EndEntityCertificateAuthenticationModule(parameter);
+			eemodule.setSession(this.admin, this.caAdminSession, this.userAdminSession, this.certificateStoreSession);
+			return eemodule;
+		}
+		return null;
 	}
 }

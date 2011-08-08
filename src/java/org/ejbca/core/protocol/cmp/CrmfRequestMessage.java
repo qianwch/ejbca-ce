@@ -92,6 +92,7 @@ public class CrmfRequestMessage extends BaseCmpMessage implements ICrmfRequestMe
 
     private int requestType = 0;
     private int requestId = 0;
+    private String b64SenderKID = null;
 	private String b64SenderNonce = null;
 	private String b64TransId = null;
 	/** Default CA DN */
@@ -176,6 +177,13 @@ public class CrmfRequestMessage extends BaseCmpMessage implements ICrmfRequestMe
 				setTransactionId(new String(Base64.encode(val)));							
 			}
 		}
+        os = header.getSenderKID();
+        if(os != null) {
+            byte[] val = os.getOctets();
+            if (val != null) {
+                setSenderKID(new String(Base64.encode(val)));
+            }
+        }
 		os = header.getSenderNonce();
 		if (os != null) {
 			byte[] val = os.getOctets();
@@ -527,6 +535,14 @@ public class CrmfRequestMessage extends BaseCmpMessage implements ICrmfRequestMe
 		return null;
 	}
 
+	public void setSenderKID(final String b64kid) {
+		this.b64SenderKID = b64kid;
+	}
+	
+	public String getSenderKID() {
+		return b64SenderKID;
+	}
+	
 	public void setSenderNonce(final String b64nonce) {
 		this.b64SenderNonce = b64nonce;
 	}
