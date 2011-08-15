@@ -34,6 +34,25 @@
 #
 # Default normal (empty value means the same)
 #cmp.operationmode=normal
+#cmp.operationmode=ra
+
+# Specify authentication module for the client mode. More than one module can be specified by separating them with a ";".
+# In case of more than one module specified, the first mode will be used to for authentication testing. If the first
+# module fails, the second module will be used for authentication testing, and so on.
+#
+# Default: RegTokenPwd
+#cmp.client.authenticationmodule=DnPartPwd
+#cmp.client.authenticationmodule=RegTokenPwd;DnPartPwd
+
+# Specify the parameters for the authentication module specified in cmp.client.authenticationmodule. In case of more than one
+# module specified, the corresponding parameters are separated with a ";". The number and order of the parameters should match
+# the number and order of the authentication modules specified. If an authentication module does not require any parameters,
+# "-" should be specified.
+# 
+# Default:-
+#cmp.client.authenticationparameters=O
+#cmp.client.authenticationparameters=-;O
+
 
 # Allow the client/RA to specify that the CA should not verify POP, 
 # set to true to allow no POP (raVerify in the rfc). 

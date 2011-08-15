@@ -31,11 +31,13 @@ public class CmpConfiguration {
 	public static final String CONFIG_CERTREQHANDLER_CLASS    = "cmp.certreqhandler.class";
 	public static final String CONFIG_UNIDDATASOURCE		  = "cmp.uniddatasource";
 
+	public static final String CONFIG_RACERT_PATH			  = "cmp.racertificatepath";
 
 	public static final String AUTHMODULE_REG_TOKEN_PWD = "RegTokenPwd";
 	public static final String AUTHMODULE_DN_PART_PWD = "DnPartPwd";
 	public static final String AUTHMODULE_HMAC = "HMAC";
 	public static final String AUTHMODULE_ENDENTITY_CERTIFICATE = "EndEntityCertificate";
+	public static final String DEFAULT_AUTHMODULE = AUTHMODULE_REG_TOKEN_PWD; 
 	
 	/**
 	 * This defines if we allows messages that has a POPO setting of raVerify. 
@@ -43,6 +45,10 @@ public class CmpConfiguration {
 	 */
 	public static boolean getAllowRAVerifyPOPO() {
 		return "true".equalsIgnoreCase(ConfigurationHolder.getExpandedString(CONFIG_ALLOWRAVERIFYPOPO, "false"));
+	}
+	
+	public static String getRaCertificatePath() {
+		return ConfigurationHolder.getString(CONFIG_RACERT_PATH, "");
 	}
 	
 	/** The default CA used for signing requests, if it is not given in the request itself. */
@@ -59,7 +65,7 @@ public class CmpConfiguration {
 	}
 	
 	public static String getAuthenticationModule() {
-		return ConfigurationHolder.getString(CONFIG_AUTHENTICATIONMODULE, AUTHMODULE_REG_TOKEN_PWD);
+		return ConfigurationHolder.getString(CONFIG_AUTHENTICATIONMODULE, DEFAULT_AUTHMODULE);
 	}
 	
 	public static String getAuthenticationParameters() {

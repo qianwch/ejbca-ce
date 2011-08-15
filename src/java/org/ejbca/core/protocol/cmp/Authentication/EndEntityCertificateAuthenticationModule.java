@@ -1,16 +1,19 @@
 package org.ejbca.core.protocol.cmp.Authentication;
 
+import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.util.Collection;
 import java.util.Iterator;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.bouncycastle.asn1.x509.X509CertificateStructure;
+import org.ejbca.config.CmpConfiguration;
 import org.ejbca.core.EjbcaException;
 import org.ejbca.core.ejb.ca.caadmin.CAAdminSession;
 import org.ejbca.core.ejb.ca.store.CertificateStoreSession;
@@ -49,23 +52,31 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
 	
 	@Override
 	public String extractPassword(CrmfRequestMessage req) {
+		String password = null;
 		try {
 			UserDataVO userdata = userSession.findUserBySubjectDN(admin, req.getSubjectDN());
+			
+			X509CertificateStructure extraCert = req.getPKIMessage().getExtraCert(0);
+			Certificate extraCertCert = CertTools.getCertfromByteArray(extraCert.getEncoded());
+			Certificate[] extraCertChain = {extraCertCert};
+
 			CAInfo ca = caSession.getCAInfo(this.admin, this.authenticationParameterCAName);
-			Collection<Certificate> certs = certSession.findCertificatesByUsername(this.admin, userdata.getUsername());
+			
+			Collection<Certificate> certs = certSession.findCertificatesBySubjectAndIssuer(admin, CertTools.getSubjectDN(extraCertCert), ca.getSubjectDN()); //Username(this.admin, userdata.getUsername());
 			Iterator<Certificate> itr = certs.iterator();
 			Certificate cert;
+			Certificate[] certChain = new Certificate[1];
 			while(itr.hasNext()) {
 				cert = itr.next();
-				if(StringUtils.equals(ca.getSubjectDN(), CertTools.getIssuerDN(cert))) {
-					Signature sig = Signature.getInstance(CertTools.getSignatureAlgorithm(cert), "BC");
-					sig.initVerify(cert);
-					//sig.update(protBytes);
-					if(sig.verify(req.getPKIMessage().getProtectedBytes())) {
-						String password = genRandomPwd();
+				certChain[0] = cert;
+				if(CertTools.compareCertificateChains(extraCertChain, certChain) /*StringUtils.equals(ca.getSubjectDN(), CertTools.getIssuerDN(extraCertCert))*/) {
+					final Signature sig = Signature.getInstance(req.getHeader().getProtectionAlg().getObjectId().getId(), "BC");
+					sig.initVerify(cert.getPublicKey());
+					sig.update(req.getPKIMessage().getProtectedBytes());
+					if(sig.verify(req.getPKIMessage().getProtection().getBytes())) {
+						password = genRandomPwd();
 						userdata.setPassword(password);
 						userSession.changeUser(admin, userdata, true);
-						return password;
 					}
 				}
 			}
@@ -87,9 +98,17 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
 			log.debug(e.getLocalizedMessage());
 		} catch (EjbcaException e) {
 			log.debug(e.getLocalizedMessage());
+		} catch (CertificateException e) {
+			log.debug(e.getLocalizedMessage());
+		} catch (IOException e) {
+			log.debug(e.getLocalizedMessage());
 		}
 	
-		return null;
+		return password;
+	}
+	
+	public String getName() {
+		return CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE;
 	}
 
     private String genRandomPwd() {

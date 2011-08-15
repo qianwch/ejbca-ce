@@ -5,6 +5,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 
 import org.apache.log4j.Logger;
+import org.ejbca.config.CmpConfiguration;
 import org.ejbca.core.ejb.ra.UserAdminSession;
 import org.ejbca.core.model.authorization.AuthorizationDeniedException;
 import org.ejbca.core.model.log.Admin;
@@ -59,6 +60,11 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 		}
 		
 		return null;
+	}
+
+	@Override
+	public String getName() {
+		return CmpConfiguration.AUTHMODULE_HMAC;
 	}
 
 }

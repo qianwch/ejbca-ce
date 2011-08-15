@@ -162,6 +162,10 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
 				handler = new RevocationMessageHandler(admin, certificateStoreSession, userAdminSession, caAdminSession, endEntityProfileSession, certificateProfileSession);
 				cmpMessage = new GeneralCmpMessage(req);
 				break;
+			case 20:
+				handler = new NestedMessageContentHandler(admin, caAdminSession, endEntityProfileSession, certificateProfileSession, certificateStoreSession, userAdminSession, certificateRequestSession, signSession);
+				cmpMessage = new NestedMessageContent(req);
+				break;
 			default:
 				unknownMessageType = tagno;
 				log.info("Received an unknown message type, tagno="+tagno);
