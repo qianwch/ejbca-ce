@@ -57,11 +57,9 @@ import org.ejbca.core.model.ra.UserDataConstants;
 import org.ejbca.core.model.ra.UserDataVO;
 import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
 import org.ejbca.core.model.util.AlgorithmTools;
-import org.ejbca.core.protocol.cmp.authentication.DnPartAuthenticationModule;
 import org.ejbca.core.protocol.cmp.authentication.EndEntityCertificateAuthenticationModule;
 import org.ejbca.core.protocol.cmp.authentication.HMACAuthenticationModule;
 import org.ejbca.core.protocol.cmp.authentication.ICMPAuthenticationModule;
-import org.ejbca.core.protocol.cmp.authentication.RegTokenAuthenticationModule;
 import org.ejbca.cvc.AlgorithmUtil;
 import org.ejbca.util.Base64;
 import org.ejbca.util.CertTools;
@@ -346,126 +344,7 @@ public class CrmfRequestTest extends CmpTestCase {
         log.trace("<test07SignedConfirmationMessage()");
     }
 
-    public void test08extractingPassword() throws Exception {
-    	log.trace(">test08extractingPassword()");
-    	deleteCmpUser();
-    	createCmpUser();
-    	
-        // A name that does not exist
-        byte[] nonce = CmpMessageHelper.createSenderNonce();
-        byte[] transid = CmpMessageHelper.createSenderNonce();
-        String pwd = "foo123";
-        String extractedPwd = "";
 
-        UserDataVO userdata = userAdminSession.findUserBySubjectDN(admin, userDN);
-        userdata.setPassword(pwd);
-        userAdminSession.changeUser(admin, userdata, true);
-        
-        //------------- setting the protection algorithm -----------------------
-        PKIMessage msg = genCertReq(issuerDN, userDN, keys, cacert, nonce, transid, true, null, null, null, null);
-        assertNotNull(msg);
-        // SHA1
-        AlgorithmIdentifier owfAlg = new AlgorithmIdentifier("1.3.14.3.2.26");
-        // 567 iterations
-        int iterationCount = 1000;
-        DERInteger iteration = new DERInteger(iterationCount);
-        // HMAC/SHA1
-        AlgorithmIdentifier macAlg = new AlgorithmIdentifier("1.2.840.113549.2.7");
-        byte[] salt = "foo123".getBytes();
-        DEROctetString derSalt = new DEROctetString(salt);
-
-        // Create the new protected return message
-        String objectId = "1.2.840.113533.7.66.13";
-        //if (badObjectId) {
-        //    objectId += ".7";
-        //}
-        PBMParameter pp = new PBMParameter(derSalt, owfAlg, iteration, macAlg);
-        AlgorithmIdentifier pAlg = new AlgorithmIdentifier(new DERObjectIdentifier(objectId), pp);
-        msg.getHeader().setProtectionAlg(pAlg);
-                
-        CrmfRequestMessage req = new CrmfRequestMessage(msg, "CN=AdminCA1,O=EJBCA Sample,C=SE", true, "CN");
-        req.setPassword(pwd);
-        req.setPbeParameters("keyId", "key", "digestAlg", "macAlg", 100);
-        
-        
-        //---------- setting the protection bytes ------------------------------
-        // Calculate the protection bits
-        byte[] raSecret = pwd.getBytes();
-        byte[] basekey = new byte[raSecret.length + salt.length];
-        for (int i = 0; i < raSecret.length; i++) {
-            basekey[i] = raSecret[i];
-        }
-        for (int i = 0; i < salt.length; i++) {
-            basekey[raSecret.length + i] = salt[i];
-        }
-        // Construct the base key according to rfc4210, section 5.1.3.1
-        MessageDigest dig = MessageDigest.getInstance(owfAlg.getObjectId().getId(), "BC");
-        for (int i = 0; i < iterationCount; i++) {
-            basekey = dig.digest(basekey);
-            dig.reset();
-        }
-        // For HMAC/SHA1 there is another oid, that is not known in BC, but the
-        // result is the same so...
-        String macOid = macAlg.getObjectId().getId();
-        byte[] protectedBytes = msg.getProtectedBytes();
-        Mac mac = Mac.getInstance(macOid, "BC");
-        SecretKey key = new SecretKeySpec(basekey, macOid);
-        mac.init(key);
-        mac.reset();
-        mac.update(protectedBytes, 0, protectedBytes.length);
-        byte[] out = mac.doFinal();
-        DERBitString bs = new DERBitString(out);
-
-        // Finally store the protection bytes in the msg
-        msg.setProtection(bs);
-        
-        
-        
-        //int reqId = msg.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue();
-        ByteArrayOutputStream bao = new ByteArrayOutputStream();
-        DEROutputStream outder = new DEROutputStream(bao);
-        outder.writeObject(msg);
-        byte[] ba = bao.toByteArray();
-        
-        //org.bouncycastle.util.encoders.Base64 base = new org.bouncycastle.util.encoders.Base64();
-        //File file = new File("/home/aveen/Desktop/cmpreq.req");
-        //FileOutputStream outs = new FileOutputStream(file);
-        //base.encode(ba, outs);
-        //outs.close();
-        
-        // Send request and receive response
-        sendCmpHttp(ba, 200);
-        
-        
-        ICMPAuthenticationModule authmodule;
-
-        authmodule = new RegTokenAuthenticationModule(null);
-        extractedPwd = authmodule.extractPassword(req);
-        log.debug("Extracted password using RegTokenAuthenticationModule: " + extractedPwd);
-        assertEquals(pwd, extractedPwd);
-        
-        
-        authmodule = new DnPartAuthenticationModule("C");
-        extractedPwd = authmodule.extractPassword(req);
-        log.debug("Extracted password using DnPartAuthenticationModule: " + extractedPwd);
-        assertEquals("SE", extractedPwd);
-        
-        authmodule = new HMACAuthenticationModule(null);
-        ((HMACAuthenticationModule) authmodule).setPkiMessage(msg);
-        ((HMACAuthenticationModule) authmodule).setSession(admin, userAdminSession);
-        extractedPwd = authmodule.extractPassword(req);
-        log.debug("Extracted password using HMACAuthenticationModule: " + extractedPwd);
-        assertEquals(pwd, extractedPwd);
-        /*
-        authmodule = new EndEntityCertificateAuthenticationModule("AdminCA1");
-        ((EndEntityCertificateAuthenticationModule) authmodule).setSession(admin, caAdminSession, userAdminSession, InterfaceCache.getCertificateStoreSession());
-        extractedPwd = authmodule.extractPassword(req);
-        log.debug("Extracted password using EndEntityCertificateAuthenticationModule: " + extractedPwd);
-        assertEquals(pwd, extractedPwd);
-        */      
-    	log.trace("<test08extractingPassword()");	
-    }
-    
     public void testZZZCleanUp() throws Exception {
     	log.trace(">testZZZCleanUp");
     	boolean cleanUpOk = true;

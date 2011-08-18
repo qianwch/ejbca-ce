@@ -34,6 +34,7 @@ import org.ejbca.core.ejb.ca.sign.SignSessionLocal;
 import org.ejbca.core.ejb.ca.store.CertificateStoreSessionLocal;
 import org.ejbca.core.ejb.ra.CertificateRequestSessionLocal;
 import org.ejbca.core.ejb.ra.UserAdminSessionLocal;
+import org.ejbca.core.ejb.authorization.AuthorizationSessionLocal;
 import org.ejbca.core.model.InternalResources;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.protocol.FailInfo;
@@ -89,6 +90,8 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
 	private CertificateStoreSessionLocal certificateStoreSession;
 	@EJB
 	private CertificateRequestSessionLocal certificateRequestSession;
+	@EJB
+	private AuthorizationSessionLocal authorizationSession;
 	
 	@PostConstruct
 	public void postConstruct() {
@@ -142,11 +145,11 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
 			switch (tagno) {
 			case 0:
 				// 0 (ir, Initialization Request) and 2 (cr, Certification Req) are both certificate requests
-				handler = new CrmfMessageHandler(admin, caAdminSession,  certificateProfileSession, certificateRequestSession, endEntityProfileSession, signSession, userAdminSession, certificateStoreSession);
+				handler = new CrmfMessageHandler(admin, caAdminSession,  certificateProfileSession, certificateRequestSession, endEntityProfileSession, signSession, userAdminSession, certificateStoreSession, authorizationSession);
 				cmpMessage = new CrmfRequestMessage(req, CmpConfiguration.getDefaultCA(), CmpConfiguration.getAllowRAVerifyPOPO(), CmpConfiguration.getExtractUsernameComponent());
 				break;
 			case 2:
-				handler = new CrmfMessageHandler(admin, caAdminSession, certificateProfileSession, certificateRequestSession, endEntityProfileSession, signSession, userAdminSession, certificateStoreSession);
+				handler = new CrmfMessageHandler(admin, caAdminSession, certificateProfileSession, certificateRequestSession, endEntityProfileSession, signSession, userAdminSession, certificateStoreSession, authorizationSession);
 				cmpMessage = new CrmfRequestMessage(req, CmpConfiguration.getDefaultCA(), CmpConfiguration.getAllowRAVerifyPOPO(), CmpConfiguration.getExtractUsernameComponent());
 				break;
 			case 19:
@@ -159,11 +162,11 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
 				break;
 			case 11:
 				// Revocation request (rr, Revocation Request)
-				handler = new RevocationMessageHandler(admin, certificateStoreSession, userAdminSession, caAdminSession, endEntityProfileSession, certificateProfileSession);
+				handler = new RevocationMessageHandler(admin, certificateStoreSession, userAdminSession, caAdminSession, endEntityProfileSession, certificateProfileSession, authorizationSession);
 				cmpMessage = new GeneralCmpMessage(req);
 				break;
 			case 20:
-				handler = new NestedMessageContentHandler(admin, caAdminSession, endEntityProfileSession, certificateProfileSession, certificateStoreSession, userAdminSession, certificateRequestSession, signSession);
+				handler = new NestedMessageContentHandler(admin, caAdminSession, endEntityProfileSession, certificateProfileSession, certificateStoreSession, userAdminSession, certificateRequestSession, signSession, authorizationSession);
 				cmpMessage = new NestedMessageContent(req);
 				break;
 			default:

@@ -1,10 +1,12 @@
 package org.ejbca.core.protocol.cmp.authentication;
 
-import org.ejbca.core.protocol.cmp.CrmfRequestMessage;
+import com.novosec.pkix.asn1.cmp.PKIMessage;
 
 public interface ICMPAuthenticationModule {
 	
-	public abstract String extractPassword(CrmfRequestMessage req);
+	public abstract boolean verify(PKIMessage msg);
 	public abstract String getName();
+	public abstract String getAuthenticationString();
+	public abstract String getErrorMessage();
 
 }

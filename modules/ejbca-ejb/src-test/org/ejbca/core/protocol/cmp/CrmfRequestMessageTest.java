@@ -18,12 +18,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.PublicKey;
+import java.security.Signature;
 import java.security.SignatureException;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
@@ -34,6 +36,7 @@ import junit.framework.TestCase;
 
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1Sequence;
+import org.bouncycastle.asn1.DERBitString;
 import org.bouncycastle.asn1.DEREncodable;
 import org.bouncycastle.asn1.DERGeneralizedTime;
 import org.bouncycastle.asn1.DERInteger;
@@ -46,12 +49,16 @@ import org.bouncycastle.asn1.DERUTF8String;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.GeneralName;
+import org.bouncycastle.asn1.x509.GeneralNames;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.asn1.x509.X509Extension;
 import org.bouncycastle.asn1.x509.X509Extensions;
 import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.cms.CMSSignedGenerator;
 import org.bouncycastle.jce.X509KeyUsage;
+import org.ejbca.core.model.AlgorithmConstants;
+import org.ejbca.core.protocol.cmp.authentication.DnPartPasswordExtractor;
+import org.ejbca.core.protocol.cmp.authentication.RegTokenPasswordExtractor;
 import org.ejbca.util.Base64;
 import org.ejbca.util.CertTools;
 import org.ejbca.util.CryptoProviderTools;
@@ -67,6 +74,7 @@ import com.novosec.pkix.asn1.crmf.CertReqMsg;
 import com.novosec.pkix.asn1.crmf.CertRequest;
 import com.novosec.pkix.asn1.crmf.CertTemplate;
 import com.novosec.pkix.asn1.crmf.OptionalValidity;
+import com.novosec.pkix.asn1.crmf.POPOSigningKey;
 import com.novosec.pkix.asn1.crmf.ProofOfPossession;
 
 /**
@@ -369,6 +377,174 @@ public class CrmfRequestMessageTest extends TestCase {
 		//PublicKey pubKey = msg.getRequestPublicKey();
 		//assertTrue(CmpMessageHelper.verifyCertBasedPKIProtection(msg.getMessage(), pubKey));
     }
+    
+    /**
+     * Testing the 2 authentication modules that do not need contact with the server/database. The other 2 methods are tested AuthenticationModulesTest
+     * 
+     * @throws NoSuchAlgorithmException
+     * @throws NoSuchProviderException
+     * @throws InvalidAlgorithmParameterException
+     * @throws InvalidKeyException
+     * @throws SignatureException
+     * @throws IOException
+     */
+    public void testPasswordExtractors() throws NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException, InvalidKeyException, SignatureException, IOException {
+    	String username = "authModuleTestUser";
+        String userDN = "CN="+username+", O=PrimeKey Solutions AB, C=SE, UID=foo123UID";
+        String issuerDN = "CN=AdminCA1,O=EJBCA Sample,C=SE";
+        byte[] nonce = CmpMessageHelper.createSenderNonce();
+        byte[] transid = CmpMessageHelper.createSenderNonce();
+        KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
+    	PKIMessage msg = genCertReq(issuerDN, userDN, keys, nonce, transid, false, null, null, null, null); 
+    	
+    	//CrmfRequestMessage req = new CrmfRequestMessage(msg, issuerDN, false, null);
+    	String password = null;
+    	
+    	password = RegTokenPasswordExtractor.extractPassword(msg.getBody().getIr().getCertReqMsg(0));
+    	assertNotNull("RegTokenPasswordExtractor returned null password", password);
+    	assertEquals("RegTokenPasswordExtractor returned wrong password", "foo123", password);
+    	
+    	password = null;
+    	password = DnPartPasswordExtractor.extractPassword(msg.getBody().getIr().getCertReqMsg(0), "UID");
+    	assertNotNull("DnPartPasswordExtractor returned null password", password);
+    	assertEquals("DnPartPasswordExtractor returned wrong password", "foo123UID", password);
+    }
+    
+	private PKIMessage genCertReq(String issuerDN, String userDN, KeyPair keys, byte[] nonce, byte[] transid, boolean raVerifiedPopo, X509Extensions extensions, Date notBefore, Date notAfter, BigInteger customCertSerno) throws NoSuchAlgorithmException, NoSuchProviderException, IOException, InvalidKeyException, SignatureException {
+		return genCertReq(issuerDN, userDN, "UPN=fooupn@bar.com,rfc822Name=fooemail@bar.com", keys, nonce, transid, raVerifiedPopo, extensions, notBefore, notAfter, customCertSerno);
+	}
+	
+	private PKIMessage genCertReq(String issuerDN, String userDN, String altNames, KeyPair keys, byte[] nonce, byte[] transid, boolean raVerifiedPopo, X509Extensions extensions, Date notBefore, Date notAfter, BigInteger customCertSerno) throws NoSuchAlgorithmException, NoSuchProviderException, IOException, InvalidKeyException, SignatureException {
+		OptionalValidity myOptionalValidity = new OptionalValidity();
+		org.bouncycastle.asn1.x509.Time nb = new org.bouncycastle.asn1.x509.Time(new DERGeneralizedTime("20030211002120Z"));
+		if (notBefore != null) {
+			nb = new org.bouncycastle.asn1.x509.Time(notBefore);
+		}
+		org.bouncycastle.asn1.x509.Time na = new org.bouncycastle.asn1.x509.Time(new Date()); 
+		if (notAfter != null) {
+			na = new org.bouncycastle.asn1.x509.Time(notAfter);
+		}
+		myOptionalValidity.setNotBefore(nb);
+		myOptionalValidity.setNotAfter(na);
+		
+		CertTemplate myCertTemplate = new CertTemplate();
+		myCertTemplate.setValidity( myOptionalValidity );
+		myCertTemplate.setIssuer(new X509Name(issuerDN));
+		myCertTemplate.setSubject(new X509Name(userDN));
+		byte[]                  bytes = keys.getPublic().getEncoded();
+        ByteArrayInputStream    bIn = new ByteArrayInputStream(bytes);
+        ASN1InputStream         dIn = new ASN1InputStream(bIn);
+        SubjectPublicKeyInfo keyInfo = new SubjectPublicKeyInfo((ASN1Sequence)dIn.readObject());
+		myCertTemplate.setPublicKey(keyInfo);
+		// If we did not pass any extensions as parameter, we will create some of our own, standard ones
+        X509Extensions exts = extensions;
+        if (exts == null) {
+        	// SubjectAltName
+    		// Some altNames
+            ByteArrayOutputStream   bOut = new ByteArrayOutputStream();
+            DEROutputStream         dOut = new DEROutputStream(bOut);
+            Vector<X509Extension> values = new Vector<X509Extension>();
+            Vector<DERObjectIdentifier> oids = new Vector<DERObjectIdentifier>();
+        	if (altNames != null) {
+                GeneralNames san = CertTools.getGeneralNamesFromAltName(altNames);
+                dOut.writeObject(san);
+                byte[] value = bOut.toByteArray();
+                X509Extension sanext = new X509Extension(false, new DEROctetString(value));
+                values.add(sanext);
+                oids.add(X509Extensions.SubjectAlternativeName);
+        	}
+            // KeyUsage
+            int bcku = 0;
+            bcku = X509KeyUsage.digitalSignature | X509KeyUsage.keyEncipherment | X509KeyUsage.nonRepudiation;
+            X509KeyUsage ku = new X509KeyUsage(bcku);
+            bOut = new ByteArrayOutputStream();
+            dOut = new DEROutputStream(bOut);
+            dOut.writeObject(ku);
+            byte[] value = bOut.toByteArray();
+            X509Extension kuext = new X509Extension(false, new DEROctetString(value));
+            values.add(kuext);
+            oids.add(X509Extensions.KeyUsage);
+
+            // Make the complete extension package
+            exts = new X509Extensions(oids, values);
+        }
+        myCertTemplate.setExtensions(exts);
+		if (customCertSerno != null) {
+			// Add serialNumber to the certTemplate, it is defined as a MUST NOT be used in RFC4211, but we will use it anyway in order
+			// to request a custom certificate serial number (something not standard anyway)
+			myCertTemplate.setSerialNumber(new DERInteger(customCertSerno));
+		}
+
+        CertRequest myCertRequest = new CertRequest(new DERInteger(4), myCertTemplate);
+        // myCertRequest.addControls(new
+        // AttributeTypeAndValue(CRMFObjectIdentifiers.regInfo_utf8Pairs, new
+        // DERInteger(12345)));
+        CertReqMsg myCertReqMsg = new CertReqMsg(myCertRequest);
+        // POPO
+        /*
+         * PKMACValue myPKMACValue = new PKMACValue( new AlgorithmIdentifier(new
+         * DERObjectIdentifier("8.2.1.2.3.4"), new DERBitString(new byte[] { 8,
+         * 1, 1, 2 })), new DERBitString(new byte[] { 12, 29, 37, 43 }));
+         * 
+         * POPOPrivKey myPOPOPrivKey = new POPOPrivKey(new DERBitString(new
+         * byte[] { 44 }), 2); //take choice pos tag 2
+         * 
+         * POPOSigningKeyInput myPOPOSigningKeyInput = new POPOSigningKeyInput(
+         * myPKMACValue, new SubjectPublicKeyInfo( new AlgorithmIdentifier(new
+         * DERObjectIdentifier("9.3.3.9.2.2"), new DERBitString(new byte[] { 2,
+         * 9, 7, 3 })), new byte[] { 7, 7, 7, 4, 5, 6, 7, 7, 7 }));
+         */
+        ProofOfPossession myProofOfPossession = null;
+        if (raVerifiedPopo) {
+            // raVerified POPO (meaning there is no POPO)
+            myProofOfPossession = new ProofOfPossession(new DERNull(), 0);
+        } else {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            DEROutputStream mout = new DEROutputStream(baos);
+            mout.writeObject(myCertRequest);
+            mout.close();
+            byte[] popoProtectionBytes = baos.toByteArray();
+            Signature sig = Signature.getInstance(PKCSObjectIdentifiers.sha1WithRSAEncryption.getId(), "BC");
+            sig.initSign(keys.getPrivate());
+            sig.update(popoProtectionBytes);
+
+            DERBitString bs = new DERBitString(sig.sign());
+
+            POPOSigningKey myPOPOSigningKey = new POPOSigningKey(new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption), bs);
+            // myPOPOSigningKey.setPoposkInput( myPOPOSigningKeyInput );
+            myProofOfPossession = new ProofOfPossession(myPOPOSigningKey, 1);
+        }
+
+        myCertReqMsg.setPop(myProofOfPossession);
+        // myCertReqMsg.addRegInfo(new AttributeTypeAndValue(new
+        // DERObjectIdentifier("1.3.6.2.2.2.2.3.1"), new
+        // DERInteger(1122334455)));
+        AttributeTypeAndValue av = new AttributeTypeAndValue(CRMFObjectIdentifiers.regCtrl_regToken, new DERUTF8String("foo123"));
+        myCertReqMsg.addRegInfo(av);
+
+        CertReqMessages myCertReqMessages = new CertReqMessages(myCertReqMsg);
+        // myCertReqMessages.addCertReqMsg(myCertReqMsg);
+
+        // log.debug("CAcert subject name: "+cacert.getSubjectDN().getName());
+        PKIHeader myPKIHeader = new PKIHeader(new DERInteger(2), new GeneralName(new X509Name(userDN)), new GeneralName(new X509Name(issuerDN)));
+        myPKIHeader.setMessageTime(new DERGeneralizedTime(new Date()));
+        // senderNonce
+        myPKIHeader.setSenderNonce(new DEROctetString(nonce));
+        // TransactionId
+        myPKIHeader.setTransactionID(new DEROctetString(transid));
+        // myPKIHeader.setRecipNonce(new DEROctetString(new
+        // String("RecipNonce").getBytes()));
+        // PKIFreeText myPKIFreeText = new PKIFreeText(new
+        // DERUTF8String("hello"));
+        // myPKIFreeText.addString(new DERUTF8String("free text string"));
+        // myPKIHeader.setFreeText(myPKIFreeText);
+        
+        PKIBody myPKIBody = new PKIBody(myCertReqMessages, 0); // initialization
+                                                               // request
+        PKIMessage myPKIMessage = new PKIMessage(myPKIHeader, myPKIBody);
+        return myPKIMessage;
+    }
+
 
     /** CMP initial request message, created with Huawei eNode B, with signature POP (no POPOSigningKey) and signature protection */
     static byte[] huaweiir = Base64.decode(("MIIRmTCB8gIBAqRuMGwxCzAJBgNVBAYTAkNOMQ8wDQYDVQQKEwZIdWF3ZWkxJjAkBgNVBAsTHVdp" +

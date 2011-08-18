@@ -33,11 +33,9 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.DERBitString;
-import org.bouncycastle.asn1.DEREncodable;
 import org.bouncycastle.asn1.DERInteger;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DEROutputStream;
-import org.bouncycastle.asn1.DERUTF8String;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.asn1.x509.Time;
@@ -46,8 +44,11 @@ import org.bouncycastle.asn1.x509.X509Extensions;
 import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.cms.CMSSignedGenerator;
 import org.bouncycastle.util.Arrays;
+import org.ejbca.config.CmpConfiguration;
 import org.ejbca.core.protocol.IRequestMessage;
 import org.ejbca.core.protocol.IResponseMessage;
+import org.ejbca.core.protocol.cmp.authentication.DnPartPasswordExtractor;
+import org.ejbca.core.protocol.cmp.authentication.RegTokenPasswordExtractor;
 import org.ejbca.util.Base64;
 import org.ejbca.util.CertTools;
 import org.ejbca.util.RequestMessageUtils;
@@ -55,8 +56,6 @@ import org.ejbca.util.RequestMessageUtils;
 import com.novosec.pkix.asn1.cmp.PKIBody;
 import com.novosec.pkix.asn1.cmp.PKIHeader;
 import com.novosec.pkix.asn1.cmp.PKIMessage;
-import com.novosec.pkix.asn1.crmf.AttributeTypeAndValue;
-import com.novosec.pkix.asn1.crmf.CRMFObjectIdentifiers;
 import com.novosec.pkix.asn1.crmf.CertReqMessages;
 import com.novosec.pkix.asn1.crmf.CertReqMsg;
 import com.novosec.pkix.asn1.crmf.CertRequest;
@@ -230,50 +229,30 @@ public class CrmfRequestMessage extends BaseCmpMessage implements ICrmfRequestMe
 			}
 			ret = password;
 		} else {
-			// If there is "Registration Token Control" in the CertReqMsg regInfo containing a password, we can use that
-			AttributeTypeAndValue av = null;
-			int i = 0;
-			do {
-				av = getReq().getRegInfo(i);
-				if (av != null) {
-					if (log.isTraceEnabled()) {
-						log.trace("Found AttributeTypeAndValue (in CertReqMsg): "+av.getObjectId().getId());
-					}
-					if (StringUtils.equals(CRMFObjectIdentifiers.regCtrl_regToken.getId(), av.getObjectId().getId())) {
-						final DEREncodable enc = av.getParameters();
-						final DERUTF8String str = DERUTF8String.getInstance(enc);
-						ret = str.getString();
-						if (log.isDebugEnabled()) {
-							log.debug("Found a request password in CRMF request regCtrl_regToken");
-						}
-					}
-				}
-				i++;
-			} while ( (av != null) && (ret == null) );
-		}		
-		if (ret == null) {
-			// If there is "Registration Token Control" in the CertRequest controls containing a password, we can use that
-			// Note, this is the correct way to use the regToken according to RFC4211, section "6.1.  Registration Token Control"
-			AttributeTypeAndValue av = null;
-			int i = 0;
-			do {
-				av = getReq().getCertReq().getControls(i);
-				if (av != null) {
-					if (log.isTraceEnabled()) {
-						log.trace("Found AttributeTypeAndValue (in CertReq): "+av.getObjectId().getId());
-					}
-					if (StringUtils.equals(CRMFObjectIdentifiers.regCtrl_regToken.getId(), av.getObjectId().getId())) {
-						final DEREncodable enc = av.getParameters();
-						final DERUTF8String str = DERUTF8String.getInstance(enc);
-						ret = str.getString();
-						if (log.isDebugEnabled()) {
-							log.debug("Found a request password in CRMF request regCtrl_regToken");
-						}
-					}
-				}
-				i++;
-			} while ( (av != null) && (ret == null) );
+			ret = getAuthenticationPassword();
 		}
+
+		return ret;
+	}
+	
+	private String getAuthenticationPassword() {
+		String authenticationModulels = CmpConfiguration.getAuthenticationModule();
+		String authenticationParameters = CmpConfiguration.getAuthenticationParameters();
+		String modules[] = authenticationModulels.split(";");
+		String parameters[] = authenticationParameters.split(";");
+		
+		int i=0;
+		String ret = null;
+		
+		while((ret == null) && (i<parameters.length)) {
+			if(StringUtils.equals(modules[i], CmpConfiguration.AUTHMODULE_REG_TOKEN_PWD)) {
+				ret = RegTokenPasswordExtractor.extractPassword(getReq());
+			} else if(StringUtils.equals(modules[i], CmpConfiguration.AUTHMODULE_DN_PART_PWD)) {
+				ret = DnPartPasswordExtractor.extractPassword(getReq(), parameters[i]);
+			}
+			i++;
+		}
+		
 		return ret;
 	}
 
