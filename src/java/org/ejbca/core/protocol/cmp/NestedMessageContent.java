@@ -88,17 +88,29 @@ public class NestedMessageContent extends BaseCmpMessage implements IRequestMess
 				ret = sig.verify(raSignedMessage.getProtection().getBytes());
 			}
 		} catch (CertificateException e) {
-			log.debug(e.getLocalizedMessage());
+			if(log.isDebugEnabled()) {
+				log.debug(e.getLocalizedMessage());
+			}
 		} catch (IOException e) {
-			log.debug(e.getLocalizedMessage());
+			if(log.isDebugEnabled()) {
+				log.debug(e.getLocalizedMessage());
+			}
 		} catch (NoSuchAlgorithmException e) {
-			log.debug(e.getLocalizedMessage());
+			if(log.isDebugEnabled()) {
+				log.debug(e.getLocalizedMessage());
+			}
 		} catch (NoSuchProviderException e) {
-			log.debug(e.getLocalizedMessage());
+			if(log.isDebugEnabled()) {
+				log.debug(e.getLocalizedMessage());
+			}
 		} catch (InvalidKeyException e) {
-			log.debug(e.getLocalizedMessage());
+			if(log.isDebugEnabled()) {
+				log.debug(e.getLocalizedMessage());
+			}
 		} catch (SignatureException e) {
-			log.debug(e.getLocalizedMessage());
+			if(log.isDebugEnabled()) {
+				log.debug(e.getLocalizedMessage());
+			}
 		}
 
 		return ret;
