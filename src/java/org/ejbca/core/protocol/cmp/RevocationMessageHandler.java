@@ -128,7 +128,12 @@ public class RevocationMessageHandler extends BaseCmpMessageHandler implements I
 				authenticationModule = messageVerifyer.getAuthenticationModule();
 			}
 			if(authenticationModule == null) {
-				String errMsg = "No authentication method was specified.";
+				String errMsg = "";
+				if(errMsg != null) {
+					errMsg = messageVerifyer.getErrorMessage();
+				} else {
+					errMsg = "Unrecognized authentication modules";
+				}
 				LOG.error(errMsg);
 				return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_MESSAGE_CHECK, errMsg);
 			}

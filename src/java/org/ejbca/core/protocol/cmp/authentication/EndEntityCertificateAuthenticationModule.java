@@ -49,7 +49,6 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
 	
 	private Admin admin;
 	private CAAdminSession caSession;
-	private UserAdminSession userSession;
 	private CertificateStoreSession certSession;
 	private AuthorizationSession authSession;
 	private EndEntityProfileSession eeProfileSession;
@@ -61,17 +60,15 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
 		
 		admin = null;
 		caSession = null;
-		userSession = null;
 		certSession = null;
 		authSession = null;
 		eeProfileSession = null;
 	}
 	
-	public void setSession(Admin adm, CAAdminSession caSession, UserAdminSession userSession, CertificateStoreSession certSession, 
+	public void setSession(Admin adm, CAAdminSession caSession, CertificateStoreSession certSession, 
 					AuthorizationSession authSession, EndEntityProfileSession eeprofSession) {
 		this.admin = adm;
 		this.caSession = caSession;
-		this.userSession = userSession;
 		this.certSession = certSession;
 		this.authSession = authSession;
 		this.eeProfileSession = eeprofSession;
@@ -159,18 +156,9 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
 			sig.update(msg.getProtectedBytes());
 			if(sig.verify(msg.getProtection().getBytes())) {
 				password = genRandomPwd();
-				CertTemplate certTemp = getCertTemplate(msg);
-				UserDataVO userdata = userSession.findUserBySubjectAndIssuerDN(admin, certTemp.getSubject().toString(), certTemp.getIssuer().toString());
-				userdata.setPassword(password);
-				userSession.changeUser(admin, userdata, true);
 				return true;
 			}
 		} catch (InvalidKeyException e) {
-			if(log.isDebugEnabled()) {
-				log.debug(e.getLocalizedMessage());
-			}
-			errorMessage = e.getLocalizedMessage();
-		} catch (NotFoundException e) {
 			if(log.isDebugEnabled()) {
 				log.debug(e.getLocalizedMessage());
 			}
@@ -190,31 +178,6 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
 				log.debug(e.getLocalizedMessage());
 			}
 			errorMessage = e.getLocalizedMessage();
-		} catch (CADoesntExistsException e) {
-			if(log.isDebugEnabled()) {
-				log.debug(e.getLocalizedMessage());
-			}
-			errorMessage = e.getLocalizedMessage();
-		} catch (AuthorizationDeniedException e) {
-			if(log.isDebugEnabled()) {
-				log.debug(e.getLocalizedMessage());
-			}
-			errorMessage = e.getLocalizedMessage();
-		} catch (UserDoesntFullfillEndEntityProfile e) {
-			if(log.isDebugEnabled()) {
-				log.debug(e.getLocalizedMessage());
-			}
-			errorMessage = e.getLocalizedMessage();
-		} catch (WaitingForApprovalException e) {
-			if(log.isDebugEnabled()) {
-				log.debug(e.getLocalizedMessage());
-			}
-			errorMessage = e.getLocalizedMessage();
-		} catch (EjbcaException e) {
-			if(log.isDebugEnabled()) {
-				log.debug(e.getLocalizedMessage());
-			}
-			errorMessage = e.getLocalizedMessage();
 		}
 		return false;
 	}
@@ -222,20 +185,6 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
     private String genRandomPwd() {
     	NoLookOrSoundALikeENLDPasswordGenerator pwdGen = new NoLookOrSoundALikeENLDPasswordGenerator();
     	return pwdGen.getNewPassword(16, 16);
-    }
-    
-    private CertTemplate getCertTemplate(PKIMessage msg) {
-    	int tagnr = msg.getBody().getTagNo();
-    	if(tagnr == CmpPKIBodyConstants.INITIALIZATIONREQUEST) {
-    		return msg.getBody().getIr().getCertReqMsg(0).getCertReq().getCertTemplate();
-    	}
-    	if(tagnr==CmpPKIBodyConstants.CERTIFICATAIONREQUEST) {
-    		return msg.getBody().getCr().getCertReqMsg(0).getCertReq().getCertTemplate();
-    	}
-    	if(tagnr==CmpPKIBodyConstants.REVOCATIONREQUEST) {
-    		return msg.getBody().getRr().getRevDetails(0).getCertDetails();
-    	}
-    	return null;
     }
     
     private boolean isAuthorized(Certificate cert, PKIMessage msg, int caid) throws NotFoundException {
@@ -306,7 +255,8 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
         boolean returnval = false;
         returnval = authSession.isAuthorizedNoLog(admin, AccessRulesConstants.CAPREFIX + caid);
         if (!returnval) {
-            log.info("Admin " + admin.getUsername() + " not authorized to resource " + AccessRulesConstants.CAPREFIX + caid);
+        	errorMessage = "Admin " + admin.getUsername() + " not authorized to resource " + AccessRulesConstants.CAPREFIX + caid; 
+            log.info(errorMessage);
         }
         return returnval;
     }
@@ -318,7 +268,8 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
             if (authSession.isAuthorizedNoLog(admin, "/super_administrator")) {
                 returnval = true;
             } else {
-                log.info("Admin " + admin.getUsername() + " was not authorized to resource /super_administrator");
+            	errorMessage = "Admin " + admin.getUsername() + " was not authorized to resource /super_administrator"; 
+                log.info(errorMessage);
             }
         } else {
             returnval = authSession.isAuthorizedNoLog(admin, AccessRulesConstants.ENDENTITYPROFILEPREFIX + profileid + rights)
@@ -338,9 +289,9 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
 		} 
 		ret = eeProfileSession.getEndEntityProfileId(admin, endEntityProfile);
 		if (ret == 0) {
-			final String msg = "No end entity profile found with name: "+endEntityProfile;
-			log.info(msg);
-			throw new NotFoundException(msg);
+			errorMessage = "No end entity profile found with name: "+endEntityProfile;
+			log.info(errorMessage);
+			throw new NotFoundException(errorMessage);
 		}
 		return ret;
 	}

@@ -11,7 +11,7 @@ import com.novosec.pkix.asn1.crmf.CertReqMsg;
 
 public class RegTokenPasswordExtractor {
 	
-	private static final Logger log = Logger.getLogger(RegTokenPasswordExtraction.class);
+	private static final Logger log = Logger.getLogger(RegTokenPasswordExtractor.class);
 		
 	public static String extractPassword(CertReqMsg req) {
 		

@@ -1,6 +1,7 @@
 package org.ejbca.core.protocol.cmp.authentication;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 import org.cesecore.core.ejb.ra.raadmin.EndEntityProfileSession;
 import org.ejbca.config.CmpConfiguration;
 import org.ejbca.core.ejb.authorization.AuthorizationSession;
@@ -14,6 +15,8 @@ import com.novosec.pkix.asn1.cmp.PKIMessage;
 
 public class VerifyPKIMessage {
 	
+	private static final Logger log = Logger.getLogger(VerifyPKIMessage.class);
+	
 	private CAInfo cainfo;
 	private ICMPAuthenticationModule authModule;
 	
@@ -24,6 +27,7 @@ public class VerifyPKIMessage {
 	private AuthorizationSession authorizationSessoin;
 	private EndEntityProfileSession eeProfileSession;
 	
+	private String errMsg;
 
 	public VerifyPKIMessage() {
 		this.cainfo = null;
@@ -35,6 +39,12 @@ public class VerifyPKIMessage {
 		this.certificateStoreSession = null;
 		this.authorizationSessoin = null;
 		this.eeProfileSession = null;
+		
+		this.errMsg = null;
+	}
+	
+	public String getErrorMessage() {
+		return this.errMsg;
 	}
 	
 	public VerifyPKIMessage(CAInfo cainfo, Admin admin, CAAdminSession caSession, UserAdminSession userSession, CertificateStoreSession certSession,
@@ -63,11 +73,18 @@ public class VerifyPKIMessage {
 		ICMPAuthenticationModule module = null;
 		int i=0;
 		while(i<modules.length) {
+			if(log.isDebugEnabled()) {
+				log.debug("Trying to verify the message authentication by using \"" + modules[i] + "\" authentication module.");
+			}
 			module = getAuthModule(modules[i], params[i], msg);
 			if((module != null) && module.verify(msg)) {
 				this.authModule = module;
 				return true;
 			}
+			if((module != null) && (module.getErrorMessage() != null)) {
+				errMsg = module.getErrorMessage();
+			}
+			i++;
 		}
 		return false;
 		
@@ -82,7 +99,7 @@ public class VerifyPKIMessage {
 			return hmacmodule;
 		} else if(StringUtils.equals(module, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE)) {
 			EndEntityCertificateAuthenticationModule eemodule = new EndEntityCertificateAuthenticationModule(parameter);
-			eemodule.setSession(this.admin, this.caAdminSession, this.userAdminSession, this.certificateStoreSession, this.authorizationSessoin, this.eeProfileSession);
+			eemodule.setSession(this.admin, this.caAdminSession, this.certificateStoreSession, this.authorizationSessoin, this.eeProfileSession);
 			return eemodule;
 		}
 		return null;

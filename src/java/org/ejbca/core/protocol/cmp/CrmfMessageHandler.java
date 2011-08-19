@@ -313,9 +313,9 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 			certProfileId = getUsedCertProfileId(certProfileName);
 		} catch (NotFoundException e) {
 			LOG.info(INTRES.getLocalizedMessage(CMP_ERRORGENERAL, e.getMessage()), e);
-			if (this.raAuthSecret == null) {
-				return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.INCORRECT_DATA, e.getMessage());
-			}
+			//if (this.raAuthSecret == null) {
+			//	return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.INCORRECT_DATA, e.getMessage());
+			//}
 			return CmpMessageHelper.createErrorMessage(msg, FailInfo.INCORRECT_DATA, e.getMessage(), requestId, requestType, null, keyId, this.responseProt);
 		}
 		CAInfo caInfo = this.caAdminSession.getCAInfo(this.admin, caId);
@@ -329,7 +329,12 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 				authenticationModule = messageVerifyer.getAuthenticationModule();
 			}
 			if(authenticationModule == null) {
-				String errMsg = "No authentication method was specified.";
+				String errMsg = "";
+				if(messageVerifyer.getErrorMessage() != null) {
+					errMsg = messageVerifyer.getErrorMessage();
+				} else {
+					errMsg = "Unrecognized authentication modules";
+				}
 				LOG.error(errMsg);
 				return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_MESSAGE_CHECK, errMsg);
 			}
