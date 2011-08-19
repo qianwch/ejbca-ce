@@ -42,6 +42,9 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 		
 	public HMACAuthenticationModule(String parameter) {
 		this.raAuthSecret = parameter;
+		if(StringUtils.equals(raAuthSecret, "-")) {
+			this.raAuthSecret = CmpConfiguration.getRAAuthenticationSecret();
+		}
 		this.cainfo = null;
 		this.password = null;
 		this.errorMessage = null;

@@ -76,7 +76,7 @@ public class VerifyPKIMessage {
 			if(log.isDebugEnabled()) {
 				log.debug("Trying to verify the message authentication by using \"" + modules[i] + "\" authentication module.");
 			}
-			module = getAuthModule(modules[i], params[i], msg);
+			module = getAuthModule(modules[i].trim(), params[i].trim(), msg);
 			if((module != null) && module.verify(msg)) {
 				this.authModule = module;
 				return true;

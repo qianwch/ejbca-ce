@@ -245,10 +245,10 @@ public class CrmfRequestMessage extends BaseCmpMessage implements ICrmfRequestMe
 		String ret = null;
 		
 		while((ret == null) && (i<parameters.length)) {
-			if(StringUtils.equals(modules[i], CmpConfiguration.AUTHMODULE_REG_TOKEN_PWD)) {
+			if(StringUtils.equals(modules[i].trim(), CmpConfiguration.AUTHMODULE_REG_TOKEN_PWD)) {
 				ret = RegTokenPasswordExtractor.extractPassword(getReq());
 			} else if(StringUtils.equals(modules[i], CmpConfiguration.AUTHMODULE_DN_PART_PWD)) {
-				ret = DnPartPasswordExtractor.extractPassword(getReq(), parameters[i]);
+				ret = DnPartPasswordExtractor.extractPassword(getReq(), parameters[i].trim());
 			}
 			i++;
 		}

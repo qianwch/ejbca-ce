@@ -18,8 +18,8 @@ public class CmpConfiguration {
 	public static final String CONFIG_DEFAULTCA               = "cmp.defaultca";
 	public static final String CONFIG_ALLOWRAVERIFYPOPO       = "cmp.allowraverifypopo";
 	public static final String CONFIG_OPERATIONMODE           = "cmp.operationmode";
-	public static final String CONFIG_AUTHENTICATIONMODULE	  = "cmp.client.authmodule";
-	public static final String CONFIG_AUTHENTICATIONPARAMETERS= "cmp.client.authparameters";
+	public static final String CONFIG_AUTHENTICATIONMODULE	  = "cmp.authmodule";
+	public static final String CONFIG_AUTHENTICATIONPARAMETERS= "cmp.authparameters";
 	public static final String CONFIG_RA_ALLOWCUSTOMCERTSERNO = "cmp.ra.allowcustomcertserno";
 	public static final String CONFIG_RA_NAMEGENERATIONSCHEME = "cmp.ra.namegenerationscheme";
 	public static final String CONFIG_RA_NAMEGENERATIONPARAMS = "cmp.ra.namegenerationparameters";
@@ -37,7 +37,6 @@ public class CmpConfiguration {
 	public static final String AUTHMODULE_DN_PART_PWD = "DnPartPwd";
 	public static final String AUTHMODULE_HMAC = "HMAC";
 	public static final String AUTHMODULE_ENDENTITY_CERTIFICATE = "EndEntityCertificate";
-	public static final String DEFAULT_AUTHMODULE = AUTHMODULE_REG_TOKEN_PWD; 
 	
 	/**
 	 * This defines if we allows messages that has a POPO setting of raVerify. 
@@ -65,11 +64,12 @@ public class CmpConfiguration {
 	}
 	
 	public static String getAuthenticationModule() {
-		return ConfigurationHolder.getString(CONFIG_AUTHENTICATIONMODULE, DEFAULT_AUTHMODULE);
+		String defaultAuthModules = AUTHMODULE_REG_TOKEN_PWD + ";" + AUTHMODULE_HMAC;
+		return ConfigurationHolder.getString(CONFIG_AUTHENTICATIONMODULE, defaultAuthModules);
 	}
 	
 	public static String getAuthenticationParameters() {
-		return ConfigurationHolder.getString(CONFIG_AUTHENTICATIONPARAMETERS, "-");
+		return ConfigurationHolder.getString(CONFIG_AUTHENTICATIONPARAMETERS, "-;-");
 	}
 	
 	public static boolean getRAOperationMode() {
