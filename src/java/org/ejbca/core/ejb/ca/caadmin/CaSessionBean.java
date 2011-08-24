@@ -321,6 +321,9 @@ public class CaSessionBean implements CaSessionLocal, CaSessionRemote {
                 // hash by a previous call?
                 if (oRealCAId != null) {
                     // yes, using cached value of real caid.
+                	if (log.isDebugEnabled()) {
+                		log.debug("Found a mapping from caid "+caid+" to realCaid "+oRealCAId);
+                	}
                     cadata = CAData.findById(entityManager, oRealCAId);
                 } else {
                     // no, we have to search for it among all CA certs
@@ -329,10 +332,12 @@ public class CaSessionBean implements CaSessionLocal, CaSessionRemote {
                         final CAData tmp = i.next();
                         final Certificate caCert = tmp != null ? tmp.getCA().getCACertificate() : null;
                         if (caCert != null && caid == CertTools.getSubjectDN(caCert).hashCode()) {
-                            cadata = tmp; // found. Do also cache it if
-                            // someone else is needing it
-                            // later
-                            CaHelperCache.caCertToCaId.put(new Integer(caid), new Integer(cadata.getSubjectDN().hashCode()));
+                            cadata = tmp; // found. 
+                            // Do also cache it if someone else is needing it later
+                        	if (log.isDebugEnabled()) {
+                        		log.debug("Adding a mapping from caid "+caid+" to realCaid "+cadata.getCaId());
+                        	}
+                            CaHelperCache.caCertToCaId.put(new Integer(caid), new Integer(cadata.getCaId()));
                         }
                     }
                 }
