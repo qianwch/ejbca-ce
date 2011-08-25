@@ -166,6 +166,7 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
 				cmpMessage = new GeneralCmpMessage(req);
 				break;
 			case 20:
+				// NestedMessageContent (nested)
 				handler = new NestedMessageContentHandler(admin, caAdminSession, endEntityProfileSession, certificateProfileSession, certificateStoreSession, userAdminSession, certificateRequestSession, signSession, authorizationSession);
 				cmpMessage = new NestedMessageContent(req);
 				break;

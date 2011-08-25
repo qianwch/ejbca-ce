@@ -11,7 +11,9 @@ import org.ejbca.core.ejb.ra.CertificateRequestSession;
 import org.ejbca.core.ejb.ra.UserAdminSession;
 import org.ejbca.core.model.InternalResources;
 import org.ejbca.core.model.log.Admin;
+import org.ejbca.core.protocol.FailInfo;
 import org.ejbca.core.protocol.IResponseMessage;
+import org.ejbca.core.protocol.ResponseStatus;
 
 import com.novosec.pkix.asn1.cmp.PKIMessage;
 
@@ -46,36 +48,56 @@ public class NestedMessageContentHandler extends BaseCmpMessageHandler implement
 		
 		IResponseMessage resp = null;
 		if (msg instanceof NestedMessageContent) {
-			PKIMessage nested = ((NestedMessageContent) msg).getPKIMessage().getBody().getNested();
-			int tagnr = nested.getBody().getTagNo();
+	
+			NestedMessageContent nestedMsg = (NestedMessageContent) msg;
+			if(nestedMsg.verify()) {
+				PKIMessage nested = ((NestedMessageContent) msg).getPKIMessage().getBody().getNested();
+				int tagnr = nested.getBody().getTagNo();
 			
-			if((tagnr == CmpPKIBodyConstants.INITIALIZATIONREQUEST) || (tagnr == CmpPKIBodyConstants.CERTIFICATAIONREQUEST)) {
+				if((tagnr == CmpPKIBodyConstants.INITIALIZATIONREQUEST) || (tagnr == CmpPKIBodyConstants.CERTIFICATAIONREQUEST)) {
 			
-				//CrmfRequestMessage crmfMsg = (CrmfRequestMessage) msg.getHeader().getGeneralInfo(0).getInfoValue();
-				CrmfRequestMessage crmfMsg = new CrmfRequestMessage(nested, ((NestedMessageContent) msg).getIssuerDN(), true, null);
-				CrmfMessageHandler crmfHandler = new CrmfMessageHandler(admin, caAdminSession, certificateProfileSession, certificateRequestSession, 
-						endEntityProfileSession, signSession, userAdminSession, certificateStoreSession, authorizationSession);
-				resp = crmfHandler.handleMessage(crmfMsg);
-			} else if(tagnr == CmpPKIBodyConstants.REVOCATIONREQUEST) {
-				BaseCmpMessage baseMsg = new GeneralCmpMessage(nested);
-				RevocationMessageHandler revHandler = new RevocationMessageHandler(admin, certificateStoreSession, userAdminSession, caAdminSession, endEntityProfileSession, certificateProfileSession, authorizationSession);
-				resp = revHandler.handleMessage(baseMsg);
+					//CrmfRequestMessage crmfMsg = (CrmfRequestMessage) msg.getHeader().getGeneralInfo(0).getInfoValue();
+					CrmfRequestMessage crmfMsg = new CrmfRequestMessage(nested, ((NestedMessageContent) msg).getIssuerDN(), true, null);
+					CrmfMessageHandler crmfHandler = new CrmfMessageHandler(admin, caAdminSession, certificateProfileSession, certificateRequestSession, 
+							endEntityProfileSession, signSession, userAdminSession, certificateStoreSession, authorizationSession);
+					resp = crmfHandler.handleMessage(crmfMsg);
+				} else if(tagnr == CmpPKIBodyConstants.REVOCATIONREQUEST) {
+					BaseCmpMessage baseMsg = new GeneralCmpMessage(nested);
+					RevocationMessageHandler revHandler = new RevocationMessageHandler(admin, certificateStoreSession, userAdminSession, caAdminSession, endEntityProfileSession, certificateProfileSession, authorizationSession);
+					resp = revHandler.handleMessage(baseMsg);
+				} else {
+					LOG.error("Unsupported type of nested PKIMessage");
+				}
 			} else {
-				LOG.error("Unsupported type of nested PKIMessage");
+				final String errMsg = "Could not verify the RA";
+				LOG.error(errMsg);				
+				fillMessageDetails(msg);
+				resp = CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_REQUEST, errMsg);
 			}
 		} else {
-			final String errMsg = INTRES.getLocalizedMessage("cmp.errornocmrfreq");
+			final String errMsg = "ICmpMessage is not a NestedMessageContent.";
 			LOG.error(errMsg);
+			resp = CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_MESSAGE_CHECK, errMsg);
 		}
 		if (resp == null) {
-			final String errMsg = INTRES.getLocalizedMessage("cmp.errornullresp");
+			//final String errMsg = INTRES.getLocalizedMessage("cmp.errornullresp");
+			final String errMsg = "Could not create a response message.";
 			LOG.error(errMsg);
+			resp = CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_MESSAGE_CHECK, errMsg);
 		}
 		
 		if (LOG.isTraceEnabled()) {
 			LOG.trace("<handleMessage");
 		}
 		return resp;
+	}
+	
+	private void fillMessageDetails(BaseCmpMessage msg) {
+		msg.setSender(msg.getMessage().getHeader().getSender());
+		msg.setRecipient(msg.getMessage().getHeader().getRecipient());
+		msg.setSenderNonce(msg.getMessage().getHeader().getSenderNonce().toString());
+		msg.setRecipientNonce(msg.getMessage().getHeader().getRecipNonce().toString());
+		
 	}
 
 }

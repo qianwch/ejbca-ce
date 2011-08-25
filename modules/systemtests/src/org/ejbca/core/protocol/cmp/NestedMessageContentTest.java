@@ -138,6 +138,7 @@ public class NestedMessageContentTest extends CmpTestCase {
     private Certificate cacert;
     private String subjectDN;
     private String issuerDN;
+    private String raCertsPath = "/tmp/racerts";
 	
 	public NestedMessageContentTest(String arg0) {
 		super(arg0);
@@ -168,21 +169,27 @@ public class NestedMessageContentTest extends CmpTestCase {
 			log.error("Could not create end entity profile.", e);
 		}
         // Configure CMP for this test
+		confSession.backupConfiguration();
         updatePropertyOnServer(CmpConfiguration.CONFIG_OPERATIONMODE, "ra");
         updatePropertyOnServer(CmpConfiguration.CONFIG_ALLOWRAVERIFYPOPO, "true");
-        updatePropertyOnServer(CmpConfiguration.CONFIG_RESPONSEPROTECTION, "signature");
-        updatePropertyOnServer(CmpConfiguration.CONFIG_RA_AUTHENTICATIONSECRET, "foo123");
         updatePropertyOnServer(CmpConfiguration.CONFIG_RA_ENDENTITYPROFILE, "CMPTESTPROFILE");
         updatePropertyOnServer(CmpConfiguration.CONFIG_RA_CERTIFICATEPROFILE, "CMPTESTPROFILE");
         updatePropertyOnServer(CmpConfiguration.CONFIG_RACANAME, "AdminCA1");
         updatePropertyOnServer(CmpConfiguration.CONFIG_RA_NAMEGENERATIONSCHEME, "DN");
         updatePropertyOnServer(CmpConfiguration.CONFIG_RA_NAMEGENERATIONPARAMS, "CN");
-        updatePropertyOnServer(CmpConfiguration.CONFIG_RACERT_PATH, "/tmp/racerts");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_RACERT_PATH, raCertsPath);
         updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE);
         updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "AdminCA1");
 
         CryptoProviderTools.installBCProvider();
         
+        //Creates CmpConfiguration.CONFIG_RACERT_PATH if it does not exist
+        File raCerts = new File(CmpConfiguration.getRaCertificatePath());
+        if(!raCerts.exists()) {
+        	raCerts.mkdirs();
+        }
+        
+        //Set the caid and cacert
         // Try to use AdminCA1 if it exists
         final CAInfo adminca1;
 
@@ -230,7 +237,6 @@ public class NestedMessageContentTest extends CmpTestCase {
         }
         
         issuerDN = cacert != null ? ((X509Certificate) cacert).getIssuerDN().getName() : "CN=AdminCA1,O=EJBCA Sample,C=SE";
-		confSession.backupConfiguration();
 		
 	}
 
@@ -258,7 +264,7 @@ public class NestedMessageContentTest extends CmpTestCase {
         PKIBody myPKIBody = new PKIBody(crmfMsg, 20); // NestedMessageContent
         PKIMessage myPKIMessage = new PKIMessage(myPKIHeader, myPKIBody);
 		KeyPair raKeys = KeyTools.genKeys("1024", "RSA");
-		createRACertificate("raSigner", "foo123", raKeys, nb, na);
+		createRACertificate("raCrmfSigner", "foo123", raKeys, nb, na);
 		signPKIMessage(myPKIMessage, raKeys);
             
             
@@ -302,7 +308,7 @@ public class NestedMessageContentTest extends CmpTestCase {
         PKIBody myPKIBody = new PKIBody(crmfMsg, 20); // NestedMessageContent
         PKIMessage myPKIMessage = new PKIMessage(myPKIHeader, myPKIBody);
 		KeyPair raKeys = KeyTools.genKeys("1024", "RSA");
-		createRACertificate("raSignerV", "foo123", raKeys, nb, na);
+		createRACertificate("raSignerVerify", "foo123", raKeys, nb, na);
 		signPKIMessage(myPKIMessage, raKeys);
             
             
@@ -386,7 +392,193 @@ public class NestedMessageContentTest extends CmpTestCase {
         int revStatus = checkRevokeStatus(issuerDN, CertTools.getSerialNumber(cert));
         assertNotSame("Revocation request failed to revoke the certificate", RevokedCertInfo.NOT_REVOKED, revStatus);
 	}
+
+	public void test04CrmfRACertExist() throws ObjectNotFoundException, InvalidKeyException, SignatureException, AuthorizationDeniedException, EjbcaException, UserDoesntFullfillEndEntityProfile, WaitingForApprovalException, Exception {
+		
+		String reqSubjectDN = "CN=bogusSubjectNested";
+        final byte[] nonce = CmpMessageHelper.createSenderNonce();
+        final byte[] transid = CmpMessageHelper.createSenderNonce();
+        
+    	PKIMessage crmfMsg = createEESignedCrmfReq(subjectDN);
+    	assertNotNull("Failed to create crmfMsg.", crmfMsg);
+        int reqID = crmfMsg.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue();
+    	
+    	org.bouncycastle.asn1.x509.Time nb = new org.bouncycastle.asn1.x509.Time(new DERGeneralizedTime("20030211002120Z"));
+    	org.bouncycastle.asn1.x509.Time na = new org.bouncycastle.asn1.x509.Time(new Date()); 
+        PKIHeader myPKIHeader = new PKIHeader(new DERInteger(2), new GeneralName(new X509Name(reqSubjectDN)), new GeneralName(new X509Name(((X509Certificate)cacert).getSubjectDN()
+                   .getName())));
+        myPKIHeader.setMessageTime(new DERGeneralizedTime(new Date()));
+        // senderNonce
+        myPKIHeader.setSenderNonce(new DEROctetString(nonce));
+        // TransactionId
+        myPKIHeader.setTransactionID(new DEROctetString(transid));
+		//myPKIHeader.addGeneralInfo(new InfoTypeAndValue(ASN1Sequence.getInstance(crmfMsg)));
+
+        PKIBody myPKIBody = new PKIBody(crmfMsg, 20); // NestedMessageContent
+        PKIMessage myPKIMessage = new PKIMessage(myPKIHeader, myPKIBody);
+		KeyPair raKeys = KeyTools.genKeys("1024", "RSA");
+		createRACertificate("raSignerTest04", "foo123", raKeys, nb, na);
+		signPKIMessage(myPKIMessage, raKeys);
+            
+            
+        assertNotNull("Failed to create myPKIHeader", myPKIHeader);
+        assertNotNull("myPKIBody is null", myPKIBody);
+        assertNotNull("myPKIMessage is null", myPKIMessage);
+
+        final ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        final DEROutputStream out = new DEROutputStream(bao);
+        out.writeObject(myPKIMessage);
+        final byte[] ba = bao.toByteArray();
+        // Send request and receive response
+        final byte[] resp = sendCmpHttp(ba, 200);
+        //final byte[] resp = sendCmpHttp(myPKIMessage.getDERObject().toASN1Object().getEncoded(), 200);
+        // do not check signing if we expect a failure (sFailMessage==null)
+        checkCmpResponseGeneral(resp, issuerDN, reqSubjectDN, cacert, crmfMsg.getHeader().getSenderNonce().getOctets(), crmfMsg.getHeader().getTransactionID().getOctets(), false, null);
+        Certificate cert = checkCmpCertRepMessage(subjectDN, cacert, resp, reqID);
+        assertNotNull("CrmfRequest did not return a certificate", cert);
+        
+        NestedMessageContent nestedContent = new NestedMessageContent(myPKIMessage);
+        boolean ret = nestedContent.verify();
+        assertTrue("The message verification failed, yet the a certificate was returned.", ret);
+        
+   	}
+
+	public void test05CrmfRACertDoesNotExist() throws ObjectNotFoundException, InvalidKeyException, SignatureException, AuthorizationDeniedException, EjbcaException, UserDoesntFullfillEndEntityProfile, WaitingForApprovalException, Exception {
+		
+		String reqSubjectDN = "CN=bogusSubjectNested";
+        final byte[] nonce = CmpMessageHelper.createSenderNonce();
+        final byte[] transid = CmpMessageHelper.createSenderNonce();
+        
+    	PKIMessage crmfMsg = createEESignedCrmfReq(subjectDN);
+    	assertNotNull("Failed to create crmfMsg.", crmfMsg);
+    	
+    	org.bouncycastle.asn1.x509.Time nb = new org.bouncycastle.asn1.x509.Time(new DERGeneralizedTime("20030211002120Z"));
+    	org.bouncycastle.asn1.x509.Time na = new org.bouncycastle.asn1.x509.Time(new Date()); 
+        PKIHeader myPKIHeader = new PKIHeader(new DERInteger(2), new GeneralName(new X509Name(reqSubjectDN)), new GeneralName(new X509Name(((X509Certificate)cacert).getSubjectDN()
+                   .getName())));
+        myPKIHeader.setMessageTime(new DERGeneralizedTime(new Date()));
+        // nonce
+        DEROctetString dernonce = new DEROctetString(nonce);
+        myPKIHeader.setSenderNonce(dernonce);
+        myPKIHeader.setRecipNonce(dernonce);
+        // TransactionId
+        myPKIHeader.setTransactionID(new DEROctetString(transid));
+
+        PKIBody myPKIBody = new PKIBody(crmfMsg, 20); // NestedMessageContent
+        PKIMessage myPKIMessage = new PKIMessage(myPKIHeader, myPKIBody);
+		KeyPair raKeys = KeyTools.genKeys("1024", "RSA");
+		createRACertificate("raSignerTest05", "foo123", raKeys, nb, na);
+		signPKIMessage(myPKIMessage, raKeys);
+		deleteRaCertificate("raSignerTest05");
+            
+            
+        assertNotNull("Failed to create myPKIHeader", myPKIHeader);
+        assertNotNull("myPKIBody is null", myPKIBody);
+        assertNotNull("myPKIMessage is null", myPKIMessage);
+
+        final ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        final DEROutputStream out = new DEROutputStream(bao);
+        out.writeObject(myPKIMessage);
+        final byte[] ba = bao.toByteArray();
+        // Send request and receive response
+        final byte[] resp = sendCmpHttp(ba, 200);
+
+        PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
+        assertNotNull(respObject);
+
+        PKIBody body = respObject.getBody();
+        assertEquals(23, body.getTagNo());
+        String errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
+        assertEquals("Wrong error message", "Could not verify the RA", errMsg);
+        
+        NestedMessageContent nestedContent = new NestedMessageContent(myPKIMessage);
+        boolean ret = nestedContent.verify();
+        assertFalse("The message verification failed, yet the a certificate was returned.", ret);
+        
+   	}
 	
+	public void test06NotNestedMessage() throws ObjectNotFoundException, InvalidKeyException, SignatureException, AuthorizationDeniedException, EjbcaException, UserDoesntFullfillEndEntityProfile, WaitingForApprovalException, Exception {
+		
+		OptionalValidity myOptionalValidity = new OptionalValidity();
+		org.bouncycastle.asn1.x509.Time nb = new org.bouncycastle.asn1.x509.Time(new DERGeneralizedTime("20030211002120Z"));
+		org.bouncycastle.asn1.x509.Time na = new org.bouncycastle.asn1.x509.Time(new Date()); 
+		myOptionalValidity.setNotBefore(nb);
+		myOptionalValidity.setNotAfter(na);
+
+		KeyPair keys = KeyTools.genKeys("1024", "RSA");
+		CertTemplate myCertTemplate = new CertTemplate();
+		myCertTemplate.setValidity( myOptionalValidity );
+		myCertTemplate.setIssuer(new X509Name(issuerDN));
+		myCertTemplate.setSubject(new X509Name(subjectDN));
+		byte[]                  bytes = keys.getPublic().getEncoded();
+        ByteArrayInputStream    bIn = new ByteArrayInputStream(bytes);
+        ASN1InputStream         dIn = new ASN1InputStream(bIn);
+        SubjectPublicKeyInfo keyInfo = new SubjectPublicKeyInfo((ASN1Sequence)dIn.readObject());
+		myCertTemplate.setPublicKey(keyInfo);
+		// If we did not pass any extensions as parameter, we will create some of our own, standard ones
+		
+        X509Extensions exts = null;
+        if (exts == null) {
+        	// SubjectAltName
+            ByteArrayOutputStream   bOut = new ByteArrayOutputStream();
+            DEROutputStream         dOut = new DEROutputStream(bOut);
+            Vector<X509Extension> values = new Vector<X509Extension>();
+            Vector<DERObjectIdentifier> oids = new Vector<DERObjectIdentifier>();
+            // KeyUsage
+            int bcku = 0;
+            bcku = X509KeyUsage.digitalSignature | X509KeyUsage.keyEncipherment | X509KeyUsage.nonRepudiation;
+            X509KeyUsage ku = new X509KeyUsage(bcku);
+            bOut = new ByteArrayOutputStream();
+            dOut = new DEROutputStream(bOut);
+            dOut.writeObject(ku);
+            byte[] value = bOut.toByteArray();
+            X509Extension kuext = new X509Extension(false, new DEROctetString(value));
+            values.add(kuext);
+            oids.add(X509Extensions.KeyUsage);
+
+            // Make the complete extension package
+            exts = new X509Extensions(oids, values);
+        }
+        myCertTemplate.setExtensions(exts);
+        CertRequest myCertRequest = new CertRequest(new DERInteger(4), myCertTemplate);
+        CertReqMsg myCertReqMsg = new CertReqMsg(myCertRequest);
+        ProofOfPossession myProofOfPossession = new ProofOfPossession(new DERNull(), 0);
+        myCertReqMsg.setPop(myProofOfPossession);
+        AttributeTypeAndValue av = new AttributeTypeAndValue(CRMFObjectIdentifiers.regCtrl_regToken, new DERUTF8String("foo123"));
+        myCertReqMsg.addRegInfo(av);
+
+        CertReqMessages myCertReqMessages = new CertReqMessages(myCertReqMsg);
+
+        PKIHeader myPKIHeader = new PKIHeader(new DERInteger(2), new GeneralName(new X509Name(subjectDN)), new GeneralName(new X509Name(((X509Certificate)cacert).getSubjectDN().getName())));
+        final byte[] nonce = CmpMessageHelper.createSenderNonce();
+        final byte[] transid = CmpMessageHelper.createSenderNonce();
+        myPKIHeader.setMessageTime(new DERGeneralizedTime(new Date()));
+        // senderNonce
+        myPKIHeader.setSenderNonce(new DEROctetString(nonce));
+        // TransactionId
+        myPKIHeader.setTransactionID(new DEROctetString(transid));
+        PKIBody myPKIBody = new PKIBody(myCertReqMessages, 20); // nestedMessageContent
+        PKIMessage myPKIMessage = new PKIMessage(myPKIHeader, myPKIBody);
+        
+        assertNotNull("Failed to create PKIHeader", myPKIHeader);
+        assertNotNull("Failed to create PKIBody", myPKIBody);
+        assertNotNull("Failed to create PKIMessage", myPKIMessage);
+		
+        final ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        final DEROutputStream out = new DEROutputStream(bao);
+        out.writeObject(myPKIMessage);
+        final byte[] ba = bao.toByteArray();
+        // Send request and receive response
+        final byte[] resp = sendCmpHttp(ba, 200);
+
+        PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
+        assertNotNull(respObject);
+
+        PKIBody body = respObject.getBody();
+        assertEquals(23, body.getTagNo());
+        String errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
+        assertEquals("Wrong error message", "Not a valid CMP message.", errMsg);
+   	}
 	
 	
     public void testZZZCleanUp() throws Exception {
@@ -396,6 +588,13 @@ public class NestedMessageContentTest extends CmpTestCase {
 		try {
 			userAdminSession.revokeAndDeleteUser(admin, "cmpTestAdmin", ReasonFlags.keyCompromise);
 		} catch(Exception e){}
+		
+		deleteRaCertificate("raCrmfSigner");
+		deleteRaCertificate("raRevSigner");
+		deleteRaCertificate("raSignerVerify");
+		deleteRaCertificate("raSignerTest04");
+		
+		assertTrue("Could not restore CMP configurations", confSession.restoreConfiguration());
         
     	log.trace("<testZZZCleanUp");
     }
@@ -433,6 +632,10 @@ public class NestedMessageContentTest extends CmpTestCase {
 	private void createRACertificate(String username, String password, KeyPair keys, org.bouncycastle.asn1.x509.Time notBefore, 
 			org.bouncycastle.asn1.x509.Time notAfter) throws AuthorizationDeniedException, EjbcaException, CertificateException, FileNotFoundException,
 			IOException, UserDoesntFullfillEndEntityProfile, ObjectNotFoundException, Exception {
+		
+		assertTrue("RACertPath is suppose to be \"" + raCertsPath + "\", instead it is \"" + CmpConfiguration.getRaCertificatePath() + "\".", confSession.verifyProperty(CmpConfiguration.CONFIG_RACERT_PATH, raCertsPath));
+		assertEquals(raCertsPath, CmpConfiguration.getRaCertificatePath());
+		
         UserDataVO userdata = createUser(username, "CN="+username, password);
         Certificate racert = signSession.createCertificate(admin, username, password, keys.getPublic(), X509KeyUsage.digitalSignature|X509KeyUsage.keyCertSign, notAfter.getDate(), notBefore.getDate());
         
@@ -451,6 +654,26 @@ public class NestedMessageContentTest extends CmpTestCase {
         
         userAdminSession.deleteUser(admin, username);
 
+	}
+	
+	private void deleteRaCertificate(String username) {
+		String raCertsPath = CmpConfiguration.getRaCertificatePath();
+		String filepath = raCertsPath + "/" + username + ".pem";
+		File fileToDelete = new File(filepath);
+					
+		// Make sure the file or directory exists and isn't write protected
+		if (!fileToDelete.exists()) {
+			log.error("Delete: no such file or directory: " + fileToDelete.getName());
+			throw new IllegalArgumentException("Delete: no such file or directory: " + fileToDelete.getName());
+		}
+		
+		if (!fileToDelete.canWrite()) {
+			log.error("Delete: write protected: " + fileToDelete.getName());
+			throw new IllegalArgumentException("Delete: write protected: " + fileToDelete.getName());
+		}
+		
+		fileToDelete.delete();
+		log.debug("Deleted file: " + fileToDelete.getName());
 	}
 
 	private void signPKIMessage(PKIMessage msg, KeyPair keys) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException, SignatureException {

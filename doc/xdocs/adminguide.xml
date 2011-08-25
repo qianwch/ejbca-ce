@@ -722,7 +722,14 @@ final byte[] transid = "trandis".getBytes();
 
 PKIMessage crmfMsg = createCrmfReq();
 //Signing crmfMsg
-KeyPair eeKeys = getEEKeys();
+KeyPair eeKeys = getAdminKeys();
+Certificate adminCert = getAdminCertificate();
+ByteArrayInputStream    bIn = new ByteArrayInputStream(adminCert.getEncoded());
+ASN1InputStream         dIn = new ASN1InputStream(bIn);
+ASN1Sequence extraAdminCertSeq = (ASN1Sequence)dIn.readObject();
+X509CertificateStructure extraCert = new X509CertificateStructure(ASN1Sequence.getInstance(extraAdminCertSeq));
+crmfMsg.addExtraCert(extraCert);
+
 final Signature sig = Signature.getInstance(PKCSObjectIdentifiers.sha1WithRSAEncryption.getId(), "BC");
 sig.initSign(eekeys.getPrivate());
 sig.update(crmfMsg.getProtectedBytes());
