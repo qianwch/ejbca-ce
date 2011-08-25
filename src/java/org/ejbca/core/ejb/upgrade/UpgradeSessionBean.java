@@ -94,6 +94,7 @@ public class UpgradeSessionBean implements UpgradeSessionLocal, UpgradeSessionRe
     }
 
     private boolean postUpgrade(int oldVersion) {
+    	log.debug(">post-upgrade from version: "+oldVersion);
         if (oldVersion < 311) {
             log.error("Only upgrade from EJBCA 3.11.x is supported in EJBCA 4.0.x.");
             return false;
@@ -106,6 +107,7 @@ public class UpgradeSessionBean implements UpgradeSessionLocal, UpgradeSessionRe
     }
 
     private boolean upgrade(String dbtype, int oldVersion) {
+    	log.debug(">upgrade from version: "+oldVersion+", with dbtype: "+dbtype);
         if (oldVersion <= 311) {
             log.error("Only upgrade from EJBCA 3.11.x is supported in EJBCA 4.0.x.");
             return false;
