@@ -93,6 +93,11 @@ public class NestedMessageContent extends BaseCmpMessage implements IRequestMess
 	}
 	
 	@Override
+	/**
+	 * Verifies the signature of the pkimessage using the trusted RA certificate stored in cmpConfiguration.getRaCertificatePath()
+	 * 
+	 * @return True if the verification succeeds. False otherwise.
+	 */
 	public boolean verify() {
 		boolean ret = false;
 		try {
@@ -136,6 +141,15 @@ public class NestedMessageContent extends BaseCmpMessage implements IRequestMess
 		return ret;
 	}
 
+	/**
+	 * Reads the files in cmpConfiguration.getRaCertificatePath() and returns them as a list of certificates.
+	 *  
+	 * The certificate files should be PEM encoded.
+	 * 
+	 * @return A list of the certificates in cmpConfiguration.getRaCertificatePath(). 
+	 * @throws CertificateException
+	 * @throws IOException
+	 */
 	private Vector<X509Certificate> getRaCerts() throws CertificateException, IOException {
 			
 		Vector<X509Certificate> racerts = new Vector<X509Certificate>();
@@ -152,144 +166,121 @@ public class NestedMessageContent extends BaseCmpMessage implements IRequestMess
 		return racerts;
 	}
 	
+	
+	
 	@Override
 	public IResponseMessage createResponseMessage(Class responseClass,
 			IRequestMessage req, Certificate cert, PrivateKey signPriv,
 			String provider) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public String getCRLIssuerDN() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public BigInteger getCRLSerialNo() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public int getErrorNo() {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 
 	@Override
 	public String getErrorText() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public String getIssuerDN() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public String getPassword() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public String getPreferredDigestAlg() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public String getRequestAltNames() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public String getRequestDN() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public X509Extensions getRequestExtensions() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public int getRequestId() {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 
 	@Override
 	public byte[] getRequestKeyInfo() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public PublicKey getRequestPublicKey() throws InvalidKeyException,
 			NoSuchAlgorithmException, NoSuchProviderException {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public int getRequestType() {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 
 	@Override
 	public Date getRequestValidityNotAfter() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public Date getRequestValidityNotBefore() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public X509Name getRequestX509Name() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public BigInteger getSerialNo() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public String getUsername() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public boolean includeCACert() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
 	public boolean requireKeyInfo() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
-	public void setKeyInfo(Certificate cert, PrivateKey key, String provider) {
-		// TODO Auto-generated method stub
-		
-	}
+	public void setKeyInfo(Certificate cert, PrivateKey key, String provider) {}
 }
