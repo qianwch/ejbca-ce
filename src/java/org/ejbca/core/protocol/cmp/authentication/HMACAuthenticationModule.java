@@ -1,3 +1,16 @@
+/*************************************************************************
+ *                                                                       *
+ *  EJBCA: The OpenSource Certificate Authority                          *
+ *                                                                       *
+ *  This software is free software; you can redistribute it and/or       *
+ *  modify it under the terms of the GNU Lesser General Public           *
+ *  License as published by the Free Software Foundation; either         *
+ *  version 2.1 of the License, or any later version.                    *
+ *                                                                       *
+ *  See terms of license at gnu.org.                                     *
+ *                                                                       *
+ *************************************************************************/
+
 package org.ejbca.core.protocol.cmp.authentication;
 
 import java.security.InvalidKeyException;
@@ -21,9 +34,15 @@ import com.novosec.pkix.asn1.cmp.PKIMessage;
 import com.novosec.pkix.asn1.crmf.CertTemplate;
 
 /**
- * This class is used basically only to authenticate CrmfRequests
+ * Checks the authentication of the PKIMessage.
  * 
- * @author aveen
+ * In RA mode, the authenticity is checked through a shared secret specified either in 
+ * the configuration file or in the CA.
+ * 
+ * In client mode, the authenticity is checked through the clear-text-password of the 
+ * pre-registered endentity from the database. 
+ * 
+ * @version $Id$
  *
  */
 public class HMACAuthenticationModule implements ICMPAuthenticationModule {
@@ -103,53 +122,20 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 			return false;
 		}
 			
-		// If we use a globally configured shared secret for all CAs we check it right away
-		if (this.raAuthSecret != null) {
-			try {
-				if(!verifyer.verify(this.raAuthSecret)) {
-					errorMessage = INTRES.getLocalizedMessage("cmp.errorauthmessage", "Global auth secret");
-					LOG.info(errorMessage); // info because this is something we should expect and we handle it
-					if (verifyer.getErrMsg() != null) {
-						errorMessage = verifyer.getErrMsg();
-						LOG.info(errorMessage);
-					}
-				} else {
-					this.password = this.raAuthSecret;
-				}
-			} catch (InvalidKeyException e) {
-				errorMessage = INTRES.getLocalizedMessage("cmp.errorgeneral");
-				LOG.error(errorMessage, e);
-			} catch (NoSuchAlgorithmException e) {
-				errorMessage = INTRES.getLocalizedMessage("cmp.errorgeneral");
-				LOG.error(errorMessage, e);
-			} catch (NoSuchProviderException e) {
-				errorMessage = INTRES.getLocalizedMessage("cmp.errorgeneral");
-				LOG.error(errorMessage, e);
-			}
-		}
-
-		// Now we know which CA the request is for, if we didn't use a global shared secret we can check it now!
-		if (this.password == null) {
-			//CAInfo caInfo = this.caAdminSession.getCAInfo(this.admin, caId);
-			String cmpRaAuthSecret = null;  
-			if (cainfo instanceof X509CAInfo) {
-				cmpRaAuthSecret = ((X509CAInfo) cainfo).getCmpRaAuthSecret();
-			}		
-			if (StringUtils.isNotEmpty(cmpRaAuthSecret)) {
+		if(CmpConfiguration.getRAOperationMode()) { //RA mode
+		
+			// If we use a globally configured shared secret for all CAs we check it right away
+			if (this.raAuthSecret != null) {
 				try {
-					if(!verifyer.verify(cmpRaAuthSecret)) {
-						errorMessage = INTRES.getLocalizedMessage("cmp.errorauthmessage", "Auth secret for CAId="+cainfo.getCAId());
-						if (StringUtils.isEmpty(cmpRaAuthSecret)) {
-							errorMessage += " Secret is empty";
-						} else {
-							errorMessage += " Secret fails verify";
-						}
+					if(!verifyer.verify(this.raAuthSecret)) {
+						errorMessage = INTRES.getLocalizedMessage("cmp.errorauthmessage", "Global auth secret");
 						LOG.info(errorMessage); // info because this is something we should expect and we handle it
 						if (verifyer.getErrMsg() != null) {
 							errorMessage = verifyer.getErrMsg();
-						}
+							LOG.info(errorMessage);
+						}	
 					} else {
-						this.password = cmpRaAuthSecret;
+						this.password = this.raAuthSecret;
 					}
 				} catch (InvalidKeyException e) {
 					errorMessage = INTRES.getLocalizedMessage("cmp.errorgeneral");
@@ -162,12 +148,47 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 					LOG.error(errorMessage, e);
 				}
 			}
-		}
+
+			// Now we know which CA the request is for, if we didn't use a global shared secret we can check it now!
+			if (this.password == null) {
+				//CAInfo caInfo = this.caAdminSession.getCAInfo(this.admin, caId);
+				String cmpRaAuthSecret = null;  
+				if (cainfo instanceof X509CAInfo) {
+					cmpRaAuthSecret = ((X509CAInfo) cainfo).getCmpRaAuthSecret();
+				}		
+				if (StringUtils.isNotEmpty(cmpRaAuthSecret)) {
+					try {
+						if(!verifyer.verify(cmpRaAuthSecret)) {
+							errorMessage = INTRES.getLocalizedMessage("cmp.errorauthmessage", "Auth secret for CAId="+cainfo.getCAId());
+							if (StringUtils.isEmpty(cmpRaAuthSecret)) {
+								errorMessage += " Secret is empty";
+							} else {
+								errorMessage += " Secret fails verify";
+							}
+							LOG.info(errorMessage); // info because this is something we should expect and we handle it
+							if (verifyer.getErrMsg() != null) {
+								errorMessage = verifyer.getErrMsg();
+							}
+						} else {
+							this.password = cmpRaAuthSecret;
+						}
+					} catch (InvalidKeyException e) {
+						errorMessage = INTRES.getLocalizedMessage("cmp.errorgeneral");
+						LOG.error(errorMessage, e);
+					} catch (NoSuchAlgorithmException e) {
+						errorMessage = INTRES.getLocalizedMessage("cmp.errorgeneral");
+						LOG.error(errorMessage, e);
+					} catch (NoSuchProviderException e) {
+						errorMessage = INTRES.getLocalizedMessage("cmp.errorgeneral");
+						LOG.error(errorMessage, e);
+					}
+				}
+			}
 			
-		//If neither a global shared secret nor CA specific secret, we try to get the pre-registered endentity from the DB, and if there is a 
-		//clear text password we check HMAC using this password.
-		//Note that this should only work in client mode
-		if((!CmpConfiguration.getRAOperationMode()) && this.password == null) {
+		} else { //client mode
+			
+			//If neither a global shared secret nor CA specific secret, we try to get the pre-registered endentity from the DB, and if there is a 
+			//clear text password we check HMAC using this password.
 			CertTemplate certTemp = getCertTemplate(msg);
 			String subjectDN = certTemp.getSubject().toString();
 			String issuerDN = certTemp.getIssuer().toString();
