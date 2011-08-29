@@ -63,10 +63,6 @@ public class VerifyPKIMessage {
 		this.errMsg = null;
 	}
 	
-	public String getErrorMessage() {
-		return this.errMsg;
-	}
-	
 	public VerifyPKIMessage(CAInfo cainfo, Admin admin, CAAdminSession caSession, UserAdminSession userSession, CertificateStoreSession certSession,
 				AuthorizationSession authSession, EndEntityProfileSession eeprofSession) {
 		this.cainfo = cainfo;
@@ -80,10 +76,35 @@ public class VerifyPKIMessage {
 		this.eeProfileSession = eeprofSession;
 	}
 	
-	public ICMPAuthenticationModule getAuthenticationModule() {
+	
+	/**
+	 * Returns the error message resulted in failing to verify the PKIMessage
+	 * 
+	 * The error message is set if verify() returns false.
+	 * 
+	 * @return the error message as String. Null if the verification succeeded.
+	 */
+	public String getErrorMessage() {
+		return this.errMsg;
+	}
+	
+	/**
+	 * Returns the name of the authentication module that was successfully used to authenticate the message.
+	 * 
+	 * The authentication module is set if verify() returns true.
+	 * 
+	 * @return the name of the successful authentication module. Null if message verification failed.
+	 */
+	public ICMPAuthenticationModule getUsedAuthenticationModule() {
 		return this.authModule;
 	}
 	
+	/**
+	 * Verifies the authenticity of msg
+	 * 
+	 * @param msg
+	 * @return True if verification is successful. False otherwise
+	 */
 	public boolean verify(PKIMessage msg) {
 		String authModules = CmpConfiguration.getAuthenticationModule();
 		String authparameters = CmpConfiguration.getAuthenticationParameters();
@@ -110,7 +131,14 @@ public class VerifyPKIMessage {
 		
 	}
 	
-	
+	/**
+	 * Returns the authentication module whose name is 'module'
+	 * 
+	 * @param module
+	 * @param parameter
+	 * @param pkimsg
+	 * @return The authentication module whose name is 'module'. Null if no such module is implemented.
+	 */
 	private ICMPAuthenticationModule getAuthModule(String module, String parameter, PKIMessage pkimsg) {
 		if(StringUtils.equals(module, CmpConfiguration.AUTHMODULE_HMAC)) {
 			HMACAuthenticationModule hmacmodule = new HMACAuthenticationModule(parameter);

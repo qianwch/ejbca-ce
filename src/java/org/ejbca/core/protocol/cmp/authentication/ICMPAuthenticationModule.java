@@ -23,9 +23,37 @@ import com.novosec.pkix.asn1.cmp.PKIMessage;
  */
 public interface ICMPAuthenticationModule {
 	
+	/**
+	 * Verifies that msg was sent by a trusted source.
+	 * 
+	 * @param msg
+	 * @return true of msg was sent by a trusted source, and false otherwise
+	 */
 	public abstract boolean verify(PKIMessage msg);
+	
+	/**
+	 * Returns the name of the used authentication module.
+	 * 
+	 * @return the name of the used authentication module.
+	 */
 	public abstract String getName();
+	
+	/**
+	 * Returns the password that was successfully used to authenticate the message.
+	 * 
+	 * This password is set if verify() returns true.
+	 * 
+	 * @return the password that was successfully used to authenticate the message. Null if the authentication had failed.
+	 */
 	public abstract String getAuthenticationString();
+	
+	/**
+	 * Returns the error message resulted in failing to authenticate the message.
+	 * 
+	 * The error message is set if verify() returns false.
+	 * 
+	 * @return The error message as String. Null if no error had occurred
+	 */
 	public abstract String getErrorMessage();
 
 }

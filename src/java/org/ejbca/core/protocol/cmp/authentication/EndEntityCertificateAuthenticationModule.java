@@ -76,6 +76,15 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
 		eeProfileSession = null;
 	}
 	
+	/**
+	 * Sets the sessions needed to perform the verification.
+	 * 
+	 * @param adm
+	 * @param caSession
+	 * @param certSession
+	 * @param authSession
+	 * @param eeprofSession
+	 */
 	public void setSession(Admin adm, CAAdminSession caSession, CertificateStoreSession certSession, 
 					AuthorizationSession authSession, EndEntityProfileSession eeprofSession) {
 		this.admin = adm;
@@ -86,19 +95,47 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
 	}
 	
 	
+	/**
+	 * Returns the name of this authentication module as String
+	 * 
+	 * @return the name of this authentication module as String
+	 */
 	public String getName() {
 		return CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE;
 	}
 	
+	/**
+	 * Returns the password resulted from the verification process.
+	 * 
+	 * This password is set if verify() returns true.
+	 * 
+	 * @return The password as String. Null if the verification had failed.
+	 */
 	public String getAuthenticationString() {
 		return this.password;
 	}
 	
+	/**
+	 * Get the error message resulted from the failure of the verification process.
+	 * 
+	 * The error message is set if verify() returns false.
+	 * 
+	 * @return The error message as String. Null if no error had ocured.
+	 */
 	public String getErrorMessage() {
 		return this.errorMessage;
 	}
-	
-	@Override
+
+	/**
+	 * Verifies the signature of 'msg'. msg should be signed by an authorized administrator in EJBCA and 
+	 * the administrator's cerfificate should be attached in msg in the extraCert field.  
+	 * 
+	 * When successful, the password is set to the randomly generated 16-gidits String.
+	 * When failed, the error message is set.
+	 * 
+	 * @param msg
+	 * @return true if the message signature was verified successfully and false otherwise.
+	 */
 	public boolean verify(PKIMessage msg) {
 		
 		//Check that there is a certificate in the extraCert field in msg
@@ -193,11 +230,25 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
 		return false;
 	}
 
+	/**
+	 * Generated a random password of 16 digits.
+	 * 
+	 * @return a randomly generated password
+	 */
     private String genRandomPwd() {
     	NoLookOrSoundALikeENLDPasswordGenerator pwdGen = new NoLookOrSoundALikeENLDPasswordGenerator();
     	return pwdGen.getNewPassword(16, 16);
     }
     
+    /**
+     * Checks if cert belongs to an administrator who is authorized to process the request.
+     * 
+     * @param cert
+     * @param msg
+     * @param caid
+     * @return true if the administrator is authorized to process the request and false otherwise.
+     * @throws NotFoundException
+     */
     private boolean isAuthorized(Certificate cert, PKIMessage msg, int caid) throws NotFoundException {
     	CertificateInfo certInfo = certSession.getCertificateInfo(admin, CertTools.getFingerprintAsString(cert));
     	String username = certInfo.getUsername();
@@ -262,6 +313,12 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
 
     }
     
+    /**
+     * Checks whether admin is authorized to access the CA with ID caid
+     * @param admin
+     * @param caid
+     * @return true of admin is authorized and false otherwize
+     */
     private boolean authorizedToCA(Admin admin, int caid) {
         boolean returnval = false;
         returnval = authSession.isAuthorizedNoLog(admin, AccessRulesConstants.CAPREFIX + caid);
@@ -272,6 +329,14 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
         return returnval;
     }
     
+    /**
+     * Checks whether admin is authorized to access the EndEntityProfile with the ID profileid
+     * 
+     * @param admin
+     * @param profileid
+     * @param rights
+     * @return true if admin is authorized and false otherwise.
+     */
     private boolean authorizedToEndEntityProfile(Admin admin, int profileid, String rights) {
         boolean returnval = false;
         if (profileid == SecConst.EMPTY_ENDENTITYPROFILE
@@ -289,6 +354,12 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
         return returnval;
     }
 
+    /**
+     * Return the ID of EndEntityProfile that is used for CMP purposes. 
+     * @param keyId
+     * @return the ID of EndEntityProfile used for CMP purposes. 0 if no such EndEntityProfile exists. 
+     * @throws NotFoundException
+     */
 	private int getUsedEndEntityProfileId(final String keyId) throws NotFoundException {
 		int ret = 0;
 		String endEntityProfile = CmpConfiguration.getRAEndEntityProfile();

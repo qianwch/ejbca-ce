@@ -326,7 +326,7 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 			VerifyPKIMessage messageVerifyer = new VerifyPKIMessage(caInfo, admin, caAdminSession, userAdminSession, certStoreSession, authorizationSession, endEntityProfileSession);
 			ICMPAuthenticationModule authenticationModule = null;
 			if(messageVerifyer.verify(crmfreq.getPKIMessage())) {
-				authenticationModule = messageVerifyer.getAuthenticationModule();
+				authenticationModule = messageVerifyer.getUsedAuthenticationModule();
 			}
 			if(authenticationModule == null) {
 				String errMsg = "";

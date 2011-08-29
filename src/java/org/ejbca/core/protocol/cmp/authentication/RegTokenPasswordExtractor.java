@@ -32,6 +32,12 @@ public class RegTokenPasswordExtractor {
 	
 	private static final Logger log = Logger.getLogger(RegTokenPasswordExtractor.class);
 		
+	/**
+	 * Extracts password from the CMRF request message parameters
+	 * 
+	 * @param req
+	 * @return the password extracted from the CRMF request. Null if no such password was found.
+	 */
 	public static String extractPassword(CertReqMsg req) {
 		
 		String ret = null;

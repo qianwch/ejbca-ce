@@ -76,27 +76,66 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 		this.cainfo = cainfo;
 	}
 	
+	/**
+	 * Sets the sessions needed to perform the verification.
+	 * 
+	 * @param adm
+	 * @param userSession
+	 */
 	public void setSession(Admin adm, UserAdminSession userSession) {
 		this.admin = adm;
 		this.userAdminSession = userSession;
 	}
 	
-	@Override
+	/**
+	 * Returns the name of this authentication module as String
+	 * 
+	 * @return the name of this authentication module as String
+	 */
 	public String getName() {
 		return CmpConfiguration.AUTHMODULE_HMAC;
 	}
 	
 	@Override
+	/**
+	 * Returns the password resulted from the verification process.
+	 * 
+	 * This password is set if verify() returns true.
+	 * 
+	 * @return The password as String. Null if the verification had failed.
+	 */
 	public String getAuthenticationString() {
 		return this.password;
 	}
 	
 	@Override
+	/**
+	 * Get the error message resulted from the failure of the verification process.
+	 * 
+	 * The error message is set if verify() returns false.
+	 * 
+	 * @return The error message as String. Null if no error had occurred.
+	 */
 	public String getErrorMessage(){
 		return this.errorMessage;
 	}
 	
 	@Override
+	/**
+	 * Verifies that 'msg' is sent by a trusted source. 
+	 * 
+	 * In RA mode:
+	 * 		- A globally configured shared secret for all CAs will be used to authenticate the message.
+	 * 		- If the globallt shared secret fails, the password set in the CA will be used to authenticate the message.
+	 *  In client mode, the clear-text password set in the pre-registered end entity in the database will be used to 
+	 *  authenticate the message. 
+	 * 
+	 * When successful, the password will be set to the password that was successfully used in authenticating the message.
+	 * When failed, the error message will be set.
+	 * 
+	 * @param msg
+	 * @return true if the message signature was verified successfully and false otherwise.
+	 */
 	public boolean verify(PKIMessage msg) {
 		
 		if(msg == null) {
@@ -229,7 +268,12 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 	}
 
 	
-    
+    /**
+     * Returns the certificate template specified in the request impeded in msg.
+     * 
+     * @param msg
+     * @return the certificate template imbeded in msg. Null if no such template was found.
+     */
     private CertTemplate getCertTemplate(PKIMessage msg) {
     	int tagnr = msg.getBody().getTagNo();
     	if(tagnr == CmpPKIBodyConstants.INITIALIZATIONREQUEST) {

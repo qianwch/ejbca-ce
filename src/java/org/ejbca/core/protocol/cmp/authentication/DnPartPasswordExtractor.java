@@ -29,6 +29,13 @@ public class DnPartPasswordExtractor {
 
 	private static final Logger log = Logger.getLogger(DnPartPasswordExtractor.class);
 
+	/**
+	 * Extracts the value of 'dnPart' from the subjectDN of the certificate request template.
+	 * 
+	 * @param req
+	 * @param dnPart
+	 * @return
+	 */
 	public static String extractPassword(CertReqMsg req, String dnPart) {
 		String ret = null;
 		String dnString = req.getCertReq().getCertTemplate().getSubject().toString();
