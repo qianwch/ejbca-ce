@@ -1,3 +1,16 @@
+/*************************************************************************
+ *                                                                       *
+ *  EJBCA: The OpenSource Certificate Authority                          *
+ *                                                                       *
+ *  This software is free software; you can redistribute it and/or       *
+ *  modify it under the terms of the GNU Lesser General Public           *
+ *  License as published by the Free Software Foundation; either         *
+ *  version 2.1 of the License, or any later version.                    *
+ *                                                                       *
+ *  See terms of license at gnu.org.                                     *
+ *                                                                       *
+ *************************************************************************/
+
 package org.ejbca.core.protocol.cmp;
 
 import java.io.ByteArrayInputStream;
@@ -29,6 +42,13 @@ import org.ejbca.util.CertTools;
 
 import com.novosec.pkix.asn1.cmp.PKIMessage;
 
+/**
+ * Nested Message Content according to RFC4210. The PKI message is signed by an RA authority.
+ * The PKIMessage body is another PKIMessage containing the request to be processed. 
+ * 
+ * @version $Id$
+ *
+ */
 public class NestedMessageContent extends BaseCmpMessage implements IRequestMessage {
 
 	private static final long serialVersionUID = 1L;
