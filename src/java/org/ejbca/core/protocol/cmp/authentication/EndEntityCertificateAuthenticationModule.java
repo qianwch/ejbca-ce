@@ -1,3 +1,16 @@
+/*************************************************************************
+ *                                                                       *
+ *  EJBCA: The OpenSource Certificate Authority                          *
+ *                                                                       *
+ *  This software is free software; you can redistribute it and/or       *
+ *  modify it under the terms of the GNU Lesser General Public           *
+ *  License as published by the Free Software Foundation; either         *
+ *  version 2.1 of the License, or any later version.                    *
+ *                                                                       *
+ *  See terms of license at gnu.org.                                     *
+ *                                                                       *
+ *************************************************************************/
+
 package org.ejbca.core.protocol.cmp.authentication;
 
 import java.io.IOException;
@@ -30,6 +43,12 @@ import org.ejbca.util.passgen.NoLookOrSoundALikeENLDPasswordGenerator;
 
 import com.novosec.pkix.asn1.cmp.PKIMessage;
 
+/**
+ * Check the authentication of the PKIMessage by verifying the signature of the administrator who sent the message
+ * 
+ * @version $Id$
+ *
+ */
 public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticationModule {
 
 	private static final Logger log = Logger.getLogger(EndEntityCertificateAuthenticationModule.class);
