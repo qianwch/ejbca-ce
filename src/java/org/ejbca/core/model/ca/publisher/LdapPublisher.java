@@ -611,11 +611,12 @@ public class LdapPublisher extends BasePublisher {
 		String email = CertTools.getEMailAddress(cert);
 
 		// Check if the entry is already present, we will update it with the new certificate.
-		LDAPEntry oldEntry = searchOldEntity(username, ldapVersion, lc, certdn, userDN, email);
+		final LDAPEntry oldEntry;
 
 		ArrayList modSet = null;
 
 		if (!CertTools.isCA(cert)) {
+			oldEntry = searchOldEntity(username, ldapVersion, lc, certdn, userDN, email);
 			if (log.isDebugEnabled()) {
 				log.debug("Removing end user certificate from first available server of " + getHostnames());
 			}
@@ -634,10 +635,10 @@ public class LdapPublisher extends BasePublisher {
 				}
 			} else {
 				String msg = intres.getLocalizedMessage("publisher.errorrevokenoentry");
-				log.error(msg);            
-				throw new PublisherException(msg);            
+				log.warn(msg);
 			}
 		} else  {
+			oldEntry = null;
 			// Removal of CA certificate isn't support because of object class restrictions
 			if (log.isDebugEnabled()) {
 				log.debug("Not removing CA certificate from first available server of " + getHostnames() + ", because of object class restrictions.");
@@ -645,11 +646,11 @@ public class LdapPublisher extends BasePublisher {
 		}
 
 		// Try all the listed servers
-		Iterator servers = getHostnameList().iterator();
-		boolean connectionFailed;
-		do {
-			connectionFailed = false;
-			String currentServer =(String) servers.next(); 
+		final Iterator<String> servers = getHostnameList().iterator();
+		boolean isConnectionNotDone = true;
+		while ( oldEntry!=null && isConnectionNotDone && servers.hasNext()) {
+			isConnectionNotDone = false;
+			String currentServer = servers.next(); 
 			if (log.isDebugEnabled()) {
 				log.debug("currentServer: "+currentServer);
 			}
@@ -659,7 +660,7 @@ public class LdapPublisher extends BasePublisher {
 				// authenticate to the server
 				lc.bind(ldapVersion, getLoginDN(), getLoginPassword().getBytes("UTF8"), ldapBindConstraints);            
 				// Add or modify the entry
-				if (oldEntry != null && modSet != null && getModifyExistingUsers()) {
+				if (modSet != null && getModifyExistingUsers()) {
 					if (removecert) {
 						LDAPModification[] mods = new LDAPModification[modSet.size()]; 
 						mods = (LDAPModification[])modSet.toArray(mods);
@@ -672,9 +673,6 @@ public class LdapPublisher extends BasePublisher {
 					log.info(msg);  
 				} else {
 					if (log.isDebugEnabled()) {
-						if (oldEntry == null) {
-							log.debug("Not modifying LDAP entry because there is no existing entry.");						
-						}
 						if (modSet == null) {
 							log.debug("Not modifying LDAP entry because we don't have anything to modify.");						
 						}
@@ -684,7 +682,7 @@ public class LdapPublisher extends BasePublisher {
 					}
 				}
 			} catch (LDAPException e) {
-				connectionFailed = true;
+				isConnectionNotDone = true;
 				if (servers.hasNext()) {
 					log.warn("Failed to publish to " + currentServer + ". Trying next in list.");
 				} else {
@@ -705,7 +703,7 @@ public class LdapPublisher extends BasePublisher {
 					log.error(msg, e);
 				}
 			}
-		} while (connectionFailed && servers.hasNext()) ;
+		}
 		if (log.isTraceEnabled()) {
 			log.trace("<revokeCertificate()");
 		}
