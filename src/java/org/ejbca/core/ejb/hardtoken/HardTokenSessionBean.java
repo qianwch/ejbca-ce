@@ -254,6 +254,7 @@ public class HardTokenSessionBean implements HardTokenSessionLocal, HardTokenSes
         ArrayList<Integer> returnval = new ArrayList<Integer>();
         HashSet<Integer> authorizedcertprofiles = new HashSet<Integer>(certificateProfileSession.getAuthorizedCertificateProfileIds(admin,
                 SecConst.CERTTYPE_HARDTOKEN, caSession.getAvailableCAs(admin)));
+        authorizedcertprofiles.add(new Integer(SecConst.CERTPROFILE_NO_PROFILE));
         HashSet<Integer> authorizedcaids = new HashSet<Integer>(caSession.getAvailableCAs(admin));
         Collection<HardTokenProfileData> result = HardTokenProfileData.findAll(entityManager);
         Iterator<HardTokenProfileData> i = result.iterator();
