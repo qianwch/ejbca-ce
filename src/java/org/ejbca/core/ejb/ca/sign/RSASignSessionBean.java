@@ -766,7 +766,7 @@ public class RSASignSessionBean implements SignSessionLocal, SignSessionRemote {
             final String caSubjectDN = CertTools.getSubjectDN(cacert);
             if ( ca.isDoEnforceUniqueDistinguishedName() ){
             	if (ca.isUseCertificateStorage()) {
-            		final Set<String> users = certificateStoreSession.findUsernamesByIssuerDNAndSubjectDN(admin, caSubjectDN, data.getDN());
+            		final Set<String> users = certificateStoreSession.findUsernamesByIssuerDNAndSubjectDN(admin, caSubjectDN, data.getCertificateDN());
             		if ( users.size()>0 && !users.contains(username) ) {
             			String msg = intres.getLocalizedMessage("signsession.subjectdn_exists_for_another_user", "'"+username+"'", listUsers(users));
             			log.info(msg);
@@ -917,14 +917,14 @@ public class RSASignSessionBean implements SignSessionLocal, SignSessionRemote {
             // Store certificate in certificate profiles publishers.
             final Collection<Integer> publishers = certProfile.getPublisherList();
             if (!publishers.isEmpty()) {
-                publisherSession.storeCertificate(admin, publishers, cert, username, data.getPassword(), data.getDN(), cafingerprint, SecConst.CERT_ACTIVE, certProfile.getType(), -1, RevokedCertInfo.NOT_REVOKED, tag, certProfileId, updateTime, data.getExtendedinformation());
+                publisherSession.storeCertificate(admin, publishers, cert, username, data.getPassword(), data.getCertificateDN(), cafingerprint, SecConst.CERT_ACTIVE, certProfile.getType(), -1, RevokedCertInfo.NOT_REVOKED, tag, certProfileId, updateTime, data.getExtendedinformation());
             }
             // Finally we check if this certificate should not be issued as active, but revoked directly upon issuance 
             int revreason = getIssuanceRevocationReason(data);
             if (revreason != RevokedCertInfo.NOT_REVOKED) {
             	// If we don't store the certificate in the database, we wont support revocation/reactivation so issuing revoked certificates would be really strange. 
             	if (ca.isUseCertificateStorage()) {
-                    certificateStoreSession.revokeCertificate(admin, cert, publishers, revreason, data.getDN());
+                    certificateStoreSession.revokeCertificate(admin, cert, publishers, revreason, data.getCertificateDN());
             	} else {
             		log.warn("CA configured to revoke issued certificates directly, but not to store issued the certificates. Revocation will be ignored. Please verify your configuration.");
             	}
