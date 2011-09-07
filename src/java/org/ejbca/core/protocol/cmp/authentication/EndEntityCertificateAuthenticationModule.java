@@ -39,7 +39,8 @@ import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.model.ra.NotFoundException;
 import org.ejbca.core.protocol.cmp.CmpPKIBodyConstants;
 import org.ejbca.util.CertTools;
-import org.ejbca.util.passgen.NoLookOrSoundALikeENLDPasswordGenerator;
+import org.ejbca.util.passgen.IPasswordGenerator;
+import org.ejbca.util.passgen.PasswordGeneratorFactory;
 
 import com.novosec.pkix.asn1.cmp.PKIMessage;
 
@@ -236,8 +237,8 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
 	 * @return a randomly generated password
 	 */
     private String genRandomPwd() {
-    	NoLookOrSoundALikeENLDPasswordGenerator pwdGen = new NoLookOrSoundALikeENLDPasswordGenerator();
-    	return pwdGen.getNewPassword(16, 16);
+		final IPasswordGenerator pwdgen = PasswordGeneratorFactory.getInstance(PasswordGeneratorFactory.PASSWORDTYPE_ALLPRINTABLE);
+		return pwdgen.getNewPassword(12, 12);
     }
     
     /**
