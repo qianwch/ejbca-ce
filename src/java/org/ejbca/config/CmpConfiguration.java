@@ -18,8 +18,8 @@ public class CmpConfiguration {
 	public static final String CONFIG_DEFAULTCA               = "cmp.defaultca";
 	public static final String CONFIG_ALLOWRAVERIFYPOPO       = "cmp.allowraverifypopo";
 	public static final String CONFIG_OPERATIONMODE           = "cmp.operationmode";
-	public static final String CONFIG_AUTHENTICATIONMODULE	  = "cmp.authmodule";
-	public static final String CONFIG_AUTHENTICATIONPARAMETERS= "cmp.authparameters";
+	public static final String CONFIG_AUTHENTICATIONMODULE	  = "cmp.authenticationmodule";
+	public static final String CONFIG_AUTHENTICATIONPARAMETERS= "cmp.authenticationparameters";
 	public static final String CONFIG_RA_ALLOWCUSTOMCERTSERNO = "cmp.ra.allowcustomcertserno";
 	public static final String CONFIG_RA_NAMEGENERATIONSCHEME = "cmp.ra.namegenerationscheme";
 	public static final String CONFIG_RA_NAMEGENERATIONPARAMS = "cmp.ra.namegenerationparameters";
