@@ -74,6 +74,13 @@
 #cmp.authenticationparameters=UID;AdminCA1
 #cmp.authenticationparameters=-;O;-
 
+# When the cmp.authenticationmodule is set to 'EndEntityCertificate', Ejbca can be set to check if the certificate in question 
+# belongs to a registered administrator who has the right authorizations. If this action is set to 'false', no such check will be
+# performed.
+#
+# Default: true
+#cmp.checkadminauthorization=true
+#cmp.checkadminauthorization=false
 
 # Allow the client/RA to specify that the CA should not verify POP, 
 # set to true to allow no POP (raVerify in the rfc). 

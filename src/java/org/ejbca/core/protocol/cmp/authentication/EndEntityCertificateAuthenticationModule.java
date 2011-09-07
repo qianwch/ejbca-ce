@@ -146,8 +146,8 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
 			log.info(errorMessage);
 			return false;
 		}
-			
-		//Check that the certificate in the extraCert field exists in the DB
+		
+		//Read the extraCert and store it in a local variable
 		Certificate extracert = null;
 		try {
 			extracert = CertTools.getCertfromByteArray(extraCertStruct.getEncoded());
@@ -162,46 +162,51 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
 			}
 			this.errorMessage = e.getLocalizedMessage();
 		}
-		Certificate dbcert = certSession.findCertificateByFingerprint(admin, CertTools.getFingerprintAsString(extracert));
-		if(dbcert == null) {
-			errorMessage = "The End Entity certificate attached to the PKIMessage in the extraCert field could not be found in the database.";
-			if(log.isDebugEnabled()) {
-				log.debug(errorMessage);
-			}
-			return false;
-		}
+
+		if(CmpConfiguration.getCheckAdminAuthorization()) {
 			
-		//Check that the extraCert is given by the right CA
-		CAInfo ca = caSession.getCAInfo(this.admin, this.authenticationParameterCAName);
-		if(!StringUtils.equals(CertTools.getIssuerDN(extracert), ca.getSubjectDN())) {
-			errorMessage = "The End Entity certificate attached to the PKIMessage is not given by the CA \"" + this.authenticationParameterCAName + "\"";
-			if(log.isDebugEnabled()) {
-				log.debug(errorMessage);
-			}
-			return false;
-		}
-		
-		//Check that the request sender is an authorized administrator
-		try {
-			if(!isAuthorized(extracert, msg, ca.getCAId())){
-				errorMessage = "\"" + CertTools.getSubjectDN(extracert) + "\" is not an authorized administrator.";
+			//Check that the certificate in the extraCert field exists in the DB
+			Certificate dbcert = certSession.findCertificateByFingerprint(admin, CertTools.getFingerprintAsString(extracert));
+			if(dbcert == null) {
+				errorMessage = "The End Entity certificate attached to the PKIMessage in the extraCert field could not be found in the database.";
 				if(log.isDebugEnabled()) {
 					log.debug(errorMessage);
 				}
-				return false;			
+				return false;
 			}
-		} catch (NotFoundException e1) {
-			if(log.isDebugEnabled()) {
-				log.debug(e1.getLocalizedMessage());
+			
+			//Check that the extraCert is given by the right CA
+			CAInfo ca = caSession.getCAInfo(this.admin, this.authenticationParameterCAName);
+			if(!StringUtils.equals(CertTools.getIssuerDN(extracert), ca.getSubjectDN())) {
+				errorMessage = "The End Entity certificate attached to the PKIMessage is not given by the CA \"" + this.authenticationParameterCAName + "\"";
+				if(log.isDebugEnabled()) {
+					log.debug(errorMessage);
+				}
+				return false;
 			}
-			errorMessage = e1.getLocalizedMessage();
+		
+			//Check that the request sender is an authorized administrator
+			try {
+				if(!isAuthorized(extracert, msg, ca.getCAId())){
+					errorMessage = "\"" + CertTools.getSubjectDN(extracert) + "\" is not an authorized administrator.";
+					if(log.isDebugEnabled()) {
+						log.debug(errorMessage);
+					}
+					return false;			
+				}
+			} catch (NotFoundException e1) {
+				if(log.isDebugEnabled()) {
+					log.debug(e1.getLocalizedMessage());
+				}
+				errorMessage = e1.getLocalizedMessage();
+			}
 		}
 		
 		//Begin the verification process.
 		//Verify the signature of msg using the public key of the certificate we found in the database
 		try {
 			final Signature sig = Signature.getInstance(msg.getHeader().getProtectionAlg().getObjectId().getId(), "BC");
-			sig.initVerify(dbcert.getPublicKey());
+			sig.initVerify(extracert.getPublicKey());
 			sig.update(msg.getProtectedBytes());
 			if(sig.verify(msg.getProtection().getBytes())) {
 				password = genRandomPwd();

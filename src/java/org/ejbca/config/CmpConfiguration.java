@@ -20,6 +20,7 @@ public class CmpConfiguration {
 	public static final String CONFIG_OPERATIONMODE           = "cmp.operationmode";
 	public static final String CONFIG_AUTHENTICATIONMODULE	  = "cmp.authenticationmodule";
 	public static final String CONFIG_AUTHENTICATIONPARAMETERS= "cmp.authenticationparameters";
+	public static final String CONFIG_CHECKADMINAUTHORIZATION = "cmp.checkadminauthorization";
 	public static final String CONFIG_RA_ALLOWCUSTOMCERTSERNO = "cmp.ra.allowcustomcertserno";
 	public static final String CONFIG_RA_NAMEGENERATIONSCHEME = "cmp.ra.namegenerationscheme";
 	public static final String CONFIG_RA_NAMEGENERATIONPARAMS = "cmp.ra.namegenerationparameters";
@@ -70,6 +71,10 @@ public class CmpConfiguration {
 	
 	public static String getAuthenticationParameters() {
 		return ConfigurationHolder.getString(CONFIG_AUTHENTICATIONPARAMETERS, "-;-");
+	}
+	
+	public static boolean getCheckAdminAuthorization() {
+		return "true".equalsIgnoreCase(ConfigurationHolder.getString(CONFIG_CHECKADMINAUTHORIZATION, "true"));
 	}
 	
 	public static boolean getRAOperationMode() {

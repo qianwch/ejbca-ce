@@ -495,7 +495,8 @@ public class AuthenticationModulesTest extends CmpTestCase {
         assertEquals("Unrecognized authentication modules", errMsg);
 	}
 	
-	public void test09EECrmfReqUnauthorizedAdmin() throws NoSuchAlgorithmException, EjbcaException, IOException, Exception  {
+
+	public void test10EECrmfCheckAdminAuthorization() throws NoSuchAlgorithmException, EjbcaException, IOException, Exception  {
 		assertFalse("Configurations have not been backed up before starting testing.", confSession.backupConfiguration());
 		
 		confSession.updateProperty(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE);
@@ -538,6 +539,14 @@ public class AuthenticationModulesTest extends CmpTestCase {
         assertEquals(23, body.getTagNo());
         String errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
         assertEquals("\"CN=cmpTestUnauthorizedAdmin,C=SE\" is not an authorized administrator.", errMsg);
+        
+		confSession.updateProperty(CmpConfiguration.CONFIG_CHECKADMINAUTHORIZATION, "false");
+		assertTrue("The CMP Authentication module was not configured correctly.", confSession.verifyProperty(CmpConfiguration.CONFIG_CHECKADMINAUTHORIZATION, "false"));
+		
+        final byte[] resp2 = sendCmpHttp(ba, 200);        
+        checkCmpResponseGeneral(resp2, issuerDN, userDN, cacert, msg.getHeader().getSenderNonce().getOctets(), msg.getHeader().getTransactionID().getOctets(), false, null);
+        Certificate cert2 = checkCmpCertRepMessage(userDN, cacert, resp2, msg.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue());
+        assertNotNull("CrmfRequest did not return a certificate", cert2);
 	}
 	
 	
