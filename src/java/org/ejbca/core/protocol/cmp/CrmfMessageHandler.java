@@ -66,8 +66,6 @@ import org.ejbca.util.passgen.IPasswordGenerator;
 import org.ejbca.util.passgen.PasswordGeneratorFactory;
 //import org.junit.rules.Verifier;
 
-import com.sun.org.apache.bcel.internal.generic.ATHROW;
-
 /**
  * Message handler for certificate request messages in the CRMF format
  * @author tomas
@@ -338,19 +336,7 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 				LOG.error(errMsg);
 				return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_MESSAGE_CHECK, errMsg);
 			}
-			
-			String pass = authenticationModule.getAuthenticationString(); 
-			if(pass != null) {
-				crmfreq.setPassword(pass);
-			} else {
-				String errMsg = authenticationModule.getErrorMessage();
-				LOG.error(errMsg);
-				return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_MESSAGE_CHECK, errMsg);
-			}
-			if(LOG.isDebugEnabled()) {
-				LOG.debug("Verifying CrmfRequest using " + authenticationModule.getName() + " authentication module.");
-			}
-			
+
 			// Create a username and password and register the new user in EJBCA
 			final UsernameGenerator gen = UsernameGenerator.getInstance(this.usernameGenParams);
 			// Don't convert this DN to an ordered EJBCA DN string with CertTools.stringToBCDNString because we don't want double escaping of some characters
@@ -362,7 +348,7 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 			final String username = gen.generateUsername(dnname.toString());
 			final String pwd;
 			if(StringUtils.equals(authenticationModule.getName(), CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE)) {
-				pwd = pass;
+				pwd = authenticationModule.getAuthenticationString();
 			} else if(StringUtils.equals(authenticationModule.getName(), CmpConfiguration.AUTHMODULE_HMAC)) {
 				if (StringUtils.equals(this.userPwdParams, "random")) {
 					if (LOG.isDebugEnabled()) {
