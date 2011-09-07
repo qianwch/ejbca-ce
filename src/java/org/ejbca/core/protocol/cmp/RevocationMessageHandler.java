@@ -52,6 +52,7 @@ import org.ejbca.core.model.ra.NotFoundException;
 import org.ejbca.core.protocol.FailInfo;
 import org.ejbca.core.protocol.IResponseMessage;
 import org.ejbca.core.protocol.ResponseStatus;
+import org.ejbca.core.protocol.cmp.authentication.HMACAuthenticationModule;
 import org.ejbca.core.protocol.cmp.authentication.ICMPAuthenticationModule;
 import org.ejbca.core.protocol.cmp.authentication.VerifyPKIMessage;
 import org.ejbca.util.Base64;
@@ -136,9 +137,16 @@ public class RevocationMessageHandler extends BaseCmpMessageHandler implements I
 				}
 				LOG.error(errMsg);
 				return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_MESSAGE_CHECK, errMsg);
+			} else {
+				if(authenticationModule instanceof HMACAuthenticationModule) {
+					HMACAuthenticationModule hmacmodule = (HMACAuthenticationModule) authenticationModule;
+					owfAlg = hmacmodule.getCmpPbeVerifyer().getOwfOid();
+					macAlg = hmacmodule.getCmpPbeVerifyer().getMacOid();
+				}
 			}
 			
-			if (authenticationModule.getAuthenticationString() != null) {
+			cmpRaAuthSecret = authenticationModule.getAuthenticationString();
+			if (cmpRaAuthSecret != null) {
 				// If authentication was correct, we will now try to find the certificate to revoke
 				PKIMessage pkimsg = msg.getMessage();
 				PKIBody body = pkimsg.getBody();
