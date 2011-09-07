@@ -58,6 +58,8 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 	private CAInfo cainfo;
 	private String password;
 	private String errorMessage;
+	
+	private CmpPbeVerifyer verifyer;
 		
 	public HMACAuthenticationModule(String parameter) {
 		this.raAuthSecret = parameter;
@@ -70,6 +72,8 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 		
 		this.admin = null;
 		this.userAdminSession = null;
+		
+		this.verifyer = null;
 	}
 
 	public void setCaInfo(CAInfo cainfo) {
@@ -120,6 +124,10 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 		return this.errorMessage;
 	}
 	
+	public CmpPbeVerifyer getCmpPbeVerifyer() {
+		return this.verifyer;
+	}
+	
 	@Override
 	/**
 	 * Verifies that 'msg' is sent by a trusted source. 
@@ -143,7 +151,6 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 			return false;
 		}
 
-		CmpPbeVerifyer verifyer = null;
 		try {	
 			verifyer = new CmpPbeVerifyer(msg);
 		} catch(IllegalArgumentException e) {
@@ -177,13 +184,13 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 						this.password = this.raAuthSecret;
 					}
 				} catch (InvalidKeyException e) {
-					errorMessage = INTRES.getLocalizedMessage("cmp.errorgeneral");
+					errorMessage = e.getLocalizedMessage();
 					LOG.error(errorMessage, e);
 				} catch (NoSuchAlgorithmException e) {
-					errorMessage = INTRES.getLocalizedMessage("cmp.errorgeneral");
+					errorMessage = e.getLocalizedMessage();
 					LOG.error(errorMessage, e);
 				} catch (NoSuchProviderException e) {
-					errorMessage = INTRES.getLocalizedMessage("cmp.errorgeneral");
+					errorMessage = e.getLocalizedMessage();
 					LOG.error(errorMessage, e);
 				}
 			}
