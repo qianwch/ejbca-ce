@@ -300,7 +300,7 @@ public class NestedMessageContentTest extends CmpTestCase {
         final byte[] resp = sendCmpHttp(ba, 200);
         //final byte[] resp = sendCmpHttp(myPKIMessage.getDERObject().toASN1Object().getEncoded(), 200);
         // do not check signing if we expect a failure (sFailMessage==null)
-        checkCmpResponseGeneral(resp, issuerDN, reqSubjectDN, cacert, crmfMsg.getHeader().getSenderNonce().getOctets(), crmfMsg.getHeader().getTransactionID().getOctets(), false, null);
+        checkCmpResponseGeneral(resp, issuerDN, subjectDN, cacert, crmfMsg.getHeader().getSenderNonce().getOctets(), crmfMsg.getHeader().getTransactionID().getOctets(), false, null);
         Certificate cert = checkCmpCertRepMessage(subjectDN, cacert, resp, reqID);
         assertNotNull("CrmfRequest did not return a certificate", cert);
    	}

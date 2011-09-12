@@ -138,6 +138,10 @@ public class NestedMessageContent extends BaseCmpMessage implements IRequestMess
 			}
 		}
 
+		if(log.isDebugEnabled()) {
+			log.debug("Verifying the NestedMessageContent returned " + ret);
+		}
+
 		return ret;
 	}
 

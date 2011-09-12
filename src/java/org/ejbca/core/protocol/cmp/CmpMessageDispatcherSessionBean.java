@@ -167,9 +167,23 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
 				break;
 			case 20:
 				// NestedMessageContent (nested)
-				handler = new NestedMessageContentHandler(admin, caAdminSession, endEntityProfileSession, certificateProfileSession, certificateStoreSession, userAdminSession, certificateRequestSession, signSession, authorizationSession);
-				cmpMessage = new NestedMessageContent(req);
-				break;
+				//handler = new NestedMessageContentHandler(admin, caAdminSession, endEntityProfileSession, certificateProfileSession, certificateStoreSession, userAdminSession, certificateRequestSession, signSession, authorizationSession);
+				if(log.isDebugEnabled()) {
+					log.debug("Received a NestedMessage Content");
+				}
+				NestedMessageContent nestedMessage = new NestedMessageContent(req);
+				if(nestedMessage.verify()) {
+					PKIMessage nested = nestedMessage.getPKIMessage().getBody().getNested();
+					return dispatch(admin, nested.getDERObject().getDEREncoded());
+				} else {
+					final String errMsg = "Could not verify the RA";
+					log.error(errMsg);
+					cmpMessage = new NestedMessageContent(req);
+					fillMessageDetails(cmpMessage);
+					return CmpMessageHelper.createUnprotectedErrorMessage(cmpMessage, ResponseStatus.FAILURE, FailInfo.BAD_REQUEST, errMsg);
+				}
+				
+				//break;
 			default:
 				unknownMessageType = tagno;
 				log.info("Received an unknown message type, tagno="+tagno);
@@ -195,4 +209,13 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
 			return null;
 		}
 	}
+
+	private void fillMessageDetails(BaseCmpMessage msg) {
+		msg.setSender(msg.getMessage().getHeader().getSender());
+		msg.setRecipient(msg.getMessage().getHeader().getRecipient());
+		msg.setSenderNonce(msg.getMessage().getHeader().getSenderNonce().toString());
+		msg.setRecipientNonce(msg.getMessage().getHeader().getRecipNonce().toString());
+		
+	}
+	
 }
