@@ -132,6 +132,8 @@ public class CrmfRequestTest extends CmpTestCase {
         updatePropertyOnServer(CmpConfiguration.CONFIG_OPERATIONMODE, "normal");
         updatePropertyOnServer(CmpConfiguration.CONFIG_RESPONSEPROTECTION, "signature");
         updatePropertyOnServer(CmpConfiguration.CONFIG_DEFAULTCA, issuerDN);
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_HMAC + ";" + CmpConfiguration.AUTHMODULE_REG_TOKEN_PWD);
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "-;-");
     }
 
     public void setUp() throws Exception {

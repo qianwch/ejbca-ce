@@ -55,6 +55,7 @@ import org.ejbca.core.model.ra.UsernameGeneratorParams;
 import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
 import org.ejbca.core.protocol.ExtendedUserDataHandler;
 import org.ejbca.core.protocol.ExtendedUserDataHandler.HandlerException;
+import org.ejbca.core.protocol.cmp.authentication.HMACAuthenticationModule;
 import org.ejbca.core.protocol.cmp.authentication.ICMPAuthenticationModule;
 import org.ejbca.core.protocol.cmp.authentication.VerifyPKIMessage;
 import org.ejbca.core.protocol.FailInfo;
@@ -404,7 +405,8 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 			// Set all protection parameters
 			CmpPbeVerifyer verifyer = null;
 			if(StringUtils.equals(authenticationModule.getName(), CmpConfiguration.AUTHMODULE_HMAC)) {
-				verifyer = new CmpPbeVerifyer(msg.getMessage());
+				HMACAuthenticationModule hmacmodule = (HMACAuthenticationModule) authenticationModule;
+				verifyer = hmacmodule.getCmpPbeVerifyer();
 				final String pbeDigestAlg = verifyer.getOwfOid();
 				final String pbeMacAlg = verifyer.getMacOid();
 				final int pbeIterationCount = verifyer.getIterationCount();

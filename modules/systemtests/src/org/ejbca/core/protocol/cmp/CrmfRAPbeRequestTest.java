@@ -154,6 +154,8 @@ public class CrmfRAPbeRequestTest extends CmpTestCase {
         updatePropertyOnServer(CmpConfiguration.CONFIG_RA_CERTIFICATEPROFILE, CPNAME);
         updatePropertyOnServer(CmpConfiguration.CONFIG_RA_ENDENTITYPROFILE, EEPNAME);
         updatePropertyOnServer(CmpConfiguration.CONFIG_RACANAME, cainfo.getName());
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_HMAC);
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "-");
         // Configure a Certificate profile (CmpRA) using ENDUSER as template and
         // check "Allow validity override".
         if (certificateProfileSession.getCertificateProfile(admin, CPNAME) == null) {
@@ -197,6 +199,8 @@ public class CrmfRAPbeRequestTest extends CmpTestCase {
 
     public void test01CrmfHttpOkUser() throws Exception {
 
+    	log.debug(">test01CrmfHttpOkUser()");
+    	
         byte[] nonce = CmpMessageHelper.createSenderNonce();
         byte[] transid = CmpMessageHelper.createSenderNonce();
 
@@ -277,6 +281,8 @@ public class CrmfRAPbeRequestTest extends CmpTestCase {
         resp = sendCmpHttp(ba, 200);
         checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, false, PBEPASSWORD);
         checkCmpRevokeConfirmMessage(issuerDN, userDN, cert.getSerialNumber(), cacert, resp, false);
+        
+        log.debug("<test01CrmfHttpOkUser()");
     }
 
     public void test03CrmfHttpTooManyIterations() throws Exception {
