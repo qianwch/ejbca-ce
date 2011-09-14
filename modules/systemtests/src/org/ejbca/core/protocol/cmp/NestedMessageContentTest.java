@@ -19,11 +19,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.Signature;
@@ -35,35 +32,25 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
 
-import javax.crypto.Mac;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.ASN1OutputStream;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DERBitString;
 import org.bouncycastle.asn1.DERGeneralizedTime;
 import org.bouncycastle.asn1.DERInteger;
 import org.bouncycastle.asn1.DERNull;
-import org.bouncycastle.asn1.DERObject;
 import org.bouncycastle.asn1.DERObjectIdentifier;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DEROutputStream;
-import org.bouncycastle.asn1.DERString;
 import org.bouncycastle.asn1.DERUTF8String;
-import org.bouncycastle.asn1.ocsp.BasicOCSPResponse;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.GeneralName;
-import org.bouncycastle.asn1.x509.GeneralNames;
 import org.bouncycastle.asn1.x509.ReasonFlags;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.asn1.x509.X509CertificateStructure;
@@ -71,23 +58,20 @@ import org.bouncycastle.asn1.x509.X509Extension;
 import org.bouncycastle.asn1.x509.X509Extensions;
 import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.jce.X509KeyUsage;
-import org.bouncycastle.ocsp.BasicOCSPResp;
 import org.cesecore.core.ejb.authorization.AdminEntitySessionRemote;
 import org.cesecore.core.ejb.authorization.AdminGroupSessionRemote;
 import org.cesecore.core.ejb.ca.store.CertificateProfileSession;
 import org.cesecore.core.ejb.ra.raadmin.EndEntityProfileSession;
 import org.ejbca.config.CmpConfiguration;
+import org.ejbca.config.ConfigurationHolder;
 import org.ejbca.core.EjbcaException;
 import org.ejbca.core.ejb.authorization.AuthorizationSession;
 import org.ejbca.core.ejb.ca.caadmin.CAAdminSessionRemote;
 import org.ejbca.core.ejb.ca.caadmin.CaSessionRemote;
 import org.ejbca.core.ejb.ca.sign.SignSessionRemote;
 import org.ejbca.core.ejb.ca.store.CertificateStoreSession;
-import org.ejbca.core.ejb.ca.store.CertificateStoreSessionRemote;
 import org.ejbca.core.ejb.config.ConfigurationSessionRemote;
-import org.ejbca.core.ejb.ra.CertificateRequestSessionRemote;
 import org.ejbca.core.ejb.ra.UserAdminSessionRemote;
-import org.ejbca.core.model.AlgorithmConstants;
 import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.approval.WaitingForApprovalException;
 import org.ejbca.core.model.authorization.AdminEntity;
@@ -99,13 +83,11 @@ import org.ejbca.core.model.ca.certificateprofiles.CertificateProfileExistsExcep
 import org.ejbca.core.model.ca.certificateprofiles.EndUserCertificateProfile;
 import org.ejbca.core.model.ca.crl.RevokedCertInfo;
 import org.ejbca.core.model.log.Admin;
-import org.ejbca.core.model.ra.NotFoundException;
 import org.ejbca.core.model.ra.UserDataConstants;
 import org.ejbca.core.model.ra.UserDataVO;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfile;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfileExistsException;
 import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
-import org.ejbca.core.protocol.FailInfo;
 import org.ejbca.ui.cli.batch.BatchMakeP12;
 import org.ejbca.util.CertTools;
 import org.ejbca.util.CryptoProviderTools;
@@ -113,9 +95,8 @@ import org.ejbca.util.InterfaceCache;
 import org.ejbca.util.dn.DnComponents;
 import org.ejbca.util.keystore.KeyTools;
 import org.hibernate.ObjectNotFoundException;
+import org.junit.rules.TemporaryFolder;
 
-import com.novosec.pkix.asn1.cmp.CMPObjectIdentifiers;
-import com.novosec.pkix.asn1.cmp.InfoTypeAndValue;
 import com.novosec.pkix.asn1.cmp.PKIBody;
 import com.novosec.pkix.asn1.cmp.PKIHeader;
 import com.novosec.pkix.asn1.cmp.PKIMessage;
@@ -126,8 +107,6 @@ import com.novosec.pkix.asn1.crmf.CertReqMsg;
 import com.novosec.pkix.asn1.crmf.CertRequest;
 import com.novosec.pkix.asn1.crmf.CertTemplate;
 import com.novosec.pkix.asn1.crmf.OptionalValidity;
-import com.novosec.pkix.asn1.crmf.PBMParameter;
-import com.novosec.pkix.asn1.crmf.POPOSigningKey;
 import com.novosec.pkix.asn1.crmf.ProofOfPossession;
 
 /**
@@ -159,9 +138,16 @@ public class NestedMessageContentTest extends CmpTestCase {
     private String subjectDN;
     private String issuerDN;
     private String raCertsPath = "/tmp/racerts";
+	private TemporaryFolder folder = new TemporaryFolder();
 	
-	public NestedMessageContentTest(String arg0) {
+	public NestedMessageContentTest(String arg0) throws IOException {
 		super(arg0);
+        
+        CryptoProviderTools.installBCProvider();
+
+		// Create a temporary directory to store ra certificates, use JUnits TemporaryFolder that is deleted on exit
+		File createdFolder = folder.newFolder("racerts");
+		raCertsPath = createdFolder.getCanonicalPath();
 		
 		subjectDN = "CN=nestedCMPTest,C=SE";
         admin = new Admin(Admin.TYPE_BATCHCOMMANDLINE_USER);
@@ -200,14 +186,8 @@ public class NestedMessageContentTest extends CmpTestCase {
         updatePropertyOnServer(CmpConfiguration.CONFIG_RACERT_PATH, raCertsPath);
         updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE);
         updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "AdminCA1");
-
-        CryptoProviderTools.installBCProvider();
-        
-        //Creates CmpConfiguration.CONFIG_RACERT_PATH if it does not exist
-        File raCerts = new File(CmpConfiguration.getRaCertificatePath());
-        if(!raCerts.exists()) {
-        	raCerts.mkdirs();
-        }
+        // Also update raCerts path locally to be able to verify locally
+        ConfigurationHolder.instance().setProperty(CmpConfiguration.CONFIG_RACERT_PATH, raCertsPath);
         
         //Set the caid and cacert
         // Try to use AdminCA1 if it exists
@@ -338,7 +318,7 @@ public class NestedMessageContentTest extends CmpTestCase {
         	
         NestedMessageContent nestedMsg = new NestedMessageContent(myPKIMessage);
         boolean verify = nestedMsg.verify();
-        assertTrue("NestedMessageVerification faild.", verify);
+        assertTrue("NestedMessageVerification failed.", verify);
 		
 	}
 	
@@ -487,9 +467,8 @@ public class NestedMessageContentTest extends CmpTestCase {
         PKIBody myPKIBody = new PKIBody(crmfMsg, 20); // NestedMessageContent
         PKIMessage myPKIMessage = new PKIMessage(myPKIHeader, myPKIBody);
 		KeyPair raKeys = KeyTools.genKeys("1024", "RSA");
-		createRACertificate("raSignerTest05", "foo123", raKeys, nb, na);
+		// Don't create a certificate, so there is no RA cert authorized on the server side.
 		signPKIMessage(myPKIMessage, raKeys);
-		deleteRaCertificate("raSignerTest05");
             
             
         assertNotNull("Failed to create myPKIHeader", myPKIHeader);
@@ -604,15 +583,12 @@ public class NestedMessageContentTest extends CmpTestCase {
     public void testZZZCleanUp() throws Exception {
     	log.trace(">testZZZCleanUp");
     	
-    	certProfileSession.removeCertificateProfile(admin, "CMPTESTPROFILE");        
 		try {
 			userAdminSession.revokeAndDeleteUser(admin, "cmpTestAdmin", ReasonFlags.keyCompromise);
 		} catch(Exception e){}
 		
-		deleteRaCertificate("raCrmfSigner");
-		deleteRaCertificate("raRevSigner");
-		deleteRaCertificate("raSignerVerify");
-		deleteRaCertificate("raSignerTest04");
+    	certProfileSession.removeCertificateProfile(admin, "CMPTESTPROFILE");        
+		eeProfileSession.removeEndEntityProfile(admin, "CMPTESTPROFILE");
 		
 		assertTrue("Could not restore CMP configurations", confSession.restoreConfiguration());
         
@@ -653,19 +629,18 @@ public class NestedMessageContentTest extends CmpTestCase {
 			org.bouncycastle.asn1.x509.Time notAfter) throws AuthorizationDeniedException, EjbcaException, CertificateException, FileNotFoundException,
 			IOException, UserDoesntFullfillEndEntityProfile, ObjectNotFoundException, Exception {
 		
-		assertTrue("RACertPath is suppose to be \"" + raCertsPath + "\", instead it is \"" + CmpConfiguration.getRaCertificatePath() + "\".", confSession.verifyProperty(CmpConfiguration.CONFIG_RACERT_PATH, raCertsPath));
-		assertEquals(raCertsPath, CmpConfiguration.getRaCertificatePath());
+		assertTrue("RACertPath is suppose to be \"" + raCertsPath + "\", instead it is \"" + confSession.getProperty(CmpConfiguration.CONFIG_RACERT_PATH, null) + "\".", confSession.verifyProperty(CmpConfiguration.CONFIG_RACERT_PATH, raCertsPath));
 		
-        UserDataVO userdata = createUser(username, "CN="+username, password);
+        createUser(username, "CN="+username, password);
         Certificate racert = signSession.createCertificate(admin, username, password, keys.getPublic(), X509KeyUsage.digitalSignature|X509KeyUsage.keyCertSign, notAfter.getDate(), notBefore.getDate());
         
         Vector<Certificate> certCollection = new Vector<Certificate>();
         certCollection.add(racert);
         byte[] pemRaCert = CertTools.getPEMFromCerts(certCollection);
         
-        String raCertPath = CmpConfiguration.getRaCertificatePath();
+        String raCertPath = confSession.getProperty(CmpConfiguration.CONFIG_RACERT_PATH, null);
         String filename = raCertPath + "/" + username + ".pem";
-        File file = new File(filename);
+        File file = folder.newFile(filename);
         assertNotNull(file);
         FileOutputStream fout = new FileOutputStream(file);
         fout.write(pemRaCert);
@@ -676,26 +651,6 @@ public class NestedMessageContentTest extends CmpTestCase {
 
 	}
 	
-	private void deleteRaCertificate(String username) {
-		String raCertsPath = CmpConfiguration.getRaCertificatePath();
-		String filepath = raCertsPath + "/" + username + ".pem";
-		File fileToDelete = new File(filepath);
-					
-		// Make sure the file or directory exists and isn't write protected
-		if (!fileToDelete.exists()) {
-			log.error("Delete: no such file or directory: " + fileToDelete.getName());
-			throw new IllegalArgumentException("Delete: no such file or directory: " + fileToDelete.getName());
-		}
-		
-		if (!fileToDelete.canWrite()) {
-			log.error("Delete: write protected: " + fileToDelete.getName());
-			throw new IllegalArgumentException("Delete: write protected: " + fileToDelete.getName());
-		}
-		
-		fileToDelete.delete();
-		log.debug("Deleted file: " + fileToDelete.getName());
-	}
-
 	private void signPKIMessage(PKIMessage msg, KeyPair keys) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException, SignatureException {
 		final Signature sig = Signature.getInstance(PKCSObjectIdentifiers.sha1WithRSAEncryption.getId(), "BC");
 		sig.initSign(keys.getPrivate());
