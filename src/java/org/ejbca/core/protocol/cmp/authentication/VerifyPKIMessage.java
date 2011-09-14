@@ -63,8 +63,8 @@ public class VerifyPKIMessage {
 		this.errMsg = null;
 	}
 	
-	public VerifyPKIMessage(CAInfo cainfo, Admin admin, CAAdminSession caSession, UserAdminSession userSession, CertificateStoreSession certSession,
-				AuthorizationSession authSession, EndEntityProfileSession eeprofSession) {
+	public VerifyPKIMessage(final CAInfo cainfo, final Admin admin, final CAAdminSession caSession, final UserAdminSession userSession, final CertificateStoreSession certSession,
+			final AuthorizationSession authSession, final EndEntityProfileSession eeprofSession) {
 		this.cainfo = cainfo;
 		this.authModule = null;
 		
@@ -105,11 +105,11 @@ public class VerifyPKIMessage {
 	 * @param msg
 	 * @return True if verification is successful. False otherwise
 	 */
-	public boolean verify(PKIMessage msg) {
-		String authModules = CmpConfiguration.getAuthenticationModule();
-		String authparameters = CmpConfiguration.getAuthenticationParameters();
-		String modules[] = authModules.split(";");
-		String params[] = authparameters.split(";");
+	public boolean verify(final PKIMessage msg) {
+		final String authModules = CmpConfiguration.getAuthenticationModule();
+		final String authparameters = CmpConfiguration.getAuthenticationParameters();
+		final String modules[] = authModules.split(";");
+		final String params[] = authparameters.split(";");
 		
 		ICMPAuthenticationModule module = null;
 		int i=0;
@@ -139,14 +139,14 @@ public class VerifyPKIMessage {
 	 * @param pkimsg
 	 * @return The authentication module whose name is 'module'. Null if no such module is implemented.
 	 */
-	private ICMPAuthenticationModule getAuthModule(String module, String parameter, PKIMessage pkimsg) {
+	private ICMPAuthenticationModule getAuthModule(final String module, final String parameter, final PKIMessage pkimsg) {
 		if(StringUtils.equals(module, CmpConfiguration.AUTHMODULE_HMAC)) {
-			HMACAuthenticationModule hmacmodule = new HMACAuthenticationModule(parameter);
+			final HMACAuthenticationModule hmacmodule = new HMACAuthenticationModule(parameter);
 			hmacmodule.setSession(this.admin, this.userAdminSession);
 			hmacmodule.setCaInfo(this.cainfo);
 			return hmacmodule;
 		} else if(StringUtils.equals(module, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE)) {
-			EndEntityCertificateAuthenticationModule eemodule = new EndEntityCertificateAuthenticationModule(parameter);
+			final EndEntityCertificateAuthenticationModule eemodule = new EndEntityCertificateAuthenticationModule(parameter);
 			eemodule.setSession(this.admin, this.caAdminSession, this.certificateStoreSession, this.authorizationSessoin, this.eeProfileSession);
 			return eemodule;
 		}

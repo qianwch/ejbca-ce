@@ -36,13 +36,13 @@ public class DnPartPasswordExtractor {
 	 * @param dnPart
 	 * @return
 	 */
-	public static String extractPassword(CertReqMsg req, String dnPart) {
+	public static String extractPassword(final CertReqMsg req, final String dnPart) {
 		String ret = null;
-		String dnString = req.getCertReq().getCertTemplate().getSubject().toString();
+		final String dnString = req.getCertReq().getCertTemplate().getSubject().toString();
 		if(log.isDebugEnabled()) {
 			log.debug("Extracting password from SubjectDN \"" + dnString + "\" and DN part \"" + dnPart + "\"");
 		}
-		if(dnString != null) {
+		if (dnString != null) {
 			ret = CertTools.getPartFromDN(dnString, dnPart);
 		}
 		

@@ -52,28 +52,30 @@ public class CmpPbeVerifyer {
 	private byte[] salt = null;
 	private String lastUsedRaSecret = null;
 	
-	public CmpPbeVerifyer(PKIMessage msg) {
-		PKIHeader head = msg.getHeader();
+	public CmpPbeVerifyer(final PKIMessage msg) {
+		final PKIHeader head = msg.getHeader();
 		protectedBytes = msg.getProtectedBytes();
 		protection = msg.getProtection();
 		pAlg = head.getProtectionAlg();
-		LOG.debug("Protection type is: "+pAlg.getObjectId().getId());
-		PBMParameter pp = PBMParameter.getInstance(pAlg.getParameters());
+		final PBMParameter pp = PBMParameter.getInstance(pAlg.getParameters());
 		iterationCount = pp.getIterationCount().getPositiveValue().intValue();
-		LOG.debug("Iteration count is: "+iterationCount);
-		AlgorithmIdentifier owfAlg = pp.getOwf();
+		final AlgorithmIdentifier owfAlg = pp.getOwf();
 		// Normal OWF alg is 1.3.14.3.2.26 - SHA1
 		owfOid = owfAlg.getObjectId().getId();
-		LOG.debug("Owf type is: "+owfOid);
-		AlgorithmIdentifier macAlg = pp.getMac();
+		final AlgorithmIdentifier macAlg = pp.getMac();
 		// Normal mac alg is 1.3.6.1.5.5.8.1.2 - HMAC/SHA1
 		macOid = macAlg.getObjectId().getId();
-		LOG.debug("Mac type is: "+macOid);
+		if (LOG.isDebugEnabled()) {
+			LOG.debug("Protection type is: "+pAlg.getObjectId().getId());
+			LOG.debug("Iteration count is: "+iterationCount);
+			LOG.debug("Owf type is: "+owfOid);
+			LOG.debug("Mac type is: "+macOid);
+		}
 		salt = pp.getSalt().getOctets();
 		//log.info("Salt: "+new String(salt));
 	}
 	
-	public boolean verify(String raAuthenticationSecret) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException {
+	public boolean verify(final String raAuthenticationSecret) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException {
 		lastUsedRaSecret = raAuthenticationSecret;
 		boolean ret = false;
 		// Verify the PasswordBased protection of the message
@@ -86,14 +88,10 @@ public class CmpPbeVerifyer {
 				LOG.info("Received message with too many iterations in PBE protection: "+iterationCount);
 				throw new InvalidKeyException("Iteration count can not exceed 10000");
 			}			
-			byte[] raSecret = raAuthenticationSecret.getBytes();
+			final byte[] raSecret = raAuthenticationSecret.getBytes();
 			byte[] basekey = new byte[raSecret.length + salt.length];
-			for (int i = 0; i < raSecret.length; i++) {
-				basekey[i] = raSecret[i];
-			}
-			for (int i = 0; i < salt.length; i++) {
-				basekey[raSecret.length+i] = salt[i];
-			}
+			System.arraycopy(raSecret, 0, basekey, 0, raSecret.length);
+			System.arraycopy(salt, 0, basekey, raSecret.length, salt.length);
 			// Construct the base key according to rfc4210, section 5.1.3.1
 			MessageDigest dig = MessageDigest.getInstance(owfOid, "BC");
 			for (int i = 0; i < iterationCount; i++) {
@@ -101,14 +99,14 @@ public class CmpPbeVerifyer {
 				dig.reset();
 			}
 			// HMAC/SHA1 is normal 1.3.6.1.5.5.8.1.2 or 1.2.840.113549.2.7 
-			Mac mac = Mac.getInstance(macOid, "BC");
-			SecretKey key = new SecretKeySpec(basekey, macOid);
+			final Mac mac = Mac.getInstance(macOid, "BC");
+			final SecretKey key = new SecretKeySpec(basekey, macOid);
 			mac.init(key);
 			mac.reset();
 			mac.update(protectedBytes, 0, protectedBytes.length);
-			byte[] out = mac.doFinal();
+			final byte[] out = mac.doFinal();
 			// My out should now be the same as the protection bits
-			byte[] pb = protection.getBytes();
+			final byte[] pb = protection.getBytes();
 			ret = Arrays.equals(out, pb);
 		}
 		return ret;

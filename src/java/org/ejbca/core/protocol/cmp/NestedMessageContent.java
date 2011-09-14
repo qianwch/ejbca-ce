@@ -64,7 +64,7 @@ public class NestedMessageContent extends BaseCmpMessage implements IRequestMess
 
 	public NestedMessageContent() {}
 	
-	public NestedMessageContent(PKIMessage pkiMsg) {
+	public NestedMessageContent(final PKIMessage pkiMsg) {
 		this.raSignedMessage = pkiMsg;
 		setPKIMessageBytes(pkiMsg);
 		this.originalMessage = pkiMsg.getBody().getNested();
@@ -101,8 +101,8 @@ public class NestedMessageContent extends BaseCmpMessage implements IRequestMess
 	public boolean verify() {
 		boolean ret = false;
 		try {
-			Vector<X509Certificate> racerts = getRaCerts();
-			Iterator<X509Certificate> itr = racerts.iterator();
+			final Vector<X509Certificate> racerts = getRaCerts();
+			final Iterator<X509Certificate> itr = racerts.iterator();
 			X509Certificate cert;
 			Signature sig;
 			while(itr.hasNext() && !ret) {
@@ -156,10 +156,10 @@ public class NestedMessageContent extends BaseCmpMessage implements IRequestMess
 	 */
 	private Vector<X509Certificate> getRaCerts() throws CertificateException, IOException {
 			
-		Vector<X509Certificate> racerts = new Vector<X509Certificate>();
-		String raCertsPath = CmpConfiguration.getRaCertificatePath();
-		File raCertDirectory = new File(raCertsPath);
-		String[] files = raCertDirectory.list();
+		final Vector<X509Certificate> racerts = new Vector<X509Certificate>();
+		final String raCertsPath = CmpConfiguration.getRaCertificatePath();
+		final File raCertDirectory = new File(raCertsPath);
+		final String[] files = raCertDirectory.list();
 		String filepath;
 		if(files != null) {
 			for(String certFile : files) {
@@ -173,9 +173,9 @@ public class NestedMessageContent extends BaseCmpMessage implements IRequestMess
 	
 	
 	@Override
-	public IResponseMessage createResponseMessage(Class responseClass,
-			IRequestMessage req, Certificate cert, PrivateKey signPriv,
-			String provider) {
+	public IResponseMessage createResponseMessage(final Class responseClass,
+			final IRequestMessage req, final Certificate cert, final PrivateKey signPriv,
+			final String provider) {
 		return null;
 	}
 
@@ -286,5 +286,5 @@ public class NestedMessageContent extends BaseCmpMessage implements IRequestMess
 	}
 
 	@Override
-	public void setKeyInfo(Certificate cert, PrivateKey key, String provider) {}
+	public void setKeyInfo(final Certificate cert, final PrivateKey key, final String provider) {}
 }

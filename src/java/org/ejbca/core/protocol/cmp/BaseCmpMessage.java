@@ -44,20 +44,20 @@ public abstract class BaseCmpMessage implements Serializable {
 	private String pbeKeyId = null;
 	private String pbeKey = null;
 
-	public void setSenderNonce(String b64nonce) {
+	public void setSenderNonce(final String b64nonce) {
 		this.b64SenderNonce = b64nonce;
 	}
 	public String getSenderNonce() {
 		return b64SenderNonce;
 	}
-	public void setRecipientNonce(String b64nonce) {
+	public void setRecipientNonce(final String b64nonce) {
 		this.b64RecipientNonce = b64nonce;
 	}
 	public String getRecipientNonce() {
 		return b64RecipientNonce;
 	}
 
-	public void setTransactionId(String b64transid) {
+	public void setTransactionId(final String b64transid) {
 		this.b64TransId = b64transid;
 	}
 	public String getTransactionId() {
@@ -66,7 +66,7 @@ public abstract class BaseCmpMessage implements Serializable {
 
 	public GeneralName getRecipient() {
 		if (recipient == null && recipientBytes != null) {
-			ASN1InputStream ais = new ASN1InputStream(new ByteArrayInputStream(recipientBytes));
+			final ASN1InputStream ais = new ASN1InputStream(new ByteArrayInputStream(recipientBytes));
 			try {
 				recipient = GeneralName.getInstance(ais.readObject());
 			} catch (IOException e) {
@@ -75,10 +75,10 @@ public abstract class BaseCmpMessage implements Serializable {
 		}
 		return recipient;
 	}
-	public void setRecipient(GeneralName recipient) {
+	public void setRecipient(final GeneralName recipient) {
 		this.recipient = recipient;
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		ASN1OutputStream aos = new ASN1OutputStream(baos);
+		final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		final ASN1OutputStream aos = new ASN1OutputStream(baos);
 		try {
 			aos.writeObject(recipient);
 		} catch (IOException e) {
@@ -88,7 +88,7 @@ public abstract class BaseCmpMessage implements Serializable {
 	}
 	public GeneralName getSender() {
 		if (sender == null && senderBytes != null) {
-			ASN1InputStream ais = new ASN1InputStream(new ByteArrayInputStream(senderBytes));
+			final ASN1InputStream ais = new ASN1InputStream(new ByteArrayInputStream(senderBytes));
 			try {
 				sender = GeneralName.getInstance(ais.readObject());
 			} catch (IOException e) {
@@ -97,10 +97,10 @@ public abstract class BaseCmpMessage implements Serializable {
 		}
 		return sender;
 	}
-	public void setSender(GeneralName sender) {
+	public void setSender(final GeneralName sender) {
 		this.sender = sender;
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		ASN1OutputStream aos = new ASN1OutputStream(baos);
+		final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		final ASN1OutputStream aos = new ASN1OutputStream(baos);
 		try {
 			aos.writeObject(sender);
 		} catch (IOException e) {
@@ -114,16 +114,16 @@ public abstract class BaseCmpMessage implements Serializable {
 	public PKIMessage getMessage() {
 		return msg;
 	}
-	public void setMessage(PKIMessage msg) {
+	public void setMessage(final PKIMessage msg) {
 		this.msg = msg;
 	}
 	public String getProtectionType() {
 		return protectionType;
 	}
-	public void setProtectionType(String protectionType) {
+	public void setProtectionType(final String protectionType) {
 		this.protectionType = protectionType;
 	}
-	public void setPbeParameters(String keyId, String key, String digestAlg, String macAlg, int iterationCount) {
+	public void setPbeParameters(final String keyId, final String key, final String digestAlg, final String macAlg, final int iterationCount) {
 		this.pbeKeyId = keyId;
 		this.pbeKey = key;
 		this.pbeDigestAlg = digestAlg;

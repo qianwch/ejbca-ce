@@ -61,7 +61,7 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 	
 	private CmpPbeVerifyer verifyer;
 		
-	public HMACAuthenticationModule(String parameter) {
+	public HMACAuthenticationModule(final String parameter) {
 		this.raAuthSecret = parameter;
 		if(StringUtils.equals(raAuthSecret, "-")) {
 			this.raAuthSecret = CmpConfiguration.getRAAuthenticationSecret();
@@ -76,7 +76,7 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 		this.verifyer = null;
 	}
 
-	public void setCaInfo(CAInfo cainfo) {
+	public void setCaInfo(final CAInfo cainfo) {
 		this.cainfo = cainfo;
 	}
 	
@@ -86,7 +86,7 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 	 * @param adm
 	 * @param userSession
 	 */
-	public void setSession(Admin adm, UserAdminSession userSession) {
+	public void setSession(final Admin adm, final UserAdminSession userSession) {
 		this.admin = adm;
 		this.userAdminSession = userSession;
 	}
@@ -144,7 +144,7 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 	 * @param msg
 	 * @return true if the message signature was verified successfully and false otherwise.
 	 */
-	public boolean verify(PKIMessage msg) {
+	public boolean verify(final PKIMessage msg) {
 		
 		if(msg == null) {
 			LOG.error("No PKIMessage was found");
@@ -235,9 +235,9 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 			
 			//If neither a global shared secret nor CA specific secret, we try to get the pre-registered endentity from the DB, and if there is a 
 			//clear text password we check HMAC using this password.
-			CertTemplate certTemp = getCertTemplate(msg);
-			String subjectDN = certTemp.getSubject().toString();
-			String issuerDN = certTemp.getIssuer().toString();
+			final CertTemplate certTemp = getCertTemplate(msg);
+			final String subjectDN = certTemp.getSubject().toString();
+			final String issuerDN = certTemp.getIssuer().toString();
 			if(LOG.isDebugEnabled()) {
 				LOG.debug("Searching for an end entity with SubjectDN=\"" + subjectDN + "\" and issuerDN=\"" + issuerDN + "\"");
 			}
@@ -248,9 +248,9 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 				LOG.info("No EndEntity with subjectDN \"" + subjectDN + "\" and issuer \"" + issuerDN + "\" could be found, wich is expected if the request had been send in Client mode.");
 			}
 			if(userdata != null) {
-				String eepassword = userdata.getPassword();
+				final String eepassword = userdata.getPassword();
 				if(StringUtils.isNotEmpty(eepassword)) { 
-					CmpPbeVerifyer cmpverify = new CmpPbeVerifyer(msg);
+					final CmpPbeVerifyer cmpverify = new CmpPbeVerifyer(msg);
 					try {
 						if(cmpverify.verify(eepassword)) {
 							this.password = eepassword;
@@ -281,8 +281,8 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
      * @param msg
      * @return the certificate template imbeded in msg. Null if no such template was found.
      */
-    private CertTemplate getCertTemplate(PKIMessage msg) {
-    	int tagnr = msg.getBody().getTagNo();
+    private CertTemplate getCertTemplate(final PKIMessage msg) {
+    	final int tagnr = msg.getBody().getTagNo();
     	if(tagnr == CmpPKIBodyConstants.INITIALIZATIONREQUEST) {
     		return msg.getBody().getIr().getCertReqMsg(0).getCertReq().getCertTemplate();
     	}

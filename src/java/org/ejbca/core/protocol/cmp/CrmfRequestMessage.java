@@ -171,21 +171,21 @@ public class CrmfRequestMessage extends BaseCmpMessage implements ICrmfRequestMe
 		this.req = msgs.getCertReqMsg(0);
 		DEROctetString os = header.getTransactionID();
 		if (os != null) {
-			byte[] val = os.getOctets();
+			final byte[] val = os.getOctets();
 			if (val != null) {
 				setTransactionId(new String(Base64.encode(val)));							
 			}
 		}
         os = header.getSenderKID();
         if(os != null) {
-            byte[] val = os.getOctets();
+        	final byte[] val = os.getOctets();
             if (val != null) {
                 setSenderKID(new String(Base64.encode(val)));
             }
         }
 		os = header.getSenderNonce();
 		if (os != null) {
-			byte[] val = os.getOctets();
+			final byte[] val = os.getOctets();
 			if (val != null) {
 				setSenderNonce(new String(Base64.encode(val)));							
 			}
@@ -199,8 +199,7 @@ public class CrmfRequestMessage extends BaseCmpMessage implements ICrmfRequestMe
 		final CertRequest request = getReq().getCertReq();
 		final CertTemplate templ = request.getCertTemplate();
 		final SubjectPublicKeyInfo keyInfo = templ.getPublicKey();
-		final PublicKey pk = getPublicKey(keyInfo, "BC");
-		return pk;
+		return getPublicKey(keyInfo, "BC");
 	}
 	private PublicKey getPublicKey(final SubjectPublicKeyInfo subjectPKInfo, final String  provider) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException {		
 		try {
@@ -210,7 +209,7 @@ public class CrmfRequestMessage extends BaseCmpMessage implements ICrmfRequestMe
 		} catch (java.security.spec.InvalidKeySpecException e) {
 			final InvalidKeyException newe = new InvalidKeyException("Error decoding public key.");
 			newe.initCause(e);
-			throw newe;
+			throw newe; // NOPMD: we store the original exception above
 		}
 	}
 	
@@ -236,10 +235,10 @@ public class CrmfRequestMessage extends BaseCmpMessage implements ICrmfRequestMe
 	}
 	
 	private String getAuthenticationPassword() {
-		String authenticationModulels = CmpConfiguration.getAuthenticationModule();
-		String authenticationParameters = CmpConfiguration.getAuthenticationParameters();
-		String modules[] = authenticationModulels.split(";");
-		String parameters[] = authenticationParameters.split(";");
+		final String authenticationModulels = CmpConfiguration.getAuthenticationModule();
+		final String authenticationParameters = CmpConfiguration.getAuthenticationParameters();
+		final String modules[] = authenticationModulels.split(";");
+		final String parameters[] = authenticationParameters.split(";");
 		
 		int i=0;
 		String ret = null;
@@ -273,7 +272,7 @@ public class CrmfRequestMessage extends BaseCmpMessage implements ICrmfRequestMe
         	if (StringUtils.isEmpty(component)) {
         		component = "CN";
         	}
-            String name = CertTools.getPartFromDN(getRequestDN(), component);
+        	final String name = CertTools.getPartFromDN(getRequestDN(), component);
             if (name == null) {
                 log.error("No component "+component+" in DN: "+getRequestDN());
             } else {

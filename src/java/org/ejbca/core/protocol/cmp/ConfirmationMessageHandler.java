@@ -72,13 +72,13 @@ public class ConfirmationMessageHandler extends BaseCmpMessageHandler implements
 	private CaSession caSession;
 	
 	//public ConfirmationMessageHandler(Admin admin, CAAdminSession caAdminSession, EndEntityProfileSession endEntityProfileSession, CertificateProfileSession certificateProfileSession) {
-	public ConfirmationMessageHandler(Admin admin, CAAdminSession caAdminSession, CaSession caSession, EndEntityProfileSession endEntityProfileSession, CertificateProfileSession certificateProfileSession) {
+	public ConfirmationMessageHandler(final Admin admin, final CAAdminSession caAdminSession, final CaSession caSession, final EndEntityProfileSession endEntityProfileSession, final CertificateProfileSession certificateProfileSession) {
 		super(admin, caAdminSession, endEntityProfileSession, certificateProfileSession);
 		raAuthenticationSecret = CmpConfiguration.getRAAuthenticationSecret();
 		responseProtection = CmpConfiguration.getResponseProtection();
 		this.caSession = caSession;
 	}
-	public IResponseMessage handleMessage(BaseCmpMessage msg) {
+	public IResponseMessage handleMessage(final BaseCmpMessage msg) {
 		if (LOG.isTraceEnabled()) {
 			LOG.trace(">handleMessage");
 		}
@@ -91,10 +91,10 @@ public class ConfirmationMessageHandler extends BaseCmpMessageHandler implements
 			String macAlg = null;
 			int iterationCount = 1024;
 			String cmpRaAuthSecret = null;	
-			String keyId = getSenderKeyId(msg.getHeader());
+			final String keyId = getSenderKeyId(msg.getHeader());
 			if (keyId != null) {
 				try {
-					CmpPbeVerifyer verifyer = new CmpPbeVerifyer(msg.getMessage());
+					final CmpPbeVerifyer verifyer = new CmpPbeVerifyer(msg.getMessage());
 					owfAlg = verifyer.getOwfOid();
 					macAlg = verifyer.getMacOid();
 					iterationCount = verifyer.getIterationCount();
@@ -110,8 +110,8 @@ public class ConfirmationMessageHandler extends BaseCmpMessageHandler implements
 						// Get the correct profiles' and CA ids based on current configuration. 
 						CAInfo caInfo;
 						try {
-							int eeProfileId = getUsedEndEntityProfileId(keyId);
-							int caId = getUsedCaId(keyId, eeProfileId);
+							final int eeProfileId = getUsedEndEntityProfileId(keyId);
+							final int caId = getUsedCaId(keyId, eeProfileId);
 							caInfo = caAdminSession.getCAInfo(admin, caId);
 						} catch (NotFoundException e) {
 							LOG.info(INTRES.getLocalizedMessage(CMP_ERRORGENERAL, e.getMessage()), e);
@@ -148,7 +148,7 @@ public class ConfirmationMessageHandler extends BaseCmpMessageHandler implements
 			if (LOG.isDebugEnabled()) {
 				LOG.debug("Creating a PKI confirm message response");
 			}
-			CmpConfirmResponseMessage cresp = new CmpConfirmResponseMessage();
+			final CmpConfirmResponseMessage cresp = new CmpConfirmResponseMessage();
 			cresp.setRecipientNonce(msg.getSenderNonce());
 			cresp.setSenderNonce(new String(Base64.encode(CmpMessageHelper.createSenderNonce())));
 			cresp.setSender(msg.getRecipient());
@@ -163,7 +163,7 @@ public class ConfirmationMessageHandler extends BaseCmpMessageHandler implements
 			 } else if (StringUtils.equals(responseProtection, "signature")) {
 				try {
 					// Get the CA that should sign the response
-					String cadn = CertTools.stringToBCDNString(msg.getRecipient().getName().toString());
+					final String cadn = CertTools.stringToBCDNString(msg.getRecipient().getName().toString());
 				    CA ca = null;
 				    if (cadn == null) {
 				    	if (LOG.isDebugEnabled()) {
@@ -177,7 +177,7 @@ public class ConfirmationMessageHandler extends BaseCmpMessageHandler implements
 				        ca = caSession.getCA(admin, cadn.hashCode());
 				    }
 				    if (ca != null) {
-				    	CATokenContainer catoken = ca.getCAToken();
+				    	final CATokenContainer catoken = ca.getCAToken();
 				        cresp.setSignKeyInfo(ca.getCACertificate(), catoken.getPrivateKey(SecConst.CAKEYPURPOSE_CERTSIGN), catoken.getProvider());
 				    } else {
 				        if (LOG.isDebugEnabled()) {

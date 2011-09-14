@@ -65,7 +65,7 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
 	private AuthorizationSession authSession;
 	private EndEntityProfileSession eeProfileSession;
 
-	public EndEntityCertificateAuthenticationModule(String parameter) {
+	public EndEntityCertificateAuthenticationModule(final String parameter) {
 		this.authenticationParameterCAName = parameter;
 		password = null;
 		errorMessage = null;
@@ -86,8 +86,8 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
 	 * @param authSession
 	 * @param eeprofSession
 	 */
-	public void setSession(Admin adm, CAAdminSession caSession, CertificateStoreSession certSession, 
-					AuthorizationSession authSession, EndEntityProfileSession eeprofSession) {
+	public void setSession(final Admin adm, final CAAdminSession caSession, final CertificateStoreSession certSession, 
+			final AuthorizationSession authSession, final EndEntityProfileSession eeprofSession) {
 		this.admin = adm;
 		this.caSession = caSession;
 		this.certSession = certSession;
@@ -137,10 +137,10 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
 	 * @param msg
 	 * @return true if the message signature was verified successfully and false otherwise.
 	 */
-	public boolean verify(PKIMessage msg) {
+	public boolean verify(final PKIMessage msg) {
 		
 		//Check that there is a certificate in the extraCert field in msg
- 		X509CertificateStructure extraCertStruct = msg.getExtraCert(0);
+		final X509CertificateStructure extraCertStruct = msg.getExtraCert(0);
 		if(extraCertStruct == null) {
 			errorMessage = "There is no certificate in the extraCert field in the PKIMessage";
 			log.info(errorMessage);
@@ -166,7 +166,7 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
 		if(CmpConfiguration.getCheckAdminAuthorization()) {
 			
 			//Check that the certificate in the extraCert field exists in the DB
-			Certificate dbcert = certSession.findCertificateByFingerprint(admin, CertTools.getFingerprintAsString(extracert));
+			final Certificate dbcert = certSession.findCertificateByFingerprint(admin, CertTools.getFingerprintAsString(extracert));
 			if(dbcert == null) {
 				errorMessage = "The End Entity certificate attached to the PKIMessage in the extraCert field could not be found in the database.";
 				if(log.isDebugEnabled()) {
@@ -176,7 +176,7 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
 			}
 			
 			//Check that the extraCert is given by the right CA
-			CAInfo ca = caSession.getCAInfo(this.admin, this.authenticationParameterCAName);
+			final CAInfo ca = caSession.getCAInfo(this.admin, this.authenticationParameterCAName);
 			if(!StringUtils.equals(CertTools.getIssuerDN(extracert), ca.getSubjectDN())) {
 				errorMessage = "The End Entity certificate attached to the PKIMessage is not given by the CA \"" + this.authenticationParameterCAName + "\"";
 				if(log.isDebugEnabled()) {
@@ -255,28 +255,24 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
      * @return true if the administrator is authorized to process the request and false otherwise.
      * @throws NotFoundException
      */
-    private boolean isAuthorized(Certificate cert, PKIMessage msg, int caid) throws NotFoundException {
-    	CertificateInfo certInfo = certSession.getCertificateInfo(admin, CertTools.getFingerprintAsString(cert));
-    	String username = certInfo.getUsername();
-    	Admin reqAdmin = new Admin(cert, username, CertTools.getEMailAddress(cert));    	
+    private boolean isAuthorized(final Certificate cert, final PKIMessage msg, final int caid) throws NotFoundException {
+    	final CertificateInfo certInfo = certSession.getCertificateInfo(admin, CertTools.getFingerprintAsString(cert));
+    	final String username = certInfo.getUsername();
+    	final Admin reqAdmin = new Admin(cert, username, CertTools.getEMailAddress(cert));    	
     	
         if (!authorizedToCA(reqAdmin, caid)) {
             errorMessage = intres.getLocalizedMessage("ra.errorauthca", Integer.valueOf(caid));
-            if(log.isDebugEnabled()) {
-            	log.error("Admin " + username + " is not authorized for CA " + caid);
-            }
+            log.info("Admin " + username + " is not authorized for CA " + caid);
             return false;
         }
         
-        int eeprofid = getUsedEndEntityProfileId(msg.getHeader().getSenderKID().toString());
-        int tagnr = msg.getBody().getTagNo();
+        final int eeprofid = getUsedEndEntityProfileId(msg.getHeader().getSenderKID().toString());
+        final int tagnr = msg.getBody().getTagNo();
         if((tagnr == CmpPKIBodyConstants.CERTIFICATAIONREQUEST) || (tagnr == CmpPKIBodyConstants.INITIALIZATIONREQUEST)) {
         
             if (!authorizedToEndEntityProfile(reqAdmin, eeprofid, AccessRulesConstants.CREATE_RIGHTS)) {
             	errorMessage = intres.getLocalizedMessage("ra.errorauthprofile", Integer.valueOf(eeprofid));
-            	if(log.isDebugEnabled()) {
-            		log.error(errorMessage);
-            	}
+            	log.info(errorMessage);
                 return false;
             }
             
@@ -290,26 +286,20 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
         	
         	if(!authSession.isAuthorizedNoLog(admin, AccessRulesConstants.REGULAR_CREATECERTIFICATE)) {
         		errorMessage = "Administrator " + username + " is not authorized to create certificates.";
-        		if(log.isDebugEnabled()) {
-        			log.error(errorMessage);
-        		}
+        		log.info(errorMessage);
                 return false;
         	}
 		} else if(tagnr == CmpPKIBodyConstants.REVOCATIONREQUEST) {
 			
         	if(!authorizedToEndEntityProfile(reqAdmin, eeprofid, AccessRulesConstants.REVOKE_RIGHTS)) {
         		errorMessage = "Administrator " + username + " is not authorized to revoke.";
-        		if(log.isDebugEnabled()) {
-        			log.error(errorMessage);
-        		}
+        		log.info(errorMessage);
                 return false;
         	}
 			
         	if(!authSession.isAuthorizedNoLog(admin, AccessRulesConstants.REGULAR_REVOKEENDENTITY)) {
         		errorMessage = "Administrator " + username + " is not authorized to revoke End Entities";
-        		if(log.isDebugEnabled()) {
-        			log.error(errorMessage);
-        		}
+        		log.info(errorMessage);
                 return false;
         	}
         	

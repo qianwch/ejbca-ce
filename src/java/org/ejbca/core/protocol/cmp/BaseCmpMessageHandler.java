@@ -38,7 +38,7 @@ import com.novosec.pkix.asn1.cmp.PKIHeader;
  */
 public class BaseCmpMessageHandler {
 
-	private static Logger LOG = Logger.getLogger(BaseCmpMessageHandler.class);
+	private static final Logger LOG = Logger.getLogger(BaseCmpMessageHandler.class);
 
     /** strings for error messages defined in internal resources */
 	protected static final String CMP_ERRORADDUSER = "cmp.erroradduser";
@@ -57,7 +57,7 @@ public class BaseCmpMessageHandler {
 	protected BaseCmpMessageHandler() {
 	}
 
-	protected BaseCmpMessageHandler(final Admin admin, CAAdminSession caAdminSession, EndEntityProfileSession endEntityProfileSession, CertificateProfileSession certificateProfileSession) {
+	protected BaseCmpMessageHandler(final Admin admin, final CAAdminSession caAdminSession, final EndEntityProfileSession endEntityProfileSession, final CertificateProfileSession certificateProfileSession) {
 		this.admin = admin;
 		this.caAdminSession = caAdminSession;
 		this.endEntityProfileSession = endEntityProfileSession;
@@ -65,7 +65,7 @@ public class BaseCmpMessageHandler {
 	}
 
 	/** @return SenderKeyId of in the header or null none was found. */
-	protected String getSenderKeyId(PKIHeader head) {
+	protected String getSenderKeyId(final PKIHeader head) {
 		String keyId = null;
 		final DEROctetString os = head.getSenderKID();
 		if (os != null) {
@@ -105,7 +105,7 @@ public class BaseCmpMessageHandler {
 	}
 
 	/** @return the CA id to use for a request based on the current configuration, used end entity profile and keyId. */
-	protected int getUsedCaId(String keyId, int eeProfileId) throws NotFoundException {
+	protected int getUsedCaId(final String keyId, int eeProfileId) throws NotFoundException {
 		int ret = 0;
 		final String caName = CmpConfiguration.getRACAName();
 		if (StringUtils.equals(caName, "ProfileDefault")) {

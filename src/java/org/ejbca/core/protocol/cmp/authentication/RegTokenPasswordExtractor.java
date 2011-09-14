@@ -38,7 +38,7 @@ public class RegTokenPasswordExtractor {
 	 * @param req
 	 * @return the password extracted from the CRMF request. Null if no such password was found.
 	 */
-	public static String extractPassword(CertReqMsg req) {
+	public static String extractPassword(final CertReqMsg req) {
 		
 		String ret = null;
 		

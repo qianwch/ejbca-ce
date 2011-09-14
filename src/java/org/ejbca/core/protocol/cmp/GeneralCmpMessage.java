@@ -50,8 +50,8 @@ public class GeneralCmpMessage extends BaseCmpMessage {
      */
     static final long serialVersionUID = 1000L;
 
-	public GeneralCmpMessage(PKIMessage msg) {
-		PKIBody body = msg.getBody();
+	public GeneralCmpMessage(final PKIMessage msg) {
+		final PKIBody body = msg.getBody();
 		int tag = body.getTagNo();
 		if (tag == 19) {
 			// this is a PKIConfirmContent
@@ -66,8 +66,8 @@ public class GeneralCmpMessage extends BaseCmpMessage {
 			if (log.isDebugEnabled()) {
 				log.debug("Received a Cert Confirm message");
 			}
-			CertConfirmContent obj = body.getCertConf();
-			PKIStatusInfo status = obj.getPKIStatus();
+			final CertConfirmContent obj = body.getCertConf();
+			final PKIStatusInfo status = obj.getPKIStatus();
 			if (status != null) {
 				int st = status.getStatus().getValue().intValue();
 				if (st != 0) {
@@ -82,21 +82,21 @@ public class GeneralCmpMessage extends BaseCmpMessage {
 			if (log.isDebugEnabled()) {
 				log.debug("Received a RevReqContent");
 			}
-			RevReqContent rr = body.getRr();
-			RevDetails rd = rr.getRevDetails(0);
-			CertTemplate ct = rd.getCertDetails();
-			DERInteger serno = ct.getSerialNumber();
-			X509Name issuer = ct.getIssuer();
+			final RevReqContent rr = body.getRr();
+			final RevDetails rd = rr.getRevDetails(0);
+			final CertTemplate ct = rd.getCertDetails();
+			final DERInteger serno = ct.getSerialNumber();
+			final X509Name issuer = ct.getIssuer();
 			if ( (serno != null) && (issuer != null) ) {
-				String errMsg = intres.getLocalizedMessage("cmp.receivedrevreq", issuer.toString(), serno.getValue().toString(16));
+				final String errMsg = intres.getLocalizedMessage("cmp.receivedrevreq", issuer.toString(), serno.getValue().toString(16));
 				log.info(errMsg);
 			} else {
-				String errMsg = intres.getLocalizedMessage("cmp.receivedrevreqnoissuer");
+				final String errMsg = intres.getLocalizedMessage("cmp.receivedrevreqnoissuer");
 				log.info(errMsg);
 			}
 		}
 		setMessage(msg);
-		PKIHeader header = msg.getHeader();
+		final PKIHeader header = msg.getHeader();
 		DEROctetString os = header.getTransactionID();
 		if (os != null) {
 			byte[] val = os.getOctets();

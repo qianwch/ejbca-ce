@@ -77,13 +77,13 @@ import com.novosec.pkix.asn1.crmf.PBMParameter;
  * @version $Id$
  */
 public class CmpMessageHelper {
-	private static Logger LOG = Logger.getLogger(CmpMessageHelper.class);
+	private static final Logger LOG = Logger.getLogger(CmpMessageHelper.class);
     private static final InternalResources INTRES = InternalResources.getInstance();
 
 	private static final String CMP_ERRORGENERAL = "cmp.errorgeneral";
 
-	public static PKIHeader createPKIHeader(X509Name sender, X509Name recipient, String senderNonce, String recipientNonce, String transactionId) {
-		PKIHeader myPKIHeader =
+	public static PKIHeader createPKIHeader(final X509Name sender, final X509Name recipient, final String senderNonce, final String recipientNonce, final String transactionId) {
+		final PKIHeader myPKIHeader =
 			new PKIHeader(
 					new DERInteger(2),
 					new GeneralName(sender),
@@ -101,11 +101,11 @@ public class CmpMessageHelper {
 		return myPKIHeader;
 	}
 
-    public static byte[] signPKIMessage(PKIMessage myPKIMessage, X509Certificate signCert, PrivateKey signKey, String digestAlg, String provider) throws InvalidKeyException, NoSuchProviderException, NoSuchAlgorithmException, SecurityException, SignatureException, IOException, CertificateEncodingException {
+    public static byte[] signPKIMessage(final PKIMessage myPKIMessage, final X509Certificate signCert, final PrivateKey signKey, final String digestAlg, final String provider) throws InvalidKeyException, NoSuchProviderException, NoSuchAlgorithmException, SecurityException, SignatureException, IOException, CertificateEncodingException {
     	if (LOG.isTraceEnabled()) {
     		LOG.trace(">signPKIMessage()");
     	}
-		X509CertificateStructure signStruct = X509CertificateStructure.getInstance(new ASN1InputStream(new ByteArrayInputStream(signCert.getEncoded())).readObject());
+    	final X509CertificateStructure signStruct = X509CertificateStructure.getInstance(new ASN1InputStream(new ByteArrayInputStream(signCert.getEncoded())).readObject());
 		CmpMessageHelper.buildCertBasedPKIProtection( myPKIMessage, signStruct, signKey, digestAlg, provider);
     	if (LOG.isTraceEnabled()) {
     		LOG.trace("<signPKIMessage()");
@@ -114,7 +114,7 @@ public class CmpMessageHelper {
 		return CmpMessageHelper.pkiMessageToByteArray(myPKIMessage);
     }
     
-	public static void buildCertBasedPKIProtection( PKIMessage pKIMessage, X509CertificateStructure cert, PrivateKey key, String digestAlg, String provider )
+	public static void buildCertBasedPKIProtection(final PKIMessage pKIMessage, final X509CertificateStructure cert, final PrivateKey key, final String digestAlg, final String provider )
 	throws NoSuchProviderException, NoSuchAlgorithmException, SecurityException, SignatureException, InvalidKeyException
 	{
 		// Select which signature algorithm we should use for the response, based on the digest algorithm.
@@ -137,7 +137,7 @@ public class CmpMessageHelper {
     	if (LOG.isDebugEnabled()) {
     		LOG.debug("Signing CMP message with signature alg: "+sigAlg);
     	}
-		Signature sig = Signature.getInstance(sigAlg , provider );
+    	final Signature sig = Signature.getInstance(sigAlg , provider );
 		sig.initSign(key);
 		sig.update( pKIMessage.getProtectedBytes() );
 		
@@ -155,27 +155,27 @@ public class CmpMessageHelper {
 	 * @throws InvalidKeyException pubKey is not valid for signature verification
 	 * @throws SignatureException if the passed-in signature is improperly encoded or of the wrong type, if this signature algorithm is unable to process the input data provided, etc.
 	 */
-	public static boolean verifyCertBasedPKIProtection(PKIMessage pKIMessage, PublicKey pubKey) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException, SignatureException {
-		AlgorithmIdentifier sigAlg = pKIMessage.getHeader().getProtectionAlg();
+	public static boolean verifyCertBasedPKIProtection(final PKIMessage pKIMessage, final PublicKey pubKey) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException, SignatureException {
+		final AlgorithmIdentifier sigAlg = pKIMessage.getHeader().getProtectionAlg();
 		if (LOG.isDebugEnabled()) {
 			LOG.debug("Verifying signature with algorithm: "+sigAlg.getObjectId().getId());
 		}
-		Signature sig = Signature.getInstance(sigAlg.getObjectId().getId(), "BC");
+		final Signature sig = Signature.getInstance(sigAlg.getObjectId().getId(), "BC");
 		sig.initVerify(pubKey);
 		sig.update(pKIMessage.getProtectedBytes());
-		boolean result = sig.verify(pKIMessage.getProtection().getBytes());
+		final boolean result = sig.verify(pKIMessage.getProtection().getBytes());
 		if (LOG.isDebugEnabled()) {
 			LOG.debug("Verification result: "+result);
 		}
 		return result;
 	}
 	
-	public static byte[] protectPKIMessageWithPBE(PKIMessage msg, String keyId, String raSecret, String digestAlgId, String macAlgId, int iterationCount) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException, IOException {
+	public static byte[] protectPKIMessageWithPBE(final PKIMessage msg, final String keyId, final String raSecret, final String digestAlgId, final String macAlgId, final int iterationCount) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException, IOException {
     	if (LOG.isTraceEnabled()) {
     		LOG.trace(">protectPKIMessageWithPBE()");
     	}
 		// Create the PasswordBased protection of the message
-		PKIHeader head = msg.getHeader();
+    	final PKIHeader head = msg.getHeader();
 		byte[] keyIdBytes;
 		try {
 			keyIdBytes = keyId.getBytes("UTF-8");			
@@ -186,27 +186,27 @@ public class CmpMessageHelper {
 		head.setSenderKID(new DEROctetString(keyIdBytes));
 		// SHA1
 		//AlgorithmIdentifier owfAlg = new AlgorithmIdentifier("1.3.14.3.2.26");
-		AlgorithmIdentifier owfAlg = new AlgorithmIdentifier(digestAlgId);
+		final AlgorithmIdentifier owfAlg = new AlgorithmIdentifier(digestAlgId);
 		// iterations, usually something like 1024
-		DERInteger iteration = new DERInteger(iterationCount);
+		final DERInteger iteration = new DERInteger(iterationCount);
 		// HMAC/SHA1
 		//AlgorithmIdentifier macAlg = new AlgorithmIdentifier("1.2.840.113549.2.7");
-		AlgorithmIdentifier macAlg = new AlgorithmIdentifier(macAlgId);
+		final AlgorithmIdentifier macAlg = new AlgorithmIdentifier(macAlgId);
 		// We need some random bytes for the nonce
-		byte[] saltbytes = createSenderNonce();
-		DEROctetString derSalt = new DEROctetString(saltbytes);
+		final byte[] saltbytes = createSenderNonce();
+		final DEROctetString derSalt = new DEROctetString(saltbytes);
 		
 		// Create the new protected return message
 		//String objectId = "1.2.840.113533.7.66.13" = passwordBasedMac;
-		String objectId = CMPObjectIdentifiers.passwordBasedMac.getId();
-		PBMParameter pp = new PBMParameter(derSalt, owfAlg, iteration, macAlg);
-		AlgorithmIdentifier pAlg = new AlgorithmIdentifier(new DERObjectIdentifier(objectId), pp);
+		final String objectId = CMPObjectIdentifiers.passwordBasedMac.getId();
+		final PBMParameter pp = new PBMParameter(derSalt, owfAlg, iteration, macAlg);
+		final AlgorithmIdentifier pAlg = new AlgorithmIdentifier(new DERObjectIdentifier(objectId), pp);
 		head.setProtectionAlg(pAlg);
-		PKIBody body = msg.getBody();
-		PKIMessage ret = new PKIMessage(head, body);
+		final PKIBody body = msg.getBody();
+		final PKIMessage ret = new PKIMessage(head, body);
 
 		// Calculate the protection bits
-		byte[] rasecret = raSecret.getBytes();
+		final byte[] rasecret = raSecret.getBytes();
 		byte[] basekey = new byte[rasecret.length + saltbytes.length];
 		for (int i = 0; i < rasecret.length; i++) {
 			basekey[i] = rasecret[i];
@@ -215,21 +215,21 @@ public class CmpMessageHelper {
 			basekey[rasecret.length+i] = saltbytes[i];
 		}
 		// Construct the base key according to rfc4210, section 5.1.3.1
-		MessageDigest dig = MessageDigest.getInstance(owfAlg.getObjectId().getId(), "BC");
+		final MessageDigest dig = MessageDigest.getInstance(owfAlg.getObjectId().getId(), "BC");
 		for (int i = 0; i < iterationCount; i++) {
 			basekey = dig.digest(basekey);
 			dig.reset();
 		}
 		// Do the mac
-		String macOid = macAlg.getObjectId().getId();
-		byte[] protectedBytes = ret.getProtectedBytes();
-		Mac mac = Mac.getInstance(macOid, "BC");
-		SecretKey key = new SecretKeySpec(basekey, macOid);
+		final String macOid = macAlg.getObjectId().getId();
+		final byte[] protectedBytes = ret.getProtectedBytes();
+		final Mac mac = Mac.getInstance(macOid, "BC");
+		final SecretKey key = new SecretKeySpec(basekey, macOid);
 		mac.init(key);
 		mac.reset();
 		mac.update(protectedBytes, 0, protectedBytes.length);
-		byte[] out = mac.doFinal();
-		DERBitString bs = new DERBitString(out);
+		final byte[] out = mac.doFinal();
+		final DERBitString bs = new DERBitString(out);
 
 		// Finally store the protection bytes in the msg
 		ret.setProtection(bs);
@@ -241,10 +241,10 @@ public class CmpMessageHelper {
 		return CmpMessageHelper.pkiMessageToByteArray(ret);
 	}
 
-	public static byte[] pkiMessageToByteArray(PKIMessage msg) throws IOException {
+	public static byte[] pkiMessageToByteArray(final PKIMessage msg) throws IOException {
 		// Return response as byte array 
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		DEROutputStream mout = new DEROutputStream( baos );
+		final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		final DEROutputStream mout = new DEROutputStream( baos );
 		mout.writeObject( msg );
 		mout.close();
 		return baos.toByteArray();
@@ -256,9 +256,8 @@ public class CmpMessageHelper {
 	 */
 	public static byte[] createSenderNonce() {
     	// Sendernonce is a random number
-    	byte[] senderNonce = new byte[16];
-        Random randomSource;
-        randomSource = new Random();
+		final byte[] senderNonce = new byte[16];
+        final Random randomSource = new Random();
         randomSource.nextBytes(senderNonce);
     	return senderNonce;
 	}
@@ -271,12 +270,12 @@ public class CmpMessageHelper {
 	 * @param failText
 	 * @return IResponseMessage that can be sent to user
 	 */
-	public static IResponseMessage createUnprotectedErrorMessage(BaseCmpMessage msg, ResponseStatus status, FailInfo failInfo, String failText) {
+	public static IResponseMessage createUnprotectedErrorMessage(final BaseCmpMessage msg, final ResponseStatus status, final FailInfo failInfo, final String failText) {
 		// Create a failure message
 		if (LOG.isDebugEnabled()) {
 			LOG.debug("Creating an unprotected error message with status="+status.getValue()+", failInfo="+failInfo+", failText="+failText);
 		}
-		CmpErrorResponseMessage resp = new CmpErrorResponseMessage();
+		final CmpErrorResponseMessage resp = new CmpErrorResponseMessage();
 		resp.setSenderNonce(new String(Base64.encode(CmpMessageHelper.createSenderNonce())));
 		if (msg != null) {
 			resp.setRecipientNonce(msg.getSenderNonce());
@@ -316,8 +315,7 @@ public class CmpMessageHelper {
 	 * 
 	 * @return IResponseMessage that can be sent to user
 	 */
-	public static CmpErrorResponseMessage createErrorMessage(BaseCmpMessage msg, FailInfo failInfo, String failText, int requestId, int requestType, CmpPbeVerifyer verifyer, String keyId, String responseProt) {
-		CmpErrorResponseMessage resp = null;
+	public static CmpErrorResponseMessage createErrorMessage(final BaseCmpMessage msg, final FailInfo failInfo, final String failText, final int requestId, final int requestType, final CmpPbeVerifyer verifyer, final String keyId, final String responseProt) {
 		final CmpErrorResponseMessage cresp = new CmpErrorResponseMessage();
 		cresp.setRecipientNonce(msg.getSenderNonce());
 		cresp.setSenderNonce(new String(Base64.encode(CmpMessageHelper.createSenderNonce())));
@@ -338,10 +336,9 @@ public class CmpMessageHelper {
 				cresp.setPbeParameters(keyId, raAuthSecret, pbeDigestAlg, pbeMacAlg, pbeIterationCount);
 			}
 		}
-		resp = cresp;
 		try {
 			// Here we need to create the response message, when coming from SignSession it has already been "created"
-			resp.create();
+			cresp.create();
 		} catch (InvalidKeyException e) {
 			LOG.error(INTRES.getLocalizedMessage(CMP_ERRORGENERAL), e);
 		} catch (NoSuchAlgorithmException e) {
@@ -355,7 +352,7 @@ public class CmpMessageHelper {
 		} catch (IOException e) {
 			LOG.error(INTRES.getLocalizedMessage(CMP_ERRORGENERAL), e);
 		}
-		return resp;
+		return cresp;
 	}
 	
 	/**
@@ -366,7 +363,7 @@ public class CmpMessageHelper {
 	 * @param failText
 	 * @return IResponseMessage that can be sent to user
 	 */
-	public static PKIBody createCertRequestRejectBody(PKIHeader header, PKIStatusInfo info, int requestId, int requestType) {
+	public static PKIBody createCertRequestRejectBody(final PKIHeader header, final PKIStatusInfo info, final int requestId, final int requestType) {
 		// Create a failure message
 		if (LOG.isDebugEnabled()) {
 			LOG.debug("Creating a cert request rejection message");
@@ -382,14 +379,14 @@ public class CmpMessageHelper {
 		PKIHeader myPKIHeader = CmpMessageHelper.createPKIHeader(sender, rcpt, senderNonce, rcptNonce, transactionId);
 		*/
 		
-		CertResponse myCertResponse = new CertResponse(new DERInteger(requestId), info);
-		CertRepMessage myCertRepMessage = new CertRepMessage(myCertResponse);
+		final CertResponse myCertResponse = new CertResponse(new DERInteger(requestId), info);
+		final CertRepMessage myCertRepMessage = new CertRepMessage(myCertResponse);
 
-		int respType = requestType + 1; // 1 = intitialization response, 3 = certification response etc
+		final int respType = requestType + 1; // 1 = intitialization response, 3 = certification response etc
 		if (LOG.isDebugEnabled()) {
 			LOG.debug("Creating response body of type "+respType);
 		}
-		PKIBody myPKIBody = new PKIBody(myCertRepMessage, respType); 
+		final PKIBody myPKIBody = new PKIBody(myCertRepMessage, respType); 
 		
 		return myPKIBody;
 	}

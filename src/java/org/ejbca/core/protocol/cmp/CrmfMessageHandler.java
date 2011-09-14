@@ -14,9 +14,6 @@
 package org.ejbca.core.protocol.cmp;
 
 import java.math.BigInteger;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.util.List;
 
 import javax.ejb.EJBException;
@@ -44,7 +41,6 @@ import org.ejbca.core.model.ca.SignRequestException;
 import org.ejbca.core.model.ca.SignRequestSignatureException;
 import org.ejbca.core.model.ca.caadmin.CADoesntExistsException;
 import org.ejbca.core.model.ca.caadmin.CAInfo;
-import org.ejbca.core.model.ca.caadmin.X509CAInfo;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.model.ra.ExtendedInformation;
 import org.ejbca.core.model.ra.NotFoundException;
@@ -54,18 +50,17 @@ import org.ejbca.core.model.ra.UsernameGenerator;
 import org.ejbca.core.model.ra.UsernameGeneratorParams;
 import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
 import org.ejbca.core.protocol.ExtendedUserDataHandler;
-import org.ejbca.core.protocol.ExtendedUserDataHandler.HandlerException;
-import org.ejbca.core.protocol.cmp.authentication.HMACAuthenticationModule;
-import org.ejbca.core.protocol.cmp.authentication.ICMPAuthenticationModule;
-import org.ejbca.core.protocol.cmp.authentication.VerifyPKIMessage;
 import org.ejbca.core.protocol.FailInfo;
 import org.ejbca.core.protocol.IRequestMessage;
 import org.ejbca.core.protocol.IResponseMessage;
 import org.ejbca.core.protocol.ResponseStatus;
+import org.ejbca.core.protocol.ExtendedUserDataHandler.HandlerException;
+import org.ejbca.core.protocol.cmp.authentication.HMACAuthenticationModule;
+import org.ejbca.core.protocol.cmp.authentication.ICMPAuthenticationModule;
+import org.ejbca.core.protocol.cmp.authentication.VerifyPKIMessage;
 import org.ejbca.util.CertTools;
 import org.ejbca.util.passgen.IPasswordGenerator;
 import org.ejbca.util.passgen.PasswordGeneratorFactory;
-//import org.junit.rules.Verifier;
 
 /**
  * Message handler for certificate request messages in the CRMF format
@@ -86,8 +81,6 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 	private final UsernameGeneratorParams usernameGenParams;
 	/** Parameters used for temporary password generation */
 	private final String userPwdParams;
-	/** Parameter used to authenticate RA messages if we are using RA mode to create users */
-	private final String raAuthSecret;
 	/** Parameter used to determine the type of protection for the response message */
 	private final String responseProt;
 	/** Determines if it the RA will look for requested custom certificate serial numbers, if false such data is ignored */
@@ -108,7 +101,6 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 		super();
 		this.usernameGenParams = null;
 		this.userPwdParams = "random";
-		this.raAuthSecret = null;
 		this.responseProt = null;
 		this.allowCustomCertSerno = false;
 		this.signSession =null;
@@ -129,8 +121,8 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 	 * @param signSession
 	 * @param userAdminSession
 	 */
-	public CrmfMessageHandler(final Admin admin, CAAdminSession caAdminSession, CertificateProfileSession certificateProfileSession, CertificateRequestSession certificateRequestSession,
-			EndEntityProfileSession endEntityProfileSession, SignSession signSession, UserAdminSession userAdminSession, CertificateStoreSession certSession, AuthorizationSession authSession) {
+	public CrmfMessageHandler(final Admin admin, final CAAdminSession caAdminSession, final CertificateProfileSession certificateProfileSession, final CertificateRequestSession certificateRequestSession,
+			final EndEntityProfileSession endEntityProfileSession, final SignSession signSession, final UserAdminSession userAdminSession, final CertificateStoreSession certSession, final AuthorizationSession authSession) {
 		super(admin, caAdminSession, endEntityProfileSession, certificateProfileSession);
 		// Get EJB beans, we can not use local beans here because the TCP listener does not work with that
 		this.signSession = signSession;
@@ -147,7 +139,6 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 			this.usernameGenParams.setPrefix(CmpConfiguration.getRANameGenerationPrefix());
 			this.usernameGenParams.setPostfix(CmpConfiguration.getRANameGenerationPostfix());
 			this.userPwdParams =  CmpConfiguration.getUserPasswordParams();
-			this.raAuthSecret = CmpConfiguration.getRAAuthenticationSecret();
 			this.allowCustomCertSerno = CmpConfiguration.getRAAllowCustomCertSerno();
 			this.responseProt = CmpConfiguration.getResponseProtection();
 			if (LOG.isDebugEnabled()) {
@@ -159,7 +150,6 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 		} else {
 			this.usernameGenParams = null;
 			this.userPwdParams = "random";
-			this.raAuthSecret = null;
 			this.responseProt = null;
 			this.allowCustomCertSerno = false;
 		}
@@ -297,7 +287,6 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 		// Try to find a HMAC/SHA1 protection key
 		final int requestId = crmfreq.getRequestId();
 		final int requestType = crmfreq.getRequestType();
-		IResponseMessage resp = null; // The CMP response message to be sent back to the client
 		final String keyId = getSenderKeyId(crmfreq.getHeader());
 		if (keyId == null) {			// No keyId found in message so we can not authenticate it.
 			final String errMsg = INTRES.getLocalizedMessage("cmp.errorunauthmessagera");
@@ -317,12 +306,12 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 			//}
 			return CmpMessageHelper.createErrorMessage(msg, FailInfo.INCORRECT_DATA, e.getMessage(), requestId, requestType, null, keyId, this.responseProt);
 		}
-		CAInfo caInfo = this.caAdminSession.getCAInfo(this.admin, caId);
+		final CAInfo caInfo = this.caAdminSession.getCAInfo(this.admin, caId);
 		
-		try {
-			
+		IResponseMessage resp = null; // The CMP response message to be sent back to the client
+		try {			
 			//Verify the authenticity of the message and get the authentication module
-			VerifyPKIMessage messageVerifyer = new VerifyPKIMessage(caInfo, admin, caAdminSession, userAdminSession, certStoreSession, authorizationSession, endEntityProfileSession);
+			final VerifyPKIMessage messageVerifyer = new VerifyPKIMessage(caInfo, admin, caAdminSession, userAdminSession, certStoreSession, authorizationSession, endEntityProfileSession);
 			ICMPAuthenticationModule authenticationModule = null;
 			if(messageVerifyer.verify(crmfreq.getPKIMessage())) {
 				authenticationModule = messageVerifyer.getUsedAuthenticationModule();
@@ -365,7 +354,7 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 				}
 			} else {
 				//This should not run since an error would have occurred earlier if the authentication module was unknown 
-				String errMsg = "Unknown authentication module.";
+				final String errMsg = "Unknown authentication module.";
 				LOG.error(errMsg);
 				return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_MESSAGE_CHECK, errMsg);
 			}
@@ -382,7 +371,7 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 			final ExtendedInformation ei;
 			if (this.allowCustomCertSerno) {
 				// Don't even try to parse out the field if it is not allowed
-				BigInteger customCertSerno = crmfreq.getSubjectCertSerialNo();
+				final BigInteger customCertSerno = crmfreq.getSubjectCertSerialNo();
 				if (customCertSerno != null) {
 					// If we have a custom certificate serial number in the request, we will pass it on to the UserData object
 					ei = new ExtendedInformation();
@@ -405,7 +394,7 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 			// Set all protection parameters
 			CmpPbeVerifyer verifyer = null;
 			if(StringUtils.equals(authenticationModule.getName(), CmpConfiguration.AUTHMODULE_HMAC)) {
-				HMACAuthenticationModule hmacmodule = (HMACAuthenticationModule) authenticationModule;
+				final HMACAuthenticationModule hmacmodule = (HMACAuthenticationModule) authenticationModule;
 				verifyer = hmacmodule.getCmpPbeVerifyer();
 				final String pbeDigestAlg = verifyer.getOwfOid();
 				final String pbeMacAlg = verifyer.getMacOid();

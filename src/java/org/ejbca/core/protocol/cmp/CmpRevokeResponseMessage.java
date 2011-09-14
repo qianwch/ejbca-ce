@@ -68,15 +68,15 @@ public class CmpRevokeResponseMessage extends BaseCmpMessage implements IRespons
     private FailInfo failInfo = FailInfo.BAD_REQUEST;
     private ResponseStatus status = ResponseStatus.FAILURE;
 
-    public void setCertificate(Certificate cert) {
+    public void setCertificate(final Certificate cert) {
 	}
 
-	public void setCrl(CRL crl) {
+	public void setCrl(final CRL crl) {
 	}
 
-	public void setIncludeCACert(boolean incCACert) {
+	public void setIncludeCACert(final boolean incCACert) {
 	}
-	public void setCACert(Certificate cACert) {
+	public void setCACert(final Certificate cACert) {
 	}
 
 	public byte[] getResponseMessage() throws IOException,
@@ -84,7 +84,7 @@ public class CmpRevokeResponseMessage extends BaseCmpMessage implements IRespons
         return responseMessage;
 	}
 
-	public void setStatus(ResponseStatus status) {
+	public void setStatus(final ResponseStatus status) {
 		this.status = status;
 	}
 
@@ -92,7 +92,7 @@ public class CmpRevokeResponseMessage extends BaseCmpMessage implements IRespons
 		return status;
 	}
 
-	public void setFailInfo(FailInfo failInfo) {
+	public void setFailInfo(final FailInfo failInfo) {
 		this.failInfo = failInfo;
 	}
 
@@ -100,7 +100,7 @@ public class CmpRevokeResponseMessage extends BaseCmpMessage implements IRespons
 		return failInfo;
 	}
 
-	public void setFailText(String failText) {
+	public void setFailText(final String failText) {
 		this.failText = failText;
 	}
 
@@ -112,29 +112,31 @@ public class CmpRevokeResponseMessage extends BaseCmpMessage implements IRespons
 			NoSuchAlgorithmException, NoSuchProviderException,
 			SignRequestException, NotFoundException {
 
-		X509Name sender = X509Name.getInstance(getSender().getName());
-		X509Name recipient = X509Name.getInstance(getRecipient().getName());
-		PKIHeader myPKIHeader = CmpMessageHelper.createPKIHeader(sender, recipient, getSenderNonce(), getRecipientNonce(), getTransactionId());
+		final X509Name sender = X509Name.getInstance(getSender().getName());
+		final X509Name recipient = X509Name.getInstance(getRecipient().getName());
+		final PKIHeader myPKIHeader = CmpMessageHelper.createPKIHeader(sender, recipient, getSenderNonce(), getRecipientNonce(), getTransactionId());
 
 		PKIStatusInfo myPKIStatusInfo = new PKIStatusInfo(new DERInteger(0)); // 0 = accepted
 		if (status != ResponseStatus.SUCCESS && status != ResponseStatus.GRANTED_WITH_MODS) {
-			log.debug("Creating a rejection message");
+			if (log.isDebugEnabled()) {
+				log.debug("Creating a rejection message");
+			}
 			myPKIStatusInfo = new PKIStatusInfo(new DERInteger(2)); // 2 = rejection			
 			myPKIStatusInfo.setFailInfo(failInfo.getAsBitString());
 			if (failText != null) {
 				myPKIStatusInfo.setStatusString(new PKIFreeText(new DERUTF8String(failText)));					
 			}
 		}
-		RevRepContent myRevrepMessage = new RevRepContent(myPKIStatusInfo);
+		final RevRepContent myRevrepMessage = new RevRepContent(myPKIStatusInfo);
 
-		PKIBody myPKIBody = new PKIBody(myRevrepMessage, CmpPKIBodyConstants.REVOCATIONRESPONSE);
-		PKIMessage myPKIMessage = new PKIMessage(myPKIHeader, myPKIBody);
+		final PKIBody myPKIBody = new PKIBody(myRevrepMessage, CmpPKIBodyConstants.REVOCATIONRESPONSE);
+		final PKIMessage myPKIMessage = new PKIMessage(myPKIHeader, myPKIBody);
 
 		if ((getPbeDigestAlg() != null) && (getPbeMacAlg() != null) && (getPbeKeyId() != null) && (getPbeKey() != null) ) {
 			responseMessage = CmpMessageHelper.protectPKIMessageWithPBE(myPKIMessage, getPbeKeyId(), getPbeKey(), getPbeDigestAlg(), getPbeMacAlg(), getPbeIterationCount());
 		} else {
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			DEROutputStream mout = new DEROutputStream( baos );
+			final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			final DEROutputStream mout = new DEROutputStream( baos );
 			mout.writeObject( myPKIMessage );
 			mout.close();
 			responseMessage = baos.toByteArray();			
@@ -146,36 +148,35 @@ public class CmpRevokeResponseMessage extends BaseCmpMessage implements IRespons
 		return false;
 	}
 
-	public void setSignKeyInfo(Certificate cert, PrivateKey key,
-			String provider) {
+	public void setSignKeyInfo(final Certificate cert, final PrivateKey key, final String provider) {
 	}
 
-	public void setSenderNonce(String senderNonce) {
+	public void setSenderNonce(final String senderNonce) {
 		super.setSenderNonce(senderNonce);
 	}
 
-	public void setRecipientNonce(String recipientNonce) {
+	public void setRecipientNonce(final String recipientNonce) {
 		super.setRecipientNonce(recipientNonce);
 	}
 
-	public void setTransactionId(String transactionId) {
+	public void setTransactionId(final String transactionId) {
 		super.setTransactionId(transactionId);
 	}
 
-	public void setRecipientKeyInfo(byte[] recipientKeyInfo) {
+	public void setRecipientKeyInfo(final byte[] recipientKeyInfo) {
 	}
 
-	public void setPreferredDigestAlg(String digest) {
+	public void setPreferredDigestAlg(final String digest) {
 	}
 
-	public void setRequestType(int reqtype) {
+	public void setRequestType(final int reqtype) {
 	}
 
-	public void setRequestId(int reqid) {
+	public void setRequestId(final int reqid) {
 	}
 
     /** @see org.ejca.core.protocol.IResponseMessage
      */
-    public void setProtectionParamsFromRequest(IRequestMessage reqMsg) {
+    public void setProtectionParamsFromRequest(final IRequestMessage reqMsg) {
     }
 }

@@ -64,7 +64,7 @@ public class CmpResponseMessage implements IResponseMessage {
 	 * /serialization/spec/version.doc.html> details. </a>
 	 *
 	 */
-	static final long serialVersionUID = 10003L;
+	private static final long serialVersionUID = 10003L;
 	
 	private static final Logger log = Logger.getLogger(CmpResponseMessage.class);
 	
@@ -114,24 +114,24 @@ public class CmpResponseMessage implements IResponseMessage {
 	private transient String pbeKeyId = null;
 	private transient String pbeKey = null;
 	
-	public void setCertificate(Certificate cert) {
+	public void setCertificate(final Certificate cert) {
 		this.cert = cert;
 	}
 	
-	public void setCrl(CRL crl) {
+	public void setCrl(final CRL crl) {
 		
 	}
 	
-	public void setIncludeCACert(boolean incCACert) {
+	public void setIncludeCACert(final boolean incCACert) {
 	}
-	public void setCACert(Certificate cACert) {
+	public void setCACert(final Certificate cACert) {
 	}
 	
 	public byte[] getResponseMessage() throws IOException, CertificateEncodingException {
         return responseMessage;
 	}
 	
-	public void setStatus(ResponseStatus status) {
+	public void setStatus(final ResponseStatus status) {
         this.status = status;
 	}
 	
@@ -139,7 +139,7 @@ public class CmpResponseMessage implements IResponseMessage {
         return status;
 	}
 	
-	public void setFailInfo(FailInfo failInfo) {
+	public void setFailInfo(final FailInfo failInfo) {
         this.failInfo = failInfo;
 	}
 	
@@ -147,7 +147,7 @@ public class CmpResponseMessage implements IResponseMessage {
         return failInfo;
 	}
 	
-    public void setFailText(String failText) {
+    public void setFailText(final String failText) {
     	this.failText = failText;
     }
 
@@ -161,7 +161,7 @@ public class CmpResponseMessage implements IResponseMessage {
 		String issuer = null;
 		String subject = null;
 		if (cert != null) {
-			X509Certificate x509cert = (X509Certificate)cert;
+			final X509Certificate x509cert = (X509Certificate)cert;
 			issuer = x509cert.getIssuerDN().getName();
 			subject = x509cert.getSubjectDN().getName();
 		} else if (signCert != null) {
@@ -172,9 +172,9 @@ public class CmpResponseMessage implements IResponseMessage {
 			subject = "CN=fooSubject";
 		}
 		
-		X509Name issuerName = new X509Name(issuer);
-		X509Name subjectName = new X509Name(subject);
-		PKIHeader myPKIHeader = CmpMessageHelper.createPKIHeader(issuerName, subjectName, senderNonce, recipientNonce, transactionId);
+		final X509Name issuerName = new X509Name(issuer);
+		final X509Name subjectName = new X509Name(subject);
+		final PKIHeader myPKIHeader = CmpMessageHelper.createPKIHeader(issuerName, subjectName, senderNonce, recipientNonce, transactionId);
 
 		try {
 			if (status.equals(ResponseStatus.SUCCESS)) {
@@ -182,23 +182,23 @@ public class CmpResponseMessage implements IResponseMessage {
 			    	if (log.isDebugEnabled()) {					
 			    		log.debug("Creating a CertRepMessage 'accepted'");
 			    	}
-					PKIStatusInfo myPKIStatusInfo = new PKIStatusInfo(new DERInteger(0)); // 0 = accepted
-					CertResponse myCertResponse = new CertResponse(new DERInteger(requestId), myPKIStatusInfo);
+			    	final PKIStatusInfo myPKIStatusInfo = new PKIStatusInfo(new DERInteger(0)); // 0 = accepted
+			    	final CertResponse myCertResponse = new CertResponse(new DERInteger(requestId), myPKIStatusInfo);
 					
-					X509CertificateStructure struct = X509CertificateStructure.getInstance(new ASN1InputStream(new ByteArrayInputStream(cert.getEncoded())).readObject());
-					CertOrEncCert retCert = new CertOrEncCert(struct, 0);
-					CertifiedKeyPair myCertifiedKeyPair = new CertifiedKeyPair(retCert);
+			    	final X509CertificateStructure struct = X509CertificateStructure.getInstance(new ASN1InputStream(new ByteArrayInputStream(cert.getEncoded())).readObject());
+			    	final CertOrEncCert retCert = new CertOrEncCert(struct, 0);
+			    	final CertifiedKeyPair myCertifiedKeyPair = new CertifiedKeyPair(retCert);
 					myCertResponse.setCertifiedKeyPair(myCertifiedKeyPair);
 					//myCertResponse.setRspInfo(new DEROctetString(new byte[] { 101, 111, 121 }));
 					
-					CertRepMessage myCertRepMessage = new CertRepMessage(myCertResponse);
+					final CertRepMessage myCertRepMessage = new CertRepMessage(myCertResponse);
 					
 					int respType = requestType + 1; // 1 = intitialization response, 3 = certification response etc
 			    	if (log.isDebugEnabled()) {
 			    		log.debug("Creating response body of type " + respType);
 			    	}
-					PKIBody myPKIBody = new PKIBody(myCertRepMessage, respType); 
-					PKIMessage myPKIMessage = new PKIMessage(myPKIHeader, myPKIBody);
+			    	final PKIBody myPKIBody = new PKIBody(myCertRepMessage, respType); 
+			    	final PKIMessage myPKIMessage = new PKIMessage(myPKIHeader, myPKIBody);
 					
 					if ( (pbeKeyId != null) && (pbeKey != null) && (pbeDigestAlg != null) && (pbeMacAlg != null) ) {
 						responseMessage = CmpMessageHelper.protectPKIMessageWithPBE(myPKIMessage, pbeKeyId, pbeKey, pbeDigestAlg, pbeMacAlg, pbeIterationCount);
@@ -212,13 +212,13 @@ public class CmpResponseMessage implements IResponseMessage {
 		    		log.debug("Creating a CertRepMessage 'rejected'");
 		    	}
 				// Create a failure message
-				PKIStatusInfo myPKIStatusInfo = new PKIStatusInfo(new DERInteger(2)); // 2 = rejection
+		    	final PKIStatusInfo myPKIStatusInfo = new PKIStatusInfo(new DERInteger(2)); // 2 = rejection
 				myPKIStatusInfo.setFailInfo(failInfo.getAsBitString());
 				if (failText != null) {
 					myPKIStatusInfo.setStatusString(new PKIFreeText(new DERUTF8String(failText)));					
 				}
-				PKIBody myPKIBody = CmpMessageHelper.createCertRequestRejectBody(myPKIHeader, myPKIStatusInfo, requestId, requestType);
-				PKIMessage myPKIMessage = new PKIMessage(myPKIHeader, myPKIBody);
+				final PKIBody myPKIBody = CmpMessageHelper.createCertRequestRejectBody(myPKIHeader, myPKIStatusInfo, requestId, requestType);
+				final PKIMessage myPKIMessage = new PKIMessage(myPKIHeader, myPKIBody);
 				
 				if ( (pbeKeyId != null) && (pbeKey != null) && (pbeDigestAlg != null) && (pbeMacAlg != null) ) {
 					responseMessage = CmpMessageHelper.protectPKIMessageWithPBE(myPKIMessage, pbeKeyId, pbeKey, pbeDigestAlg, pbeMacAlg, pbeIterationCount);
@@ -232,14 +232,14 @@ public class CmpResponseMessage implements IResponseMessage {
 		    	}
 				// Not supported, lets create a PKIError failure instead
 				// Create a failure message
-				PKIStatusInfo myPKIStatusInfo = new PKIStatusInfo(new DERInteger(2)); // 2 = rejection
+		    	final PKIStatusInfo myPKIStatusInfo = new PKIStatusInfo(new DERInteger(2)); // 2 = rejection
 				myPKIStatusInfo.setFailInfo(failInfo.getAsBitString());
 				if (failText != null) {
 					myPKIStatusInfo.setStatusString(new PKIFreeText(new DERUTF8String(failText)));					
 				}
-				ErrorMsgContent myErrorContent = new ErrorMsgContent(myPKIStatusInfo);
-				PKIBody myPKIBody = new PKIBody(myErrorContent, 23); // 23 = error
-				PKIMessage myPKIMessage = new PKIMessage(myPKIHeader, myPKIBody);
+				final ErrorMsgContent myErrorContent = new ErrorMsgContent(myPKIStatusInfo);
+				final PKIBody myPKIBody = new PKIBody(myErrorContent, 23); // 23 = error
+				final PKIMessage myPKIMessage = new PKIMessage(myPKIHeader, myPKIBody);
 				if ( (pbeKeyId != null) && (pbeKey != null) && (pbeDigestAlg != null) && (pbeMacAlg != null) ) {
 					responseMessage = CmpMessageHelper.protectPKIMessageWithPBE(myPKIMessage, pbeKeyId, pbeKey, pbeDigestAlg, pbeMacAlg, pbeIterationCount);
 				} else {
@@ -268,7 +268,7 @@ public class CmpResponseMessage implements IResponseMessage {
 		return true;
 	}
 	
-	public void setSignKeyInfo(Certificate cert, PrivateKey key, String provider) {
+	public void setSignKeyInfo(final Certificate cert, final PrivateKey key, final String provider) {
 		this.signCert = cert;
 		this.signKey = key;
 		if (provider != null) {
@@ -276,41 +276,41 @@ public class CmpResponseMessage implements IResponseMessage {
 		}
 	}
 	
-	public void setSenderNonce(String senderNonce) {
+	public void setSenderNonce(final String senderNonce) {
 		this.senderNonce = senderNonce;
 	}
 	
-	public void setRecipientNonce(String recipientNonce) {
+	public void setRecipientNonce(final String recipientNonce) {
 		this.recipientNonce = recipientNonce;
 	}
 	
-	public void setTransactionId(String transactionId) {
+	public void setTransactionId(final String transactionId) {
 		this.transactionId = transactionId;
 	}
 	
-	public void setRecipientKeyInfo(byte[] recipientKeyInfo) {
+	public void setRecipientKeyInfo(final byte[] recipientKeyInfo) {
 	}
 	
-	public void setPreferredDigestAlg(String digest) {
+	public void setPreferredDigestAlg(final String digest) {
 		this.digestAlg = digest;
 	}
 
     /** @see org.ejca.core.protocol.IResponseMessage
      */
-	public void setRequestType(int reqtype) {
+	public void setRequestType(final int reqtype) {
 		this.requestType = reqtype;
 	}
 
     /** @see org.ejca.core.protocol.IResponseMessage
      */
-    public void setRequestId(int reqid) {
+    public void setRequestId(final int reqid) {
     	this.requestId = reqid;
     }
     
     @Override
-	public void setProtectionParamsFromRequest(IRequestMessage reqMsg) {
+	public void setProtectionParamsFromRequest(final IRequestMessage reqMsg) {
     	if (reqMsg instanceof ICrmfRequestMessage) {
-    		ICrmfRequestMessage crmf = (ICrmfRequestMessage) reqMsg;
+    		final ICrmfRequestMessage crmf = (ICrmfRequestMessage) reqMsg;
 			this.pbeIterationCount = crmf.getPbeIterationCount();
 			this.pbeDigestAlg = crmf.getPbeDigestAlg();
 			this.pbeMacAlg = crmf.getPbeMacAlg();

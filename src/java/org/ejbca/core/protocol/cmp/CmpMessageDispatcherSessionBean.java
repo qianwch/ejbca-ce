@@ -105,7 +105,7 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
 	 * @throws IOException 
 	 */
 	@TransactionAttribute(TransactionAttributeType.REQUIRED)
-	public IResponseMessage dispatch(Admin admin, byte[] ba) throws IOException {
+	public IResponseMessage dispatch(final Admin admin, final byte[] ba) throws IOException {
 		DERObject derObject = new LimitLengthASN1Reader(new ByteArrayInputStream(ba), ba.length).readObject();
 		return dispatch(admin, derObject);
 	}
@@ -115,7 +115,7 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
 	 * @param message der encoded CMP message
 	 * @return IResponseMessage containing the CMP response message or null if there is no message to send back or some internal error has occurred
 	 */
-	private IResponseMessage dispatch(Admin admin, DERObject derObject) {
+	private IResponseMessage dispatch(final Admin admin, final DERObject derObject) {
 		final PKIMessage req;
 		try {
 			req = PKIMessage.getInstance(derObject);
@@ -129,8 +129,8 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
 			return CmpMessageHelper.createUnprotectedErrorMessage(null, ResponseStatus.FAILURE, FailInfo.BAD_REQUEST, eMsg);
 		}
 		try {
-			PKIHeader header = req.getHeader();
-			PKIBody body = req.getBody();
+			final PKIHeader header = req.getHeader();
+			final PKIBody body = req.getBody();
 			
 			int tagno = body.getTagNo();
 			if (log.isDebugEnabled()) {
@@ -171,9 +171,9 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
 				if(log.isDebugEnabled()) {
 					log.debug("Received a NestedMessage Content");
 				}
-				NestedMessageContent nestedMessage = new NestedMessageContent(req);
+				final NestedMessageContent nestedMessage = new NestedMessageContent(req);
 				if(nestedMessage.verify()) {
-					PKIMessage nested = nestedMessage.getPKIMessage().getBody().getNested();
+					final PKIMessage nested = nestedMessage.getPKIMessage().getBody().getNested();
 					return dispatch(admin, nested.getDERObject().getDEREncoded());
 				} else {
 					final String errMsg = "Could not verify the RA";
@@ -210,7 +210,7 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
 		}
 	}
 
-	private void fillMessageDetails(BaseCmpMessage msg) {
+	private void fillMessageDetails(final BaseCmpMessage msg) {
 		msg.setSender(msg.getMessage().getHeader().getSender());
 		msg.setRecipient(msg.getMessage().getHeader().getRecipient());
 		msg.setSenderNonce(msg.getMessage().getHeader().getSenderNonce().toString());
