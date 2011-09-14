@@ -17,6 +17,7 @@ import java.math.BigInteger;
 import java.security.PublicKey;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.DERBitString;
@@ -34,6 +35,7 @@ import org.bouncycastle.util.encoders.Hex;
 import org.ejbca.core.model.InternalResources;
 import org.ejbca.core.model.ca.caadmin.CA;
 import org.ejbca.core.model.ca.certificateprofiles.CertificateProfile;
+import org.ejbca.core.model.ra.ExtendedInformation;
 import org.ejbca.core.model.ra.UserDataVO;
 
 /**
@@ -50,6 +52,13 @@ import org.ejbca.core.model.ra.UserDataVO;
  * with a size of nvalues. The members will be:
  *  'value1', 'value2' and so on.
  *  
+ * Optionally, an other property can be defined:
+ * 
+ *  'dynamic' : true/false if the extension value(s) should be allowed to be 
+ *              overridden by value(s) put as extensiondata in 
+ *              ExtendedInformation. Default is 'false'.
+ *
+ *
  * See documentation for more information.
  * 
  * @author Philip Vendil 2007 jan 5
@@ -60,6 +69,8 @@ import org.ejbca.core.model.ra.UserDataVO;
 
 public class BasicCertificateExtension extends CertificateExtension {
 
+	private static final Logger log = Logger.getLogger(BasicCertificateExtension.class);
+	
 	private static final InternalResources intres = InternalResources.getInstance();
 	
 	private static String ENCODING_DERBITSTRING       = "DERBITSTRING";	 
@@ -72,13 +83,13 @@ public class BasicCertificateExtension extends CertificateExtension {
 	private static String ENCODING_DERNULL            = "DERNULL";
 	private static String ENCODING_DEROBJECT          = "DEROBJECT";
 	private static String ENCODING_DEROID             = "DERBOJECTIDENTIFIER";
+	private static String ENCODING_RAW                = "RAW";
 	
 	// Defined Properties
 	private static String PROPERTY_VALUE    = "value";
 	private static String PROPERTY_ENCODING = "encoding";
     private static String PROPERTY_NVALUES  = "nvalues";
-	
-	private DEREncodable dEREncodable = null;
+    private static String PROPERTY_DYNAMIC  = "dynamic";
 	
 	/**
 	 * Returns the defined property 'value' in the encoding 
@@ -130,49 +141,127 @@ public class BasicCertificateExtension extends CertificateExtension {
 												if(encoding.equalsIgnoreCase(ENCODING_DEROID)){
 													toret = parseDERBoolean(value);
 												}else{
-													throw new CertificateExtentionConfigurationException(intres.getLocalizedMessage("certext.basic.incorrectenc", encoding, Integer.valueOf(getId())));
-												}
+												throw new CertificateExtentionConfigurationException(intres.getLocalizedMessage("certext.basic.incorrectenc", encoding, Integer.valueOf(getId())));
+											}
 		return toret;
 	}
 
+        /**
+         * @deprecated use getValueEncoded instead.
+         */
 	public DEREncodable getValue(UserDataVO userData, CA ca, CertificateProfile certProfile, PublicKey userPublicKey, PublicKey caPublicKey)
 	throws CertificateExtensionException, CertificateExtentionConfigurationException {
+		throw new UnsupportedOperationException("Use getValueEncoded instead");
+	}
+	
+	/**
+	 * This certificate extension implementations overrides this method as it 
+	 * want to be able to return a byte[] with the extension value. Otherwise 
+	 * the implementation could have been put in the getValue method as the 
+	 * super class CertificateExtension has a default implementation for 
+	 * getValueEncoded which calls getValue.
+	 * @see CertificateExtension#getValueEncoded(UserDataVO, CA, CertificateProfile, PublicKey, PublicKey) 
+	 */
+	@Override
+	public byte[] getValueEncoded(UserDataVO userData, CA ca, CertificateProfile certProfile, PublicKey userPublicKey, PublicKey caPublicKey)
+	throws CertificateExtensionException, CertificateExtentionConfigurationException {
+		final byte[] result;
 		try {
-			if(dEREncodable == null) {
-				String encoding = getProperties().getProperty(PROPERTY_ENCODING);
-				encoding = StringUtils.trim(encoding); // Ignore any spaces in the end
-				String strnvalues = getProperties().getProperty(PROPERTY_NVALUES);
-				String value = null;
-
-				int nvalues;
-
-				if ( strnvalues == null || strnvalues.trim().equals("") ) {
-					nvalues = 0;
-				} else {
-					nvalues = Integer.parseInt(strnvalues);
-				}
-
-				if (nvalues < 1 ) {
-					value = getProperties().getProperty(PROPERTY_VALUE);
-					if ( value == null || value.trim().equals("") ) {
-						value = getProperties().getProperty(PROPERTY_VALUE+"1");
-					}
-					dEREncodable = parseValue(encoding, value);
-				} else {
+			String encoding = StringUtils.trim(getProperties().getProperty(PROPERTY_ENCODING));
+			String[] values = getValues(userData);
+			
+			if (values == null || values.length == 0) {
+				throw new CertificateExtentionConfigurationException(intres.getLocalizedMessage("certext.basic.incorrectvalue", Integer.valueOf(getId())));
+			}
+			
+			if (encoding.equalsIgnoreCase(ENCODING_RAW)) {
+				result = parseRaw(values[0]);
+			} else {
+				if (values.length > 1) {
 					ASN1EncodableVector ev = new ASN1EncodableVector();
-					for (int i=1; i<=nvalues; i++) {
-						value = getProperties().getProperty(PROPERTY_VALUE+Integer.toString(i));
+					for (String value : values) {
 						DEREncodable derval = parseValue(encoding, value);
 						ev.add(derval);
 					}
-					dEREncodable = new DERSequence(ev);
+					result = new DERSequence(ev).getDEREncoded();
+				} else {
+					result = parseValue(encoding, values[0]).getDERObject().getDEREncoded();
 				}
 			}
 		} catch (Exception e) {
+			if (log.isDebugEnabled()) {
+				log.debug("BasicCertificateExtension missconfigured", e);
+			}
 			throw new CertificateExtentionConfigurationException(intres.getLocalizedMessage("certext.certextmissconfigured",Integer.valueOf(getId())));
 		}
+		return result;
+	}
+	
+	/**
+	 * Get the extension value by first looking in the ExtendedInformation (if 
+	 * dynamic is enabled) and then in the static configuration.
+	 * 
+	 * @param userData The userdata to get the ExtendedInformation from
+	 * @return The value(s) for the extension (usually 1) or null if no value found
+	 */
+	private String[] getValues(UserDataVO userData) {
+		String[] result = null;
+		
+		boolean dynamic = Boolean.parseBoolean(StringUtils.trim(getProperties().getProperty(PROPERTY_DYNAMIC, Boolean.FALSE.toString())));
+		
+		String strnvalues = getProperties().getProperty(PROPERTY_NVALUES);
 
-		return dEREncodable;
+		int nvalues;
+
+		if ( strnvalues == null || strnvalues.trim().equals("") ) {
+			nvalues = 0;
+		} else {
+			nvalues = Integer.parseInt(strnvalues);
+		}
+		
+		if (dynamic) {
+			final ExtendedInformation ei = userData.getExtendedinformation();
+			if (ei == null) {
+				result = null;
+			} else {
+				if (nvalues < 1 ) {
+					String value = userData.getExtendedinformation().getExtensionData(getOID());
+					if (value == null || value.trim().isEmpty()) {
+						value = userData.getExtendedinformation().getExtensionData(getOID() + "." + PROPERTY_VALUE);
+					}
+					if (value == null) {
+						result = null;
+					} else {
+						result = new String[] { value };
+					}
+				} else {
+					for (int i = 1; i <= nvalues; i++) {
+						 String value = userData.getExtendedinformation().getExtensionData(getOID() + "." + PROPERTY_VALUE + Integer.toString(i));
+						 if (value != null) {
+							 if (result == null) {
+								result = new String[nvalues];
+							 }
+							 result[i - 1] = value;
+						 }
+					}
+				}
+			}
+		}
+		if (result == null) {
+			if (nvalues < 1 ) {
+				String value = getProperties().getProperty(PROPERTY_VALUE);
+				if ( value == null || value.trim().equals("") ) {
+					value = getProperties().getProperty(PROPERTY_VALUE+"1");
+				}
+				result = new String[] { value };
+			} else {
+				result = new String[nvalues];
+				for (int i=1; i<=nvalues; i++) {
+					result[i - 1] = getProperties().getProperty(PROPERTY_VALUE+Integer.toString(i));
+				}
+			}
+		}
+		return result;
 	}
 
     private DEREncodable parseDERBitString(String value) throws CertificateExtentionConfigurationException {
@@ -201,7 +290,7 @@ public class BasicCertificateExtension extends CertificateExtension {
 	}
 	
     private DEREncodable parseDEROID(String value) throws CertificateExtentionConfigurationException {
-        DEREncodable retval = null;
+    	DEREncodable retval = null;
         try{
             retval = new DERObjectIdentifier(value);
         }catch(Exception e){
@@ -299,6 +388,9 @@ public class BasicCertificateExtension extends CertificateExtension {
 			throw new CertificateExtentionConfigurationException(intres.getLocalizedMessage("certext.basic.illegalvalue",value,Integer.valueOf(getId())));
 		}
 	}
-
+	
+	private byte[] parseRaw(String value) {
+		return Hex.decode(value);
+	}
 
 }
