@@ -49,7 +49,6 @@ import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.X509CertificateStructure;
-import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.cms.CMSSignedGenerator;
 import org.bouncycastle.ocsp.BasicOCSPResp;
 import org.ejbca.core.model.InternalResources;
@@ -82,12 +81,12 @@ public class CmpMessageHelper {
 
 	private static final String CMP_ERRORGENERAL = "cmp.errorgeneral";
 
-	public static PKIHeader createPKIHeader(final X509Name sender, final X509Name recipient, final String senderNonce, final String recipientNonce, final String transactionId) {
+	public static PKIHeader createPKIHeader(final GeneralName sender, final GeneralName recipient, final String senderNonce, final String recipientNonce, final String transactionId) {
 		final PKIHeader myPKIHeader =
 			new PKIHeader(
 					new DERInteger(2),
-					new GeneralName(sender),
-					new GeneralName(recipient));
+					sender,
+					recipient);
 		myPKIHeader.setMessageTime(new DERGeneralizedTime(new Date()));
 		if (senderNonce != null) {
 			myPKIHeader.setSenderNonce(new DEROctetString(Base64.decode(senderNonce.getBytes())));					

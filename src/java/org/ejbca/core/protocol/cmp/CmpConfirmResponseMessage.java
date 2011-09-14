@@ -25,7 +25,6 @@ import java.security.cert.X509Certificate;
 
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.DERNull;
-import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.cms.CMSSignedGenerator;
 import org.ejbca.core.model.ca.SignRequestException;
 import org.ejbca.core.model.ra.NotFoundException;
@@ -112,9 +111,7 @@ public class CmpConfirmResponseMessage extends BaseCmpMessage implements IRespon
 			NoSuchAlgorithmException, NoSuchProviderException,
 			SignRequestException, NotFoundException {
 
-		final X509Name sender = X509Name.getInstance(getSender().getName());
-		final X509Name recipient = X509Name.getInstance(getRecipient().getName());
-		final PKIHeader myPKIHeader = CmpMessageHelper.createPKIHeader(sender, recipient, getSenderNonce(), getRecipientNonce(), getTransactionId());
+		final PKIHeader myPKIHeader = CmpMessageHelper.createPKIHeader(getSender(), getRecipient(), getSenderNonce(), getRecipientNonce(), getTransactionId());
 		final PKIBody myPKIBody = new PKIBody(new DERNull(), 19);
 		final PKIMessage myPKIMessage = new PKIMessage(myPKIHeader, myPKIBody);
 

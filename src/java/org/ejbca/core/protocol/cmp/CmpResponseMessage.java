@@ -29,6 +29,7 @@ import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.DERInteger;
 import org.bouncycastle.asn1.DERUTF8String;
+import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.X509CertificateStructure;
 import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.cms.CMSSignedGenerator;
@@ -172,8 +173,8 @@ public class CmpResponseMessage implements IResponseMessage {
 			subject = "CN=fooSubject";
 		}
 		
-		final X509Name issuerName = new X509Name(issuer);
-		final X509Name subjectName = new X509Name(subject);
+		final GeneralName issuerName = new GeneralName(new X509Name(issuer));
+		final GeneralName subjectName = new GeneralName(new X509Name(subject));
 		final PKIHeader myPKIHeader = CmpMessageHelper.createPKIHeader(issuerName, subjectName, senderNonce, recipientNonce, transactionId);
 
 		try {

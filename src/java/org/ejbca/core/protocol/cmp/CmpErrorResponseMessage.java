@@ -24,7 +24,6 @@ import java.security.cert.CertificateEncodingException;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.DERInteger;
 import org.bouncycastle.asn1.DERUTF8String;
-import org.bouncycastle.asn1.x509.X509Name;
 import org.ejbca.core.model.ca.SignRequestException;
 import org.ejbca.core.model.ra.NotFoundException;
 import org.ejbca.core.protocol.FailInfo;
@@ -110,9 +109,7 @@ public class CmpErrorResponseMessage extends BaseCmpMessage implements IResponse
 	public boolean create() throws IOException, InvalidKeyException,
 			NoSuchAlgorithmException, NoSuchProviderException,
 			SignRequestException, NotFoundException {
-		final X509Name sender = X509Name.getInstance(getSender().getName());
-		final X509Name recipient = X509Name.getInstance(getRecipient().getName());
-		final PKIHeader myPKIHeader = CmpMessageHelper.createPKIHeader(sender, recipient, getSenderNonce(), getRecipientNonce(), getTransactionId());
+		final PKIHeader myPKIHeader = CmpMessageHelper.createPKIHeader(getSender(), getRecipient(), getSenderNonce(), getRecipientNonce(), getTransactionId());
 		final PKIStatusInfo myPKIStatusInfo = new PKIStatusInfo(new DERInteger(2)); // 2 = rejection
 		if (failInfo != null) {
 			myPKIStatusInfo.setFailInfo(failInfo.getAsBitString());			
