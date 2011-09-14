@@ -27,9 +27,10 @@ import java.security.SignatureException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.Vector;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.ASN1InputStream;
@@ -101,13 +102,11 @@ public class NestedMessageContent extends BaseCmpMessage implements IRequestMess
 	public boolean verify() {
 		boolean ret = false;
 		try {
-			final Vector<X509Certificate> racerts = getRaCerts();
+			final List<X509Certificate> racerts = getRaCerts();
 			final Iterator<X509Certificate> itr = racerts.iterator();
-			X509Certificate cert;
-			Signature sig;
 			while(itr.hasNext() && !ret) {
-				cert = itr.next();
-				sig = Signature.getInstance(cert.getSigAlgName(), "BC");
+				X509Certificate cert = itr.next();
+				Signature sig = Signature.getInstance(cert.getSigAlgName(), "BC");
 				sig.initVerify(cert.getPublicKey());
 				sig.update(raSignedMessage.getProtectedBytes());
 				ret = sig.verify(raSignedMessage.getProtection().getBytes());
@@ -154,9 +153,9 @@ public class NestedMessageContent extends BaseCmpMessage implements IRequestMess
 	 * @throws CertificateException
 	 * @throws IOException
 	 */
-	private Vector<X509Certificate> getRaCerts() throws CertificateException, IOException {
+	private List<X509Certificate> getRaCerts() throws CertificateException, IOException {
 			
-		final Vector<X509Certificate> racerts = new Vector<X509Certificate>();
+		final List<X509Certificate> racerts = new ArrayList<X509Certificate>();
 		final String raCertsPath = CmpConfiguration.getRaCertificatePath();
 		final File raCertDirectory = new File(raCertsPath);
 		final String[] files = raCertDirectory.list();
