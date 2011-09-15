@@ -87,6 +87,7 @@ import org.ejbca.core.protocol.ws.objects.UserMatch;
 import org.ejbca.util.CertTools;
 import org.ejbca.util.IPatternLogger;
 import org.ejbca.util.ValidityDate;
+import org.ejbca.util.cert.OID;
 import org.ejbca.util.query.Query;
 
 /** Helper class for other classes that wants to call remote EJBs.
@@ -369,25 +370,7 @@ public class EjbcaWSHelper {
             useEI = true;
         }
 
-        // Set generic Custom ExtendedInformation from potential data in UserDataVOWS
-        List<ExtendedInformationWS> userei = userdata.getExtendedInformation();
-        if (userei != null) {
-            for (ExtendedInformationWS item : userei) {
-            	String key = item.getName();
-            	String value = item.getValue ();
-            	if ((key != null) && (value != null)) {
-            		if (log.isDebugEnabled()) {
-            			log.debug("Set generic extended information: "+key+", "+value);
-            		}
-                    ei.setMapData(key, value);    			            		
-                    useEI = true;
-            	} else {
-            		if (log.isDebugEnabled()) {
-            			log.debug("Key or value is null when trying to set generic extended information.");
-            		}
-            	}
-    		}
-        }
+        useEI = setExtendedInformationFromUserDataVOWS(userdata, ei) || useEI;
 
         final UserDataVO userdatavo = new UserDataVO(userdata.getUsername(),
         		userdata.getSubjectDN(),
@@ -408,9 +391,40 @@ public class EjbcaWSHelper {
 		
 		return userdatavo;
 	}
-	
-	
-	
+
+
+	private boolean setExtendedInformationFromUserDataVOWS( UserDataVOWS userdata, ExtendedInformation ei ) {
+		// Set generic Custom ExtendedInformation from potential data in UserDataVOWS
+		final List<ExtendedInformationWS> userei = userdata.getExtendedInformation();
+		if ( userei==null ) {
+			return false;
+		}
+		boolean useEI = false;
+		for (ExtendedInformationWS item : userei) {
+			final String key = item.getName();
+			final String value = item.getValue ();
+			if ( value==null || key==null ) {
+				if (log.isDebugEnabled()) {
+					log.debug("Key or value is null when trying to set generic extended information.");
+				}
+				continue;
+			}
+			if ( OID.isStartingWithValidOID(key)  ) {
+				ei.setExtensionData(key, value);
+				if (log.isDebugEnabled()) {
+					log.debug("Set certificate extension: "+key+", "+value);
+				}
+			} else {
+				ei.setMapData(key, value);
+				if (log.isDebugEnabled()) {
+					log.debug("Set generic extended information: "+key+", "+value);
+				}
+			}
+			useEI = true;
+		}
+		return useEI;
+	}
+
 	protected UserDataVOWS convertUserDataVO(Admin admin, UserDataVO userdata) throws EjbcaException, ClassCastException {
 	    UserDataVOWS dataWS = new UserDataVOWS();
 		String username = userdata.getUsername();
