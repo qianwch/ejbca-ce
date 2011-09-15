@@ -25,8 +25,11 @@ import org.apache.log4j.Logger;
 import org.cesecore.core.ejb.ca.store.CertificateProfileSession;
 import org.cesecore.core.ejb.ra.raadmin.EndEntityProfileSession;
 import org.ejbca.config.CmpConfiguration;
+import org.ejbca.core.ejb.authorization.AuthorizationSession;
 import org.ejbca.core.ejb.ca.caadmin.CAAdminSession;
 import org.ejbca.core.ejb.ca.caadmin.CaSession;
+import org.ejbca.core.ejb.ca.store.CertificateStoreSession;
+import org.ejbca.core.ejb.ra.UserAdminSession;
 import org.ejbca.core.model.InternalResources;
 import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.ca.SignRequestException;
@@ -42,6 +45,9 @@ import org.ejbca.core.model.ra.NotFoundException;
 import org.ejbca.core.protocol.FailInfo;
 import org.ejbca.core.protocol.IResponseMessage;
 import org.ejbca.core.protocol.ResponseStatus;
+import org.ejbca.core.protocol.cmp.authentication.HMACAuthenticationModule;
+import org.ejbca.core.protocol.cmp.authentication.ICMPAuthenticationModule;
+import org.ejbca.core.protocol.cmp.authentication.VerifyPKIMessage;
 import org.ejbca.util.Base64;
 import org.ejbca.util.CertTools;
 
@@ -70,13 +76,23 @@ public class ConfirmationMessageHandler extends BaseCmpMessageHandler implements
 	private String responseProtection = null;
 	/** CA Session used to sign the response */
 	private CaSession caSession;
+	/** User Admin Session used to authenticate the request */
+	private UserAdminSession userAdminSession;
+	/** Certificate Store Session used to authenticate the request */
+	private CertificateStoreSession certificateStoreSession;
+	/** Authorization Session used to authenticate the request */
+	private AuthorizationSession authorizationSession;
 	
-	//public ConfirmationMessageHandler(Admin admin, CAAdminSession caAdminSession, EndEntityProfileSession endEntityProfileSession, CertificateProfileSession certificateProfileSession) {
-	public ConfirmationMessageHandler(final Admin admin, final CAAdminSession caAdminSession, final CaSession caSession, final EndEntityProfileSession endEntityProfileSession, final CertificateProfileSession certificateProfileSession) {
+	public ConfirmationMessageHandler(final Admin admin, final CAAdminSession caAdminSession, final CaSession caSession, final EndEntityProfileSession endEntityProfileSession, 
+					final CertificateProfileSession certificateProfileSession, final UserAdminSession userAdminSession, final CertificateStoreSession certStoreSession, 
+					final AuthorizationSession authSession) {
 		super(admin, caAdminSession, endEntityProfileSession, certificateProfileSession);
 		raAuthenticationSecret = CmpConfiguration.getRAAuthenticationSecret();
 		responseProtection = CmpConfiguration.getResponseProtection();
 		this.caSession = caSession;
+		this.userAdminSession = userAdminSession;
+		this.certificateStoreSession = certStoreSession;
+		this.authorizationSession = authSession;
 	}
 	public IResponseMessage handleMessage(final BaseCmpMessage msg) {
 		if (LOG.isTraceEnabled()) {
@@ -93,57 +109,45 @@ public class ConfirmationMessageHandler extends BaseCmpMessageHandler implements
 			String cmpRaAuthSecret = null;	
 			final String keyId = getSenderKeyId(msg.getHeader());
 			if (keyId != null) {
+				
+				CAInfo caInfo;
 				try {
-					final CmpPbeVerifyer verifyer = new CmpPbeVerifyer(msg.getMessage());
-					owfAlg = verifyer.getOwfOid();
-					macAlg = verifyer.getMacOid();
-					iterationCount = verifyer.getIterationCount();
-					// If we use a globally configured shared secret for all CAs we check it right away
-					if (raAuthenticationSecret != null) {
-						if (!verifyer.verify(raAuthenticationSecret)) {
-							String err = "Protection verified false on ConformationMessage";
-							LOG.error(err);
-							return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_MESSAGE_CHECK, err);
-						}
-						cmpRaAuthSecret = raAuthenticationSecret;
-					} else {
-						// Get the correct profiles' and CA ids based on current configuration. 
-						CAInfo caInfo;
-						try {
-							final int eeProfileId = getUsedEndEntityProfileId(keyId);
-							final int caId = getUsedCaId(keyId, eeProfileId);
-							caInfo = caAdminSession.getCAInfo(admin, caId);
-						} catch (NotFoundException e) {
-							LOG.info(INTRES.getLocalizedMessage(CMP_ERRORGENERAL, e.getMessage()), e);
-							return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.INCORRECT_DATA, e.getMessage());
-						} catch (EJBException e) {
-							final String errMsg = INTRES.getLocalizedMessage(CMP_ERRORADDUSER);
-							LOG.error(errMsg, e);			
-							return null;	// Fatal error
-						}
-						if (caInfo instanceof X509CAInfo) {
-							cmpRaAuthSecret = ((X509CAInfo) caInfo).getCmpRaAuthSecret();
-						}
-						// Now we know which CA the request is for, if we didn't use a global shared secret we can check it now!
-						if (cmpRaAuthSecret == null || !verifyer.verify(cmpRaAuthSecret)) {
-							String errMsg = INTRES.getLocalizedMessage("cmp.errorauthmessage");
-							LOG.info(errMsg); // info because this is something we should expect and we handle it
-							if (verifyer.getErrMsg() != null) {
-								errMsg = verifyer.getErrMsg();
-							}
-							return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_MESSAGE_CHECK, errMsg);
-						}
-					}
-				} catch (NoSuchAlgorithmException e) {
-					LOG.error("Exception calculating protection: ", e);
-					return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_MESSAGE_CHECK, e.getMessage());
-				} catch (NoSuchProviderException e) {
-					LOG.error("Exception calculating protection: ", e);
-					return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_MESSAGE_CHECK, e.getMessage());
-				} catch (InvalidKeyException e) {
-					LOG.error("Exception calculating protection: ", e);
-					return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_MESSAGE_CHECK, e.getMessage());
+					int eeProfileId = getUsedEndEntityProfileId(keyId);
+					int caId = getUsedCaId(keyId, eeProfileId);
+					caInfo = caAdminSession.getCAInfo(admin, caId);
+				} catch (NotFoundException e) {
+					LOG.info(INTRES.getLocalizedMessage(CMP_ERRORGENERAL, e.getMessage()), e);
+					return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.INCORRECT_DATA, e.getMessage());
+				} catch (EJBException e) {
+					final String errMsg = INTRES.getLocalizedMessage(CMP_ERRORADDUSER);
+					LOG.error(errMsg, e);			
+					return null;	// Fatal error
 				}
+				
+				//Verify the authenticity of the message
+				VerifyPKIMessage messageVerifyer = new VerifyPKIMessage(caInfo, admin, caAdminSession, userAdminSession, certificateStoreSession, authorizationSession, endEntityProfileSession);
+				ICMPAuthenticationModule authenticationModule = null;
+				if(messageVerifyer.verify(msg.getMessage())) {
+					authenticationModule = messageVerifyer.getUsedAuthenticationModule();
+				}
+				if(authenticationModule == null) {
+					String errMsg = "";
+					if(errMsg != null) {
+						errMsg = messageVerifyer.getErrorMessage();
+					} else {
+						errMsg = "Unrecognized authentication modules";
+					}
+					LOG.error(errMsg);
+					return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_MESSAGE_CHECK, errMsg);
+				} else {
+					if(authenticationModule instanceof HMACAuthenticationModule) {
+						HMACAuthenticationModule hmacmodule = (HMACAuthenticationModule) authenticationModule;
+						owfAlg = hmacmodule.getCmpPbeVerifyer().getOwfOid();
+						macAlg = hmacmodule.getCmpPbeVerifyer().getMacOid();
+					}
+				}
+				cmpRaAuthSecret = authenticationModule.getAuthenticationString();
+				
 			}
 			if (LOG.isDebugEnabled()) {
 				LOG.debug("Creating a PKI confirm message response");
