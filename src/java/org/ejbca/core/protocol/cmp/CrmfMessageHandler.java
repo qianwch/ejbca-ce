@@ -214,6 +214,8 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 							LOG.debug("Found username: "+data.getUsername());
 						}
 						crmfreq.setUsername(data.getUsername());
+						crmfreq.setPassword(data.getPassword());
+
 					} else {
 						final String errMsg = INTRES.getLocalizedMessage("cmp.infonouserfordn", dn);
 						LOG.info(errMsg);
