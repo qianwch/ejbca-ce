@@ -77,6 +77,9 @@
 # Shared secret between the CA and the RA used to authenticate valid RA messages.
 # Leave this commented out to be able to use a separate secret for each CA (see Edit Certificate Authorities configuration).
 #
+# Note that the cmp.authenticationparameters should be set to - (not specified) for the HMAC authentication module to fall 
+# back to this setting. 
+#
 # Default: empty
 #cmp.ra.authenticationsecret=
 
