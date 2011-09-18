@@ -70,6 +70,8 @@ public class EjbcaWSNonAdminTest extends CommonEjbcaWS {
 
     private static final Logger log = Logger.getLogger(EjbcaWSNonAdminTest.class);
 
+	private static final String TEST_NONADMIN_FILE = "p12/"+TEST_NONADMIN_USERNAME+".jks";
+
     private static String adminusername1 = null;
     private static X509Certificate admincert1 = null;
     private static Admin admin1 = null;
@@ -99,14 +101,14 @@ public class EjbcaWSNonAdminTest extends CommonEjbcaWS {
     private void setUpNonAdmin() throws Exception {
         super.setUp();
         CryptoProviderTools.installBCProvider();
-        if (new File("p12/wsnonadmintest.jks").exists()) {
+        if (new File(TEST_NONADMIN_FILE).exists()) {
             String urlstr = "https://" + hostname + ":" + httpsPort + "/ejbca/ejbcaws/ejbcaws?wsdl";
             log.info("Contacting webservice at " + urlstr);
 
-            System.setProperty("javax.net.ssl.trustStore", "p12/wsnonadmintest.jks");
-            System.setProperty("javax.net.ssl.trustStorePassword", "foo123");
-            System.setProperty("javax.net.ssl.keyStore", "p12/wsnonadmintest.jks");
-            System.setProperty("javax.net.ssl.keyStorePassword", "foo123");
+            System.setProperty("javax.net.ssl.trustStore", TEST_NONADMIN_FILE);
+            System.setProperty("javax.net.ssl.trustStorePassword", PASSWORD);
+            System.setProperty("javax.net.ssl.keyStore", TEST_NONADMIN_FILE);
+            System.setProperty("javax.net.ssl.keyStorePassword", PASSWORD);
 
             QName qname = new QName("http://ws.protocol.core.ejbca.org/", "EjbcaWSService");
             EjbcaWSService service = new EjbcaWSService(new URL(urlstr), qname);
@@ -395,7 +397,7 @@ public class EjbcaWSNonAdminTest extends CommonEjbcaWS {
 
         UserDataVO userdata = new UserDataVO(adminusername1, "CN=" + adminusername1, caid, null, null, 1, SecConst.EMPTY_ENDENTITYPROFILE,
                 SecConst.CERTPROFILE_FIXED_ENDUSER, SecConst.TOKEN_SOFT_P12, 0, null);
-        userdata.setPassword("foo123");
+        userdata.setPassword(PASSWORD);
         userAdminSession.addUser(intadmin, userdata, true);
 
         BatchMakeP12 makep12 = new BatchMakeP12();
@@ -413,12 +415,12 @@ public class EjbcaWSNonAdminTest extends CommonEjbcaWS {
         admincert1 = (X509Certificate) certificateStoreSession.findCertificatesByUsername(intadmin, adminusername1).iterator().next();
 
         KeyStore ks = KeyStore.getInstance("JKS");
-        ks.load(new FileInputStream("p12/wsnonadmintest.jks"), "foo123".toCharArray());
+        ks.load(new FileInputStream(TEST_NONADMIN_FILE), PASSWORD.toCharArray());
         Enumeration<String> enumer = ks.aliases();
         X509Certificate reqadmincert = null;
         while (enumer.hasMoreElements()) {
             String nextAlias = enumer.nextElement();
-            if (nextAlias.equals("wsnonadmintest")) {
+            if (nextAlias.equals(TEST_NONADMIN_USERNAME)) {
                 reqadmincert = (X509Certificate) ks.getCertificate(nextAlias);
             }
         }

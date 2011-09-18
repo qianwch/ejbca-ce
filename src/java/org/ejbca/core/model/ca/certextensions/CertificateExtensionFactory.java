@@ -64,17 +64,17 @@ public class CertificateExtensionFactory {
 	
 	private static CertificateExtensionFactory instance = null;
 	
-	private static String PROPERTY_ID           = "id";
-	private static String PROPERTY_OID          = ".oid";
-	private static String PROPERTY_CLASSPATH    = ".classpath";
-	private static String PROPERTY_DISPLAYNAME  = ".displayname";
-	private static String PROPERTY_USED         = ".used";
-	private static String PROPERTY_TRANSLATABLE = ".translatable";
-	private static String PROPERTY_CRITICAL     = ".critical";
+	private static final String PROPERTY_ID           = "id";
+	private static final String PROPERTY_OID          = ".oid";
+	private static final String PROPERTY_CLASSPATH    = ".classpath";
+	private static final String PROPERTY_DISPLAYNAME  = ".displayname";
+	private static final String PROPERTY_USED         = ".used";
+	private static final String PROPERTY_TRANSLATABLE = ".translatable";
+	private static final String PROPERTY_CRITICAL     = ".critical";
 	
-	private ArrayList<AvailableCertificateExtension> availableCertificateExtensions = new ArrayList<AvailableCertificateExtension>();
-	private HashMap<Integer, CertificateExtension> certificateExtensions = new HashMap<Integer, CertificateExtension>();
-	private HashMap<String, String> standardCertificateExtensions = new HashMap<String, String>();
+	private final ArrayList<AvailableCertificateExtension> availableCertificateExtensions = new ArrayList<AvailableCertificateExtension>();
+	private final HashMap<Integer, CertificateExtension> certificateExtensions = new HashMap<Integer, CertificateExtension>();
+	private final HashMap<String, String> standardCertificateExtensions = new HashMap<String, String>();
 	{
 		standardCertificateExtensions.put(X509Extensions.BasicConstraints.getId(), BasicConstraint.class.getName());
 		standardCertificateExtensions.put(X509Extensions.SubjectKeyIdentifier.getId(), SubjectKeyIdentifier.class.getName());
@@ -98,13 +98,14 @@ public class CertificateExtensionFactory {
 	
 	
 	/**
-	 * Special Method that should only be used from test scripts.
+	 * Special Method that should only be used from test scripts. New instance is created at each call.
 	 */
-	static CertificateExtensionFactory getInstance(Properties props){
-		if(instance == null){
-			instance = parseConfiguration(props);
+	static public CertificateExtensionFactory getInstance(Properties props){
+		if (props==null) {
+			instance=null;
+			return null;
 		}
-		
+		instance = parseConfiguration(props);
 		return instance;
 	}
 	
