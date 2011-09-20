@@ -36,7 +36,6 @@ import org.ejbca.core.ejb.ca.caadmin.CAAdminSessionRemote;
 import org.ejbca.core.ejb.ca.store.CertificateStoreSessionRemote;
 import org.ejbca.core.ejb.config.GlobalConfigurationSessionRemote;
 import org.ejbca.core.ejb.hardtoken.HardTokenSessionRemote;
-import org.ejbca.core.ejb.ra.UserAdminSessionRemote;
 import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.approval.Approval;
 import org.ejbca.core.model.approval.ApprovalDataVO;
@@ -79,18 +78,17 @@ public class EjbcaWSNonAdminTest extends CommonEjbcaWS {
     private static GlobalConfiguration gc = null;
 
     private List<AdminEntity> adminEntities;
-    private Admin intadmin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
+    private final Admin intadmin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
     private Admin reqadmin;
 
-    private CAAdminSessionRemote caAdminSessionRemote = InterfaceCache.getCAAdminSession();
-    private ApprovalExecutionSessionRemote approvalExecutionSession = InterfaceCache.getApprovalExecutionSession();
-    private ApprovalSessionRemote approvalSession = InterfaceCache.getApprovalSession();
-    private CertificateStoreSessionRemote certificateStoreSession = InterfaceCache.getCertificateStoreSession();
-    private HardTokenSessionRemote hardTokenSessionRemote = InterfaceCache.getHardTokenSession();
-    private GlobalConfigurationSessionRemote globalConfigurationSession = InterfaceCache.getGlobalConfigurationSession();
-    private UserAdminSessionRemote userAdminSession = InterfaceCache.getUserAdminSession();
-    private AuthorizationSessionRemote authorizationSession = InterfaceCache.getAuthorizationSession();
-    private AdminEntitySessionRemote adminEntitySession = InterfaceCache.getAdminEntitySession();
+    private final CAAdminSessionRemote caAdminSessionRemote = InterfaceCache.getCAAdminSession();
+    private final ApprovalExecutionSessionRemote approvalExecutionSession = InterfaceCache.getApprovalExecutionSession();
+    private final ApprovalSessionRemote approvalSession = InterfaceCache.getApprovalSession();
+    private final CertificateStoreSessionRemote certificateStoreSession = InterfaceCache.getCertificateStoreSession();
+    private final HardTokenSessionRemote hardTokenSessionRemote = InterfaceCache.getHardTokenSession();
+    private final GlobalConfigurationSessionRemote globalConfigurationSession = InterfaceCache.getGlobalConfigurationSession();
+    private final AuthorizationSessionRemote authorizationSession = InterfaceCache.getAuthorizationSession();
+    private final AdminEntitySessionRemote adminEntitySession = InterfaceCache.getAdminEntitySession();
     
     public void test00SetupAccessRights() throws Exception {
         super.setupAccessRights();
