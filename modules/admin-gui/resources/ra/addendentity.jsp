@@ -10,6 +10,7 @@
 <jsp:useBean id="ejbcawebbean" scope="session" class="org.ejbca.ui.web.admin.configuration.EjbcaWebBean" />
 <jsp:useBean id="rabean" scope="session" class="org.ejbca.ui.web.admin.rainterface.RAInterfaceBean" />
 <jsp:useBean id="tokenbean" scope="session" class="org.ejbca.ui.web.admin.hardtokeninterface.HardTokenInterfaceBean" />
+<jsp:useBean id="editendentitybean" scope="page" class="org.ejbca.ui.web.admin.rainterface.EditEndEntityBean" />
 <%! // Declarations
 
   static final String ACTION                   = "action";
@@ -35,6 +36,8 @@
   static final String TEXTFIELD_CERTSERIALNUMBER  = "textfieldcertsn";
   static final String TEXTFIELD_CARDNUMBER        = "textfieldcardnumber";
   static final String TEXTFIELD_MAXFAILEDLOGINS	  = "textfieldmaxfailedlogins";
+  
+  static final String TEXTAREA_EXTENSIONDATA      = "textareaextensiondata";
 
   static final String SELECT_ENDENTITYPROFILE     = "selectendentityprofile";
   static final String SELECT_CERTIFICATEPROFILE   = "selectcertificateprofile";
@@ -73,6 +76,7 @@
   static final String CHECKBOX_REQUIRED_ENDTIME           = "checkboxrequiredendtime";
   static final String CHECKBOX_REQUIRED_MAXFAILEDLOGINS	  = "checkboxrequiredmaxfailedlogins";
   static final String CHECKBOX_REQUIRED_CERTSERIALNUMBER  = "checkboxrequiredcertserialnumber";
+  static final String CHECKBOX_REQUIRED_EXTENSIONDATA     = "checkboxrequiredextensiondata";
 
   static final String RADIO_MAXFAILEDLOGINS		  		  = "radiomaxfailedlogins";
   static final String RADIO_MAXFAILEDLOGINS_VAL_UNLIMITED = "unlimited";
@@ -193,8 +197,23 @@
          lastselectedsubjectaltnames  = new String[oldprofile.getSubjectAltNameFieldOrderLength()];
          lastselectedsubjectdirattrs  = new String[oldprofile.getSubjectDirAttrFieldOrderLength()];
          newuser.setEndEntityProfileId(oldprofileid);         
+         
+         String value = request.getParameter(TEXTAREA_EXTENSIONDATA);
+         if (value != null) {
+         	ExtendedInformation ei = newuser.getExtendedInformation();
+         	if (ei == null) {
+         		ei = new ExtendedInformation();
+         		newuser.setExtendedInformation(ei);
+         	}
+                editendentitybean.setExtendedInformation(ei);
+                
+                // Save the new value if the profile allows it
+                if (oldprofile.getUseExtensiondata()) {
+                    editendentitybean.setExtensionData(value);
+                }
+         }
 
-         String value = request.getParameter(TEXTFIELD_USERNAME);
+         value = request.getParameter(TEXTFIELD_USERNAME);
          if(value !=null){
            value=value.trim(); 
            if(!value.equals("")){
@@ -705,7 +724,9 @@
       } else {
         availablecas = ejbcawebbean.getInformationMemory().getEndEntityAvailableCAs(profileid);
       }
-  
+      
+      pageContext.setAttribute("useradded", useradded);
+      pageContext.setAttribute("profile", profile);
 %>
 <head>
   <title><%= globalconfiguration.getEjbcaTitle() %></title>
@@ -1779,7 +1800,19 @@ function checkallfields(){
 			<td><input type="checkbox" name="<%= CHECKBOX_REQUIRED_CARDNUMBER %>" value="<%= CHECKBOX_VALUE %>"  disabled="true" <% if(profile.isRequired(EndEntityProfile.CARDNUMBER,0)) out.write(" CHECKED "); %>></td>
 		</tr>
 	<%	} %>
-
+        
+        <%	if (profile.getUseExtensiondata()) { %>
+		<tr  id="Row<%=(row++)%2%>"> 
+			<td>&nbsp;</td><td align="right"> 
+				<c:out value="<%= ejbcawebbean.getText(\"CERT_EXTENSIONDATA\") %>"/>
+			</td><td> 
+				<textarea name="<%=TEXTAREA_EXTENSIONDATA%>" rows="4" cols="35"><c:if test="${!useradded}"><c:out value="${editendentitybean.extensionData}"/></c:if></textarea>
+			</td>
+			<td>
+				<input type="checkbox" name="<%= CHECKBOX_REQUIRED_EXTENSIONDATA %>" value="<%= CHECKBOX_VALUE %>" disabled="true"/>
+			</td>
+		</tr>
+	<%	} %> 
 
     <!-- ---------- Other data -------------------- -->
 

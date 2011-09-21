@@ -11,6 +11,7 @@
 <jsp:useBean id="cabean" scope="session" class="org.ejbca.ui.web.admin.cainterface.CAInterfaceBean" />
 <jsp:useBean id="tokenbean" scope="session" class="org.ejbca.ui.web.admin.hardtokeninterface.HardTokenInterfaceBean" />
 <jsp:useBean id="viewendentityhelper" scope="session" class="org.ejbca.ui.web.admin.rainterface.ViewEndEntityHelper" />
+<jsp:useBean id="editendentitybean" scope="page" class="org.ejbca.ui.web.admin.rainterface.EditEndEntityBean" />
 <%! // Declarations
  
 
@@ -30,7 +31,13 @@
   viewendentityhelper.parseRequest(request);
   
   viewendentityhelper.row = 0;
-
+  
+    // Initialize EditEndEntityBean
+    ExtendedInformation userEi = viewendentityhelper.userdata.getExtendedInformation();
+    if (userEi == null) {
+        userEi = new ExtendedInformation();
+    }
+    editendentitybean.setExtendedInformation(userEi);
 %>
 <head>
   <title><%= globalconfiguration.getEjbcaTitle() %></title>
@@ -341,7 +348,24 @@
          </td>
        </tr>
       <% } %>
-
+      
+      <% if(viewendentityhelper.profile.getUseExtensiondata() || !editendentitybean.getExtensionDataAsMap().isEmpty()){ %>
+       <tr id="Row<%=(viewendentityhelper.row++)%2%>">
+	 <td align="right" width="<%=ViewEndEntityHelper.columnwidth%>"><%= ejbcawebbean.getText("CERT_EXTENSIONDATA") %></td>
+	 <td><table>
+             <c:forEach var="item" items="${editendentitybean.extensionDataAsMap}">
+               <tr>
+                 <td>
+                   <c:out value="${item.key}"/>
+                 </td>
+                 <td>
+                   <c:out value="${item.value}"/>
+                 </td>
+               </tr>
+             </c:forEach>
+            </table></td>
+       </tr>
+      <% } %>
 
     <!-- ---------- Other data -------------------- -->
 

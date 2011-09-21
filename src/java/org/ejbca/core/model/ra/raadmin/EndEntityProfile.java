@@ -210,6 +210,12 @@ public class EndEntityProfile extends UpgradeableDataHashMap implements Serializ
     private static final String PRINTINGSVGFILENAME    = "PRINTINGSVGFILENAME";
     private static final String PRINTINGSVGDATA        = "PRINTINGSVGDATA";
 
+    /** 
+     * If it should be possible to add/edit certificate extension data
+     * when adding/editing an end entity using the admin web or not.
+     */
+    private static final String USEEXTENSIONDATA       = "USEEXTENSIONDATA";
+
     // String constants that never change, so we can do the String concat/conversion once
     private static final String CONST_DEFAULTCERTPROFILE = Integer.toString(SecConst.CERTPROFILE_FIXED_ENDUSER);
     private static final String CONST_AVAILCERTPROFILES1 = SecConst.CERTPROFILE_FIXED_ENDUSER + ";" + SecConst.CERTPROFILE_FIXED_OCSPSIGNER + ";" + SecConst.CERTPROFILE_FIXED_SERVER;
@@ -1873,5 +1879,16 @@ public class EndEntityProfile extends UpgradeableDataHashMap implements Serializ
 
     public static String[] getSubjectDirAttrProfileFields() {
     	return (String[])DnComponents.getDirAttrFields().toArray(new String[0]);
+    }
+    
+    /**
+     * @return true if it should be possible to add extension data in the GUI.
+     */
+    public boolean getUseExtensiondata(){
+    	return getValueDefaultFalse(USEEXTENSIONDATA);
+    }
+
+    public void setUseExtensiondata(final boolean use){
+    	data.put(USEEXTENSIONDATA, Boolean.valueOf(use));
     }
 }
