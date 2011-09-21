@@ -25,6 +25,7 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.ejbca.config.EjbcaConfiguration;
+import org.ejbca.core.model.authorization.AdminInformation;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.util.Base64;
 import org.ejbca.util.CertTools;
@@ -293,11 +294,11 @@ public abstract class ApprovalRequest implements Externalizable {
 	}
 
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		int version = in.readInt();
+		final int version = in.readInt();
 		if(version == 1){
-			String requestAdminCert = (String) in.readObject();			
+			final String requestAdminCert = (String) in.readObject();			
 			byte[] certbuf = Base64.decode(requestAdminCert.getBytes());
-		      CertificateFactory cf = CertTools.getCertificateFactory();
+			final CertificateFactory cf = CertTools.getCertificateFactory();
 		      X509Certificate x509cert = null;
 		      try {
 		    	  x509cert = (X509Certificate)cf.generateCertificate(new ByteArrayInputStream(certbuf));
@@ -305,6 +306,7 @@ public abstract class ApprovalRequest implements Externalizable {
 		    	  log.error(e);
 		      }
 		    this.requestAdmin = new Admin(x509cert, null, null); 
+			this.requestAdmin.setAuthToken(AdminInformation.getRandomToken());
 			this.requestSignature = (String) in.readObject();
 			this.approvalRequestType = in.readInt();
 			this.numOfRequiredApprovals =  in.readInt();
@@ -314,6 +316,7 @@ public abstract class ApprovalRequest implements Externalizable {
 		}
 		if(version == 2){
 			this.requestAdmin = (Admin) in.readObject();
+			this.requestAdmin.setAuthToken(AdminInformation.getRandomToken());
 			this.requestSignature = (String) in.readObject();
 			this.approvalRequestType = in.readInt();
 			this.numOfRequiredApprovals =  in.readInt();
@@ -323,12 +326,13 @@ public abstract class ApprovalRequest implements Externalizable {
 		}
 		if(version == 3){
 			this.requestAdmin = (Admin) in.readObject();
+			this.requestAdmin.setAuthToken(AdminInformation.getRandomToken());
 			this.requestSignature = (String) in.readObject();
 			this.approvalRequestType = in.readInt();
 			this.numOfRequiredApprovals =  in.readInt();
 			this.cAId = in.readInt();
 			this.endEntityProfileId = in.readInt();
-			int stepSize = in.readInt();
+			final int stepSize = in.readInt();
 			this.approvalSteps = new boolean[stepSize];
 			for(int i=0;i<approvalSteps.length;i++){
 				approvalSteps[i] = in.readBoolean();
