@@ -36,7 +36,7 @@ public class cmpvalidationtest  {
                 cmd.execute();
             } else {
                 System.out.println(
-                    "Usage: crmfrequest | missingstoredcert | stress");
+                    "Usage: crmfrequest | missingstoredcert | wrongsignature | stress");
             }
         } catch (Exception e) {
         	Throwable cause = e.getCause();
@@ -61,45 +61,11 @@ public class cmpvalidationtest  {
             return new CrmfRequestTestCommand(args);
         }else if (args[0].equals("missingstoredcert")) {
             return new CrmfRequestMissingStoredCertTestCommand(args);
-        /*
-        }else if (args[0].equals("findcerts")) {
-            return new FindCertsCommand(args);
-        }else if (args[0].equals("pkcs10req")) {
-            return new PKCS10ReqCommand(args);
-        } else if (args[0].equals("pkcs12req")) {
-            return new PKCS12ReqCommand(args);
-        } else if (args[0].equals("certreq")) {
-            return new CertificateRequestCommand(args);
-        } else if (args[0].equals("revokecert")) {
-            return new RevokeCertCommand(args);
-        } else if (args[0].equals("getpublisherqueuelength")) {
-            return new GetPublisherQueueLength(args);
-        } else if (args[0].equals("revoketoken")) {
-            return new RevokeTokenCommand(args);
-        } else if (args[0].equals("revokeuser")) {
-            return new RevokeUserCommand(args);
-        } else if (args[0].equals("checkrevokationstatus") || args[0].equals("checkrevocationstatus")) {
-            return new CheckRevokeStatusCommand(args);
-        }else if (args[0].equals("generatenewuser")) {
-            return new GenerateNewUserCommand(args);        
-        }else if (args[0].equals("createcrl")) {
-            return new CreateCRLCommand(args);        
-        } else if (args[0].equals("cacertrequest")) {
-            return new CaCertRequestCommand(args);
-        } else if (args[0].equals("cacertresponse")) {
-            return new CaCertResponseCommand(args);
-        } else if (args[0].equals("customlog")) {
-            return new CustomLogCommand(args);
+        }else if (args[0].equals("wrongsignature")) {
+            return new CrmfRequestWrongSignatureTestCommand(args);
+            /*
         } else if (args[0].equals("stress")) {
             return new StressTestCommand(args);
-        } else if (args[0].equals("cvcgetchain")) {
-            return new CvcGetChainCommand(args);
-        } else if (args[0].equals("cvcrequest")) {
-            return new CvcRequestCommand(args);
-        } else if (args[0].equals("cvcprint")) {
-            return new CvcPrintCommand(args);
-        } else if (args[0].equals("cvcpem")) {
-            return new CvcPemCommand(args);
         */
 	    }
         
