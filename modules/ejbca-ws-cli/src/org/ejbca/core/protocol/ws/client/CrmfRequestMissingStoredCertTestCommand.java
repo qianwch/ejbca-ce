@@ -65,7 +65,7 @@ import com.novosec.pkix.asn1.crmf.CertRequest;
 
 
 /**
- * Sends a CMP certificate request message and receives a certificate back.
+ * Sends a CMP certificate request message signed by an unknown RA (ra certificate not stored) and receives an error message.
  *
  * @version $Id$
  */
