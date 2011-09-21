@@ -36,7 +36,7 @@ public class cmpvalidationtest  {
                 cmd.execute();
             } else {
                 System.out.println(
-                    "Usage: crmfrequest | stress");
+                    "Usage: crmfrequest | missingstoredcert | stress");
             }
         } catch (Exception e) {
         	Throwable cause = e.getCause();
@@ -59,9 +59,9 @@ public class cmpvalidationtest  {
         
         if (args[0].equals("crmfrequest")) {
             return new CrmfRequestTestCommand(args);
+        }else if (args[0].equals("missingstoredcert")) {
+            return new CrmfRequestMissingStoredCertTestCommand(args);
         /*
-        }else if (args[0].equals("finduser")) {
-            return new FindUserCommand(args);
         }else if (args[0].equals("findcerts")) {
             return new FindCertsCommand(args);
         }else if (args[0].equals("pkcs10req")) {
