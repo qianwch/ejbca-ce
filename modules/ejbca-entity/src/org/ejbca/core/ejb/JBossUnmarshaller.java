@@ -15,6 +15,8 @@ package org.ejbca.core.ejb;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import org.apache.log4j.Logger;
 import org.ejbca.config.EjbcaConfiguration;
@@ -58,6 +60,19 @@ public final class JBossUnmarshaller {
 			} catch (Exception e) {
 				LOG.error("", e);
 			}
+		} else if (className.equals(org.cesecore.util.Base64GetHashMap.class.getName())) {
+			// Make special handling if this is an EJBCA 5.0 that has been downgraded to 4.0 (rollback after upgrade perhaps)
+			if (LOG.isTraceEnabled()) {
+				LOG.trace("Converting from cesecore Base64GetHashMap to older EJBCA Base64GetHashMap, this is a downgraded EJBCA 5 to EJBCA 4.");
+			}
+			if (t.getName().equals(org.ejbca.util.Base64GetHashMap.class.getName()) || t.getName().equals(HashMap.class.getName())) {
+				ret = (T)new org.ejbca.util.Base64GetHashMap((org.cesecore.util.Base64GetHashMap)object);
+			} else {
+				LOG.error("Can not convert from org.cesecore.util.Base64GetHashMap to "+t.getName());
+			}
+		} else if (LinkedHashMap.class.getName().equals(object.getClass().getName()) && t.getName().equals(HashMap.class.getName())) {
+			// If we have a LinkedHashMap (ejbca5) in the database, and tries to read a HashMap (ejbca4)
+			ret = (T)object;
 		} else {
 			LOG.error("Extraction from " + className + " is currently not supported");
 		}

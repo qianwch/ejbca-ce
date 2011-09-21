@@ -216,6 +216,9 @@
         <include name="org/ejbca/util/JAXWSDocAndConvTools.java"/>
   		<!-- Tool for tests. -->
         <include name="org/ejbca/util/NonEjbTestTools.java"/>
+  		<!-- Classes from cesecore, needed for forwards compatibility. -->
+        <include name="org/cesecore/util/Base64*.java"/>
+        <include name="org/cesecore/certificates/endentity/*.java"/>
 	</fileset>
 	<pathconvert refid="source.fileset.ejbca-util" pathsep=" " property="source.fileset.ejbca-util.files"><map from="${src.dir}/" to=""/></pathconvert>
 

@@ -32,6 +32,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 
 import org.apache.log4j.Logger;
+import org.cesecore.certificates.endentity.EndEntityInformation;
 import org.ejbca.core.model.ca.store.CertReqHistory;
 import org.ejbca.core.model.ra.UserDataVO;
 import org.ejbca.util.CertTools;
@@ -243,9 +244,19 @@ public class CertReqHistoryData implements Serializable {
 			throw new RuntimeException(e);
 		}
 		final XMLDecoder decoder = new XMLDecoder(new ByteArrayInputStream(baXML));
-		final UserDataVO useradmindata;
+		UserDataVO useradmindata;
 		try {
-			useradmindata  = (UserDataVO) decoder.readObject();
+			Object o = decoder.readObject();
+			try {
+				useradmindata  = (UserDataVO)o;
+			} catch( ClassCastException e ) {
+				if (log.isTraceEnabled()) {
+					log.trace("Trying to decode new type of CertReqHistoryData: "+e.getMessage());
+				}
+				// It is probably an older object of type UserDataVO
+				EndEntityInformation newdata = (EndEntityInformation)o;
+				useradmindata = UserDataVO.fromEndEntityInformation(newdata);
+			}
 		} catch( Throwable t ) {
 			// try to repair the end of the XML string.
 			// this will only succeed if a limited number of chars is lost in the end of the string

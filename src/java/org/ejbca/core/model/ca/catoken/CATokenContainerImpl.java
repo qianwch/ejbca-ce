@@ -866,7 +866,20 @@ public class CATokenContainerImpl extends CATokenContainer {
 	 *  Returns the class path of a CA Token.
 	 */    
 	private String getClassPath(){
-		return (String) data.get(CLASSPATH);
+		String classpath = (String) data.get(CLASSPATH);
+		// Hack to support downgrade from EJBCA 5.0 to 4.0
+		if ("org.cesecore.keys.token.SoftCryptoToken".equals(classpath)) {
+			if (log.isTraceEnabled()) {
+				log.trace("Creating org.ejbca.core.model.ca.catoken.SoftCAToken instead of org.cesecore.keys.token.SoftCryptoToken.");
+			}
+			classpath = SoftCAToken.class.getName();
+		} else if ("org.cesecore.keys.token.PKCS11CryptoToken".equals(classpath)) {
+			if (log.isTraceEnabled()) {
+				log.trace("Creating org.ejbca.core.model.ca.catoken.PKCS11CAToken instead of org.cesecore.keys.token.PKCS11CryptoToken.");
+			}
+			classpath = PKCS11CAToken.class.getName();
+		}
+		return classpath;
 	}
 
 	/**

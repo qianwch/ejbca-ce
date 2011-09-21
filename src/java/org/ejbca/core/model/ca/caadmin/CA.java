@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.DEREncodable;
 import org.bouncycastle.asn1.x509.X509Extensions;
@@ -267,6 +268,20 @@ public abstract class CA extends UpgradeableDataHashMap implements Serializable 
         CATokenContainer ret = CATokenManager.instance().getCAToken(caid);
         if (ret == null) {
         	Integer tokentype = (Integer) ((HashMap)data.get(CATOKENDATA)).get(CATokenContainer.CATOKENTYPE);
+        	if (tokentype == null) {
+        		// Probably a downgraded EJBCA 5.0 installation, so some hacks to handle it...
+                final String classpath = (String) data.get("classpath");
+                if (log.isDebugEnabled()) {
+                    log.debug("tokentype is null, but CA token classpath is: " + classpath);
+                }
+                if (StringUtils.equals("org.cesecore.keys.token.SoftCryptoToken", classpath)) {
+                	tokentype = CATokenConstants.CATOKENTYPE_P12;
+                } else if (StringUtils.equals("org.cesecore.keys.token.PKCS11CryptoToken", classpath)) {
+                	tokentype = CATokenConstants.CATOKENTYPE_HSM;                	
+                } else {
+                	tokentype = CATokenConstants.CATOKENTYPE_NULL;
+                }
+        	}
             switch(tokentype.intValue()) {
             case CATokenConstants.CATOKENTYPE_P12:
                 ret = new CATokenContainerImpl((HashMap)data.get(CATOKENDATA), caid); 

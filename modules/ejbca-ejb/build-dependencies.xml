@@ -97,6 +97,8 @@
 					<include name="org/ejbca/util/ValidityDate.java"/>
 					<include name="org/ejbca/util/YearMonthDayTime.java"/>
 					<include name="org/ejbca/util/UnitParser.java"/>
+					<!-- Dependencies from cesecore packages, for forwards compatibility -->
+					<include name="org/cesecore/util/Base64*.java"/>					
 				</fileset>
 			</copy>
 			<javac srcdir="${src-temp.dir}/common" destdir="${build-temp.dir}/common" debug="on" includeantruntime="no"
@@ -285,6 +287,8 @@
 					<exclude name="org/ejbca/core/model/ca/publisher/ExternalOCSPPublisher.java"/>
 					<!-- Uses ExternalOCSPPublisher -->
 					<exclude name="org/ejbca/core/ejb/ca/publisher/PublisherSessionBean.java"/>
+					<!-- Dependencies from cesecore packages, for forwards compatibility -->
+					<include name="org/cesecore/certificates/endentity/EndEntityInformation.java"/>					
 				</fileset>
 			</copy>
 			<javac srcdir="${src-temp.dir}/publish" destdir="${build-temp.dir}/publish" debug="on" includeantruntime="no"
@@ -314,6 +318,8 @@
 					<include name="org/ejbca/core/model/ra/UserDataVO.java"/>
 					<include name="org/ejbca/util/dn/DNFieldsUtil.java"/>
 					<include name="org/ejbca/util/dn/DNFields.java"/>
+					<!-- Dependencies from cesecore packages, for forwards compatibility -->
+					<include name="org/cesecore/certificates/endentity/EndEntityInformation.java"/>					
 				</fileset>
 			</copy>
 			<javac srcdir="${src-temp.dir}/certhist" destdir="${build-temp.dir}/certhist" debug="on" includeantruntime="no"
@@ -460,6 +466,8 @@
 					<include name="org/ejbca/core/model/ra/UserDataVO.java"/>
 					<include name="org/ejbca/util/dn/DNFieldsUtil.java"/>
 					<include name="org/ejbca/util/dn/DNFields.java"/>
+					<!-- Dependencies from cesecore packages, for forwards compatibility -->
+					<include name="org/cesecore/certificates/endentity/EndEntityInformation.java"/>					
 				</fileset>
 			</copy>
 			<javac srcdir="${src-temp.dir}/ca" destdir="${build-temp.dir}/ca" debug="on" includeantruntime="no"
