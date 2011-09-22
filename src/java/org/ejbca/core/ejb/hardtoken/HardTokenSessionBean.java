@@ -24,7 +24,6 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -92,6 +91,9 @@ public class HardTokenSessionBean implements HardTokenSessionLocal, HardTokenSes
     private static final Logger log = Logger.getLogger(EjbcaHardTokenBatchJobSessionBean.class);
     /** Internal localization of logs and errors */
     private static final InternalResources intres = InternalResources.getInstance();
+    // random used to generate unique IDs.
+    private static final Random ran = new Random();
+
 
     @PersistenceContext(unitName = "ejbca")
     private EntityManager entityManager;
@@ -1012,35 +1014,23 @@ public class HardTokenSessionBean implements HardTokenSessionLocal, HardTokenSes
         return exists;
     }
 
-    private Integer findFreeHardTokenProfileId() {
-        Random ran = (new Random((new Date()).getTime()));
-        int id = ran.nextInt();
-        boolean foundfree = false;
-        while (!foundfree) {
-            if (id > SecConst.TOKEN_SOFT) {
-                if (HardTokenProfileData.findByPK(entityManager, Integer.valueOf(id)) == null) {
-                    foundfree = true;
-                }
-            }
-            id = ran.nextInt();
-        }
-        return Integer.valueOf(id);
-    }
+	private Integer findFreeHardTokenProfileId() {
+		while ( true ) {
+			final int id = ran.nextInt();
+			if ( id>SecConst.TOKEN_SOFT && HardTokenProfileData.findByPK(entityManager, Integer.valueOf(id))==null ) {
+				return Integer.valueOf(id);
+			}
+		}
+	}
 
-    private Integer findFreeHardTokenIssuerId() {
-        Random ran = (new Random((new Date()).getTime()));
-        int id = ran.nextInt();
-        boolean foundfree = false;
-        while (!foundfree) {
-            if (id > 1) {
-                if (org.ejbca.core.ejb.hardtoken.HardTokenIssuerData.findByPK(entityManager, Integer.valueOf(id)) == null) {
-                    foundfree = true;
-                }
-            }
-            id = ran.nextInt();
-        }
-        return Integer.valueOf(id);
-    }
+	private Integer findFreeHardTokenIssuerId() {
+		while ( true ) {
+			final int id = ran.nextInt();
+			if ( id>1 && org.ejbca.core.ejb.hardtoken.HardTokenIssuerData.findByPK(entityManager, Integer.valueOf(id))==null ) {
+				return Integer.valueOf(id);
+			}
+		}
+	}
 
     /** Method that returns the hard token data from a hashmap and updates it if necessary. */
     private HardToken getHardToken(Admin admin, int encryptcaid, boolean includePUK, HashMap data) {
