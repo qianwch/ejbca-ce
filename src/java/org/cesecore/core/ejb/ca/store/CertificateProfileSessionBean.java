@@ -60,7 +60,8 @@ import org.ejbca.core.model.log.LogConstants;
 public class CertificateProfileSessionBean implements CertificateProfileSessionLocal, CertificateProfileSessionRemote {
 
     private static final Logger LOG = Logger.getLogger(CertificateProfileSessionBean.class);
-
+    /** random used to generate unique IDs. */
+    private static final Random RANDOM = new Random();
     /** Internal localization of logs and errors */
     private static final InternalResources INTRES = InternalResources.getInstance();
 
@@ -461,17 +462,10 @@ public class CertificateProfileSessionBean implements CertificateProfileSessionL
 
     @Override
     public int findFreeCertificateProfileId() {
-        final Random random = new Random(new Date().getTime());
-        int id = random.nextInt();
-        boolean foundfree = false;
-        while (!foundfree) {
-            if (id > SecConst.FIXED_CERTIFICATEPROFILE_BOUNDRY) {
-                if (CertificateProfileData.findById(entityManager, Integer.valueOf(id)) == null) {
-                    foundfree = true;
-                }
-            } else {
-                id = random.nextInt();
-            }
+        int id = Math.abs(RANDOM.nextInt(Integer.MAX_VALUE));
+        // Never generate id's less than 10000
+        while ((id < 10000) || (CertificateProfileData.findById(entityManager, id) != null)) {
+            id = Math.abs(RANDOM.nextInt(Integer.MAX_VALUE));
         }
         return id;
     }
