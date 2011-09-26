@@ -17,7 +17,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
 
 import javax.ejb.EJB;
 import javax.ejb.FinderException;
@@ -40,6 +39,7 @@ import org.ejbca.core.model.authorization.AdminGroup;
 import org.ejbca.core.model.authorization.AdminGroupExistsException;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.model.log.LogConstants;
+import org.ejbca.util.ProfileID;
 
 /**
  * Handles AdminGroup entities. 
@@ -91,7 +91,7 @@ public class AdminGroupSessionBean implements AdminGroupSessionLocal, AdminGroup
             LOG.debug("initialize: FinderEx, add default group.");
             // Add Default Special Admin Group
             try {
-                final AdminGroupData agdl = new AdminGroupData(Integer.valueOf(findFreeAdminGroupId()), AdminGroup.DEFAULTGROUPNAME);
+                final AdminGroupData agdl = new AdminGroupData(findFreeAdminGroupId(), AdminGroup.DEFAULTGROUPNAME);
                 entityManager.persist(agdl);
 
                 final ArrayList<AdminEntity> adminentities = new ArrayList<AdminEntity>();
@@ -169,7 +169,7 @@ public class AdminGroupSessionBean implements AdminGroupSessionLocal, AdminGroup
             boolean success = false;
             if (AdminGroupData.findByGroupName(entityManager, admingroupname) == null) {
                 try {
-                    entityManager.persist(new AdminGroupData(Integer.valueOf(findFreeAdminGroupId()), admingroupname));
+                    entityManager.persist(new AdminGroupData(findFreeAdminGroupId(), admingroupname));
                     success = true;
                 } catch (Exception e) {
                     final String msg = INTRES.getLocalizedMessage("authorization.erroraddadmingroup", admingroupname);
@@ -415,17 +415,14 @@ public class AdminGroupSessionBean implements AdminGroupSessionLocal, AdminGroup
         agdl.addAccessRules(entityManager, accessrules);
     }
     
-    private int findFreeAdminGroupId() {
-    	final Random random = new Random();
-        int id = random.nextInt();
-        boolean foundfree = false;
-        while (!foundfree) {
-            if (AdminGroupData.findByPrimeKey(entityManager, Integer.valueOf(id)) == null) {
-                foundfree = true;
-            }
-            id = random.nextInt();
-        }
-        return id;
+    private Integer findFreeAdminGroupId() {
+		final ProfileID.DB db = new ProfileID.DB() {
+			@Override
+			public boolean isFree(Integer i) {
+				return AdminGroupData.findByPrimeKey(AdminGroupSessionBean.this.entityManager, i)==null;
+			}
+		};
+		return Integer.valueOf( ProfileID.getNotUsedID(db) );
     }
     
     private void removeEntitiesAndRulesFromGroup(final AdminGroupData agl) {

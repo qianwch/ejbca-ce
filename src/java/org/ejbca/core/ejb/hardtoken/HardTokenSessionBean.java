@@ -27,7 +27,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Random;
 import java.util.TreeMap;
 
 import javax.ejb.EJB;
@@ -77,6 +76,7 @@ import org.ejbca.core.model.ra.UserAdminConstants;
 import org.ejbca.core.model.ra.UserDataVO;
 import org.ejbca.util.Base64GetHashMap;
 import org.ejbca.util.CertTools;
+import org.ejbca.util.ProfileID;
 
 /**
  * Stores data used by web server clients. Uses JNDI name for datasource as
@@ -91,8 +91,6 @@ public class HardTokenSessionBean implements HardTokenSessionLocal, HardTokenSes
     private static final Logger log = Logger.getLogger(EjbcaHardTokenBatchJobSessionBean.class);
     /** Internal localization of logs and errors */
     private static final InternalResources intres = InternalResources.getInstance();
-    // random used to generate unique IDs.
-    private static final Random ran = new Random();
 
 
     @PersistenceContext(unitName = "ejbca")
@@ -1015,21 +1013,23 @@ public class HardTokenSessionBean implements HardTokenSessionLocal, HardTokenSes
     }
 
 	private Integer findFreeHardTokenProfileId() {
-		while ( true ) {
-			final int id = ran.nextInt();
-			if ( id>SecConst.TOKEN_SOFT && HardTokenProfileData.findByPK(entityManager, Integer.valueOf(id))==null ) {
-				return Integer.valueOf(id);
+		final ProfileID.DB db=new ProfileID.DB() {
+			@Override
+			public boolean isFree(Integer i) {
+				return HardTokenProfileData.findByPK(entityManager, i)==null;
 			}
-		}
+		};
+		return ProfileID.getNotUsedID(db);
 	}
 
 	private Integer findFreeHardTokenIssuerId() {
-		while ( true ) {
-			final int id = ran.nextInt();
-			if ( id>1 && org.ejbca.core.ejb.hardtoken.HardTokenIssuerData.findByPK(entityManager, Integer.valueOf(id))==null ) {
-				return Integer.valueOf(id);
+		final ProfileID.DB db=new ProfileID.DB() {
+			@Override
+			public boolean isFree(Integer i) {
+				return org.ejbca.core.ejb.hardtoken.HardTokenIssuerData.findByPK(entityManager, i)==null;
 			}
-		}
+		};
+		return ProfileID.getNotUsedID(db);
 	}
 
     /** Method that returns the hard token data from a hashmap and updates it if necessary. */
