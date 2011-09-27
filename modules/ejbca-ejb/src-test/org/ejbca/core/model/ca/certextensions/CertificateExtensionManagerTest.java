@@ -13,6 +13,8 @@
 
 package org.ejbca.core.model.ca.certextensions;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
@@ -21,6 +23,8 @@ import java.util.Properties;
 
 import junit.framework.TestCase;
 
+import org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.asn1.DEREncodable;
 import org.bouncycastle.asn1.DERPrintableString;
 import org.ejbca.core.model.ca.certificateprofiles.CertificateProfile;
 import org.ejbca.util.StringTools;
@@ -86,8 +90,8 @@ public class CertificateExtensionManagerTest extends TestCase {
 		assertTrue(certExt.getId() == 1);
 		assertTrue(certExt.getOID().equals("1.2.3.4"));
 		assertTrue(certExt.isCriticalFlag());
-		assertTrue(certExt.getValue(null, null, null, null, null) instanceof DERPrintableString);
-		assertTrue(((DERPrintableString) certExt.getValue(null, null, null, null, null)).getString().equals("Test 123"));
+		assertTrue(getObject(certExt.getValueEncoded(null, null, null, null, null)) instanceof DERPrintableString);
+		assertTrue(((DERPrintableString) getObject(certExt.getValueEncoded(null, null, null, null, null))).getString().equals("Test 123"));
 		
 		assertNull(fact.getCertificateExtensions(Integer.valueOf(2)));
 		
@@ -96,8 +100,8 @@ public class CertificateExtensionManagerTest extends TestCase {
 		assertTrue(certExt.getId() == 3);
 		assertTrue(certExt.getOID().equals("3.2.3.4"));
 		assertTrue(!certExt.isCriticalFlag());
-		assertTrue(certExt.getValue(null, null, null, null, null) instanceof DERPrintableString);
-		assertTrue(((DERPrintableString) certExt.getValue(null, null, null, null, null)).getString().equals("Test 321"));
+		assertTrue(getObject(certExt.getValueEncoded(null, null, null, null, null)) instanceof DERPrintableString);
+		assertTrue(((DERPrintableString) getObject(certExt.getValueEncoded(null, null, null, null, null))).getString().equals("Test 321"));
 		
 	}
 	
@@ -142,6 +146,10 @@ public class CertificateExtensionManagerTest extends TestCase {
 		assertEquals(Arrays.asList("http://example.com"), StringTools.splitURIs("\"http://example.com")); 	// No ending quote
 		assertEquals(Arrays.asList("aa;a", "bb;;;b", "cc"), StringTools.splitURIs("\"aa;a\";\"bb;;;b\";\"cc")); 	// No ending quote
 	}
-
+	
+	private DEREncodable getObject(byte[] valueEncoded) throws IOException {
+		ASN1InputStream in = new ASN1InputStream(new ByteArrayInputStream(valueEncoded));
+		return in.readObject();
+	}
 
 }
