@@ -20,7 +20,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Random;
 
 import javax.ejb.EJB;
 import javax.ejb.EJBException;
@@ -48,6 +47,7 @@ import org.ejbca.core.model.ra.userdatasource.UserDataSourceException;
 import org.ejbca.core.model.ra.userdatasource.UserDataSourceExistsException;
 import org.ejbca.core.model.ra.userdatasource.UserDataSourceVO;
 import org.ejbca.util.Base64GetHashMap;
+import org.ejbca.util.ProfileID;
 
 /**
  * Stores data used by web server clients.
@@ -182,7 +182,7 @@ public class UserDataSourceSessionBean implements UserDataSourceSessionLocal, Us
     	if (log.isTraceEnabled()) {
             log.trace(">addUserDataSource(name: " + name + ")");
     	}
-        addUserDataSource(admin,findFreeUserDataSourceId().intValue(),name,userdatasource);
+        addUserDataSource(admin,findFreeUserDataSourceId(),name,userdatasource);
         log.trace("<addUserDataSource()");
     }
 
@@ -518,19 +518,14 @@ public class UserDataSourceSessionBean implements UserDataSourceSessionLocal, Us
         return false;
     }
 
-    private Integer findFreeUserDataSourceId() {
-        Random ran = (new Random((new Date()).getTime()));
-        int id = ran.nextInt();
-        boolean foundfree = false;
-        while (!foundfree) {
-        	if (id > 1) {
-        		if (UserDataSourceData.findById(entityManager, id) == null) {
-        			foundfree = true;
-        		}
-        	}
-        	id = ran.nextInt();
-        }
-        return Integer.valueOf(id);
+    private int findFreeUserDataSourceId() {
+		final ProfileID.DB db = new ProfileID.DB() {
+			@Override
+			public boolean isFree(int i) {
+				return UserDataSourceData.findById(UserDataSourceSessionBean.this.entityManager, i)==null;
+			}
+		};
+		return ProfileID.getNotUsedID(db);
     }
 
     /** Method that returns the UserDataSource data and updates it if necessary. */

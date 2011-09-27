@@ -23,7 +23,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
 
 import javax.ejb.EJB;
 import javax.ejb.EJBException;
@@ -57,6 +56,7 @@ import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.model.log.LogConstants;
 import org.ejbca.util.Base64;
 import org.ejbca.util.CertTools;
+import org.ejbca.util.ProfileID;
 import org.ejbca.util.mail.MailSender;
 import org.ejbca.util.query.IllegalQueryException;
 import org.ejbca.util.query.Query;
@@ -448,18 +448,13 @@ public class ApprovalSessionBean implements ApprovalSessionLocal, ApprovalSessio
     }
 
     private Integer findFreeApprovalId() {
-        Random ran = new Random((new Date()).getTime());
-        int id = ran.nextInt();
-        boolean foundfree = false;
-        while (!foundfree) {
-                if (id > 1) {
-                	if (ApprovalData.findByApprovalId(entityManager, id).size() == 0) {
-                        foundfree = true;
-                	}
-                }
-                id = ran.nextInt();
-        }
-        return Integer.valueOf(id);
+		final ProfileID.DB db = new ProfileID.DB() {
+			@Override
+			public boolean isFree(int i) {
+				return ApprovalData.findByApprovalId(ApprovalSessionBean.this.entityManager, i).size()==0;
+			}
+		};
+		return Integer.valueOf( ProfileID.getNotUsedID(db) );
     }
 
 	/**

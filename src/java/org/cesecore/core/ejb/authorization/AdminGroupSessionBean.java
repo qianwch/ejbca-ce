@@ -418,8 +418,8 @@ public class AdminGroupSessionBean implements AdminGroupSessionLocal, AdminGroup
     private Integer findFreeAdminGroupId() {
 		final ProfileID.DB db = new ProfileID.DB() {
 			@Override
-			public boolean isFree(Integer i) {
-				return AdminGroupData.findByPrimeKey(AdminGroupSessionBean.this.entityManager, i)==null;
+			public boolean isFree(int i) {
+				return AdminGroupData.findByPrimeKey(AdminGroupSessionBean.this.entityManager, Integer.valueOf(i))==null;
 			}
 		};
 		return Integer.valueOf( ProfileID.getNotUsedID(db) );

@@ -243,6 +243,7 @@
 					<exclude name="org/ejbca/core/model/approval/approvalrequests/ActivateCATokenApprovalRequest.java"/>
 					<!-- Key Recovery approval requests.. org.ejbca.core.model.keyrecovery.approvalrequests would be a better location for this -->
 					<exclude name="org/ejbca/core/model/approval/approvalrequests/KeyRecoveryApprovalRequest.java"/>
+                                        <include name="org/ejbca/util/ProfileID.java"/>
 				</fileset>
 			</copy>
 			<javac srcdir="${src-temp.dir}/approval" destdir="${build-temp.dir}/approval" debug="on" includeantruntime="no"
@@ -643,6 +644,7 @@
 				<fileset dir="${src.dir}">
 					<include name="org/ejbca/core/ejb/ra/userdatasource/*SessionBean.java"/>
 					<include name="org/ejbca/core/model/ra/userdatasource/**/*.java"/>
+                                        <include name="org/ejbca/util/ProfileID.java"/>
 				</fileset>
 			</copy>
 			<javac srcdir="${src-temp.dir}/userdatasource" destdir="${build-temp.dir}/userdatasource" debug="on" includeantruntime="no"

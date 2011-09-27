@@ -1015,8 +1015,8 @@ public class HardTokenSessionBean implements HardTokenSessionLocal, HardTokenSes
 	private Integer findFreeHardTokenProfileId() {
 		final ProfileID.DB db=new ProfileID.DB() {
 			@Override
-			public boolean isFree(Integer i) {
-				return HardTokenProfileData.findByPK(entityManager, i)==null;
+			public boolean isFree(int i) {
+				return HardTokenProfileData.findByPK(entityManager, Integer.valueOf(i))==null;
 			}
 		};
 		return ProfileID.getNotUsedID(db);
@@ -1025,8 +1025,8 @@ public class HardTokenSessionBean implements HardTokenSessionLocal, HardTokenSes
 	private Integer findFreeHardTokenIssuerId() {
 		final ProfileID.DB db=new ProfileID.DB() {
 			@Override
-			public boolean isFree(Integer i) {
-				return org.ejbca.core.ejb.hardtoken.HardTokenIssuerData.findByPK(entityManager, i)==null;
+			public boolean isFree(int i) {
+				return org.ejbca.core.ejb.hardtoken.HardTokenIssuerData.findByPK(entityManager, Integer.valueOf(i))==null;
 			}
 		};
 		return ProfileID.getNotUsedID(db);

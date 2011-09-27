@@ -16,11 +16,9 @@ package org.ejbca.core.ejb.ca.publisher;
 import java.io.UnsupportedEncodingException;
 import java.security.cert.Certificate;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Random;
 
 import javax.ejb.CreateException;
 import javax.ejb.EJB;
@@ -56,6 +54,7 @@ import org.ejbca.core.model.log.LogConstants;
 import org.ejbca.core.model.ra.ExtendedInformation;
 import org.ejbca.util.Base64GetHashMap;
 import org.ejbca.util.CertTools;
+import org.ejbca.util.ProfileID;
 
 /**
  * Handles management of Publishers.
@@ -263,7 +262,7 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
         if (log.isTraceEnabled()) {
             log.trace(">addPublisher(name: " + name + ")");
         }
-        addPublisher(admin, findFreePublisherId().intValue(), name, publisher);
+        addPublisher(admin, findFreePublisherId(), name, publisher);
         log.trace("<addPublisher()");
     }
 
@@ -495,20 +494,14 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
         return returnval;
     }
 
-    private Integer findFreePublisherId() {
-    	Random ran = (new Random((new Date()).getTime()));
-    	int id = ran.nextInt();
-    	boolean foundfree = false;
-    	while (!foundfree) {
-    		if (id > 1) {
-    			PublisherData pd = PublisherData.findById(entityManager, Integer.valueOf(id));
-    			if (pd == null) {
-    				foundfree = true;
-    			}
-    		}
-    		id = ran.nextInt();
-    	}
-    	return Integer.valueOf(id);
+    private int findFreePublisherId() {
+		final ProfileID.DB db = new ProfileID.DB() {
+			@Override
+			public boolean isFree(int i) {
+				return PublisherData.findById(PublisherSessionBean.this.entityManager, i)==null;
+			}
+		};
+		return ProfileID.getNotUsedID(db);
     }
 
     /** @return the publisher data and updates it if necessary. */
