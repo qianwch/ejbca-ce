@@ -397,17 +397,12 @@ public class CrmfRequestMessageTest extends TestCase {
         KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
     	PKIMessage msg = genCertReq(issuerDN, userDN, keys, nonce, transid, false, null, null, null, null); 
     	
-    	//CrmfRequestMessage req = new CrmfRequestMessage(msg, issuerDN, false, null);
+    	CrmfRequestMessage req = new CrmfRequestMessage(msg, issuerDN, false, null);
     	String password = null;
     	
-    	password = RegTokenPasswordExtractor.extractPassword(msg.getBody().getIr().getCertReqMsg(0));
-    	assertNotNull("RegTokenPasswordExtractor returned null password", password);
-    	assertEquals("RegTokenPasswordExtractor returned wrong password", "foo123", password);
-    	
-    	password = null;
-    	password = DnPartPasswordExtractor.extractPassword(msg.getBody().getIr().getCertReqMsg(0), "UID");
-    	assertNotNull("DnPartPasswordExtractor returned null password", password);
-    	assertEquals("DnPartPasswordExtractor returned wrong password", "foo123UID", password);
+    	password = req.getPassword();
+    	assertNotNull("Crmf request password is null", password);
+    	assertEquals("Crmf request had the wrong password", "foo123", password);
     }
     
 	private PKIMessage genCertReq(String issuerDN, String userDN, KeyPair keys, byte[] nonce, byte[] transid, boolean raVerifiedPopo, X509Extensions extensions, Date notBefore, Date notAfter, BigInteger customCertSerno) throws NoSuchAlgorithmException, NoSuchProviderException, IOException, InvalidKeyException, SignatureException {

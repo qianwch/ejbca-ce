@@ -153,7 +153,7 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 
 		try {	
 			verifyer = new CmpPbeVerifyer(msg);
-		} catch(IllegalArgumentException e) {
+		} catch(Exception e) {
 			if(LOG.isDebugEnabled()) {
 				LOG.debug("Could not create CmpPbeVerifyer");
 				LOG.debug(e.getLocalizedMessage());
@@ -233,7 +233,7 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 			
 		} else { //client mode
 			
-			//If neither a global shared secret nor CA specific secret, we try to get the pre-registered endentity from the DB, and if there is a 
+			//If client mode, we try to get the pre-registered endentity from the DB, and if there is a 
 			//clear text password we check HMAC using this password.
 			final CertTemplate certTemp = getCertTemplate(msg);
 			final String subjectDN = certTemp.getSubject().toString();

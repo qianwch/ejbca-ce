@@ -69,6 +69,7 @@ import org.ejbca.core.model.ra.UserDataVO;
 import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
 import org.ejbca.core.protocol.cmp.authentication.EndEntityCertificateAuthenticationModule;
 import org.ejbca.core.protocol.cmp.authentication.HMACAuthenticationModule;
+import org.ejbca.core.protocol.cmp.authentication.VerifyPKIMessage;
 import org.ejbca.ui.cli.batch.BatchMakeP12;
 import org.ejbca.util.CertTools;
 import org.ejbca.util.CryptoProviderTools;
@@ -359,8 +360,12 @@ public class AuthenticationModulesTest extends CmpTestCase {
 		String parameters = "foo123" + ";" + "AdminCA1";
 		confSession.updateProperty(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, modules);
 		assertTrue("The CMP Authentication module was not configured correctly.", confSession.verifyProperty(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, modules));
+		ConfigurationHolder.updateConfiguration(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, modules);
+		
 		confSession.updateProperty(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, parameters);
 		assertTrue("The CMP Authentication module was not configured correctly.", confSession.verifyProperty(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, parameters));
+		ConfigurationHolder.updateConfiguration(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, parameters);
+		
 		confSession.updateProperty(CmpConfiguration.CONFIG_OPERATIONMODE, "ra");
 		assertTrue("The CMP Authentication module was not configured correctly.", confSession.verifyProperty(CmpConfiguration.CONFIG_OPERATIONMODE, "ra"));
 
@@ -391,6 +396,11 @@ public class AuthenticationModulesTest extends CmpTestCase {
         checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, msg.getHeader().getSenderNonce().getOctets(), msg.getHeader().getTransactionID().getOctets(), false, null);
         Certificate cert2 = checkCmpCertRepMessage(userDN, cacert, resp, msg.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue());
         assertNotNull("CrmfRequest did not return a certificate", cert2);
+        
+        VerifyPKIMessage verifier = new VerifyPKIMessage(caAdminSession.getCAInfo(admin, caid), admin, caAdminSession, userAdminSession, certSession, authorizationSession, eeProfileSession);
+        boolean verify = verifier.verify(msg);
+        assertTrue("Verifying PKIMessage failed", verify);
+        assertEquals(CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE, verifier.getUsedAuthenticationModule().getName());
 	}
 
 	public void test08HMACCrmfReqMultipleAuthenticationModules() throws Exception {
@@ -400,8 +410,12 @@ public class AuthenticationModulesTest extends CmpTestCase {
 		String parameters = "-;AdminCA1;foo123hmac";
 		confSession.updateProperty(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, modules);
 		assertTrue("The CMP Authentication module was not configured correctly.", confSession.verifyProperty(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, modules));
+		ConfigurationHolder.updateConfiguration(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, modules);
+		
 		confSession.updateProperty(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, parameters);
 		assertTrue("The CMP Authentication module was not configured correctly.", confSession.verifyProperty(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, parameters));
+		ConfigurationHolder.updateConfiguration(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, parameters);
+		
 		confSession.updateProperty(CmpConfiguration.CONFIG_OPERATIONMODE, "ra");
 		assertTrue("The CMP Authentication module was not configured correctly.", confSession.verifyProperty(CmpConfiguration.CONFIG_OPERATIONMODE, "ra"));
 		ConfigurationHolder.updateConfiguration(CmpConfiguration.CONFIG_OPERATIONMODE, "ra");
@@ -423,6 +437,11 @@ public class AuthenticationModulesTest extends CmpTestCase {
         checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, req.getHeader().getSenderNonce().getOctets(), req.getHeader().getTransactionID().getOctets(), false, null);
         Certificate cert1 = checkCmpCertRepMessage(userDN, cacert, resp, req.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue());
         assertNotNull("Crmf request did not return a certificate", cert1);
+        
+        VerifyPKIMessage verifier = new VerifyPKIMessage(caAdminSession.getCAInfo(admin, caid), admin, caAdminSession, userAdminSession, certSession, authorizationSession, eeProfileSession);
+        boolean verify = verifier.verify(req);
+        assertTrue("Verifying PKIMessage failed", verify);
+        assertEquals(CmpConfiguration.AUTHMODULE_HMAC, verifier.getUsedAuthenticationModule().getName());
 	}
 
 	public void test09HMACCrmfReqWrongAuthenticationModule() throws Exception {
@@ -516,14 +535,13 @@ public class AuthenticationModulesTest extends CmpTestCase {
         assertNotNull("CrmfRequest did not return a certificate", cert2);
 	}
 	
-	public void test11HMACCrmfReqClientMode() throws Exception {
+	public void test11CrmfReqClientModeHMAC() throws Exception {
 		assertFalse("Configurations have not been backed up before starting testing.", confSession.backupConfiguration());
 		
-		String authModules = CmpConfiguration.AUTHMODULE_HMAC + ";" + CmpConfiguration.AUTHMODULE_REG_TOKEN_PWD;
-		confSession.updateProperty(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, authModules);
-		assertTrue("The CMP Authentication module was not configured correctly.", confSession.verifyProperty(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, authModules));
-		confSession.updateProperty(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "foo123client;-");
-		assertTrue("The CMP Authentication module was not configured correctly.", confSession.verifyProperty(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "foo123client;-"));		
+		confSession.updateProperty(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_HMAC);
+		assertTrue("The CMP Authentication module was not configured correctly.", confSession.verifyProperty(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_HMAC));
+		confSession.updateProperty(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "foo123client");
+		assertTrue("The CMP Authentication module was not configured correctly.", confSession.verifyProperty(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "foo123client"));		
 		confSession.updateProperty(CmpConfiguration.CONFIG_OPERATIONMODE, "normal");
 		assertTrue("The CMP Authentication module was not configured correctly.", confSession.verifyProperty(CmpConfiguration.CONFIG_OPERATIONMODE, "normal"));
 		ConfigurationHolder.updateConfiguration(CmpConfiguration.CONFIG_OPERATIONMODE, "normal");
@@ -535,7 +553,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
 		try{
 			userAdminSession.revokeAndDeleteUser(admin, clientUsername, ReasonFlags.unused);
 		} catch(Exception e) {}
-		createUser(clientUsername, clientDN, "foo123");
+		createUser(clientUsername, clientDN, clientPassword);
 		
 		KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
 		
@@ -554,8 +572,8 @@ public class AuthenticationModulesTest extends CmpTestCase {
         Certificate cert1 = checkCmpCertRepMessage(clientDN, cacert, resp, req.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue());
         assertNotNull("Crmf request did not return a certificate", cert1);
 	}
-	/*
-	public void test12HMACModuleClientMode() throws InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException, SignatureException, IOException, 
+	
+	public void test12HMACModuleInClientMode() throws InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException, SignatureException, IOException, 
 						InvalidAlgorithmParameterException, AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, WaitingForApprovalException, 
 						EjbcaException, java.lang.Exception {
 		
@@ -586,7 +604,139 @@ public class AuthenticationModulesTest extends CmpTestCase {
 		assertNotNull("HMAC returned null password." + hmac.getAuthenticationString());
 		assertEquals("HMAC returned the wrong password", clientPassword, hmac.getAuthenticationString());
 	}
-	*/
+	
+	public void test13CrmfReqClientModeRegToken() throws Exception {
+		assertFalse("Configurations have not been backed up before starting testing.", confSession.backupConfiguration());
+		
+		confSession.updateProperty(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_REG_TOKEN_PWD);
+		assertTrue("The CMP Authentication module was not configured correctly.", confSession.verifyProperty(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_REG_TOKEN_PWD));
+		confSession.updateProperty(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "-");
+		assertTrue("The CMP Authentication module was not configured correctly.", confSession.verifyProperty(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "-"));		
+		confSession.updateProperty(CmpConfiguration.CONFIG_OPERATIONMODE, "normal");
+		assertTrue("The CMP Authentication module was not configured correctly.", confSession.verifyProperty(CmpConfiguration.CONFIG_OPERATIONMODE, "normal"));
+		ConfigurationHolder.updateConfiguration(CmpConfiguration.CONFIG_OPERATIONMODE, "normal");
+		assertFalse("The CMP Authentication module was not configured correctly.", CmpConfiguration.getRAOperationMode());
+		
+		String clientUsername = "clientTestUser";
+		String clientDN = "CN=" + clientUsername + ",C=SE";
+		String clientPassword = "foo123client";
+		try{
+			userAdminSession.revokeAndDeleteUser(admin, clientUsername, ReasonFlags.unused);
+		} catch(Exception e) {}
+		createUser(clientUsername, clientDN, "foo123");
+		
+		KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
+		
+		PKIMessage msg = genCertReq(issuerDN, clientDN, keys, cacert, nonce, transid, false, null, null, null, null);
+		assertNotNull("Generating CrmfRequest failed." + msg);
+        PKIMessage req = protectPKIMessage(msg, false, clientPassword, "mykeyid", 567);
+        assertNotNull("Protecting PKIMessage with HMACPbe failed.");
+        
+        final ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        final DEROutputStream out = new DEROutputStream(bao);
+        out.writeObject(req);
+        final byte[] ba = bao.toByteArray();
+        // Send request and receive response
+        final byte[] resp = sendCmpHttp(ba, 200);        
+        checkCmpResponseGeneral(resp, issuerDN, clientDN, cacert, req.getHeader().getSenderNonce().getOctets(), req.getHeader().getTransactionID().getOctets(), false, null);
+        Certificate cert1 = checkCmpCertRepMessage(clientDN, cacert, resp, req.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue());
+        assertNotNull("Crmf request did not return a certificate", cert1);
+	}
+	
+	public void test14CrmfReqClientModeMultipleModules() throws Exception {
+		assertFalse("Configurations have not been backed up before starting testing.", confSession.backupConfiguration());
+		
+		String authmodules = CmpConfiguration.AUTHMODULE_HMAC + ";" + CmpConfiguration.AUTHMODULE_REG_TOKEN_PWD;
+		confSession.updateProperty(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, authmodules);
+		assertTrue("The CMP Authentication module was not configured correctly.", confSession.verifyProperty(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, authmodules));
+		ConfigurationHolder.updateConfiguration(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, authmodules);
+		
+		confSession.updateProperty(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "foo123hmac;-");
+		assertTrue("The CMP Authentication module was not configured correctly.", confSession.verifyProperty(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "foo123hmac;-"));
+		ConfigurationHolder.updateConfiguration(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "foo123;-");
+
+		confSession.updateProperty(CmpConfiguration.CONFIG_OPERATIONMODE, "normal");
+		assertTrue("The CMP Authentication module was not configured correctly.", confSession.verifyProperty(CmpConfiguration.CONFIG_OPERATIONMODE, "normal"));
+		ConfigurationHolder.updateConfiguration(CmpConfiguration.CONFIG_OPERATIONMODE, "normal");
+		assertFalse("The CMP Authentication module was not configured correctly.", CmpConfiguration.getRAOperationMode());
+		
+		String clientUsername = "clientTestUser";
+		String clientDN = "CN=" + clientUsername + ",C=SE";
+		String clientPassword = "foo123client";
+		try{
+			userAdminSession.revokeAndDeleteUser(admin, clientUsername, ReasonFlags.unused);
+		} catch(Exception e) {}
+		createUser(clientUsername, clientDN, "foo123");
+		
+		KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
+		
+		PKIMessage msg = genCertReq(issuerDN, clientDN, keys, cacert, nonce, transid, false, null, null, null, null);
+		assertNotNull("Generating CrmfRequest failed." + msg);
+//        PKIMessage req = protectPKIMessage(msg, false, clientPassword, "mykeyid", 567);
+//        assertNotNull("Protecting PKIMessage with HMACPbe failed.");
+        
+        final ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        final DEROutputStream out = new DEROutputStream(bao);
+        out.writeObject(msg);
+        final byte[] ba = bao.toByteArray();
+        // Send request and receive response
+        final byte[] resp = sendCmpHttp(ba, 200);        
+        checkCmpResponseGeneral(resp, issuerDN, clientDN, cacert, msg.getHeader().getSenderNonce().getOctets(), msg.getHeader().getTransactionID().getOctets(), false, null);
+        Certificate cert1 = checkCmpCertRepMessage(clientDN, cacert, resp, msg.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue());
+        assertNotNull("Crmf request did not return a certificate", cert1);
+        
+        VerifyPKIMessage verifier = new VerifyPKIMessage(caAdminSession.getCAInfo(admin, caid), admin, caAdminSession, userAdminSession, certSession, authorizationSession, eeProfileSession);
+        boolean verify = verifier.verify(msg);
+        assertTrue(verify);
+        assertEquals(CmpConfiguration.AUTHMODULE_REG_TOKEN_PWD, verifier.getUsedAuthenticationModule().getName());
+	}
+	
+	public void test15HMACCrmfReqClientModeHMACInvalidPassword() throws Exception {
+		assertFalse("Configurations have not been backed up before starting testing.", confSession.backupConfiguration());
+		
+		confSession.updateProperty(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_HMAC);
+		assertTrue("The CMP Authentication module was not configured correctly.", confSession.verifyProperty(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_HMAC));
+		confSession.updateProperty(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "foo123client");
+		assertTrue("The CMP Authentication module was not configured correctly.", confSession.verifyProperty(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "foo123client"));		
+		confSession.updateProperty(CmpConfiguration.CONFIG_OPERATIONMODE, "normal");
+		assertTrue("The CMP Authentication module was not configured correctly.", confSession.verifyProperty(CmpConfiguration.CONFIG_OPERATIONMODE, "normal"));
+		ConfigurationHolder.updateConfiguration(CmpConfiguration.CONFIG_OPERATIONMODE, "normal");
+		assertFalse("The CMP Authentication module was not configured correctly.", CmpConfiguration.getRAOperationMode());
+		
+		String clientUsername = "clientTestUser";
+		String clientDN = "CN=" + clientUsername + ",C=SE";
+		String clientPassword = "foo123client";
+		try{
+			userAdminSession.revokeAndDeleteUser(admin, clientUsername, ReasonFlags.unused);
+		} catch(Exception e) {}
+		createUser(clientUsername, clientDN, "foo123ee");
+		
+		KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
+		
+		PKIMessage msg = genCertReq(issuerDN, clientDN, keys, cacert, nonce, transid, false, null, null, null, null);
+		assertNotNull("Generating CrmfRequest failed." + msg);
+        PKIMessage req = protectPKIMessage(msg, false, clientPassword, "mykeyid", 567);
+        assertNotNull("Protecting PKIMessage with HMACPbe failed.");
+        
+        final ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        final DEROutputStream out = new DEROutputStream(bao);
+        out.writeObject(req);
+        final byte[] ba = bao.toByteArray();
+        // Send request and receive response
+        final byte[] resp = sendCmpHttp(ba, 200);        
+        checkCmpResponseGeneral(resp, issuerDN, clientDN, cacert, req.getHeader().getSenderNonce().getOctets(), req.getHeader().getTransactionID().getOctets(), false, null);
+        
+        PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
+        assertNotNull(respObject);
+
+        PKIBody body = respObject.getBody();
+        assertEquals(23, body.getTagNo());
+        String errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
+        String expectedErrMsg = "Unrecognized authentication modules";
+        assertEquals(expectedErrMsg, errMsg);
+	}
+	
+	
 	public void test99RestoreConf() {
 		assertTrue("Restoring configuration faild.", confSession.restoreConfiguration());
 		try {

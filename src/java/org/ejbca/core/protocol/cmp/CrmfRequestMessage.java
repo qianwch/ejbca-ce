@@ -44,10 +44,8 @@ import org.bouncycastle.asn1.x509.X509Extensions;
 import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.cms.CMSSignedGenerator;
 import org.bouncycastle.util.Arrays;
-import org.ejbca.config.CmpConfiguration;
 import org.ejbca.core.protocol.IRequestMessage;
 import org.ejbca.core.protocol.IResponseMessage;
-import org.ejbca.core.protocol.cmp.authentication.DnPartPasswordExtractor;
 import org.ejbca.core.protocol.cmp.authentication.RegTokenPasswordExtractor;
 import org.ejbca.util.Base64;
 import org.ejbca.util.CertTools;
@@ -221,47 +219,17 @@ public class CrmfRequestMessage extends BaseCmpMessage implements ICrmfRequestMe
 	
 	@Override
 	public String getPassword() {
+		if(this.password != null) {
+			return this.password;
+		}
+		
+		RegTokenPasswordExtractor regTokenExtractor = new RegTokenPasswordExtractor();
+		if(regTokenExtractor.verifyOrExtract(getPKIMessage())) {
+			this.password = regTokenExtractor.getAuthenticationString();
+		}
 		return this.password;
-		/*
-		String ret = null;
-		if (password != null) {
-			if (log.isDebugEnabled()) {
-				log.debug("Returning a pre-set password in CRMF request");
-			}
-			ret = password;
-		} else {
-			ret = getAuthenticationPassword();
-		}
+	}
 
-		return ret;
-		*/
-	}
-	/*
-	private String getAuthenticationPassword() {
-		final String authenticationModulels = CmpConfiguration.getAuthenticationModule();
-		final String authenticationParameters = CmpConfiguration.getAuthenticationParameters();
-		final String modules[] = authenticationModulels.split(";");
-		final String parameters[] = authenticationParameters.split(";");
-		
-		int i=0;
-		String ret = null;
-		
-		while((ret == null) && (i<modules.length)) {
-			if(log.isDebugEnabled()) {
-				log.debug("Trying the extract the password from the CRMF request using the authentication module '" + modules[i] + "' and authentication " +
-						"parameter '" + parameters[i] + "'");
-			}
-			if(StringUtils.equals(modules[i].trim(), CmpConfiguration.AUTHMODULE_REG_TOKEN_PWD)) {
-				ret = RegTokenPasswordExtractor.extractPassword(getReq());
-			} else if(StringUtils.equals(modules[i], CmpConfiguration.AUTHMODULE_DN_PART_PWD)) {
-				ret = DnPartPasswordExtractor.extractPassword(getReq(), parameters[i].trim());
-			}
-			i++;
-		}
-		
-		return ret;
-	}
-	*/
 
     /** force a username, i.e. ignore the DN/username in the request
      */
