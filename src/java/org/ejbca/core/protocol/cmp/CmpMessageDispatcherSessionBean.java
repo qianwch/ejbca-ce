@@ -179,7 +179,7 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
 					final String errMsg = "Could not verify the RA";
 					log.error(errMsg);
 					cmpMessage = new NestedMessageContent(req);
-					fillMessageDetails(cmpMessage);
+					//fillMessageDetails(cmpMessage);
 					return CmpMessageHelper.createUnprotectedErrorMessage(cmpMessage, ResponseStatus.FAILURE, FailInfo.BAD_REQUEST, errMsg);
 				}
 				
@@ -209,13 +209,14 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
 			return null;
 		}
 	}
-
+/*
 	private void fillMessageDetails(final BaseCmpMessage msg) {
 		msg.setSender(msg.getMessage().getHeader().getSender());
 		msg.setRecipient(msg.getMessage().getHeader().getRecipient());
 		msg.setSenderNonce(msg.getMessage().getHeader().getSenderNonce().toString());
-		msg.setRecipientNonce(msg.getMessage().getHeader().getRecipNonce().toString());
+		//msg.setRecipientNonce(msg.getMessage().getHeader().getRecipNonce().toString());
+		msg.setTransactionId(msg.getHeader().getTransactionID().toString());
 		
 	}
-	
+*/	
 }

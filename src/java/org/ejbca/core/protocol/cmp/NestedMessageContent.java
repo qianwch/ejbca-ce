@@ -34,13 +34,16 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.x509.X509Extensions;
 import org.bouncycastle.asn1.x509.X509Name;
 import org.ejbca.config.CmpConfiguration;
 import org.ejbca.core.protocol.IRequestMessage;
 import org.ejbca.core.protocol.IResponseMessage;
+import org.ejbca.util.Base64;
 import org.ejbca.util.CertTools;
 
+import com.novosec.pkix.asn1.cmp.PKIHeader;
 import com.novosec.pkix.asn1.cmp.PKIMessage;
 
 /**
@@ -57,7 +60,6 @@ public class NestedMessageContent extends BaseCmpMessage implements IRequestMess
     private static final Logger log = Logger.getLogger(NestedMessageContent.class);
 	
 	private PKIMessage raSignedMessage;
-	private PKIMessage originalMessage;
 	
 	/** Because PKIMessage is not serializable we need to have the serializable bytes save as well, so 
 	 * we can restore the PKIMessage after serialization/deserialization. */ 
@@ -68,7 +70,29 @@ public class NestedMessageContent extends BaseCmpMessage implements IRequestMess
 	public NestedMessageContent(final PKIMessage pkiMsg) {
 		this.raSignedMessage = pkiMsg;
 		setPKIMessageBytes(pkiMsg);
-		this.originalMessage = pkiMsg.getBody().getNested();
+		//this.originalMessage = pkiMsg.getBody().getNested();
+		init();
+	}
+	
+	private void init() {
+		final PKIHeader header = getPKIMessage().getHeader();
+		DEROctetString os = header.getTransactionID();
+		if (os != null) {
+			final byte[] val = os.getOctets();
+			if (val != null) {
+				setTransactionId(new String(Base64.encode(val)));							
+			}
+		}
+
+		os = header.getSenderNonce();
+		if (os != null) {
+			final byte[] val = os.getOctets();
+			if (val != null) {
+				setSenderNonce(new String(Base64.encode(val)));							
+			}
+		}
+		setRecipient(header.getRecipient());
+		setSender(header.getSender());
 	}
 
 	public PKIMessage getPKIMessage() {
@@ -89,9 +113,7 @@ public class NestedMessageContent extends BaseCmpMessage implements IRequestMess
 		}
 		setMessage(msg);
 	}
-	public PKIMessage getNestedPKIMessage() {
-		return this.originalMessage;
-	}
+
 	
 	@Override
 	/**
@@ -103,14 +125,45 @@ public class NestedMessageContent extends BaseCmpMessage implements IRequestMess
 		boolean ret = false;
 		try {
 			final List<X509Certificate> racerts = getRaCerts();
+			if(log.isDebugEnabled()) {
+				log.debug("Found " + racerts.size() + " certificates in " + CmpConfiguration.getRaCertificatePath());
+			}
+			if(racerts.size() <= 0) {
+				String errorMessage = "No certificate files were found in " + CmpConfiguration.getRaCertificatePath();
+				log.error(errorMessage);
+			}
+
 			final Iterator<X509Certificate> itr = racerts.iterator();
+			X509Certificate cert = null;
 			while(itr.hasNext() && !ret) {
-				X509Certificate cert = itr.next();
+				cert = itr.next();
+				if(log.isDebugEnabled()) {
+					log.debug("Trying to verifying the NestedMessageContent using the RA certificate with subjectDN '" + cert.getSubjectDN() + "'");
+				}
+
+				try {
+					cert.checkValidity();
+				} catch(Exception e) {
+					if(log.isDebugEnabled()) {
+						log.debug("Certificate with subjectDN '" + CertTools.getSubjectDN(cert) + "' is no longer valid.");
+						log.debug(e.getLocalizedMessage());
+					}
+					continue;
+				}
+				
 				Signature sig = Signature.getInstance(cert.getSigAlgName(), "BC");
 				sig.initVerify(cert.getPublicKey());
 				sig.update(raSignedMessage.getProtectedBytes());
-				ret = sig.verify(raSignedMessage.getProtection().getBytes());
+				if(raSignedMessage.getProtection() != null) {
+					ret = sig.verify(raSignedMessage.getProtection().getBytes());
+					if(log.isDebugEnabled()) {
+						log.debug("Verifying the NestedMessageContent using the RA certificate with subjectDN '" + cert.getSubjectDN() + "' returned " + ret);
+					}
+				} else {
+					log.error("No signature was found in NestedMessageContent");
+				}
 			}
+
 		} catch (CertificateException e) {
 			if(log.isDebugEnabled()) {
 				log.debug(e.getLocalizedMessage());
@@ -157,13 +210,29 @@ public class NestedMessageContent extends BaseCmpMessage implements IRequestMess
 			
 		final List<X509Certificate> racerts = new ArrayList<X509Certificate>();
 		final String raCertsPath = CmpConfiguration.getRaCertificatePath();
+		if(log.isDebugEnabled()) {
+			log.debug("Looking for trusted RA certificate in " + raCertsPath);
+		}
+
 		final File raCertDirectory = new File(raCertsPath);
 		final String[] files = raCertDirectory.list();
+		if(log.isDebugEnabled()) {
+			log.debug("Found " + files.length + " trusted RA certificate in " + raCertsPath);
+		}
+
 		String filepath;
 		if(files != null) {
 			for(String certFile : files) {
 				filepath = raCertsPath + "/" + certFile;
+				if(log.isDebugEnabled()) {
+					log.debug("Reading certificate from " + filepath);
+				}
+
 				racerts.add((X509Certificate) CertTools.getCertsFromPEM(filepath).iterator().next());
+				if(log.isDebugEnabled()) {
+					log.debug("Added " + certFile + " to the list of trusted RA certificates");
+				}
+
 			}
 		}		
 		return racerts;
