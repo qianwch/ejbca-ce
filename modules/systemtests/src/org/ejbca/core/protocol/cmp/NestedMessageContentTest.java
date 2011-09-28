@@ -595,9 +595,6 @@ public class NestedMessageContentTest extends CmpTestCase {
         PKIMessage myPKIMessage = new PKIMessage(myPKIHeader, myPKIBody);
 		KeyPair raKeys = KeyTools.genKeys("1024", "RSA");
 		
-		ConfigurationHolder.updateConfiguration(CmpConfiguration.CONFIG_RA_CERTIFICATEPROFILE, "CMPTESTPROFILE");
-
-		
 		long nbTime = (new Date()).getTime() - 1000000L;
     	org.bouncycastle.asn1.x509.Time nb = new org.bouncycastle.asn1.x509.Time(new Date(nbTime));
     	org.bouncycastle.asn1.x509.Time na = new org.bouncycastle.asn1.x509.Time(new Date());
@@ -605,6 +602,52 @@ public class NestedMessageContentTest extends CmpTestCase {
 		Thread.sleep(5000);
 		signPKIMessage(myPKIMessage, raKeys);
         
+            
+        assertNotNull("Failed to create myPKIHeader", myPKIHeader);
+        assertNotNull("myPKIBody is null", myPKIBody);
+        assertNotNull("myPKIMessage is null", myPKIMessage);
+
+        final ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        final DEROutputStream out = new DEROutputStream(bao);
+        out.writeObject(myPKIMessage);
+        final byte[] ba = bao.toByteArray();
+        // Send request and receive response
+        final byte[] resp = sendCmpHttp(ba, 200);
+        //final byte[] resp = sendCmpHttp(myPKIMessage.getDERObject().toASN1Object().getEncoded(), 200);
+        // do not check signing if we expect a failure (sFailMessage==null)
+        
+        checkCmpResponseGeneral(resp, issuerDN, reqSubjectDN, cacert, myPKIMessage.getHeader().getSenderNonce().getOctets(), myPKIMessage.getHeader().getTransactionID().getOctets(), false, null);
+        PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
+        assertNotNull(respObject);
+
+        PKIBody body = respObject.getBody();
+        assertEquals(23, body.getTagNo());
+        String errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
+        assertEquals("Wrong error message", "Could not verify the RA", errMsg);
+		log.info("<test07ExpiredRACert()");
+   	}
+	
+	public void test08MissingSignature() throws ObjectNotFoundException, InvalidKeyException, SignatureException, AuthorizationDeniedException, EjbcaException, UserDoesntFullfillEndEntityProfile, WaitingForApprovalException, Exception {
+		log.info(">test07ExpiredRACert()");
+		String reqSubjectDN = "CN=bogusSubjectNested";
+        final byte[] nonce = CmpMessageHelper.createSenderNonce();
+        final byte[] transid = CmpMessageHelper.createSenderNonce();
+        
+    	PKIMessage crmfMsg = createEESignedCrmfReq(subjectDN);
+    	assertNotNull("Failed to create crmfMsg.", crmfMsg);
+    	
+        PKIHeader myPKIHeader = new PKIHeader(new DERInteger(2), new GeneralName(new X509Name(reqSubjectDN)), new GeneralName(new X509Name(((X509Certificate)cacert).getSubjectDN()
+                   .getName())));
+        myPKIHeader.setMessageTime(new DERGeneralizedTime(new Date()));
+        // senderNonce
+        myPKIHeader.setSenderNonce(new DEROctetString(nonce));
+        // TransactionId
+        myPKIHeader.setTransactionID(new DEROctetString(transid));
+		//myPKIHeader.addGeneralInfo(new InfoTypeAndValue(ASN1Sequence.getInstance(crmfMsg)));
+        myPKIHeader.setRecipNonce(new DEROctetString(nonce));
+
+        PKIBody myPKIBody = new PKIBody(crmfMsg, 20); // NestedMessageContent
+        PKIMessage myPKIMessage = new PKIMessage(myPKIHeader, myPKIBody);
             
         assertNotNull("Failed to create myPKIHeader", myPKIHeader);
         assertNotNull("myPKIBody is null", myPKIBody);
