@@ -452,7 +452,7 @@ public class CmpTestCase extends CaTestCase {
         // Check that the signer is the expected CA
         assertEquals(header.getSender().getTagNo(), 4);
         X509Name name = X509Name.getInstance(header.getSender().getName());
-        assertEquals(name.toString(), issuerDN);
+        assertEquals(issuerDN, name.toString());
 
         if (signed) {
             // Verify the signature
@@ -537,7 +537,7 @@ public class CmpTestCase extends CaTestCase {
         // --Recipient Nonce
         // recipient nonce should be the same as we sent away as sender nonce
         nonce = header.getRecipNonce().getOctets();
-        assertEquals(new String(nonce), new String(senderNonce));
+        assertEquals(new String(senderNonce), new String(nonce));
 
         // --Transaction ID
         // transid should be the same as the one we sent

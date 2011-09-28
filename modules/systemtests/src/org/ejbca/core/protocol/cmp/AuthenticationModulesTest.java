@@ -124,6 +124,12 @@ public class AuthenticationModulesTest extends CmpTestCase {
         setCaCert();
         
 		confSession.backupConfiguration();
+		
+		updatePropertyOnServer(CmpConfiguration.CONFIG_RA_ENDENTITYPROFILE, "EMPTY");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_RA_CERTIFICATEPROFILE, "ENDUSER");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_RACANAME, "AdminCA1");
+
+
 	}
 
 	public void test01HMACModule() throws InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException, SignatureException, IOException, InvalidAlgorithmParameterException {
@@ -141,7 +147,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
         HMACAuthenticationModule hmac = new HMACAuthenticationModule("foo123");
         hmac.setCaInfo(caAdminSession.getCAInfo(admin, caid));
         hmac.setSession(admin, userAdminSession);
-		boolean res = hmac.verify(req);
+		boolean res = hmac.verifyOrExtract(req);
 		assertTrue("Verifying the message authenticity using HMAC failed.", res);
 		assertNotNull("HMAC returned null password." + hmac.getAuthenticationString());
 		assertEquals("HMAC returned the wrong password", "foo123", hmac.getAuthenticationString());
@@ -170,7 +176,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
 
 		EndEntityCertificateAuthenticationModule eemodule = new EndEntityCertificateAuthenticationModule(caAdminSession.getCAInfo(admin, caid).getName());
 		eemodule.setSession(admin, caAdminSession, certSession, authorizationSession, eeProfileSession);
-		boolean res = eemodule.verify(msg);
+		boolean res = eemodule.verifyOrExtract(msg);
 		assertTrue("Verifying the message authenticity using EndEntityCertificate failed.", res);
 		assertNotNull("EndEntityCertificate authentication module returned null password." + eemodule.getAuthenticationString());
 		//Should be a random generated password
@@ -206,7 +212,6 @@ public class AuthenticationModulesTest extends CmpTestCase {
         Certificate cert1 = checkCmpCertRepMessage(userDN, cacert, resp, req.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue());
         assertNotNull("Crmf request did not return a certificate", cert1);
 	}
-
 	
 	public void test04HMACRevReq() throws Exception {
 		assertFalse("Configurations have not been backed up before starting testing.", confSession.backupConfiguration());
@@ -454,7 +459,8 @@ public class AuthenticationModulesTest extends CmpTestCase {
         PKIBody body = respObject.getBody();
         assertEquals(23, body.getTagNo());
         String errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
-        assertEquals("Unrecognized authentication modules", errMsg);
+        String expectedErrMsg = "Unrecognized authentication module '" + CmpConfiguration.AUTHMODULE_DN_PART_PWD + "'";
+        assertEquals(expectedErrMsg, errMsg);
 	}
 	
 
@@ -529,7 +535,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
 		try{
 			userAdminSession.revokeAndDeleteUser(admin, clientUsername, ReasonFlags.unused);
 		} catch(Exception e) {}
-		createUser(clientUsername, clientDN, clientPassword);
+		createUser(clientUsername, clientDN, "foo123");
 		
 		KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
 		
@@ -548,7 +554,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
         Certificate cert1 = checkCmpCertRepMessage(clientDN, cacert, resp, req.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue());
         assertNotNull("Crmf request did not return a certificate", cert1);
 	}
-	
+	/*
 	public void test12HMACModuleClientMode() throws InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException, SignatureException, IOException, 
 						InvalidAlgorithmParameterException, AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, WaitingForApprovalException, 
 						EjbcaException, java.lang.Exception {
@@ -575,13 +581,12 @@ public class AuthenticationModulesTest extends CmpTestCase {
         HMACAuthenticationModule hmac = new HMACAuthenticationModule("foo123");
         hmac.setCaInfo(caAdminSession.getCAInfo(admin, caid));
         hmac.setSession(admin, userAdminSession);
-		boolean res = hmac.verify(req);
+		boolean res = hmac.verifyOrExtract(req);
 		assertTrue("Verifying the message authenticity using HMAC failed.", res);
 		assertNotNull("HMAC returned null password." + hmac.getAuthenticationString());
 		assertEquals("HMAC returned the wrong password", clientPassword, hmac.getAuthenticationString());
 	}
-	
-	
+	*/
 	public void test99RestoreConf() {
 		assertTrue("Restoring configuration faild.", confSession.restoreConfiguration());
 		try {

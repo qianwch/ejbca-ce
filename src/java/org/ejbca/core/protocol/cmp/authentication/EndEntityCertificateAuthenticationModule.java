@@ -137,7 +137,7 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
 	 * @param msg
 	 * @return true if the message signature was verified successfully and false otherwise.
 	 */
-	public boolean verify(final PKIMessage msg) {
+	public boolean verifyOrExtract(final PKIMessage msg) {
 		
 		//Check that there is a certificate in the extraCert field in msg
 		final X509CertificateStructure extraCertStruct = msg.getExtraCert(0);

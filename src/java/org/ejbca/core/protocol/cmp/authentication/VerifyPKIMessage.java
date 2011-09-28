@@ -117,8 +117,9 @@ public class VerifyPKIMessage {
 			if(log.isDebugEnabled()) {
 				log.debug("Trying to verify the message authentication by using \"" + modules[i] + "\" authentication module.");
 			}
+
 			module = getAuthModule(modules[i].trim(), params[i].trim(), msg);
-			if((module != null) && module.verify(msg)) {
+			if((module != null) && module.verifyOrExtract(msg)) {
 				this.authModule = module;
 				return true;
 			}
@@ -150,6 +151,14 @@ public class VerifyPKIMessage {
 			eemodule.setSession(this.admin, this.caAdminSession, this.certificateStoreSession, this.authorizationSessoin, this.eeProfileSession);
 			return eemodule;
 		}
+		if(!CmpConfiguration.getRAOperationMode()) {
+			if(StringUtils.equals(module, CmpConfiguration.AUTHMODULE_REG_TOKEN_PWD)){
+				return new RegTokenPasswordExtractor();
+			} else if(StringUtils.equals(module, CmpConfiguration.AUTHMODULE_DN_PART_PWD)) {
+				return new DnPartPasswordExtractor(parameter);
+			}
+		}			
+		errMsg = "Unrecognized authentication module '" + module + "'";
 		return null;
 	}
 

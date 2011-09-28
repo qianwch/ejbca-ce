@@ -369,8 +369,8 @@ public class RSASignSessionBean implements SignSessionLocal, SignSessionRemote {
         	CATokenOfflineException ex = new CATokenOfflineException(msg);
         	ex.initCause(ctoe);
         	throw ex;
-        } catch (EjbcaException e) {
-            throw e;
+        //} catch (EjbcaException e) {
+        //    throw e;
         } catch (NoSuchProviderException e) {
             log.error("NoSuchProvider provider: ", e);
         } catch (InvalidKeyException e) {

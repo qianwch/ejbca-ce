@@ -221,6 +221,8 @@ public class CrmfRequestMessage extends BaseCmpMessage implements ICrmfRequestMe
 	
 	@Override
 	public String getPassword() {
+		return this.password;
+		/*
 		String ret = null;
 		if (password != null) {
 			if (log.isDebugEnabled()) {
@@ -232,8 +234,9 @@ public class CrmfRequestMessage extends BaseCmpMessage implements ICrmfRequestMe
 		}
 
 		return ret;
+		*/
 	}
-	
+	/*
 	private String getAuthenticationPassword() {
 		final String authenticationModulels = CmpConfiguration.getAuthenticationModule();
 		final String authenticationParameters = CmpConfiguration.getAuthenticationParameters();
@@ -243,7 +246,11 @@ public class CrmfRequestMessage extends BaseCmpMessage implements ICrmfRequestMe
 		int i=0;
 		String ret = null;
 		
-		while((ret == null) && (i<parameters.length)) {
+		while((ret == null) && (i<modules.length)) {
+			if(log.isDebugEnabled()) {
+				log.debug("Trying the extract the password from the CRMF request using the authentication module '" + modules[i] + "' and authentication " +
+						"parameter '" + parameters[i] + "'");
+			}
 			if(StringUtils.equals(modules[i].trim(), CmpConfiguration.AUTHMODULE_REG_TOKEN_PWD)) {
 				ret = RegTokenPasswordExtractor.extractPassword(getReq());
 			} else if(StringUtils.equals(modules[i], CmpConfiguration.AUTHMODULE_DN_PART_PWD)) {
@@ -254,6 +261,7 @@ public class CrmfRequestMessage extends BaseCmpMessage implements ICrmfRequestMe
 		
 		return ret;
 	}
+	*/
 
     /** force a username, i.e. ignore the DN/username in the request
      */

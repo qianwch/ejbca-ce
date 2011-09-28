@@ -144,7 +144,7 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 	 * @param msg
 	 * @return true if the message signature was verified successfully and false otherwise.
 	 */
-	public boolean verify(final PKIMessage msg) {
+	public boolean verifyOrExtract(final PKIMessage msg) {
 		
 		if(msg == null) {
 			LOG.error("No PKIMessage was found");
