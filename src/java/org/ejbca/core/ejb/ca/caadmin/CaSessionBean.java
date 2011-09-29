@@ -80,6 +80,7 @@ public class CaSessionBean implements CaSessionLocal, CaSessionRemote {
     }
 
     @Override
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public CA getCA(Admin admin, int caid) throws CADoesntExistsException {
         if (!authorizedToCA(admin, caid)) {
             if (log.isDebugEnabled()) {
@@ -92,6 +93,7 @@ public class CaSessionBean implements CaSessionLocal, CaSessionRemote {
     }
     
     @Override
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public CA getCA(Admin admin, String name) throws CADoesntExistsException {
         CA ca = getCAInternal(-1, name);
         if (!authorizedToCA(admin, ca.getCAId())) {
