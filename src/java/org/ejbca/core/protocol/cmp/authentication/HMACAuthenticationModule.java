@@ -16,10 +16,14 @@ package org.ejbca.core.protocol.cmp.authentication;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.cert.Certificate;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.bouncycastle.asn1.x509.X509Name;
+import org.bouncycastle.util.encoders.Hex;
 import org.ejbca.config.CmpConfiguration;
+import org.ejbca.core.ejb.ca.store.CertificateStoreSession;
 import org.ejbca.core.ejb.ra.UserAdminSession;
 import org.ejbca.core.model.InternalResources;
 import org.ejbca.core.model.authorization.AuthorizationDeniedException;
@@ -29,7 +33,9 @@ import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.model.ra.UserDataVO;
 import org.ejbca.core.protocol.cmp.CmpPKIBodyConstants;
 import org.ejbca.core.protocol.cmp.CmpPbeVerifyer;
+import org.ejbca.util.CertTools;
 
+import com.novosec.pkix.asn1.cmp.CertConfirmContent;
 import com.novosec.pkix.asn1.cmp.PKIMessage;
 import com.novosec.pkix.asn1.crmf.CertTemplate;
 
@@ -53,6 +59,7 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 	
 	private Admin admin;
 	private UserAdminSession userAdminSession;
+	private CertificateStoreSession certStoreSession;
 	
 	private String raAuthSecret;
 	private CAInfo cainfo;
@@ -86,9 +93,10 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 	 * @param adm
 	 * @param userSession
 	 */
-	public void setSession(final Admin adm, final UserAdminSession userSession) {
+	public void setSession(final Admin adm, final UserAdminSession userSession, final CertificateStoreSession certStoreSession) {
 		this.admin = adm;
 		this.userAdminSession = userSession;
+		this.certStoreSession = certStoreSession;
 	}
 	
 	/**
@@ -145,7 +153,6 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 	 * @return true if the message signature was verified successfully and false otherwise.
 	 */
 	public boolean verifyOrExtract(final PKIMessage msg) {
-		
 		if(msg == null) {
 			LOG.error("No PKIMessage was found");
 			return false;
@@ -232,28 +239,70 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 			}
 			
 		} else { //client mode
-			
 			//If client mode, we try to get the pre-registered endentity from the DB, and if there is a 
 			//clear text password we check HMAC using this password.
-			final CertTemplate certTemp = getCertTemplate(msg);
-			final String subjectDN = certTemp.getSubject().toString();
-			final String issuerDN = certTemp.getIssuer().toString();
-			if(LOG.isDebugEnabled()) {
-				LOG.debug("Searching for an end entity with SubjectDN=\"" + subjectDN + "\" and issuerDN=\"" + issuerDN + "\"");
-			}
 			UserDataVO userdata = null;
+			final CertTemplate certTemp = getCertTemplate(msg);
+			String subjectDN = null;
+			String issuerDN = null;
+			if (certTemp == null) {
+				// No subject DN in request, it can be a CertConfirm, where we can get the certificate 
+				// serialNo fingerprint instead
+				final CertConfirmContent certConf = getCertConfirm(msg);
+				if (certConf != null) {
+					byte[] certhash = certConf.getCertHash().getOctets();
+					final String fp = new String(Hex.encode(certhash));
+					if (LOG.isDebugEnabled()) {
+						LOG.debug("Looking for issued certificate with fingerprint: "+fp);
+					}
+					Certificate cert = certStoreSession.findCertificateByFingerprint(admin, fp);
+					subjectDN = CertTools.getSubjectDN(cert);
+					issuerDN = CertTools.getIssuerDN(cert);					
+				} else {
+					if (LOG.isDebugEnabled()) {
+						LOG.debug("there was no CertTemplate, and it was not a CertConfirm either...");
+					}
+				}
+			} else {
+				subjectDN = certTemp.getSubject().toString();				
+				final X509Name issuer = certTemp.getIssuer();
+				if (issuer != null) {
+					issuerDN = issuer.toString();
+				}
+			}			
 			try {
-				userdata = this.userAdminSession.findUserBySubjectAndIssuerDN(this.admin, subjectDN, issuerDN);
+				if (issuerDN != null) {
+					if(LOG.isDebugEnabled()) {
+						LOG.debug("Searching for an end entity with SubjectDN='" + subjectDN + "' and issuerDN='" + issuerDN + "'.");
+					}
+					userdata = this.userAdminSession.findUserBySubjectAndIssuerDN(this.admin, subjectDN, issuerDN);
+				} else if (subjectDN != null) {
+					if(LOG.isDebugEnabled()) {
+						LOG.debug("Searching for an end entity with SubjectDN='" + subjectDN + "'.");
+					}
+					userdata = this.userAdminSession.findUserBySubjectDN(admin, subjectDN);
+				}
 			} catch (AuthorizationDeniedException e) {
-				LOG.info("No EndEntity with subjectDN \"" + subjectDN + "\" and issuer \"" + issuerDN + "\" could be found, wich is expected if the request had been send in Client mode.");
+				LOG.info("No EndEntity with subjectDN '" + subjectDN + "' could be found, which is expected if the request had been send in Client mode.");
 			}
 			if(userdata != null) {
+				if(LOG.isDebugEnabled()) {
+					LOG.debug("Comparing HMAC password authentication for user '"+userdata.getUsername()+"'.");
+				}
 				final String eepassword = userdata.getPassword();
-				if(StringUtils.isNotEmpty(eepassword)) { 
+				if(StringUtils.isNotEmpty(eepassword)) {
 					final CmpPbeVerifyer cmpverify = new CmpPbeVerifyer(msg);
 					try {
 						if(cmpverify.verify(eepassword)) {
+							if(LOG.isDebugEnabled()) {
+								LOG.debug("HMAC password authentication succeeded for user '"+userdata.getUsername()+"'.");
+							}							
 							this.password = eepassword;
+						} else {
+							if(LOG.isDebugEnabled()) {
+								LOG.debug("HMAC password authentication failed for user '"+userdata.getUsername()+"'.");
+							}
+							errorMessage = INTRES.getLocalizedMessage("cmp.errorauthmessage", userdata.getUsername());
 						}
 					} catch (InvalidKeyException e) {
 						errorMessage = INTRES.getLocalizedMessage("cmp.errorgeneral");
@@ -265,10 +314,14 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 						errorMessage = INTRES.getLocalizedMessage("cmp.errorgeneral");
 						LOG.error(errorMessage, e);
 					}
+				} else {
+					if(LOG.isDebugEnabled()) {
+						LOG.debug("No clear text password for user '"+userdata.getUsername()+"', not possible to check authentication.");
+					}
 				}
 			} else {
-				errorMessage = "End Entity with subjectDN \"" + subjectDN + "\" and issuerDN \"" + issuerDN + "\" was not found";
-				LOG.error(errorMessage);
+					errorMessage = "End Entity with subjectDN '" + subjectDN +"' was not found";
+					LOG.error(errorMessage);
 			}
 		}
 		return this.password != null;
@@ -276,10 +329,10 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 
 	
     /**
-     * Returns the certificate template specified in the request impeded in msg.
+     * Returns the certificate template specified in the request embedded in msg.
      * 
      * @param msg
-     * @return the certificate template imbeded in msg. Null if no such template was found.
+     * @return the certificate template embedded in msg. Null if no such template was found.
      */
     private CertTemplate getCertTemplate(final PKIMessage msg) {
     	final int tagnr = msg.getBody().getTagNo();
@@ -291,6 +344,20 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
     	}
     	if(tagnr==CmpPKIBodyConstants.REVOCATIONREQUEST) {
     		return msg.getBody().getRr().getRevDetails(0).getCertDetails();
+    	}
+    	return null;
+    }
+
+    /**
+     * Returns the certificate confirmation embedded in msg.
+     * 
+     * @param msg
+     * @return the certificate confirmation embedded in msg. Null if no such confirmation was found.
+     */
+    private CertConfirmContent getCertConfirm(final PKIMessage msg) {
+    	final int tagnr = msg.getBody().getTagNo();
+    	if(tagnr == CmpPKIBodyConstants.CERTIFICATECONFIRM) {
+    		return msg.getBody().getCertConf();
     	}
     	return null;
     }

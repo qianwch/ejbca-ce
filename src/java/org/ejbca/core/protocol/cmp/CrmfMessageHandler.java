@@ -91,8 +91,6 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 	private final CertificateStoreSession certStoreSession;
 	private final AuthorizationSession authorizationSession;
 	
-	private int caId;           // The CA to user when adding users in RA mode
-	
 	/**
 	 * Used only by unit test.
 	 */
@@ -215,7 +213,7 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 						crmfreq.setUsername(data.getUsername());
 						
 						ICMPAuthenticationModule authenticationModule = null;
-						Object verified = verifyAndGetAuthModule(msg, crmfreq);
+						Object verified = verifyAndGetAuthModule(msg, crmfreq, 0);
 						if(verified instanceof IResponseMessage) {
 							return (IResponseMessage) verified;
 						} else {
@@ -291,6 +289,7 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 			return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_MESSAGE_CHECK, errMsg);
 		}
 		
+		int caId; // The CA to user when adding users in RA mode
 		try {
 			eeProfileId = getUsedEndEntityProfileId(keyId);
 			caId = getUsedCaId(keyId, eeProfileId);
@@ -303,12 +302,11 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 			//}
 			return CmpMessageHelper.createErrorMessage(msg, FailInfo.INCORRECT_DATA, e.getMessage(), requestId, requestType, null, keyId, this.responseProt);
 		}
-		final CAInfo caInfo = this.caAdminSession.getCAInfo(this.admin, caId);
 		
 		IResponseMessage resp = null; // The CMP response message to be sent back to the client
 		try {			
 			ICMPAuthenticationModule authenticationModule = null;
-			Object verified = verifyAndGetAuthModule(msg, crmfreq);
+			Object verified = verifyAndGetAuthModule(msg, crmfreq, caId);
 			if(verified instanceof IResponseMessage) {
 				return (IResponseMessage) verified;
 			} else {
@@ -429,8 +427,13 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 		return resp;
 	}
 	
-	private Object verifyAndGetAuthModule(BaseCmpMessage msg, CrmfRequestMessage crmfreq) {
-		final CAInfo caInfo = this.caAdminSession.getCAInfo(this.admin, caId);
+	private Object verifyAndGetAuthModule(final BaseCmpMessage msg, final CrmfRequestMessage crmfreq, final int caId) {
+		final CAInfo caInfo;
+		if (caId > 0) {
+			caInfo = this.caAdminSession.getCAInfo(this.admin, caId);	
+		} else {
+			caInfo = null;
+		}
 		final VerifyPKIMessage messageVerifyer = new VerifyPKIMessage(caInfo, admin, caAdminSession, userAdminSession, certStoreSession, authorizationSession, endEntityProfileSession);
 		ICMPAuthenticationModule authenticationModule = null;
 		if(messageVerifyer.verify(crmfreq.getPKIMessage())) {

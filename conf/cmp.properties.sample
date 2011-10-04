@@ -45,13 +45,13 @@
 # The password extractors are:
 # - RegTokenPwd - does not require parameters
 # - DnPartPwd - The DN part that should contain the password is given in cmp.authenticationparameters. For example, if the 
-#   subjectDN is "CN=Name,C=SE,UID=password", cmp.authenticationparameters should be sett to "UID".
-# These mothods extract the password from the CMP request and authenticate the sender using the extracted password
+#   subjectDN is "CN=Name,C=SE,UID=password", cmp.authenticationparameters should be set to "UID".
+# These methods extract the password from the CMP request and authenticate the sender using the extracted password
 #
-# The PKIMessage verifyers are:
-# - HMAC - an authentication secret can be set in cmp.authenticationparameters. If nothing was set there, the authentication secret
-#   that will be used is the one specified in cmp.ra.authenticationsecret
-# - EndEntityCertificate - requires the name of the CA that gave the EndEntityCertificate to be specified in cmp.authenticationparameters.
+# The PKIMessage verifiers are:
+# - HMAC - an RA authentication secret can be set in cmp.authenticationparameters. If nothing was set there, the authentication secret
+#   that will be used is the one specified in cmp.ra.authenticationsecret. For client mode no authentication parameters are needed.
+# - EndEntityCertificate - requires the name of the CA that issued the EndEntity certificate to be specified in cmp.authenticationparameters.
 #
 # Default: RegTokenPwd;HMAC
 #cmp.authenticationmodule=RegTokenPwd

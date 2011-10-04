@@ -147,7 +147,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
 
         HMACAuthenticationModule hmac = new HMACAuthenticationModule("foo123");
         hmac.setCaInfo(caAdminSession.getCAInfo(admin, caid));
-        hmac.setSession(admin, userAdminSession);
+        hmac.setSession(admin, userAdminSession, certSession);
 		boolean res = hmac.verifyOrExtract(req);
 		assertTrue("Verifying the message authenticity using HMAC failed.", res);
 		assertNotNull("HMAC returned null password." + hmac.getAuthenticationString());
@@ -571,6 +571,23 @@ public class AuthenticationModulesTest extends CmpTestCase {
         checkCmpResponseGeneral(resp, issuerDN, clientDN, cacert, req.getHeader().getSenderNonce().getOctets(), req.getHeader().getTransactionID().getOctets(), false, null);
         Certificate cert1 = checkCmpCertRepMessage(clientDN, cacert, resp, req.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue());
         assertNotNull("Crmf request did not return a certificate", cert1);
+
+        // 
+        // Try a request with no issuerDN in the certTemplate
+		createUser(clientUsername, clientDN, clientPassword);
+		PKIMessage msgNoIssuer = genCertReq(null, clientDN, keys, cacert, nonce, transid, false, null, null, null, null);
+		assertNotNull("Generating CrmfRequest failed." + msgNoIssuer);
+        PKIMessage reqNoIssuer = protectPKIMessage(msgNoIssuer, false, clientPassword, "mykeyid", 567);
+        assertNotNull("Protecting PKIMessage with HMACPbe failed.");
+        final ByteArrayOutputStream bao2 = new ByteArrayOutputStream();
+        final DEROutputStream out2 = new DEROutputStream(bao2);
+        out2.writeObject(reqNoIssuer);
+        final byte[] ba2 = bao2.toByteArray();
+        // Send request and receive response
+        final byte[] respNoIssuer = sendCmpHttp(ba2, 200);        
+        checkCmpResponseGeneral(respNoIssuer, issuerDN, clientDN, cacert, reqNoIssuer.getHeader().getSenderNonce().getOctets(), reqNoIssuer.getHeader().getTransactionID().getOctets(), false, null);
+        Certificate cert2 = checkCmpCertRepMessage(clientDN, cacert, respNoIssuer, reqNoIssuer.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue());
+        assertNotNull("Crmf request did not return a certificate", cert2);
 	}
 	
 	public void test12HMACModuleInClientMode() throws InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException, SignatureException, IOException, 
@@ -598,7 +615,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
 
         HMACAuthenticationModule hmac = new HMACAuthenticationModule("foo123");
         hmac.setCaInfo(caAdminSession.getCAInfo(admin, caid));
-        hmac.setSession(admin, userAdminSession);
+        hmac.setSession(admin, userAdminSession, certSession);
 		boolean res = hmac.verifyOrExtract(req);
 		assertTrue("Verifying the message authenticity using HMAC failed.", res);
 		assertNotNull("HMAC returned null password." + hmac.getAuthenticationString());
@@ -732,10 +749,9 @@ public class AuthenticationModulesTest extends CmpTestCase {
         PKIBody body = respObject.getBody();
         assertEquals(23, body.getTagNo());
         String errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
-        String expectedErrMsg = "Unrecognized authentication modules";
+        String expectedErrMsg = "Authentication failed for message. clientTestUser.";
         assertEquals(expectedErrMsg, errMsg);
 	}
-	
 	
 	public void test99RestoreConf() {
 		assertTrue("Restoring configuration faild.", confSession.restoreConfiguration());
@@ -744,18 +760,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
 			userAdminSession.revokeAndDeleteUser(admin, "cmpTestUnauthorizedAdmin", ReasonFlags.keyCompromise);
 		} catch(Exception e){}
 		
-	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+	}	
 	
 	private void setCAID() {
 		// Try to use AdminCA1 if it exists
@@ -834,7 +839,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
     		log.debug("created user: " + username);
     	} catch (Exception e) {
     		log.debug("User " + username + " already exists. Setting the user status to NEW");
-    		userAdminSession.changeUser(admin, user, false);
+    		userAdminSession.changeUser(admin, user, true);
     		userAdminSession.setUserStatus(admin, username, UserDataConstants.STATUS_NEW);
     		log.debug("Reset status to NEW");
     	}

@@ -37,7 +37,6 @@ import org.ejbca.core.model.ca.caadmin.CA;
 import org.ejbca.core.model.ca.caadmin.CADoesntExistsException;
 import org.ejbca.core.model.ca.caadmin.CAInfo;
 import org.ejbca.core.model.ca.caadmin.IllegalKeyStoreException;
-import org.ejbca.core.model.ca.caadmin.X509CAInfo;
 import org.ejbca.core.model.ca.catoken.CATokenContainer;
 import org.ejbca.core.model.ca.catoken.CATokenOfflineException;
 import org.ejbca.core.model.log.Admin;
@@ -70,8 +69,6 @@ public class ConfirmationMessageHandler extends BaseCmpMessageHandler implements
 	private static final Logger LOG = Logger.getLogger(ConfirmationMessageHandler.class);
 	private static final InternalResources INTRES = InternalResources.getInstance();
 	
-	/** Parameter used to authenticate RA messages if we are using RA mode to create users */
-	private String raAuthenticationSecret = null;
 	/** Parameter used to determine the type of protection for the response message */
 	private String responseProtection = null;
 	/** CA Session used to sign the response */
@@ -87,7 +84,6 @@ public class ConfirmationMessageHandler extends BaseCmpMessageHandler implements
 					final CertificateProfileSession certificateProfileSession, final UserAdminSession userAdminSession, final CertificateStoreSession certStoreSession, 
 					final AuthorizationSession authSession) {
 		super(admin, caAdminSession, endEntityProfileSession, certificateProfileSession);
-		raAuthenticationSecret = CmpConfiguration.getRAAuthenticationSecret();
 		responseProtection = CmpConfiguration.getResponseProtection();
 		this.caSession = caSession;
 		this.userAdminSession = userAdminSession;
@@ -174,7 +170,7 @@ public class ConfirmationMessageHandler extends BaseCmpMessageHandler implements
 				    		LOG.debug("Using Default CA to sign Certificate Confirm message: "+CmpConfiguration.getDefaultCA());
 				        }
 				    	ca = caSession.getCA(admin, CmpConfiguration.getDefaultCA());
-				    } else if (CmpConfiguration.getDefaultCA() != null) {
+				    } else {
 				    	if (LOG.isDebugEnabled()) {
 				    		LOG.debug("Using recipient CA to sign Certificate Confirm message: '"+cadn+"', "+cadn.hashCode());
 				    	}

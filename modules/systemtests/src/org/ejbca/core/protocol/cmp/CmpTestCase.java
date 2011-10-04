@@ -149,7 +149,9 @@ public class CmpTestCase extends CaTestCase {
 		
 		CertTemplate myCertTemplate = new CertTemplate();
 		myCertTemplate.setValidity( myOptionalValidity );
-		myCertTemplate.setIssuer(new X509Name(issuerDN));
+		if (issuerDN != null) {
+			myCertTemplate.setIssuer(new X509Name(issuerDN));
+		}
 		myCertTemplate.setSubject(new X509Name(userDN));
 		byte[]                  bytes = keys.getPublic().getEncoded();
         ByteArrayInputStream    bIn = new ByteArrayInputStream(bytes);
@@ -643,12 +645,12 @@ public class CmpTestCase extends CaTestCase {
 
         PKIBody body = respObject.getBody();
         int tag = body.getTagNo();
-        assertEquals(tag, 1);
+        assertEquals(1, tag);
         CertRepMessage c = body.getIp();
         assertNotNull(c);
         CertResponse resp = c.getResponse(0);
         assertNotNull(resp);
-        assertEquals(resp.getCertReqId().getValue().intValue(), requestId);
+        assertEquals(requestId, resp.getCertReqId().getValue().intValue());
         PKIStatusInfo info = resp.getStatus();
         assertNotNull(info);
         assertEquals(0, info.getStatus().getValue().intValue());
@@ -659,7 +661,7 @@ public class CmpTestCase extends CaTestCase {
         X509CertificateStructure struct = cc.getCertificate();
         assertNotNull(struct);
         checkDN(userDN, struct.getSubject());
-        assertEquals(CertTools.stringToBCDNString(struct.getIssuer().toString()), CertTools.getSubjectDN(cacert));
+        assertEquals(CertTools.getSubjectDN(cacert), CertTools.stringToBCDNString(struct.getIssuer().toString()));
         return (X509Certificate) CertTools.getCertfromByteArray(struct.getEncoded());
     }
 
