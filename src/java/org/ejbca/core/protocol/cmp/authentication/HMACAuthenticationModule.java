@@ -176,9 +176,14 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 		}
 			
 		if(CmpConfiguration.getRAOperationMode()) { //RA mode
-		
+			if(LOG.isDebugEnabled()) {
+				LOG.debug("Verifying HMAC in RA mode");
+			}		
 			// If we use a globally configured shared secret for all CAs we check it right away
 			if (this.raAuthSecret != null) {
+				if (LOG.isDebugEnabled()) {
+					LOG.debug("raAuthSecret is not null");
+				}
 				try {
 					if(!verifyer.verify(this.raAuthSecret)) {
 						errorMessage = INTRES.getLocalizedMessage("cmp.errorauthmessage", "Global auth secret");
@@ -210,6 +215,9 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 					cmpRaAuthSecret = ((X509CAInfo) cainfo).getCmpRaAuthSecret();
 				}		
 				if (StringUtils.isNotEmpty(cmpRaAuthSecret)) {
+					if (LOG.isDebugEnabled()) {
+						LOG.debug("Trying CMP password from CA '"+cainfo.getName()+"'.");
+					}
 					try {
 						if(!verifyer.verify(cmpRaAuthSecret)) {
 							errorMessage = INTRES.getLocalizedMessage("cmp.errorauthmessage", "Auth secret for CAId="+cainfo.getCAId());
@@ -235,10 +243,17 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 						errorMessage = INTRES.getLocalizedMessage("cmp.errorgeneral");
 						LOG.error(errorMessage, e);
 					}
+				} else {
+					if (LOG.isDebugEnabled()) {
+						LOG.debug("CMP password is null from CA '"+cainfo.getName()+"'.");
+					}
 				}
 			}
 			
 		} else { //client mode
+			if(LOG.isDebugEnabled()) {
+				LOG.debug("Verifying HMAC in Client mode");
+			}
 			//If client mode, we try to get the pre-registered endentity from the DB, and if there is a 
 			//clear text password we check HMAC using this password.
 			UserDataVO userdata = null;

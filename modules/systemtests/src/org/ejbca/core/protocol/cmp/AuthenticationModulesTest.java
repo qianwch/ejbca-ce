@@ -143,7 +143,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
 		PKIMessage msg = genCertReq(issuerDN, userDN, keys, cacert, nonce, transid, false, null, null, null, null);	
 		assertNotNull("Generating CrmfRequest failed." + msg);
         PKIMessage req = protectPKIMessage(msg, false, "foo123", "mykeyid", 567);
-        assertNotNull("Protecting PKIMessage with HMACPbe failed." + req);
+        assertNotNull("Protecting PKIMessage with HMACPbe failed.", req);
 
         HMACAuthenticationModule hmac = new HMACAuthenticationModule("foo123");
         hmac.setCaInfo(caAdminSession.getCAInfo(admin, caid));
@@ -201,7 +201,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
 		PKIMessage msg = genCertReq(issuerDN, userDN, keys, cacert, nonce, transid, false, null, null, null, null);
 		assertNotNull("Generating CrmfRequest failed." + msg);
         PKIMessage req = protectPKIMessage(msg, false, "foo123", "mykeyid", 567);
-        assertNotNull("Protecting PKIMessage with HMACPbe failed.");
+        assertNotNull("Protecting PKIMessage with HMACPbe failed.", req);
         
         final ByteArrayOutputStream bao = new ByteArrayOutputStream();
         final DEROutputStream out = new DEROutputStream(bao);
@@ -246,7 +246,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
 		PKIMessage msg = genRevReq(issuerDN, userDN, CertTools.getSerialNumber(cert), cacert, nonce, transid, false);
 		assertNotNull("Generating RevocationRequest failed." + msg);
         PKIMessage req = protectPKIMessage(msg, false, "foo123", "mykeyid", 567);
-        assertNotNull("Protecting PKIMessage with HMACPbe failed." + req);
+        assertNotNull("Protecting PKIMessage with HMACPbe failed.", req);
         
         final ByteArrayOutputStream bao = new ByteArrayOutputStream();
         final DEROutputStream out = new DEROutputStream(bao);
@@ -426,7 +426,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
 		PKIMessage msg = genCertReq(issuerDN, userDN, keys, cacert, nonce, transid, false, null, null, null, null);
 		assertNotNull("Generating CrmfRequest failed." + msg);
         PKIMessage req = protectPKIMessage(msg, false, "foo123hmac", "mykeyid", 567);
-        assertNotNull("Protecting PKIMessage with HMACPbe failed.");
+        assertNotNull("Protecting PKIMessage with HMACPbe failed.", req);
         
         final ByteArrayOutputStream bao = new ByteArrayOutputStream();
         final DEROutputStream out = new DEROutputStream(bao);
@@ -462,7 +462,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
 		PKIMessage msg = genCertReq(issuerDN, userDN, keys, cacert, nonce, transid, false, null, null, null, null);
 		assertNotNull("Generating CrmfRequest failed." + msg);
         PKIMessage req = protectPKIMessage(msg, false, "foo123hmac", "mykeyid", 567);
-        assertNotNull("Protecting PKIMessage with HMACPbe failed.");
+        assertNotNull("Protecting PKIMessage with HMACPbe failed.", req);
         
         final ByteArrayOutputStream bao = new ByteArrayOutputStream();
         final DEROutputStream out = new DEROutputStream(bao);
@@ -560,7 +560,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
 		PKIMessage msg = genCertReq(issuerDN, clientDN, keys, cacert, nonce, transid, false, null, null, null, null);
 		assertNotNull("Generating CrmfRequest failed." + msg);
         PKIMessage req = protectPKIMessage(msg, false, clientPassword, "mykeyid", 567);
-        assertNotNull("Protecting PKIMessage with HMACPbe failed.");
+        assertNotNull("Protecting PKIMessage with HMACPbe failed.", req);
         
         final ByteArrayOutputStream bao = new ByteArrayOutputStream();
         final DEROutputStream out = new DEROutputStream(bao);
@@ -578,7 +578,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
 		PKIMessage msgNoIssuer = genCertReq(null, clientDN, keys, cacert, nonce, transid, false, null, null, null, null);
 		assertNotNull("Generating CrmfRequest failed." + msgNoIssuer);
         PKIMessage reqNoIssuer = protectPKIMessage(msgNoIssuer, false, clientPassword, "mykeyid", 567);
-        assertNotNull("Protecting PKIMessage with HMACPbe failed.");
+        assertNotNull("Protecting PKIMessage with HMACPbe failed.", req);
         final ByteArrayOutputStream bao2 = new ByteArrayOutputStream();
         final DEROutputStream out2 = new DEROutputStream(bao2);
         out2.writeObject(reqNoIssuer);
@@ -672,7 +672,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
 		PKIMessage msg = genCertReq(issuerDN, clientDN, keys, cacert, nonce, transid, false, null, null, null, null);
 		assertNotNull("Generating CrmfRequest failed." + msg);
         PKIMessage req = protectPKIMessage(msg, false, clientPassword, "mykeyid", 567);
-        assertNotNull("Protecting PKIMessage with HMACPbe failed.");
+        assertNotNull("Protecting PKIMessage with HMACPbe failed.", req);
         
         final ByteArrayOutputStream bao = new ByteArrayOutputStream();
         final DEROutputStream out = new DEROutputStream(bao);
@@ -715,7 +715,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
 		PKIMessage msg = genCertReq(issuerDN, clientDN, keys, cacert, nonce, transid, false, null, null, null, null);
 		assertNotNull("Generating CrmfRequest failed." + msg);
 //        PKIMessage req = protectPKIMessage(msg, false, clientPassword, "mykeyid", 567);
-//        assertNotNull("Protecting PKIMessage with HMACPbe failed.");
+//        assertNotNull("Protecting PKIMessage with HMACPbe failed.", req);
         
         final ByteArrayOutputStream bao = new ByteArrayOutputStream();
         final DEROutputStream out = new DEROutputStream(bao);
@@ -758,7 +758,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
 		PKIMessage msg = genCertReq(issuerDN, clientDN, keys, cacert, nonce, transid, false, null, null, null, null);
 		assertNotNull("Generating CrmfRequest failed." + msg);
         PKIMessage req = protectPKIMessage(msg, false, clientPassword, "mykeyid", 567);
-        assertNotNull("Protecting PKIMessage with HMACPbe failed.");
+        assertNotNull("Protecting PKIMessage with HMACPbe failed.", req);
         
         final ByteArrayOutputStream bao = new ByteArrayOutputStream();
         final DEROutputStream out = new DEROutputStream(bao);

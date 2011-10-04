@@ -276,7 +276,6 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 	 */
 	private IResponseMessage handleRaMessage(final BaseCmpMessage msg, final CrmfRequestMessage crmfreq) throws AuthorizationDeniedException, EjbcaException, ClassNotFoundException {
 		final int eeProfileId;        // The endEntityProfile to be used when adding users in RA mode.
-		//final int caId;           // The CA to user when adding users in RA mode
 		final String certProfileName;  // The certificate profile to use when adding users in RA mode.
 		final int certProfileId;
 		// Try to find a HMAC/SHA1 protection key
@@ -289,7 +288,7 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 			return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_MESSAGE_CHECK, errMsg);
 		}
 		
-		int caId; // The CA to user when adding users in RA mode
+		int caId = 0; // The CA to user when adding users in RA mode
 		try {
 			eeProfileId = getUsedEndEntityProfileId(keyId);
 			caId = getUsedCaId(keyId, eeProfileId);
@@ -429,10 +428,10 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 	
 	private Object verifyAndGetAuthModule(final BaseCmpMessage msg, final CrmfRequestMessage crmfreq, final int caId) {
 		final CAInfo caInfo;
-		if (caId > 0) {
-			caInfo = this.caAdminSession.getCAInfo(this.admin, caId);	
-		} else {
+		if (caId == 0) {
 			caInfo = null;
+		} else {
+			caInfo = this.caAdminSession.getCAInfo(this.admin, caId);	
 		}
 		final VerifyPKIMessage messageVerifyer = new VerifyPKIMessage(caInfo, admin, caAdminSession, userAdminSession, certStoreSession, authorizationSession, endEntityProfileSession);
 		ICMPAuthenticationModule authenticationModule = null;
