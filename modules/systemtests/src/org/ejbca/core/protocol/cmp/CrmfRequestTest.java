@@ -15,7 +15,6 @@ package org.ejbca.core.protocol.cmp;
 
 import java.io.ByteArrayOutputStream;
 import java.security.KeyPair;
-import java.security.MessageDigest;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
@@ -24,19 +23,10 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Random;
 
-import javax.crypto.Mac;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.ASN1Sequence;
-import org.bouncycastle.asn1.DERBitString;
-import org.bouncycastle.asn1.DERInteger;
-import org.bouncycastle.asn1.DERObjectIdentifier;
-import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DEROutputStream;
-import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.cms.CMSSignedGenerator;
@@ -56,11 +46,6 @@ import org.ejbca.core.model.ra.NotFoundException;
 import org.ejbca.core.model.ra.UserDataConstants;
 import org.ejbca.core.model.ra.UserDataVO;
 import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
-import org.ejbca.core.model.util.AlgorithmTools;
-import org.ejbca.core.protocol.cmp.authentication.EndEntityCertificateAuthenticationModule;
-import org.ejbca.core.protocol.cmp.authentication.HMACAuthenticationModule;
-import org.ejbca.core.protocol.cmp.authentication.ICMPAuthenticationModule;
-import org.ejbca.cvc.AlgorithmUtil;
 import org.ejbca.util.Base64;
 import org.ejbca.util.CertTools;
 import org.ejbca.util.CryptoProviderTools;
@@ -68,7 +53,6 @@ import org.ejbca.util.InterfaceCache;
 import org.ejbca.util.keystore.KeyTools;
 
 import com.novosec.pkix.asn1.cmp.PKIMessage;
-import com.novosec.pkix.asn1.crmf.PBMParameter;
 
 /**
  * This test runs in 'normal' CMP mode

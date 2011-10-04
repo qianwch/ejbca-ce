@@ -23,7 +23,6 @@ import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.cert.Certificate;
@@ -679,7 +678,14 @@ public class NestedMessageContentTest extends CmpTestCase {
     	
 		try {
 			userAdminSession.revokeAndDeleteUser(admin, "cmpTestAdmin", ReasonFlags.keyCompromise);
-		} catch(Exception e){}
+		} catch(Exception e){
+			// NOPMD
+		}
+		try {
+			userAdminSession.revokeAndDeleteUser(admin, "nestedCMPTest", ReasonFlags.keyCompromise);
+		} catch(Exception e){
+			// NOPMD
+		}
 		
     	certProfileSession.removeCertificateProfile(admin, "CMPTESTPROFILE");        
 		eeProfileSession.removeEndEntityProfile(admin, "CMPTESTPROFILE");

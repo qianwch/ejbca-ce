@@ -16,7 +16,6 @@ package org.ejbca.core.protocol.cmp;
 import java.math.BigInteger;
 import java.util.List;
 
-import javax.ejb.EJBException;
 import javax.persistence.PersistenceException;
 
 import org.apache.commons.lang.StringUtils;
@@ -36,8 +35,6 @@ import org.ejbca.core.model.InternalResources;
 import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.approval.ApprovalException;
 import org.ejbca.core.model.authorization.AuthorizationDeniedException;
-import org.ejbca.core.model.ca.IllegalKeyException;
-import org.ejbca.core.model.ca.SignRequestException;
 import org.ejbca.core.model.ca.SignRequestSignatureException;
 import org.ejbca.core.model.ca.caadmin.CADoesntExistsException;
 import org.ejbca.core.model.ca.caadmin.CAInfo;
@@ -61,8 +58,6 @@ import org.ejbca.core.protocol.cmp.authentication.VerifyPKIMessage;
 import org.ejbca.util.CertTools;
 import org.ejbca.util.passgen.IPasswordGenerator;
 import org.ejbca.util.passgen.PasswordGeneratorFactory;
-
-import com.novosec.pkix.asn1.cmp.CertRepMessage;
 
 /**
  * Message handler for certificate request messages in the CRMF format
@@ -249,21 +244,14 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 		} catch (AuthorizationDeniedException e) {
 			final String errMsg = INTRES.getLocalizedMessage(CMP_ERRORGENERAL, e.getMessage());
 			LOG.info(errMsg, e);			
-//		} catch (IllegalKeyException e) {
-//			final String errMsg = INTRES.getLocalizedMessage(CMP_ERRORGENERAL, e.getMessage());
-//			LOG.error(errMsg, e);			
-//		} catch (CADoesntExistsException e) {
-//			final String errMsg = INTRES.getLocalizedMessage(CMP_ERRORGENERAL, e.getMessage());
-//			LOG.info(errMsg, e); // info because this is something we should expect and we handle it	
-//			resp = CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.WRONG_AUTHORITY, e.getMessage());
-//		} catch (SignRequestException e) {
-//			final String errMsg = INTRES.getLocalizedMessage(CMP_ERRORGENERAL, e.getMessage());
-//			LOG.info(errMsg, e);			
-//			resp = CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_REQUEST, e.getMessage());
-//		} catch (SignRequestSignatureException e) {
-//			final String errMsg = INTRES.getLocalizedMessage(CMP_ERRORGENERAL, e.getMessage());
-//			LOG.info(errMsg, e); // info because this is something we should expect and we handle it
-//			resp = CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_POP, e.getMessage());
+		} catch (CADoesntExistsException e) {
+			final String errMsg = INTRES.getLocalizedMessage(CMP_ERRORGENERAL, e.getMessage());
+			LOG.info(errMsg, e); // info because this is something we should expect and we handle it	
+			resp = CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.WRONG_AUTHORITY, e.getMessage());
+		} catch (SignRequestSignatureException e) {
+			final String errMsg = INTRES.getLocalizedMessage(CMP_ERRORGENERAL, e.getMessage());
+			LOG.info(errMsg, e); // info because this is something we should expect and we handle it
+			resp = CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_POP, e.getMessage());
         } catch (EjbcaException e) {
             final String errMsg = INTRES.getLocalizedMessage(CMP_ERRORGENERAL, e.getMessage());
             LOG.info(errMsg, e);           
@@ -271,11 +259,6 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 		} catch (ClassNotFoundException e) {
 			final String errMsg = INTRES.getLocalizedMessage(CMP_ERRORGENERAL, e.getMessage());
 			LOG.error(errMsg, e);			
-//		} catch (EJBException e) {
-//			// Fatal error
-//			final String errMsg = INTRES.getLocalizedMessage(CMP_ERRORADDUSER);
-//			LOG.error(errMsg, e);			
-//			resp = null;
 		}		
 		if (LOG.isTraceEnabled()) {
 			LOG.trace("<handleMessage");
