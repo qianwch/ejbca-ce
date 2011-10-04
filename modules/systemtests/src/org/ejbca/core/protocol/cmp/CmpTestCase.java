@@ -676,7 +676,7 @@ public class CmpTestCase extends CaTestCase {
         X509Name name = X509Name.getInstance(header.getSender().getName());
         assertEquals(name.toString(), ((X509Certificate)cacert).getSubjectDN().getName());
         name = X509Name.getInstance(header.getRecipient().getName());
-        assertEquals(name.toString(), userDN);
+        assertEquals(userDN, name.toString());
 
         PKIBody body = respObject.getBody();
         int tag = body.getTagNo();
