@@ -24,7 +24,7 @@ import org.bouncycastle.asn1.x509.PolicyQualifierId;
  * 
  * Forwards compatibility class with EJBCA 5.0
  * 
- * @version $Id: CertificatePolicy.java 12583 2011-09-15 08:46:19Z anatom $
+ * @version $Id$
  */
 public class CertificatePolicy implements Serializable, Cloneable {
 

@@ -30,7 +30,7 @@ import org.ejbca.util.dn.DNFieldsUtil;
  *
  * Forwards compatibility class with EJBCA 5.0
  * 
- * @version $Id: EndEntityInformation.java 12583 2011-09-15 08:46:19Z anatom $
+ * @version $Id$
  */
 public class EndEntityInformation implements Serializable {
 

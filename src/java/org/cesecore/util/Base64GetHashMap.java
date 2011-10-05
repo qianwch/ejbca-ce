@@ -26,7 +26,7 @@ import org.ejbca.util.StringTools;
  *
  * Forwards compatibility class with EJBCA 5.0
  *  
- * @version $Id: Base64GetHashMap.java 12229 2011-08-10 13:43:41Z anatom $
+ * @version $Id$
  */
 public class Base64GetHashMap extends LinkedHashMap {
   
