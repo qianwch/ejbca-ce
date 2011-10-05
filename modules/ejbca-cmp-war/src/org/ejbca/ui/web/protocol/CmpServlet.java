@@ -94,7 +94,6 @@ public class CmpServlet extends HttpServlet {
 		} catch (Exception e) {
 			response.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
 			log.error( intres.getLocalizedMessage("cmp.errornoasn1"), e );
-			return;
 		}
 		if (log.isTraceEnabled()) {
 			log.trace("<doPost()");
