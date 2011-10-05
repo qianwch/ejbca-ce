@@ -77,7 +77,7 @@
         	
             <include name="org/ejbca/ui/cli/ClientToolBox.java" />
             <include name="org/ejbca/core/protocol/ws/client/ejbcawsracli.java" />
-            <include name="org/ejbca/core/protocol/ws/client/cmpvalidationtest.java" />
+            <include name="org/ejbca/core/protocol/ws/client/cmpnestedmessagetest.java" />
             <include name="org/ejbca/core/protocol/ws/client/cvcwscli.java" />
             <include name="org/ejbca/core/protocol/ws/client/gen/*.java" />
             <include name="org/ejbca/util/provider/TrustManagerFactoryImpl.java" />
