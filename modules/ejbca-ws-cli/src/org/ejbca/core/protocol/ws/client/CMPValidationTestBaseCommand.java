@@ -2,17 +2,15 @@ package org.ejbca.core.protocol.ws.client;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
@@ -27,6 +25,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Hashtable;
 import java.util.Random;
 import java.util.Vector;
 
@@ -46,8 +45,10 @@ import org.bouncycastle.asn1.DEROutputStream;
 import org.bouncycastle.asn1.DERUTF8String;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
+import org.bouncycastle.asn1.x509.CRLReason;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.GeneralNames;
+import org.bouncycastle.asn1.x509.ReasonFlags;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.asn1.x509.X509CertificateStructure;
 import org.bouncycastle.asn1.x509.X509Extension;
@@ -68,6 +69,8 @@ import com.novosec.pkix.asn1.cmp.PKIBody;
 import com.novosec.pkix.asn1.cmp.PKIHeader;
 import com.novosec.pkix.asn1.cmp.PKIMessage;
 import com.novosec.pkix.asn1.cmp.PKIStatusInfo;
+import com.novosec.pkix.asn1.cmp.RevDetails;
+import com.novosec.pkix.asn1.cmp.RevReqContent;
 import com.novosec.pkix.asn1.crmf.AttributeTypeAndValue;
 import com.novosec.pkix.asn1.crmf.CRMFObjectIdentifiers;
 import com.novosec.pkix.asn1.crmf.CertReqMessages;
@@ -89,7 +92,7 @@ public class CMPValidationTestBaseCommand {
 	protected Random random;
 	protected X509Certificate cacert;
 	protected KeyPair popokeys;
-	final protected String userDN;
+	protected String userDN;
     final protected byte[] nonce = new byte[16];
     final protected byte[] transid = new byte[16];
     final protected boolean isHttp;
@@ -105,7 +108,7 @@ public class CMPValidationTestBaseCommand {
 	public CMPValidationTestBaseCommand() {
 		
 		this.random = new Random();
-        this.userDN = "CN=CMP Test User Nr "+getRandomAndRepeated()+",O=CMP Test,C=SE,E=email.address@my.com,SN="+getFnrLra();
+        this.userDN = "CN=CMPTestUserNr"+getRandomAndRepeated()+",serialNumber="+getFnrLra();
         random.nextBytes(this.nonce);
         random.nextBytes(this.transid);
         isHttp = true;
@@ -173,7 +176,30 @@ public class CMPValidationTestBaseCommand {
     	} else {
     		myCertTemplate.setExtensions(extensions);
     	}
+    	
     	return new CertRequest(new DERInteger(4), myCertTemplate);
+    }
+    
+    protected RevReqContent genRevReq(String issuerDN, BigInteger serNo, Certificate cacert,
+            boolean crlEntryExtension) throws NoSuchAlgorithmException, NoSuchProviderException, IOException, InvalidKeyException, SignatureException {
+        CertTemplate myCertTemplate = new CertTemplate();
+        myCertTemplate.setIssuer(new X509Name(issuerDN));
+        myCertTemplate.setSerialNumber(new DERInteger(serNo));
+
+        RevDetails myRevDetails = new RevDetails(myCertTemplate);
+        ReasonFlags reasonbits = new ReasonFlags(ReasonFlags.keyCompromise);
+        myRevDetails.setRevocationReason(reasonbits);
+        if (crlEntryExtension) {
+            CRLReason crlReason = new CRLReason(CRLReason.cessationOfOperation);
+            X509Extension ext = new X509Extension(false, new DEROctetString(crlReason.getEncoded()));
+            Hashtable<DERObjectIdentifier, X509Extension> ht = new Hashtable<DERObjectIdentifier, X509Extension>();
+            ht.put(X509Extensions.ReasonCode, ext);
+            myRevDetails.setCrlEntryDetails(new X509Extensions(ht));
+        }
+
+        RevReqContent myRevReqContent = new RevReqContent(myRevDetails);
+        
+        return myRevReqContent;
     }
     
     protected PKIMessage genPKIMessage(final boolean raVerifiedPopo,
@@ -191,14 +217,14 @@ public class CMPValidationTestBaseCommand {
     		mout.writeObject( certRequest );
     		mout.close();
     		final byte[] popoProtectionBytes = baos.toByteArray();
-    		final Signature sig = Signature.getInstance( PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
+    		final Signature sig = Signature.getInstance( PKCSObjectIdentifiers.sha256WithRSAEncryption.getId());
     		sig.initSign(popokeys.getPrivate());
     		sig.update( popoProtectionBytes );
 
     		final DERBitString bs = new DERBitString(sig.sign());
 
     		final POPOSigningKey myPOPOSigningKey =	new POPOSigningKey(
-    					new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption), bs);
+    					new AlgorithmIdentifier(PKCSObjectIdentifiers.sha256WithRSAEncryption), bs);
     		//myPOPOSigningKey.setPoposkInput( myPOPOSigningKeyInput );
     		myProofOfPossession = new ProofOfPossession(myPOPOSigningKey, 1);           
     	}
@@ -224,7 +250,7 @@ public class CMPValidationTestBaseCommand {
     protected PKIMessage signPKIMessage(final PKIMessage msg, PrivateKey signingKey) throws NoSuchAlgorithmException, NoSuchProviderException, 
     		InvalidKeyException, SignatureException {
     	PKIMessage message = msg;
-    	final Signature sig = Signature.getInstance(PKCSObjectIdentifiers.sha1WithRSAEncryption.getId(), "BC");
+    	final Signature sig = Signature.getInstance(PKCSObjectIdentifiers.sha256WithRSAEncryption.getId(), "BC");
     	sig.initSign(signingKey);
     	sig.update(message.getProtectedBytes());
     	byte[] eeSignature = sig.sign();			
@@ -328,6 +354,8 @@ public class CMPValidationTestBaseCommand {
     			}
     		} else {
     			getPrintStream().println("No valid algorithm.");
+    			getPrintStream().println(id);
+    			getPrintStream().println(PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
     			return false;
     		}
     	}
@@ -495,7 +523,7 @@ public class CMPValidationTestBaseCommand {
     	final String s = Integer.toString( random.nextInt() );
     	return s.substring(s.length()-length);
     }
-    private String getFnrLra() {
+    public String getFnrLra() {
     	return getRandomAllDigitString(6)+getRandomAllDigitString(5)+'-'+getRandomAllDigitString(5);
     }
     private int getRandomAndRepeated() {

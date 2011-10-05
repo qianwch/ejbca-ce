@@ -40,7 +40,6 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Date;
 import java.util.Enumeration;
 
-import org.apache.commons.lang.StringUtils;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.DERGeneralizedTime;
 import org.bouncycastle.asn1.DERInteger;
@@ -73,17 +72,17 @@ public class CrmfRequestMissingStoredCertTestCommand extends CMPValidationTestBa
 	
 
 	
-	private static final int ARG_HOSTNAME    = 1;
-	private static final int ARG_CAFILE      = 2;
-	private static final int ARG_PORT        = 3;
-	private static final int ARG_KEYID       = 4;
-	private static final int ARG_URLPATH     = 5;
+	private static final int ARG_HOSTNAME    		= 1;
+	private static final int ARG_CAFILE      		= 2;
+	private static final int ARG_KEYSTOREPATH		= 3;
+	private static final int ARG_KEYSTOREPASSWORD	= 4;
+	private static final int ARG_CERTNAMEINKEYSTORE = 5;
+	private static final int ARG_PORT        		= 6;
+	private static final int ARG_URLPATH     		= 7;
 
-	private static final int NR_OF_MANDATORY_ARGS = ARG_CAFILE+1;
+	private static final int NR_OF_MANDATORY_ARGS = ARG_CERTNAMEINKEYSTORE+1;
 	private static final int MAX_NR_OF_ARGS = ARG_URLPATH+1;
 	
-    String keyId;
-//    PrivateKey outerSignKey;
     PrivateKey innerSignKey;
     Certificate innerCertificate;
     int reqId;
@@ -104,7 +103,6 @@ public class CrmfRequestMissingStoredCertTestCommand extends CMPValidationTestBa
     	hostname = args[ARG_HOSTNAME];
     	String certFile = args[ARG_CAFILE];
         port = args.length>ARG_PORT ? Integer.parseInt(args[ARG_PORT].trim()):8080;
-        keyId = args.length>ARG_KEYID ? args[ARG_KEYID].trim():"EMPTY";
         urlPath = args.length>ARG_URLPATH && args[ARG_URLPATH].toLowerCase().indexOf("null")<0 ? args[ARG_URLPATH].trim():null;
 
         try {
@@ -123,78 +121,52 @@ public class CrmfRequestMissingStoredCertTestCommand extends CMPValidationTestBa
 			System.exit(-1);
 		}
 
-        init(certFile);
+        init(args);
 
     }
-    private void init(String certFile) {
+    private void init(String[] args) {
     	
         FileInputStream file_inputstream;
 		try {
-			file_inputstream = new FileInputStream("/home/aveen/workspace/ejbca_4_0/p12/superadmin.p12");
+			String pwd = args[ARG_KEYSTOREPASSWORD];
+			String certNameInKeystore = args[ARG_CERTNAMEINKEYSTORE];
+			file_inputstream = new FileInputStream(args[ARG_KEYSTOREPATH]);
 			KeyStore keyStore = KeyStore.getInstance("PKCS12");
-			keyStore.load(file_inputstream, "ejbca".toCharArray());
+			keyStore.load(file_inputstream, pwd.toCharArray());
 			System.out.println("Keystore size " + keyStore.size());
 			Enumeration aliases = keyStore.aliases();
 			while(aliases.hasMoreElements()) {
 				System.out.println(aliases.nextElement());
 			}
-			Key key=keyStore.getKey("superadmin", "ejbca".toCharArray());
+			Key key=keyStore.getKey(certNameInKeystore, pwd.toCharArray());
 			getPrintStream().println("Key information " + key.getAlgorithm() + " " + key.getFormat());
 			PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(key.getEncoded());
 			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 			innerSignKey = keyFactory.generatePrivate(keySpec);
-			innerCertificate = keyStore.getCertificate("superadmin");
+			innerCertificate = keyStore.getCertificate(certNameInKeystore);
 		} catch (FileNotFoundException e2) {
-			e2.printStackTrace();
+			e2.printStackTrace(getPrintStream());
+			System.exit(-1);
 		} catch (KeyStoreException e) {
-			e.printStackTrace();
+			e.printStackTrace(getPrintStream());
+			System.exit(-1);
 		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
+			e.printStackTrace(getPrintStream());
+			System.exit(-1);
 		} catch (CertificateException e) {
-			e.printStackTrace();
+			e.printStackTrace(getPrintStream());
+			System.exit(-1);
 		} catch (IOException e) {
-			e.printStackTrace();
+			e.printStackTrace(getPrintStream());
+			System.exit(-1);
 		} catch (UnrecoverableKeyException e) {
-			e.printStackTrace();
+			e.printStackTrace(getPrintStream());
+			System.exit(-1);
 		} catch (InvalidKeySpecException e) {
-			e.printStackTrace();
+			e.printStackTrace(getPrintStream());
+			System.exit(-1);
 		}
-        
-        /*
-		try {
-			KeyPair outerSignKeys = KeyTools.genKeys("1024", "RSA");
-			outerSignKey = outerSignKeys.getPrivate();
-	        X509Certificate signCert = CertTools.genSelfCert("CN=cmpStressTest,C=SE", 5000000, null, outerSignKeys.getPrivate(), outerSignKeys.getPublic(), PKCSObjectIdentifiers.sha1WithRSAEncryption.getId(), true, "BC"); 
-	        
-	        Vector<Certificate> certCollection = new Vector<Certificate>();
-	        certCollection.add(signCert);
-	        byte[] pemRaCert = CertTools.getPEMFromCerts(certCollection);
-	        
-	        FileOutputStream out = new FileOutputStream(new File("/tmp/racerts/cmpStressTest.pem"));
-	        out.write(pemRaCert);
-	        out.close();
-		} catch (NoSuchAlgorithmException e1) {
-			e1.printStackTrace();
-		} catch (NoSuchProviderException e1) {
-			e1.printStackTrace();
-		} catch (InvalidAlgorithmParameterException e1) {
-			e1.printStackTrace();
-		} catch (InvalidKeyException e) {
-			e.printStackTrace();
-		} catch (CertificateEncodingException e) {
-			e.printStackTrace();
-		} catch (SignatureException e) {
-			e.printStackTrace();
-		} catch (IllegalStateException e) {
-			e.printStackTrace();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (CertificateException e) {
-			e.printStackTrace();
-		}
-        */        
+              
     }
 
     
@@ -268,11 +240,10 @@ public class CrmfRequestMissingStoredCertTestCommand extends CMPValidationTestBa
     			getPrintStream().println("Expected tagnr 23, but found " + body.getTagNo());
     			System.exit(-1);
     		}
-    		String errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
-    		if(!StringUtils.equals("Could not verify the RA", errMsg)) {
-    			getPrintStream().println("Expected error message is 'Could not verify the RA', but found '" + errMsg + "'");
-    			System.exit(-1);
-    		}
+			getPrintStream().println("Response tagnr checked 23 ok");
+			getPrintStream().println("FailInfo error code: " + body.getError().getPKIStatus().getFailInfo().getPadBits());
+			getPrintStream().println("Error Message: " + body.getError().getPKIStatus().getStatusString().getString(0).getString());
+			
 		} catch (IOException e) {
 			e.printStackTrace(getPrintStream());
 			System.exit(-1);
@@ -303,9 +274,9 @@ public class CrmfRequestMissingStoredCertTestCommand extends CMPValidationTestBa
     }   	
  
 	protected void usage() {
-		getPrintStream().println("Command used to send a cmp certificate request and get back a certificate.");
-		getPrintStream().println("Usage : missingstoredcert <hostname> <CA certificate file name> [<port>] [<KeyId to be sent to server>] [<URL path of servlet. use 'null' to get EJBCA (not proxy) default>]");
-		getPrintStream().println("EJBCA build configutation requirements: cmp.operationmode=ra, cmp.allowraverifypopo=true, cmp.authenticationmodule=EndEntityCertificate, cmp.authenticationparameters=AdminCA1, checkadminauthorization=false, cmp.racertificatepath=/tmp/racerts");
+		getPrintStream().println("Command used to send a cmp certificate request signed by an untrusted RA.");
+		getPrintStream().println("Usage : missingstoredcert <hostname> <CA certificate file name> <CMS keystore (p12)> <keystore password> <CMS certificate in keystore> [<port>] [<URL path of servlet. use 'null' to get EJBCA (not proxy) default>]");
+		getPrintStream().println("EJBCA build configutation requirements: cmp.operationmode=ra, cmp.authenticationmodule=EndEntityCertificate, cmp.authenticationparameters=AdminCA1, cmp.racertificatepath=/opt/racerts");
 
 	}
 	

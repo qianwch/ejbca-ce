@@ -641,7 +641,7 @@ class CMPValidationStressTest extends ClientToolBox {
                 return this.lastNextInt;
             }
             void newSession() {
-                this.userDN = "CN=CMP Test User Nr "+getRandomAndRepeated()+",O=CMP Test,C=SE,E=email.address@my.com,SN="+getFnrLra();
+                this.userDN = "CN=CMP Test User Nr "+getRandomAndRepeated()+",serialNumber="+getFnrLra();
                 StressTest.this.performanceTest.getRandom().nextBytes(this.nonce);
                 StressTest.this.performanceTest.getRandom().nextBytes(this.transid);
             }

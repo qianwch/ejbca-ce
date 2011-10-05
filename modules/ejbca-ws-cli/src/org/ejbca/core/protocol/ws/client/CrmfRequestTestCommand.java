@@ -13,18 +13,12 @@
  
 package org.ejbca.core.protocol.ws.client;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PrintStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -33,79 +27,40 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
-import java.security.Provider;
-import java.security.Signature;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
-import java.util.Random;
-import java.util.Vector;
 
-import javax.crypto.Mac;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-
-import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.ASN1Sequence;
-import org.bouncycastle.asn1.DERBitString;
+import org.apache.commons.lang.StringUtils;
 import org.bouncycastle.asn1.DERGeneralizedTime;
 import org.bouncycastle.asn1.DERInteger;
-import org.bouncycastle.asn1.DERNull;
-import org.bouncycastle.asn1.DERObjectIdentifier;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DEROutputStream;
-import org.bouncycastle.asn1.DERUTF8String;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.GeneralName;
-import org.bouncycastle.asn1.x509.GeneralNames;
-import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
-import org.bouncycastle.asn1.x509.X509CertificateStructure;
-import org.bouncycastle.asn1.x509.X509Extension;
-import org.bouncycastle.asn1.x509.X509Extensions;
 import org.bouncycastle.asn1.x509.X509Name;
-import org.bouncycastle.jce.X509KeyUsage;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.ejbca.core.model.InternalResources;
 import org.ejbca.ui.cli.ErrorAdminCommandException;
 import org.ejbca.ui.cli.IAdminCommand;
 import org.ejbca.ui.cli.IllegalAdminCommandException;
 import org.ejbca.util.CertTools;
-import org.ejbca.util.CryptoProviderTools;
 import org.ejbca.util.keystore.KeyTools;
 
-import com.novosec.pkix.asn1.cmp.CMPObjectIdentifiers;
-import com.novosec.pkix.asn1.cmp.CertOrEncCert;
-import com.novosec.pkix.asn1.cmp.CertRepMessage;
-import com.novosec.pkix.asn1.cmp.CertResponse;
-import com.novosec.pkix.asn1.cmp.CertifiedKeyPair;
 import com.novosec.pkix.asn1.cmp.PKIBody;
 import com.novosec.pkix.asn1.cmp.PKIHeader;
 import com.novosec.pkix.asn1.cmp.PKIMessage;
-import com.novosec.pkix.asn1.cmp.PKIStatusInfo;
-import com.novosec.pkix.asn1.crmf.AttributeTypeAndValue;
-import com.novosec.pkix.asn1.crmf.CRMFObjectIdentifiers;
-import com.novosec.pkix.asn1.crmf.CertReqMessages;
-import com.novosec.pkix.asn1.crmf.CertReqMsg;
 import com.novosec.pkix.asn1.crmf.CertRequest;
-import com.novosec.pkix.asn1.crmf.CertTemplate;
-import com.novosec.pkix.asn1.crmf.OptionalValidity;
-import com.novosec.pkix.asn1.crmf.PBMParameter;
-import com.novosec.pkix.asn1.crmf.POPOSigningKey;
-import com.novosec.pkix.asn1.crmf.ProofOfPossession;
 
 
 
@@ -120,20 +75,23 @@ public class CrmfRequestTestCommand extends CMPValidationTestBaseCommand impleme
 	
 
 	
-	private static final int ARG_HOSTNAME    = 1;
-	private static final int ARG_CAFILE      = 2;
-	private static final int ARG_PORT        = 3;
-	private static final int ARG_KEYID       = 4;
-	private static final int ARG_URLPATH     = 5;
+	private static final int ARG_HOSTNAME    		= 1;
+	private static final int ARG_CAFILE      		= 2;
+	private static final int ARG_KEYSTOREPATH		= 3;
+	private static final int ARG_KEYSTOREPASSWORD	= 4;
+	private static final int ARG_CERTNAMEINKEYSTORE = 5;
+	private static final int ARG_CREATEDCERTSPATH	= 6;
+	private static final int ARG_PORT        		= 7;
+	private static final int ARG_URLPATH     		= 8;
 
-	private static final int NR_OF_MANDATORY_ARGS = ARG_CAFILE+1;
+	private static final int NR_OF_MANDATORY_ARGS = ARG_CERTNAMEINKEYSTORE+1;
 	private static final int MAX_NR_OF_ARGS = ARG_URLPATH+1;
 	
-    String keyId;
     PrivateKey outerSignKey;
     PrivateKey innerSignKey;
     Certificate innerCertificate;
     int reqId;
+    String createsCertsPath;
 
     /**
      * Creates a new instance of RaAddUserCommand
@@ -150,8 +108,8 @@ public class CrmfRequestTestCommand extends CMPValidationTestBaseCommand impleme
     	
     	hostname = args[ARG_HOSTNAME];
     	String certFile = args[ARG_CAFILE];
+    	createsCertsPath = args.length>ARG_CREATEDCERTSPATH ? args[ARG_CREATEDCERTSPATH] : null;
         port = args.length>ARG_PORT ? Integer.parseInt(args[ARG_PORT].trim()):8080;
-        keyId = args.length>ARG_KEYID ? args[ARG_KEYID].trim():"EMPTY";
         urlPath = args.length>ARG_URLPATH && args[ARG_URLPATH].toLowerCase().indexOf("null")<0 ? args[ARG_URLPATH].trim():null;
 
         try {
@@ -170,27 +128,29 @@ public class CrmfRequestTestCommand extends CMPValidationTestBaseCommand impleme
 			System.exit(-1);
 		}
 
-        init(certFile);
+        init(args);
 
     }
-    private void init(String certFile) {
+    private void init(String args[]) {
     	
         FileInputStream file_inputstream;
 		try {
-			file_inputstream = new FileInputStream("/home/aveen/workspace/ejbca_4_0/p12/superadmin.p12");
+			String pwd = args[ARG_KEYSTOREPASSWORD];
+			String certNameInKeystore = args[ARG_CERTNAMEINKEYSTORE];
+			file_inputstream = new FileInputStream(args[ARG_KEYSTOREPATH]);
 			KeyStore keyStore = KeyStore.getInstance("PKCS12");
-			keyStore.load(file_inputstream, "ejbca".toCharArray());
+			keyStore.load(file_inputstream, pwd.toCharArray());
 			System.out.println("Keystore size " + keyStore.size());
 			Enumeration aliases = keyStore.aliases();
 			while(aliases.hasMoreElements()) {
 				System.out.println(aliases.nextElement());
 			}
-			Key key=keyStore.getKey("superadmin", "ejbca".toCharArray());
+			Key key=keyStore.getKey(certNameInKeystore, pwd.toCharArray());
 			getPrintStream().println("Key information " + key.getAlgorithm() + " " + key.getFormat());
 			PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(key.getEncoded());
 			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 			innerSignKey = keyFactory.generatePrivate(keySpec);
-			innerCertificate = keyStore.getCertificate("superadmin");
+			innerCertificate = keyStore.getCertificate(certNameInKeystore);
 		} catch (FileNotFoundException e2) {
 			e2.printStackTrace();
 		} catch (KeyStoreException e) {
@@ -211,15 +171,19 @@ public class CrmfRequestTestCommand extends CMPValidationTestBaseCommand impleme
 		try {
 			KeyPair outerSignKeys = KeyTools.genKeys("1024", "RSA");
 			outerSignKey = outerSignKeys.getPrivate();
-	        X509Certificate signCert = CertTools.genSelfCert("CN=cmpStressTest,C=SE", 5000000, null, outerSignKeys.getPrivate(), outerSignKeys.getPublic(), PKCSObjectIdentifiers.sha1WithRSAEncryption.getId(), true, "BC"); 
+	        X509Certificate signCert = CertTools.genSelfCert("CN=cmpTest,C=SE", 5000, null, outerSignKeys.getPrivate(), outerSignKeys.getPublic(), PKCSObjectIdentifiers.sha256WithRSAEncryption.getId(), true, "BC"); 
 	        
-	        Vector<Certificate> certCollection = new Vector<Certificate>();
+	        writeCertificate(signCert, "/opt/racerts", "cmpTest.pem");
+	        
+	        /*
+	        ArrayList<Certificate> certCollection = new ArrayList<Certificate>();
 	        certCollection.add(signCert);
 	        byte[] pemRaCert = CertTools.getPEMFromCerts(certCollection);
 	        
-	        FileOutputStream out = new FileOutputStream(new File("/tmp/racerts/cmpStressTest.pem"));
+	        FileOutputStream out = new FileOutputStream(new File("/opt/racerts/cmpStressTest.pem"));
 	        out.write(pemRaCert);
 	        out.close();
+	        */
 		} catch (NoSuchAlgorithmException e1) {
 			e1.printStackTrace();
 		} catch (NoSuchProviderException e1) {
@@ -234,12 +198,12 @@ public class CrmfRequestTestCommand extends CMPValidationTestBaseCommand impleme
 			e.printStackTrace();
 		} catch (IllegalStateException e) {
 			e.printStackTrace();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (CertificateException e) {
-			e.printStackTrace();
+		//} catch (FileNotFoundException e) {
+		//	e.printStackTrace();
+		//} catch (IOException e) {
+		//	e.printStackTrace();
+		//} catch (CertificateException e) {
+		//	e.printStackTrace();
 		}
         
     }
@@ -264,9 +228,9 @@ public class CrmfRequestTestCommand extends CMPValidationTestBaseCommand impleme
 				getPrintStream().println("No certificate request.");
 				System.exit(-1);
 			}
-			AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
+			AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha256WithRSAEncryption);
 			certMsg.getHeader().setProtectionAlg(pAlg);
-			certMsg.getHeader().setSenderKID(new DEROctetString("EMPTY".getBytes()));
+			certMsg.getHeader().setSenderKID(new DEROctetString("CMPEnduser".getBytes()));
 			PKIMessage signedMsg = signPKIMessage(certMsg, innerSignKey);
 			addExtraCert(signedMsg, innerCertificate);
 			if ( signedMsg==null ) {
@@ -298,13 +262,24 @@ public class CrmfRequestTestCommand extends CMPValidationTestBaseCommand impleme
 				getPrintStream().println("No response message.");
 				System.exit(-1);
 			}
+			/*
 			if ( !checkCmpResponseGeneral(resp, true) ) {
 				System.exit(-1);
 			}
+			*/
 			final X509Certificate cert = checkCmpCertRepMessage(resp, reqId);
 			if ( cert==null ) {
+				getPrintStream().println("No certificate was created.");
 				System.exit(-1);
 			}
+			getPrintStream().println("Certificate for " + userDN + " was created with the serialnumber: " + cert.getSerialNumber().toString());
+			
+			if(createsCertsPath != null) {
+				String filename = CertTools.getPartFromDN(cert.getSubjectDN().toString(), "CN") + ".pem";
+				writeCertificate(cert, createsCertsPath, filename);
+				getPrintStream().println("Certificate was written to: " + createsCertsPath + "/" + filename);
+			}
+			
 		} catch (IOException e) {
 			e.printStackTrace(getPrintStream());
 			System.exit(-1);
@@ -332,9 +307,35 @@ public class CrmfRequestTestCommand extends CMPValidationTestBaseCommand impleme
  
 	protected void usage() {
 		getPrintStream().println("Command used to send a cmp certificate request and get back a certificate.");
-		getPrintStream().println("Usage : crmfrequest <hostname> <CA certificate file name> [<port>] [<KeyId to be sent to server>] [<URL path of servlet. use 'null' to get EJBCA (not proxy) default>]");
-		getPrintStream().println("EJBCA build configutation requirements: cmp.operationmode=ra, cmp.allowraverifypopo=true, cmp.authenticationmodule=EndEntityCertificate, cmp.authenticationparameters=AdminCA1, checkadminauthorization=false, cmp.racertificatepath=/tmp/racerts");
+		getPrintStream().println("Usage : crmfrequest <hostname> <CA certificate file name> <CMS keystore (p12)> <keystore password> <CMS certificate in keystore> [<path to a directory where the created certificates will be stored>] [<custom certificate serialnumber>] [<port>] [<URL path of servlet. use 'null' to get EJBCA (not proxy) default>]");
+		getPrintStream().println("EJBCA build configutation requirements: cmp.operationmode=ra, cmp.allowraverifypopo=false, cmp.authenticationmodule=EndEntityCertificate, cmp.authenticationparameters=AdminCA1, cmp.racertificatepath=/opt/racerts");
 
 	}
 	
+	private void writeCertificate(X509Certificate cert, String path, String filename) {
+		
+		if(!StringUtils.endsWith(path, "/")) {
+			path = path + "/";
+		}
+		ArrayList<Certificate> certCollection = new ArrayList<Certificate>();
+		certCollection.add(cert);
+
+		try {
+			byte[] pemRaCert = CertTools.getPEMFromCerts(certCollection);
+
+			FileOutputStream out = new FileOutputStream(new File(path + filename));
+			out.write(pemRaCert);
+			out.close();
+		} catch (CertificateException e) {
+			e.printStackTrace(getPrintStream());
+			System.exit(-1);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace(getPrintStream());
+			System.exit(-1);
+		} catch (IOException e) {
+			e.printStackTrace(getPrintStream());
+			System.exit(-1);
+		}
+	}
+
 }
