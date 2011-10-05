@@ -360,7 +360,7 @@ public class NestedCrmfRequestWrongSignatureTestCommand extends CMPNestedMessage
     }   	
  
 	protected void usage() {
-		getPrintStream().println("Command used to send a cmp certificate request with an invalid RA signature.");
+		getPrintStream().println("Command used to send a cmp certificate request inside a NestedMessageContent with an invalid RA signature.");
 		getPrintStream().println("Usage : invalidrasignature <hostname> <CA certificate file name> <CMS keystore (p12)> <keystore password> <CMS certificate in keystore> [<port>] [<KeyId to be sent to server>] [<URL path of servlet. use 'null' to get EJBCA (not proxy) default>]");
 
 		getPrintStream().println("EJBCA build configutation requirements: cmp.operationmode=ra, cmp.allowraverifypopo=true, cmp.authenticationmodule=EndEntityCertificate, cmp.authenticationparameters=AdminCA1, checkadminauthorization=false, cmp.racertificatepath=/opt/racerts");
