@@ -22,7 +22,7 @@ import org.ejbca.ui.cli.IAdminCommand;
  *
  * @version $Id: ejbcawsracli.java 11009 2010-12-29 15:20:37Z jeklund $
  */
-public class cmpvalidationtest  {
+public class cmpnestedmessagetest  {
     /**
      * main Client
      *
@@ -58,11 +58,11 @@ public class cmpvalidationtest  {
         }        
         
         if (args[0].equals("crmfrequest")) {
-            return new CrmfRequestTestCommand(args);
+            return new NestedCrmfRequestTestCommand(args);
         }else if (args[0].equals("missingstoredcert")) {
-            return new CrmfRequestMissingStoredCertTestCommand(args);
+            return new NestedCrmfRequestMissingStoredCertTestCommand(args);
         }else if (args[0].equals("wrongsignature")) {
-            return new CrmfRequestWrongSignatureTestCommand(args);
+            return new NestedCrmfRequestWrongSignatureTestCommand(args);
             /*
         } else if (args[0].equals("stress")) {
             return new StressTestCommand(args);

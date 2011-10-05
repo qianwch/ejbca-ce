@@ -21,7 +21,7 @@ import java.util.List;
  *
  * @version $Id$
  */
-public class CMPValidationTest extends ClientToolBox {
+public class CMPNestedMessageTest extends ClientToolBox {
     /* (non-Javadoc)
      * @see org.ejbca.ui.cli.ClientToolBox#execute(java.lang.String[])
      */
@@ -33,7 +33,7 @@ public class CMPValidationTest extends ClientToolBox {
         }
         try {
         	// the cmpvalidationTest can not be compiled when building EJBCA.
-            Class.forName("org.ejbca.core.protocol.ws.client.cmpvalidationtest").getMethod("main", new Class<?>[]{String[].class}).invoke(null, new Object[]{lArgs.toArray(new String[]{})});
+            Class.forName("org.ejbca.core.protocol.ws.client.cmpnestedmessagetest").getMethod("main", new Class<?>[]{String[].class}).invoke(null, new Object[]{lArgs.toArray(new String[]{})});
 
         } catch (Exception e) {
             e.printStackTrace(System.err);
@@ -45,6 +45,6 @@ public class CMPValidationTest extends ClientToolBox {
      */
     @Override
     protected String getName() {
-        return "CMPValidationTest";
+        return "CMPNestedMessageTest";
     }
 }

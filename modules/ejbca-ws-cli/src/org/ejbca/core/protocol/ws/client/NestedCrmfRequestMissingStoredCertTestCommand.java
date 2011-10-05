@@ -68,7 +68,7 @@ import com.novosec.pkix.asn1.crmf.CertRequest;
  *
  * @version $Id$
  */
-public class CrmfRequestMissingStoredCertTestCommand extends CMPValidationTestBaseCommand implements IAdminCommand{
+public class NestedCrmfRequestMissingStoredCertTestCommand extends CMPNestedMessageTestBaseCommand implements IAdminCommand{
 	
 
 	
@@ -92,7 +92,7 @@ public class CrmfRequestMissingStoredCertTestCommand extends CMPValidationTestBa
      *
      * @param args command line arguments
      */
-    public CrmfRequestMissingStoredCertTestCommand(String[] args) {
+    public NestedCrmfRequestMissingStoredCertTestCommand(String[] args) {
     	super();
     	
     	if(args.length < NR_OF_MANDATORY_ARGS || args.length > MAX_NR_OF_ARGS){

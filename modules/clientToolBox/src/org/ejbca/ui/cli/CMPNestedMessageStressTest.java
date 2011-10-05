@@ -113,7 +113,7 @@ import com.novosec.pkix.asn1.crmf.ProofOfPossession;
  * @version $Id: CMPTest.java 11982 2011-05-16 13:36:33Z primelars $
  *
  */
-class CMPValidationStressTest extends ClientToolBox {
+class CMPNestedMessageStressTest extends ClientToolBox {
     /** Internal localization of logs and errors */
     private static final InternalResources intres = InternalResources.getInstance();
     static private class StressTest {
@@ -815,7 +815,7 @@ class CMPValidationStressTest extends ClientToolBox {
      */
     @Override
     protected String getName() {
-        return "CMPValidationStressTest";
+        return "CMPNestedMessageStressTest";
     }
 
 }

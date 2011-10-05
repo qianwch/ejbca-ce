@@ -82,7 +82,7 @@ import com.novosec.pkix.asn1.crmf.PBMParameter;
 import com.novosec.pkix.asn1.crmf.POPOSigningKey;
 import com.novosec.pkix.asn1.crmf.ProofOfPossession;
 
-public class CMPValidationTestBaseCommand {
+public class CMPNestedMessageTestBaseCommand {
 	
     protected static final InternalResources intres = InternalResources.getInstance();
 
@@ -105,7 +105,7 @@ public class CMPValidationTestBaseCommand {
     protected CertificateFactory certificateFactory;
 
 	
-	public CMPValidationTestBaseCommand() {
+	public CMPNestedMessageTestBaseCommand() {
 		
 		this.random = new Random();
         this.userDN = "CN=CMPTestUserNr"+getRandomAndRepeated()+",serialNumber="+getFnrLra();
