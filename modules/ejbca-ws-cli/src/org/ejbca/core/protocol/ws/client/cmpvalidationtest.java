@@ -36,7 +36,7 @@ public class cmpvalidationtest  {
                 cmd.execute();
             } else {
                 System.out.println(
-                    "Usage: crmfrequest | missingstoredcert | wrongsignature | stress");
+                    "Usage: crmfrequest | missingstoredcert | wrongsignature");
             }
         } catch (Exception e) {
         	Throwable cause = e.getCause();
