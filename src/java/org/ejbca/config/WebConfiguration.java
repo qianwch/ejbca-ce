@@ -139,4 +139,9 @@ public class WebConfiguration {
     public static String notification(String sDefault){
         return ConfigurationHolder.getString ("web.errorpage.notification", sDefault);
     }
+
+    /** @return true if we allow proxied authentication to the Admin GUI. */
+    public static boolean isProxiedAuthenticationEnabled(){
+        return Boolean.TRUE.toString().equalsIgnoreCase(ConfigurationHolder.getString("web.enableproxiedauth", "false"));
+    }
 }
