@@ -213,7 +213,7 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 						crmfreq.setUsername(data.getUsername());
 						
 						ICMPAuthenticationModule authenticationModule = null;
-						Object verified = verifyAndGetAuthModule(msg, crmfreq, 0);
+						Object verified = verifyAndGetAuthModule(msg, crmfreq, data.getUsername(), 0);
 						if(verified instanceof IResponseMessage) {
 							return (IResponseMessage) verified;
 						} else {
@@ -305,7 +305,7 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 		IResponseMessage resp = null; // The CMP response message to be sent back to the client
 		try {			
 			ICMPAuthenticationModule authenticationModule = null;
-			Object verified = verifyAndGetAuthModule(msg, crmfreq, caId);
+			Object verified = verifyAndGetAuthModule(msg, crmfreq, null, caId);
 			if(verified instanceof IResponseMessage) {
 				return (IResponseMessage) verified;
 			} else {
@@ -426,7 +426,7 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 		return resp;
 	}
 	
-	private Object verifyAndGetAuthModule(final BaseCmpMessage msg, final CrmfRequestMessage crmfreq, final int caId) {
+	private Object verifyAndGetAuthModule(final BaseCmpMessage msg, final CrmfRequestMessage crmfreq, final String username, final int caId) {
 		final CAInfo caInfo;
 		if (caId == 0) {
 			caInfo = null;
@@ -435,7 +435,7 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 		}
 		final VerifyPKIMessage messageVerifyer = new VerifyPKIMessage(caInfo, admin, caAdminSession, userAdminSession, certStoreSession, authorizationSession, endEntityProfileSession);
 		ICMPAuthenticationModule authenticationModule = null;
-		if(messageVerifyer.verify(crmfreq.getPKIMessage())) {
+		if(messageVerifyer.verify(crmfreq.getPKIMessage(), username)) {
 			authenticationModule = messageVerifyer.getUsedAuthenticationModule();
 		}
 		if(authenticationModule == null) {

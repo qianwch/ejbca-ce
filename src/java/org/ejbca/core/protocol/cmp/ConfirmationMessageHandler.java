@@ -123,7 +123,7 @@ public class ConfirmationMessageHandler extends BaseCmpMessageHandler implements
 				//Verify the authenticity of the message
 				VerifyPKIMessage messageVerifyer = new VerifyPKIMessage(caInfo, admin, caAdminSession, userAdminSession, certificateStoreSession, authorizationSession, endEntityProfileSession);
 				ICMPAuthenticationModule authenticationModule = null;
-				if(messageVerifyer.verify(msg.getMessage())) {
+				if(messageVerifyer.verify(msg.getMessage(), null)) {
 					authenticationModule = messageVerifyer.getUsedAuthenticationModule();
 				}
 				if(authenticationModule == null) {

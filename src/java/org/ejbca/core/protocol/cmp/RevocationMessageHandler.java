@@ -44,7 +44,6 @@ import org.ejbca.core.model.approval.WaitingForApprovalException;
 import org.ejbca.core.model.authorization.AuthorizationDeniedException;
 import org.ejbca.core.model.ca.SignRequestException;
 import org.ejbca.core.model.ca.caadmin.CAInfo;
-import org.ejbca.core.model.ca.caadmin.X509CAInfo;
 import org.ejbca.core.model.ca.crl.RevokedCertInfo;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.model.ra.AlreadyRevokedException;
@@ -122,7 +121,7 @@ public class RevocationMessageHandler extends BaseCmpMessageHandler implements I
 			//Verify the authenticity of the message
 			final VerifyPKIMessage messageVerifyer = new VerifyPKIMessage(caInfo, admin, caAdminSession, userAdminSession, certificateStoreSession, authorizationSession, endEntityProfileSession);
 			ICMPAuthenticationModule authenticationModule = null;
-			if(messageVerifyer.verify(msg.getMessage())) {
+			if(messageVerifyer.verify(msg.getMessage(), null)) {
 				authenticationModule = messageVerifyer.getUsedAuthenticationModule();
 			}
 			if(authenticationModule == null) {

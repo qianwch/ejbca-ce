@@ -224,7 +224,7 @@ public class CrmfRequestMessage extends BaseCmpMessage implements ICrmfRequestMe
 		}
 		
 		RegTokenPasswordExtractor regTokenExtractor = new RegTokenPasswordExtractor();
-		if(regTokenExtractor.verifyOrExtract(getPKIMessage())) {
+		if(regTokenExtractor.verifyOrExtract(getPKIMessage(), null)) {
 			this.password = regTokenExtractor.getAuthenticationString();
 		}
 		return this.password;

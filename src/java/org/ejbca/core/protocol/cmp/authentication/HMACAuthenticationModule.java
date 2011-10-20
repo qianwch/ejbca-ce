@@ -152,7 +152,7 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 	 * @param msg
 	 * @return true if the message signature was verified successfully and false otherwise.
 	 */
-	public boolean verifyOrExtract(final PKIMessage msg) {
+	public boolean verifyOrExtract(final PKIMessage msg, final String username) {
 		if(msg == null) {
 			LOG.error("No PKIMessage was found");
 			return false;
@@ -286,16 +286,21 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
 				}
 			}			
 			try {
-				if (issuerDN != null) {
-					if(LOG.isDebugEnabled()) {
-						LOG.debug("Searching for an end entity with SubjectDN='" + subjectDN + "' and issuerDN='" + issuerDN + "'.");
-					}
-					userdata = this.userAdminSession.findUserBySubjectAndIssuerDN(this.admin, subjectDN, issuerDN);
-				} else if (subjectDN != null) {
-					if(LOG.isDebugEnabled()) {
-						LOG.debug("Searching for an end entity with SubjectDN='" + subjectDN + "'.");
-					}
-					userdata = this.userAdminSession.findUserBySubjectDN(admin, subjectDN);
+                if (username != null) {
+                    if(LOG.isDebugEnabled()) {
+                        LOG.debug("Searching for an end entity with username='" + username+"'.");
+                    }
+                    userdata = this.userAdminSession.findUser(admin, username);
+                } else {
+                    // No username given, so we try to find from subject/issuerDN from the certificate request
+                    if (issuerDN != null) {
+                        userdata = this.userAdminSession.findUserBySubjectAndIssuerDN(this.admin, subjectDN, issuerDN);
+                    } else if (subjectDN != null) {
+                        if(LOG.isDebugEnabled()) {
+                            LOG.debug("Searching for an end entity with SubjectDN='" + subjectDN + "'.");
+                        }
+                        userdata = this.userAdminSession.findUserBySubjectDN(admin, subjectDN);
+                    }                    
 				}
 			} catch (AuthorizationDeniedException e) {
 				LOG.info("No EndEntity with subjectDN '" + subjectDN + "' could be found, which is expected if the request had been send in Client mode.");
