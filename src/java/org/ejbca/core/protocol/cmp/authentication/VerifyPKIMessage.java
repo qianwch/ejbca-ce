@@ -124,7 +124,7 @@ public class VerifyPKIMessage {
 			}
 
 			module = getAuthModule(modules[i].trim(), params[i].trim(), msg);
-			if((module != null) && module.verifyOrExtract(msg, null)) {
+			if((module != null) && module.verifyOrExtract(msg, username)) {
 				this.authModule = module;
 				ret = true;
 				break;
