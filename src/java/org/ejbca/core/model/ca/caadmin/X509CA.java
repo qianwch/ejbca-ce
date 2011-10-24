@@ -907,8 +907,10 @@ public class X509CA extends CA implements Serializable {
 
         X509CRL crl;
         crl = crlgen.generate(getCAToken().getPrivateKey(SecConst.CAKEYPURPOSE_CRLSIGN),getCAToken().getProvider());
-        // Verify before sending back
-        crl.verify(getCAToken().getPublicKey(SecConst.CAKEYPURPOSE_CRLSIGN));
+        // Verify using the CA certificate before returning
+        // If we can not verify the issued CRL using the CA certificate we don't want to issue this CRL
+        // because something is wrong...
+        crl.verify(cacert.getPublicKey());
 
         return crl;        
     }    
