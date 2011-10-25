@@ -342,10 +342,19 @@ public class X509CA extends CA implements Serializable {
     
 
     public byte[] createPKCS7(Certificate cert, boolean includeChain) throws SignRequestSignatureException {
-        // First verify that we signed this certificate
-        try {
+        // Verify using the CA certificate before returning
+        // If we can not verify the issued certificate using the CA certificate we don't want to issue this certificate
+        // because something is wrong...
+         try {
             if (cert != null) {
-                cert.verify(getCAToken().getPublicKey(SecConst.CAKEYPURPOSE_CERTSIGN));
+                PublicKey verifyKey;
+                X509Certificate cacert = (X509Certificate)getCACertificate ();
+                if (cacert != null) {
+                    verifyKey = cacert.getPublicKey();
+                } else {
+                    verifyKey = getCAToken().getPublicKey(SecConst.CAKEYPURPOSE_CERTSIGN);
+                }
+               cert.verify(verifyKey);
             }
         } catch (Exception e) {
             throw new SignRequestSignatureException("Cannot verify certificate in createPKCS7(), did I sign this?");
