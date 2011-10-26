@@ -23,7 +23,9 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 
 import org.apache.log4j.Logger;
+import org.bouncycastle.asn1.DEREncodable;
 import org.bouncycastle.asn1.DERObject;
+import org.bouncycastle.asn1.cmp.PKIMessages;
 import org.cesecore.core.ejb.ca.store.CertificateProfileSessionLocal;
 import org.cesecore.core.ejb.ra.raadmin.EndEntityProfileSessionLocal;
 import org.ejbca.config.CmpConfiguration;
@@ -167,23 +169,34 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
 				break;
 			case 20:
 				// NestedMessageContent (nested)
-				//handler = new NestedMessageContentHandler(admin, caAdminSession, endEntityProfileSession, certificateProfileSession, certificateStoreSession, userAdminSession, certificateRequestSession, signSession, authorizationSession);
 				if(log.isDebugEnabled()) {
-					log.debug("Received a NestedMessage Content");
+					log.debug("Received a NestedMessageContent");
 				}
+
 				final NestedMessageContent nestedMessage = new NestedMessageContent(req);
 				if(nestedMessage.verify()) {
-					final PKIMessage nested = nestedMessage.getPKIMessage().getBody().getNested();
-					return dispatch(admin, nested.getDERObject().getDEREncoded());
+                    if(log.isDebugEnabled()) {
+                        log.debug("The NestedMessageContent was verified successfully");
+                    }
+                    try {
+					    final DEREncodable nested = nestedMessage.getPKIMessage().getBody().getNested();
+                        PKIMessages nestedMessages = PKIMessages.getInstance(nested);
+                        org.bouncycastle.asn1.cmp.PKIMessage[] pkiMessages = nestedMessages.toPKIMessageArray();
+					    return dispatch(admin, pkiMessages[0].getDERObject().getDEREncoded());
+
+                    } catch (IllegalArgumentException e) {
+                        final String errMsg = e.getLocalizedMessage();
+                        log.error(errMsg);
+                        cmpMessage = new NestedMessageContent(req);
+                        return CmpMessageHelper.createUnprotectedErrorMessage(cmpMessage, ResponseStatus.FAILURE, FailInfo.BAD_REQUEST, errMsg);
+                    }
 				} else {
 					final String errMsg = "Could not verify the RA";
 					log.error(errMsg);
 					cmpMessage = new NestedMessageContent(req);
-					//fillMessageDetails(cmpMessage);
 					return CmpMessageHelper.createUnprotectedErrorMessage(cmpMessage, ResponseStatus.FAILURE, FailInfo.BAD_REQUEST, errMsg);
 				}
 				
-				//break;
 			default:
 				unknownMessageType = tagno;
 				log.info("Received an unknown message type, tagno="+tagno);
@@ -209,14 +222,4 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
 			return null;
 		}
 	}
-/*
-	private void fillMessageDetails(final BaseCmpMessage msg) {
-		msg.setSender(msg.getMessage().getHeader().getSender());
-		msg.setRecipient(msg.getMessage().getHeader().getRecipient());
-		msg.setSenderNonce(msg.getMessage().getHeader().getSenderNonce().toString());
-		//msg.setRecipientNonce(msg.getMessage().getHeader().getRecipNonce().toString());
-		msg.setTransactionId(msg.getHeader().getTransactionID().toString());
-		
-	}
-*/	
 }
