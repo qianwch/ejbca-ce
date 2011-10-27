@@ -3,7 +3,8 @@
 <%@page errorPage="errorpage.jsp" import="org.ejbca.config.GlobalConfiguration,
                                           org.ejbca.core.model.authorization.AuthorizationDeniedException,
                                           org.ejbca.core.model.authorization.AccessRulesConstants"%>
-<html>
+
+<%@page import="org.ejbca.config.WebConfiguration"%><html>
 <jsp:useBean id="ejbcawebbean" scope="session" class="org.ejbca.ui.web.admin.configuration.EjbcaWebBean" />
 <jsp:setProperty name="ejbcawebbean" property="*" /> 
 <% 
@@ -345,6 +346,9 @@
 		<li id="cat9"><a href="<%= ejbcawebbean.getHelpBaseURI() %>/concepts.html" target="<%= GlobalConfiguration.DOCWINDOW %>"
 			title="<%= ejbcawebbean.getText("OPENHELPSECTION") %>"><%=ejbcawebbean.getText("DOCUMENTATION") %></a>
 		</li>
+<% } %>
+<% if (org.ejbca.config.WebConfiguration.isProxiedAuthenticationEnabled()) { %>
+		<li id="cat10"><a href="/logout" target="_top"><%=ejbcawebbean.getText("LOGOUT") %></a></li>
 <% } %>
 
 <%
