@@ -565,6 +565,9 @@ public class NestedMessageContentTest extends CmpTestCase {
         myPKIHeader.setTransactionID(new DEROctetString(transid));
         PKIBody myPKIBody = new PKIBody(myCertReqMessages, 20); // nestedMessageContent
         PKIMessage myPKIMessage = new PKIMessage(myPKIHeader, myPKIBody);
+		KeyPair raKeys = KeyTools.genKeys("1024", "RSA");
+		createRACertificate("raSignerTest06", "foo123", raKeys, null, null);
+		signPKIMessage(myPKIMessage, raKeys);
         
         assertNotNull("Failed to create PKIHeader", myPKIHeader);
         assertNotNull("Failed to create PKIBody", myPKIBody);
@@ -583,7 +586,7 @@ public class NestedMessageContentTest extends CmpTestCase {
         PKIBody body = respObject.getBody();
         assertEquals(23, body.getTagNo());
         String errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
-        assertEquals("Wrong error message", "Not a valid CMP message.", errMsg);
+        assertEquals("Wrong error message", "unknown object in getInstance: org.bouncycastle.asn1.DERSequence", errMsg);
    	}
 	
 	public void test07ExpiredRACert() throws ObjectNotFoundException, InvalidKeyException, SignatureException, AuthorizationDeniedException, EjbcaException, UserDoesntFullfillEndEntityProfile, WaitingForApprovalException, Exception {
