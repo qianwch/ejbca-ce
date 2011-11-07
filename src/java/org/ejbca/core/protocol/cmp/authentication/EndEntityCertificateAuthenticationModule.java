@@ -21,6 +21,7 @@ import java.security.Signature;
 import java.security.SignatureException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -60,6 +61,7 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
 	private String authenticationParameterCAName;
 	private String password;
 	private String errorMessage;
+    private Certificate extraCert;
 	
 	private Admin admin;
 	private CAAdminSession caSession;
@@ -132,6 +134,15 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
 		return this.errorMessage;
 	}
 
+    /**
+     * Get the certificate that was attached to the CMP request in it's extraCert field.
+     * 
+     * @return The certificate that was attached to the CMP request in it's extraCert field 
+     */
+    public Certificate getExtraCert() {
+        return extraCert;
+    }
+
 	/**
 	 * Verifies the signature of 'msg'. msg should be signed by an authorized administrator in EJBCA and 
 	 * the administrator's cerfificate should be attached in msg in the extraCert field.  
@@ -153,9 +164,8 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
 		}
 		
 		//Read the extraCert and store it in a local variable
-		Certificate extracert = null;
 		try {
-			extracert = CertTools.getCertfromByteArray(extraCertStruct.getEncoded());
+			extraCert = CertTools.getCertfromByteArray(extraCertStruct.getEncoded());
 		} catch (CertificateException e) {
 			if(log.isDebugEnabled()) {
 				log.debug(e.getLocalizedMessage());
@@ -169,7 +179,7 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
 		}
 
         //Check that the certificate in the extraCert field exists in the DB
-        final String fp = CertTools.getFingerprintAsString(extracert);
+        final String fp = CertTools.getFingerprintAsString(extraCert);
         final Certificate dbcert = certSession.findCertificateByFingerprint(admin, fp);
         if(dbcert == null) {
             errorMessage = "The End Entity certificate attached to the PKIMessage in the extraCert field could not be found in the database.";
@@ -187,6 +197,19 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
             }
             return false;            
         }
+        
+        // Check that the certificate is valid
+        X509Certificate cert = (X509Certificate) certSession.findCertificateByFingerprint(admin, fp);
+        try {
+            cert.checkValidity();
+        } catch(Exception e) {
+            errorMessage = "The certificate attached to the PKIMessage in the extraCert field in not valid";
+            if(log.isDebugEnabled()) {
+                log.debug(errorMessage+". Fingerprint="+fp);
+                log.debug(e.getLocalizedMessage());
+            }
+        }
+        
         CAInfo cainfo = null;
         try {
             // If client mode we will check if this certificate belongs to the user, and set the password of the request to this user's password
@@ -210,7 +233,7 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
             if (!StringUtils.equals("-", this.authenticationParameterCAName)) {
                 cainfo = caSession.getCAInfo(this.admin, this.authenticationParameterCAName);
                 //Check that the extraCert is given by the right CA
-                if(!StringUtils.equals(CertTools.getIssuerDN(extracert), cainfo.getSubjectDN())) {
+                if(!StringUtils.equals(CertTools.getIssuerDN(extraCert), cainfo.getSubjectDN())) {
                     errorMessage = "The End Entity certificate attached to the PKIMessage is not given by the CA \"" + this.authenticationParameterCAName + "\"";
                     if(log.isDebugEnabled()) {
                         log.debug(errorMessage);
@@ -218,7 +241,7 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
                     return false;
                 }
             } else {
-                cainfo = caSession.getCAInfo(this.admin, CertTools.getIssuerDN(extracert).hashCode());
+                cainfo = caSession.getCAInfo(this.admin, CertTools.getIssuerDN(extraCert).hashCode());
             }
         } catch (AuthorizationDeniedException e) {
             errorMessage = e.getLocalizedMessage();
@@ -238,7 +261,7 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
         // Verify the signature of the client certificate as well, that it is really issued by this CA
         Certificate cacert = cainfo.getCertificateChain().iterator().next();
         try {
-            extracert.verify(cacert.getPublicKey(), "BC");
+            extraCert.verify(cacert.getPublicKey(), "BC");
         } catch (Exception e) {
             errorMessage = "The End Entity certificate attached to the PKIMessage is not issued by the CA \"" + this.authenticationParameterCAName + "\"";
             if(log.isDebugEnabled()) {
@@ -250,8 +273,8 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
         if(CmpConfiguration.getCheckAdminAuthorization()) {                    
             //Check that the request sender is an authorized administrator
             try {
-                if(!isAuthorized(extracert, msg, cainfo.getCAId())){
-                    errorMessage = "\"" + CertTools.getSubjectDN(extracert) + "\" is not an authorized administrator.";
+                if(!isAuthorized(extraCert, msg, cainfo.getCAId())){
+                    errorMessage = "\"" + CertTools.getSubjectDN(extraCert) + "\" is not an authorized administrator.";
                     if(log.isDebugEnabled()) {
                         log.debug(errorMessage);
                     }
@@ -269,7 +292,7 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
         //Verify the signature of msg using the public key of the certificate we found in the database
         try {
             final Signature sig = Signature.getInstance(msg.getHeader().getProtectionAlg().getObjectId().getId(), "BC");
-            sig.initVerify(extracert.getPublicKey());
+            sig.initVerify(extraCert.getPublicKey());
             sig.update(msg.getProtectedBytes());
             if (sig.verify(msg.getProtection().getBytes())) {
                 if (password == null) {

@@ -17,6 +17,7 @@ public class CmpConfiguration {
 	
 	public static final String CONFIG_DEFAULTCA               = "cmp.defaultca";
 	public static final String CONFIG_ALLOWRAVERIFYPOPO       = "cmp.allowraverifypopo";
+    public static final String CONFIG_ALLOWAUTOMATICKEYUPDATE = "cmp.allowautomatickeyupdate";
 	public static final String CONFIG_OPERATIONMODE           = "cmp.operationmode";
 	public static final String CONFIG_AUTHENTICATIONMODULE	  = "cmp.authenticationmodule";
 	public static final String CONFIG_AUTHENTICATIONPARAMETERS= "cmp.authenticationparameters";
@@ -45,8 +46,20 @@ public class CmpConfiguration {
 	 */
 	public static boolean getAllowRAVerifyPOPO() {
 		return "true".equalsIgnoreCase(ConfigurationHolder.getExpandedString(CONFIG_ALLOWRAVERIFYPOPO, "false"));
-	}
+    }
+
+    /**
+     * This defines if we allow automatic renewal of a certificate by setting the end entity status to "NEW" before requesting a new certificate
+     * If this variable is set to false, the status of the end entity will not be altered before requesting a new certificate
+     * @return
+     */
+    public static boolean getAllowAutomaticKeyUpdate() {
+        return "true".equalsIgnoreCase(ConfigurationHolder.getExpandedString(CONFIG_ALLOWAUTOMATICKEYUPDATE, "false"));
+    }
 	
+    /**
+     * The catalog containing the trusted certificates to be used to verify a NestedMessageContent 
+     */
 	public static String getRaCertificatePath() {
 		return ConfigurationHolder.getString(CONFIG_RACERT_PATH, "");
 	}

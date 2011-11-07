@@ -154,6 +154,11 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
 				handler = new CrmfMessageHandler(admin, caAdminSession, certificateProfileSession, certificateRequestSession, endEntityProfileSession, signSession, userAdminSession, certificateStoreSession, authorizationSession);
 				cmpMessage = new CrmfRequestMessage(req, CmpConfiguration.getDefaultCA(), CmpConfiguration.getAllowRAVerifyPOPO(), CmpConfiguration.getExtractUsernameComponent());
 				break;
+            case 7:
+                // Key Update request (kur, Key Update Request)
+                handler = new CrmfKeyUpdateHandler(admin, caAdminSession, certificateProfileSession, endEntityProfileSession, signSession, certificateStoreSession, authorizationSession, userAdminSession);
+                cmpMessage = new CrmfRequestMessage(req, CmpConfiguration.getDefaultCA(), CmpConfiguration.getAllowRAVerifyPOPO(), CmpConfiguration.getExtractUsernameComponent());
+                break;
 			case 19:
 				// PKI confirm (pkiconf, Confirmation)
 			case 24:
