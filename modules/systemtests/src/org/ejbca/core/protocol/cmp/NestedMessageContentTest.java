@@ -710,6 +710,13 @@ public class NestedMessageContentTest extends CmpTestCase {
 		
 		assertTrue("Could not restore CMP configurations", confSession.restoreConfiguration());
         
+        File createdFolder = new File(raCertsPath);
+        File[] certs = createdFolder.listFiles();
+        for(int i=0; i<certs.length; i++) {
+            certs[i].delete();
+        }
+        createdFolder.delete();
+		
     	log.trace("<testZZZCleanUp");
     }
 	
