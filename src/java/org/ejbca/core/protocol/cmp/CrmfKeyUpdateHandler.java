@@ -13,6 +13,10 @@
 
 package org.ejbca.core.protocol.cmp;
 
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 
 import javax.ejb.FinderException;
@@ -162,6 +166,18 @@ public class CrmfKeyUpdateHandler extends BaseCmpMessageHandler implements ICmpM
                 crmfreq.setUsername(userdata.getUsername());
                 crmfreq.setPassword(password);
                 
+                
+                // Check the public key, whether it is allowed to use the old keys or not.
+                if(!CmpConfiguration.getAllowUpdateWithSameKey()) {
+                	PublicKey certPublicKey = oldCert.getPublicKey();
+                	PublicKey requestPublicKey = crmfreq.getRequestPublicKey();
+                	if(certPublicKey.equals(requestPublicKey)) {
+                        final String errMsg = "Invalid key. The public key in the KeyUpdateRequest is the same as the public key in the existing end entity certiticate";
+                        LOG.error(errMsg);
+                        return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_MESSAGE_CHECK, errMsg);
+                	}
+                }
+                
                 // Process the request
                 resp = signSession.createCertificate(admin, crmfreq, org.ejbca.core.protocol.cmp.CmpResponseMessage.class, userdata);               
 
@@ -200,7 +216,22 @@ public class CrmfKeyUpdateHandler extends BaseCmpMessageHandler implements ICmpM
             final String errMsg = INTRES.getLocalizedMessage(CMP_ERRORGENERAL, e.getMessage());
             LOG.info(errMsg, e);           
             resp = CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_REQUEST, e.getMessage());
-        }
+        } catch (InvalidKeyException e) {
+            final String errMsg = INTRES.getLocalizedMessage(CMP_ERRORGENERAL, e.getMessage());
+            LOG.info("Error while reading the public key of the extraCert attached to the CMP request");
+            LOG.info(errMsg, e);           
+            resp = CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_REQUEST, e.getMessage());
+		} catch (NoSuchAlgorithmException e) {
+            final String errMsg = INTRES.getLocalizedMessage(CMP_ERRORGENERAL, e.getMessage());
+            LOG.info("Error while reading the public key of the extraCert attached to the CMP request");
+            LOG.info(errMsg, e);           
+            resp = CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_REQUEST, e.getMessage());
+		} catch (NoSuchProviderException e) {
+            final String errMsg = INTRES.getLocalizedMessage(CMP_ERRORGENERAL, e.getMessage());
+            LOG.info("Error while reading the public key of the extraCert attached to the CMP request");
+            LOG.info(errMsg, e);           
+            resp = CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_REQUEST, e.getMessage());
+		}
 
         if (LOG.isTraceEnabled()) {
             LOG.trace("<handleMessage");

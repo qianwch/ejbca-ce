@@ -100,6 +100,12 @@
 #cmp.allowautomatickeyupdate=true
 #cmp.allowautomatickeyupdate=false
 
+# Allow the use of the old keys when renewing a certificate/updating keys
+#
+# Default: true
+#cmp.allowupdatewithsamekey=false
+#cmp.allowupdatewithsamekey=true
+
 # Allow the client/RA to specify that the CA should not verify POP, 
 # set to true to allow no POP (raVerify in the rfc). 
 # Note: only set to true if cmp.operationmode=ra.

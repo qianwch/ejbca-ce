@@ -18,6 +18,7 @@ public class CmpConfiguration {
 	public static final String CONFIG_DEFAULTCA               = "cmp.defaultca";
 	public static final String CONFIG_ALLOWRAVERIFYPOPO       = "cmp.allowraverifypopo";
     public static final String CONFIG_ALLOWAUTOMATICKEYUPDATE = "cmp.allowautomatickeyupdate";
+    public static final String CONFIG_ALLOWUPDATEWITHSAMEKEY  = "cmp.allowupdatewithsamekey";
 	public static final String CONFIG_OPERATIONMODE           = "cmp.operationmode";
 	public static final String CONFIG_AUTHENTICATIONMODULE	  = "cmp.authenticationmodule";
 	public static final String CONFIG_AUTHENTICATIONPARAMETERS= "cmp.authenticationparameters";
@@ -51,10 +52,16 @@ public class CmpConfiguration {
     /**
      * This defines if we allow automatic renewal of a certificate by setting the end entity status to "NEW" before requesting a new certificate
      * If this variable is set to false, the status of the end entity will not be altered before requesting a new certificate
-     * @return
      */
     public static boolean getAllowAutomaticKeyUpdate() {
         return "true".equalsIgnoreCase(ConfigurationHolder.getExpandedString(CONFIG_ALLOWAUTOMATICKEYUPDATE, "false"));
+    }
+    
+    /**
+     * This defines if we allow the KeyUpdate (which is equivalent to certificate renewal) to be done using the same old keys or not. 
+     */
+    public static boolean getAllowUpdateWithSameKey() {
+    	return "true".equalsIgnoreCase(ConfigurationHolder.getExpandedString(CONFIG_ALLOWUPDATEWITHSAMEKEY, "false"));
     }
 	
     /**
