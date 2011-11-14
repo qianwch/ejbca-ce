@@ -61,7 +61,7 @@ public class CmpConfiguration {
      * This defines if we allow the KeyUpdate (which is equivalent to certificate renewal) to be done using the same old keys or not. 
      */
     public static boolean getAllowUpdateWithSameKey() {
-    	return "true".equalsIgnoreCase(ConfigurationHolder.getExpandedString(CONFIG_ALLOWUPDATEWITHSAMEKEY, "false"));
+    	return "true".equalsIgnoreCase(ConfigurationHolder.getExpandedString(CONFIG_ALLOWUPDATEWITHSAMEKEY, "true"));
     }
 	
     /**
