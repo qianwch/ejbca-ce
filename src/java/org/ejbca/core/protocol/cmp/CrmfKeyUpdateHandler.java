@@ -98,6 +98,32 @@ public class CrmfKeyUpdateHandler extends BaseCmpMessageHandler implements ICmpM
 
     }
 
+    /**
+     * Handles the CMP message
+     * 
+     * Expects the CMP message to be a CrmfRequestMessage. The message is authenticated using 
+     * EndEntityCertificateAuthenticationModule in client mode. It used the attached certificate 
+     * to find then End Entity which this certificate belongs to and requesting for a new certificate 
+     * to be generated. 
+     * 
+     * If automatic update of the key (same as certificate renewal), the end entity's status is set to 
+     * 'NEW' before processing the request. If using the same old keys in the new certificate is not allowed, 
+     * a check is made to insure the the key specified in the request is not the same as the key of the attached 
+     * certificate.
+     * 
+     * The KeyUpdateRequet is processed only in client mode.
+     * 
+     * @param msg
+     * @throws AuthorizationDeniedException when the concerned end entity could not be found
+     * @throws CADoesntExistsException
+     * @throws UserDoesntFullfillEndEntityProfile when the end entity fails to update
+     * @throws WaitingForApprovalException when the end entity fails to update
+     * @throws EjbcaException when the end entity fails to update
+     * @throws FinderException when updating the end entity status fails
+     * @throws InvalidKeyException when failing to read the key from the crmf request
+     * @throws NoSuchAlgorithmException when failing to read the key from the crmf request
+     * @throws NoSuchProviderException when failing to read the key from the crmf request
+     */
     public IResponseMessage handleMessage(final BaseCmpMessage msg) {
         if (LOG.isTraceEnabled()) {
             LOG.trace(">handleMessage");
