@@ -65,6 +65,7 @@ import org.ejbca.core.protocol.PKCS10RequestMessage;
 import org.ejbca.util.Base64;
 import org.ejbca.util.CertTools;
 import org.ejbca.util.CryptoProviderTools;
+import org.ejbca.util.HTMLTools;
 import org.ejbca.util.RequestMessageUtils;
 
 /**
@@ -160,7 +161,7 @@ public class CardCertReqServlet extends HttpServlet {
                 }
             }
             log.debug("Got request for " + username + ".");
-            debug.print("<h3>username: " + username + "</h3>");
+            debug.print("<h3>username: " + HTMLTools.htmlescape(username) + "</h3>");
             
             final UserDataVO data = userAdminSession.findUser(administrator, username);
             final X509Certificate notRevokedCerts[]; {
@@ -301,7 +302,7 @@ public class CardCertReqServlet extends HttpServlet {
             while (paramNames.hasMoreElements()) {
                 String name = paramNames.nextElement().toString();
                 String parameter = request.getParameter(name);
-                debug.print("<h4>" + name + ":</h4>" + parameter + "<br>");
+                debug.print("<h4>" + HTMLTools.htmlescape(name) + ":</h4>" + HTMLTools.htmlescape(parameter) + "<br>");
             }
             debug.takeCareOfException(e);
             debug.printDebugInfo();

@@ -88,6 +88,7 @@ import org.ejbca.util.CertTools;
 import org.ejbca.util.CryptoProviderTools;
 import org.ejbca.util.DummyPatternLogger;
 import org.ejbca.util.GUIDGenerator;
+import org.ejbca.util.HTMLTools;
 import org.ejbca.util.IPatternLogger;
 
 /** Base servlet for handling OCSP requests, subclass of both OCSPServlet and OCSPServletStandalone.
@@ -346,7 +347,7 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
                 return;
             }
             if ( contentType!=null ) {
-                final String sError = "Content-type is not application/ocsp-request. It is \'"+contentType+"\'.";
+                final String sError = "Content-type is not application/ocsp-request. It is \'"+HTMLTools.htmlescape(contentType)+"\'.";
                 m_log.debug(sError);
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, sError);
                 return;

@@ -50,6 +50,7 @@ import org.ejbca.cvc.CardVerifiableCertificate;
 import org.ejbca.ui.web.RequestHelper;
 import org.ejbca.util.Base64;
 import org.ejbca.util.CertTools;
+import org.ejbca.util.HTMLTools;
 
 /**
  * Servlet used to distribute certificates and CRLs.<br>
@@ -245,13 +246,13 @@ public class CertDistServlet extends HttpServlet {
 
                     } else {
                         log.debug("No certificate found for '"+dn+"'.");
-                        res.sendError(HttpServletResponse.SC_NOT_FOUND, "No certificate found for requested subject '"+dn+"'.");
+                        res.sendError(HttpServletResponse.SC_NOT_FOUND, "No certificate found for requested subject '"+HTMLTools.htmlescape(dn)+"'.");
                     }
                 }
                 if (command.equalsIgnoreCase(COMMAND_LISTCERT)) {
                     res.setContentType("text/html");
                     PrintWriter pout = new PrintWriter(res.getOutputStream());
-                    printHtmlHeader("Certificates for "+dn, pout);
+                    printHtmlHeader("Certificates for "+HTMLTools.htmlescape(dn), pout);
                     for (int i=0;i<certs.length;i++) {
                         Date notBefore = CertTools.getNotBefore((Certificate)certs[i]);
                         Date notAfter = CertTools.getNotAfter((Certificate)certs[i]);
@@ -269,7 +270,7 @@ public class CertDistServlet extends HttpServlet {
 
                     }
                     if (certs.length == 0) {
-                        pout.println("No certificates exists for '"+dn+"'.");
+                        pout.println("No certificates exists for '"+HTMLTools.htmlescape(dn)+"'.");
                     }
                     printHtmlFooter(pout);
                     pout.close();
@@ -382,15 +383,15 @@ public class CertDistServlet extends HttpServlet {
                 if (revinfo != null) {
                     if (revinfo.revocationReason == RevokedCertInfo.NOT_REVOKED) {
                         pout.println("<h1>NOT REVOKED</h1>");
-                        pout.println("Certificate with issuer '"+dn+"' and serial number '"+serno+"' is NOT revoked.");
+                        pout.println("Certificate with issuer '"+HTMLTools.htmlescape(dn)+"' and serial number '"+HTMLTools.htmlescape(serno)+"' is NOT revoked.");
                     } else {
                         pout.println("<h1>REVOKED</h1>");
-                        pout.println("Certificate with issuer '"+dn+"' and serial number '"+serno+"' is revoked.");
+                        pout.println("Certificate with issuer '"+HTMLTools.htmlescape(dn)+"' and serial number '"+HTMLTools.htmlescape(serno)+"' is revoked.");
                         pout.println("RevocationDate is '"+revinfo.revocationDate+"' and reason '"+revinfo.revocationReason+"'.");
                     }
                 } else {
                     pout.println("<h1>CERTIFICATE DOES NOT EXIST</h1>");
-                    pout.println("Certificate with issuer '"+dn+"' and serial number '"+serno+"' does not exist.");
+                    pout.println("Certificate with issuer '"+HTMLTools.htmlescape(dn)+"' and serial number '"+HTMLTools.htmlescape(serno)+"' does not exist.");
                 }
                 printHtmlFooter(pout);
                 pout.close();
@@ -478,7 +479,7 @@ public class CertDistServlet extends HttpServlet {
                 res.sendError(HttpServletResponse.SC_NOT_FOUND, "Error creating JKS with CA certificate chain.");
 			} catch (EJBException e) {
                 log.debug("CA does not exist: ", e);
-                res.sendError(HttpServletResponse.SC_NOT_FOUND, "CA does not exist: "+e.getMessage());
+                res.sendError(HttpServletResponse.SC_NOT_FOUND, "CA does not exist: "+HTMLTools.htmlescape(e.getMessage()));
 			}
 	}
     

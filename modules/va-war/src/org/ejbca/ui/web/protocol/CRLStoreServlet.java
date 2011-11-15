@@ -28,6 +28,7 @@ import org.ejbca.core.ejb.ca.store.CertificateStoreSessionLocal;
 import org.ejbca.core.protocol.certificatestore.HashID;
 import org.ejbca.core.protocol.crlstore.CRLCacheFactory;
 import org.ejbca.core.protocol.crlstore.ICRLCache;
+import org.ejbca.util.HTMLTools;
 
 /** 
  * Servlet implementing server side of the CRL Store.
@@ -88,7 +89,7 @@ public class CRLStoreServlet extends StoreServletBase {
 
 	private void returnCrl( byte crl[], HttpServletResponse resp, String name, boolean isDelta ) throws IOException {
 		if ( crl==null || crl.length<1 ) {
-			resp.sendError(HttpServletResponse.SC_NO_CONTENT, "No CRL with hash: "+name);
+			resp.sendError(HttpServletResponse.SC_NO_CONTENT, "No CRL with hash: "+HTMLTools.htmlescape(name));
 			return;
 		}
 		resp.setContentType("application/pkix-crl");

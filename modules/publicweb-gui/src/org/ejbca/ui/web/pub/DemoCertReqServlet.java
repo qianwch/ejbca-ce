@@ -40,6 +40,7 @@ import org.ejbca.core.model.ra.UserDataVO;
 import org.ejbca.ui.web.RequestHelper;
 import org.ejbca.util.CertTools;
 import org.ejbca.util.CryptoProviderTools;
+import org.ejbca.util.HTMLTools;
 import org.ejbca.util.StringTools;
 
 /**
@@ -172,7 +173,7 @@ public class DemoCertReqServlet extends HttpServlet {
     // Before doing anything else, check if the user name is unique and ok.
     boolean check = checkUsername(admin,username, userAdminSession);
     if (check == false) {
-        String msg = "User '"+username+"' already exist.";
+        String msg = "User '"+HTMLTools.htmlescape(username)+"' already exist.";
         log.error(msg);
         debug.printMessage(msg);
         debug.printDebugInfo();
@@ -303,7 +304,7 @@ public class DemoCertReqServlet extends HttpServlet {
         while (paramNames.hasMoreElements()) {
             String name=paramNames.nextElement().toString();
             String parameter=request.getParameter(name);
-            debug.print("<h4>"+name+":</h4>"+parameter+"<br>");
+            debug.print("<h4>"+HTMLTools.htmlescape(name)+":</h4>"+HTMLTools.htmlescape(parameter)+"<br>");
         }
         debug.takeCareOfException(e);
         debug.printDebugInfo();
