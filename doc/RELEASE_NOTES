@@ -1,3 +1,16 @@
+EJBCA 4.0.6
+-----------
+This is a maintenance release with a few bug fixes and a new feature. In all 4 issues have been resolved.
+
+* Worthy changes:
+- Improved CMP by supporting KeyUpdate requests in client mode.
+- Fixed importing empty CRL via CLI
+* Notworthy chages:
+- Fixed two minor bugs
+
+Read the full changelog for details.
+For upgrade instructions, please see UPGRADE
+
 EJBCA 4.0.5
 -----------
 This is a maintenance release with a few improvements and bug fixes. In all 7 issues have been resolved.
