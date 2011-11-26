@@ -46,7 +46,7 @@
             <menu name="Other documentation">
                 <item name="FAQ"		  href="/faq.html"/>
                 <item name="Wiki"   href="http://wiki.ejbca.org/"/>
-                <item name="Howto"                href="/howto.html"/>
+                <item name="Guides"                href="/guides.html"/>
                 <item name="Security"		  href="/security.html"/>
                 <item name="Changelog"            href="http://jira.primekey.se/browse/ECA?report=com.atlassian.jira.plugin.system.project:changelog-panel"/>
                 <item name="References"           href="/references.html"/>
