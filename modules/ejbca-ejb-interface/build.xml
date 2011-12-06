@@ -21,6 +21,7 @@
 
 	<path id="va-compile.classpath">
 		<pathelement location="${mod.va-entity.lib}" />
+		<path refid="lib.ejbca-util.classpath"/>
 		<path refid="lib.commons-lang.classpath"/>
 		<path refid="lib.jee.classpath"/>
 		<path refid="lib.log4j.classpath"/>
@@ -49,11 +50,8 @@
         <javac destdir="${build-va.dir}" debug="on" includeantruntime="no"
         	encoding="iso8859-1" target="${java.target.version}" classpathref="va-compile.classpath">
         	<src path="${src.dir}"/>
-    		<src path="${ejbca.home}/src/java"/>
 			<include name="org/ejbca/core/ejb/**/CertificateStoreSession*.java"/>
 			<include name="org/cesecore/core/ejb/**/CrlSession*.java"/>
-        	<exclude name="org/ejbca/core/ejb/ca/store/CertificateStore*SessionBean.java" />
-			<exclude name="org/cesecore/core/ejb/ca/crl/Crl*SessionBean.java" />
         	<include name="org/ejbca/core/ejb/JndiHelper.java" />
     	</javac>
     </target>

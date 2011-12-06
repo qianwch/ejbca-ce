@@ -13,7 +13,6 @@
 	<import file="${build-properties.basedir}/../propertyDefaults.xml"/>
 	
     <property name="ejbca.dist.path" location="${ejbca.home}/dist" />
-    <property name="va.dist.path" location="${ejbca.home}/va-dist" />
     <!-- Define the different modules -->
     <property name="mod.path" location="${ejbca.home}/modules" />
     <property name="mod.common.path" location="${mod.path}/common" />

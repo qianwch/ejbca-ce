@@ -414,6 +414,7 @@
                 <include name="va-common.jar" />
                 <include name="log4jconfig.jar" />
         	</zipfileset>
+        	<zipfileset prefix="lib" dir="${dist.dir}" includes="ejbca-util.jar"/>
 	</ear>
     </target>
 	
