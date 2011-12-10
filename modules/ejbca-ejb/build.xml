@@ -339,7 +339,7 @@
     	</copy>
         <jar destfile="${mod.ejbca-ejb.lib}">
         	<fileset dir="${build.dir}"/>
-            <fileset dir="${ejbca.home}" includes="conf/**/*.properties"/>
+            <fileset dir="${ejbca.home}" includes="conf/**/*.properties" excludes="conf/plugins/*"/>
             <fileset dir="${ejbca.home}/src/upgrade"/>
             <fileset dir="${internalresources.base.dir}" includes="intresources/*.properties"/>
         	<!--

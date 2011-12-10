@@ -25,6 +25,9 @@
 	<import file="bin/${appserver.type}.xml" optional="true"/><!-- We might just want to build the clientToolBox with an appserver. -->
 	<import file="./test.xmli" />
 	<import file="./docs.xmli" />
+
+	<!-- this import is only used by the plugin scheme-->
+    <import file="${ejbca.home}/modules/build-properties.xml"/>
 	
     <!-- =================================================================== -->
     <!-- Clean ALL                                                           -->
@@ -170,23 +173,138 @@
 		</sequential>
 	</macrodef>
 
-	<target name="plugin-bootstrap-build" if="plugin.ejbca.present">
-    	<echo message="Plugin build found"/>
-		<path id="ejbca.total.plugin.classpath">
-		   <fileset dir="${lib}">
-			   <include name="*.jar"/>
-		     </fileset>
-			 <fileset dir="${ejbca.home}/modules/dist">
-			   <include name="*.jar"/>
-			 </fileset>
-			 <fileset dir="${dist.dir}">
-			   <include name="*.jar"/>
-			 </fileset>
-		  </path>
-		<ant antfile="${plugin.ejbca.ant.file}" inheritAll="false" inheritrefs="false">
-			<property name="ejbca.total.plugin.classpath" refid="ejbca.total.plugin.classpath"/>
-		</ant>
-	</target>
+    <target name="build-one-plugin">
+        <echo message="Processing plugin file: '${ejbca.plugin.property.file}'"/>
+        <property file="${ejbca.plugin.property.file}"/>
+        <fail message="File '${ejbca.plugin.property.file}' lacks a property setting for 'plugin.ejbca.ant.file'!">
+            <condition>
+                <not>
+                    <isset property="plugin.ejbca.ant.file"/>
+                </not>
+            </condition>
+        </fail>
+        <path id="ejbca.plugin.classpath">
+            <fileset dir="${lib}">
+                <include name="*.jar"/>
+            </fileset>
+            <fileset dir="${ejbca.home}/modules/dist">
+                <include name="*.jar"/>
+            </fileset>
+            <fileset dir="${dist.dir}">
+                <include name="*.jar"/>
+            </fileset>
+            <path refid="lib.ejbca-common-web.classpath"/>
+            <path refid="lib.log4j.classpath"/>
+            <path refid="lib.servlet.classpath"/>
+            <path refid="lib.commons-lang.classpath"/>
+            <path refid="lib.commons-fileupload.classpath"/>
+            <path refid="lib.jee.classpath"/>
+            <path refid="lib.bouncycastle.classpath"/>
+            <path refid="lib.ldap.classpath"/>
+        </path>
+    	<delete dir="${ejbca.plugin.tmp.path}"/>
+    	<mkdir dir="${ejbca.plugin.tmp.path}"/>
+	    <script language="javascript"> <![CDATA[
+	        var antcall = project.createTask ("ant");
+
+	        // The minimum configuration: a path to an "ant" build file
+	        antcall.setAntfile (project.getProperty ("plugin.ejbca.ant.file"));
+
+	        // Check for possible non-default "ant" target
+	        var build_target = project.getProperty ("plugin.ejbca.ant.target");
+	        if (build_target != null) {
+	            antcall.setTarget (build_target);
+	        }
+
+	        // Check for possible custom properties
+			var properties = project.getProperties ();
+		    var keys = properties.keys ();
+		    while (keys.hasMoreElements ()) {
+	        var key = keys.nextElement ();
+		        if (key.startsWith ("plugin.ejbca.ant.custom.")) {
+		            var custom_prop = antcall.createProperty ();
+		            custom_prop.setName (key);
+		            custom_prop.setValue (properties.get (key));
+		        }
+		    }
+	    	
+            // The class-path to it all
+		    var myref = new org.apache.tools.ant.taskdefs.Ant.Reference ();
+		    myref.setRefId ("ejbca.plugin.classpath");
+	        var prop = antcall.createProperty ();
+	        prop.setName ("ejbca.classpath");
+	        prop.setRefid (myref);
+
+           // The full path to "application.xml"
+	        prop = antcall.createProperty ();
+	        prop.setName ("ejbca.app.xml");
+	        prop.setValue (project.getProperty ("eardd.src") + "/META-INF/application.xml");
+
+			// The database type in case the plugin wants to extend etc.
+	    	prop = antcall.createProperty ();
+		    prop.setName ("ejbca.dbtype");
+		    prop.setValue (project.getProperty ("database.name"));
+	    	
+			// The datasource for using with persistence.xml (hibernate)
+	    	prop = antcall.createProperty ();
+		    prop.setName ("ejbca.datasource");
+		    prop.setValue (project.getProperty ("datasource.jndi-name-prefix") + project.getProperty ("datasource.jndi-name"));
+
+			// The hibernate dialect in case the plugin wants to use hibernate.
+			prop = antcall.createProperty ();
+		    prop.setName ("ejbca.hibernate");
+		    prop.setValue (project.getProperty ("hibernate.dialect"));
+
+			// The path to generate code to
+			prop = antcall.createProperty ();
+		    prop.setName ("ejbca.gen.path");
+		    prop.setValue (project.getProperty ("ejbca.plugin.gen.path"));
+
+	    	// A path to use as you like
+			prop = antcall.createProperty ();
+		    prop.setName ("ejbca.tmp.path");
+		    prop.setValue (project.getProperty ("ejbca.plugin.tmp.path"));
+
+			// The path to the EJBCA install directory
+			prop = antcall.createProperty ();
+		    prop.setName ("ejbca.home");
+    		prop.setValue (project.getProperty ("ejbca.home"));
+
+
+	    	// Remove all properties the plugin doesn't need...
+			antcall.setInheritAll (false);
+	        antcall.setInheritRefs (false);
+		    antcall.perform ();
+	]]> </script>
+    </target>
+
+    <target name="plugin-bootstrap-build" if="ejbca.plugin.collection">
+	    <!-- Called once immediately before "ejbca.ear" creation if there are any plugins to build -->
+		<echo message="Plugins found!"/>
+    	<mkdir dir="${ejbca.plugin.gen.path}/lib"/>
+        <script language="javascript"> <![CDATA[
+		    importClass(java.io.File);
+		    var path = project.getProperty ("ejbca.plugin.collection");
+
+        	// Build one plugin at a time
+        	while (path != null) {
+		        var i = path.indexOf (File.pathSeparatorChar);
+		        var plugin_file = path;
+		        if (i > 0) {
+		            plugin_file = path.substring (0, i);
+		            path = path.substring (i + 1);
+		        } else {
+		            path = null;
+		        }
+		        var antcall = project.createTask ("antcall");
+		        antcall.setTarget ("build-one-plugin");
+		        var prop = antcall.createParam ();
+		        prop.setName ("ejbca.plugin.property.file");
+		        prop.setValue (plugin_file);
+		        antcall.perform ();
+		    }
+    ]]> </script>
+    </target>
 
 	<target name="va_replacings_in_application.xml">
 		<war-replacement-in-module
@@ -221,7 +339,7 @@
 		<property name="eardd.src" value="${tmp}/ear" />
 		<!-- Make sure we have an application.xml since we want to specify base URLs. Configure enabled modules. -->
 		<mkdir dir="${eardd.src}/META-INF"/>
-		<copy todir="${eardd.src}/META-INF" file="src/deploy/ear/META-INF/application.xml" flatten="true" failonerror="true"/>
+		<copy todir="${eardd.src}/META-INF" file="src/deploy/ear/META-INF/application.xml" overwrite="true" flatten="true" failonerror="true"/>
 		<war-replacement-in-module
 			replacement-tag="!--@doc.war@-->"
 			replacement-file="${eardd.src}/META-INF/application.xml"
@@ -278,16 +396,17 @@
 		</condition>
 		<!-- Do we need special WebSphere handling? -->
     	<condition property="websphere-specials" value="true"><equals arg1="websphere" arg2="${appserver.type}"/></condition>
-		<!-- Plugin build starts here... -->
-		<antcall target="plugin-bootstrap-build"/>
+		<!-- Remove possible "leftovers" from previous plugin runs! -->
+	    <delete dir="${ejbca.plugin.gen.path}"/>
+        <!-- Plugin build starts here... -->
+	    <antcall target="plugin-bootstrap-build"/>
 		<!-- Build the EAR -->
         <ear destfile="${caear}" appxml="${eardd.src}/META-INF/application.xml">
     		<!-- Specify that we will use a specific WS implementation -->
             <zipfileset prefix="META-INF/services" dir="${ejbca.home}/src/deploy/ear/META-INF/services/" includes="javax.xml.soap.MetaFactory"/>
             <zipfileset prefix="META-INF" dir="${ejbca.home}/src/deploy/ear/META-INF" includes="weblogic-application.xml"/>
-            <zipfileset prefix="lib" dir="${plugin.ejbca.lib.dir}" erroronmissingdir="false">
-                <include name="*.jar" if="plugin.ejbca.present"/>
-            </zipfileset>
+        	<!-- The place where to find plugins -->
+		    <zipfileset dir="${ejbca.plugin.gen.path}" erroronmissingdir="false"/>
             <zipfileset prefix="lib" dir="${lib}">
             	<!-- Since WepSphere 7's "special" tools can't handle the signature of these objects, we will add them later. -->
                 <include name="bcmail-jdk${java.ver}-145.jar" unless="websphere-specials"/>
