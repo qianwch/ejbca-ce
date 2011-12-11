@@ -1,13 +1,13 @@
 <project name="Parameter test" default="bad" basedir=".">
 
-	<!-- This ant build file only tests that the plugin interface is working -->
+	<!-- This ant build file only tests that the plugin builder is working -->
 
 	<target name="bad">
 		<fail message="Seems that 'target' isn't working!."/>
 	</target>
 
 	<target name="test-me">
-		<echo message="Plugin Interface Tester Executing!"/> 
+		<echo message="Plugin Builder Tester Executing!"/> 
         <fail message="Plugin build property error!">
             <condition>
                 <not>
