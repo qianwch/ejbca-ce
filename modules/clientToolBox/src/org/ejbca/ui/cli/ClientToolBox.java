@@ -59,6 +59,7 @@ public abstract class ClientToolBox {
         		new EjbcaWsRaCli(), 
         		new CvcWsRaCli(), 
         		new CMPTest(),
+        		new CMPKeyUpdateStressTest(),
         		new CMPNestedMessageTest(),
         		new CMPNestedMessageStressTest(),
         		new SCEPTest(),
