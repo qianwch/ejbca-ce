@@ -98,8 +98,8 @@ import com.novosec.pkix.asn1.crmf.ProofOfPossession;
 
 /**
  * Used to stress test the CMP interface.
- * @author primelars
- * @version $Id: CMPTest.java 11982 2011-05-16 13:36:33Z primelars $
+ * @author aveen
+ * @version $Id$
  *
  */
 class CMPKeyUpdateStressTest extends ClientToolBox {
@@ -114,10 +114,8 @@ class CMPKeyUpdateStressTest extends ClientToolBox {
         final private X509Certificate cacert;
         final private CertificateFactory certificateFactory;
         final private Provider bcProvider = new BouncyCastleProvider();
-        final private String keyId;
         final private String hostName;
         final private int port;
-        final private boolean isHttp;
         final String urlPath;
         final String resultCertFilePrefix;
         boolean isSign;
@@ -126,11 +124,9 @@ class CMPKeyUpdateStressTest extends ClientToolBox {
 
         StressTest( final String _hostName,
                     final int _port,
-                    final boolean _isHttp,
                     final InputStream certInputStream,
                     final int numberOfThreads,
                     final int waitTime,
-                    final String _keyId,
                     final String _urlPath,
                     final String _resultCertFilePrefix,
                     final PrivateKey _oldKey,
@@ -139,9 +135,7 @@ class CMPKeyUpdateStressTest extends ClientToolBox {
             this.hostName = _hostName;
             this.certificateFactory = CertificateFactory.getInstance("X.509", this.bcProvider);
             this.cacert = (X509Certificate)this.certificateFactory.generateCertificate(certInputStream);
-            this.keyId = _keyId;
             this.port = _port;
-            this.isHttp = _isHttp;
             this.urlPath = _urlPath;
             this.resultCertFilePrefix = _resultCertFilePrefix;
 
@@ -213,6 +207,7 @@ class CMPKeyUpdateStressTest extends ClientToolBox {
                                new GeneralName(new X509Name(this.cacert.getSubjectDN().getName())) );
             myPKIHeader.setMessageTime(new DERGeneralizedTime(new Date()));
             myPKIHeader.setSenderNonce(new DEROctetString(sessionData.getNonce()));
+            myPKIHeader.setSenderKID(new DEROctetString(sessionData.getNonce()));
             myPKIHeader.setTransactionID(new DEROctetString(sessionData.getTransId()));
 
             final PKIBody myPKIBody = new PKIBody(myCertReqMessages, 7); // key update request
@@ -237,7 +232,7 @@ class CMPKeyUpdateStressTest extends ClientToolBox {
             message.setProtection(new DERBitString(eeSignature));
             return message;
         }
-                
+        
         private byte[] sendCmpHttp(final byte[] message) throws Exception {
             final CMPSendHTTP send = CMPSendHTTP.doIt(message, StressTest.this.hostName, StressTest.this.port, StressTest.this.urlPath, false);
             if ( send.responseCode!=HttpURLConnection.HTTP_OK ) {
@@ -531,15 +526,7 @@ class CMPKeyUpdateStressTest extends ClientToolBox {
             public String getJobTimeDescription() {
                 return "Get certificate";
             }
-            /*
-            private void addExtraCert(PKIMessage msg, Certificate cert) throws CertificateEncodingException, IOException{
-                ByteArrayInputStream    bIn = new ByteArrayInputStream(cert.getEncoded());
-                ASN1InputStream         dIn = new ASN1InputStream(bIn);
-                ASN1Sequence extraCertSeq = (ASN1Sequence)dIn.readObject();
-                X509CertificateStructure extraCert = new X509CertificateStructure(ASN1Sequence.getInstance(extraCertSeq));
-                msg.addExtraCert(extraCert);
-            }
-            */
+
         }        
         
         class SessionData {
@@ -553,36 +540,7 @@ class CMPKeyUpdateStressTest extends ClientToolBox {
             SessionData() {
                 super();
             }
-            /*
-            Socket getSocket() throws UnknownHostException, IOException {
-                if ( StressTest.this.isHttp ) {
-                    return null;
-                }
-                if ( this.socket==null || this.socket.isClosed() || !this.socket.isBound() || !this.socket.isConnected() || this.socket.isInputShutdown() || this.socket.isOutputShutdown() ) {
-                    StressTest.this.performanceTest.getLog().info("New socket created for thread with '"+this.transid+"'.");
-                    this.socket = new Socket(StressTest.this.hostName, StressTest.this.port);
-                    this.socket.setKeepAlive(true);
-                }
-                return this.socket;
-            }
-            */
-            /*
-            private String getRandomAllDigitString( int length ) {
-                final String s = Integer.toString( StressTest.this.performanceTest.getRandom().nextInt() );
-                return s.substring(s.length()-length);
-            }
-            private String getFnrLra() {
-                return getRandomAllDigitString(6)+getRandomAllDigitString(5)+'-'+getRandomAllDigitString(5);
-            }
-            private int getRandomAndRepeated() {
-                // Initialize with some new value every time the test is started
-                // Return the same value once in a while so we have multiple requests for the same username
-                if ( this.lastNextInt==0 || howOftenToGenerateSameUsername==0 || StressTest.this.performanceTest.getRandom().nextInt()%howOftenToGenerateSameUsername!=0 ) {
-                    this.lastNextInt = StressTest.this.performanceTest.getRandom().nextInt();
-                }
-                return this.lastNextInt;
-            }
-            */
+
             void newSession() {
                 //this.userDN = "CN=CMP Test User Nr "+getRandomAndRepeated()+",serialNumber="+getFnrLra();
                 StressTest.this.performanceTest.getRandom().nextBytes(this.nonce);
@@ -633,7 +591,7 @@ class CMPKeyUpdateStressTest extends ClientToolBox {
         final String urlPath;
         final String resultFilePrefix;
         if ( args.length < 6 ) {
-            System.out.println(args[0]+" <host name> <CA certificate file name> <keystore (p12)> <keystore password> <friendlyname in keystore> [<number of threads>] [<wait time (ms) between each thread is started>] [<KeyId to be sent to server>] [<port>] [<URL path of servlet. use 'null' to get EJBCA (not proxy) default>] [<certificate file prefix. set this if you want all received certificates stored on files>]");
+            System.out.println(args[0]+" <host name> <CA certificate file name> <keystore (p12)> <keystore password> <friendlyname in keystore> [<number of threads>] [<wait time (ms) between each thread is started>] [<port>] [<URL path of servlet. use 'null' to get EJBCA (not proxy) default>] [<certificate file prefix. set this if you want all received certificates stored on files>]");
             System.out.println("EJBCA build configutation requirements: cmp.operationmode=normal, cmp.allowraverifypopo=true, cmp.allowautomatickeyupdate=true, cmp.allowupdatewithsamekey=true");
 //            System.out.println("EJBCA build configuration optional: cmp.ra.certificateprofile=KeyId cmp.ra.endentityprofile=KeyId (used when the KeyId argument should be used as profile name).");
             System.out.println("Ejbca expects the following: There exists an end entity with a generated certificate. The end entity's certificate and its private key are stored in the keystore used " +
@@ -649,11 +607,10 @@ class CMPKeyUpdateStressTest extends ClientToolBox {
         certNameInKeystore = args[5];
         numberOfThreads = args.length>6 ? Integer.parseInt(args[6].trim()):1;
         waitTime = args.length>7 ? Integer.parseInt(args[7].trim()):0;
-        keyId = args.length>8 ? args[8].trim():"EMPTY";
-        port = args.length>9 ? Integer.parseInt(args[9].trim()):8080;
+        port = args.length>8 ? Integer.parseInt(args[8].trim()):8080;
 //        isHttp = true;
-        urlPath = args.length>10 && args[10].toLowerCase().indexOf("null")<0 ? args[10].trim():null;
-        resultFilePrefix = args.length>11 ? args[11].trim() : null;
+        urlPath = args.length>9 && args[9].toLowerCase().indexOf("null")<0 ? args[9].trim():null;
+        resultFilePrefix = args.length>10 ? args[10].trim() : null;
 
         CryptoProviderTools.installBCProviderIfNotAvailable();
         
@@ -706,7 +663,7 @@ class CMPKeyUpdateStressTest extends ClientToolBox {
                 return;
             }
 //            Security.addProvider(new BouncyCastleProvider());
-            new StressTest(hostName, port, true, new FileInputStream(certFile), numberOfThreads, waitTime, keyId, urlPath, resultFilePrefix, oldCertKey, extracert);
+            new StressTest(hostName, port, new FileInputStream(certFile), numberOfThreads, waitTime, urlPath, resultFilePrefix, oldCertKey, extracert);
         } catch (Exception e) {
             e.printStackTrace();
         }
