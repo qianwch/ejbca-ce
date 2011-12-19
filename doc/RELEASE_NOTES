@@ -1,3 +1,13 @@
+EJBCA 4.0.7
+-----------
+This is a maintenance release with a few bug fixes and a new feature. In all X issues have been resolved.
+
+* Noteworthy changes:
+- The VA health-check URL is now what it is claimed to be in the property file. You will need to reconfigure devices monitoring this URL.
+
+Read the full Changelog for details.
+For upgrade instructions, please see UPGRADE
+
 EJBCA 4.0.6
 -----------
 This is a maintenance release with a few bug fixes and a new feature. In all 4 issues have been resolved.
