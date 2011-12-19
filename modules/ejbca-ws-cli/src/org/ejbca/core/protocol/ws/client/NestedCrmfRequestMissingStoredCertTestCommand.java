@@ -276,7 +276,7 @@ public class NestedCrmfRequestMissingStoredCertTestCommand extends CMPNestedMess
 	protected void usage() {
 		getPrintStream().println("Command used to send a cmp certificate request inside a NestedMessageContent signed by an untrusted RA.");
 		getPrintStream().println("Usage : missingstoredcert <hostname> <CA certificate file name> <CMS keystore (p12)> <keystore password> <CMS certificate in keystore> [<port>] [<URL path of servlet. use 'null' to get EJBCA (not proxy) default>]");
-		getPrintStream().println("EJBCA build configutation requirements: cmp.operationmode=ra, cmp.authenticationmodule=EndEntityCertificate, cmp.authenticationparameters=AdminCA1, cmp.racertificatepath=/opt/racerts");
+		getPrintStream().println("EJBCA build configuration requirements: cmp.operationmode=ra, cmp.authenticationmodule=EndEntityCertificate, cmp.authenticationparameters=AdminCA1, cmp.racertificatepath=/opt/racerts");
 
 	}
 	

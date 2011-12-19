@@ -308,7 +308,7 @@ public class NestedCrmfRequestTestCommand extends CMPNestedMessageTestBaseComman
 	protected void usage() {
 		getPrintStream().println("Command used to send a cmp certificate request inside a NestedMessageContent and get back a certificate.");
 		getPrintStream().println("Usage : crmfrequest <hostname> <CA certificate file name> <CMS keystore (p12)> <keystore password> <CMS certificate in keystore> [<path to a directory where the created certificates will be stored>] [<custom certificate serialnumber>] [<port>] [<URL path of servlet. use 'null' to get EJBCA (not proxy) default>]");
-		getPrintStream().println("EJBCA build configutation requirements: cmp.operationmode=ra, cmp.allowraverifypopo=false, cmp.authenticationmodule=EndEntityCertificate, cmp.authenticationparameters=AdminCA1, cmp.racertificatepath=/opt/racerts");
+		getPrintStream().println("EJBCA build configuration requirements: cmp.operationmode=ra, cmp.allowraverifypopo=false, cmp.authenticationmodule=EndEntityCertificate, cmp.authenticationparameters=AdminCA1, cmp.racertificatepath=/opt/racerts");
 
 	}
 	
