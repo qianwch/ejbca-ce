@@ -8,7 +8,7 @@
 <body>
   <section name="News and Info">
   <note>
-  <p><strong>2011-11-18: EJBCA 4.0.6 and cert-cvc 1.2.13 with EAC ePassport support is now out!</strong>
+  <p><strong>2011-12-23: EJBCA 4.0.7 is now out!</strong>
   <br/>Visit the <a href="download.html">download</a> section. There is also a LiveCD!
   </p>
   </note>
@@ -18,10 +18,11 @@
   <br/>
   The library is freely usable under the LGPL 2.1 (or later) license for all parties interesting 
   in handling CVC certificates, in particular for EU EAC ePassports. 
-  The cert-cvc library was donated to the open source by the Swedish National Police Board. 
+  The cert-cvc library was donated to the open source by the Swedish National Police Board.
+  <b>The current version is cert-cvc 1.2.13, with full EAC ePassport support.</b>
   </note>
   <note>
-  Did you know that EJBCA includes a stand-alone OCSP responder? The responder is scalable with high-performance and can be used
+  Did you know that EJBCA includes a stand-alone Validation Authority, including an OCSP responder? The responder is scalable with high-performance and can be used
   also with any other CA than EJBCA. 
   </note>
   <note>
