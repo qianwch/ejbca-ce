@@ -3,7 +3,13 @@ EJBCA 4.0.7
 This is a maintenance release with a few bug fixes and a new feature. In all X issues have been resolved.
 
 * Noteworthy changes:
+- Fixed a bug reading large OCSP requests over HTTP 1.1 using chunked encoding.
+- Fixed a few minor XSS issues.
+- Fixed an issue where building the Validation Authority (VA) failed on specific platforms.
 - The VA health-check URL is now what it is claimed to be in the property file. You will need to reconfigure devices monitoring this URL.
+- Documented EJBCA integration with Djigzo
+- Added a plug-in build system.
+- Improved support for Chinese in the admin GUI.
 
 Read the full Changelog for details.
 For upgrade instructions, please see UPGRADE
