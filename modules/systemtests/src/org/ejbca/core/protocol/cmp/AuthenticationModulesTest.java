@@ -390,10 +390,10 @@ public class AuthenticationModulesTest extends CmpTestCase {
 		msg.getHeader().setSenderKID(new DEROctetString(nonce));
 		
 		String adminName = "cmpTestAdmin";
-		createUser("cmpTestAdmin", "CN=cmpTestAdmin,C=SE", "foo123");
+		createUser(adminName, "CN=cmpTestAdmin,C=SE", "foo123");
 		KeyPair admkeys = KeyTools.genKeys("1024", "RSA");
-		Certificate admCert = signSession.createCertificate(admin, "cmpTestAdmin", "foo123", admkeys.getPublic());
-		Admin adm = new Admin(admCert, "cmpTestAdmin", "cmpTestAdmin@primekey.se");
+		Certificate admCert = signSession.createCertificate(admin, adminName, "foo123", admkeys.getPublic());
+		Admin adm = new Admin(admCert, adminName, adminName + "@primekey.se");
 		setupAccessRights(adm);
 		addExtraCert(msg, admCert);
 		signPKIMessage(msg, admkeys);
@@ -414,7 +414,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
 		PKIBody body = respObject.getBody();
 		assertEquals(23, body.getTagNo());
 		String errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
-		String expectedErrMsg = "CA '" + "C=SE,CN=cmprevuser1".hashCode() + "' (DN: C=SE,CN=cmprevuser1) is unknown";
+		String expectedErrMsg = "CA with DN 'C=SE,CN=cmprevuser1' is unknown";
 		assertEquals(expectedErrMsg, errMsg);
 	}
 

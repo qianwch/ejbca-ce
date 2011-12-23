@@ -30,15 +30,14 @@ import org.cesecore.core.ejb.ca.store.CertificateProfileSessionLocal;
 import org.cesecore.core.ejb.ra.raadmin.EndEntityProfileSessionLocal;
 import org.ejbca.config.CmpConfiguration;
 import org.ejbca.core.ejb.JndiHelper;
+import org.ejbca.core.ejb.authorization.AuthorizationSessionLocal;
 import org.ejbca.core.ejb.ca.caadmin.CAAdminSessionLocal;
 import org.ejbca.core.ejb.ca.caadmin.CaSessionLocal;
 import org.ejbca.core.ejb.ca.sign.SignSessionLocal;
 import org.ejbca.core.ejb.ca.store.CertificateStoreSessionLocal;
 import org.ejbca.core.ejb.ra.CertificateRequestSessionLocal;
 import org.ejbca.core.ejb.ra.UserAdminSessionLocal;
-import org.ejbca.core.ejb.authorization.AuthorizationSessionLocal;
 import org.ejbca.core.model.InternalResources;
-import org.ejbca.core.model.ca.caadmin.CA;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.protocol.FailInfo;
 import org.ejbca.core.protocol.IResponseMessage;
@@ -170,13 +169,7 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
 				break;
 			case 11:
 				// Revocation request (rr, Revocation Request)
-				CA ca = null;
-				try {
-					ca = caSession.getCA(admin, req.getHeader().getRecipient().getName().toString().hashCode());
-				} catch (Exception e) {
-					log.error(e.getLocalizedMessage());
-				}
-				handler = new RevocationMessageHandler(admin, ca, certificateStoreSession, userAdminSession, caAdminSession, endEntityProfileSession, certificateProfileSession, authorizationSession);
+				handler = new RevocationMessageHandler(admin, caSession, certificateStoreSession, userAdminSession, caAdminSession, endEntityProfileSession, certificateProfileSession, authorizationSession);
 				cmpMessage = new GeneralCmpMessage(req);
 				break;
 			case 20:

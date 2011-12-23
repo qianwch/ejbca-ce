@@ -18,7 +18,6 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 
-import javax.ejb.EJBException;
 import javax.ejb.FinderException;
 
 import org.apache.commons.lang.StringUtils;
@@ -36,6 +35,7 @@ import org.cesecore.core.ejb.ra.raadmin.EndEntityProfileSession;
 import org.ejbca.config.CmpConfiguration;
 import org.ejbca.core.ejb.authorization.AuthorizationSession;
 import org.ejbca.core.ejb.ca.caadmin.CAAdminSession;
+import org.ejbca.core.ejb.ca.caadmin.CaSession;
 import org.ejbca.core.ejb.ca.store.CertificateStoreSession;
 import org.ejbca.core.ejb.ra.UserAdminSession;
 import org.ejbca.core.model.InternalResources;
@@ -45,7 +45,6 @@ import org.ejbca.core.model.approval.WaitingForApprovalException;
 import org.ejbca.core.model.authorization.AuthorizationDeniedException;
 import org.ejbca.core.model.ca.SignRequestException;
 import org.ejbca.core.model.ca.caadmin.CA;
-import org.ejbca.core.model.ca.caadmin.CAInfo;
 import org.ejbca.core.model.ca.caadmin.IllegalKeyStoreException;
 import org.ejbca.core.model.ca.catoken.CATokenOfflineException;
 import org.ejbca.core.model.ca.crl.RevokedCertInfo;
@@ -80,17 +79,18 @@ public class RevocationMessageHandler extends BaseCmpMessageHandler implements I
 	
 	/** Parameter used to determine the type of protection for the response message */
 	private String responseProtection = null;
-	private CA ca;
 	
 	private UserAdminSession userAdminSession;
 	private CertificateStoreSession certificateStoreSession;
 	private AuthorizationSession authorizationSession;
+	private CaSession caSession;
 	
-	public RevocationMessageHandler(final Admin admin, final CA ca, final CertificateStoreSession certificateStoreSession, final UserAdminSession userAdminSession, final CAAdminSession caAdminSession, final EndEntityProfileSession endEntityProfileSession, final CertificateProfileSession certificateProfileSession, final AuthorizationSession authSession) {
+	public RevocationMessageHandler(final Admin admin, final CaSession casession, final CertificateStoreSession certificateStoreSession, final UserAdminSession userAdminSession, final CAAdminSession caAdminSession, final EndEntityProfileSession endEntityProfileSession, final CertificateProfileSession certificateProfileSession, final AuthorizationSession authSession) {
 		super(admin, caAdminSession, endEntityProfileSession, certificateProfileSession);
 		responseProtection = CmpConfiguration.getResponseProtection();
-		this.ca = ca;
+		
 		// Get EJB beans, we can not use local beans here because the MBean used for the TCP listener does not work with that
+		this.caSession = casession;
 		this.userAdminSession = userAdminSession;
 		this.certificateStoreSession = certificateStoreSession;
 		this.authorizationSession = authSession;
@@ -99,9 +99,13 @@ public class RevocationMessageHandler extends BaseCmpMessageHandler implements I
 		LOG.trace(">handleMessage");
 		IResponseMessage resp = null;
 		
-		if(ca == null) {
-			String errmsg = "CA '" + msg.getRecipient().getName().toString().hashCode() + "' (DN: " + msg.getRecipient().getName().toString() + ") is unknown";
-	 	 	return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.INCORRECT_DATA, errmsg);
+		CA ca = null;
+		try {
+			ca = caSession.getCA(admin, msg.getHeader().getRecipient().getName().toString().hashCode());
+		} catch (Exception e) {
+			LOG.error(e.getLocalizedMessage());
+			String errMsg = "CA with DN '" + msg.getHeader().getRecipient().getName().toString() + "' is unknown";
+			return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_REQUEST, errMsg);
 		}
 		
 		// if version == 1 it is cmp1999 and we should not return a message back
@@ -116,22 +120,8 @@ public class RevocationMessageHandler extends BaseCmpMessageHandler implements I
 			FailInfo failInfo = FailInfo.BAD_MESSAGE_CHECK;
 			String failText = null;
 			
-			CAInfo caInfo;
-			try {
-				final int eeProfileId = getUsedEndEntityProfileId(keyId);
-				final int caId = getUsedCaId(keyId, eeProfileId);
-				caInfo = caAdminSession.getCAInfo(admin, caId);
-			} catch (NotFoundException e) {
-				LOG.info(INTRES.getLocalizedMessage(CMP_ERRORGENERAL, e.getMessage()), e);
-				return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.INCORRECT_DATA, e.getMessage());
-			} catch (EJBException e) {
-				final String errMsg = INTRES.getLocalizedMessage(CMP_ERRORADDUSER);
-				LOG.error(errMsg, e);                   
-				return null;    // Fatal error
-			}
-			
 			//Verify the authenticity of the message
-			final VerifyPKIMessage messageVerifyer = new VerifyPKIMessage(caInfo, admin, caAdminSession, userAdminSession, certificateStoreSession, authorizationSession, endEntityProfileSession);
+			final VerifyPKIMessage messageVerifyer = new VerifyPKIMessage(ca.getCAInfo(), admin, caAdminSession, userAdminSession, certificateStoreSession, authorizationSession, endEntityProfileSession);
 			ICMPAuthenticationModule authenticationModule = null;
 			if(messageVerifyer.verify(msg.getMessage(), null)) {
 				authenticationModule = messageVerifyer.getUsedAuthenticationModule();
