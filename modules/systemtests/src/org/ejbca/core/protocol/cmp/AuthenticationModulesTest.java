@@ -618,6 +618,9 @@ public class AuthenticationModulesTest extends CmpTestCase {
 		ConfigurationHolder.updateConfiguration(CmpConfiguration.CONFIG_OPERATIONMODE, "normal");
 		assertFalse("The CMP Authentication module was not configured correctly.", CmpConfiguration.getRAOperationMode());
 		
+        confSession.updateProperty(CmpConfiguration.CONFIG_RESPONSEPROTECTION, "signature");
+        assertTrue("The response protection was not configured correctly.", confSession.verifyProperty(CmpConfiguration.CONFIG_RESPONSEPROTECTION, "signature"));
+
 		String clientUsername = "clientTestUser";
 		String clientDN = "CN=" + clientUsername + ",C=SE";
 		String clientPassword = "foo123client";
