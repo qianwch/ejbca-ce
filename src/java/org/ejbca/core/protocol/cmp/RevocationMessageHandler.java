@@ -39,11 +39,15 @@ import org.ejbca.core.ejb.ca.caadmin.CAAdminSession;
 import org.ejbca.core.ejb.ca.store.CertificateStoreSession;
 import org.ejbca.core.ejb.ra.UserAdminSession;
 import org.ejbca.core.model.InternalResources;
+import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.approval.ApprovalException;
 import org.ejbca.core.model.approval.WaitingForApprovalException;
 import org.ejbca.core.model.authorization.AuthorizationDeniedException;
 import org.ejbca.core.model.ca.SignRequestException;
+import org.ejbca.core.model.ca.caadmin.CA;
 import org.ejbca.core.model.ca.caadmin.CAInfo;
+import org.ejbca.core.model.ca.caadmin.IllegalKeyStoreException;
+import org.ejbca.core.model.ca.catoken.CATokenOfflineException;
 import org.ejbca.core.model.ca.crl.RevokedCertInfo;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.model.ra.AlreadyRevokedException;
@@ -76,14 +80,16 @@ public class RevocationMessageHandler extends BaseCmpMessageHandler implements I
 	
 	/** Parameter used to determine the type of protection for the response message */
 	private String responseProtection = null;
+	private CA ca;
 	
 	private UserAdminSession userAdminSession;
 	private CertificateStoreSession certificateStoreSession;
 	private AuthorizationSession authorizationSession;
 	
-	public RevocationMessageHandler(final Admin admin, final CertificateStoreSession certificateStoreSession, final UserAdminSession userAdminSession, final CAAdminSession caAdminSession, final EndEntityProfileSession endEntityProfileSession, final CertificateProfileSession certificateProfileSession, final AuthorizationSession authSession) {
+	public RevocationMessageHandler(final Admin admin, final CA ca, final CertificateStoreSession certificateStoreSession, final UserAdminSession userAdminSession, final CAAdminSession caAdminSession, final EndEntityProfileSession endEntityProfileSession, final CertificateProfileSession certificateProfileSession, final AuthorizationSession authSession) {
 		super(admin, caAdminSession, endEntityProfileSession, certificateProfileSession);
 		responseProtection = CmpConfiguration.getResponseProtection();
+		this.ca = ca;
 		// Get EJB beans, we can not use local beans here because the MBean used for the TCP listener does not work with that
 		this.userAdminSession = userAdminSession;
 		this.certificateStoreSession = certificateStoreSession;
@@ -92,6 +98,12 @@ public class RevocationMessageHandler extends BaseCmpMessageHandler implements I
 	public IResponseMessage handleMessage(final BaseCmpMessage msg) {
 		LOG.trace(">handleMessage");
 		IResponseMessage resp = null;
+		
+		if(ca == null) {
+			String errmsg = "CA '" + msg.getRecipient().getName().toString().hashCode() + "' (DN: " + msg.getRecipient().getName().toString() + ") is unknown";
+	 	 	return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.INCORRECT_DATA, errmsg);
+		}
+		
 		// if version == 1 it is cmp1999 and we should not return a message back
 		// Try to find a HMAC/SHA1 protection key
 		String owfAlg = null;
@@ -254,6 +266,14 @@ public class RevocationMessageHandler extends BaseCmpMessageHandler implements I
 			}
 	    	if (StringUtils.equals(responseProtection, "pbe") && (owfAlg != null) && (macAlg != null) && (keyId != null) && (cmpRaAuthSecret != null) ) {
 	    		rresp.setPbeParameters(keyId, cmpRaAuthSecret, owfAlg, macAlg, iterationCount);
+	    	} else {
+	    		try {
+	    			rresp.setSignKeyInfo(ca.getCACertificate(), ca.getCAToken().getPrivateKey(SecConst.CAKEYPURPOSE_CERTSIGN), ca.getCAToken().getProvider());
+	    		} catch(IllegalKeyStoreException e) {
+	    			LOG.error(e.getLocalizedMessage());
+	    		} catch(CATokenOfflineException e) {
+	    			LOG.error(e.getLocalizedMessage());
+	    		}
 	    	}
 	    	resp = rresp;
 			try {

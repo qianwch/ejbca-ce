@@ -38,6 +38,7 @@ import org.ejbca.core.ejb.ra.CertificateRequestSessionLocal;
 import org.ejbca.core.ejb.ra.UserAdminSessionLocal;
 import org.ejbca.core.ejb.authorization.AuthorizationSessionLocal;
 import org.ejbca.core.model.InternalResources;
+import org.ejbca.core.model.ca.caadmin.CA;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.protocol.FailInfo;
 import org.ejbca.core.protocol.IResponseMessage;
@@ -169,7 +170,13 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
 				break;
 			case 11:
 				// Revocation request (rr, Revocation Request)
-				handler = new RevocationMessageHandler(admin, certificateStoreSession, userAdminSession, caAdminSession, endEntityProfileSession, certificateProfileSession, authorizationSession);
+				CA ca = null;
+				try {
+					ca = caSession.getCA(admin, req.getHeader().getRecipient().getName().toString().hashCode());
+				} catch (Exception e) {
+					log.error(e.getLocalizedMessage());
+				}
+				handler = new RevocationMessageHandler(admin, ca, certificateStoreSession, userAdminSession, caAdminSession, endEntityProfileSession, certificateProfileSession, authorizationSession);
 				cmpMessage = new GeneralCmpMessage(req);
 				break;
 			case 20:

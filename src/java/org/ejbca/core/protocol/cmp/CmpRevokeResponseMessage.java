@@ -12,20 +12,21 @@
  *************************************************************************/
 package org.ejbca.core.protocol.cmp;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
+import java.security.SignatureException;
 import java.security.cert.CRL;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
 
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.DERInteger;
-import org.bouncycastle.asn1.DEROutputStream;
 import org.bouncycastle.asn1.DERUTF8String;
+import org.bouncycastle.cms.CMSSignedGenerator;
 import org.ejbca.core.model.ca.SignRequestException;
 import org.ejbca.core.model.ra.NotFoundException;
 import org.ejbca.core.protocol.FailInfo;
@@ -60,6 +61,16 @@ public class CmpRevokeResponseMessage extends BaseCmpMessage implements IRespons
 	static final long serialVersionUID = 10003L;
 
 	private static final Logger log = Logger.getLogger(CmpRevokeResponseMessage .class);
+	
+	/** Default digest algorithm for SCEP response message, can be overridden */
+	private String digestAlg = CMSSignedGenerator.DIGEST_SHA1;
+	/** The default provider is BC, if nothing else is specified when setting SignKeyInfo */
+	private String provider = "BC";
+	
+	/** Certificate for the signer of the response message (CA) */
+	private transient Certificate signCert = null;
+	/** Private key used to sign the response message */
+	private transient PrivateKey signKey = null;
 
 	/** The encoded response message */
     private byte[] responseMessage = null;
@@ -132,11 +143,20 @@ public class CmpRevokeResponseMessage extends BaseCmpMessage implements IRespons
 		if ((getPbeDigestAlg() != null) && (getPbeMacAlg() != null) && (getPbeKeyId() != null) && (getPbeKey() != null) ) {
 			responseMessage = CmpMessageHelper.protectPKIMessageWithPBE(myPKIMessage, getPbeKeyId(), getPbeKey(), getPbeDigestAlg(), getPbeMacAlg(), getPbeIterationCount());
 		} else {
-			final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			final DEROutputStream mout = new DEROutputStream( baos );
-			mout.writeObject( myPKIMessage );
-			mout.close();
-			responseMessage = baos.toByteArray();			
+            try {
+				responseMessage = CmpMessageHelper.signPKIMessage(myPKIMessage, (X509Certificate) signCert, signKey, digestAlg, provider);
+			} catch (CertificateEncodingException e) {
+                log.error(e.getLocalizedMessage(), e);
+			} catch (SecurityException e) {
+                log.error(e.getLocalizedMessage(), e);
+			} catch (SignatureException e) {
+                log.error(e.getLocalizedMessage(), e);
+			}
+			//final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			//final DEROutputStream mout = new DEROutputStream( baos );
+			//mout.writeObject( myPKIMessage );
+			//mout.close();
+			//responseMessage = baos.toByteArray();			
 		}
 		return true;
 	}
@@ -146,6 +166,11 @@ public class CmpRevokeResponseMessage extends BaseCmpMessage implements IRespons
 	}
 
 	public void setSignKeyInfo(final Certificate cert, final PrivateKey key, final String provider) {
+		  this.signCert = cert;
+		  this.signKey = key;
+		  if (provider != null) {
+			  this.provider = provider;
+		  }
 	}
 
 	public void setSenderNonce(final String senderNonce) {
