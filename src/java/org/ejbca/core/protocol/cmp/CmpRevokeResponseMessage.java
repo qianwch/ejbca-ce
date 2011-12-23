@@ -146,7 +146,7 @@ public class CmpRevokeResponseMessage extends BaseCmpMessage implements IRespons
 			responseMessage = CmpMessageHelper.protectPKIMessageWithPBE(myPKIMessage, getPbeKeyId(), getPbeKey(), getPbeDigestAlg(), getPbeMacAlg(), getPbeIterationCount());
 		} else {
             try {
-				responseMessage = CmpMessageHelper.signPKIMessage(myPKIMessage, (X509Certificate) signCert, signKey, digestAlg, provider);
+				responseMessage = CmpMessageHelper.signPKIMessage(myPKIMessage, (X509Certificate)signCert, signKey, digestAlg, provider);
 			} catch (CertificateEncodingException e) {
 				log.error("Failed to sign CMPRevokeResponseMessage");
                 log.error(e.getLocalizedMessage(), e);
@@ -175,9 +175,7 @@ public class CmpRevokeResponseMessage extends BaseCmpMessage implements IRespons
 		} catch (IOException e) {
             log.error(e.getLocalizedMessage(), e);
 		}
-
-		return resp; 			
-		
+		return resp;
 	}
 	
 	public boolean requireSignKeyInfo() {

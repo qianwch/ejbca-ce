@@ -137,7 +137,7 @@ public class RevocationMessageHandler extends BaseCmpMessageHandler implements I
 				return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_MESSAGE_CHECK, errMsg);
 			} else {
 				if(authenticationModule instanceof HMACAuthenticationModule) {
-					HMACAuthenticationModule hmacmodule = (HMACAuthenticationModule) authenticationModule;
+					final HMACAuthenticationModule hmacmodule = (HMACAuthenticationModule) authenticationModule;
 					owfAlg = hmacmodule.getCmpPbeVerifyer().getOwfOid();
 					macAlg = hmacmodule.getCmpPbeVerifyer().getMacOid();
 				}
