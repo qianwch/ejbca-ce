@@ -45,6 +45,7 @@ import org.ejbca.core.model.approval.WaitingForApprovalException;
 import org.ejbca.core.model.authorization.AuthorizationDeniedException;
 import org.ejbca.core.model.ca.SignRequestException;
 import org.ejbca.core.model.ca.caadmin.CA;
+import org.ejbca.core.model.ca.caadmin.CADoesntExistsException;
 import org.ejbca.core.model.ca.caadmin.IllegalKeyStoreException;
 import org.ejbca.core.model.ca.catoken.CATokenOfflineException;
 import org.ejbca.core.model.ca.crl.RevokedCertInfo;
@@ -102,11 +103,10 @@ public class RevocationMessageHandler extends BaseCmpMessageHandler implements I
 		CA ca = null;
 		try {
 			ca = caSession.getCA(admin, msg.getHeader().getRecipient().getName().toString().hashCode());
-		} catch (Exception e) {
-			LOG.error(e.getLocalizedMessage());
-			String errMsg = "CA with DN '" + msg.getHeader().getRecipient().getName().toString() + "' is unknown";
-			return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_REQUEST, errMsg);
-		}
+        } catch (CADoesntExistsException e) {
+            final String errMsg = "CA with DN '" + msg.getHeader().getRecipient().getName().toString() + "' is unknown";
+            return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_REQUEST, errMsg);
+        }
 		
 		// if version == 1 it is cmp1999 and we should not return a message back
 		// Try to find a HMAC/SHA1 protection key
