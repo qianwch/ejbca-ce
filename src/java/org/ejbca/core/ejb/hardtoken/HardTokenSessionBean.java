@@ -630,37 +630,29 @@ public class HardTokenSessionBean implements HardTokenSessionLocal, HardTokenSes
         if (log.isTraceEnabled()) {
             log.trace(">addHardToken(tokensn : " + tokensn + ")");
         }
-        String bcdn = CertTools.stringToBCDNString(significantissuerdn);
-        org.ejbca.core.ejb.hardtoken.HardTokenData data = org.ejbca.core.ejb.hardtoken.HardTokenData.findByTokenSN(entityManager, tokensn);
-        if (data == null) {
-            try {
-                entityManager.persist(new org.ejbca.core.ejb.hardtoken.HardTokenData(tokensn, username, new java.util.Date(), new java.util.Date(),
-                        tokentype, bcdn, setHardToken(admin, globalConfigurationSession.getCachedGlobalConfiguration(admin).getHardTokenEncryptCA(),
-                                hardtokendata)));
-                if (certificates != null) {
-                    Iterator<Certificate> i = certificates.iterator();
-                    while (i.hasNext()) {
-                        addHardTokenCertificateMapping(admin, tokensn, (X509Certificate)i.next());
-                    }
-                }
-                if (copyof != null) {
-                    entityManager.persist(new HardTokenPropertyData(tokensn, HardTokenPropertyData.PROPERTY_COPYOF, copyof));
-                }
-                String msg = intres.getLocalizedMessage("hardtoken.addedtoken", tokensn);
-                logSession.log(admin, bcdn.hashCode(), LogConstants.MODULE_HARDTOKEN, new java.util.Date(), username, null,
-                        LogConstants.EVENT_INFO_HARDTOKENDATA, msg);
-            } catch (Exception e) {
-                String msg = intres.getLocalizedMessage("hardtoken.tokenexists", tokensn);
-                logSession.log(admin, bcdn.hashCode(), LogConstants.MODULE_HARDTOKEN, new java.util.Date(), username, null,
-                        LogConstants.EVENT_ERROR_HARDTOKENDATA, msg);
-                throw new HardTokenExistsException("Tokensn : " + tokensn);
-            }
-        } else {
+        final String bcdn = CertTools.stringToBCDNString(significantissuerdn);
+        final org.ejbca.core.ejb.hardtoken.HardTokenData data = org.ejbca.core.ejb.hardtoken.HardTokenData.findByTokenSN(this.entityManager, tokensn);
+        if (data != null) {
             String msg = intres.getLocalizedMessage("hardtoken.tokenexists", tokensn);
-            logSession.log(admin, bcdn.hashCode(), LogConstants.MODULE_HARDTOKEN, new java.util.Date(), username, null, LogConstants.EVENT_ERROR_HARDTOKENDATA,
-                    msg);
+            this.logSession.log(
+                    admin, bcdn.hashCode(), LogConstants.MODULE_HARDTOKEN, new java.util.Date(), username, null, LogConstants.EVENT_ERROR_HARDTOKENDATA, msg);
             throw new HardTokenExistsException("Tokensn : " + tokensn);
         }
+        this.entityManager.persist(
+                new org.ejbca.core.ejb.hardtoken.HardTokenData(
+                        tokensn, username, new java.util.Date(), new java.util.Date(), tokentype, bcdn,
+                        setHardToken(admin, this.globalConfigurationSession.getCachedGlobalConfiguration(admin).getHardTokenEncryptCA(), hardtokendata) ));
+        if ( certificates!=null ) {
+            for ( final Certificate cert : certificates ) {
+                addHardTokenCertificateMapping(admin, tokensn, cert);
+            }
+        }
+        if (copyof != null) {
+            this.entityManager.persist(new HardTokenPropertyData(tokensn, HardTokenPropertyData.PROPERTY_COPYOF, copyof));
+        }
+        final String msg = intres.getLocalizedMessage("hardtoken.addedtoken", tokensn);
+        this.logSession.log(admin, bcdn.hashCode(), LogConstants.MODULE_HARDTOKEN, new java.util.Date(), username, null,
+                LogConstants.EVENT_INFO_HARDTOKENDATA, msg);
         log.trace("<addHardToken()");
     }
 
