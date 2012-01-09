@@ -385,15 +385,15 @@ function checkallfields(){
 <div align="center"> 
   <% if(processrequest){ %>
   <h2><%= ejbcawebbean.getText("PROCESSREQUEST") %></h2>
-  <h3><%= ejbcawebbean.getText("CANAME")+ " : " + caname %><br />
+  <h3><%= ejbcawebbean.getText("CANAME")+ " : "%><c:out value="<%= caname %>"/><br />
       <%= ejbcawebbean.getText("ONLYTHEPUBLICKEY") %></h3>
   <% }else{
        if(editca){ %>
   <h2><%= ejbcawebbean.getText("EDITCA") %></h2>
-  <h3><%= ejbcawebbean.getText("CANAME")+ " : " + cainfo.getName() %></h3>
+  <h3><%= ejbcawebbean.getText("CANAME")+ " : "%><c:out value="<%= cainfo.getName() %>"/></h3>
   <%   }else{ %>
    <h2><%= ejbcawebbean.getText("CREATECA") %></h2>
-   <h3><%= ejbcawebbean.getText("CANAME")+ " : " + caname %></h3>
+   <h3><%= ejbcawebbean.getText("CANAME")+ " : "%><c:out value="<%= caname %>"/></h3>
   <%   }
      }%>
 </div>
@@ -414,9 +414,9 @@ function checkallfields(){
 
     <form name="changecatype" action="<%= THIS_FILENAME %>" method="post">
       <input type="hidden" name='<%= ACTION %>' value='<%=ACTION_CHOOSE_CATYPE %>'>
-      <input type="hidden" name='<%= HIDDEN_CANAME %>' value='<%=caname %>'>
+      <input type="hidden" name='<%= HIDDEN_CANAME %>' value='<c:out value="<%= caname %>"/>'>
       <input type="hidden" name='<%= HIDDEN_PROCESSREQUEST %>' value='<%= processrequest%>'>
-      <input type="hidden" name='<%= HIDDEN_PROCESSREQUESTDN %>' value='<%= processedsubjectdn%>'>
+      <input type="hidden" name='<%= HIDDEN_PROCESSREQUESTDN %>' value='<c:out value="<%= processedsubjectdn %>"/>'>
       <input type="hidden" name='<%= HIDDEN_PROCESSSEQUENCE %>' value='<%= processedsequence%>'>
 
       <% if(editca) { %>
@@ -537,14 +537,13 @@ function checkallfields(){
         <%= ejbcawebbean.getText("DESCRIPTION") %>
       </td>
       <td width="50%"> 
-        <% if(isexternal){
-              out.write(cainfo.getDescription());
-           }else{ %>
-        <textarea name="<%=TEXTFIELD_DESCRIPTION%>" cols="45" rows="4"><% if(editca) out.write(cainfo.getDescription());%></textarea>
+        <% if(isexternal){ %>
+              <c:out value="<%= cainfo.getDescription() %>"/>
+         <% }else{ %>
+        <textarea name="<%=TEXTFIELD_DESCRIPTION%>" cols="45" rows="4"><% if(editca) { %><c:out value="<%= cainfo.getDescription() %>"/><% } %></textarea>
        <% } %>
       </td>
     </tr>
-
 
     <!-- ---------- Directives -------------------- -->
 
@@ -685,11 +684,11 @@ function checkallfields(){
         <strong><%= ejbcawebbean.getText("CERT_SUBJECTDN") %></strong>
       </td>
       <td width="50%"> 
-        <% if(editca){
-              out.write(cainfo.getSubjectDN() + "<br />"); 
-           }else{ %>
+        <% if(editca){%>
+              <c:out value="<%= cainfo.getSubjectDN() %>"/><br />
+          <% }else{ %>
         <% /* Maxlength for the CA subject DN is based on 250 chars MySQL String mapping minus the "CN=xxxxSignerCertificate," string that is added for services. */ %>
-        <input type="text" name="<%=TEXTFIELD_SUBJECTDN%>" size="45" <% if(processrequest) out.write(" value='" + processedsubjectdn + "'"); %> maxlength="225">
+        <input type="text" name="<%=TEXTFIELD_SUBJECTDN%>" size="45" <% if(processrequest) {%>value='<c:out value="<%= processedsubjectdn %>"/>' <%}%>maxlength="225">
         <% } %>
       </td>
     </tr>
@@ -782,12 +781,13 @@ function checkallfields(){
         <%= ejbcawebbean.getText("EXT_PKIX_SUBJECTALTNAME") %>
       </td>
       <td width="50%">
-         <% if(editca)
-              if(x509cainfo.getSubjectAltName() == null || x509cainfo.getSubjectAltName().trim().equals(""))
+         <% if(editca) {
+              if(x509cainfo.getSubjectAltName() == null || x509cainfo.getSubjectAltName().trim().equals("")) {
                 out.write(ejbcawebbean.getText("NONE")); 
-              else
-                out.write(x509cainfo.getSubjectAltName());                
-            else{  %>  
+              } else { %>
+                <c:out value="<%= x509cainfo.getSubjectAltName() %>"/>
+              <% }
+            } else{  %>  
          <input type="text" name="<%=TEXTFIELD_SUBJECTALTNAME%>" size="45" maxlength="255">
          <% } %>   
       </td>
@@ -936,12 +936,12 @@ function checkallfields(){
         <br/> <em><%= ejbcawebbean.getText("USEDTOOVERIDECERTPROFILE") %></em>
       </td>
       <td width="50%">
-           <% if(isexternal){
-                out.write("" + x509cainfo.getDefaultCRLDistPoint());
-              }else{ %>
+           <% if(isexternal){%>
+                <c:out value="<%= x509cainfo.getDefaultCRLDistPoint() %>"/>
+              <%}else{ %>
          <input type="text" name="<%=TEXTFIELD_DEFAULTCRLDISTPOINT%>" size="45" maxlength="4096"
-            <% if(editca) out.write(" value='" + x509cainfo.getDefaultCRLDistPoint()+ "'");%>>
-           <% } %> 
+         <% if(editca){%>value="<c:out value="<%= x509cainfo.getDefaultCRLDistPoint() %>"/>"<%}%>>
+         <% } %> 
            <input type="button" name="<%=BUTTON_GENDEFAULTCRLDISTPOINT%>" onClick="gendefaultcrldistpoint()" value="<%= ejbcawebbean.getText("GENERATE") %>" >
       </td>
     </tr>
@@ -952,11 +952,11 @@ function checkallfields(){
         <%= ejbcawebbean.getHelpReference("/userguide.html#CRL%20Issuer") %>
       </td>
       <td width="50%">
-           <% if(isexternal){
-                out.write("" + x509cainfo.getDefaultCRLIssuer());
-              }else{ %>
+           <% if(isexternal){%>
+                <c:out value="<%= x509cainfo.getDefaultCRLIssuer() %>"/>
+             <% }else{ %>
          <input type="text" name="<%=TEXTFIELD_DEFAULTCRLISSUER%>" size="45" maxlength="255"
-            <% if(editca) out.write(" value='" + x509cainfo.getDefaultCRLIssuer()+ "'");%>>
+         <% if(editca){%>value="<c:out value="<%= x509cainfo.getDefaultCRLIssuer() %>"/>"<%}%>>
            <% } %> 
            <input type="button" name="<%=BUTTON_GENDEFAULTCRLISSUER%>" onClick="gendefaultcrlissuer()" value="<%= ejbcawebbean.getText("GENERATE") %>" >
       </td>
@@ -969,11 +969,11 @@ function checkallfields(){
         <br/> <em><%= ejbcawebbean.getText("USEDTOOVERIDECERTPROFILE") %></em>
       </td>
       <td width="50%">
-           <% if(isexternal){
-                out.write("" + x509cainfo.getCADefinedFreshestCRL());
-              }else{ %>
+           <% if(isexternal){%>
+                <c:out value="<%= x509cainfo.getCADefinedFreshestCRL() %>"/>
+              <%}else{ %>
          <input type="text" name="<%=TEXTFIELD_CADEFINEDFRESHESTCRL%>" size="45" maxlength="255"
-            <% if(editca && (x509cainfo.getCADefinedFreshestCRL() != null)) out.write(" value='" + x509cainfo.getCADefinedFreshestCRL()+ "'");%>>
+         <% if(editca && (x509cainfo.getCADefinedFreshestCRL() != null)){%>value="<c:out value="<%= x509cainfo.getCADefinedFreshestCRL() %>"/>"<%}%>>
            <% } %>
            <input type="button" name="<%=BUTTON_GENCADEFINEDFRESHESTCRL%>" onClick="gencadefinedfresherstcrl()" value="<%= ejbcawebbean.getText("GENERATE") %>" >
       </td>
@@ -1066,8 +1066,7 @@ function checkallfields(){
        </select>
      </td>
    </tr>
-
-
+      
     <!-- ---------- Services -------------------- -->
 
     <tr  id="Row<%=row++%2%>"> 
@@ -1086,11 +1085,11 @@ function checkallfields(){
         <br/> <em><%= ejbcawebbean.getText("USEDTOOVERIDECERTPROFILE") %></em>
       </td>
       <td width="50%">
-           <% if(isexternal){
-                out.write("" + x509cainfo.getDefaultOCSPServiceLocator());
-              }else{ %>
+           <% if(isexternal){%>
+                <c:out value="<%= x509cainfo.getDefaultOCSPServiceLocator() %>"/>
+             <% }else{ %>
          <input type="text" name="<%=TEXTFIELD_DEFAULTOCSPLOCATOR%>" size="45" maxlength="255"
-            <% if(editca) out.write(" value='" + x509cainfo.getDefaultOCSPServiceLocator()+ "'");%>>
+         <% if(editca){ %>value="<c:out value="<%= x509cainfo.getDefaultOCSPServiceLocator() %>"/>"<%}%>>
            <% } %> <input type="button" name="<%=BUTTON_GENDEFAULTOCSPLOCATOR%>" onClick="gendefaultocsplocator()" value="<%= ejbcawebbean.getText("GENERATE") %>" >
       </td>
     </tr>
@@ -1229,7 +1228,7 @@ function checkallfields(){
       </td>
       <td width="50%">
         <% String cmpRaAuthSecretValue = (editca?((X509CAInfo)cainfo).getCmpRaAuthSecret():""); %>
-        <input type="password" name="<%=TEXTFIELD_SHAREDCMPRASECRET%>" size="20" maxlength="64" value="<%= cmpRaAuthSecretValue %>">
+        <input type="password" name="<%=TEXTFIELD_SHAREDCMPRASECRET%>" size="20" maxlength="64" value="<c:out value="<%= cmpRaAuthSecretValue %>"/>">
       </td>
     </tr>
     <% } // if (catype == CAInfo.CATYPE_X509) %>
