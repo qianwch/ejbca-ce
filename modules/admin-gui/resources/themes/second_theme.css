@@ -274,6 +274,12 @@ select option:focus,
 select option:active {
 	background-color: #FFC;
 }
+select.number {
+	text-align: right;
+}
+select.acronym {
+	text-align: center;
+}
 p.help {
 	margin-top: .25em;
 	margin-bottom: .25em;
@@ -429,9 +435,6 @@ table.results tbody tr:hover,
 table.results tbody tr:focus,
 table.results tbody tr:active {
 	background-color: #FFB !important;
-}
-select.number {
-	text-align: right;
 }
 
 /* Page: Home */

@@ -42,7 +42,7 @@
 	    <h:commandButton id="deleteButton" action="#{listServicesManagedBean.deleteService}" value="#{web.text.DELETESERVICE}" onclick="return confirm('#{web.text.AREYOUSURE}');"/>
 		</p>
 		<h3><h:outputText value="#{web.text.ADDSERVICE}"/></h3>
-		<h:inputText id="newServiceName" value="#{listServicesManagedBean.newServiceName}" size="40"/>
+		<h:inputText id="newServiceName" value="#{listServicesManagedBean.newServiceName}" size="40" title="#{web.text.FORMAT_ID_STR}"/>
 		<h:commandButton id="addButton" action="#{listServicesManagedBean.addService}" value="#{web.text.ADD}"/>
 		<br/>
 		<h:commandButton id="renameButton" action="#{listServicesManagedBean.renameService}" value="#{web.text.RENAMESELECTED}"/>&nbsp;&nbsp;&nbsp;&nbsp;

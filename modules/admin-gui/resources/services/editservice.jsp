@@ -118,7 +118,7 @@
 		<h:inputTextarea id="descriptionTextArea" value="#{editService.serviceConfigurationView.description}" rows="4" cols="45"/>
 	</h:panelGroup>
 	<h:panelGroup>
-		
+		&nbsp;
 	</h:panelGroup>
 	<h:panelGroup>
 		<f:verbatim>
