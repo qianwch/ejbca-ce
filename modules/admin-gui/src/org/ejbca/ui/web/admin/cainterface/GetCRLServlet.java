@@ -14,7 +14,6 @@
 package org.ejbca.ui.web.admin.cainterface;
 
 import java.io.IOException;
-import java.security.cert.X509CRL;
 
 import javax.ejb.EJB;
 import javax.servlet.ServletConfig;
@@ -108,9 +107,7 @@ public class GetCRLServlet extends HttpServlet {
             try {
                 Admin admin = ejbcawebbean.getAdminObject();
                 byte[] crl = crlSession.getLastCRL(admin, issuerdn, false);
-                X509CRL x509crl = CertTools.getCRLfromByteArray(crl);
-                String dn = CertTools.getIssuerDN(x509crl);
-        		String basename = getBaseFileName(dn);
+        		String basename = getBaseFileName(issuerdn);
                 String filename = basename+".crl";
                 // We must remove cache headers for IE
                 ServletUtils.removeCacheHeaders(res);
@@ -131,9 +128,7 @@ public class GetCRLServlet extends HttpServlet {
         	try {
         		Admin admin = ejbcawebbean.getAdminObject();
         		byte[] crl = crlSession.getLastCRL(admin, issuerdn, true);
-        		X509CRL x509crl = CertTools.getCRLfromByteArray(crl);
-        		String dn = CertTools.getIssuerDN(x509crl);
-        		String basename = getBaseFileName(dn);
+        		String basename = getBaseFileName(issuerdn);
         		String filename = basename+"_delta.crl";
         		// We must remove cache headers for IE
         		ServletUtils.removeCacheHeaders(res);

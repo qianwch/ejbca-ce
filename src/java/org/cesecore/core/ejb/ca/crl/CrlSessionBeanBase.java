@@ -13,7 +13,6 @@
 package org.cesecore.core.ejb.ca.crl;
 
 import java.security.cert.Certificate;
-import java.security.cert.X509CRL;
 import java.util.Date;
 
 import javax.ejb.EJBException;
@@ -55,15 +54,15 @@ abstract class CrlSessionBeanBase {
 		int maxnumber = 0;
 		try {
 			maxnumber = getLastCRLNumber(admin, issuerdn, deltaCRL);
-			X509CRL crl = null;
+			byte[] crlbytes = null;
 			CRLData data = CRLData.findByIssuerDNAndCRLNumber(getEntityManager(), issuerdn, maxnumber);
 			if (data != null) {
-				crl = data.getCRL();
+				crlbytes = data.getCRLBytes();
 			}
-			if (crl != null) {
+			if (crlbytes != null) {
 				String msg = intres.getLocalizedMessage("store.getcrl", issuerdn, Integer.valueOf(maxnumber));            	
-				log(admin, crl.getIssuerDN().toString().hashCode(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_INFO_GETLASTCRL, msg);
-				return crl.getEncoded();
+				log(admin, issuerdn.hashCode(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_INFO_GETLASTCRL, msg);
+				return crlbytes;
 			}
 		} catch (Exception e) {
 			String msg = intres.getLocalizedMessage("store.errorgetcrl", issuerdn);            	
