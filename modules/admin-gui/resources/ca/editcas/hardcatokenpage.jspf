@@ -2,7 +2,7 @@
   HardCATokenInfo hardcatokeninfo = (HardCATokenInfo) catokeninfo; 
   
 %>
-    <tr  id="Row<%=row++%2%>"> 
+    <tr  id="Row<%=row%2%>"> 
       <input type="hidden" name='<%= HIDDEN_CATOKENPATH %>' value='<%=catokenpath %>'>
       <td width="50%"  align="right"> 
         <%= ejbcawebbean.getText("HARDCATOKENPROPERTIES") %>
@@ -23,7 +23,7 @@
     <% }%>
     <tr  id="Row<%=row++%2%>"> 
       <td width="50%"  align="right"> 
-        <%= ejbcawebbean.getText("SIGNINGALGORITHM") %>
+        <strong><%= ejbcawebbean.getText("SIGNINGALGORITHM") %></strong>
       </td>
       <td width="50%"> 
            <% if(editca){
@@ -34,7 +34,7 @@
                 <% for(int i=0; i < AlgorithmConstants.AVAILABLE_SIGALGS.length; i++){ %>
                      <option value="<%= AlgorithmConstants.AVAILABLE_SIGALGS[i]%>"><%= AlgorithmConstants.AVAILABLE_SIGALGS[i] %></option>  
                 <% } %> 
-	 </select>
+	    </select>
            <% } %> 
       </td>
     </tr>
