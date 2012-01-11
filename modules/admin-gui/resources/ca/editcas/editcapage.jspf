@@ -262,7 +262,7 @@ function confirmrevocation(){
 
   if(editca && !waitingresponse){%>
 function viewcacert(){
-    win_popup = window.open('<%=VIEWCERT_LINK%>?caid=<%=caid%>', 'view_cert','height=600,width=600,scrollbars=yes,toolbar=no,resizable=1');
+    win_popup = window.open('<%=VIEWCERT_LINK%>?caid=<%=caid%>', 'view_cert','height=650,width=750,scrollbars=yes,toolbar=no,resizable=1');
     win_popup.focus();
 }
   
@@ -276,7 +276,7 @@ function confirmrenewal(){
   function viewxkmscert(){        
       var link = "<%= VIEWCERT_LINK %>?<%= CERTSERNO_PARAMETER %>=<%= java.net.URLEncoder.encode(xkmscert.getSerialNumber().toString(16) + "," + CertTools.getIssuerDN(xkmscert),"UTF-8")%>";
       link = encodeURI(link);
-      win_popup = window.open(link, 'view_cert','height=600,width=500,scrollbars=yes,toolbar=no,resizable=1');
+      win_popup = window.open(link, 'view_cert','height=650,width=750,scrollbars=yes,toolbar=no,resizable=1');
       win_popup.focus();
   }
 <% } 
@@ -284,7 +284,7 @@ function confirmrenewal(){
   function viewcmscert(){        
       var link = "<%= VIEWCERT_LINK %>?<%= CERTSERNO_PARAMETER %>=<%= java.net.URLEncoder.encode(cmscert.getSerialNumber().toString(16) + "," + CertTools.getIssuerDN(cmscert),"UTF-8")%>";
       link = encodeURI(link);
-      win_popup = window.open(link, 'view_cert','height=600,width=500,scrollbars=yes,toolbar=no,resizable=1');
+      win_popup = window.open(link, 'view_cert','height=650,width=750,scrollbars=yes,toolbar=no,resizable=1');
       win_popup.focus();
   }
   <% } 
