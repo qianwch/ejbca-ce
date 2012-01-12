@@ -36,17 +36,20 @@ function viewcert(link){
 <h1><h:outputText value="#{web.text.APPROVEACTIONS}"/></h1>
 
 <h:form>
-<p align="center"><h:outputText value="#{web.text.SEARCHFORACTION}"/>  
-<h:selectOneMenu id="status" value="#{listApproveActionSessionBean.selectedStatus}"> 
-  <f:selectItems value="#{listApproveActionSessionBean.availableStatus}"/>
-</h:selectOneMenu>
-   <h:outputText value="#{web.text.REQUESTEDWITHIN}"/>    
+<p align="center">
+  <h:outputText value="#{web.text.SEARCHFORACTION}"/>  
+  <h:selectOneMenu id="status" value="#{listApproveActionSessionBean.selectedStatus}"> 
+    <f:selectItems value="#{listApproveActionSessionBean.availableStatus}"/>
+  </h:selectOneMenu>
+  <h:outputText value=" #{web.text.REQUESTEDWITHIN} "/>
   <h:selectOneMenu id="timespan" value="#{listApproveActionSessionBean.selectedTimeSpan}">
-  <f:selectItems value="#{listApproveActionSessionBean.availableTimeSpans}"/>
-</h:selectOneMenu>
-  <h:commandButton id="list" action="#{listApproveActionSessionBean.list}" value="#{web.text.LIST}"/>
+    <f:selectItems value="#{listApproveActionSessionBean.availableTimeSpans}"/>
+  </h:selectOneMenu>
+  <h:outputText value=" "/>
+  <h:commandButton id="list" action="#{listApproveActionSessionBean.list}" value="#{web.text.SEARCH}"/>
   </p>
 </h:form>
+
   <div class="message"><h:messages layout="table" errorClass="alert"/></div>
   <hr/>
   <h:form >
