@@ -69,7 +69,7 @@
 	<h:form id="adminListForm" rendered="#{not empty adminGroupsManagedBean.currentAdminGroup}">
 	<h:inputHidden id="currentAdminGroup" value="#{adminGroupsManagedBean.currentAdminGroup}" />
 	<h:dataTable value="#{adminGroupsManagedBean.admins}" var="admin" style="width: 100%;"
-		headerClass="listHeader" rowClasses="listRow1,listRow2" columnClasses="caColumn,withColumn,typeColumn,valueColumn,commandColumn">
+		headerClass="listHeader" rowClasses="Row0,Row1" columnClasses="caColumn,withColumn,typeColumn,valueColumn,commandColumn">
 		<h:column>
 			<f:facet name="header">
 				<h:panelGroup>

@@ -51,7 +51,7 @@
 		 <f:validator validatorId="legalCharsValidator" />
 	</h:inputHidden>
 	<h:dataTable value="#{adminGroupsManagedBean.adminGroups}" var="adminGroup"
-		headerClass="listHeader" rowClasses="listRow1,listRow2">
+		headerClass="listHeader" rowClasses="Row0,Row1">
 		<f:facet name="header">
 			<h:outputText value="#{web.text.CURRENTADMINGROUPS}" />
 		</f:facet>

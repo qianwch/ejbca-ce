@@ -200,32 +200,41 @@ function checkallfields(){
 <body onload='roleupdated()'>
 
 <div align="center">
-	<p><H2><h:outputText value="#{web.text.ACCESSRULESFORGROUP} #{adminGroupsManagedBean.currentAdminGroup}" /></H2></p>
+	<h2><h:outputText value="#{web.text.ACCESSRULESFORGROUP} #{adminGroupsManagedBean.currentAdminGroup}" /></h2>
 	<h:outputText value="#{web.text.AUTHORIZATIONDENIED}" rendered="#{!adminGroupsManagedBean.authorizedToGroup}"/>
 	<h:panelGroup rendered="#{adminGroupsManagedBean.authorizedToGroup}">
 	<p><h:outputText styleClass="alert" value="#{web.text.ADVANCEDMODEREQUIRED}" rendered="#{adminGroupsManagedBean.basicRuleSet.forceAdvanced}" /></p>
 	<p><h:messages layout="table" errorClass="alert"/></p>
   
-  	<div align="right">
-	<h:panelGrid columns="1" style="text-align: right;">
-		<h:outputLink value="#{web.ejbcaWebBean.globalConfiguration.authorizationPath}/administratorprivileges.jsf" title="#{web.text.BACKTOADMINGROUPS}">
-			<h:outputText value="#{web.text.BACKTOADMINGROUPS}"/>
-		</h:outputLink>
-		<h:outputLink value="#{web.ejbcaWebBean.globalConfiguration.authorizationPath}/editadminentities.jsf?currentAdminGroup=#{adminGroupsManagedBean.currentAdminGroup}"
-			title="#{web.text.EDITADMINS}" rendered="#{not empty adminGroupsManagedBean.currentAdminGroup}">
-			<h:outputText value="#{web.text.EDITADMINS}"/>
-		</h:outputLink>
-		<h:outputLink value="#{web.ejbcaWebBean.globalConfiguration.authorizationPath}/editadvancedaccessrules.jsf?currentAdminGroup=#{adminGroupsManagedBean.currentAdminGroup}"
-			title="#{web.text.ADVANCEDMODE}" rendered="#{not empty adminGroupsManagedBean.currentAdminGroup}">
-			<h:outputText value="#{web.text.ADVANCEDMODE}"/>
-		</h:outputLink>
-	</h:panelGrid>
-	</div>
 	<h:panelGroup rendered="#{!adminGroupsManagedBean.basicRuleSet.forceAdvanced}">
  
  	<h:form id="basicRules">
 	<h:inputHidden id="currentAdminGroup" value="#{adminGroupsManagedBean.currentAdminGroup}" />
-	<h:panelGrid columns="2" rowClasses="listRow1,listRow2" columnClasses="leftColumn,rightColumn" width="100%">
+	<h:panelGrid styleClass="edit" width="100%" columns="2" rowClasses="Row1,Row0" columnClasses="label,field">
+		<h:panelGroup>
+			&nbsp;
+		</h:panelGroup>
+		<h:panelGroup>
+			<h:outputLink value="#{web.ejbcaWebBean.globalConfiguration.authorizationPath}/administratorprivileges.jsf" title="#{web.text.BACKTOADMINGROUPS}">
+				<h:outputText value="#{web.text.BACKTOADMINGROUPS}"/>
+			</h:outputLink>
+		</h:panelGroup>
+
+		<h:panelGroup>
+			&nbsp;
+		</h:panelGroup>
+		<h:panelGroup style="display: block; text-align: right;">
+			<h:outputLink value="#{web.ejbcaWebBean.globalConfiguration.authorizationPath}/editadminentities.jsf?currentAdminGroup=#{adminGroupsManagedBean.currentAdminGroup}"
+				title="#{web.text.EDITADMINS}" rendered="#{not empty adminGroupsManagedBean.currentAdminGroup}">
+				<h:outputText value="#{web.text.EDITADMINS}"/>
+			</h:outputLink>
+			<br/>
+			<h:outputLink value="#{web.ejbcaWebBean.globalConfiguration.authorizationPath}/editadvancedaccessrules.jsf?currentAdminGroup=#{adminGroupsManagedBean.currentAdminGroup}"
+				title="#{web.text.ADVANCEDMODE}" rendered="#{not empty adminGroupsManagedBean.currentAdminGroup}">
+				<h:outputText value="#{web.text.ADVANCEDMODE}"/>
+			</h:outputLink>
+		</h:panelGroup>
+
 		<h:outputText value="#{web.text.ROLE}"/>
 		<h:selectOneMenu id="selectrole" value="#{adminGroupsManagedBean.currentRole}" onchange='roleupdated()'>
 			<f:selectItems value="#{adminGroupsManagedBean.availableRoles}" />
@@ -251,15 +260,19 @@ function checkallfields(){
 			<f:selectItems value="#{adminGroupsManagedBean.availableOtherRules}" />
 		</h:selectManyListbox> 
 
-		<h:outputText value=""/>
+		<h:panelGroup>
+			&nbsp;
+		</h:panelGroup>
 		<h:panelGroup>
 			<h:commandButton action="#{adminGroupsManagedBean.saveAccessRules}" onclick="return checkallfields();" value="#{web.text.SAVE}"/>
 			<h:commandButton action="cancel" value="#{web.text.RESTORE}"/>
 		</h:panelGroup>
 	</h:panelGrid>
 	</h:form>
+
 	</h:panelGroup>
 	</h:panelGroup>
+
 </div>
 
 <%	// Include Footer 
