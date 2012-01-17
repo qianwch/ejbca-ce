@@ -9,64 +9,6 @@
  */
 
 
-/* The css items below between "Tigris begin" and "Tigris end" tags have been copied from the
-   Tigris style project, http://style.tigris.org/. */ 
-/* Tigris begin */
-
-.app h3, .app h4 {
-	color: #fff;
-}
-.app h3 {
-	background-color: #333;
-}
-.app h3 a:link, .app h3 a:visited, .app h4 a:link, .app h4 a:visited {
-	color: #fff !important;
-	text-decoration: underline;
-}
-
-.app h4 {
-	background-color: #888;
-}
-.app th {
-	background-color: #bbb;
-	white-space: nowrap;
-}
-.app h3, .app h4, pre, code {
-	font-size: small;
-}
-.app h3, .app h4 {
-	padding: 5px;
-	margin-right: 2px;
-	margin-left: 2px;
-}
-
-.app td, .app th {
-	padding: 2px 3px;
-}
-.app h3, .app h4 {
-	clear: both;
-}
-body .grid td {
-	border-top: 1px solid #ccc;
-	border-left: 1px solid #ccc;
-	background-color: transparent;
-}
-.a td {
-	background: #ddd;
-}
-.b td {
-	background: #efefef;
-}
-table {
-	font-size: 1em;
-}
-.app table, th, td {
-	border: none;
-	vertical-align: top;
-}
-/* Tigris end */
-
-
 /*--------------------------------------------------------------------------*/
 /* GLOBAL */
 
@@ -284,32 +226,20 @@ p.help {
 	margin-top: .25em;
 	margin-bottom: .25em;
 }
-div.h4 {
-	margin: 0em .5em;
-}
-#home h4 {
-	margin: 0px;
-	padding: 3px 4px;
-	background: #DDD none;
-	border: 1px solid #6F9AD3;
-	border-bottom: 0px none;
-	border-radius: .8em .8em 0em 0em;
-	-o-border-radius: .8em .8em 0em 0em;
-	-moz-border-radius: .8em .8em 0em 0em;
-	-khtml-border-radius: .8em .8em 0em 0em;
-	-webkit-border-radius: .8em .8em 0em 0em;
-	color: #000;
-}
-#home h4 a:link,
-#home h4 a:visited,
-#home h4 a:hover,
-#home h4 a:focus,
-#home h4 a:active {
-	color: #000 !important;
-}
 div.message {
 	margin-top: .5em;
 	text-align: center;
+}
+/* --- Tables */
+table {
+	font-size: 1em;
+}
+table th,
+table td {
+	margin: 0px;
+	padding: 2px 3px;
+	border: none;
+	vertical-align: top;
 }
 table h3 {
 	margin-top: 0em;
@@ -320,6 +250,7 @@ table.grid {
 table.grid th {
 	background-color: #F4F4F4;
 	color: #284E81;
+	white-space: nowrap;
 }
 table.grid th,
 table.grid td {
@@ -436,33 +367,48 @@ h3#welcome {
 div#information {
 	margin-top: .5em;
 }
-div#information code {
+#information code {
 	font-size: 1.15em;
 /*	font-weight: bold;	/**/
 }
 div#home {
 	margin-top: 1.5em;
 }
-div#home > table > tbody > tr > td {
+#home > table > tbody > tr > td {
 	margin: 0em;
 	padding: 0em;
 }
-div#crlstatus {
-	margin-left: 0em;
+div.status {
+	margin: 0em 1em 0em 0em;
 }
-div#publishqueuestatus {
-	margin-right: 0em;
+div.status h4 {
+	margin: 0px;
+	padding: 3px 4px;
+	background: #DDD none;
+	border: 1px solid #6F9AD3;
+	border-bottom: 0px none;
+	border-radius: .8em .8em 0em 0em;
+	-o-border-radius: .8em .8em 0em 0em;
+	-moz-border-radius: .8em .8em 0em 0em;
+	-khtml-border-radius: .8em .8em 0em 0em;
+	-webkit-border-radius: .8em .8em 0em 0em;
+	color: #000;
+	font-size: small;
 }
-#crlstatus h4,
-#publishqueuestatus h4,
-#crlstatus table th,
-#publishqueuestatus table th,
-#crlstatus table td,
-#publishqueuestatus table td {
+div.status h4 a:link,
+div.status h4 a:visited,
+div.status h4 a:hover,
+div.status h4 a:focus,
+div.status h4 a:active {
+	color: #000 !important;
+	text-decoration: underline;
+}
+div.status h4,
+div.status table th,
+div.status table td {
 	white-space: nowrap;
 }
-#crlstatus table td img,
-#publishqueuestatus table td img {
+div.status table td img {
 	width: 16px;
 	height: 16px;
 	margin-top: .1em;

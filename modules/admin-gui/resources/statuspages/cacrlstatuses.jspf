@@ -4,11 +4,11 @@
 	Collection caids = cabean.getAuthorizedCAs();
 	Iterator caiter = caids.iterator();
 %>
-
         
 <%@page import="org.ejbca.core.model.SecConst"%>
 <%@page import="org.ejbca.core.model.ca.catoken.ICAToken"%>
-<div class="h4" id="crlstatus" >
+
+<div class="status" id="crlstatus" >
         <h4><%=ejbcawebbean.getText("CAHEALTH")%> <%= ejbcawebbean.getHelpReference("/userguide.html#CA%20Status") %></h4>
 		<table border="1" cellspacing="2" cellpadding="3" width="100%" class="grid">
 			<%	if(ejbcawebbean.getAdminPreference().getFrontpageCaStatus()) { %>
@@ -42,7 +42,7 @@
 							}
 							if (castatus != SecConst.CA_EXTERNAL) {
 							%>
-							<tr class="a">	
+							<tr>	
 								<td><%=name %></td>
 								<td style="text-align:center;">
 									<% if (caservice) { %>
@@ -71,7 +71,7 @@
 			    		}  
 			        }
 			   } else { %>
-			   		<tr class="a">	
+			   		<tr>	
 						<td colspan="3"><%=ejbcawebbean.getText("CANBEENABLED") %></td>
 					</tr>
 			   <% } %>
