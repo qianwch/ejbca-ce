@@ -116,7 +116,7 @@ body#menu {
 /*--------------------------------------------------------------------------*/
 /* HEADER & FOOTER */
 
-/* Header */
+/* --- Header */
 body#header {
 	margin: 0em;
 	padding: 0em;
@@ -139,7 +139,7 @@ body#header {
 	margin-top: 0px;
 }
 
-/* Footer */
+/* --- Footer */
 div#footer {
 	margin-top: 1.5em;
 	text-align: center;
@@ -160,7 +160,6 @@ div#footer {
 /*--------------------------------------------------------------------------*/
 /* CONTENT */
 
-/* Page: ALL */
 h1 {
 	margin-top: 0em;
 	margin-bottom: .2em;
@@ -230,6 +229,7 @@ div.message {
 	margin-top: .5em;
 	text-align: center;
 }
+
 /* --- Tables */
 table {
 	font-size: 1em;
@@ -259,7 +259,11 @@ table.grid td {
 	border: 1px solid #6F9AD3;
 }
 
-/* Page: ALL List/Actions forms */
+
+/*--------------------------------------------------------------------------*/
+/* CONTENT > FORMS */
+
+/* --- Form: List/Actions */
 table.list,
 table.actions {
 	width: 100%;
@@ -277,7 +281,7 @@ table.actions tr td h3 {
 	margin-bottom: -.25em;
 }
 
-/* Page: ALL View tables */
+/* --- Form: View */
 table.view tr td.dn {
 	white-space: pre-wrap;
 }
@@ -285,7 +289,7 @@ table.view tr td .attribute {
 	white-space: pre !important;
 }
 
-/* Page: ALL Edit forms */
+/* --- Form: Edit */
 table.edit {
 	margin-top: .75em;
 	margin-left: -2px;
@@ -295,19 +299,22 @@ table.edit tr td {
 	padding: .25em .5em;
 	line-height: 1.55em;
 }
-/* --- Sections, Headers, and Footers */
+/* Sections, Headers, and Footers */
 table.edit tr:first-child td,
 table.edit tr.section td {
 	background-color: #FEEECD;
 	border-top: 3px solid #FEDD9A;
 	color: #A00;
 }
+table.edit tr:first-child td.field {
+	text-align: right;
+}
 table.edit tr:last-child td {
 	background-color: #FEEECD;
 	border-bottom: 3px solid #FEDD9A;
 	color: #A00;
 }
-/* --- Titles */
+/* Titles */
 table.edit tr.section td,
 table.edit tr.title td {
 	font-size: 1.25em;
@@ -315,12 +322,12 @@ table.edit tr.title td {
 table.edit tr td.title {								/* OLD TO KEEP */
 	font-size: 1.25em;
 }
-/* --- Others */
+/* Others */
 table.edit tr td .attribute {
 	white-space: pre !important;
 }
 
-/* Page: ALL Search forms */
+/* --- Form: Search */
 table.search tr td {
 	padding: .25em .5em .1em 0em;
 	line-height: 1.75em;
@@ -355,7 +362,11 @@ table.results tbody tr:active {
 	background-color: #FFB !important;
 }
 
-/* Page: Home */
+
+/*--------------------------------------------------------------------------*/
+/* CONTENT > PAGES */
+
+/* --- Page: Home */
 h3#welcome {
 	color: #555;
 	text-shadow: .1em .1em .15em rgba(0,0,0,.1);
@@ -414,7 +425,7 @@ div.status table td img {
 	margin-top: .1em;
 }
 
-/* Page: CA > CA Activation */
+/* --- Page: CA > CA Activation */
 div#activation {
 	margin-top: 1em;
 }
@@ -462,7 +473,7 @@ div#code input[type="submit"] {
 	margin-left: 1em;
 }
 
-/* Page: RA > Add End-Entity */
+/* --- Page: RA > Add End-Entity */
 table#addendentity.edit tr td {
 	padding: .15em .3em;
 	vertical-align: middle;
@@ -476,7 +487,7 @@ table#addendentity.edit tr td:last-child {
 	text-align: center;
 }
 
-/* Page: SUP > Log configuration */
+/* --- Page: SUP > Log configuration */
 table#logconfiguration {
 	margin-bottom: .25em;
 }
@@ -510,7 +521,7 @@ table#logconfigbuttons td input[type="submit"] {
 	margin-right: 1em;
 }
 
-/* Page: SYS > Administrators Groups */
+/* --- Page: SYS > Administrators Groups */
 form#groupList p {
 	margin-top: 1.25em;
 }
@@ -563,20 +574,18 @@ form#groupList table td a:active {
 /*--------------------------------------------------------------------------*/
 /* TABLES */
 
-/* Table: ALL */
-
 .Row0, #Row0 { color: black; font-size: 9pt; background-color: #F7F9FF; }
 .Row1, #Row1 { color: black; font-size: 9pt; background-color: #E5ECFF; }
 
 .label { vertical-align: top; text-align: right; }
 .field { vertical-align: top; text-align: left; }
 
-/* Table: ALL List */
+/* --- Table: List/Actions */
 
 .listColumn1 { text-align: left; width: 40%; }
 .listColumn2 { text-align: left; width: 60%; }
 
-/* Table: Logs */
+/* --- Table: SUP > Logs */
 
 td#InfoRow0 { color: black; font-size: 9pt; background-color: white; }
 td#InfoRow1 { color: black; font-size: 9pt; background-color: #ccffcc; }
@@ -584,9 +593,9 @@ td#ErrorRow0 { color: black; font-size: 9pt; background-color: white; }
 td#ErrorRow1 { color: black; font-size: 9pt; background-color: #ffcccc; }
 
 tr#LogTextRow0 { color: black; font-size: 7pt; background-color: white; }
-tr#LogTextRow1 { color: black; font-size: 7pt; background-color: #e5ecff; }
+tr#LogTextRow1 { color: black; font-size: 7pt; background-color: #E5ECFF; }
 
-/* Table: Admins */
+/* --- Table: SYS > Administrators Groups */
 
 .listHeader { color: black; font-size: 1.2em; font-weight: bold; text-align: left; }
 
@@ -603,7 +612,6 @@ tr#LogTextRow1 { color: black; font-size: 7pt; background-color: #e5ecff; }
 /*--------------------------------------------------------------------------*/
 /* POPUPS */
 
-/* Popup: ALL */
 body.popup {
 	margin: 1em;
 	padding: 0em;
@@ -642,7 +650,7 @@ body.popup {
 	white-space: nowrap;
 }
 
-/* Popup: Edit End-Entity */
+/* --- Popup: Edit End-Entity */
 .popup#editendentity table.edit tr td {
 	padding: .15em .4em .15em .3em;
 	vertical-align: middle;
@@ -652,7 +660,7 @@ body.popup {
 	text-align: center;
 }
 
-/* Popup: View History */
+/* --- Popup: View History */
 .popup#viewhistory h2,
 .popup#viewhistory h3,
 .popup#viewhistory h4 {
