@@ -64,7 +64,7 @@ function checkallfields(){
         <%= ejbcawebbean.getText("ADMINGROUP") %> 
       </td>
       <td width="70%"> 
-        <c:out value="<%= adminidtonamemap.get(Integer.valueOf(issuerdata.getRoleDataId())) %>"/> 
+        <c:out value="<%= adminidtonamemap.get(Integer.valueOf(issuerdata.getAdminGroupId())) %>"/> 
       </td>
     </tr>
     <tr  id="Row<%=row++%2%>"> 

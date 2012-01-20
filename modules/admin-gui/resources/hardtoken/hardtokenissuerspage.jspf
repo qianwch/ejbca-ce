@@ -64,7 +64,7 @@ function checkselected(){
                HardTokenIssuerData data = (HardTokenIssuerData) issuerdatas.get(curalias);
                 %>
             <option value='<c:out value="<%=curalias%>"/>'>
-                <% out.write(curalias + ", " + adminidtonamemap.get(Integer.valueOf(data.getRoleDataId()))); %>
+                <% out.write(curalias + ", " + adminidtonamemap.get(Integer.valueOf(data.getAdminGroupId()))); %>
              </option>
           <%}%>
         </select>
@@ -116,9 +116,9 @@ function checkselected(){
         <select name="<%=SELECT_ADMINGROUP%>" >
           <%Iterator iter = authgroups.iterator();
             while(iter.hasNext()){
-              RoleData role = (RoleData) iter.next();%>
-            <option value="<%= role.getPrimaryKey()%>">
-               <c:out value='<%= role.getRoleName() %>'/>
+            	AdminGroup group = (AdminGroup) iter.next();%>
+            <option value="<%= group.getAdminGroupId()%>">
+               <c:out value='<%= group.getAdminGroupName() %>'/>
             </option>
           <%}%>
         </select>
