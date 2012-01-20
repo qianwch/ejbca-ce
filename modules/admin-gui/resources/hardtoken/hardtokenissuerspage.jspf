@@ -116,15 +116,9 @@ function checkselected(){
         <select name="<%=SELECT_ADMINGROUP%>" >
           <%Iterator iter = authgroups.iterator();
             while(iter.hasNext()){
-<<<<<<< .arbetskopia
-              AdminGroup group = (AdminGroup) iter.next();%>
-            <option value="<%= group.getAdminGroupId()%>">
-               <%= group.getAdminGroupName() %>
-=======
               RoleData role = (RoleData) iter.next();%>
             <option value="<%= role.getPrimaryKey()%>">
                <c:out value='<%= role.getRoleName() %>'/>
->>>>>>> .sammanslagning-höger.r13819
             </option>
           <%}%>
         </select>
