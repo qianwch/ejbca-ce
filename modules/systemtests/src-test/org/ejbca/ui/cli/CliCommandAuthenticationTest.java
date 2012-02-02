@@ -223,6 +223,7 @@ public class CliCommandAuthenticationTest {
         boolean oldValue = config.getEnableCommandLineInterface();
         config.setEnableCommandLineInterface(enabled);
         globalConfigurationProxySession.saveGlobalConfigurationRemote(internalAdmin, config);
+        log.debug("Updated globalconfiguration with clienabled: "+config.getEnableCommandLineInterface());
         return oldValue;
     }
 
@@ -231,6 +232,7 @@ public class CliCommandAuthenticationTest {
         boolean oldValue = config.getEnableCommandLineInterfaceDefaultUser();
         config.setEnableCommandLineInterfaceDefaultUser(enabled);
         globalConfigurationProxySession.saveGlobalConfigurationRemote(internalAdmin, config);
+        log.debug("Updated globalconfiguration with cliuserenabled: "+config.getEnableCommandLineInterfaceDefaultUser());
         return oldValue;
     }
 }
