@@ -40,7 +40,11 @@ public class GlobalConfigurationProxySessionBean implements GlobalConfigurationP
     @EJB
     private GlobalConfigurationSessionLocal globalConfigurationSession;
     
+    /** Method used for systemtests where we need to save global configuration from remote. 
+     * Set transaction to requires_new, in acse container throws an exception and gets into "rollback only"
+     */
     @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void saveGlobalConfigurationRemote(final AuthenticationToken admin, final GlobalConfiguration globconf) throws AuthorizationDeniedException {
         if (log.isTraceEnabled()) {
             log.trace(">saveGlobalConfigurationRemote()");
