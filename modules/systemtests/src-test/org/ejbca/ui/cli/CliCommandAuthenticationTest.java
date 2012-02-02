@@ -187,7 +187,7 @@ public class CliCommandAuthenticationTest {
                 throw e;
             }
         } finally {
-            setCliUserEnabled(oldValue);
+            setCliEnabled(oldValue);
         }
     }
     
