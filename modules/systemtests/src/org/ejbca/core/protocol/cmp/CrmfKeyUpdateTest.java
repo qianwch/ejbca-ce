@@ -27,9 +27,11 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 
 import javax.ejb.ObjectNotFoundException;
 
@@ -51,10 +53,13 @@ import org.bouncycastle.asn1.x509.ReasonFlags;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.asn1.x509.X509CertificateStructure;
 import org.bouncycastle.asn1.x509.X509Name;
+import org.cesecore.core.ejb.authorization.AdminEntitySessionRemote;
+import org.cesecore.core.ejb.authorization.AdminGroupSessionRemote;
 import org.ejbca.config.CmpConfiguration;
 import org.ejbca.config.ConfigurationHolder;
 import org.ejbca.core.EjbcaException;
 import org.ejbca.core.ejb.JndiHelper;
+import org.ejbca.core.ejb.authorization.AuthorizationSession;
 import org.ejbca.core.ejb.ca.caadmin.CAAdminSessionRemote;
 import org.ejbca.core.ejb.ca.caadmin.CaSessionRemote;
 import org.ejbca.core.ejb.ca.sign.SignSessionRemote;
@@ -64,6 +69,8 @@ import org.ejbca.core.ejb.ra.UserAdminSessionRemote;
 import org.ejbca.core.model.AlgorithmConstants;
 import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.approval.WaitingForApprovalException;
+import org.ejbca.core.model.authorization.AdminEntity;
+import org.ejbca.core.model.authorization.AdminGroup;
 import org.ejbca.core.model.authorization.AuthorizationDeniedException;
 import org.ejbca.core.model.ca.caadmin.CADoesntExistsException;
 import org.ejbca.core.model.ca.caadmin.CAInfo;
@@ -72,6 +79,7 @@ import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.model.ra.UserDataConstants;
 import org.ejbca.core.model.ra.UserDataVO;
 import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
+import org.ejbca.ui.cli.batch.BatchMakeP12;
 import org.ejbca.util.CertTools;
 import org.ejbca.util.CryptoProviderTools;
 import org.ejbca.util.InterfaceCache;
@@ -126,6 +134,9 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
     private SignSessionRemote signSession = InterfaceCache.getSignSession();
     private ConfigurationSessionRemote confSession = JndiHelper.getRemoteSession(ConfigurationSessionRemote.class); //InterfaceCache.getConfigurationSession();
     private CertificateStoreSession certStoreSession = InterfaceCache.getCertificateStoreSession();
+    private AdminGroupSessionRemote adminGroupSession = InterfaceCache.getAdminGroupSession();
+    private AdminEntitySessionRemote adminEntitySession = InterfaceCache.getAdminEntitySession();
+    private AuthorizationSession authorizationSession = InterfaceCache.getAuthorizationSession();
     
     public CrmfKeyUpdateTest(String arg0) {
         super(arg0);
@@ -213,7 +224,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
 
         
         
-        PKIMessage req = genRenewalReq(keys, false);
+        PKIMessage req = genRenewalReq(keys, false, null, null);
         assertNotNull("Failed to generate a CMP renewal request", req);
         int reqId = req.getBody().getKur().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue();
         AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
@@ -295,7 +306,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
 
         
         
-        PKIMessage req = genRenewalReq(keys, false);
+        PKIMessage req = genRenewalReq(keys, false, null, null);
         assertNotNull("Failed to generate a CMP renewal request", req);
         AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
         req.getHeader().setProtectionAlg(pAlg);      
@@ -385,7 +396,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
 
         
         
-        PKIMessage req = genRenewalReq(keys, false);
+        PKIMessage req = genRenewalReq(keys, false, null, null);
         assertNotNull("Failed to generate a CMP renewal request", req);
         AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
         req.getHeader().setProtectionAlg(pAlg);      
@@ -471,7 +482,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
                     AlgorithmConstants.SIGALG_SHA1_WITH_RSA, false);
         assertNotNull("Failed to create a test certificate", fakeCert);
         
-        PKIMessage req = genRenewalReq(keys, false);
+        PKIMessage req = genRenewalReq(keys, false, null, null);
         assertNotNull("Failed to generate a CMP renewal request", req);
         AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
         req.getHeader().setProtectionAlg(pAlg);      
@@ -536,7 +547,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
      * 		- Check that the CMP response message contain the expected error details text
      * 
      * @throws Exception
-     */
+     * /
     @Test
     public void test05UpdateKeyInRAMode() throws Exception {
         if(log.isTraceEnabled()) {
@@ -557,7 +568,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
 
         
         
-        PKIMessage req = genRenewalReq(keys, false);
+        PKIMessage req = genRenewalReq(keys, false, null, null);
         assertNotNull("Failed to generate a CMP renewal request", req);
         int reqId = req.getBody().getKur().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue();
         AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
@@ -596,7 +607,8 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         }
 
     }
-
+	*/
+    
     /**
      * Sends a KeyUpdateRequest using the same old keys and the configurations is NOT to allow the use of the same key. 
      * A CMP error message is expected and no certificate renewal.
@@ -645,7 +657,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
 
         
         
-        PKIMessage req = genRenewalReq(keys, false);
+        PKIMessage req = genRenewalReq(keys, false, null, null);
         assertNotNull("Failed to generate a CMP renewal request", req);
         AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
         req.getHeader().setProtectionAlg(pAlg);      
@@ -732,7 +744,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
 
         
         KeyPair newkeys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
-        PKIMessage req = genRenewalReq(newkeys, false);
+        PKIMessage req = genRenewalReq(newkeys, false, null, null);
         assertNotNull("Failed to generate a CMP renewal request", req);
         int reqId = req.getBody().getKur().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue();
         AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
@@ -766,6 +778,498 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         }
 
     }
+   
+    /**
+     * Sends a KeyUpdateRequest in RA mode. 
+     * Successful operation is expected and a new certificate is received.
+     * 
+     * - Pre-configuration: Sets the operational mode to RA mode (cmp.raoperationalmode=ra)
+     * - Pre-configuration: Sets the cmp.authenticationmodule to 'EndEntityCertificate'
+     * - Pre-configuration: Sets the cmp.authenticationparameters to 'AdminCA1'
+     * - Pre-configuration: Set cmp.checkadminauthorization to 'true'
+     * - Creates a new user and obtains a certificate, cert, for this user. Tests whether obtaining the certificate was successful.
+     * - Generates a CMP KeyUpdate Request and tests that such request has been created.
+     * - Signs the CMP request using cert and attaches cert to the CMP request. Tests that the CMP request is still not null
+     * - Verifies the signature of the CMP request
+     * - Sends the request using HTTP and receives an response.
+     * - Examines the response:
+     * 		- Checks that the response is not empty or null
+     * 		- Checks that the protection algorithm is sha1WithRSAEncryption
+     * 		- Check that the signer is the expected CA
+     * 		- Verifies the response signature
+     * 		- Checks that the response's senderNonce is 16 bytes long
+     * 		- Checks that the request's senderNonce is the same as the response's recipientNonce
+     * 		- Checks that the request and the response has the same transactionID
+     * 		- Obtains the certificate from the response
+     * 		- Checks that the obtained certificate has the right subjectDN and issuerDN
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void test09RAMode() throws Exception {
+        if(log.isTraceEnabled()) {
+            log.trace("test09RAMode()");
+        }
+        
+        updatePropertyOnServer(CmpConfiguration.CONFIG_OPERATIONMODE, "ra");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE);
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "AdminCA1");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_CHECKADMINAUTHORIZATION, "true");
+
+        //------------------ create the user and issue his first certificate -------------
+        createUser(username, userDN, "foo123");
+        KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
+        Certificate certificate = null;
+        certificate = (X509Certificate) signSession.createCertificate(admin, username, "foo123", keys.getPublic());
+        assertNotNull("Failed to create a test certificate", certificate);
+
+        PKIMessage req = genRenewalReq(keys, false, userDN, issuerDN);
+        assertNotNull("Failed to generate a CMP renewal request", req);
+        int reqId = req.getBody().getKur().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue();
+
+        AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
+        req.getHeader().setProtectionAlg(pAlg);
+        req.getHeader().setSenderKID(new DEROctetString("CMPTESTPROFILE".getBytes()));
+        
+		createUser("cmpTestAdmin", "CN=cmpTestAdmin,C=SE", "foo123");
+		KeyPair admkeys = KeyTools.genKeys("1024", "RSA");
+		Certificate admCert = signSession.createCertificate(admin, "cmpTestAdmin", "foo123", admkeys.getPublic());
+		Admin adm = new Admin(admCert, "cmpTestAdmin", "cmpTestAdmin@primekey.se");
+		setupAccessRights(adm);
+		addExtraCert(req, admCert);
+		signPKIMessage(req, admkeys);
+		assertNotNull(req);
+        
+        //addExtraCert(req, certificate);
+        //signPKIMessage(req, keys);
+        //assertNotNull(req);
+
+        ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        DEROutputStream out = new DEROutputStream(bao);
+        out.writeObject(req);
+        byte[] ba = bao.toByteArray();
+        //send request and recieve response
+        byte[] resp = sendCmpHttp(ba, 200);
+        //chechCmpResponseGeneral(resp, issuerDN, cacert, nonce, transid, true, null);
+        checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, true, null);
+        X509Certificate cert = checkKurCertRepMessage(userDN, cacert, resp, reqId);
+        assertNotNull("Failed to renew the certificate", cert);
+
+
+        if(log.isTraceEnabled()) {
+            log.trace("<test09RAMode()");
+        }
+
+    }
+
+    /**
+     * Sends a KeyUpdateRequest in RA mode and the request sender is not an authorized administrator. 
+     * A CMP error message is expected and no certificate renewal.
+     * 
+     * - Pre-configuration: Sets the operational mode to client mode (cmp.raoperationalmode=normal)
+     * - Pre-configuration: Sets the cmp.authenticationmodule to 'EndEntityCertificate'
+     * - Pre-configuration: Sets the cmp.authenticationparameters to 'AdminCA1'
+     * - Pre-configuration: Set cmp.checkadminauthorization to 'true'
+     * - Creates a new user and obtains a certificate, cert, for this user. Tests whether obtaining the certificate was successful.
+     * - Generates a CMP KeyUpdate Request and tests that such request has been created.
+     * - Signs the CMP request using cert and attaches cert to the CMP request. Tests that the CMP request is still not null
+     * - Verifies the signature of the CMP request
+     * - Sends the request using HTTP and receives an response.
+     * - Examines the response:
+     * 		- Checks that the response is not empty or null
+     * 		- Checks that the protection algorithm is sha1WithRSAEncryption
+     * 		- Check that the signer is the expected CA
+     * 		- Verifies the response signature
+     * 		- Checks that the response's senderNonce is 16 bytes long
+     * 		- Checks that the request's senderNonce is the same as the response's recipientNonce
+     * 		- Checks that the request and the response has the same transactionID
+     * 		- Parse the response and make sure that the parsing did not result in a 'null'
+     * 		- Check that the CMP response message tag number is '23', indicating a CMP error message
+     * 		- Check that the CMP response message contain the expected error details text
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void test10RAModeNonAdmin() throws Exception {
+        if(log.isTraceEnabled()) {
+            log.trace("test10RAModeNonAdmin()");
+        }
+        
+        updatePropertyOnServer(CmpConfiguration.CONFIG_OPERATIONMODE, "ra");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE);
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "AdminCA1");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_CHECKADMINAUTHORIZATION, "true");
+
+        //------------------ create the user and issue his first certificate -------------
+        createUser(username, userDN, "foo123");
+        KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
+        Certificate certificate = (X509Certificate) signSession.createCertificate(admin, username, "foo123", keys.getPublic());
+        assertNotNull("Failed to create a test certificate", certificate);
+
+        PKIMessage req = genRenewalReq(keys, false, userDN, issuerDN);
+        assertNotNull("Failed to generate a CMP renewal request", req);
+        int reqId = req.getBody().getKur().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue();
+
+        AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
+        req.getHeader().setProtectionAlg(pAlg);
+        req.getHeader().setSenderKID(new DEROctetString("CMPTESTPROFILE".getBytes()));
+        
+        addExtraCert(req, certificate);
+        signPKIMessage(req, keys);
+        assertNotNull(req);
+
+        ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        DEROutputStream out = new DEROutputStream(bao);
+        out.writeObject(req);
+        byte[] ba = bao.toByteArray();
+        //send request and recieve response
+        byte[] resp = sendCmpHttp(ba, 200);
+        //chechCmpResponseGeneral(resp, issuerDN, cacert, nonce, transid, true, null);
+        checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, false, null);
+        
+        PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
+        assertNotNull(respObject);
+
+        final PKIBody body = respObject.getBody();
+        assertEquals(23, body.getTagNo());
+        final String errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
+        final String expectedErrMsg = "\"" + userDN + "\" is not an authorized administrator.";
+        assertEquals(expectedErrMsg, errMsg);
+
+        if(log.isTraceEnabled()) {
+            log.trace("<test10RAModeNonAdmin()");
+        }
+
+    }
+    
+    /**
+     * Sends a KeyUpdateRequest in RA mode without filling the 'issuerDN' field in the request. 
+     * Successful operation is expected and a new certificate is received.
+     * 
+     * - Pre-configuration: Sets the operational mode to RA mode (cmp.raoperationalmode=ra)
+     * - Pre-configuration: Sets the cmp.authenticationmodule to 'EndEntityCertificate'
+     * - Pre-configuration: Sets the cmp.authenticationparameters to 'AdminCA1'
+     * - Pre-configuration: Set cmp.checkadminauthorization to 'true'
+     * - Creates a new user and obtains a certificate, cert, for this user. Tests whether obtaining the certificate was successful.
+     * - Generates a CMP KeyUpdate Request and tests that such request has been created.
+     * - Signs the CMP request using cert and attaches cert to the CMP request. Tests that the CMP request is still not null
+     * - Verifies the signature of the CMP request
+     * - Sends the request using HTTP and receives an response.
+     * - Examines the response:
+     * 		- Checks that the response is not empty or null
+     * 		- Checks that the protection algorithm is sha1WithRSAEncryption
+     * 		- Check that the signer is the expected CA
+     * 		- Verifies the response signature
+     * 		- Checks that the response's senderNonce is 16 bytes long
+     * 		- Checks that the request's senderNonce is the same as the response's recipientNonce
+     * 		- Checks that the request and the response has the same transactionID
+     * 		- Obtains the certificate from the response
+     * 		- Checks that the obtained certificate has the right subjectDN and issuerDN
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void test11RANoIssuer() throws Exception {
+        if(log.isTraceEnabled()) {
+            log.trace("test11RANoIssuer()");
+        }
+        
+        updatePropertyOnServer(CmpConfiguration.CONFIG_OPERATIONMODE, "ra");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE);
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "AdminCA1");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_CHECKADMINAUTHORIZATION, "true");
+
+        //------------------ create the user and issue his first certificate -------------
+        createUser(username, userDN, "foo123");
+        KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
+        Certificate certificate = (X509Certificate) signSession.createCertificate(admin, username, "foo123", keys.getPublic());
+        assertNotNull("Failed to create a test certificate", certificate);
+
+        PKIMessage req = genRenewalReq(keys, false, userDN, null);
+        assertNotNull("Failed to generate a CMP renewal request", req);
+        int reqId = req.getBody().getKur().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue();
+
+        AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
+        req.getHeader().setProtectionAlg(pAlg);
+        req.getHeader().setSenderKID(new DEROctetString("CMPTESTPROFILE".getBytes()));
+        
+		createUser("cmpTestAdmin", "CN=cmpTestAdmin,C=SE", "foo123");
+		KeyPair admkeys = KeyTools.genKeys("1024", "RSA");
+		Certificate admCert = signSession.createCertificate(admin, "cmpTestAdmin", "foo123", admkeys.getPublic());
+		Admin adm = new Admin(admCert, "cmpTestAdmin", "cmpTestAdmin@primekey.se");
+		setupAccessRights(adm);
+		addExtraCert(req, admCert);
+		signPKIMessage(req, admkeys);
+		assertNotNull(req);
+
+        ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        DEROutputStream out = new DEROutputStream(bao);
+        out.writeObject(req);
+        byte[] ba = bao.toByteArray();
+        //send request and recieve response
+        byte[] resp = sendCmpHttp(ba, 200);
+        //chechCmpResponseGeneral(resp, issuerDN, cacert, nonce, transid, true, null);
+        checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, false, null);
+        X509Certificate cert = checkKurCertRepMessage(userDN, cacert, resp, reqId);
+        assertNotNull("Failed to renew the certificate", cert);
+        
+        if(log.isTraceEnabled()) {
+            log.trace("<test11RANoIssuer()");
+        }
+
+    }
+    
+    /**
+     * Sends a KeyUpdateRequest in RA mode with neither subjectDN nor issuerDN are set in the request. 
+     * A CMP error message is expected and no certificate renewal.
+     * 
+     * - Pre-configuration: Sets the operational mode to client mode (cmp.raoperationalmode=normal)
+     * - Pre-configuration: Sets the cmp.authenticationmodule to 'EndEntityCertificate'
+     * - Pre-configuration: Sets the cmp.authenticationparameters to 'AdminCA1'
+     * - Pre-configuration: Set cmp.checkadminauthorization to 'true'
+     * - Creates a new user and obtains a certificate, cert, for this user. Tests whether obtaining the certificate was successful.
+     * - Generates a CMP KeyUpdate Request and tests that such request has been created.
+     * - Signs the CMP request using cert and attaches cert to the CMP request. Tests that the CMP request is still not null
+     * - Verifies the signature of the CMP request
+     * - Sends the request using HTTP and receives an response.
+     * - Examines the response:
+     * 		- Checks that the response is not empty or null
+     * 		- Checks that the protection algorithm is sha1WithRSAEncryption
+     * 		- Check that the signer is the expected CA
+     * 		- Verifies the response signature
+     * 		- Checks that the response's senderNonce is 16 bytes long
+     * 		- Checks that the request's senderNonce is the same as the response's recipientNonce
+     * 		- Checks that the request and the response has the same transactionID
+     * 		- Parse the response and make sure that the parsing did not result in a 'null'
+     * 		- Check that the CMP response message tag number is '23', indicating a CMP error message
+     * 		- Check that the CMP response message contain the expected error details text
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void test12RANoIssuerNoSubjectDN() throws Exception {
+        if(log.isTraceEnabled()) {
+            log.trace("test12RANoIssuerNoSubjetDN()");
+        }
+        
+        updatePropertyOnServer(CmpConfiguration.CONFIG_OPERATIONMODE, "ra");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE);
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "AdminCA1");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_CHECKADMINAUTHORIZATION, "true");
+
+        //------------------ create the user and issue his first certificate -------------
+        createUser(username, userDN, "foo123");
+        KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
+        Certificate certificate = (X509Certificate) signSession.createCertificate(admin, username, "foo123", keys.getPublic());
+        assertNotNull("Failed to create a test certificate", certificate);
+
+        PKIMessage req = genRenewalReq(keys, false, null, null);
+        assertNotNull("Failed to generate a CMP renewal request", req);
+        int reqId = req.getBody().getKur().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue();
+
+        AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
+        req.getHeader().setProtectionAlg(pAlg);
+        req.getHeader().setSenderKID(new DEROctetString("CMPTESTPROFILE".getBytes()));
+        
+		createUser("cmpTestAdmin", "CN=cmpTestAdmin,C=SE", "foo123");
+		KeyPair admkeys = KeyTools.genKeys("1024", "RSA");
+		Certificate admCert = signSession.createCertificate(admin, "cmpTestAdmin", "foo123", admkeys.getPublic());
+		Admin adm = new Admin(admCert, "cmpTestAdmin", "cmpTestAdmin@primekey.se");
+		setupAccessRights(adm);
+		addExtraCert(req, admCert);
+		signPKIMessage(req, admkeys);
+		assertNotNull(req);
+
+        ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        DEROutputStream out = new DEROutputStream(bao);
+        out.writeObject(req);
+        byte[] ba = bao.toByteArray();
+        //send request and recieve response
+        byte[] resp = sendCmpHttp(ba, 200);
+        //chechCmpResponseGeneral(resp, issuerDN, cacert, nonce, transid, true, null);
+        checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, false, null);
+        
+        PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
+        assertNotNull(respObject);
+
+        final PKIBody body = respObject.getBody();
+        assertEquals(23, body.getTagNo());
+        final String errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
+        final String expectedErrMsg = "Cannot find a SubjectDN in the request";
+        assertEquals(expectedErrMsg, errMsg);
+
+        if(log.isTraceEnabled()) {
+            log.trace("<test12RANoIssuerNoSubjectDN()");
+        }
+
+    }
+    
+    /**
+     * Sends a KeyUpdateRequest in RA mode when there are more than one authentication module configured. 
+     * Successful operation is expected and a new certificate is received.
+     * 
+     * - Pre-configuration: Sets the operational mode to RA mode (cmp.raoperationalmode=ra)
+     * - Pre-configuration: Sets the cmp.authenticationmodule to "HMAC;DnPartPwd;EndEntityCertificate"
+     * - Pre-configuration: Sets the cmp.authenticationparameters to "-;OU;AdminCA1"
+     * - Pre-configuration: Set cmp.checkadminauthorization to 'true'
+     * - Creates a new user and obtains a certificate, cert, for this user. Tests whether obtaining the certificate was successful.
+     * - Generates a CMP KeyUpdate Request and tests that such request has been created.
+     * - Signs the CMP request using cert and attaches cert to the CMP request. Tests that the CMP request is still not null
+     * - Verifies the signature of the CMP request
+     * - Sends the request using HTTP and receives an response.
+     * - Examines the response:
+     * 		- Checks that the response is not empty or null
+     * 		- Checks that the protection algorithm is sha1WithRSAEncryption
+     * 		- Check that the signer is the expected CA
+     * 		- Verifies the response signature
+     * 		- Checks that the response's senderNonce is 16 bytes long
+     * 		- Checks that the request's senderNonce is the same as the response's recipientNonce
+     * 		- Checks that the request and the response has the same transactionID
+     * 		- Obtains the certificate from the response
+     * 		- Checks that the obtained certificate has the right subjectDN and issuerDN
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void test13RAMultipleAuthenticationModules() throws Exception {
+        if(log.isTraceEnabled()) {
+            log.trace("test13RAMultipleAuthenticationModules");
+        }
+        
+        updatePropertyOnServer(CmpConfiguration.CONFIG_OPERATIONMODE, "ra");
+        String authmodules = CmpConfiguration.AUTHMODULE_HMAC + ";" + CmpConfiguration.AUTHMODULE_DN_PART_PWD + ";" + CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE;
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, authmodules);
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "-;OU;AdminCA1");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_CHECKADMINAUTHORIZATION, "true");
+
+        //------------------ create the user and issue his first certificate -------------
+        createUser(username, userDN, "foo123");
+        KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
+        Certificate certificate = (X509Certificate) signSession.createCertificate(admin, username, "foo123", keys.getPublic());
+        assertNotNull("Failed to create a test certificate", certificate);
+
+        PKIMessage req = genRenewalReq(keys, false, userDN, null);
+        assertNotNull("Failed to generate a CMP renewal request", req);
+        int reqId = req.getBody().getKur().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue();
+
+        AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
+        req.getHeader().setProtectionAlg(pAlg);
+        req.getHeader().setSenderKID(new DEROctetString("CMPTESTPROFILE".getBytes()));
+        
+		createUser("cmpTestAdmin", "CN=cmpTestAdmin,C=SE", "foo123");
+		KeyPair admkeys = KeyTools.genKeys("1024", "RSA");
+		Certificate admCert = signSession.createCertificate(admin, "cmpTestAdmin", "foo123", admkeys.getPublic());
+		Admin adm = new Admin(admCert, "cmpTestAdmin", "cmpTestAdmin@primekey.se");
+		setupAccessRights(adm);
+		addExtraCert(req, admCert);
+		signPKIMessage(req, admkeys);
+		assertNotNull(req);
+
+        ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        DEROutputStream out = new DEROutputStream(bao);
+        out.writeObject(req);
+        byte[] ba = bao.toByteArray();
+        //send request and recieve response
+        byte[] resp = sendCmpHttp(ba, 200);
+        //chechCmpResponseGeneral(resp, issuerDN, cacert, nonce, transid, true, null);
+        checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, false, null);
+        X509Certificate cert = checkKurCertRepMessage(userDN, cacert, resp, reqId);
+        assertNotNull("Failed to renew the certificate", cert);
+        
+        if(log.isTraceEnabled()) {
+            log.trace("<test13RAMultipleAuthenticationModules()");
+        }
+
+    }
+    
+    /**
+     * Sends a KeyUpdateRequest in RA mode when the authentication module is NOT set to 'EndEntityCertificate'. 
+     * Successful operation is expected and a new certificate is received.
+     * 
+     * - Pre-configuration: Sets the operational mode to RA mode (cmp.raoperationalmode=ra)
+     * - Pre-configuration: Sets the cmp.authenticationmodule to 'HMAC'
+     * - Pre-configuration: Sets the cmp.authenticationparameters to '-'
+     * - Pre-configuration: Set cmp.checkadminauthorization to 'true'
+     * - Creates a new user and obtains a certificate, cert, for this user. Tests whether obtaining the certificate was successful.
+     * - Generates a CMP KeyUpdate Request and tests that such request has been created.
+     * - Signs the CMP request using cert and attaches cert to the CMP request. Tests that the CMP request is still not null
+     * - Verifies the signature of the CMP request
+     * - Sends the request using HTTP and receives an response.
+     * - Examines the response:
+     * 		- Checks that the response is not empty or null
+     * 		- Checks that the protection algorithm is sha1WithRSAEncryption
+     * 		- Check that the signer is the expected CA
+     * 		- Verifies the response signature
+     * 		- Checks that the response's senderNonce is 16 bytes long
+     * 		- Checks that the request's senderNonce is the same as the response's recipientNonce
+     * 		- Checks that the request and the response has the same transactionID
+     * 		- Obtains the certificate from the response
+     * 		- Checks that the obtained certificate has the right subjectDN and issuerDN
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void test14RANoCA() throws Exception {
+        if(log.isTraceEnabled()) {
+            log.trace("test14RANoCA()");
+        }
+        
+        updatePropertyOnServer(CmpConfiguration.CONFIG_OPERATIONMODE, "ra");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_DN_PART_PWD);
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "OU");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_CHECKADMINAUTHORIZATION, "true");
+
+        //------------------ create the user and issue his first certificate -------------
+        createUser(username, userDN, "foo123");
+        KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
+        Certificate certificate = (X509Certificate) signSession.createCertificate(admin, username, "foo123", keys.getPublic());
+        assertNotNull("Failed to create a test certificate", certificate);
+
+        PKIMessage req = genRenewalReq(keys, false, null, null);
+        assertNotNull("Failed to generate a CMP renewal request", req);
+        int reqId = req.getBody().getKur().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue();
+
+        AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
+        req.getHeader().setProtectionAlg(pAlg);
+        req.getHeader().setSenderKID(new DEROctetString("CMPTESTPROFILE".getBytes()));
+        
+		createUser("cmpTestAdmin", "CN=cmpTestAdmin,C=SE", "foo123");
+		KeyPair admkeys = KeyTools.genKeys("1024", "RSA");
+		Certificate admCert = signSession.createCertificate(admin, "cmpTestAdmin", "foo123", admkeys.getPublic());
+		Admin adm = new Admin(admCert, "cmpTestAdmin", "cmpTestAdmin@primekey.se");
+		setupAccessRights(adm);
+		addExtraCert(req, admCert);
+		signPKIMessage(req, admkeys);
+		assertNotNull(req);
+
+        ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        DEROutputStream out = new DEROutputStream(bao);
+        out.writeObject(req);
+        byte[] ba = bao.toByteArray();
+        //send request and recieve response
+        byte[] resp = sendCmpHttp(ba, 200);
+        //chechCmpResponseGeneral(resp, issuerDN, cacert, nonce, transid, true, null);
+        checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, false, null);
+        
+        PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
+        assertNotNull(respObject);
+
+        final PKIBody body = respObject.getBody();
+        assertEquals(23, body.getTagNo());
+        final String errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
+        final String expectedErrMsg = "Cannot find a SubjectDN in the request";
+        assertEquals(expectedErrMsg, errMsg);
+
+        if(log.isTraceEnabled()) {
+            log.trace("<test14RANoCA()");
+        }
+
+    }
+
+    
+    
+    
+    
 
     
     
@@ -882,7 +1386,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
 
     }
     
-    private PKIMessage genRenewalReq(KeyPair keys, boolean raVerifiedPopo) throws IOException, NoSuchAlgorithmException, NoSuchProviderException, 
+    private PKIMessage genRenewalReq(KeyPair keys, boolean raVerifiedPopo, String reqSubjectDN, String reqIssuerDN) throws IOException, NoSuchAlgorithmException, NoSuchProviderException, 
                         InvalidKeyException, SignatureException {
         
         CertTemplate myCertTemplate = new CertTemplate();
@@ -893,6 +1397,14 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         myOptionalValidity.setNotBefore(nb);
         myOptionalValidity.setNotAfter(na);
         myCertTemplate.setValidity(myOptionalValidity);
+        
+        if(reqSubjectDN != null) {
+        	myCertTemplate.setSubject(new X509Name(reqSubjectDN));
+        }
+        
+        if(reqIssuerDN != null) {
+        	myCertTemplate.setIssuer(new X509Name(reqIssuerDN));
+        }
         
         byte[] bytes = keys.getPublic().getEncoded();
         ByteArrayInputStream bIn = new ByteArrayInputStream(bytes);
@@ -1007,6 +1519,30 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         checkDN(userDN, struct.getSubject());
         assertEquals(CertTools.stringToBCDNString(struct.getIssuer().toString()), CertTools.getSubjectDN(cacert));
         return (X509Certificate) CertTools.getCertfromByteArray(struct.getEncoded());
+    }
+    
+    private void setupAccessRights(Admin adm) throws Exception {
+        
+    	boolean adminExists = false;
+    	AdminGroup admingroup = adminGroupSession.getAdminGroup(adm, AdminGroup.TEMPSUPERADMINGROUP);
+    	Iterator<AdminEntity> iter = admingroup.getAdminEntities().iterator();
+    	while (iter.hasNext()) {
+    		AdminEntity adminEntity = iter.next();
+    		if (adminEntity.getMatchValue().equals(adm.getUsername())) {
+    			adminExists = true;
+            }
+    	}
+
+    	if (!adminExists) {
+    		List<AdminEntity> list = new ArrayList<AdminEntity>();
+    		list.add(new AdminEntity(AdminEntity.WITH_COMMONNAME, AdminEntity.TYPE_EQUALCASE, adm.getUsername(), caid));
+    		adminEntitySession.addAdminEntities(adm, AdminGroup.TEMPSUPERADMINGROUP, list);
+    		authorizationSession.forceRuleUpdate(adm);
+    	}
+    	
+    	BatchMakeP12 batch = new BatchMakeP12();
+    	batch.setMainStoreDir("p12");
+    	batch.createAllNew();
     }
 
 }

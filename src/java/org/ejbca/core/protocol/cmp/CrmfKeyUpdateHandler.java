@@ -23,6 +23,7 @@ import javax.ejb.FinderException;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.bouncycastle.asn1.x509.X509Name;
 import org.cesecore.core.ejb.ca.store.CertificateProfileSession;
 import org.cesecore.core.ejb.ra.raadmin.EndEntityProfileSession;
 import org.ejbca.config.CmpConfiguration;
@@ -129,12 +130,9 @@ public class CrmfKeyUpdateHandler extends BaseCmpMessageHandler implements ICmpM
             LOG.trace(">handleMessage");
         }
         
-        if(CmpConfiguration.getRAOperationMode()) {
-            final String errMsg = "This request can only be processed in client mode";
-            LOG.info(errMsg);
-            return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_REQUEST, errMsg);
+        if(LOG.isDebugEnabled()) {
+        	LOG.debug("CMP running on RA mode: " + CmpConfiguration.getRAOperationMode());
         }
-        
         
         IResponseMessage resp = null;
         try {
@@ -145,7 +143,7 @@ public class CrmfKeyUpdateHandler extends BaseCmpMessageHandler implements ICmpM
                 crmfreq.getMessage();               
                 
                 // Authenticate the request
-                EndEntityCertificateAuthenticationModule eecmodule = new EndEntityCertificateAuthenticationModule("-");
+                EndEntityCertificateAuthenticationModule eecmodule = new EndEntityCertificateAuthenticationModule(getEECCA());
                 eecmodule.setSession(this.admin, this.caAdminSession, this.certStoreSession, this.authorizationSession, this.endEntityProfileSession, 
                         this.userAdminSession);
                 if(!eecmodule.verifyOrExtract(crmfreq.getPKIMessage(), null)) {
@@ -156,14 +154,54 @@ public class CrmfKeyUpdateHandler extends BaseCmpMessageHandler implements ICmpM
                     LOG.error(errMsg);
                     return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_MESSAGE_CHECK, errMsg);
                 }
+                
+                if(LOG.isDebugEnabled()) {
+                	LOG.debug("The CMP KeyUpdate request was verified successfully");
+                }
             
                 // Get the certificate attached to the request
                 X509Certificate oldCert = (X509Certificate) eecmodule.getExtraCert();
             
                 // Find the end entity that the certificate belongs to
-                String subjectDN = oldCert.getSubjectDN().toString();
-                String issuerDN = oldCert.getIssuerDN().toString();
-                UserDataVO userdata = userAdminSession.findUserBySubjectAndIssuerDN(admin, subjectDN, issuerDN);
+                String subjectDN = null;
+                String issuerDN = null;
+                
+                if(CmpConfiguration.getRAOperationMode()) {
+
+                	X509Name dn = crmfreq.getPKIMessage().getBody().getKur().getCertReqMsg(0).getCertReq().getCertTemplate().getSubject();
+                	if(dn != null) {
+                		subjectDN = dn.toString();
+                	}
+                	dn = crmfreq.getPKIMessage().getBody().getKur().getCertReqMsg(0).getCertReq().getCertTemplate().getIssuer();
+                	if(dn != null) {
+                		issuerDN = dn.toString();
+                	}
+                } else {
+                	subjectDN = oldCert.getSubjectDN().toString(); 
+                	issuerDN = oldCert.getIssuerDN().toString();
+                }
+                
+                if(subjectDN == null) {
+                	final String errMsg = "Cannot find a SubjectDN in the request";
+                    LOG.info(errMsg);
+                    return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_REQUEST, errMsg);
+                }
+                
+                if(LOG.isDebugEnabled()) {
+                	LOG.debug("Looking for a user with subjectDN: " + subjectDN);
+                }
+                
+                
+                UserDataVO userdata = null;
+                if(issuerDN == null) {
+                	if(LOG.isDebugEnabled()) {
+                		LOG.debug("The CMP KeyUpdateRequest did not specify an issuer");
+                	}
+                	userdata = userAdminSession.findUserBySubjectDN(admin, subjectDN);
+                } else {
+                	userdata = userAdminSession.findUserBySubjectAndIssuerDN(admin, subjectDN, issuerDN);
+                }
+                
                 if(userdata == null) {
                     final String errMsg = INTRES.getLocalizedMessage("cmp.infonouserfordn", subjectDN);
                     LOG.info(errMsg);
@@ -263,6 +301,22 @@ public class CrmfKeyUpdateHandler extends BaseCmpMessageHandler implements ICmpM
             LOG.trace("<handleMessage");
         }
         return resp;
+    }
+    
+    private String getEECCA() {
+    	String authmethods = CmpConfiguration.getAuthenticationModule();
+    	String authparams = CmpConfiguration.getAuthenticationParameters();
+    	
+    	String[] methods = authmethods.split(";");
+    	String[] params = authparams.split(";");
+    	
+    	for(int i=0; i<methods.length; i++) {
+    		if(StringUtils.equals(methods[i], CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE)) {
+    			return params[i];
+    		}
+    	}
+    	
+    	return "-";
     }
 
 
