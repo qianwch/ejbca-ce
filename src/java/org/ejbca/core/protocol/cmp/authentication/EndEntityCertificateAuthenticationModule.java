@@ -25,6 +25,7 @@ import java.security.cert.X509Certificate;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.x509.X509CertificateStructure;
 import org.cesecore.core.ejb.ra.raadmin.EndEntityProfileSession;
 import org.ejbca.config.CmpConfiguration;
@@ -355,7 +356,7 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
             return false;
         }
         
-        final int eeprofid = getUsedEndEntityProfileId(msg.getHeader().getSenderKID().toString());
+        final int eeprofid = getUsedEndEntityProfileId(msg.getHeader().getSenderKID());
         final int tagnr = msg.getBody().getTagNo();
         if((tagnr == CmpPKIBodyConstants.CERTIFICATAIONREQUEST) || (tagnr == CmpPKIBodyConstants.INITIALIZATIONREQUEST)) {
         
@@ -445,14 +446,14 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
      * @return the ID of EndEntityProfile used for CMP purposes. 0 if no such EndEntityProfile exists. 
      * @throws NotFoundException
      */
-	private int getUsedEndEntityProfileId(final String keyId) throws NotFoundException {
+	private int getUsedEndEntityProfileId(final DEROctetString keyId) throws NotFoundException {
 		int ret = 0;
 		String endEntityProfile = CmpConfiguration.getRAEndEntityProfile();
-		if (StringUtils.equals(endEntityProfile, "KeyId")) {
+		if (StringUtils.equals(endEntityProfile, "KeyId") && (keyId != null)) {
 			if (log.isDebugEnabled()) {
 				log.debug("Using End Entity Profile with same name as KeyId in request: "+keyId);
 			}
-			endEntityProfile = keyId;
+			endEntityProfile = keyId.toString();
 		} 
 		ret = eeProfileSession.getEndEntityProfileId(admin, endEntityProfile);
 		if (ret == 0) {

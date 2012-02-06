@@ -98,10 +98,14 @@ public class BaseCmpMessageHandler {
 		int ret = 0;
 		String endEntityProfile = CmpConfiguration.getRAEndEntityProfile();
 		if (StringUtils.equals(endEntityProfile, "KeyId")) {
-			if (LOG.isDebugEnabled()) {
-				LOG.debug("Using End Entity Profile with same name as KeyId in request: "+keyId);
-			}
-			endEntityProfile = keyId;
+            if(keyId != null) {
+			    if (LOG.isDebugEnabled()) {
+				    LOG.debug("Using End Entity Profile with same name as KeyId in request: "+keyId);
+			    }
+			    endEntityProfile = keyId;
+            } else {
+                LOG.error("Expecting the End Entity Profile ID to be specified in the KeyID parameter, but the KeyID parameter is 'null'");
+            }
 		} 
 		ret = endEntityProfileSession.getEndEntityProfileId(admin, endEntityProfile);
 		if (ret == 0) {
@@ -134,16 +138,16 @@ public class BaseCmpMessageHandler {
 			if (LOG.isDebugEnabled()) {
 				LOG.debug("Using keyId as CA name when adding users in RA mode.");
 			}
-			// Use keyId as CA name
-			final CAInfo info = caAdminSession.getCAInfo(admin, keyId);
-			if (info == null) {
-				LOG.info("No CA found matching keyId: "+keyId);
-				throw new NotFoundException("CA with name '"+keyId+"' not found");
-			}
-			if (LOG.isDebugEnabled()) {
-				LOG.debug("Using CA: "+info.getName());
-			}
-			ret = info.getCAId();																	
+            if(keyId != null) {
+			    // Use keyId as CA name
+			    final CAInfo info = caAdminSession.getCAInfo(admin, keyId);
+			    if (LOG.isDebugEnabled()) {
+				    LOG.debug("Using CA: "+info.getName());
+                }
+                ret = info.getCAId();
+            } else {
+                LOG.error("Expecting the CA name to be specified in the KeyID parameter, but the KeyID parameter is 'null'");
+			}																	
 		} else {
 			final CAInfo info = caAdminSession.getCAInfo(admin, caName);
 			if (info == null) {
@@ -158,14 +162,22 @@ public class BaseCmpMessageHandler {
 		return ret;
 	}
 
-	/** @return the certificate profile to use for a request based on the current configuration and keyId. */
-	protected String getUsedCertProfileName(final String keyId) throws NotFoundException {
-		final String certificateProfile = CmpConfiguration.getRACertificateProfile();
-		if (StringUtils.equals(certificateProfile, "KeyId")) {
-			if (LOG.isDebugEnabled()) {
-				LOG.debug("Using Certificate Profile with same name as KeyId in request: " + keyId);
-			}
-			return keyId;
+	/** 
+     * @return the certificate profile name to use for a request based on the current configuration and keyId. 
+     */
+	protected String getUsedCertProfileName(final String keyId, final int eeProfileId) throws NotFoundException {
+        // Get the configured string, may be a profile name or 'KeyId' or 'ProfileDefault'
+		String certificateProfile = CmpConfiguration.getRACertificateProfile();
+        if (StringUtils.equals(certificateProfile, "KeyId")) {
+            if(keyId != null) {
+		        if (LOG.isDebugEnabled()) {
+		            LOG.debug("Using Certificate Profile with same name as KeyId in request: " + keyId);
+                }
+                certificateProfile = keyId;
+	        } else {
+                LOG.error("Expecting the Certificate Profile name to be specified in the KeyID parameter, but the KeyID parameter is 'null'.");
+                LOG.error("Certificate profile '" + certificateProfile + "' instead" );
+            }
 		}
 		return certificateProfile;
 	}

@@ -115,183 +115,178 @@ public class RevocationMessageHandler extends BaseCmpMessageHandler implements I
 		final int iterationCount = 1024;
 		String cmpRaAuthSecret = null;
 		final String keyId = getSenderKeyId(msg.getHeader());
-		if (keyId != null) {
-			ResponseStatus status = ResponseStatus.FAILURE;
-			FailInfo failInfo = FailInfo.BAD_MESSAGE_CHECK;
-			String failText = null;
+		ResponseStatus status = ResponseStatus.FAILURE;
+		FailInfo failInfo = FailInfo.BAD_MESSAGE_CHECK;
+		String failText = null;
 			
-			//Verify the authenticity of the message
-			final VerifyPKIMessage messageVerifyer = new VerifyPKIMessage(ca.getCAInfo(), admin, caAdminSession, userAdminSession, certificateStoreSession, authorizationSession, endEntityProfileSession);
-			ICMPAuthenticationModule authenticationModule = null;
-			if(messageVerifyer.verify(msg.getMessage(), null)) {
-				authenticationModule = messageVerifyer.getUsedAuthenticationModule();
-			}
-			if(authenticationModule == null) {
-				String errMsg = "";
-				if(messageVerifyer.getErrorMessage() != null) {
-					errMsg = messageVerifyer.getErrorMessage();
-				} else {
-					errMsg = "Unrecognized authentication modules";
-				}
-				LOG.error(errMsg);
-				return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_MESSAGE_CHECK, errMsg);
+		//Verify the authenticity of the message
+		final VerifyPKIMessage messageVerifyer = new VerifyPKIMessage(ca.getCAInfo(), admin, caAdminSession, userAdminSession, certificateStoreSession, authorizationSession, endEntityProfileSession);
+		ICMPAuthenticationModule authenticationModule = null;
+		if(messageVerifyer.verify(msg.getMessage(), null)) {
+			authenticationModule = messageVerifyer.getUsedAuthenticationModule();
+		}
+		if(authenticationModule == null) {
+			String errMsg = "";
+			if(messageVerifyer.getErrorMessage() != null) {
+				errMsg = messageVerifyer.getErrorMessage();
 			} else {
-				if(authenticationModule instanceof HMACAuthenticationModule) {
-					final HMACAuthenticationModule hmacmodule = (HMACAuthenticationModule) authenticationModule;
-					owfAlg = hmacmodule.getCmpPbeVerifyer().getOwfOid();
-					macAlg = hmacmodule.getCmpPbeVerifyer().getMacOid();
+				errMsg = "Unrecognized authentication modules";
+			}
+			LOG.error(errMsg);
+			return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_MESSAGE_CHECK, errMsg);
+		} else {
+			if(authenticationModule instanceof HMACAuthenticationModule) {
+				final HMACAuthenticationModule hmacmodule = (HMACAuthenticationModule) authenticationModule;
+				owfAlg = hmacmodule.getCmpPbeVerifyer().getOwfOid();
+				macAlg = hmacmodule.getCmpPbeVerifyer().getMacOid();
+			}
+		}
+			
+		cmpRaAuthSecret = authenticationModule.getAuthenticationString();
+		if (cmpRaAuthSecret != null) {
+			// If authentication was correct, we will now try to find the certificate to revoke
+			final PKIMessage pkimsg = msg.getMessage();
+			final PKIBody body = pkimsg.getBody();
+			final RevReqContent rr = body.getRr();
+			final RevDetails rd = rr.getRevDetails(0);
+			final CertTemplate ct = rd.getCertDetails();
+			final DERInteger serno = ct.getSerialNumber();
+			final X509Name issuer = ct.getIssuer();
+			// Get the revocation reason. 
+			// For CMPv1 this can be a simple DERBitString or it can be a requested CRL Entry Extension
+			// If there exists CRL Entry Extensions we will use that, because it's the only thing allowed in CMPv2
+			int reason = RevokedCertInfo.REVOCATION_REASON_UNSPECIFIED;
+			final DERBitString reasonbits = rd.getRevocationReason();
+			if (reasonbits != null) {
+				reason = CertTools.bitStringToRevokedCertInfo(reasonbits);
+				if (LOG.isDebugEnabled()) {
+					LOG.debug("CMPv1 revocation reason: "+reason);
+				}
+			} else {
+				if (LOG.isDebugEnabled()) {
+					LOG.debug("CMPv1 revocation reason is null");
 				}
 			}
-			
-			cmpRaAuthSecret = authenticationModule.getAuthenticationString();
-			if (cmpRaAuthSecret != null) {
-				// If authentication was correct, we will now try to find the certificate to revoke
-				final PKIMessage pkimsg = msg.getMessage();
-				final PKIBody body = pkimsg.getBody();
-				final RevReqContent rr = body.getRr();
-				final RevDetails rd = rr.getRevDetails(0);
-				final CertTemplate ct = rd.getCertDetails();
-				final DERInteger serno = ct.getSerialNumber();
-				final X509Name issuer = ct.getIssuer();
-				// Get the revocation reason. 
-				// For CMPv1 this can be a simple DERBitString or it can be a requested CRL Entry Extension
-				// If there exists CRL Entry Extensions we will use that, because it's the only thing allowed in CMPv2
-				int reason = RevokedCertInfo.REVOCATION_REASON_UNSPECIFIED;
-				final DERBitString reasonbits = rd.getRevocationReason();
-				if (reasonbits != null) {
-					reason = CertTools.bitStringToRevokedCertInfo(reasonbits);
-					if (LOG.isDebugEnabled()) {
-						LOG.debug("CMPv1 revocation reason: "+reason);
-					}
-				} else {
-					if (LOG.isDebugEnabled()) {
-						LOG.debug("CMPv1 revocation reason is null");
-					}
-				}
-				final X509Extensions crlExt = rd.getCrlEntryDetails();
-				if (crlExt != null) {
-					X509Extension ext = crlExt.getExtension(X509Extensions.ReasonCode);
-					if (ext != null) {
-						try {
-							final ASN1InputStream ai = new ASN1InputStream(ext.getValue().getOctets());
-							final DERObject obj = ai.readObject();
-							final DEREnumerated crlreason = DEREnumerated.getInstance(obj);
-							// RevokedCertInfo.REVOCATION_REASON_AACOMPROMISE are the same integer values as the CRL reason extension code
-							reason = crlreason.getValue().intValue();
-							if (LOG.isDebugEnabled()) {
-								LOG.debug("CRLReason extension: "+reason);
-							}
-						} catch (IOException e) {
-							LOG.info("Exception parsin CRL reason extension: ", e);
-						}
-					} else {
-						if (LOG.isDebugEnabled()) {
-							LOG.debug("No CRL reason code extension present.");
-						}
-					}
-				} else {
-					if (LOG.isDebugEnabled()) {
-						LOG.debug("No CRL entry extensions present");
-					}
-				}
-				
-				if ( (serno != null) && (issuer != null) ) {
-					final String iMsg = INTRES.getLocalizedMessage("cmp.receivedrevreq", issuer.toString(), serno.getValue().toString(16));
-					LOG.info(iMsg);
+			final X509Extensions crlExt = rd.getCrlEntryDetails();
+			if (crlExt != null) {
+				X509Extension ext = crlExt.getExtension(X509Extensions.ReasonCode);
+				if (ext != null) {
 					try {
-						userAdminSession.revokeCert(admin, serno.getValue(), issuer.toString(), reason);
-						status = ResponseStatus.SUCCESS;
-					} catch (AuthorizationDeniedException e) {
-						failInfo = FailInfo.NOT_AUTHORIZED;
-						final String errMsg = INTRES.getLocalizedMessage("cmp.errornotauthrevoke", issuer.toString(), serno.getValue().toString(16));
-						failText = errMsg; 
-						LOG.error(failText);
-					} catch (FinderException e) {
-						failInfo = FailInfo.BAD_CERTIFICATE_ID;
-						final String errMsg = INTRES.getLocalizedMessage("cmp.errorcertnofound", issuer.toString(), serno.getValue().toString(16));
-						failText = errMsg; 
-						LOG.error(failText);
-					} catch (WaitingForApprovalException e) {
-						status = ResponseStatus.GRANTED_WITH_MODS;
-					} catch (ApprovalException e) {
-						failInfo = FailInfo.BAD_REQUEST;
-						final String errMsg = INTRES.getLocalizedMessage("cmp.erroralreadyrequested");
-						failText = errMsg; 
-						LOG.error(failText);
-					} catch (AlreadyRevokedException e) {
-						failInfo = FailInfo.BAD_REQUEST;
-						final String errMsg = INTRES.getLocalizedMessage("cmp.erroralreadyrevoked");
-						failText = errMsg; 
-						LOG.error(failText);
+						final ASN1InputStream ai = new ASN1InputStream(ext.getValue().getOctets());
+						final DERObject obj = ai.readObject();
+						final DEREnumerated crlreason = DEREnumerated.getInstance(obj);
+						// RevokedCertInfo.REVOCATION_REASON_AACOMPROMISE are the same integer values as the CRL reason extension code
+						reason = crlreason.getValue().intValue();
+						if (LOG.isDebugEnabled()) {
+							LOG.debug("CRLReason extension: "+reason);
+						}
+					} catch (IOException e) {
+						LOG.info("Exception parsin CRL reason extension: ", e);
 					}
 				} else {
+					if (LOG.isDebugEnabled()) {
+						LOG.debug("No CRL reason code extension present.");
+					}
+				}
+			} else {
+				if (LOG.isDebugEnabled()) {
+					LOG.debug("No CRL entry extensions present");
+				}
+			}
+				
+			if ( (serno != null) && (issuer != null) ) {
+				final String iMsg = INTRES.getLocalizedMessage("cmp.receivedrevreq", issuer.toString(), serno.getValue().toString(16));
+				LOG.info(iMsg);
+				try {
+					userAdminSession.revokeCert(admin, serno.getValue(), issuer.toString(), reason);
+					status = ResponseStatus.SUCCESS;
+				} catch (AuthorizationDeniedException e) {
+					failInfo = FailInfo.NOT_AUTHORIZED;
+					final String errMsg = INTRES.getLocalizedMessage("cmp.errornotauthrevoke", issuer.toString(), serno.getValue().toString(16));
+					failText = errMsg; 
+					LOG.error(failText);
+				} catch (FinderException e) {
 					failInfo = FailInfo.BAD_CERTIFICATE_ID;
-					final String errMsg = INTRES.getLocalizedMessage("cmp.errormissingissuerrevoke", issuer.toString(), serno.getValue().toString(16));
+					final String errMsg = INTRES.getLocalizedMessage("cmp.errorcertnofound", issuer.toString(), serno.getValue().toString(16));
+					failText = errMsg; 
+					LOG.error(failText);
+				} catch (WaitingForApprovalException e) {
+					status = ResponseStatus.GRANTED_WITH_MODS;
+				} catch (ApprovalException e) {
+					failInfo = FailInfo.BAD_REQUEST;
+					final String errMsg = INTRES.getLocalizedMessage("cmp.erroralreadyrequested");
+					failText = errMsg; 
+					LOG.error(failText);
+				} catch (AlreadyRevokedException e) {
+					failInfo = FailInfo.BAD_REQUEST;
+					final String errMsg = INTRES.getLocalizedMessage("cmp.erroralreadyrevoked");
 					failText = errMsg; 
 					LOG.error(failText);
 				}
 			} else {
-				final String errMsg = INTRES.getLocalizedMessage("cmp.errorauthmessage");
-				LOG.error(errMsg);
-				failText = errMsg;
-				if (authenticationModule.getErrorMessage() != null) {
-					failText = authenticationModule.getErrorMessage();
-				}
+				failInfo = FailInfo.BAD_CERTIFICATE_ID;
+				final String errMsg = INTRES.getLocalizedMessage("cmp.errormissingissuerrevoke", issuer.toString(), serno.getValue().toString(16));
+				failText = errMsg; 
+				LOG.error(failText);
 			}
-			if (LOG.isDebugEnabled()) {
-				LOG.debug("Creating a PKI revocation message response");
-			}
-			final CmpRevokeResponseMessage rresp = new CmpRevokeResponseMessage();
-			rresp.setRecipientNonce(msg.getSenderNonce());
-			rresp.setSenderNonce(new String(Base64.encode(CmpMessageHelper.createSenderNonce())));
-			rresp.setSender(msg.getRecipient());
-			rresp.setRecipient(msg.getSender());
-			rresp.setTransactionId(msg.getTransactionId());
-			rresp.setFailInfo(failInfo);
-			rresp.setFailText(failText);
-			rresp.setStatus(status);
-	    	// Set all protection parameters
-			if (LOG.isDebugEnabled()) {
-				LOG.debug(responseProtection+", "+owfAlg+", "+macAlg+", "+keyId+", "+cmpRaAuthSecret);
-			}
-	    	if (StringUtils.equals(responseProtection, "pbe") && (owfAlg != null) && (macAlg != null) && (keyId != null) && (cmpRaAuthSecret != null) ) {
-	    		rresp.setPbeParameters(keyId, cmpRaAuthSecret, owfAlg, macAlg, iterationCount);
-	    	} else {
-	    		try {
-	    			rresp.setSignKeyInfo(ca.getCACertificate(), ca.getCAToken().getPrivateKey(SecConst.CAKEYPURPOSE_CERTSIGN), ca.getCAToken().getProvider());
-	    		} catch(IllegalKeyStoreException e) {
-	    			LOG.error(e.getLocalizedMessage());
-	    		} catch(CATokenOfflineException e) {
-	    			LOG.error(e.getLocalizedMessage());
-	    		}
-	    	}
-	    	resp = rresp;
-			try {
-				resp.create();
-			} catch (InvalidKeyException e) {
-				String errMsg = INTRES.getLocalizedMessage("cmp.errorgeneral");
-				LOG.error(errMsg, e);			
-			} catch (NoSuchAlgorithmException e) {
-				String errMsg = INTRES.getLocalizedMessage("cmp.errorgeneral");
-				LOG.error(errMsg, e);			
-			} catch (NoSuchProviderException e) {
-				String errMsg = INTRES.getLocalizedMessage("cmp.errorgeneral");
-				LOG.error(errMsg, e);			
-			} catch (SignRequestException e) {
-				String errMsg = INTRES.getLocalizedMessage("cmp.errorgeneral");
-				LOG.error(errMsg, e);			
-			} catch (NotFoundException e) {
-				String errMsg = INTRES.getLocalizedMessage("cmp.errorgeneral");
-				LOG.error(errMsg, e);			
-			} catch (IOException e) {
-				String errMsg = INTRES.getLocalizedMessage("cmp.errorgeneral");
-				LOG.error(errMsg, e);			
-			}														
 		} else {
-			// If we don't have any protection to verify, we fail
-			final String errMsg = INTRES.getLocalizedMessage("cmp.errornoprot");
-			resp = CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_MESSAGE_CHECK, errMsg);
+			final String errMsg = INTRES.getLocalizedMessage("cmp.errorauthmessage");
+			LOG.error(errMsg);
+			failText = errMsg;
+			if (authenticationModule.getErrorMessage() != null) {
+				failText = authenticationModule.getErrorMessage();
+			}
 		}
+		if (LOG.isDebugEnabled()) {
+			LOG.debug("Creating a PKI revocation message response");
+		}
+		final CmpRevokeResponseMessage rresp = new CmpRevokeResponseMessage();
+		rresp.setRecipientNonce(msg.getSenderNonce());
+		rresp.setSenderNonce(new String(Base64.encode(CmpMessageHelper.createSenderNonce())));
+		rresp.setSender(msg.getRecipient());
+		rresp.setRecipient(msg.getSender());
+		rresp.setTransactionId(msg.getTransactionId());
+		rresp.setFailInfo(failInfo);
+		rresp.setFailText(failText);
+		rresp.setStatus(status);
+		// Set all protection parameters
+		if (LOG.isDebugEnabled()) {
+			LOG.debug(responseProtection+", "+owfAlg+", "+macAlg+", "+keyId+", "+cmpRaAuthSecret);
+		}
+		if (StringUtils.equals(responseProtection, "pbe") && (owfAlg != null) && (macAlg != null) && (keyId != null) && (cmpRaAuthSecret != null) ) {
+			rresp.setPbeParameters(keyId, cmpRaAuthSecret, owfAlg, macAlg, iterationCount);
+	    } else {
+	    	try {
+	    		rresp.setSignKeyInfo(ca.getCACertificate(), ca.getCAToken().getPrivateKey(SecConst.CAKEYPURPOSE_CERTSIGN), ca.getCAToken().getProvider());
+	    	} catch(IllegalKeyStoreException e) {
+	    		LOG.error(e.getLocalizedMessage());
+	    	} catch(CATokenOfflineException e) {
+	    		LOG.error(e.getLocalizedMessage());
+	    	}
+	    }
+		resp = rresp;
+		try {
+			resp.create();
+		} catch (InvalidKeyException e) {
+			String errMsg = INTRES.getLocalizedMessage("cmp.errorgeneral");
+			LOG.error(errMsg, e);			
+		} catch (NoSuchAlgorithmException e) {
+			String errMsg = INTRES.getLocalizedMessage("cmp.errorgeneral");
+			LOG.error(errMsg, e);			
+		} catch (NoSuchProviderException e) {
+			String errMsg = INTRES.getLocalizedMessage("cmp.errorgeneral");
+			LOG.error(errMsg, e);			
+		} catch (SignRequestException e) {
+			String errMsg = INTRES.getLocalizedMessage("cmp.errorgeneral");
+			LOG.error(errMsg, e);			
+		} catch (NotFoundException e) {
+			String errMsg = INTRES.getLocalizedMessage("cmp.errorgeneral");
+			LOG.error(errMsg, e);			
+		} catch (IOException e) {
+			String errMsg = INTRES.getLocalizedMessage("cmp.errorgeneral");
+			LOG.error(errMsg, e);			
+		}
+		
 		return resp;
 	}
 }

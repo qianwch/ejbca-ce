@@ -166,7 +166,6 @@ public class AuthenticationModulesTest extends CmpTestCase {
 
 		AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
 		msg.getHeader().setProtectionAlg(pAlg);
-		msg.getHeader().setSenderKID(new DEROctetString(nonce));
 
 		createUser("cmpTestAdmin", "CN=cmpTestAdmin,C=SE", "foo123");
 		KeyPair admkeys = KeyTools.genKeys("1024", "RSA");
@@ -278,7 +277,6 @@ public class AuthenticationModulesTest extends CmpTestCase {
 		
 		AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
 		msg.getHeader().setProtectionAlg(pAlg);		 
-		msg.getHeader().setSenderKID(new DEROctetString(nonce));
 
 		createUser("cmpTestAdmin", "CN=cmpTestAdmin,C=SE", "foo123");
 		KeyPair admkeys = KeyTools.genKeys("1024", "RSA");
@@ -333,7 +331,6 @@ public class AuthenticationModulesTest extends CmpTestCase {
 		
 		AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
 		msg.getHeader().setProtectionAlg(pAlg);		 
-		msg.getHeader().setSenderKID(new DEROctetString(nonce));
 
 		createUser("cmpTestAdmin", "CN=cmpTestAdmin,C=SE", "foo123");
 		KeyPair admkeys = KeyTools.genKeys("1024", "RSA");
@@ -387,7 +384,6 @@ public class AuthenticationModulesTest extends CmpTestCase {
 		
 		AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
 		msg.getHeader().setProtectionAlg(pAlg);     
-		msg.getHeader().setSenderKID(new DEROctetString(nonce));
 		
 		String adminName = "cmpTestAdmin";
 		createUser(adminName, "CN=cmpTestAdmin,C=SE", "foo123");
@@ -441,7 +437,6 @@ public class AuthenticationModulesTest extends CmpTestCase {
 		
 		AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
 		msg.getHeader().setProtectionAlg(pAlg);		 
-		msg.getHeader().setSenderKID(new DEROctetString(nonce));
 
 		createUser("cmpTestAdmin", "CN=cmpTestAdmin,C=SE", "foo123");
 		KeyPair admkeys = KeyTools.genKeys("1024", "RSA");
@@ -571,7 +566,6 @@ public class AuthenticationModulesTest extends CmpTestCase {
 		
 		AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
 		msg.getHeader().setProtectionAlg(pAlg);		 
-		msg.getHeader().setSenderKID(new DEROctetString(nonce));
 
 		String adminName ="cmpTestUnauthorizedAdmin"; 
 		createUser(adminName , "CN=" + adminName + ",C=SE", "foo123");
@@ -892,7 +886,6 @@ public class AuthenticationModulesTest extends CmpTestCase {
                 assertNotNull("Generating CrmfRequest failed.", msg);            
                 AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
                 msg.getHeader().setProtectionAlg(pAlg);      
-                msg.getHeader().setSenderKID(new DEROctetString(nonce));
                 addExtraCert(msg, fakeCert);
                 signPKIMessage(msg, fakeKeys);
                 assertNotNull(msg);
@@ -930,7 +923,6 @@ public class AuthenticationModulesTest extends CmpTestCase {
                 assertNotNull("Generating CrmfRequest failed.", msg);            
                 AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
                 msg.getHeader().setProtectionAlg(pAlg);      
-                msg.getHeader().setSenderKID(new DEROctetString(nonce));
                 addExtraCert(msg, othercert);
                 signPKIMessage(msg, otherKeys);
                 assertNotNull(msg);
@@ -963,7 +955,6 @@ public class AuthenticationModulesTest extends CmpTestCase {
             assertNotNull("Generating CrmfRequest failed.", msg);            
             AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
             msg.getHeader().setProtectionAlg(pAlg);      
-            msg.getHeader().setSenderKID(new DEROctetString(nonce));
             addExtraCert(msg, cert);
             signPKIMessage(msg, keys);
             assertNotNull(msg);
