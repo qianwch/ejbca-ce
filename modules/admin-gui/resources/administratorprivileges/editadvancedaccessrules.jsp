@@ -38,17 +38,17 @@
 
 <body>
  
- <div align="center">
+<div align="center">
 
 	<h2><h:outputText value="#{web.text.ACCESSRULESFORGROUP} #{adminGroupsManagedBean.currentAdminGroup}" /></h2>
 
 	<h:outputText value="#{web.text.AUTHORIZATIONDENIED}" rendered="#{!adminGroupsManagedBean.authorizedToGroup}"/>
+
+
 	<h:panelGroup rendered="#{adminGroupsManagedBean.authorizedToGroup}">
- 
 	<p><h:messages layout="table" errorClass="alert"/></p>
- 
-	<div align="right">
-	<h:panelGrid columns="1" style="text-align: right;">
+
+	<h:panelGrid styleClass="edit-top" width="100%" columns="1" rowClasses="Row0,Row1" style="text-align: right;">
 		<h:outputLink value="#{web.ejbcaWebBean.globalConfiguration.authorizationPath}/administratorprivileges.jsf"
 			title="#{web.text.BACKTOADMINGROUPS}">
 			<h:outputText value="#{web.text.BACKTOADMINGROUPS}"/>
@@ -63,7 +63,6 @@
 			<h:outputText value="#{web.text.BASICMODE}"/>
 		</h:outputLink>
 	</h:panelGrid>
-	</div>
 	
 	<h:form id="accessRulesForm" rendered="#{not empty adminGroupsManagedBean.currentAdminGroup}">
 	<h:inputHidden id="currentAdminGroup" value="#{adminGroupsManagedBean.currentAdminGroup}" />
@@ -98,10 +97,19 @@
 		</h:dataTable>
 		</h:column>
 	</h:dataTable>
-	<h:commandButton action="#{adminGroupsManagedBean.saveAdvancedAccessRules}" value="#{web.text.SAVE}"/>
-	<h:commandButton action="#{adminGroupsManagedBean.restoreAdvancedAccessRules}" value="#{web.text.RESTORE}"/>
+
+	<h:panelGrid styleClass="edit-bottom" width="100%" columns="1" style="text-align: center;">
+		<h:panelGroup>
+			<h:commandButton action="#{adminGroupsManagedBean.saveAdvancedAccessRules}" value="#{web.text.SAVE}"/>
+			<f:verbatim>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</f:verbatim>
+			<h:commandButton action="#{adminGroupsManagedBean.restoreAdvancedAccessRules}" value="#{web.text.RESTORE}"/>
+		</h:panelGroup>
+	</h:panelGrid>
+
 	</h:form>
+
 	</h:panelGroup>
+
 </div>
 
 <%	// Include Footer 

@@ -100,6 +100,15 @@
 	<h:panelGroup>				
 		<f:verbatim>&nbsp;</f:verbatim>
 	</h:panelGroup>
+
+
+	<h:panelGroup>
+		<f:verbatim><strong></f:verbatim><h:outputText value="#{web.text.GENERALSETTINGS}"/><f:verbatim> :</strong></f:verbatim>
+	</h:panelGroup>
+	<h:panelGroup>
+		<f:verbatim>&nbsp;</f:verbatim>
+	</h:panelGroup>
+
 	<h:panelGroup>
 		<f:verbatim><strong></f:verbatim><h:outputText value="#{web.text.ACTIVE}"/><f:verbatim></strong></f:verbatim>
 	</h:panelGroup>
@@ -119,8 +128,12 @@
 		<h:outputText value="#{web.text.DESCRIPTION}"/>
 	</h:panelGroup>
 	<h:panelGroup>
-		<h:inputTextarea id="descriptionTextArea" value="#{editService.serviceConfigurationView.description}" rows="4" cols="45"/>
+		<h:inputTextarea id="descriptionTextArea" value="#{editService.serviceConfigurationView.description}" rows="2" cols="45"/>
 	</h:panelGroup>
+
+
+	<%-- Form buttons --%>
+
 	<h:panelGroup>
 		&nbsp;
 	</h:panelGroup>
@@ -147,9 +160,10 @@ function enableAll(){
 		<f:verbatim>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</f:verbatim>
 		<h:commandButton id="cancelButton" action="#{editService.cancel}" value="#{web.text.CANCEL}"/>		
 	</h:panelGroup>
+
 </h:panelGrid>
 </h:form>
+
 </body>
 </f:view>
 </html>
-

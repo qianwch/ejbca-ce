@@ -97,19 +97,21 @@
 <h2><c:out value="<%= ejbcawebbean.getText(\"FORADMIN\")+\" \" + ejbcawebbean.getUsersCommonName() %>" /></h2>
 
 <form name="defaultmypreferences" method="post" action="<%=THIS_FILENAME %>">
-  <table width="100%" border="0" cellspacing="3" cellpadding="3">
-<!--
+  <table class="action" id="config" width="100%" border="0" cellspacing="3" cellpadding="3">
+
     <tr id="Row0"> 
       <td width="50%" valign="top"> 
         &nbsp;
       </td>
-      <td width="50%" valign="top"> 
-        <div align="right"><A  onclick='displayHelpWindow("<%= ejbcawebbean.getHelpfileInfix("mypreferences_help.html") %>")'>
-        <u><c:out value="<%= ejbcawebbean.getText(\"HELP\") %>" /></u> </A></div>
+      <td width="50%" valign="top" align="right"> 
+        &nbsp;
+<!--
+        <a onclick='displayHelpWindow("<%= ejbcawebbean.getHelpfileInfix("mypreferences_help.html") %>")'><c:out value="<%= ejbcawebbean.getText(\"HELP\") %>" /></a>
+-->
       </td>
     </tr>
--->
-    <tr  id="Row0"> 
+
+    <tr  id="Row1"> 
       <td width="50%" valign="top"> 
         <h3><c:out value="<%= ejbcawebbean.getText(\"PREFEREDLANGUAGE\") %>" /></h3>
         <p class="help"><c:out value="<%= ejbcawebbean.getText(\"DEFAULTLANGUAGETOUSE\") %>" /></p>
@@ -141,6 +143,7 @@
         </select>
       </td>
     </tr>
+
     <tr  id="Row0"> 
       <td width="50%" valign="top"> 
         <h3><c:out value="<%= ejbcawebbean.getText(\"THEME\") %>" /></h3>
@@ -159,6 +162,7 @@
         </select>
       </td>
     </tr>
+
     <tr  id="Row1"> 
       <td width="49%" valign="top"> 
         <h3><c:out value="<%= ejbcawebbean.getText(\"NUMBEROFRECORDSPERPAGE\") %>" /></h3>
@@ -175,6 +179,7 @@
         </select>
       </td>
     </tr>
+
     <tr  id="Row0"> 
       <td width="49%" valign="top"> 
         <h3><c:out value="<%= ejbcawebbean.getText(\"CASTATUSONFRONTPAGE\") %>" /></h3>
@@ -184,7 +189,7 @@
         <input name="<%= CHECKBOX_CASTATUSFIRSTPAGE %>" type="checkbox" value="<%=CHECKBOX_VALUE%>" <%=dup.getFrontpageCaStatus() ? "checked=\"checked\"" : ""%>/>
       </td>
     </tr>
-    <tr  id="Row1"> 
+    <tr  id="Row0"> 
       <td width="49%" valign="top"> 
         <h3><c:out value="<%= ejbcawebbean.getText(\"PUBLISHERQUEUESTATUSON\") %>" /></h3>
         <p class="help"><c:out value="<%= ejbcawebbean.getText(\"IFPUBLISHERQUEUESSHOULD\") %>" /></p>
@@ -193,19 +198,22 @@
         <input name="<%= CHECKBOX_PUBQSTATUSFIRSTPAGE %>" type="checkbox" value="<%=CHECKBOX_VALUE%>" <%=dup.getFrontpagePublisherQueueStatus() ? "checked=\"checked\"" : ""%>/>
       </td>
     </tr>
-    <tr  id="Row0"> 
-      <td width="49%" valign="top">&nbsp;</td>
-      <td width="51%" valign="top">&nbsp;</td>
-    </tr>
+
+
+    <%-- Form buttons --%>
+
     <tr  id="Row1"> 
       <td width="49%" valign="top">&nbsp;</td>
       <td width="51%" valign="top"> 
         <input type="submit" name="<%= BUTTON_SAVE %>" value='<c:out value="<%= ejbcawebbean.getText(\"SAVE\") %>"/>'>
+        &nbsp;&nbsp;&nbsp;
         <input type="submit" name="<%= BUTTON_CANCEL %>" value='<c:out value="<%= ejbcawebbean.getText(\"CANCEL\") %>"/>'>
       </td>
     </tr>
+
   </table>
- </form>
+</form>
+
 <% // Include Footer 
    String footurl =   globalconfiguration.getFootBanner(); %>
    

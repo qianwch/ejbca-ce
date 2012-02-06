@@ -200,17 +200,23 @@ function checkallfields(){
 <body onload='roleupdated()'>
 
 <div align="center">
+
 	<h2><h:outputText value="#{web.text.ACCESSRULESFORGROUP} #{adminGroupsManagedBean.currentAdminGroup}" /></h2>
+
 	<h:outputText value="#{web.text.AUTHORIZATIONDENIED}" rendered="#{!adminGroupsManagedBean.authorizedToGroup}"/>
+
+
 	<h:panelGroup rendered="#{adminGroupsManagedBean.authorizedToGroup}">
 	<p><h:outputText styleClass="alert" value="#{web.text.ADVANCEDMODEREQUIRED}" rendered="#{adminGroupsManagedBean.basicRuleSet.forceAdvanced}" /></p>
 	<p><h:messages layout="table" errorClass="alert"/></p>
+
   
 	<h:panelGroup rendered="#{!adminGroupsManagedBean.basicRuleSet.forceAdvanced}">
  
  	<h:form id="basicRules">
 	<h:inputHidden id="currentAdminGroup" value="#{adminGroupsManagedBean.currentAdminGroup}" />
-	<h:panelGrid styleClass="edit" width="100%" columns="2" rowClasses="Row1,Row0" columnClasses="label,field">
+	<h:panelGrid styleClass="edit" width="100%" columns="2" rowClasses="Row0,Row1" columnClasses="label,field">
+
 		<h:panelGroup>
 			&nbsp;
 		</h:panelGroup>
@@ -228,7 +234,12 @@ function checkallfields(){
 				title="#{web.text.EDITADMINS}" rendered="#{not empty adminGroupsManagedBean.currentAdminGroup}">
 				<h:outputText value="#{web.text.EDITADMINS}"/>
 			</h:outputLink>
-			<br/>
+		</h:panelGroup>
+
+		<h:panelGroup>
+			&nbsp;
+		</h:panelGroup>
+		<h:panelGroup style="display: block; text-align: right;">
 			<h:outputLink value="#{web.ejbcaWebBean.globalConfiguration.authorizationPath}/editadvancedaccessrules.jsf?currentAdminGroup=#{adminGroupsManagedBean.currentAdminGroup}"
 				title="#{web.text.ADVANCEDMODE}" rendered="#{not empty adminGroupsManagedBean.currentAdminGroup}">
 				<h:outputText value="#{web.text.ADVANCEDMODE}"/>
@@ -260,13 +271,18 @@ function checkallfields(){
 			<f:selectItems value="#{adminGroupsManagedBean.availableOtherRules}" />
 		</h:selectManyListbox> 
 
+
+		<%-- Form buttons --%>
+
 		<h:panelGroup>
 			&nbsp;
 		</h:panelGroup>
 		<h:panelGroup>
 			<h:commandButton action="#{adminGroupsManagedBean.saveAccessRules}" onclick="return checkallfields();" value="#{web.text.SAVE}"/>
+			<f:verbatim>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</f:verbatim>
 			<h:commandButton action="cancel" value="#{web.text.RESTORE}"/>
 		</h:panelGroup>
+
 	</h:panelGrid>
 	</h:form>
 

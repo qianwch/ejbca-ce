@@ -207,6 +207,7 @@ a:active {
 	color: #A00;
 }
 input,
+textarea,
 select {
 	font-size: 11pt;
 }
@@ -220,10 +221,6 @@ select.number {
 }
 select.acronym {
 	text-align: center;
-}
-p.help {
-	margin-top: .25em;
-	margin-bottom: .25em;
 }
 div.message {
 	margin-top: .5em;
@@ -263,7 +260,7 @@ table.grid td {
 /*--------------------------------------------------------------------------*/
 /* CONTENT > FORMS */
 
-/* --- Form: List/Actions */
+/* --- Forms: List/Actions */
 table.list,
 table.actions {
 	width: 100%;
@@ -281,53 +278,121 @@ table.actions tr td h3 {
 	margin-bottom: -.25em;
 }
 
-/* --- Form: View */
-table.view tr td.dn {
+
+/* --- Forms: Edit/Action/View */
+table.view,
+table.action,
+table.edit-top,
+table.edit-bottom,
+table.edit {
+	margin: .75em -2px 0em -2px;
+	border-spacing: 3px 1px;
+}
+table.edit-bottom {
+	margin-top: -1px;
+}
+table.view tr td,
+table.action tr td,
+table.edit-top tr td,
+table.edit-bottom tr td,
+table.edit tr td {
+	padding: .25em .5em;
+	line-height: 1.60em;
+}
+/* Titles (and Sections) */
+table tr.section td,
+table tr.title td {
+	font-size: 1.25em;
+}
+/* DN & attributes */
+table tr td .dn {
 	white-space: pre-wrap;
 }
-table.view tr td .attribute {
+table tr td .attribute {
 	white-space: pre !important;
 }
 
 /* --- Form: Edit */
-table.edit {
-	margin-top: .75em;
-	margin-left: -2px;
-	border-spacing: 3px 1px;
-}
-table.edit tr td {
-	padding: .25em .5em;
-	line-height: 1.55em;
-}
-/* Sections, Headers, and Footers */
+/* Headers, Sections, and Footers */
+table.edit-top tr:first-child td,
 table.edit tr:first-child td,
+table.edit-bottom tr.section td,
 table.edit tr.section td {
 	background-color: #FEEECD;
 	border-top: 3px solid #FEDD9A;
 	color: #A00;
 }
+table.edit-top tr:first-child td.field,		/* For JSF */
 table.edit tr:first-child td.field {
 	text-align: right;
 }
+table.edit-bottom tr:last-child td,
 table.edit tr:last-child td {
 	background-color: #FEEECD;
 	border-bottom: 3px solid #FEDD9A;
 	color: #A00;
 }
-/* Titles */
-table.edit tr.section td,
-table.edit tr.title td {
-	font-size: 1.25em;
+
+/* --- Form: Action */
+table.action tr td {
+	vertical-align: middle;
 }
-table.edit tr td.title {								/* OLD TO KEEP */
-	font-size: 1.25em;
+/* Headers, Sections, and Footers */
+table.action tr:first-child td,
+table.action tr.section td {
+	background-color: #D0E2F6;
+	border-top: 3px solid #A5C7EE;
+	color: #1F60A9;
 }
-/* Others */
-table.edit tr td .attribute {
-	white-space: pre !important;
+table.action tr:last-child td {
+	background-color: #D0E2F6;
+	border-bottom: 3px solid #A5C7EE;
+	color: #1F60A9;
 }
 
-/* --- Form: Search */
+/* --- Form: View */
+table.view {
+	margin-top: .25em;
+}
+table.view tr td {
+	padding: .15em .5em !important;
+	line-height: 1.4em;
+}
+/* Headers, Sections, and Footers */
+table.view tr:first-child td,
+table.view tr.section td {
+	background-color: #E5E5E5;
+	border-top: 3px solid #CCCCCC;
+	color: #000;
+}
+table.view tr:last-child td {
+	background-color: #E5E5E5;
+	border-bottom: 3px solid #CCCCCC;
+	color: #000;
+}
+
+/* --- Forms: Edit/Action/View */		/* KEEP IT HERE */
+table.view table,
+table.action table,
+table.edit-top table,
+table.edit-bottom table,
+table.edit table {
+	background-color: transparent;
+	border-spacing: 0px;
+}
+table.view table tr td,
+table.action table tr td,
+table.edit-top table tr td,
+table.edit-bottom table tr td,
+table.edit table tr td {
+	padding: 0em .5em .1em 0em !important;
+	background-color: transparent !important;
+	border: 0px none transparent !important;
+	color: #000 !important;
+}
+
+
+/* --- Forms: Search/Results */
 table.search tr td {
 	padding: .25em .5em .1em 0em;
 	line-height: 1.75em;
@@ -473,17 +538,24 @@ div#code input[type="submit"] {
 	margin-left: 1em;
 }
 
+/* --- Page: RA > End-Entity profile */
+table#endentityprofile.edit tr td:first-child {
+	text-align: center;
+}
+
 /* --- Page: RA > Add End-Entity */
-table#addendentity.edit tr td {
+table#addendentity tr td {
 	padding: .15em .3em;
 	vertical-align: middle;
 	white-space: nowrap;
-	font-size: 1.1em;
-}
-table#addendentity.edit tr td.title {
 	font-size: 1.2em;
 }
-table#addendentity.edit tr td:last-child {
+/* Titles (and Sections) */
+table#addendentity tr.section td,
+table#addendentity tr.title td {
+	font-size: 1.35em;
+}
+table#addendentity tr td:last-child {
 	text-align: center;
 }
 
@@ -522,6 +594,7 @@ table#logconfigbuttons td input[type="submit"] {
 }
 
 /* --- Page: SYS > Administrators Groups */
+/* Administrator entities */
 form#groupList p {
 	margin-top: 1.25em;
 }
@@ -569,6 +642,42 @@ form#groupList table td a:active {
 	-khtml-border-radius: .25em;
 	-webkit-border-radius: .25em;
 }
+/* Access rules */
+form#accessRulesForm table {
+	margin-top: 3px;
+}
+form#accessRulesForm table table {
+	margin: 0em;
+}
+form#accessRulesForm table table thead tr:first-child th {
+	background-color: #FEEECD !important;
+	border-top: 3px solid #FEDD9A;
+	color: #A00;
+}
+form#accessRulesForm table table thead tr th {
+	text-align: center;
+}
+form#accessRulesForm table table thead tr th:first-child {
+	text-align: left;
+}
+
+/* --- Page: SYS > Configuration */
+table#config {
+	margin-top: .25em;
+}
+table#config tr td {
+	padding: .4em .4em;
+	line-height: 1.40em;
+}
+table#config tr td:first-child {
+	vertical-align: top;
+}
+table#config p.help {
+	margin: .1em .1em;
+/*	font-size: .9em;	/**/
+	color: #444;		/* Keep it, for old web browsers */
+	color: rgba(0,0,0,.75);
+}
 
 
 /*--------------------------------------------------------------------------*/
@@ -597,7 +706,7 @@ tr#LogTextRow1 { color: black; font-size: 7pt; background-color: #E5ECFF; }
 
 /* --- Table: SYS > Administrators Groups */
 
-.listHeader { color: black; font-size: 1.2em; font-weight: bold; text-align: left; }
+.listHeader { color: #777; font-size: 1.2em; font-weight: bold; text-align: left; }
 
 .caColumn { text-align: left; width: 20%; }
 .withColumn { text-align: left; width: 35%; }
@@ -606,7 +715,7 @@ tr#LogTextRow1 { color: black; font-size: 7pt; background-color: #E5ECFF; }
 .commandColumn { text-align: left; width: 5%; }
 
 .rulesColumn1 { text-align: left; width: 70%; }
-.rulesColumn2 { text-align: left; width: 15%; }
+.rulesColumn2 { text-align: center; width: 15%; }
 
 
 /*--------------------------------------------------------------------------*/
@@ -641,8 +750,10 @@ body.popup {
 	border: 0px none;
 }
 .popup table tr td {
-	padding: .1em .4em .1em .3em;
+	padding: .1em .3em;
 }
+/* Titles (and Sections) */
+.popup table tr.section td,
 .popup table tr.title td {
 	font-size: 1.2em;
 }
@@ -650,9 +761,27 @@ body.popup {
 	white-space: nowrap;
 }
 
+/* --- Popup: View End-Entity */
+.popup#viewendentity table.view {
+	margin-top: .5em;
+}
+.popup#viewendentity table.view table {
+	margin: 0em -.5em;
+}
+.popup#viewendentity table.view table tr td {
+	padding-left: .6em !important;
+}
+.popup#viewendentity table.view table tr:nth-child(2n) td {
+	background-color: #EEE !important;
+	background-color: rgba(0,0,0,.03) !important;
+}
+
 /* --- Popup: Edit End-Entity */
+.popup#editendentity table.edit {
+	margin-top: .5em;
+}
 .popup#editendentity table.edit tr td {
-	padding: .15em .4em .15em .3em;
+	padding: .15em .3em;
 	vertical-align: middle;
 	white-space: nowrap;
 }

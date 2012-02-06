@@ -53,18 +53,20 @@ function checkuseautoenroll(){
 <h1><c:out value="<%= ejbcawebbean.getText(\"EJBCAWEBCONFIGURATION\") %>"/></h1> 
 
 <form name="webconfiguration" method="post" action="<%= globalconfiguration .getConfigPath() + "/" + THIS_FILENAME %>">
-  <table width="100%" border="0" cellspacing="3" cellpadding="3">
-<!--
-    <tr id="Row0"> 
+  <table class="action" id="config" width="100%" border="0" cellspacing="3" cellpadding="3">
+
+    <tr id="Row1"> 
       <td width="50%" valign="top"> 
         &nbsp;
       </td>
-      <td width="50%" valign="top"> 
-        <div align="right"><A  onclick='displayHelpWindow("/<%=gc.getAdminWebPath() %>/help/configuration_help.en.html#mainconfig")'>
-        <u>Help</u> </A> </div>
+      <td width="50%" valign="top" align="right"> 
+        &nbsp;
+<!--
+        <a onclick='displayHelpWindow("/<%=gc.getAdminWebPath() %>/help/configuration_help.en.html#mainconfig")'><c:out value="<%= ejbcawebbean.getText(\"HELP\") %>" /></a>
+-->
       </td>
     </tr>
--->
+
     <tr id="Row0"> 
       <td width="50%" valign="top"> 
         <h3><c:out value="<%= ejbcawebbean.getText(\"EJBCATITLE\") %>"/></h3>
@@ -74,7 +76,7 @@ function checkuseautoenroll(){
         <input type="text" name="<%=TEXTFIELD_TITLE %>" value='<c:out value="<%= gc.getEjbcaTitle() %>"/>' maxlength="150" size="45" title="<%= ejbcawebbean.getText("FORMAT_STRING") %>">
       </td>
     </tr>
-    <tr id="Row1"> 
+    <tr id="Row0"> 
       <td width="49%" valign="top"> 
         <h3><c:out value="<%= ejbcawebbean.getText(\"HEADBANNER\") %>"/></h3>
         <p class="help"><c:out value="<%= ejbcawebbean.getText(\"HEADBANNERHELP\") %>"/></p>
@@ -92,6 +94,7 @@ function checkuseautoenroll(){
         <input type="text" name="<%=TEXTFIELD_FOOTBANNER %>" value='<c:out value="<%= gc.getFootBannerFilename() %>"/>' maxlength="150" size="45" title="<%= ejbcawebbean.getText("FORMAT_FILENAME") %>">
       </td>
     </tr>
+
 <!-- /* Wait for implementation.
     <tr id="Row1"> 
       <td width="49%" valign="top"> 
@@ -105,6 +108,7 @@ function checkuseautoenroll(){
       </td>
     </tr>
 -->
+
     <tr id="Row1"> 
       <td width="49%" valign="top"> 
         <h3><c:out value="<%= ejbcawebbean.getText(\"ENABLEENDENTITYPROFILELIM\") %>"/></h3>
@@ -116,6 +120,7 @@ function checkuseautoenroll(){
                                                                                                 out.write(" CHECKED "); %>> 
       </td>
     </tr>
+
     <tr id="Row0"> 
       <td width="49%" valign="top"> 
         <h3><c:out value="<%= ejbcawebbean.getText(\"ENABLEKEYRECOVERY\")%>"/>
@@ -129,6 +134,7 @@ function checkuseautoenroll(){
                                                                                                 out.write(" CHECKED "); %>> 
       </td>
     </tr>
+
     <tr id="Row1"> 
       <td width="49%" valign="top"> 
         <h3><c:out value="<%= ejbcawebbean.getText(\"ISSUEHARDWARETOKENS\") %>"/></h3>
@@ -140,6 +146,7 @@ function checkuseautoenroll(){
                                                                                                 out.write(" CHECKED "); %>> 
       </td>
     </tr>
+
     <!--  <tr id="Row1"> 
       <td width="49%" valign="top"> 
         <h3><c:out value="<%= ejbcawebbean.getText(\"REQUIREAPPROVALTOVIEWPUK\") %>"/></h3>
@@ -155,6 +162,7 @@ function checkuseautoenroll(){
         </select>
       </td>
     </tr> -->
+
     <tr id="Row1"> 
       <td width="49%" valign="top"> 
         <h3><c:out value="<%= ejbcawebbean.getText(\"HARDTOKENENCRYPTCA\") %>"/></h3>
@@ -204,6 +212,7 @@ function checkuseautoenroll(){
         <input type="text" name="<%=TEXTFIELD_APPROVALNOTIFICATIONFROMADDR %>" value='<c:out value="<%= gc.getApprovalNotificationFromAddress() %>"/>' <% if(!gc.getUseApprovalNotifications()){ out.write(" disabled "); }%>maxlength="150" size="45" title="<%= ejbcawebbean.getText("FORMAT_EMAILADDRESS") %>">
       </td>
     </tr>          
+
     <tr id="Row1"> 
       <td width="49%" valign="top"> 
         <h3><c:out value="<%= ejbcawebbean.getText(\"AUTOENROLLUSE\") %>"/>
