@@ -18,8 +18,6 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 
-import javax.ejb.EJBException;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.cesecore.core.ejb.ca.store.CertificateProfileSession;
@@ -30,7 +28,6 @@ import org.ejbca.core.ejb.ca.caadmin.CAAdminSession;
 import org.ejbca.core.ejb.ca.caadmin.CaSession;
 import org.ejbca.core.ejb.ca.store.CertificateStoreSession;
 import org.ejbca.core.ejb.ra.UserAdminSession;
-import org.ejbca.core.model.InternalResources;
 import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.ca.SignRequestException;
 import org.ejbca.core.model.ca.caadmin.CA;
@@ -41,12 +38,9 @@ import org.ejbca.core.model.ca.catoken.CATokenContainer;
 import org.ejbca.core.model.ca.catoken.CATokenOfflineException;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.model.ra.NotFoundException;
-import org.ejbca.core.protocol.FailInfo;
 import org.ejbca.core.protocol.IResponseMessage;
-import org.ejbca.core.protocol.ResponseStatus;
+import org.ejbca.core.protocol.cmp.authentication.EndEntityCertificateAuthenticationModule;
 import org.ejbca.core.protocol.cmp.authentication.HMACAuthenticationModule;
-import org.ejbca.core.protocol.cmp.authentication.ICMPAuthenticationModule;
-import org.ejbca.core.protocol.cmp.authentication.VerifyPKIMessage;
 import org.ejbca.util.Base64;
 import org.ejbca.util.CertTools;
 
@@ -67,7 +61,6 @@ import org.ejbca.util.CertTools;
 public class ConfirmationMessageHandler extends BaseCmpMessageHandler implements ICmpMessageHandler {
 	
 	private static final Logger LOG = Logger.getLogger(ConfirmationMessageHandler.class);
-	private static final InternalResources INTRES = InternalResources.getInstance();
 	
 	/** Parameter used to determine the type of protection for the response message */
 	private String responseProtection = null;
@@ -104,47 +97,66 @@ public class ConfirmationMessageHandler extends BaseCmpMessageHandler implements
 			int iterationCount = 1024;
 			String cmpRaAuthSecret = null;	
 			final String keyId = getSenderKeyId(msg.getHeader());
-			if (keyId != null) {
+			
+			if(msg.getMessage().getProtection() != null) {
 				
-				CAInfo caInfo;
+				if(LOG.isDebugEnabled()) {
+					LOG.debug("The CertConfirm message recieved is signed");
+				}
+					
 				try {
+					if(LOG.isDebugEnabled()) {
+						LOG.debug("Trying to verify the CertConf signature using HMAC/PBE");
+					}
+					
 					int eeProfileId = getUsedEndEntityProfileId(keyId);
 					int caId = getUsedCaId(keyId, eeProfileId);
-					caInfo = caAdminSession.getCAInfo(admin, caId);
-				} catch (NotFoundException e) {
-					LOG.info(INTRES.getLocalizedMessage(CMP_ERRORGENERAL, e.getMessage()), e);
-					return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.INCORRECT_DATA, e.getMessage());
-				} catch (EJBException e) {
-					final String errMsg = INTRES.getLocalizedMessage(CMP_ERRORADDUSER);
-					LOG.error(errMsg, e);			
-					return null;	// Fatal error
+					CAInfo caInfo = caAdminSession.getCAInfo(admin, caId);
+					
+					final HMACAuthenticationModule hmac = new HMACAuthenticationModule(getParam(CmpConfiguration.AUTHMODULE_HMAC));
+					hmac.setSession(admin, userAdminSession, certificateStoreSession);
+					hmac.setCaInfo(caInfo);
+					if(hmac.verifyOrExtract(msg.getMessage(), null)) {
+						cmpRaAuthSecret = hmac.getAuthenticationString();
+						owfAlg = hmac.getCmpPbeVerifyer().getOwfOid();
+						macAlg = hmac.getCmpPbeVerifyer().getMacOid();
+						iterationCount = hmac.getCmpPbeVerifyer().getIterationCount();
+						
+						if(LOG.isDebugEnabled()) {
+							LOG.debug("The CertConf message was verified successfully");
+						}
+					}
+				} catch (Exception e) {
+					
+					if(LOG.isDebugEnabled()) {
+						LOG.debug("Verifying the CertConf message using HMAC/PBE failed.");
+					}
+					
+					if(msg.getMessage().getExtraCert(0) != null) {
+						
+						if(LOG.isDebugEnabled()) {
+							LOG.debug("Trying to verify the CertConf message using EndEntityCertificate");
+						}
+						
+						final EndEntityCertificateAuthenticationModule eemodule = new EndEntityCertificateAuthenticationModule(getParam(CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE));
+						eemodule.setSession(admin, caAdminSession, certificateStoreSession, authorizationSession, endEntityProfileSession, userAdminSession);
+
+						if (eemodule.verifyOrExtract(msg.getMessage(), null)) {
+							cmpRaAuthSecret = eemodule.getAuthenticationString();
+							
+							if(LOG.isDebugEnabled()) {
+								LOG.debug("The CertConf message was verified successfully");
+							}
+						}
+					}
 				}
 				
-				//Verify the authenticity of the message
-				VerifyPKIMessage messageVerifyer = new VerifyPKIMessage(caInfo, admin, caAdminSession, userAdminSession, certificateStoreSession, authorizationSession, endEntityProfileSession);
-				ICMPAuthenticationModule authenticationModule = null;
-				if(messageVerifyer.verify(msg.getMessage(), null)) {
-					authenticationModule = messageVerifyer.getUsedAuthenticationModule();
+				if(cmpRaAuthSecret == null) {
+					LOG.error("Failed to verify the CertConf message. The request will be processed without verification");
 				}
-				if(authenticationModule == null) {
-					String errMsg = "";
-					if(errMsg != null) {
-						errMsg = messageVerifyer.getErrorMessage();
-					} else {
-						errMsg = "Unrecognized authentication modules";
-					}
-					LOG.error(errMsg);
-					return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_MESSAGE_CHECK, errMsg);
-				} else {
-					if(authenticationModule instanceof HMACAuthenticationModule) {
-						HMACAuthenticationModule hmacmodule = (HMACAuthenticationModule) authenticationModule;
-						owfAlg = hmacmodule.getCmpPbeVerifyer().getOwfOid();
-						macAlg = hmacmodule.getCmpPbeVerifyer().getMacOid();
-					}
-				}
-				cmpRaAuthSecret = authenticationModule.getAuthenticationString();
-				
 			}
+			
+			
 			if (LOG.isDebugEnabled()) {
 				LOG.debug("Creating a PKI confirm message response");
 			}
@@ -214,5 +226,21 @@ public class ConfirmationMessageHandler extends BaseCmpMessageHandler implements
 			}
 		}
 		return resp;
+	}
+	
+	private String getParam(String module) {
+		String confModule = CmpConfiguration.getAuthenticationModule();
+		String confParams = CmpConfiguration.getAuthenticationParameters();
+	 	     
+		String modules[] = confModule.split(";");
+		String params[] = confParams.split(";");
+		
+		for(int i=0; i<modules.length; i++) {
+			if(StringUtils.equals(modules[i].trim(), module)) {
+				return params[i];
+			}
+		}
+		
+		return "-";
 	}
 }
