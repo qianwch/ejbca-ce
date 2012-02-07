@@ -152,7 +152,7 @@ public class ConfirmationMessageHandler extends BaseCmpMessageHandler implements
 				}
 				
 				if(cmpRaAuthSecret == null) {
-					LOG.error("Failed to verify the CertConf message. The request will be processed without verification");
+					LOG.info("The CertConf message could not be verified. The request will be processed without verification");
 				}
 			}
 			
