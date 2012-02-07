@@ -815,6 +815,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE);
         updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "AdminCA1");
         updatePropertyOnServer(CmpConfiguration.CONFIG_CHECKADMINAUTHORIZATION, "true");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_ALLOWAUTOMATICKEYUPDATE, "true");
 
         //------------------ create the user and issue his first certificate -------------
         createUser(username, userDN, "foo123");
@@ -978,6 +979,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE);
         updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "AdminCA1");
         updatePropertyOnServer(CmpConfiguration.CONFIG_CHECKADMINAUTHORIZATION, "true");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_ALLOWAUTOMATICKEYUPDATE, "true");
 
         //------------------ create the user and issue his first certificate -------------
         createUser(username, userDN, "foo123");
@@ -1141,6 +1143,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, authmodules);
         updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "-;OU;AdminCA1");
         updatePropertyOnServer(CmpConfiguration.CONFIG_CHECKADMINAUTHORIZATION, "true");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_ALLOWAUTOMATICKEYUPDATE, "true");
 
         //------------------ create the user and issue his first certificate -------------
         createUser(username, userDN, "foo123");
