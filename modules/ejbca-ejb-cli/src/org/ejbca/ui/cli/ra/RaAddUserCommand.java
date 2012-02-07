@@ -20,6 +20,7 @@ import java.util.Map;
 
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authorization.AuthorizationDeniedException;
+import org.cesecore.certificates.ca.CADoesntExistsException;
 import org.cesecore.certificates.certificateprofile.CertificateProfileConstants;
 import org.ejbca.config.GlobalConfiguration;
 import org.ejbca.core.ejb.hardtoken.HardTokenSessionRemote;
@@ -178,8 +179,9 @@ public class RaAddUserCommand extends BaseRaAdminCommand {
             int caid = 0;
             try {
                 caid = ejb.getCaSession().getCAInfo(getAdmin(cliUserName, cliPassword), caname).getCAId();
-            } catch (Exception e) {
-            }
+            } catch (CADoesntExistsException e) {
+                // NOPMD: let it be 0, we will print a suitable error message below
+            }            
 
             if (args.length > 9) {
                 // Use certificate type, no end entity profile.
@@ -218,7 +220,7 @@ public class RaAddUserCommand extends BaseRaAdminCommand {
             }
 
             if (caid == 0) { // CA not found i database.
-                getLogger().error("Could not find CA in database.");
+                getLogger().error("Could not find CA '"+caname+"'in database.");
                 error = true;
             }
 
