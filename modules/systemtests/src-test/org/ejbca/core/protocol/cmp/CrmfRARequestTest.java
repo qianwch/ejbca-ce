@@ -43,9 +43,12 @@ import org.cesecore.mock.authentication.tokens.TestAlwaysAllowLocalAuthenticatio
 import org.cesecore.util.CertTools;
 import org.cesecore.util.CryptoProviderTools;
 import org.ejbca.config.CmpConfiguration;
+import org.ejbca.config.GlobalConfiguration;
 import org.ejbca.config.WebConfiguration;
 import org.ejbca.core.ejb.ca.caadmin.CAAdminSessionRemote;
 import org.ejbca.core.ejb.config.ConfigurationSessionRemote;
+import org.ejbca.core.ejb.config.GlobalConfigurationProxySessionRemote;
+import org.ejbca.core.ejb.config.GlobalConfigurationSession;
 import org.ejbca.core.ejb.ra.EndEntityAccessSession;
 import org.ejbca.core.ejb.ra.UserAdminSessionRemote;
 import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileSession;
@@ -84,7 +87,8 @@ public class CrmfRARequestTest extends CmpTestCase {
     private EndEntityProfileSession eeProfileSession = InterfaceCache.getEndEntityProfileSession();
     private CertificateProfileSession certProfileSession = InterfaceCache.getCertificateProfileSession();
     private EndEntityAccessSession eeAccessSession = InterfaceCache.getEndEntityAccessSession();
-    //private EndEntityAccessSession eeAccessSession = EjbRemoteHelper.INSTANCE.getRemoteSession(EndEntityAccessSessionRemote.class);
+    private GlobalConfigurationProxySessionRemote globalConfigurationProxySession = JndiHelper.getRemoteSession(GlobalConfigurationProxySessionRemote.class);
+    private GlobalConfigurationSession globalConfSession = InterfaceCache.getGlobalConfigurationSession();
 
     @Before
     public void setUp() throws Exception {
@@ -349,6 +353,10 @@ public class CrmfRARequestTest extends CmpTestCase {
     @Test
     public void test03UseKeyID() throws Exception {
 
+        GlobalConfiguration gc = globalConfSession.getCachedGlobalConfiguration();
+        gc.setEnableEndEntityProfileLimitations(true);
+        globalConfigurationProxySession.saveGlobalConfigurationRemote(roleMgmgToken, gc);
+        
         updatePropertyOnServer(CmpConfiguration.CONFIG_RA_ENDENTITYPROFILE, "KeyId");
         updatePropertyOnServer(CmpConfiguration.CONFIG_RA_CERTIFICATEPROFILE, "KeyId");
 
