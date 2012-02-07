@@ -220,7 +220,7 @@ public class RaAddUserCommand extends BaseRaAdminCommand {
             }
 
             if (caid == 0) { // CA not found i database.
-                getLogger().error("Could not find CA '"+caname+"'in database.");
+                getLogger().error("Could not find CA '"+caname+"' in database.");
                 error = true;
             }
 
@@ -241,7 +241,7 @@ public class RaAddUserCommand extends BaseRaAdminCommand {
 
             // Check if username already exists.
             if (ejb.getUserAdminSession().existsUser(username)) {
-                getLogger().error("User already exists in the database.");
+                getLogger().error("User '"+username+"' already exists in the database.");
                 error = true;
             }
 
