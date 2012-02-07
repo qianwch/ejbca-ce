@@ -422,7 +422,7 @@ function checkallfields(){
 </div>
 <form name="editcertificateprofile" method="post" action="<%=THIS_FILENAME %>">
   <input type="hidden" name='<%= ACTION %>' value='<%=ACTION_EDIT_CERTIFICATEPROFILE %>'>
-  <input type="hidden" name='<%= HIDDEN_CERTIFICATEPROFILENAME %>' value='<%=certprofile %>'>
+  <input type="hidden" name='<%= HIDDEN_CERTIFICATEPROFILENAME %>' value='<c:out value="<%=certprofile %>"/>'>
   <table class="edit" width="100%" border="0" cellspacing="3" cellpadding="3">
     <tr id="Row<%=row++%2%>"> 
       <td width="50%" valign="top"> 
@@ -860,12 +860,13 @@ function checkallfields(){
            <%       if(!certificateprofiledata.getUseCRLDistributionPoint() || certificateprofiledata.getUseDefaultCRLDistributionPoint()) {
                       out.write(" disabled "); 
                     } else {
-                      if(!certificateprofiledata.getCRLIssuer().equals("")) {
-                       out.write(" value=\"" + certificateprofiledata.getCRLIssuer() + "\"");
-                      } else if(certificateprofiledata.getCRLDistributionPointURI().equals("")) {
+                      if(!certificateprofiledata.getCRLIssuer().equals("")) {%>
+                       value="<c:out value="<%= certificateprofiledata.getCRLIssuer() %>"/>"
+                      <%} else if(certificateprofiledata.getCRLDistributionPointURI().equals("")) {
                     	  // Only add default CRLIssuer if this was the first time we enabled this checkbox, so both fields are empty
-                          out.write(" value=\"" + globalconfiguration.getStandardCRLIssuer() + "\"");
-                      }
+                    	  %>
+                         value="<c:out value="<%= globalconfiguration.getStandardCRLIssuer() %>"/>"
+                      <%}
                     }
             %>>
       </td>
@@ -896,10 +897,11 @@ function checkallfields(){
            <%       if(!certificateprofiledata.getUseFreshestCRL() || certificateprofiledata.getUseCADefinedFreshestCRL())
                       out.write(" disabled "); 
                     else 
-                      if(!certificateprofiledata.getFreshestCRLURI().equals(""))
-                       out.write(" value=\"" + certificateprofiledata.getFreshestCRLURI() + "\""); 
-                      else
-                       out.write(" value=\"" + globalconfiguration.getStandardDeltaCRLDistributionPointURI()+ "\"");%>>
+                      if(!certificateprofiledata.getFreshestCRLURI().equals("")) {%>
+                         value="<c:out value="<%= certificateprofiledata.getFreshestCRLURI() %>"/>"
+                      <%} else {%>
+                         value="<c:out value="<%= globalconfiguration.getStandardDeltaCRLDistributionPointURI() %>"/>"
+                      <%}%> >
       </td>
     </tr>
     
@@ -1023,7 +1025,7 @@ function checkallfields(){
         </table>
       </td>
       <td width="50%">
-        <input readonly type="text" name="<%= TEXTFIELD_CAISSUERURI + i %>" value="<%= uri %>" size="45" maxlength="255"/>
+        <input readonly type="text" name="<%= TEXTFIELD_CAISSUERURI + i %>" value="<c:out value="<%= uri %>"/>" size="45" maxlength="255"/>
       </td>
     </tr>
         <% }
@@ -1467,7 +1469,7 @@ function checkallfields(){
               <%    if(usedcas.contains(next))
                       out.write(" selected ");
                   %>>
-              <%= caidtonamemap.get(next) %>         
+              <c:out value="<%= caidtonamemap.get(next) %>"/>
            </option>  
               <% } %>
         </select>
@@ -1489,7 +1491,7 @@ function checkallfields(){
               <%    if(usedpublishers.contains(nextid))
                       out.write(" selected ");
                   %>>
-              <%= next %>         
+              <c:out value="<%= next %>"/>
            </option>  
               <% } %>
         </select>

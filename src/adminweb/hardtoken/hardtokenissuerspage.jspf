@@ -1,3 +1,4 @@
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <% 
   TreeMap issuerdatas   = ejbcawebbean.getInformationMemory().getHardTokenIssuers();
 
@@ -115,9 +116,9 @@ function checkselected(){
         <select name="<%=SELECT_ADMINGROUP%>" >
           <%Iterator iter = authgroups.iterator();
             while(iter.hasNext()){
-              AdminGroup group = (AdminGroup) iter.next();%>
+            	AdminGroup group = (AdminGroup) iter.next();%>
             <option value="<%= group.getAdminGroupId()%>">
-               <%= group.getAdminGroupName() %>
+               <c:out value='<%= group.getAdminGroupName() %>'/>
             </option>
           <%}%>
         </select>

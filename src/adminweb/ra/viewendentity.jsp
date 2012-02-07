@@ -68,9 +68,9 @@
       </tr>
       <tr id="Row<%=(viewendentityhelper.row++)%2%>">
 	<td align="right" width="<%=ViewEndEntityHelper.columnwidth%>"><%= ejbcawebbean.getText("ENDENTITYPROFILE") %></td>
-	<td><% if(viewendentityhelper.userdata.getEndEntityProfileId() != 0)
-                    out.write(rabean.getEndEntityProfileName(viewendentityhelper.userdata.getEndEntityProfileId()));
-                 else out.write(ejbcawebbean.getText("NOENDENTITYPROFILEDEFINED"));%>
+	<td><% if(viewendentityhelper.userdata.getEndEntityProfileId() != 0) {%>
+	                <c:out value="<%= rabean.getEndEntityProfileName(viewendentityhelper.userdata.getEndEntityProfileId()) %>"/>
+                 <%} else out.write(ejbcawebbean.getText("NOENDENTITYPROFILEDEFINED"));%>
         </td>
       </tr>
       <% if(viewendentityhelper.profile.getUse(EndEntityProfile.CLEARTEXTPASSWORD,0)){ %>
@@ -161,7 +161,7 @@
       <% if(viewendentityhelper.profile.getUse(EndEntityProfile.EMAIL,0)){ %>
        <tr id="Row<%=(viewendentityhelper.row++)%2%>">
 	 <td align="right" width="<%=ViewEndEntityHelper.columnwidth%>"><%= ejbcawebbean.getText("EMAIL") %></td>
-	 <td><% if(viewendentityhelper.userdata.getEmail() != null) out.write(viewendentityhelper.userdata.getEmail()); %>
+	 <td><% if(viewendentityhelper.userdata.getEmail() != null) {%><c:out value="<%= viewendentityhelper.userdata.getEmail() %>"/><%}%>
          </td>
        </tr>
        <% } %>
@@ -201,7 +201,7 @@
        
        <tr id="Row<%=(viewendentityhelper.row++)%2%>">
 	 <td align="right" width="<%=ViewEndEntityHelper.columnwidth%>"><%= ejbcawebbean.getText("CA") %></td>
-	 <td><%= viewendentityhelper.userdata.getCAName()  %>
+	 <td><c:out value="<%= viewendentityhelper.userdata.getCAName() %>"/>
          </td>
        </tr>
        <tr id="Row<%=(viewendentityhelper.row++)%2%>">
@@ -209,9 +209,9 @@
          <td>   
             <% for(int i=0; i < viewendentityhelper.tokentexts.length;i++){
                 if(viewendentityhelper.tokenids[i] == viewendentityhelper.userdata.getTokenType())
-                   if( viewendentityhelper.tokenids[i] > SecConst.TOKEN_SOFT)
-                     out.write(viewendentityhelper.tokentexts[i]);
-                   else
+                   if( viewendentityhelper.tokenids[i] > SecConst.TOKEN_SOFT) {%>
+                     <c:out value="<%= viewendentityhelper.tokentexts[i] %>"/>
+                   <%} else
                      out.write(ejbcawebbean.getText(viewendentityhelper.tokentexts[i]));
               } %>
          </td> 
@@ -222,8 +222,9 @@
          <td>   
             <% if(viewendentityhelper.userdata.getHardTokenIssuerId() == SecConst.NO_HARDTOKENISSUER)
                  out.write(ejbcawebbean.getText("NONE"));
-               else
-                 out.write(tokenbean.getHardTokenIssuerAlias(viewendentityhelper.userdata.getHardTokenIssuerId()));
+               else {%>
+                 <c:out value="<%= tokenbean.getHardTokenIssuerAlias(viewendentityhelper.userdata.getHardTokenIssuerId()) %>"/>
+               <%}
             %>
          </td> 
        </tr>

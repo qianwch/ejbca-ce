@@ -1510,8 +1510,8 @@ function checkUseInBatch(){
            if( availablecertprofiles != null){
              for(int i =0; i< availablecertprofiles.length;i++){
          %>
-         <option value='<%=availablecertprofiles[i]%>' <% if(userdata.getCertificateProfileId() ==Integer.parseInt(availablecertprofiles[i])) out.write(" selected "); %> >
-            <%= rabean.getCertificateProfileName(Integer.parseInt(availablecertprofiles[i])) %>
+         <option value='<c:out value="<%= availablecertprofiles[i] %>"/>' <% if(userdata.getCertificateProfileId() ==Integer.parseInt(availablecertprofiles[i])) out.write(" selected "); %> >
+            <c:out value="<%= rabean.getCertificateProfileName(Integer.parseInt(availablecertprofiles[i])) %>"/>
          </option>
          <%
              }
