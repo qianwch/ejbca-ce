@@ -25,17 +25,23 @@ import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.Principal;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 import javax.ejb.ObjectNotFoundException;
+import javax.security.auth.x500.X500Principal;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -56,9 +62,13 @@ import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.asn1.x509.X509CertificateStructure;
 import org.bouncycastle.asn1.x509.X509Name;
 import org.cesecore.CesecoreException;
+import org.cesecore.authentication.tokens.AuthenticationSubject;
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authentication.tokens.UsernamePrincipal;
 import org.cesecore.authorization.AuthorizationDeniedException;
+import org.cesecore.authorization.user.AccessMatchType;
+import org.cesecore.authorization.user.AccessUserAspectData;
+import org.cesecore.authorization.user.matchvalues.X500PrincipalAccessMatchValue;
 import org.cesecore.certificates.CertificateCreationException;
 import org.cesecore.certificates.ca.CADoesntExistsException;
 import org.cesecore.certificates.ca.CAInfo;
@@ -70,6 +80,12 @@ import org.cesecore.certificates.util.AlgorithmConstants;
 import org.cesecore.jndi.JndiHelper;
 import org.cesecore.keys.util.KeyTools;
 import org.cesecore.mock.authentication.tokens.TestAlwaysAllowLocalAuthenticationToken;
+import org.cesecore.mock.authentication.tokens.TestX509CertificateAuthenticationToken;
+import org.cesecore.roles.RoleData;
+import org.cesecore.roles.RoleExistsException;
+import org.cesecore.roles.RoleNotFoundException;
+import org.cesecore.roles.access.RoleAccessSessionRemote;
+import org.cesecore.roles.management.RoleManagementSessionRemote;
 import org.cesecore.util.CertTools;
 import org.cesecore.util.CryptoProviderTools;
 import org.ejbca.config.CmpConfiguration;
@@ -79,7 +95,9 @@ import org.ejbca.core.ejb.ca.sign.SignSessionRemote;
 import org.ejbca.core.ejb.config.ConfigurationSessionRemote;
 import org.ejbca.core.ejb.ra.UserAdminSessionRemote;
 import org.ejbca.core.model.SecConst;
+import org.ejbca.core.model.approval.ApprovalException;
 import org.ejbca.core.model.approval.WaitingForApprovalException;
+import org.ejbca.core.model.ra.NotFoundException;
 import org.ejbca.core.model.ra.UserDataConstants;
 import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
 import org.ejbca.util.InterfaceCache;
@@ -131,6 +149,9 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
     private SignSessionRemote signSession = InterfaceCache.getSignSession();
     private ConfigurationSessionRemote confSession = JndiHelper.getRemoteSession(ConfigurationSessionRemote.class); //InterfaceCache.getConfigurationSession();
     private CertificateStoreSession certStoreSession = InterfaceCache.getCertificateStoreSession();
+    private RoleManagementSessionRemote roleManagementSession = InterfaceCache.getRoleManagementSession();
+    private RoleAccessSessionRemote roleAccessSessionRemote = InterfaceCache.getRoleAccessSession();
+
     
     @Before
     public void setUp() throws Exception {
@@ -227,7 +248,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
 
         
         
-        PKIMessage req = genRenewalReq(keys, false);
+        PKIMessage req = genRenewalReq(keys, false, null, null);
         assertNotNull("Failed to generate a CMP renewal request", req);
         int reqId = req.getBody().getKur().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue();
         AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
@@ -317,7 +338,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
 
         
         
-        PKIMessage req = genRenewalReq(keys, false);
+        PKIMessage req = genRenewalReq(keys, false, null, null);
         assertNotNull("Failed to generate a CMP renewal request", req);
         AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
         req.getHeader().setProtectionAlg(pAlg);      
@@ -407,7 +428,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
 
         
         
-        PKIMessage req = genRenewalReq(keys, false);
+        PKIMessage req = genRenewalReq(keys, false, null, null);
         assertNotNull("Failed to generate a CMP renewal request", req);
         AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
         req.getHeader().setProtectionAlg(pAlg);      
@@ -482,7 +503,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
                     AlgorithmConstants.SIGALG_SHA1_WITH_RSA, false);
         assertNotNull("Failed to create a test certificate", fakeCert);
         
-        PKIMessage req = genRenewalReq(keys, false);
+        PKIMessage req = genRenewalReq(keys, false, null, null);
         assertNotNull("Failed to generate a CMP renewal request", req);
         AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
         req.getHeader().setProtectionAlg(pAlg);      
@@ -538,7 +559,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
      * 		- Checks that the CMP response message contain the expected error details text
      * 
      * @throws Exception
-     */
+     * /
     @Test
     public void test05UpdateKeyInRAMode() throws Exception {
         if(log.isTraceEnabled()) {
@@ -589,7 +610,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         }
 
     }
-
+*/
     /**
      * Sends a KeyUpdateRequest using the same old keys and the configurations is NOT to allow the use of the same key. 
      * A CMP error message is expected and no certificate renewal.
@@ -635,7 +656,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
 
         
         
-        PKIMessage req = genRenewalReq(keys, false);
+        PKIMessage req = genRenewalReq(keys, false, null, null);
         assertNotNull("Failed to generate a CMP renewal request", req);
         AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
         req.getHeader().setProtectionAlg(pAlg);      
@@ -712,7 +733,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
 
         
         KeyPair newkeys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
-        PKIMessage req = genRenewalReq(newkeys, false);
+        PKIMessage req = genRenewalReq(newkeys, false, null, null);
         assertNotNull("Failed to generate a CMP renewal request", req);
         int reqId = req.getBody().getKur().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue();
         AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
@@ -746,9 +767,326 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         }
 
     }
+    
+    @Test
+    public void test09RAMode() throws Exception {
+        if(log.isTraceEnabled()) {
+            log.trace("test09RAMode()");
+        }
+        
+        updatePropertyOnServer(CmpConfiguration.CONFIG_OPERATIONMODE, "ra");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE);
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "AdminCA1");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_ALLOWAUTOMATICKEYUPDATE, "true");
 
+        //------------------ create the user and issue his first certificate -------------
+        createUser(username, userDN, "foo123");
+        KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
+        Certificate certificate = null;
+        certificate = (X509Certificate) signSession.createCertificate(admin, username, "foo123", keys.getPublic());
+        assertNotNull("Failed to create a test certificate", certificate);
+
+        PKIMessage req = genRenewalReq(keys, false, userDN, issuerDN);
+        assertNotNull("Failed to generate a CMP renewal request", req);
+        int reqId = req.getBody().getKur().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue();
+
+        AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
+        req.getHeader().setProtectionAlg(pAlg);
+        req.getHeader().setSenderKID(new DEROctetString("CMPTESTPROFILE".getBytes()));
+        
+        createUser("cmpTestAdmin", "CN=cmpTestAdmin,C=SE", "foo123");
+        KeyPair admkeys = KeyTools.genKeys("1024", "RSA");
+        AuthenticationToken admToken = createAdminToken(admkeys, "cmpTestAdmin", "CN=cmpTestAdmin,C=SE");
+        Certificate admCert = getCertFromCredentials(admToken);
+        addExtraCert(req, admCert);
+        signPKIMessage(req, admkeys);
+        assertNotNull(req);
+        
+        ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        DEROutputStream out = new DEROutputStream(bao);
+        out.writeObject(req);
+        byte[] ba = bao.toByteArray();
+        //send request and recieve response
+        byte[] resp = sendCmpHttp(ba, 200);
+        //chechCmpResponseGeneral(resp, issuerDN, cacert, nonce, transid, true, null);
+        checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, true, null);
+        X509Certificate cert = checkKurCertRepMessage(userDN, cacert, resp, reqId);
+        assertNotNull("Failed to renew the certificate", cert);
+
+
+        if(log.isTraceEnabled()) {
+            log.trace("<test09RAMode()");
+        }
+
+    }
+
+    @Test
+    public void test10RAModeNonAdmin() throws Exception {
+        if(log.isTraceEnabled()) {
+            log.trace("test10RAModeNonAdmin()");
+        }
+        
+        updatePropertyOnServer(CmpConfiguration.CONFIG_OPERATIONMODE, "ra");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE);
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "AdminCA1");
+
+        //------------------ create the user and issue his first certificate -------------
+        createUser(username, userDN, "foo123");
+        KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
+        Certificate certificate = (X509Certificate) signSession.createCertificate(admin, username, "foo123", keys.getPublic());
+        assertNotNull("Failed to create a test certificate", certificate);
+
+        PKIMessage req = genRenewalReq(keys, false, userDN, issuerDN);
+        assertNotNull("Failed to generate a CMP renewal request", req);
+        //int reqId = req.getBody().getKur().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue();
+
+        AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
+        req.getHeader().setProtectionAlg(pAlg);
+        req.getHeader().setSenderKID(new DEROctetString("CMPTESTPROFILE".getBytes()));
+        
+        addExtraCert(req, certificate);
+        signPKIMessage(req, keys);
+        assertNotNull(req);
+
+        ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        DEROutputStream out = new DEROutputStream(bao);
+        out.writeObject(req);
+        byte[] ba = bao.toByteArray();
+        //send request and recieve response
+        byte[] resp = sendCmpHttp(ba, 200);
+        //chechCmpResponseGeneral(resp, issuerDN, cacert, nonce, transid, true, null);
+        checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, false, null);
+        
+        PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
+        assertNotNull(respObject);
+
+        final PKIBody body = respObject.getBody();
+        assertEquals(23, body.getTagNo());
+        final String errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
+        final String expectedErrMsg = "'" + userDN + "' is not an authorized administrator.";
+        assertEquals(expectedErrMsg, errMsg);
+
+        if(log.isTraceEnabled()) {
+            log.trace("<test10RAModeNonAdmin()");
+        }
+
+    }
+    
+    @Test
+    public void test11RANoIssuer() throws Exception {
+        if(log.isTraceEnabled()) {
+            log.trace("test11RANoIssuer()");
+        }
+        
+        updatePropertyOnServer(CmpConfiguration.CONFIG_OPERATIONMODE, "ra");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE);
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "AdminCA1");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_ALLOWAUTOMATICKEYUPDATE, "true");
+        
+        //------------------ create the user and issue his first certificate -------------
+        createUser(username, userDN, "foo123");
+        KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
+        Certificate certificate = (X509Certificate) signSession.createCertificate(admin, username, "foo123", keys.getPublic());
+        assertNotNull("Failed to create a test certificate", certificate);
+
+        PKIMessage req = genRenewalReq(keys, false, userDN, null);
+        assertNotNull("Failed to generate a CMP renewal request", req);
+        int reqId = req.getBody().getKur().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue();
+
+        AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
+        req.getHeader().setProtectionAlg(pAlg);
+        req.getHeader().setSenderKID(new DEROctetString("CMPTESTPROFILE".getBytes()));
+        
+        createUser("cmpTestAdmin", "CN=cmpTestAdmin,C=SE", "foo123");
+        KeyPair admkeys = KeyTools.genKeys("1024", "RSA");
+        AuthenticationToken admToken = createAdminToken(admkeys, "cmpTestAdmin", "CN=cmpTestAdmin,C=SE");
+        Certificate admCert = getCertFromCredentials(admToken);
+        addExtraCert(req, admCert);
+        signPKIMessage(req, admkeys);
+        assertNotNull(req);
+
+        ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        DEROutputStream out = new DEROutputStream(bao);
+        out.writeObject(req);
+        byte[] ba = bao.toByteArray();
+        //send request and recieve response
+        byte[] resp = sendCmpHttp(ba, 200);
+        //chechCmpResponseGeneral(resp, issuerDN, cacert, nonce, transid, true, null);
+        checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, false, null);
+        X509Certificate cert = checkKurCertRepMessage(userDN, cacert, resp, reqId);
+        assertNotNull("Failed to renew the certificate", cert);
+        
+        if(log.isTraceEnabled()) {
+            log.trace("<test11RANoIssuer()");
+        }
+
+    }
     
     
+    @Test
+    public void test12RANoIssuerNoSubjectDN() throws Exception {
+        if(log.isTraceEnabled()) {
+            log.trace("test12RANoIssuerNoSubjetDN()");
+        }
+        
+        updatePropertyOnServer(CmpConfiguration.CONFIG_OPERATIONMODE, "ra");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE);
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "AdminCA1");
+
+        //------------------ create the user and issue his first certificate -------------
+        createUser(username, userDN, "foo123");
+        KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
+        Certificate certificate = (X509Certificate) signSession.createCertificate(admin, username, "foo123", keys.getPublic());
+        assertNotNull("Failed to create a test certificate", certificate);
+
+        PKIMessage req = genRenewalReq(keys, false, null, null);
+        assertNotNull("Failed to generate a CMP renewal request", req);
+        //int reqId = req.getBody().getKur().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue();
+
+        AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
+        req.getHeader().setProtectionAlg(pAlg);
+        req.getHeader().setSenderKID(new DEROctetString("CMPTESTPROFILE".getBytes()));
+        
+        createUser("cmpTestAdmin", "CN=cmpTestAdmin,C=SE", "foo123");
+        KeyPair admkeys = KeyTools.genKeys("1024", "RSA");
+        AuthenticationToken admToken = createAdminToken(admkeys, "cmpTestAdmin", "CN=cmpTestAdmin,C=SE");
+        Certificate admCert = getCertFromCredentials(admToken);
+        addExtraCert(req, admCert);
+        signPKIMessage(req, admkeys);
+        assertNotNull(req);
+
+        ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        DEROutputStream out = new DEROutputStream(bao);
+        out.writeObject(req);
+        byte[] ba = bao.toByteArray();
+        //send request and recieve response
+        byte[] resp = sendCmpHttp(ba, 200);
+        //chechCmpResponseGeneral(resp, issuerDN, cacert, nonce, transid, true, null);
+        checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, false, null);
+        
+        PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
+        assertNotNull(respObject);
+
+        final PKIBody body = respObject.getBody();
+        assertEquals(23, body.getTagNo());
+        final String errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
+        final String expectedErrMsg = "Cannot find a SubjectDN in the request";
+        assertEquals(expectedErrMsg, errMsg);
+
+        if(log.isTraceEnabled()) {
+            log.trace("<test12RANoIssuerNoSubjectDN()");
+        }
+
+    }
+    
+    @Test
+    public void test13RAMultipleAuthenticationModules() throws Exception {
+        if(log.isTraceEnabled()) {
+            log.trace("test13RAMultipleAuthenticationModules");
+        }
+        
+        updatePropertyOnServer(CmpConfiguration.CONFIG_OPERATIONMODE, "ra");
+        String authmodules = CmpConfiguration.AUTHMODULE_HMAC + ";" + CmpConfiguration.AUTHMODULE_DN_PART_PWD + ";" + CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE;
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, authmodules);
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "-;OU;AdminCA1");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_ALLOWAUTOMATICKEYUPDATE, "true");
+
+        //------------------ create the user and issue his first certificate -------------
+        createUser(username, userDN, "foo123");
+        KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
+        Certificate certificate = (X509Certificate) signSession.createCertificate(admin, username, "foo123", keys.getPublic());
+        assertNotNull("Failed to create a test certificate", certificate);
+
+        PKIMessage req = genRenewalReq(keys, false, userDN, null);
+        assertNotNull("Failed to generate a CMP renewal request", req);
+        int reqId = req.getBody().getKur().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue();
+
+        AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
+        req.getHeader().setProtectionAlg(pAlg);
+        req.getHeader().setSenderKID(new DEROctetString("CMPTESTPROFILE".getBytes()));
+        
+        createUser("cmpTestAdmin", "CN=cmpTestAdmin,C=SE", "foo123");
+        KeyPair admkeys = KeyTools.genKeys("1024", "RSA");
+        AuthenticationToken admToken = createAdminToken(admkeys, "cmpTestAdmin", "CN=cmpTestAdmin,C=SE");
+        Certificate admCert = getCertFromCredentials(admToken);
+        addExtraCert(req, admCert);
+        signPKIMessage(req, admkeys);
+        assertNotNull(req);
+
+        ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        DEROutputStream out = new DEROutputStream(bao);
+        out.writeObject(req);
+        byte[] ba = bao.toByteArray();
+        //send request and recieve response
+        byte[] resp = sendCmpHttp(ba, 200);
+        //chechCmpResponseGeneral(resp, issuerDN, cacert, nonce, transid, true, null);
+        checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, false, null);
+        X509Certificate cert = checkKurCertRepMessage(userDN, cacert, resp, reqId);
+        assertNotNull("Failed to renew the certificate", cert);
+        
+        if(log.isTraceEnabled()) {
+            log.trace("<test13RAMultipleAuthenticationModules()");
+        }
+
+    }
+
+    @Test
+    public void test14RANoCA() throws Exception {
+        if(log.isTraceEnabled()) {
+            log.trace("test14RANoCA()");
+        }
+        
+        updatePropertyOnServer(CmpConfiguration.CONFIG_OPERATIONMODE, "ra");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_DN_PART_PWD);
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "OU");
+
+        //------------------ create the user and issue his first certificate -------------
+        createUser(username, userDN, "foo123");
+        KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
+        Certificate certificate = (X509Certificate) signSession.createCertificate(admin, username, "foo123", keys.getPublic());
+        assertNotNull("Failed to create a test certificate", certificate);
+
+        PKIMessage req = genRenewalReq(keys, false, userDN, null);
+        assertNotNull("Failed to generate a CMP renewal request", req);
+        //int reqId = req.getBody().getKur().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue();
+
+        AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
+        req.getHeader().setProtectionAlg(pAlg);
+        //req.getHeader().setSenderKID(new DEROctetString("CMPTESTPROFILE".getBytes()));
+        
+        createUser("cmpTestAdmin", "CN=cmpTestAdmin,C=SE", "foo123");
+        KeyPair admkeys = KeyTools.genKeys("1024", "RSA");
+        AuthenticationToken admToken = createAdminToken(admkeys, "cmpTestAdmin", "CN=cmpTestAdmin,C=SE");
+        Certificate admCert = getCertFromCredentials(admToken);
+        addExtraCert(req, admCert);
+        signPKIMessage(req, admkeys);
+        assertNotNull(req);
+
+        ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        DEROutputStream out = new DEROutputStream(bao);
+        out.writeObject(req);
+        byte[] ba = bao.toByteArray();
+        //send request and recieve response
+        byte[] resp = sendCmpHttp(ba, 200);
+        //chechCmpResponseGeneral(resp, issuerDN, cacert, nonce, transid, true, null);
+        checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, false, null);
+        
+        PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
+        assertNotNull(respObject);
+
+        final PKIBody body = respObject.getBody();
+        assertEquals(23, body.getTagNo());
+        final String errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
+        //final String expectedErrMsg = "Cannot find a SubjectDN in the request";
+        final String expectedErrMsg = "CA does not exist";
+        assertEquals(expectedErrMsg, errMsg);
+
+        if(log.isTraceEnabled()) {
+            log.trace("<test14RANoCA()");
+        }
+
+    }
+
     
     @After
     public void tearDown() throws Exception {
@@ -858,7 +1196,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
 
     }
     
-    private PKIMessage genRenewalReq(KeyPair keys, boolean raVerifiedPopo) throws IOException, NoSuchAlgorithmException, NoSuchProviderException, 
+    private PKIMessage genRenewalReq(KeyPair keys, boolean raVerifiedPopo, String reqSubjectDN, String reqIssuerDN) throws IOException, NoSuchAlgorithmException, NoSuchProviderException, 
                         InvalidKeyException, SignatureException {
         
         CertTemplate myCertTemplate = new CertTemplate();
@@ -870,6 +1208,14 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         myOptionalValidity.setNotAfter(na);
         myCertTemplate.setValidity(myOptionalValidity);
         
+        if(reqSubjectDN != null) {
+            myCertTemplate.setSubject(new X509Name(reqSubjectDN));
+        }
+        if(reqIssuerDN != null) {
+            myCertTemplate.setIssuer(new X509Name(reqIssuerDN));
+        }
+
+
         byte[] bytes = keys.getPublic().getEncoded();
         ByteArrayInputStream bIn = new ByteArrayInputStream(bytes);
         ASN1InputStream dIn = new ASN1InputStream(bIn);
@@ -983,6 +1329,132 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         checkDN(userDN, struct.getSubject());
         assertEquals(CertTools.stringToBCDNString(struct.getIssuer().toString()), CertTools.getSubjectDN(cacert));
         return (X509Certificate) CertTools.getCertfromByteArray(struct.getEncoded());
+    }
+    
+    private X509Certificate getCertFromCredentials(AuthenticationToken authToken) {
+        X509Certificate certificate = null;
+        Set<?> inputcreds = authToken.getCredentials();
+        if (inputcreds != null) {
+            for (Object object : inputcreds) {
+                if (object instanceof X509Certificate) {
+                    certificate = (X509Certificate) object;
+                }
+            }
+        }
+        return certificate;
+    }
+
+    private AuthenticationToken createAdminToken(KeyPair keys, String name, String dn) throws RoleExistsException, RoleNotFoundException,
+            AuthorizationDeniedException {
+        Set<Principal> principals = new HashSet<Principal>();
+        X500Principal p = new X500Principal(dn);
+        principals.add(p);
+        AuthenticationSubject subject = new AuthenticationSubject(principals, null);
+        AuthenticationToken token = createTokenWithCert(name, subject, keys);
+        X509Certificate cert = (X509Certificate) token.getCredentials().iterator().next();
+
+        // Initialize the role mgmt system with this role that is allowed to edit roles
+
+        String roleName = "Super Administrator Role";
+        RoleData roledata = roleAccessSessionRemote.findRole(roleName);
+        // Create a user aspect that matches the authentication token, and add that to the role.
+        List<AccessUserAspectData> accessUsers = new ArrayList<AccessUserAspectData>();
+        accessUsers.add(new AccessUserAspectData(roleName, CertTools.getIssuerDN(cert).hashCode(), X500PrincipalAccessMatchValue.WITH_COMMONNAME,
+                AccessMatchType.TYPE_EQUALCASEINS, CertTools.getPartFromDN(CertTools.getSubjectDN(cert), "CN")));
+        roleManagementSession.addSubjectsToRole(admin, roledata, accessUsers);
+
+        return token;
+    }
+
+    private AuthenticationToken createTokenWithCert(String adminName, AuthenticationSubject subject, KeyPair keys) {
+
+        // A small check if we have added a "fail" credential to the subject.
+        // If we have we will return null, so we can test authentication failure.
+        Set<?> usercredentials = subject.getCredentials();
+        if ((usercredentials != null) && (usercredentials.size() > 0)) {
+            Object o = usercredentials.iterator().next();
+            if (o instanceof String) {
+                String str = (String) o;
+                if (StringUtils.equals("fail", str)) {
+                    return null;
+                }
+            }
+        }
+
+        X509Certificate certificate = null;
+        // If we have a certificate as input, use that, otherwise generate a self signed certificate
+        Set<X509Certificate> credentials = new HashSet<X509Certificate>();
+
+        // If there was no certificate input, create a self signed
+        String dn = "C=SE,O=Test,CN=Test"; // default
+        // If we have created a subject with an X500Principal we will use this DN to create the dummy certificate.
+        if (subject != null) {
+            Set<Principal> principals = subject.getPrincipals();
+            if ((principals != null) && (principals.size() > 0)) {
+                Principal p = principals.iterator().next();
+                if (p instanceof X500Principal) {
+                    X500Principal xp = (X500Principal) p;
+                    dn = xp.getName();
+                }
+            }
+        }
+
+        try {
+            createUser(adminName, dn, "foo123");
+        } catch (AuthorizationDeniedException e1) {
+            throw new CertificateCreationException("Error encountered when creating admin user", e1);
+        } catch (UserDoesntFullfillEndEntityProfile e1) {
+            throw new CertificateCreationException("Error encountered when creating admin user", e1);
+        } catch (WaitingForApprovalException e1) {
+            throw new CertificateCreationException("Error encountered when creating admin user", e1);
+        } catch (EjbcaException e1) {
+            throw new CertificateCreationException("Error encountered when creating admin user", e1);
+        } catch (Exception e1) {
+            throw new CertificateCreationException("Error encountered when creating admin user", e1);
+        }
+
+        try {
+            certificate = (X509Certificate) signSession.createCertificate(admin, adminName, "foo123", keys.getPublic());
+        } catch (ObjectNotFoundException e) {
+            throw new CertificateCreationException("Error encountered when creating certificate", e);
+        } catch (CADoesntExistsException e) {
+            throw new CertificateCreationException("Error encountered when creating certificate", e);
+        } catch (EjbcaException e) {
+            throw new CertificateCreationException("Error encountered when creating certificate", e);
+        } catch (AuthorizationDeniedException e) {
+            throw new CertificateCreationException("Error encountered when creating certificate", e);
+        } catch (CesecoreException e) {
+            throw new CertificateCreationException("Error encountered when creating certificate", e);
+        }
+
+        // Add the credentials and new principal
+        credentials.add(certificate);
+        Set<X500Principal> principals = new HashSet<X500Principal>();
+        principals.add(certificate.getSubjectX500Principal());
+
+        // We cannot use the X509CertificateAuthenticationToken here, since it can only be used internally in a JVM.
+        AuthenticationToken result = new TestX509CertificateAuthenticationToken(principals, credentials);
+        return result;
+    }
+
+    private void removeAuthenticationToken(AuthenticationToken authToken, Certificate cert, String adminName) throws RoleNotFoundException,
+            AuthorizationDeniedException, ApprovalException, NotFoundException, WaitingForApprovalException, javax.ejb.RemoveException {
+        String rolename = "Super Administrator Role";
+
+        RoleData roledata = roleAccessSessionRemote.findRole("Super Administrator Role");
+        if (roledata != null) {
+
+            //Set<X509Certificate> credentials = (Set<X509Certificate>) authToken.getCredentials();
+            //Certificate cert = credentials.iterator().next();
+
+            List<AccessUserAspectData> accessUsers = new ArrayList<AccessUserAspectData>();
+            accessUsers.add(new AccessUserAspectData(rolename, CertTools.getIssuerDN(cert).hashCode(), X500PrincipalAccessMatchValue.WITH_COMMONNAME,
+                    AccessMatchType.TYPE_EQUALCASEINS, CertTools.getPartFromDN(CertTools.getSubjectDN(cert), "CN")));
+
+            roleManagementSession.removeSubjectsFromRole(admin, roledata, accessUsers);
+        }
+
+        userAdminSession.revokeAndDeleteUser(admin, adminName, RevokedCertInfo.REVOCATION_REASON_UNSPECIFIED);
     }
 
 }
