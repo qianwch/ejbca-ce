@@ -80,9 +80,7 @@ function checkusedefaultsecrldisturifield(){
 function checkusefreshestcrlfield(){
   if(document.editcertificateprofile.<%=CHECKBOX_USEFRESHESTCRL %>.checked){
     document.editcertificateprofile.<%= CHECKBOX_USECADEFINEDFRESHESTCRL %>.disabled = false;
-    document.editcertificateprofile.<%= CHECKBOX_USECADEFINEDFRESHESTCRL %>.checked = false;
-    document.editcertificateprofile.<%= TEXTFIELD_FRESHESTCRLURI %>.disabled = false;
-    document.editcertificateprofile.<%= TEXTFIELD_FRESHESTCRLURI %>.value = "<%= globalconfiguration.getStandardDeltaCRLDistributionPointURI() %>";
+    document.editcertificateprofile.<%= CHECKBOX_USECADEFINEDFRESHESTCRL %>.checked = true;
   }
   else{
   	document.editcertificateprofile.<%= CHECKBOX_USECADEFINEDFRESHESTCRL %>.disabled = true;
