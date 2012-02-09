@@ -31,10 +31,12 @@ import org.bouncycastle.asn1.DEROutputStream;
 import org.cesecore.core.ejb.ca.store.CertificateProfileSession;
 import org.cesecore.core.ejb.ra.raadmin.EndEntityProfileSession;
 import org.ejbca.config.CmpConfiguration;
+import org.ejbca.config.GlobalConfiguration;
 import org.ejbca.config.WebConfiguration;
 import org.ejbca.core.ejb.ca.caadmin.CAAdminSessionRemote;
 import org.ejbca.core.ejb.ca.caadmin.CaSessionRemote;
 import org.ejbca.core.ejb.config.ConfigurationSessionRemote;
+import org.ejbca.core.ejb.config.GlobalConfigurationSessionRemote;
 import org.ejbca.core.ejb.ra.UserAdminSessionRemote;
 import org.ejbca.core.model.AlgorithmConstants;
 import org.ejbca.core.model.InternalResources;
@@ -79,6 +81,7 @@ public class CrmfRARequestTest extends CmpTestCase {
     private UserAdminSessionRemote userAdminSession = InterfaceCache.getUserAdminSession();
     private EndEntityProfileSession eeProfileSession = InterfaceCache.getEndEntityProfileSession();
     private CertificateProfileSession certProfileSession = InterfaceCache.getCertificateProfileSession();
+    private GlobalConfigurationSessionRemote globalConfigurationSession = InterfaceCache.getGlobalConfigurationSession();
 
     public CrmfRARequestTest(String arg0) throws CertificateEncodingException, CertificateException {
         super(arg0);
@@ -328,6 +331,11 @@ public class CrmfRARequestTest extends CmpTestCase {
     }
 
     public void test03UseKeyID() throws Exception {
+    	
+        GlobalConfiguration gc = globalConfigurationSession.getCachedGlobalConfiguration(admin);
+        boolean gcEELimitations = gc.getEnableEndEntityProfileLimitations();
+        gc.setEnableEndEntityProfileLimitations(true);
+        globalConfigurationSession.saveGlobalConfigurationRemote(admin, gc);
 
     	updatePropertyOnServer(CmpConfiguration.CONFIG_RA_ENDENTITYPROFILE, "KeyId");
     	updatePropertyOnServer(CmpConfiguration.CONFIG_RA_CERTIFICATEPROFILE, "KeyId");
@@ -437,6 +445,10 @@ public class CrmfRARequestTest extends CmpTestCase {
     	int revstatus = checkRevokeStatus(issuerDN, serialnumber);
     	Assert.assertEquals("Certificate revocation failed.", RevokedCertInfo.REVOCATION_REASON_KEYCOMPROMISE, revstatus);
     	        
+    	
+        gc.setEnableEndEntityProfileLimitations(gcEELimitations);
+        globalConfigurationSession.saveGlobalConfigurationRemote(admin, gc);
+
     }
     
     public void testZZZCleanUp() throws Exception {
