@@ -1,3 +1,18 @@
+EJBCA 4.0.8
+-----------
+This is a maintenance release with a few bug fixes and new features. In all, 16 issues have been resolvesd.
+
+* Noteworthy changes:
+- CMP: SenderKeyID no longer needs to be set in the request if it is not needed.
+- CMP: KeyUpdateRequest works in RA mode as well as in client mode.
+- CMP: It is now possible to skip verification of a CertConfRequest if desired.
+- CRL: More efficient CRL download 
+- AdminGUI: Improvement in the appearance.
+- Fixed few minor XSS issues and other minor bugs
+
+Read the full Changelog for details.
+For upgrade instructions, please see UPGRADE
+
 EJBCA 4.0.7
 -----------
 This is a maintenance release with a few bug fixes and a new feature. In all 10 issues have been resolved.

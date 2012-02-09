@@ -1,3 +1,29 @@
+EJBCA 4.0.8, 2012-02-09
+---
+** New Feature
+    * [ECA-2539] - CMP: Get KeyUpdateRequest working even in RA mode 
+
+** Bug
+    * [ECA-2261] - SenderKeyID does not need to be set in a CMP request
+    * [ECA-2476] - null pointer when trying to recover lost HSM in external OCSP
+    * [ECA-2482] - Minor XSS issues
+    * [ECA-2504] - Rename LIST button in Approve Actions section
+    * [ECA-2544] - Upgrading Certificate Profiles can remove Authority Information access under certain conditions
+    * [ECA-2552] - CMP: Skip verifying CertificateConfirmationRequest if not required
+    * [ECA-2567] - CMP: Should use EjbRemoteHelper in CrmfRARequestTest
+
+** Improvement
+    * [ECA-1978] - Certificate Profile form improved
+    * [ECA-2094] - Edit CA form improved
+    * [ECA-2454] - Improve all table layout (rows: header, sections, footer)
+    * [ECA-2468] - Formats and Units (GUI usability and keys refactoring)
+    * [ECA-2497] - Unreadable code in VerifyPKIMessage
+    * [ECA-2501] - More efficient CRL download
+    * [ECA-2518] - Add link to Help page for ECDSA keys
+
+** Task
+    * [ECA-2157] - Clean up CSS code
+
 EJBCA 4.0.7, 2011-12-25
 ---
 New Feature
