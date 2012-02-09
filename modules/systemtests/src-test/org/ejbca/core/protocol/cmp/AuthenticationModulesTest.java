@@ -322,6 +322,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
 
             AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
             msg.getHeader().setProtectionAlg(pAlg);
+            msg.getHeader().setSenderKID(new DEROctetString(nonce));
 
             createUser(testUsername, testUserDN, "foo123");
             KeyPair admkeys = KeyTools.genKeys("512", "RSA");
@@ -700,6 +701,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
 
         AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
         msg.getHeader().setProtectionAlg(pAlg);
+        msg.getHeader().setSenderKID(new DEROctetString(nonce));
 
         String adminName = "cmpTestAdmin";
         //createUser("cmpTestAdmin", "CN=cmpTestAdmin,C=SE", "foo123");
