@@ -276,7 +276,8 @@ public class AuthenticationModulesTest extends CmpTestCase {
 		assertNotNull("Generating CrmfRequest failed." + msg);
 		
 		AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
-		msg.getHeader().setProtectionAlg(pAlg);		 
+		msg.getHeader().setProtectionAlg(pAlg);
+        msg.getHeader().setSenderKID(new DEROctetString(nonce));
 
 		createUser("cmpTestAdmin", "CN=cmpTestAdmin,C=SE", "foo123");
 		KeyPair admkeys = KeyTools.genKeys("1024", "RSA");
@@ -566,7 +567,8 @@ public class AuthenticationModulesTest extends CmpTestCase {
 		
 		AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
 		msg.getHeader().setProtectionAlg(pAlg);		 
-
+        msg.getHeader().setSenderKID(new DEROctetString(nonce));
+		
 		String adminName ="cmpTestUnauthorizedAdmin"; 
 		createUser(adminName , "CN=" + adminName + ",C=SE", "foo123");
 		KeyPair admkeys = KeyTools.genKeys("1024", "RSA");
