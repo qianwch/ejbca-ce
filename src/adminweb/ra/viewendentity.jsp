@@ -98,7 +98,7 @@
          %>
        <tr id="Row<%=(viewendentityhelper.row++)%2%>">
 	 <td align="right" width="<%=ViewEndEntityHelper.columnwidth%>"><%= ejbcawebbean.getText(DnComponents.getLanguageConstantFromProfileId(viewendentityhelper.fielddata[EndEntityProfile.FIELDTYPE])) %></td>
-	 <td><% if(viewendentityhelper.fieldvalue != null) out.write(viewendentityhelper.fieldvalue); %> 
+	 <td><% if(viewendentityhelper.fieldvalue != null) {%> <c:out value="<%= viewendentityhelper.fieldvalue %>"/><%}%>
          </td>
        </tr>
        <% } 
@@ -123,7 +123,7 @@
          %>
        <tr id="Row<%=(viewendentityhelper.row++)%2%>">
 	 <td align="right" width="<%=ViewEndEntityHelper.columnwidth%>"><%= ejbcawebbean.getText(DnComponents.getLanguageConstantFromProfileId(viewendentityhelper.fielddata[EndEntityProfile.FIELDTYPE])) %></td>
-	 <td><% if(viewendentityhelper.fieldvalue != null) out.write(viewendentityhelper.fieldvalue); %> 
+	 <td><% if(viewendentityhelper.fieldvalue != null) {%> <c:out value="<%= viewendentityhelper.fieldvalue %>"/><%}%>
          </td>
        </tr>
        <%   }
@@ -148,7 +148,7 @@
          %>
        <tr id="Row<%=(viewendentityhelper.row++)%2%>">
 	 <td align="right" width="<%=ViewEndEntityHelper.columnwidth%>"><%= ejbcawebbean.getText(DnComponents.getLanguageConstantFromProfileId(viewendentityhelper.fielddata[EndEntityProfile.FIELDTYPE])) %></td>
-	 <td><% if(viewendentityhelper.fieldvalue != null) out.write(viewendentityhelper.fieldvalue); %> 
+	 <td><% if(viewendentityhelper.fieldvalue != null) {%> <c:out value="<%= viewendentityhelper.fieldvalue %>"/><%}%>
          </td>
        </tr>
        <% } %>  
@@ -167,9 +167,9 @@
        <% } %>
        <tr id="Row<%=(viewendentityhelper.row++)%2%>">
 	 <td align="right" width="<%=ViewEndEntityHelper.columnwidth%>"><%= ejbcawebbean.getText("CERTIFICATEPROFILE") %></td>
-	 <td><% if(viewendentityhelper.userdata.getCertificateProfileId() != 0)
-                  out.write(rabean.getCertificateProfileName(viewendentityhelper.userdata.getCertificateProfileId())); 
-                else out.write(ejbcawebbean.getText("NOCERTIFICATEPROFILEDEFINED")); %>
+	 <td><% if(viewendentityhelper.userdata.getCertificateProfileId() != 0){%>
+                  <c:out value="<%=rabean.getCertificateProfileName(viewendentityhelper.userdata.getCertificateProfileId())%>"/>
+                <%} else out.write(ejbcawebbean.getText("NOCERTIFICATEPROFILEDEFINED")); %>
          </td>
        </tr>
        
@@ -251,8 +251,8 @@
       <%} if(viewendentityhelper.profile.getUse(EndEntityProfile.CARDNUMBER,0)){ %>
        <tr id="Row<%=(viewendentityhelper.row++)%2%>">
 	 <td align="right" width="<%=ViewEndEntityHelper.columnwidth%>"><%= ejbcawebbean.getText("CARDNUMBER") %></td>
-	 <td><% if(viewendentityhelper.userdata.getCardNumber() != null) out.write(viewendentityhelper.userdata.getCardNumber()); %>
-	 <td><% if(viewendentityhelper.userdata.getEmail() != null) out.write(viewendentityhelper.userdata.getEmail()); %>
+	 <td><% if(viewendentityhelper.userdata.getCardNumber() != null){%><c:out value="<%= viewendentityhelper.userdata.getCardNumber() %>"/><%}%>
+	 <td><% if(viewendentityhelper.userdata.getEmail() != null){%><c:out value="<%= viewendentityhelper.userdata.getEmail() %>"/><%}%> 
 
          </td>
        </tr>
@@ -323,7 +323,7 @@
 		if ( certSerialNr!=null ) { %>
 			<tr id="Row<%=(viewendentityhelper.row++)%2%>">
 			<td align="right" width="<%=ViewEndEntityHelper.columnwidth%>"><%= ejbcawebbean.getText("CERTSERIALNUMBERHEXA") %></td>
-			<td><%= certSerialNr %></td>
+			<td><c:out value="<%= certSerialNr %>"/></td>
 			</tr> 
 	<%	} }%>
     <tr id="Row<%=(viewendentityhelper.row++)%2%>">
