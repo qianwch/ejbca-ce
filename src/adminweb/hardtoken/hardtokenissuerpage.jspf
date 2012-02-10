@@ -86,7 +86,7 @@ function checkallfields(){
          <%= ejbcawebbean.getText("DESCRIPTION") %> 
       </td>
       <td width="70%"> 
-          <textarea name="<%=TEXTFIELD_DESCRIPTION%>" cols="45" rows="4"><% out.write(issuerdata.getHardTokenIssuer().getDescription());%></textarea>
+          <textarea name="<%=TEXTFIELD_DESCRIPTION%>" cols="45" rows="4"><c:out value="<%= issuerdata.getHardTokenIssuer().getDescription() %>"/></textarea>
       </td>
     </tr>
     <tr  id="Row<%=row++%2%>"> 
