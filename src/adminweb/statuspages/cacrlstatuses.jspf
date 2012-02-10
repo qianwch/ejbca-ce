@@ -1,3 +1,4 @@
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@page import="java.util.*, org.ejbca.ui.web.admin.cainterface.EditPublisherJSPHelper,org.ejbca.core.model.ca.store.CRLInfo, org.ejbca.ui.web.admin.cainterface.CAInfoView"%>
 <%
 	cabean.initialize(request, ejbcawebbean);
@@ -43,7 +44,7 @@
 							if (castatus != SecConst.CA_EXTERNAL) {
 							%>
 							<tr class="a">	
-								<td><%=name %></td>
+								<td><c:out value="<%=name %>"/></td>
 								<td style="text-align:center;">
 									<% if (caservice) { %>
 									<img src="<%=ejbcawebbean.getImagefileInfix("status-ca-active.png")%>"

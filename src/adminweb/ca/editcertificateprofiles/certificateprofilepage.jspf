@@ -418,7 +418,7 @@ function checkallfields(){
 </SCRIPT>
 <div align="center"> 
   <h2><%= ejbcawebbean.getText("EDITCERTIFICATEPROFILE") %></h2>
-  <h3><%= ejbcawebbean.getText("CERTIFICATEPROFILE")+ " : " + certprofile %></h3>
+  <h3><c:out value="<%= ejbcawebbean.getText(\"CERTIFICATEPROFILE\")+ \" : \" + certprofile %>" /></h3>
 </div>
 <form name="editcertificateprofile" method="post" action="<%=THIS_FILENAME %>">
   <input type="hidden" name='<%= ACTION %>' value='<%=ACTION_EDIT_CERTIFICATEPROFILE %>'>
@@ -459,7 +459,7 @@ function checkallfields(){
               <%  if(TYPE_IDS[i] == type)
                     out.write(" selected ");
                   %>>
-              <%= ejbcawebbean.getText(TYPE_NAMES[i]) %>         
+              <c:out value="<%= ejbcawebbean.getText(TYPE_NAMES[i]) %>" />         
            </option>  
               <% } %>
         </select>
@@ -479,7 +479,7 @@ function checkallfields(){
                    if(availablebits[j] == defaultavailablebitlengths[i])
                       out.write(" selected ");
                   }%>>
-              <%= defaultavailablebitlengths[i] + " " + ejbcawebbean.getText("BITS") %>         
+              <c:out value="<%= defaultavailablebitlengths[i] + \" \" + ejbcawebbean.getText(\"BITS\") %>" />
            </option>  
               <% } %>
         </select>
@@ -730,7 +730,7 @@ function checkallfields(){
                 for(int i=0; i<keyusagetexts.length;i++){ %>
            <option  value="<%= i %>" 
               <% if(ku[i]) out.write(" selected "); %>> 
-              <%= ejbcawebbean.getText(keyusagetexts[i]) %>
+              <c:out value="<%= ejbcawebbean.getText(keyusagetexts[i]) %>" />
            </option>
            <%   } %> 
         </select>
@@ -773,7 +773,7 @@ function checkallfields(){
                         <% if (eku.contains(oid)) {
                 	           out.write(" selected ");
                            } %>>
-                        <%= ejbcawebbean.getText(text) %>
+                        <c:out value="<%= ejbcawebbean.getText(text) %>" />
                         </option>	
                   <%}
                 } %>
@@ -851,10 +851,11 @@ function checkallfields(){
            <%       if(!certificateprofiledata.getUseCRLDistributionPoint() || certificateprofiledata.getUseDefaultCRLDistributionPoint())
                       out.write(" disabled "); 
                     else 
-                      if(!certificateprofiledata.getCRLDistributionPointURI().equals(""))
-                       out.write(" value=\"" + certificateprofiledata.getCRLDistributionPointURI().replace("\"", "&#34;") + "\""); 
-                      else
-                       out.write(" value=\"" + globalconfiguration.getStandardCRLDistributionPointURI().replace("\"", "&#34;") + "\"");%>>
+                      if(!certificateprofiledata.getCRLDistributionPointURI().equals("")){%>
+                       value="<c:out value="<%= certificateprofiledata.getCRLDistributionPointURI() %>"/>"
+                      <%} else {%>
+                       value="<c:out value="<%= globalconfiguration.getStandardCRLDistributionPointURI() %>"/>"
+                      <%}%> >
            <br>
            <input type="text" name="<%=TEXTFIELD_CRLISSUER%>" size="45" maxlength="255" 
            <%       if(!certificateprofiledata.getUseCRLDistributionPoint() || certificateprofiledata.getUseDefaultCRLDistributionPoint()) {
@@ -945,9 +946,9 @@ function checkallfields(){
         </table>
       </td>
       <td width="50%">
-        <input readonly type="text" name="<%= TEXTFIELD_CERTIFICATEPOLICYID + i %>" value="<%= policy.getPolicyID() %>" size="45" maxlength="255"/><br/>
-        <input readonly type="text" name="<%= TEXTAREA_POLICYNOTICE_UNOTICE + i %>" value="<% if((policy.getQualifierId() != null) && (policy.getQualifierId().equals(CertificatePolicy.id_qt_unotice)) && (policy.getQualifier() != null)) { %><%= policy.getQualifier() %><% } %>" size="45" maxlength="255"/><br/>
-        <input readonly type="text" name="<%= TEXTFIELD_POLICYNOTICE_CPSURL + i %>" value="<% if((policy.getQualifierId() != null) && (policy.getQualifierId().equals(CertificatePolicy.id_qt_cps)) && (policy.getQualifier() != null)) { %><%= policy.getQualifier() %><% } %>" size="45" maxlength="255"/>
+        <input readonly type="text" name="<%= TEXTFIELD_CERTIFICATEPOLICYID + i %>" value="<c:out value="<%= policy.getPolicyID() %>"/>" size="45" maxlength="255"/><br/>
+        <input readonly type="text" name="<%= TEXTAREA_POLICYNOTICE_UNOTICE + i %>" value="<% if((policy.getQualifierId() != null) && (policy.getQualifierId().equals(CertificatePolicy.id_qt_unotice)) && (policy.getQualifier() != null)) { %><c:out value="<%= policy.getQualifier() %>"/><% } %>" size="45" maxlength="255"/><br/>
+        <input readonly type="text" name="<%= TEXTFIELD_POLICYNOTICE_CPSURL + i %>" value="<% if((policy.getQualifierId() != null) && (policy.getQualifierId().equals(CertificatePolicy.id_qt_cps)) && (policy.getQualifier() != null)) { %><c:out value="<%= policy.getQualifier() %>"/><% } %>" size="45" maxlength="255"/>
       </td>
     </tr>
         <% }
@@ -999,10 +1000,11 @@ function checkallfields(){
            <%       if(!certificateprofiledata.getUseAuthorityInformationAccess() || certificateprofiledata.getUseDefaultOCSPServiceLocator())
                       out.write(" disabled "); 
                     else 
-                      if(!certificateprofiledata.getOCSPServiceLocatorURI().equals(""))
-                       out.write(" value=\"" + certificateprofiledata.getOCSPServiceLocatorURI() + "\""); 
-                      else
-                       out.write(" value=\"" + globalconfiguration.getStandardOCSPServiceLocatorURI()+ "\"");%>>
+                      if(!certificateprofiledata.getOCSPServiceLocatorURI().equals("")) {%>
+                       value="<c:out value="<%= certificateprofiledata.getOCSPServiceLocatorURI() %>"/>"
+                      <% } else { %>
+                       value="<c:out value="<%= globalconfiguration.getStandardOCSPServiceLocatorURI() %>"/>"
+                      <% } %>
       </td>
     </tr>
     <%-- caIssuers part of authority information access (aia) extension --%>
@@ -1101,8 +1103,9 @@ function checkallfields(){
       <td width="50%" valign="top"><input type="text" name="<%=TEXTFIELD_QCSSEMANTICSID %>" size="20" maxlength="255" 
            <%       if(!certificateprofiledata.getUseQCStatement())
                       out.write(" disabled "); 
-                    else 
-                      out.write(" value=\"" + certificateprofiledata.getQCSemanticsId() + "\""); %>>
+                    else {%> 
+                      value="<c:out value="<%= certificateprofiledata.getQCSemanticsId() %>"/>"
+                   <%}%> >
       </td>
     </tr>
     <tr  id="Row<%=row%2%>"> 
@@ -1110,8 +1113,9 @@ function checkallfields(){
       <td width="50%" valign="top"><input type="text" name="<%=TEXTFIELD_QCSTATEMENTRANAME %>" size="45" maxlength="255" 
            <%       if(!certificateprofiledata.getUseQCStatement())
                       out.write(" disabled "); 
-                    else 
-                      out.write(" value=\"" + certificateprofiledata.getQCStatementRAName() + "\""); %>>
+                    else { %> 
+                      value="<c:out value="<%= certificateprofiledata.getQCStatementRAName() %>"/>"
+                  <%}%> >
       </td>
     </tr>
     <tr  id="Row<%=row%2%>"> 
@@ -1155,8 +1159,9 @@ function checkallfields(){
       <td width="50%" valign="top"><input type="text" name="<%=TEXTFIELD_QCETSIVALUELIMITCUR %>" size="5" maxlength="255" 
            <%       if(!certificateprofiledata.getUseQCStatement() || !certificateprofiledata.getUseQCEtsiValueLimit())
                       out.write(" disabled "); 
-                    else 
-                      out.write(" value=\"" + certificateprofiledata.getQCEtsiValueLimitCurrency() + "\""); %>>
+                    else { %>
+                      value="<c:out value="<%= certificateprofiledata.getQCEtsiValueLimitCurrency() %>"/>"
+                  <%}%> >
       </td>
     </tr>     
     <tr  id="Row<%=row%2%>"> 
@@ -1164,8 +1169,9 @@ function checkallfields(){
       <td width="50%" valign="top"><input type="text" name="<%=TEXTFIELD_QCETSIVALUELIMIT %>" size="5" maxlength="255" 
            <%       if(!certificateprofiledata.getUseQCStatement() || !certificateprofiledata.getUseQCEtsiValueLimit())
                       out.write(" disabled "); 
-                    else 
-                      out.write(" value=\"" + certificateprofiledata.getQCEtsiValueLimit() + "\""); %>>
+                    else {%> 
+                      value="<c:out value="<%= certificateprofiledata.getQCEtsiValueLimit() %>"/>"
+                    <%}%> >
       </td>
     </tr>  
     <tr  id="Row<%=row%2%>"> 
@@ -1173,8 +1179,9 @@ function checkallfields(){
       <td width="50%" valign="top"><input type="text" name="<%=TEXTFIELD_QCETSIVALUELIMITEXP %>" size="5" maxlength="255" 
            <%       if(!certificateprofiledata.getUseQCStatement() || !certificateprofiledata.getUseQCEtsiValueLimit())
                       out.write(" disabled "); 
-                    else 
-                      out.write(" value=\"" + certificateprofiledata.getQCEtsiValueLimitExp() + "\""); %>>
+                    else {%> 
+                      value="<c:out value="<%= certificateprofiledata.getQCEtsiValueLimitExp() %>"/>"
+                    <%}%> >
       </td>
     </tr>                     
     <tr  id="Row<%=row%2%>"> 
@@ -1194,8 +1201,9 @@ function checkallfields(){
       <td width="50%" valign="top"><input type="text" name="<%=TEXTFIELD_QCETSIRETENTIONPERIOD %>" size="5" maxlength="255"
            <%       if(!certificateprofiledata.getUseQCStatement() || !certificateprofiledata.getUseQCEtsiRetentionPeriod())
                       out.write(" disabled "); 
-                    else 
-                      out.write(" value=\"" + certificateprofiledata.getQCEtsiRetentionPeriod() + "\""); %>>
+                    else {%> 
+                      value="<c:out value="<%= certificateprofiledata.getQCEtsiRetentionPeriod() %>"/>"
+                    <%}%> >
       </td>
     </tr>
     <tr  id="Row<%=row%2%>"> 
@@ -1215,8 +1223,9 @@ function checkallfields(){
       <td width="50%" valign="top"><input type="text" name="<%=TEXTFIELD_QCCUSTOMSTRINGOID %>" size="20" maxlength="255" 
            <%       if(!certificateprofiledata.getUseQCStatement() || !certificateprofiledata.getUseQCCustomString())
                       out.write(" disabled "); 
-                    else 
-                      out.write(" value=\"" + certificateprofiledata.getQCCustomStringOid() + "\""); %>>
+                    else {%> 
+                      value="<c:out value="<%= certificateprofiledata.getQCCustomStringOid() %>"/>"
+                    <%}%> >
       </td>
     </tr>     
     <tr  id="Row<%=row++%2%>"> 
@@ -1224,8 +1233,9 @@ function checkallfields(){
       <td width="50%" valign="top"><input type="text" name="<%=TEXTFIELD_QCCUSTOMSTRINGTEXT %>" size="45" maxlength="255" 
            <%       if(!certificateprofiledata.getUseQCStatement() || !certificateprofiledata.getUseQCCustomString())
                       out.write(" disabled "); 
-                    else 
-                      out.write(" value=\"" + certificateprofiledata.getQCCustomStringText() + "\""); %>>
+                    else {%> 
+                      value="<c:out value="<%= certificateprofiledata.getQCCustomStringText() %>"/>"
+                    <%}%> >
       </td>
     </tr>  
 
@@ -1358,8 +1368,9 @@ function checkallfields(){
             <input type="text" name="<%=TEXTFIELD_CNPOSTFIX%>" size="45" maxlength="255" 
            <%       if(!certificateprofiledata.getUseCNPostfix())
                       out.write(" disabled "); 
-                    else                       
-                      out.write(" value=\"" + certificateprofiledata.getCNPostfix() + "\""); %> >
+                    else {%> 
+                      value="<c:out value="<%= certificateprofiledata.getCNPostfix() %>"/>"
+                    <%}%> >
       </td>
     </tr>
 
@@ -1385,7 +1396,7 @@ function checkallfields(){
                String[] usefieldsindntexts = (String[])DnComponents.getDnLanguageTexts().toArray(new String[0]);
                for(int i=0;i < usefieldsindn.length; i++){ %>                                  
               <option value="<%=usefieldsindn[i]%>" <% if(currentfields.contains(usefieldsindn[i])) out.write(" selected "); %>> 
-                  <%= ejbcawebbean.getText(usefieldsindntexts[i]) %>
+                  <c:out value="<%= ejbcawebbean.getText(usefieldsindntexts[i]) %>" />
                </option>
             <%}%>
           </select>         
@@ -1414,7 +1425,7 @@ function checkallfields(){
                String[] usefieldsinaltnametexts = (String[])DnComponents.getAltNameLanguageTexts().toArray(new String[0]);
                for(int i=0;i < usefieldsinaltname.length; i++){ %>                                  
               <option value="<%=usefieldsinaltname[i]%>" <% if(currentfields.contains(usefieldsinaltname[i])) out.write(" selected "); %>> 
-                  <%= ejbcawebbean.getText(usefieldsinaltnametexts[i]) %>
+                  <c:out value="<%= ejbcawebbean.getText(usefieldsinaltnametexts[i]) %>" />
                </option>
             <%}%>
           </select>         

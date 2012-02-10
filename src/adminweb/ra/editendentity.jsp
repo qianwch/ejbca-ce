@@ -990,7 +990,7 @@ function checkUseInBatch(){
     <%   }
          else{ 
              if(approvalmessage != null){ %>
-        	    <div align="center"><h4 id="alert"><%= approvalmessage%></h4></div>
+        	    <div align="center"><h4 id="alert"><c:out value="<%= approvalmessage %>"/></h4></div>
         	 <% }         	 
            if(endentitysaved){%>
   <div align="center"><h4><%=ejbcawebbean.getText("ENDENTITYSAVED") %></h4></div> 
@@ -1002,8 +1002,9 @@ function checkUseInBatch(){
 	 <td align="right"><%= ejbcawebbean.getText("ENDENTITYPROFILE")%></td>  
          <td><% if(rabean.getEndEntityProfileName(profileid)==null)
                   out.write(ejbcawebbean.getText("NOENDENTITYPROFILEDEFINED"));
-                else
-                  out.write(rabean.getEndEntityProfileName(profileid));%>
+                else {%>
+                  <c:out value="<%= rabean.getEndEntityProfileName(profileid) %>"/>
+              <%}%>
          </td>
          <td><%= ejbcawebbean.getText("REQUIRED") %></td>
       <tr id="Row<%=(row++)%2%>">
@@ -1015,7 +1016,7 @@ function checkUseInBatch(){
        <form name="edituser" action="<%= THIS_FILENAME %>" method="post">   
          <input type="hidden" name='<%= ACTION %>' value='<%=ACTION_EDITUSER %>'>   
          <input type="hidden" name='<%= HIDDEN_PROFILE %>' value='<%=profileid %>'>    
-         <input type="hidden" name='<%= USER_PARAMETER %>' value='<%= username%>'>
+         <input type="hidden" name='<%= USER_PARAMETER %>' value='<c:out value="<%= username %>"/>" />
       <tr id="Row<%=(row++)%2%>">
 	<td align="right"><%= ejbcawebbean.getText("USERNAME") %></td> 
 	<td>
@@ -1032,15 +1033,15 @@ function checkUseInBatch(){
                %>
            <select name="<%= SELECT_PASSWORD %>" size="1" tabindex="<%=tabindex++%>">
                <% if( profile.getValue(EndEntityProfile.PASSWORD,0) != null){ %>
-             <option value='<%=profile.getValue(EndEntityProfile.PASSWORD,0).trim()%>' > 
-               <%=profile.getValue(EndEntityProfile.PASSWORD,0).trim()%>
+             <option value='<c:out value="<%= profile.getValue(EndEntityProfile.PASSWORD,0).trim() %>"/>' >
+               <c:out value="<%= profile.getValue(EndEntityProfile.PASSWORD,0).trim() %>"/>
              </option>                
                <%   
                   }
                 %>
            </select>
            <% }else{ %> 
-             <input type="password" name="<%= TEXTFIELD_PASSWORD %>" size="40" maxlength="255" tabindex="<%=tabindex++%>" value='<% if(userdata.getPassword()!= null) out.write(userdata.getPassword()); %>'>
+             <input type="password" name="<%= TEXTFIELD_PASSWORD %>" size="40" maxlength="255" tabindex="<%=tabindex++%>" value='<% if(userdata.getPassword()!= null) {%><c:out value="<%= userdata.getPassword() %>"/><%}%>'>
            <% } %>
  
         </td>
@@ -1063,15 +1064,15 @@ function checkUseInBatch(){
                %>
            <select name="<%= SELECT_CONFIRMPASSWORD %>" size="1" tabindex="<%=tabindex++%>">
                <% if( profile.getValue(EndEntityProfile.PASSWORD,0) != null){ %>
-             <option value='<%=profile.getValue(EndEntityProfile.PASSWORD,0).trim()%>' > 
-               <%= profile.getValue(EndEntityProfile.PASSWORD,0).trim() %>
+             <option value='<c:out value="<%= profile.getValue(EndEntityProfile.PASSWORD,0).trim() %>"/>' >
+               <c:out value="<%= profile.getValue(EndEntityProfile.PASSWORD,0).trim() %>"/> 
              </option>                
                <%   
                   }
                 %>
            </select>
            <% }else{ %> 
-             <input type="password" name="<%= TEXTFIELD_CONFIRMPASSWORD %>" size="40" maxlength="255" tabindex="<%=tabindex++%>" value='<% if(userdata.getPassword()!= null) out.write(userdata.getPassword()); %>'>
+             <input type="password" name="<%= TEXTFIELD_CONFIRMPASSWORD %>" size="40" maxlength="255" tabindex="<%=tabindex++%>" value='<% if(userdata.getPassword()!= null) {%><c:out value="<%= userdata.getPassword() %>"/><%}%>'>
            <% } %>
         </td>
 	<td>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
@@ -1131,22 +1132,22 @@ function checkUseInBatch(){
        <tr id="Row<%=(row++)%2%>">	 
 	 <td align="right"><%= ejbcawebbean.getText("EMAIL") %></td>
 	 <td>      
-           <input type="text" name="<%= TEXTFIELD_EMAIL %>" size="20" maxlength="255" tabindex="<%=tabindex++%>" value='<%=emailname%>'>@
+           <input type="text" name="<%= TEXTFIELD_EMAIL %>" size="20" maxlength="255" tabindex="<%=tabindex++%>" value='<c:out value="<%= emailname %>"/>'> @
           <% if(!profile.isModifyable(EndEntityProfile.EMAIL,0)){ 
                  String[] options = profile.getValue(EndEntityProfile.EMAIL, 0).split(EndEntityProfile.SPLITCHAR);
                %>
            <select name="<%= SELECT_EMAILDOMAIN %>" size="1" tabindex="<%=tabindex++%>">
                <% if( options != null){
                     for(int i=0;i < options.length;i++){ %>
-             <option value="<%=options[i].trim()%>" <% if(emaildomain.equals(options[i])) out.write(" selected "); %>>
-                <%=options[i].trim()%>  
+             <option value="<c:out value="<%= options[i].trim() %>"/>" <% if(emaildomain.equals(options[i])) out.write(" selected "); %>>
+                <c:out value="<%= options[i].trim() %>"/> 
              </option>                
                <%   }
                   }
                 %>
            </select>
            <% }else{ %> 
-             <input type="text" name="<%= TEXTFIELD_EMAILDOMAIN %>" size="20" maxlength="255" tabindex="<%=tabindex++%>"  value="<%=emaildomain%>">
+             <input type="text" name="<%= TEXTFIELD_EMAILDOMAIN %>" size="20" maxlength="255" tabindex="<%=tabindex++%>"  value="<c:out value="<%= emaildomain %>"/>">
            <% } %>
         </td>
 	<td><input type="checkbox" name="<%= CHECKBOX_REQUIRED_EMAIL %>" value="<%= CHECKBOX_VALUE %>"  disabled="true" <% if(profile.isRequired(EndEntityProfile.EMAIL,0)) out.write(" CHECKED "); %>></td>
@@ -1171,15 +1172,15 @@ function checkUseInBatch(){
            <select name="<%= SELECT_SUBJECTDN + i %>" size="1" tabindex="<%=tabindex++%>">
                <% if( options != null){
                     for(int j=0;j < options.length;j++){ %>
-             <option value="<%=options[j].trim()%>" <% if(userdata.getSubjectDNField(DnComponents.profileIdToDnId(fielddata[EndEntityProfile.FIELDTYPE]),fielddata[EndEntityProfile.NUMBER]).equals(options[j].trim())) out.write(" selected "); %>> 
-                <%=options[j].trim()%>
+             <option value="<c:out value="<%= options[j].trim() %>"/>" <% if(userdata.getSubjectDNField(DnComponents.profileIdToDnId(fielddata[EndEntityProfile.FIELDTYPE]),fielddata[EndEntityProfile.NUMBER]).equals(options[j].trim())) out.write(" selected "); %>> 
+                <c:out value="<%= options[j].trim() %>"/>
              </option>                
                <%   }
                   }
                 %>
            </select>
            <% }else{ %> 
-             <input type="text" name="<%= TEXTFIELD_SUBJECTDN + i %>" size="40" maxlength="255" tabindex="<%=tabindex++%>" value="<%= userdata.getSubjectDNField(DnComponents.profileIdToDnId(fielddata[EndEntityProfile.FIELDTYPE]),fielddata[EndEntityProfile.NUMBER]) %>">
+             <input type="text" name="<%= TEXTFIELD_SUBJECTDN + i %>" size="40" maxlength="255" tabindex="<%=tabindex++%>" value="<c:out value="<%= userdata.getSubjectDNField(DnComponents.profileIdToDnId(fielddata[EndEntityProfile.FIELDTYPE]),fielddata[EndEntityProfile.NUMBER]) %>"/>">
            <% }
             }
             else{ %>
@@ -1235,9 +1236,9 @@ function checkUseInBatch(){
                  // and we should not attempt to split it in name@domain parts
                  if (!(!modifyable && profilevalue.contains("@"))) {
                    if (EndEntityProfile.isFieldOfType(fieldtype, DnComponents.UPN)) { %> 
-                   <input type="text" name="<%= TEXTFIELD_UPNNAME +i%>" size="20" maxlength="255" tabindex="<%=tabindex++%>" value="<%= name %>">@
+                   <input type="text" name="<%= TEXTFIELD_UPNNAME +i%>" size="20" maxlength="255" tabindex="<%=tabindex++%>" value="<c:out value="<%= name %>"/>"> @
           <%       } else { %>       
-                   <input type="text" name="<%= TEXTFIELD_EMAIL +i%>" size="20" maxlength="255" tabindex="<%=tabindex++%>" value="<%= name %>">@
+                   <input type="text" name="<%= TEXTFIELD_EMAIL +i%>" size="20" maxlength="255" tabindex="<%=tabindex++%>" value="<c:out value="<%= name %>"/>"> @
           <%       }
                  }
                  // Only display the domain part if we have not completely locked down the email address
@@ -1246,15 +1247,15 @@ function checkUseInBatch(){
                 <select name="<%= SELECT_SUBJECTALTNAME + i %>" size="1" tabindex="<%=tabindex++%>">
                   <% if( options != null){
                       for(int j=0;j < options.length;j++){ %>
-                  <option value="<%=options[j].trim()%>" <%  if(domain.equals(options[j].trim())) out.write(" selected "); %>> 
-                    <%=options[j].trim()%>
+                  <option value="<c:out value="<%= options[j].trim() %>"/>" <%  if(domain.equals(options[j].trim())) out.write(" selected "); %>> 
+                    <c:out value="<%= options[j].trim() %>"/>
                   </option>                
                <%   }
                  }
                 %>
                 </select>
              <%  }else{ %> 
-                 <input type="text" name="<%= TEXTFIELD_SUBJECTALTNAME + i %>" size="40" maxlength="255" tabindex="<%=tabindex++%>" value="<%= domain %>">
+                 <input type="text" name="<%= TEXTFIELD_SUBJECTALTNAME + i %>" size="40" maxlength="255" tabindex="<%=tabindex++%>" value="<c:out value="<%= domain %>"/>">
              <% }
               }else{    
                if(!profile.isModifyable(fielddata[EndEntityProfile.FIELDTYPE],fielddata[EndEntityProfile.NUMBER])){ 
@@ -1262,15 +1263,15 @@ function checkUseInBatch(){
            <select name="<%= SELECT_SUBJECTALTNAME + i %>" size="1" tabindex="<%=tabindex++%>">
                <% if( options != null){
                     for(int j=0;j < options.length;j++){ %>
-             <option value="<%=options[j].trim()%>" <%  if(userdata.getSubjectAltNameField(DnComponents.profileIdToDnId(fielddata[EndEntityProfile.FIELDTYPE]),fielddata[EndEntityProfile.NUMBER]).equals(options[j].trim())) out.write(" selected "); %>> 
-                <%=options[j].trim()%>
+             <option value="<c:out value="<%= options[j].trim() %>"/>" <%  if(userdata.getSubjectAltNameField(DnComponents.profileIdToDnId(fielddata[EndEntityProfile.FIELDTYPE]),fielddata[EndEntityProfile.NUMBER]).equals(options[j].trim())) out.write(" selected "); %>> 
+                <c:out value="<%= options[j].trim() %>"/>
              </option>                
                <%   }
                   }
                 %>
            </select>
            <% }else{ %>
-             <input type="text" name="<%= TEXTFIELD_SUBJECTALTNAME + i %>" size="40" maxlength="255" tabindex="<%=tabindex++%>" value="<%= userdata.getSubjectAltNameField(DnComponents.profileIdToDnId(fielddata[EndEntityProfile.FIELDTYPE]),fielddata[EndEntityProfile.NUMBER]) %>">
+             <input type="text" name="<%= TEXTFIELD_SUBJECTALTNAME + i %>" size="40" maxlength="255" tabindex="<%=tabindex++%>" value="<c:out value="<%= userdata.getSubjectAltNameField(DnComponents.profileIdToDnId(fielddata[EndEntityProfile.FIELDTYPE]),fielddata[EndEntityProfile.NUMBER]) %>"/>">
            <% }
             }
             }else{ %>
@@ -1310,15 +1311,15 @@ function checkUseInBatch(){
            <select name="<%= SELECT_SUBJECTDIRATTR + i %>" size="1" tabindex="<%=tabindex++%>">
                <% if( options != null){
                     for(int j=0;j < options.length;j++){ %>
-             <option value="<%=options[j].trim()%>" <%  if(userdata.getSubjectDirAttributeField(DnComponents.profileIdToDnId(fielddata[EndEntityProfile.FIELDTYPE]),fielddata[EndEntityProfile.NUMBER]).equals(options[j].trim())) out.write(" selected "); %>> 
-                <%=options[j].trim()%>
+             <option value="<c:out value="<%= options[j].trim() %>"/>" <%  if(userdata.getSubjectDirAttributeField(DnComponents.profileIdToDnId(fielddata[EndEntityProfile.FIELDTYPE]),fielddata[EndEntityProfile.NUMBER]).equals(options[j].trim())) out.write(" selected "); %>> 
+                <c:out value="<%= options[j].trim() %>"/>
              </option>                
                <%   }
                   }
                 %>
            </select>
            <% }else{ %>
-             <input type="text" name="<%= TEXTFIELD_SUBJECTDIRATTR + i %>" size="40" maxlength="255" tabindex="<%=tabindex++%>" value="<%= userdata.getSubjectDirAttributeField(DnComponents.profileIdToDnId(fielddata[EndEntityProfile.FIELDTYPE]),fielddata[EndEntityProfile.NUMBER]) %>">
+             <input type="text" name="<%= TEXTFIELD_SUBJECTDIRATTR + i %>" size="40" maxlength="255" tabindex="<%=tabindex++%>" value="<c:out value="<%= userdata.getSubjectDirAttributeField(DnComponents.profileIdToDnId(fielddata[EndEntityProfile.FIELDTYPE]),fielddata[EndEntityProfile.NUMBER]) %>"/>">
            <% } 
            %>
         </td>
@@ -1412,7 +1413,7 @@ function checkUseInBatch(){
 						final BigInteger oldNr = ei!=null ? ei.certificateSerialNumber() : null;
 						final String certSerialNr = oldNr!=null ? oldNr.toString(16) : "";
 						%>
-					value="<%= certSerialNr %>"
+					value="<c:out value="<%= certSerialNr %>"/>"
 					/>
 			</td>
 			<td>
@@ -1627,7 +1628,7 @@ function checkUseInBatch(){
         <%= ejbcawebbean.getText("CARDNUMBER") %> <br>
       </td>
       <td > 
-        <input type="text" name="<%=TEXTFIELD_CARDNUMBER%>" size="20" maxlength="20" tabindex="<%=tabindex++%>" value="<%=userdata.getCardNumber()%>"> 
+        <input type="text" name="<%=TEXTFIELD_CARDNUMBER%>" size="20" maxlength="20" tabindex="<%=tabindex++%>" value="<c:out value="<%= userdata.getCardNumber() %>"/>"> 
       </td>
       <td></td>
     </tr>
