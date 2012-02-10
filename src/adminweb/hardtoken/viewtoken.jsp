@@ -255,9 +255,9 @@ function viewcopies(link){
   <div align="center"><h4 id="alert"><%= message%></h4></div>
   <% } %>
   <form name="viewtoken" action="<%= THIS_FILENAME %>" method="post">
-     <input type="hidden" name='<%= USER_PARAMETER %>' value='<%=username %>'>
+     <input type="hidden" name='<%= USER_PARAMETER %>' value="<c:out value='<%=username %>'/>">
      <% if (tokensn != null){ %>
-     <input type="hidden" name='<%= TOKENSN_PARAMETER %>' value='<%=token.getTokenSN() %>'>
+     <input type="hidden" name='<%= TOKENSN_PARAMETER %>' value="<c:out value='<%=token.getTokenSN() %>'/>">
      <% } %>
      <input type="hidden" name='<%= INDEX_PARAMETER %>' value='<%=index %>'>
 

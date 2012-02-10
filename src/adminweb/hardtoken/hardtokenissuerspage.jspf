@@ -63,8 +63,8 @@ function checkselected(){
                String curalias = (String) i.next();
                HardTokenIssuerData data = (HardTokenIssuerData) issuerdatas.get(curalias);
                 %>
-            <option value="<%=curalias%>"> 
-                <%= curalias + ", "+ adminidtonamemap.get(new Integer(data.getAdminGroupId()))%>  
+            <option value='<c:out value="<%=curalias%>"/>'> 
+                <c:out value='<%= curalias + ", "+ adminidtonamemap.get(new Integer(data.getAdminGroupId()))%>'/>  
              </option>
           <%}%>
         </select>

@@ -25,7 +25,7 @@ function checkallfields(){
 </SCRIPT>
 <div align="center"> 
   <h2><%= ejbcawebbean.getText("EDITHARDTOKENISSUER") %></h2>
-  <h3><%= ejbcawebbean.getText("HARDTOKENISSUER")+ " : " + issuerdata.getAlias() %></h3>
+  <h3><c:out value='<%= ejbcawebbean.getText("HARDTOKENISSUER") + " : " + issuerdata.getAlias() %>'/></h3>
 </div>
 <form name="editissuer" method="post" action="<%=THIS_FILENAME %>">
   <input type="hidden" name='<%= ACTION %>' value='<%=ACTION_EDIT_ISSUER %>'>
@@ -64,7 +64,7 @@ function checkallfields(){
         <%= ejbcawebbean.getText("ADMINGROUP") %> 
       </td>
       <td width="70%"> 
-        <%= adminidtonamemap.get(new Integer(issuerdata.getAdminGroupId())) %> 
+        <c:out value="<%= adminidtonamemap.get(new Integer(issuerdata.getAdminGroupId())) %>"/> 
       </td>
     </tr>
     <tr  id="Row<%=row++%2%>"> 
