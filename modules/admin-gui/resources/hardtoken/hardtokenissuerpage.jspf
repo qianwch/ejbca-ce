@@ -24,7 +24,7 @@ function checkallfields(){
 </script>
 <div align="center"> 
   <h2><%= ejbcawebbean.getText("EDITHARDTOKENISSUER") %></h2>
-  <h3><%= ejbcawebbean.getText("HARDTOKENISSUER")+ " : " + issuerdata.getAlias() %></h3>
+  <h3><c:out value='<%= ejbcawebbean.getText("HARDTOKENISSUER") + " : " + issuerdata.getAlias() %>'/></h3>
 </div>
 
 <form name="editissuer" method="post" action="<%=THIS_FILENAME %>">
