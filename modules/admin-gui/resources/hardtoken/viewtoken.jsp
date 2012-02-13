@@ -255,14 +255,14 @@ function viewcopies(link){
   <div class="message alert"><%=ejbcawebbean.getText("NOTAUTHORIZEDTOVIEWTOKEN") %></div> 
      <%  }else{%>
     <% if(message != null){ %>
-  <div class="message alert"><%= message%></div>
+  <div class="message alert"><c:out value='<%= message%>'/></div>
   <% } %>
 
 
   <form name="viewtoken" action="<%= THIS_FILENAME %>" method="post">
-     <input type="hidden" name='<%= USER_PARAMETER %>' value='<%=username %>'>
+     <input type="hidden" name='<%= USER_PARAMETER %>' value="<c:out value='<%=username %>'/>">
      <% if (tokensn != null){ %>
-     <input type="hidden" name='<%= TOKENSN_PARAMETER %>' value='<%=token.getTokenSN() %>'>
+     <input type="hidden" name='<%= TOKENSN_PARAMETER %>' value="<c:out value='<%=token.getTokenSN() %>'/>">
      <% } %>
      <input type="hidden" name='<%= INDEX_PARAMETER %>' value='<%=index %>'>
 
