@@ -1,13 +1,18 @@
-EJBCA 3.11.3, 2011-07-08
+EJBCA 3.11.4, 2012-02-13
+---
+Bug
+    * [ECA-2557] - Minor XSS issues: merge bugfix from ECA-2482
 
-** Bug
+EJBCA 3.11.3, 2011-07-08
+---
+Bug
     * [ECA-2065] - Certificate enrollment using OS X 10.6 and Safari 5.0.3
     * [ECA-2152] - Certificate not published to OCSP when reactivating after jboss restart.
     * [ECA-2212] - Problem between 'ant install' and 'ant deploy' on JBoss EAP 5.1.
 
 EJBCA 3.11.2, 2011-04-29
-
-** Bug
+---
+Bug
     * [ECA-1981] - End Entity History: Administrator is not listed right (NullPointerException)
     * [ECA-1996] - NPE in approvals page when logged in as RA Admin without End Entity Profiles access rights
     * [ECA-2008] - Date in certificate profile decreased by one if different daylight savings time
@@ -20,11 +25,11 @@ EJBCA 3.11.2, 2011-04-29
     * [ECA-2131] - Republish button in Admin GUI's view certificate page will not work when CertReqHistory isn't present for the certificate.
     * [ECA-2135] - Republish button in Admin GUI does not work for special characters
 
-** Improvement
+Improvement
     * [ECA-2012] - Support named curves for Brainpool ECC in PKCS11 HSMs
     * [ECA-2082] - Add note about potential future error in fresh installations on EJBCA 3.11.0 and 3.11.1 on MySQL.
 
-** New Feature
+New Feature
     * [ECA-2009] - Add GlassFish database schema for Oracle
     * [ECA-2013] - Support SHA224WithECDSA on PKCS11 HSMs
     * [ECA-2014] - Support signing with SHA256WithRSAandMGF1 on PKCS11 HSMs
