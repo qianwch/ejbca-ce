@@ -169,14 +169,14 @@ public class HardTokenIssuerTest {
             role = roleManagementSession.addAccessRulesToRole(internalAdmin, role, accessRules);
             HardTokenIssuer issuer = new HardTokenIssuer();
             issuer.setDescription(alias);
-            if (!hardTokenSession.addHardTokenIssuer(internalAdmin, alias, 0, issuer)) {
+            if (!hardTokenSession.addHardTokenIssuer(internalAdmin, alias, role.getPrimaryKey(), issuer)) {
                 fail("Could not add hard token issuer, test can not continue");
             }
             assertTrue(hardTokenSession.isAuthorizedToHardTokenIssuer(admin, alias));
             
             // Test authorization to edit with an unauthorized admin
             try {
-                hardTokenSession.addHardTokenIssuer(admin, alias, 0, issuer);
+                hardTokenSession.addHardTokenIssuer(admin, alias, role.getPrimaryKey(), issuer);
                 fail("admin should not have been authorized to edit issuer");
             } catch (AuthorizationDeniedException e) {
                 assertEquals("Administrator is not authorized to resource /hardtoken_functionality/edit_hardtoken_issuers. Msg: .", e.getMessage());
