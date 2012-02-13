@@ -1,3 +1,8 @@
+EJBCA 4.0.9, 2012-02-13
+---
+** Bug
+    * [ECA-2574] - Minor XSS issue
+
 EJBCA 4.0.8, 2012-02-09
 ---
 ** New Feature
