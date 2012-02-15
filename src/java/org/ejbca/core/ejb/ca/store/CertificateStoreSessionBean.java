@@ -490,7 +490,7 @@ public class CertificateStoreSessionBean extends CertificateDataUtil implements 
     		long revocationDate = -1L; // A null Date to setRevocationDate will result in -1 stored in long column
     		rev.setRevocationDate(null);
     		rev.setUpdateTime(now.getTime());
-    		int revocationReason = RevokedCertInfo.NOT_REVOKED;
+    		final int revocationReason = RevokedCertInfo.REVOCATION_REASON_REMOVEFROMCRL;
     		rev.setRevocationReason(revocationReason);
     		// Republish the certificate if possible
     		// Republishing will not restore a password, for example in AD, it will only re-activate the certificate.

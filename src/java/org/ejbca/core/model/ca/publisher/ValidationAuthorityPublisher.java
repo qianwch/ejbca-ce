@@ -25,9 +25,9 @@ import java.util.Properties;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.x509.X509Extensions;
-import org.bouncycastle.jce.X509Principal;
 import org.ejbca.core.model.InternalResources;
 import org.ejbca.core.model.SecConst;
+import org.ejbca.core.model.ca.crl.RevokedCertInfo;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.model.ra.ExtendedInformation;
 import org.ejbca.util.Base64;
@@ -52,10 +52,11 @@ public class ValidationAuthorityPublisher extends BasePublisher implements ICust
 
 	public static final int TYPE_VAPUBLISHER = 5;
 
-	protected static final String DATASOURCE 				= "dataSource";
-	protected static final String PROTECT 					= "protect";
+	protected static final String DATASOURCE				= "dataSource";
+	protected static final String PROTECT					= "protect";
 	protected static final String STORECERT					= "storeCert";
 	protected static final String STORECRL					= "storeCRL";
+	protected static final String ONLYPUBLISHREVOKED		= "onlyPublishRevoked";
 
 	// Default values
 	public static final String DEFAULT_DATASOURCE 			= "java:/OcspDS";
@@ -63,12 +64,13 @@ public class ValidationAuthorityPublisher extends BasePublisher implements ICust
 
 	private final static String insertCertificateSQL = "INSERT INTO CertificateData (base64Cert,subjectDN,issuerDN,cAFingerprint,serialNumber,status,type,username,expireDate,revocationDate,revocationReason,tag,certificateProfileId,updateTime,fingerprint,rowVersion) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0)";
 	private final static String updateCertificateSQL = "UPDATE CertificateData SET base64Cert=?,subjectDN=?,issuerDN=?,cAFingerprint=?,serialNumber=?,status=?,type=?,username=?,expireDate=?,revocationDate=?,revocationReason=?,tag=?,certificateProfileId=?,updateTime=?,rowVersion=(rowVersion+1) WHERE fingerprint=?";
+	private final static String deleteCertificateSQL = "DELETE FROM CertificateData WHERE fingerprint=?";
 	/**
 	 *
 	 */
 	public ValidationAuthorityPublisher() {
 		super();
-		this.data.put(TYPE, new Integer(TYPE_VAPUBLISHER));
+		this.data.put(TYPE, Integer.valueOf(TYPE_VAPUBLISHER));
 		setDataSource(DEFAULT_DATASOURCE);
 		setProtect(DEFAULT_PROTECT);
 	}
@@ -119,6 +121,23 @@ public class ValidationAuthorityPublisher extends BasePublisher implements ICust
 	}
 
 	/**
+	 *  Set to true if only revoked certificates should be published.
+	 */
+	public void setOnlyPublishRevoked(boolean storecert) {
+		this.data.put(ONLYPUBLISHREVOKED, Boolean.valueOf(storecert));
+	}
+	/**
+	 * @return Should only revoked certificates be published?
+	 */
+	public boolean getOnlyPublishRevoked() {
+		final Object o = this.data.get(ONLYPUBLISHREVOKED);
+		if ( o==null ) {
+			return false; // default value is false
+		}
+		return ((Boolean)o).booleanValue();
+	}
+
+	/**
 	 *  Set to true if the CRL should be published.
 	 */
 	public void setStoreCRL(boolean storecert) {
@@ -135,9 +154,7 @@ public class ValidationAuthorityPublisher extends BasePublisher implements ICust
 		return ((Boolean)o).booleanValue();
 	}
 
-	/* (non-Javadoc)
-	 * @see org.ejbca.core.model.ca.publisher.ICustomPublisher#init(java.util.Properties)
-	 */
+	@Override
 	public void init(Properties properties) {
 		setDataSource(properties.getProperty(DATASOURCE));
 		log.debug("dataSource='"+getDataSource()+"'.");
@@ -160,6 +177,7 @@ public class ValidationAuthorityPublisher extends BasePublisher implements ICust
 		private final String tag;
 		private final int certificateProfileId;
 		private final long updateTime;
+		boolean isDelete = false;
 		StoreCertPreparer(Certificate ic,
 		                  String un, String cfp, int s, long d, int r, int t, String tag, int profid, long utime) {
 			super();
@@ -174,15 +192,28 @@ public class ValidationAuthorityPublisher extends BasePublisher implements ICust
 			this.certificateProfileId = profid;
 			this.updateTime = utime;
 		}
+		@Override
 		public void prepare(PreparedStatement ps) throws Exception {
+			if ( this.isDelete ) {
+				prepareDelete(ps);
+			} else {
+				prepareNewUpdate(ps);
+			}
+		}
+		private void prepareDelete(PreparedStatement ps) throws Exception {
+			ps.setString(1, this.cafp);
+		}
+		private void prepareNewUpdate(PreparedStatement ps) throws Exception {
 			// We can select to publish the whole certificate, or not to.
 			// There are good reasons not to publish the whole certificate. It is large, thus making it a bit of heavy insert and it may
 			// contain sensitive information.
 			// On the other hand some OCSP Extension plug-ins may not work without the certificate.
 			// A regular OCSP responder works fine without the certificate.
-			String cert = null;
+			final String cert;
 			if (getStoreCert()) {
 				cert = new String(Base64.encode(this.incert.getEncoded(), true));
+			} else {
+				cert = null;
 			}
 			ps.setString(1, cert);
 			ps.setString(2, CertTools.getSubjectDN(this.incert));
@@ -200,54 +231,74 @@ public class ValidationAuthorityPublisher extends BasePublisher implements ICust
 			ps.setLong(14, this.updateTime);
 			ps.setString(15,CertTools.getFingerprintAsString(this.incert));
 		}
+		@Override
 		public String getInfoString() {
 			return "Store:, Username: "+this.username+", Issuer:"+CertTools.getIssuerDN(this.incert)+", Serno: "+CertTools.getSerialNumberAsString(this.incert)+", Subject: "+CertTools.getSubjectDN(this.incert);
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see org.ejbca.core.model.ca.publisher.ICustomPublisher#storeCertificate
-	 */
-    @Override
+	private void updateCert( StoreCertPreparer prep) throws Exception {
+		// If this is a revocation we assume that the certificate already exists in the database. In that case we will try an update first and if that fails an insert.
+		if (JDBCUtil.execute(updateCertificateSQL, prep, getDataSource()) == 1) {
+			return;
+		}
+		// If this is a revocation we tried an update below, if that failed we have to do an insert here
+		JDBCUtil.execute(insertCertificateSQL, prep, getDataSource());
+		// No exception throws, so this worked
+	}
+	private void deleteCert( StoreCertPreparer prep) throws Exception {
+		prep.isDelete = true;
+		JDBCUtil.execute(deleteCertificateSQL, prep, getDataSource());
+	}
+	private void newCert( StoreCertPreparer prep ) throws Exception {
+		try {
+			JDBCUtil.execute(insertCertificateSQL, prep, getDataSource());
+			// No exception throws, so this worked
+		} catch (SQLException e) {
+			if (log.isDebugEnabled()) {
+				log.debug(intres.getLocalizedMessage("publisher.entryexists", e.getMessage()));
+			}
+			if (JDBCUtil.execute(updateCertificateSQL, prep, getDataSource()) == 1) {
+				 return; // We updated exactly one row, which is what we expect
+			}
+			throw e; // better throw insert exception if this fallback fails.
+		}
+	}
+	@Override
 	public boolean storeCertificate(Admin admin, Certificate incert,
 	                                String username, String password,
 	                                String userDN,
 	                                String cafp, int status, int type, long revocationDate, int revocationReason, String tag, int certificateProfileId, long lastUpdate,
 	                                ExtendedInformation extendedinformation)
 	throws PublisherException {
-		boolean fail = true;
 		if (log.isDebugEnabled()) {
 			final String fingerprint = CertTools.getFingerprintAsString(incert);
 			log.debug("Publishing certificate with fingerprint "+fingerprint+", status "+status+", type "+type+" to external OCSP");
 		}
 		final StoreCertPreparer prep = new StoreCertPreparer(incert, username, cafp, status, revocationDate, revocationReason, type, tag, certificateProfileId, lastUpdate);
+		final boolean doOnlyPublishRevoked = getOnlyPublishRevoked();
 		try {
-			if (status == SecConst.CERT_REVOKED) {
-				// If this is a revocation we assume that the certificate already exists in the database. In that case we will try an update first and if that fails an insert.
-				if (JDBCUtil.execute(updateCertificateSQL, prep, getDataSource()) == 1) {
-					fail = false;	// We updated exactly one row, which is what we expect
-				} else {
-					// If this is a revocation we tried an update below, if that failed we have to do an insert here
-					JDBCUtil.execute(insertCertificateSQL, prep, getDataSource());
-					fail = false;	// No exception throws, so this worked
+			if ( doOnlyPublishRevoked ) {
+				if ( status==SecConst.CERT_REVOKED) {
+					newCert(prep); // 
+					return true;
 				}
-			} else {
-				try {
-					JDBCUtil.execute(insertCertificateSQL, prep, getDataSource());    
-					fail = false;	// No exception throws, so this worked
-				} catch (SQLException e) {
-					if (log.isDebugEnabled()) {
-						log.debug(intres.getLocalizedMessage("publisher.entryexists", e.getMessage()));
-					}
-					if (JDBCUtil.execute(updateCertificateSQL, prep, getDataSource()) == 1) {
-						fail = false;	// We updated exactly one row, which is what we expect
-					}
+				if ( revocationReason==RevokedCertInfo.REVOCATION_REASON_REMOVEFROMCRL ) {
+					deleteCert(prep); // cert unrevoked, delete it from VA DB.
+					return true;
 				}
+				return true; // do nothing if new cert.
 			}
+			if ( status==SecConst.CERT_REVOKED) {
+				updateCert(prep);
+				return true;
+			}
+			newCert(prep);
+			return true;
 		} catch (Exception e) {
 			throwPublisherException(e, prep);
+			return false;
 		}
-		return !fail;
 	}
 	private class StoreCRLPreparer implements Preparer {
 		private final String base64Crl;
@@ -265,7 +316,7 @@ public class ValidationAuthorityPublisher extends BasePublisher implements ICust
 				crl = CertTools.getCRLfromByteArray(incrl);
 				// Is it a delta CRL?
 				this.deltaCRLIndicator = crl.getExtensionValue(X509Extensions.DeltaCRLIndicator.getId())!=null ? 1 : -1;
-			    this.issuerDN = CertTools.getIssuerDN(crl);
+				this.issuerDN = CertTools.getIssuerDN(crl);
 				this.cRLNumber = number;
 				this.cAFingerprint = cafp;
 				this.base64Crl = new String(Base64.encode(incrl));
@@ -281,6 +332,7 @@ public class ValidationAuthorityPublisher extends BasePublisher implements ICust
 				throw new PublisherException(msg);            
 			}
 		}
+		@Override
 		public void prepare(PreparedStatement ps) throws Exception {
 			ps.setString(1, this.base64Crl);
 			ps.setString(2, this.cAFingerprint);
@@ -291,6 +343,7 @@ public class ValidationAuthorityPublisher extends BasePublisher implements ICust
 			ps.setLong(7, this.nextUpdate);
 			ps.setString(8, this.fingerprint);
 		}
+		@Override
 		public String getInfoString() {
 			return "Store CRL:, Issuer:"+this.issuerDN+", Number: "+this.cRLNumber+", Is delta: "+(this.deltaCRLIndicator>0);
 		}
@@ -298,9 +351,6 @@ public class ValidationAuthorityPublisher extends BasePublisher implements ICust
 	private final static String insertCRLSQL = "INSERT INTO CRLData (base64Crl,cAFingerprint,cRLNumber,deltaCRLIndicator,issuerDN,thisUpdate,nextUpdate,fingerprint,rowVersion) VALUES (?,?,?,?,?,?,?,?,0)";
 	private final static String updateCRLSQL = "UPDATE CRLData SET base64Crl=?,cAFingerprint=?,cRLNumber=?,deltaCRLIndicator=?,issuerDN=?,thisUpdate=?,nextUpdate=?,rowVersion=(rowVersion+1) WHERE fingerprint=?";
 
-	/* (non-Javadoc)
-	 * @see org.ejbca.core.model.ca.publisher.BasePublisher#storeCRL(org.ejbca.core.model.log.Admin, byte[], java.lang.String, int)
-	 */
 	@Override
 	public boolean storeCRL(Admin admin, byte[] incrl, String cafp, int number, String userDN) throws PublisherException {
 		if (!getStoreCRL() ) {
@@ -337,16 +387,16 @@ public class ValidationAuthorityPublisher extends BasePublisher implements ICust
 	}
 
 	protected class DoNothingPreparer implements Preparer {
+		@Override
 		public void prepare(PreparedStatement ps) {
 			// do nothing
 		}
+		@Override
 		public String getInfoString() {
 			return null;
 		}
 	}
-	/* (non-Javadoc)
-	 * @see se.anatom.ejbca.ca.publisher.ICustomPublisher#testConnection(se.anatom.ejbca.log.Admin)
-	 */
+	@Override
 	public void testConnection(Admin admin) throws PublisherConnectionException {
 		try {
 			JDBCUtil.execute("select 1 from CertificateData where fingerprint='XX'", new DoNothingPreparer(), getDataSource());
@@ -358,11 +408,13 @@ public class ValidationAuthorityPublisher extends BasePublisher implements ICust
 		}
 	}
 
+	@Override
 	public Object clone() throws CloneNotSupportedException {
 		ValidationAuthorityPublisher clone = new ValidationAuthorityPublisher();
-		HashMap clonedata = (HashMap) clone.saveData();
+		@SuppressWarnings("unchecked")
+		HashMap<Object, Object> clonedata = (HashMap<Object, Object>) clone.saveData();
 
-		Iterator i = (this.data.keySet()).iterator();
+		Iterator<Object> i = (this.data.keySet()).iterator();
 		while(i.hasNext()){
 			Object key = i.next();
 			clonedata.put(key, this.data.get(key));
@@ -371,6 +423,7 @@ public class ValidationAuthorityPublisher extends BasePublisher implements ICust
 		return clone;
 	}
 
+	@Override
 	public float getLatestVersion() {
 		return LATEST_VERSION;
 	}
