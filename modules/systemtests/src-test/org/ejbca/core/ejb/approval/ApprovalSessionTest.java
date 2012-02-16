@@ -66,7 +66,6 @@ import org.cesecore.util.CryptoProviderTools;
 import org.ejbca.config.EjbcaConfiguration;
 import org.ejbca.config.GlobalConfiguration;
 import org.ejbca.core.EjbcaException;
-import org.ejbca.core.ejb.authentication.cli.CliAuthenticationProviderRemote;
 import org.ejbca.core.ejb.ca.CaTestCase;
 import org.ejbca.core.ejb.config.GlobalConfigurationSessionRemote;
 import org.ejbca.core.ejb.ra.UserAdminSessionRemote;

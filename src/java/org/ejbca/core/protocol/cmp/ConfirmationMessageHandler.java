@@ -18,8 +18,6 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 
-import javax.ejb.EJBException;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.cesecore.authentication.tokens.AuthenticationToken;
@@ -32,9 +30,7 @@ import org.cesecore.certificates.ca.CaSessionLocal;
 import org.cesecore.certificates.ca.SignRequestException;
 import org.cesecore.certificates.ca.catoken.CAToken;
 import org.cesecore.certificates.certificate.CertificateStoreSession;
-import org.cesecore.certificates.certificate.request.FailInfo;
 import org.cesecore.certificates.certificate.request.ResponseMessage;
-import org.cesecore.certificates.certificate.request.ResponseStatus;
 import org.cesecore.certificates.certificateprofile.CertificateProfileSession;
 import org.cesecore.keys.token.CryptoTokenOfflineException;
 import org.cesecore.keys.token.IllegalCryptoTokenException;
@@ -44,13 +40,9 @@ import org.ejbca.config.CmpConfiguration;
 import org.ejbca.core.ejb.authentication.web.WebAuthenticationProviderSessionLocal;
 import org.ejbca.core.ejb.ra.EndEntityAccessSession;
 import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileSession;
-import org.ejbca.core.model.InternalEjbcaResources;
 import org.ejbca.core.model.SecConst;
-import org.ejbca.core.model.ra.NotFoundException;
 import org.ejbca.core.protocol.cmp.authentication.EndEntityCertificateAuthenticationModule;
 import org.ejbca.core.protocol.cmp.authentication.HMACAuthenticationModule;
-import org.ejbca.core.protocol.cmp.authentication.ICMPAuthenticationModule;
-import org.ejbca.core.protocol.cmp.authentication.VerifyPKIMessage;
 
 /**
  * Message handler for certificate request confirmation message.
@@ -69,10 +61,8 @@ import org.ejbca.core.protocol.cmp.authentication.VerifyPKIMessage;
 public class ConfirmationMessageHandler extends BaseCmpMessageHandler implements ICmpMessageHandler {
 	
 	private static final Logger LOG = Logger.getLogger(ConfirmationMessageHandler.class);
-	private static final InternalEjbcaResources INTRES = InternalEjbcaResources.getInstance();
 	
 //	/** Parameter used to authenticate RA messages if we are using RA mode to create users */
-//	private String raAuthenticationSecret = null;
 	/** Parameter used to determine the type of protection for the response message */
 	private String responseProtection = null;
 	/** CA Session used to sign the response */
@@ -91,7 +81,6 @@ public class ConfirmationMessageHandler extends BaseCmpMessageHandler implements
             EndEntityAccessSession eeAccessSession, WebAuthenticationProviderSessionLocal authProvSession) {
 
 		super(admin, caSession, endEntityProfileSession, certificateProfileSession);
-//		raAuthenticationSecret = CmpConfiguration.getRAAuthenticationSecret();
 		responseProtection = CmpConfiguration.getResponseProtection();
 		this.caSession = caSession;
         this.endEntityAccessSession = eeAccessSession;

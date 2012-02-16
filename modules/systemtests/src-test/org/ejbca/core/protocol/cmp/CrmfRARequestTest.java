@@ -55,7 +55,6 @@ import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileSession;
 import org.ejbca.core.model.ra.NotFoundException;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfile;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfileExistsException;
-import org.ejbca.core.model.util.EjbRemoteHelper;
 import org.ejbca.util.InterfaceCache;
 import org.junit.After;
 import org.junit.Assert;
