@@ -240,7 +240,7 @@ public class EndEntityInformation implements Serializable {
     }
     
     public boolean getPrintUserData(){
-        return (type & EndEntityConstants.USER_SENDNOTIFICATION) == EndEntityConstants.USER_SENDNOTIFICATION;
+        return (type & EndEntityConstants.USER_PRINT) == EndEntityConstants.USER_PRINT;
       }
 
     public void setPrintUserData(boolean printUserData){
