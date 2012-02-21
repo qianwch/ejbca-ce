@@ -89,7 +89,6 @@ public class CrmfRARequestTest extends CmpTestCase {
         admin = new Admin(Admin.TYPE_BATCHCOMMANDLINE_USER);
         // Configure CMP for this test, we allow custom certificate serial numbers
     	CertificateProfile profile = new EndUserCertificateProfile();
-    	//profile.setAllowCertSerialNumberOverride(true);
     	try {
     		certProfileSession.addCertificateProfile(admin, "CMPTESTPROFILE", profile);
 		} catch (CertificateProfileExistsException e) {
@@ -310,8 +309,6 @@ public class CrmfRARequestTest extends CmpTestCase {
         X509Certificate cert = checkCmpCertRepMessage(userDN, cacert, resp, reqId);
         BigInteger serialnumber = cert.getSerialNumber();
         
-        
-        
         // Revoke the created certificate
         //final String hash = "foo123";
         final PKIMessage con = genRevReq(issuerDN, userDN, serialnumber, cacert, nonce, transid, false);
@@ -324,7 +321,6 @@ public class CrmfRARequestTest extends CmpTestCase {
         // Send request and receive response
         final byte[] resprev = sendCmpHttp(barev, 200);
         checkCmpResponseGeneral(resprev, issuerDN, userDN, cacert, nonce, transid, false, null);
-        //checkCmpRevokeConfirmMessage(issuerDN, userDN, serialnumber, cert, resprev, true);
         int revstatus = checkRevokeStatus(issuerDN, serialnumber);
         Assert.assertEquals("Certificate revocation failed.", RevokedCertInfo.REVOCATION_REASON_KEYCOMPROMISE, revstatus);
         
@@ -347,7 +343,6 @@ public class CrmfRARequestTest extends CmpTestCase {
 
     	// Configure CMP for this test, we allow custom certificate serial numbers
     	CertificateProfile profile = new CertificateProfile();
-    	// profile.setAllowCertSerialNumberOverride(true);
     	try {
     		certProfileSession.addCertificateProfile(admin, "CMPKEYIDTESTPROFILE", profile);
     	} catch (CertificateProfileExistsException e) {
@@ -423,7 +418,6 @@ public class CrmfRARequestTest extends CmpTestCase {
     	checkCmpResponseGeneral(resp2, issuerDN, userDN, cacert, nonce2, transid2, true, null);
     	X509Certificate cert = checkCmpCertRepMessage(userDN, cacert, resp2, reqId2);
     	BigInteger serialnumber = cert.getSerialNumber();
-    	
     	        
     	        
     	UserDataVO user = userAdminSession.findUser(admin, "keyidtest2");
@@ -441,11 +435,9 @@ public class CrmfRARequestTest extends CmpTestCase {
     	// Send request and receive response
     	final byte[] resprev = sendCmpHttp(barev, 200);
     	checkCmpResponseGeneral(resprev, issuerDN, userDN, cacert, nonce2, transid2, true, null);
-    	//checkCmpRevokeConfirmMessage(issuerDN, userDN, serialnumber, cert, resprev, true);
     	int revstatus = checkRevokeStatus(issuerDN, serialnumber);
     	Assert.assertEquals("Certificate revocation failed.", RevokedCertInfo.REVOCATION_REASON_KEYCOMPROMISE, revstatus);
     	        
-    	
         gc.setEnableEndEntityProfileLimitations(gcEELimitations);
         globalConfigurationSession.saveGlobalConfigurationRemote(admin, gc);
 
