@@ -322,7 +322,8 @@ public class PublisherTest extends TestCase {
 		final int certProfileID = SecConst.CERTPROFILE_FIXED_ENDUSER;
 		final String tag = "foo";
 		final String userName = "nytt 1";
-		final boolean ret = this.publisherSession.storeCertificate(admin, publishers, cert, userName, "foo123", null, CertTools.getFingerprintAsString(cert), SecConst.CERT_ACTIVE, SecConst.CERTTYPE_ENDENTITY, -1, revokationReason, tag, certProfileID, lastUpdate, null);
+		final String cafp = "CA fingerprint could be anything in this test.";
+		final boolean ret = this.publisherSession.storeCertificate(admin, publishers, cert, userName, "foo123", null, cafp, SecConst.CERT_ACTIVE, SecConst.CERTTYPE_ENDENTITY, -1, revokationReason, tag, certProfileID, lastUpdate, null);
 		assertTrue("Error storing certificate to external ocsp publisher", ret);
 
 		final CertificateInfo info = this.certificateStoreSession.getCertificateInfo(admin, CertTools.getFingerprintAsString(cert));
@@ -336,17 +337,22 @@ public class PublisherTest extends TestCase {
 		assertEquals( certProfileID, info.getCertificateProfileId() );
 		assertEquals( tag, info.getTag() );
 		assertEquals( lastUpdate, info.getUpdateTime().getTime() );
+		assertEquals( userName, info.getUsername() );
+		assertEquals( cafp, info.getCAFingerprint() );
 	}
 	private void revokeCert(ArrayList<Integer> publishers, Certificate cert, long lastUpdate) {
 		final int certProfileID = 12345;
 		final String tag = "foobar";
 		final String userName = "nytt 2";
-		this.publisherSession.revokeCertificate(admin, publishers, cert, userName, null, CertTools.getFingerprintAsString(cert), SecConst.CERTTYPE_ENDENTITY, RevokedCertInfo.REVOCATION_REASON_UNSPECIFIED, new Date().getTime(), tag, certProfileID, lastUpdate);
+		final String cafp = "CA fingerprint could be anything in this test. Could also change value.";
+		this.publisherSession.revokeCertificate(admin, publishers, cert, userName, null, cafp, SecConst.CERTTYPE_ENDENTITY, RevokedCertInfo.REVOCATION_REASON_UNSPECIFIED, new Date().getTime(), tag, certProfileID, lastUpdate);
 		final CertificateInfo info = this.certificateStoreSession.getCertificateInfo(admin, CertTools.getFingerprintAsString(cert));
 		assertEquals( SecConst.CERT_REVOKED, info.getStatus() );
 		assertEquals( certProfileID, info.getCertificateProfileId() );
 		assertEquals( tag, info.getTag() );
 		assertEquals( lastUpdate, info.getUpdateTime().getTime() );
+		assertEquals( userName, info.getUsername() );
+		assertEquals( cafp, info.getCAFingerprint() );
 	}
 	/**
 	 * Test the VA publisher. It toggles "OnlyPublishRevoked" to see that no new certificates are published when set.
