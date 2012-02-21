@@ -1106,7 +1106,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
      * @throws Exception
      */
     @Test
-    public void test14RANoCA() throws Exception {
+    public void test12RANoCA() throws Exception {
         if(log.isTraceEnabled()) {
             log.trace("test14RANoCA()");
         }
@@ -1115,6 +1115,8 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_DN_PART_PWD);
         updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "OU");
         updatePropertyOnServer(CmpConfiguration.CONFIG_CHECKADMINAUTHORIZATION, "true");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_ALLOWAUTOMATICKEYUPDATE, "true");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_ALLOWUPDATEWITHSAMEKEY, "true");
 
         //------------------ create the user and issue his first certificate -------------
         createUser(username, userDN, "foo123");
@@ -1122,7 +1124,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         Certificate certificate = (X509Certificate) signSession.createCertificate(admin, username, "foo123", keys.getPublic());
         assertNotNull("Failed to create a test certificate", certificate);
 
-        PKIMessage req = genRenewalReq(keys, false, null, null);
+        PKIMessage req = genRenewalReq(keys, false, userDN, null);
         assertNotNull("Failed to generate a CMP renewal request", req);
         int reqId = req.getBody().getKur().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue();
 
@@ -1146,15 +1148,8 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         //send request and recieve response
         byte[] resp = sendCmpHttp(ba, 200);
         checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, false, null);
-        
-        PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
-        assertNotNull(respObject);
-
-        final PKIBody body = respObject.getBody();
-        assertEquals(23, body.getTagNo());
-        final String errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
-        final String expectedErrMsg = "Cannot find a SubjectDN in the request";
-        assertEquals(expectedErrMsg, errMsg);
+        X509Certificate cert = checkKurCertRepMessage(userDN, cacert, resp, reqId);
+        assertNotNull("Failed to renew the certificate", cert);
 
         if(log.isTraceEnabled()) {
             log.trace("<test14RANoCA()");
