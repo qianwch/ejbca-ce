@@ -24,6 +24,7 @@ import java.net.Socket;
 import java.net.URL;
 import java.security.KeyPair;
 import java.security.KeyStore;
+import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
@@ -43,6 +44,7 @@ import junit.framework.TestSuite;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.bouncycastle.asn1.DERObjectIdentifier;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DERTags;
 import org.bouncycastle.asn1.ocsp.OCSPObjectIdentifiers;
@@ -51,7 +53,7 @@ import org.bouncycastle.asn1.x509.X509Extensions;
 import org.bouncycastle.jce.provider.JCEECPublicKey;
 import org.bouncycastle.ocsp.BasicOCSPResp;
 import org.bouncycastle.ocsp.CertificateID;
-import org.bouncycastle.ocsp.CertificateStatus;
+import org.bouncycastle.ocsp.OCSPException;
 import org.bouncycastle.ocsp.OCSPReq;
 import org.bouncycastle.ocsp.OCSPReqGenerator;
 import org.bouncycastle.ocsp.OCSPResp;
@@ -266,6 +268,56 @@ public class ProtocolOcspHttpTest extends CaTestCase {
 		assertEquals("Response code", 200, resp.getStatusCode());
 	}
 
+	protected enum Status {
+		Unknown,
+		Good,
+		Revoked
+	}
+	protected void testOCSP(int _caid, X509Certificate _cacert, BigInteger certSerial, Status expectedStatus) throws NoSuchProviderException, IOException, OCSPException {
+		testOCSP(_caid, _cacert, certSerial, expectedStatus, Integer.MIN_VALUE, this.helper);
+	}
+	protected void testOCSP(int _caid, X509Certificate _cacert, BigInteger certSerial, int expectedReason) throws NoSuchProviderException, IOException, OCSPException {
+		testOCSP(_caid, _cacert, certSerial, Status.Revoked, expectedReason, this.helper);
+	}
+	private static void testOCSP(int caid, X509Certificate cacert, BigInteger certSerial, Status expectedStatus, 
+			int expectedReason, OcspJunitHelper helper) throws NoSuchProviderException, IOException, OCSPException {
+		// And an OCSP request
+		final OCSPReqGenerator gen = new OCSPReqGenerator();
+		gen.addRequest(new CertificateID(CertificateID.HASH_SHA1, cacert, certSerial));
+		log.debug("ocspTestCert.getSerialNumber() = " + certSerial);
+		final Hashtable<DERObjectIdentifier, X509Extension> exts = new Hashtable<DERObjectIdentifier, X509Extension>();
+		final String sNonce = "123456789";
+		final X509Extension ext = new X509Extension(false, new DEROctetString(sNonce.getBytes()));
+		exts.put(OCSPObjectIdentifiers.id_pkix_ocsp_nonce, ext);
+		gen.setRequestExtensions(new X509Extensions(exts));
+		final OCSPReq req = gen.generate();
+
+		// Send the request and receive a singleResponse
+		final SingleResp[] singleResps = helper.sendOCSPPost(req.getEncoded(), sNonce, 0, 200);
+		assertEquals("No of SingleResps should be 1.", 1, singleResps.length);
+		final SingleResp singleResp = singleResps[0];
+
+		final CertificateID certId = singleResp.getCertID();
+		assertEquals("Serno in response does not match serno in request.", certId.getSerialNumber(), certSerial);
+		final Object status = singleResp.getCertStatus();
+		switch ( expectedStatus ) {
+		case Unknown:
+			assertTrue("Status is not Unknown", status instanceof UnknownStatus);
+			break;
+		case Good:
+			if ( status!=org.bouncycastle.ocsp.CertificateStatus.GOOD ) {
+				log.debug("Certificate status: " + status.getClass().getName());
+			}
+			assertEquals("Status is not Good", org.bouncycastle.ocsp.CertificateStatus.GOOD, status);
+			break;
+		case Revoked:
+			assertTrue("Status is not Revoked", status instanceof RevokedStatus);
+			final int reason = ((RevokedStatus)status).getRevocationReason();
+			assertEquals("Wrong revocation reason", expectedReason, reason);
+			break;
+		}
+	}
+
 	/**
 	 * Tests ocsp message
 	 *
@@ -282,30 +334,9 @@ public class ProtocolOcspHttpTest extends CaTestCase {
 		// (send crap message and get good error)
 
 		// Get user and ocspTestCert that we know...
-		loadUserCert(caid);
+		loadUserCert(this.caid);
 
-		// And an OCSP request
-		OCSPReqGenerator gen = new OCSPReqGenerator();
-		gen.addRequest(new CertificateID(CertificateID.HASH_SHA1, cacert, ocspTestCert.getSerialNumber()));
-		log.debug("ocspTestCert.getSerialNumber() = " + ocspTestCert.getSerialNumber());
-		Hashtable exts = new Hashtable();
-		X509Extension ext = new X509Extension(false, new DEROctetString("123456789".getBytes()));
-		exts.put(OCSPObjectIdentifiers.id_pkix_ocsp_nonce, ext);
-		gen.setRequestExtensions(new X509Extensions(exts));
-		OCSPReq req = gen.generate();
-
-		// Send the request and receive a singleResponse
-		SingleResp[] singleResps = helper.sendOCSPPost(req.getEncoded(), "123456789", 0, 200);
-		assertEquals("No of SingleResps should be 1.", 1, singleResps.length);
-		SingleResp singleResp = singleResps[0];
-
-		CertificateID certId = singleResp.getCertID();
-		assertEquals("Serno in response does not match serno in request.", certId.getSerialNumber(), ocspTestCert.getSerialNumber());
-		Object status = singleResp.getCertStatus();
-		if (status != CertificateStatus.GOOD) {
-			log.debug("Certificate status: " + status.getClass().getName());
-		}
-		assertEquals("Status is not null (good)", null, status);
+		testOCSP( this.caid, cacert, ocspTestCert.getSerialNumber(), Status.Good);
 		log.trace("<test02OcspGood()");
 	}
 
@@ -318,25 +349,8 @@ public class ProtocolOcspHttpTest extends CaTestCase {
 	public void test03OcspRevoked() throws Exception {
 		log.trace(">test03OcspRevoked()");
 		// Now revoke the certificate and try again
-		certificateStoreSession.revokeCertificate(admin, ocspTestCert, null, RevokedCertInfo.REVOCATION_REASON_KEYCOMPROMISE, null);
-		// And an OCSP request
-		OCSPReqGenerator gen = new OCSPReqGenerator();
-		gen.addRequest(new CertificateID(CertificateID.HASH_SHA1, cacert, ocspTestCert.getSerialNumber()));
-		OCSPReq req = gen.generate();
-
-		// Send the request and receive a singleResponse
-		SingleResp[] singleResps = helper.sendOCSPPost(req.getEncoded(), null, 0, 200);
-		assertEquals("No of SingResps should be 1.", 1, singleResps.length);
-		SingleResp singleResp = singleResps[0];
-
-		CertificateID certId = singleResp.getCertID();
-		assertEquals("Serno in response does not match serno in request.", certId.getSerialNumber(), ocspTestCert.getSerialNumber());
-		Object status = singleResp.getCertStatus();
-		assertTrue("Status is not RevokedStatus", status instanceof RevokedStatus);
-		RevokedStatus rev = (RevokedStatus) status;
-		assertTrue("Status does not have reason", rev.hasRevocationReason());
-		int reason = rev.getRevocationReason();
-		assertEquals("Wrong revocation reason", reason, RevokedCertInfo.REVOCATION_REASON_KEYCOMPROMISE);
+		this.certificateStoreSession.revokeCertificate(admin, ocspTestCert, null, RevokedCertInfo.REVOCATION_REASON_KEYCOMPROMISE, null);
+		testOCSP( this.caid, cacert, ocspTestCert.getSerialNumber(), RevokedCertInfo.REVOCATION_REASON_KEYCOMPROMISE);
 		log.trace("<test03OcspRevoked()");
 	}
 
@@ -349,20 +363,7 @@ public class ProtocolOcspHttpTest extends CaTestCase {
 	public void test04OcspUnknown() throws Exception {
 		log.trace(">test04OcspUnknown()");
 		// An OCSP request for an unknown certificate (not exist in db)
-		OCSPReqGenerator gen = new OCSPReqGenerator();
-		gen.addRequest(new CertificateID(CertificateID.HASH_SHA1, cacert, new BigInteger("1")));
-		OCSPReq req = gen.generate();
-
-		// Send the request and receive a singleResponse
-		SingleResp[] singleResps = helper.sendOCSPPost(req.getEncoded(), null, 0, 200);
-		assertEquals("No of SingResps should be 1.", 1, singleResps.length);
-		SingleResp singleResp = singleResps[0];
-
-		CertificateID certId = singleResp.getCertID();
-		assertEquals("Serno in response does not match serno in request.", certId.getSerialNumber(), new BigInteger("1"));
-		Object status = singleResp.getCertStatus();
-		assertTrue("Status is not Unknown", status instanceof UnknownStatus);
-
+		testOCSP( this.caid, cacert, new BigInteger("1"), Status.Unknown);
 		log.trace("<test04OcspUnknown()");
 	}
 
@@ -375,19 +376,7 @@ public class ProtocolOcspHttpTest extends CaTestCase {
 	public void test05OcspUnknownCA() throws Exception {
 		log.trace(">test05OcspUnknownCA()");
 		// An OCSP request for a certificate from an unknwon CA
-		OCSPReqGenerator gen = new OCSPReqGenerator();
-		gen.addRequest(new CertificateID(CertificateID.HASH_SHA1, unknowncacert, new BigInteger("1")));
-		OCSPReq req = gen.generate();
-
-		// Send the request and receive a singleResponse
-		SingleResp[] singleResps = helper.sendOCSPPost(req.getEncoded(), null, 0, 200);
-		assertEquals("No of SingResps should be 1.", 1, singleResps.length);
-		SingleResp singleResp = singleResps[0];
-
-		CertificateID certId = singleResp.getCertID();
-		assertEquals("Serno in response does not match serno in request.", certId.getSerialNumber(), new BigInteger("1"));
-		Object status = singleResp.getCertStatus();
-		assertTrue("Status is not Unknown", status instanceof UnknownStatus);
+		testOCSP( this.caid, unknowncacert, new BigInteger("1"), Status.Unknown);
 
 		log.trace("<test05OcspUnknownCA()");
 	}
@@ -497,38 +486,20 @@ public class ProtocolOcspHttpTest extends CaTestCase {
 	/**
 	 * Tests ocsp message
 	 *
-	 * @throws Exception
-	 *			 error
+	 * @throws Exception error
 	 */
 	public void test08OcspEcdsaGood() throws Exception {
 		assertTrue("This test can only be run on a full EJBCA installation.", ((HttpURLConnection) new URL(httpReqPath + '/').openConnection())
 				.getResponseCode() == 200);
 
-		int ecdsacaid = "CN=OCSPECDSATEST".hashCode();
-		X509Certificate ecdsacacert = addECDSACA("CN=OCSPECDSATEST", "prime192v1");
-		helper.reloadKeys();
+		final int ecdsacaid = "CN=OCSPECDSATEST".hashCode();
+		final X509Certificate ecdsacacert = addECDSACA("CN=OCSPECDSATEST", "prime192v1");
+		this.helper.reloadKeys();
 
 		// Make user and ocspTestCert that we know...
 		createUserCert(ecdsacaid);
 
-		// And an OCSP request
-		OCSPReqGenerator gen = new OCSPReqGenerator();
-		gen.addRequest(new CertificateID(CertificateID.HASH_SHA1, ecdsacacert, ocspTestCert.getSerialNumber()));
-		Hashtable exts = new Hashtable();
-		X509Extension ext = new X509Extension(false, new DEROctetString("123456789".getBytes()));
-		exts.put(OCSPObjectIdentifiers.id_pkix_ocsp_nonce, ext);
-		gen.setRequestExtensions(new X509Extensions(exts));
-		OCSPReq req = gen.generate();
-
-		// Send the request and receive a singleResponse
-		SingleResp[] singleResps = helper.sendOCSPPost(req.getEncoded(), "123456789", 0, 200);
-		assertEquals("No of SingResps should be 1.", 1, singleResps.length);
-		SingleResp singleResp = singleResps[0];
-
-		CertificateID certId = singleResp.getCertID();
-		assertEquals("Serno in response does not match serno in request.", certId.getSerialNumber(), ocspTestCert.getSerialNumber());
-		Object status = singleResp.getCertStatus();
-		assertEquals("Status is not null (good)", status, null);
+			testOCSP( ecdsacaid, ecdsacacert, this.ocspTestCert.getSerialNumber(), Status.Good );
 
 	} // test08OcspEcdsaGood
 
@@ -544,29 +515,12 @@ public class ProtocolOcspHttpTest extends CaTestCase {
 
 		int ecdsacaid = "CN=OCSPECDSAIMPCATEST".hashCode();
 		X509Certificate ecdsacacert = addECDSACA("CN=OCSPECDSAIMPCATEST", "implicitlyCA");
-		helper.reloadKeys();
+		this.helper.reloadKeys();
 
 		// Make user and ocspTestCert that we know...
 		createUserCert(ecdsacaid);
 
-		// And an OCSP request
-		OCSPReqGenerator gen = new OCSPReqGenerator();
-		gen.addRequest(new CertificateID(CertificateID.HASH_SHA1, ecdsacacert, ocspTestCert.getSerialNumber()));
-		Hashtable exts = new Hashtable();
-		X509Extension ext = new X509Extension(false, new DEROctetString("123456789".getBytes()));
-		exts.put(OCSPObjectIdentifiers.id_pkix_ocsp_nonce, ext);
-		gen.setRequestExtensions(new X509Extensions(exts));
-		OCSPReq req = gen.generate();
-
-		// Send the request and receive a singleResponse
-		SingleResp[] singleResps = helper.sendOCSPPost(req.getEncoded(), "123456789", 0, 200);
-		assertEquals("No of SingResps should be 1.", 1, singleResps.length);
-		SingleResp singleResp = singleResps[0];
-
-		CertificateID certId = singleResp.getCertID();
-		assertEquals("Serno in response does not match serno in request.", certId.getSerialNumber(), ocspTestCert.getSerialNumber());
-		Object status = singleResp.getCertStatus();
-		assertEquals("Status is not null (good)", status, null);
+		testOCSP( ecdsacaid, ecdsacacert, this.ocspTestCert.getSerialNumber(), Status.Good );
 
 	} // test09OcspEcdsaImplicitlyCAGood
 
@@ -735,16 +689,8 @@ public class ProtocolOcspHttpTest extends CaTestCase {
 		assertNotNull("Response should not be null.", response);
 		assertTrue("Should not be concidered malformed.", OCSPRespGenerator.MALFORMED_REQUEST != response.getStatus());
 		// An OCSP request, ocspTestCert is already created in earlier tests
-		OCSPReqGenerator gen = new OCSPReqGenerator();
-		loadUserCert(caid);
-		gen.addRequest(new CertificateID(CertificateID.HASH_SHA1, cacert, ocspTestCert.getSerialNumber()));
-		OCSPReq req = gen.generate();
-		SingleResp[] singleResps = helper.sendOCSPGet(req.getEncoded(), null, OCSPRespGenerator.SUCCESSFUL, 200);
-		assertNotNull("SingleResps should not be null.", singleResps);
-		CertificateID certId = singleResps[0].getCertID();
-		assertEquals("Serno in response does not match serno in request.", certId.getSerialNumber(), ocspTestCert.getSerialNumber());
-		Object status = singleResps[0].getCertStatus();
-		assertEquals("Status is not null (null is 'good')", null, status);
+		loadUserCert(this.caid);
+		testOCSP( this.caid, this.cacert, this.ocspTestCert.getSerialNumber(), Status.Good );
 	}
 
 	/**
@@ -804,28 +750,10 @@ public class ProtocolOcspHttpTest extends CaTestCase {
 		int dsacaid = "CN=OCSPDSATEST".hashCode();
 		X509Certificate ecdsacacert = addDSACA("CN=OCSPDSATEST", "1024");
 		helper.reloadKeys();
-
 		// Make user and ocspTestCert that we know...
 		createUserCert(dsacaid);
 
-		// And an OCSP request
-		OCSPReqGenerator gen = new OCSPReqGenerator();
-		gen.addRequest(new CertificateID(CertificateID.HASH_SHA1, ecdsacacert, ocspTestCert.getSerialNumber()));
-		Hashtable exts = new Hashtable();
-		X509Extension ext = new X509Extension(false, new DEROctetString("123456789".getBytes()));
-		exts.put(OCSPObjectIdentifiers.id_pkix_ocsp_nonce, ext);
-		gen.setRequestExtensions(new X509Extensions(exts));
-		OCSPReq req = gen.generate();
-
-		// Send the request and receive a singleResponse
-		SingleResp[] singleResps = helper.sendOCSPPost(req.getEncoded(), "123456789", 0, 200);
-		assertEquals("No of SingResps should be 1.", 1, singleResps.length);
-		SingleResp singleResp = singleResps[0];
-
-		CertificateID certId = singleResp.getCertID();
-		assertEquals("Serno in response does not match serno in request.", certId.getSerialNumber(), ocspTestCert.getSerialNumber());
-		Object status = singleResp.getCertStatus();
-		assertEquals("Status is not null (good)", status, null);
+		testOCSP( dsacaid, ecdsacacert, this.ocspTestCert.getSerialNumber(), Status.Good);
 
 	} // test16OcspDsaGood
 
