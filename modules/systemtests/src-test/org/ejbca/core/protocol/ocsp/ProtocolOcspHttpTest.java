@@ -20,10 +20,10 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -57,13 +57,10 @@ import org.bouncycastle.asn1.x509.X509Extensions;
 import org.bouncycastle.jce.provider.JCEECPublicKey;
 import org.bouncycastle.ocsp.BasicOCSPResp;
 import org.bouncycastle.ocsp.CertificateID;
-import org.bouncycastle.ocsp.CertificateStatus;
 import org.bouncycastle.ocsp.OCSPReq;
 import org.bouncycastle.ocsp.OCSPReqGenerator;
 import org.bouncycastle.ocsp.OCSPResp;
 import org.bouncycastle.ocsp.OCSPRespGenerator;
-import org.bouncycastle.ocsp.RevokedStatus;
-import org.bouncycastle.ocsp.SingleResp;
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authentication.tokens.UsernamePrincipal;
 import org.cesecore.authorization.AuthorizationDeniedException;
@@ -109,7 +106,6 @@ import org.ejbca.core.model.ra.UserDataConstants;
 import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
 import org.ejbca.core.protocol.certificatestore.CertificateCacheTstFactory;
 import org.ejbca.core.protocol.certificatestore.ICertificateCache;
-import org.ejbca.core.protocol.ocsp.ProtocolOcspTestBase.Status;
 import org.ejbca.ui.web.LimitLengthASN1Reader;
 import org.ejbca.util.InterfaceCache;
 import org.junit.After;
@@ -228,6 +224,8 @@ public class ProtocolOcspHttpTest extends ProtocolOcspTestBase {
 				.getResponseCode() == 200);
 		cacert = (X509Certificate) getTestCACert();
 		caid = getTestCAId();
+
+		this.configurationSessionRemote.backupConfiguration();
 	}
 
 	@After
@@ -239,6 +237,7 @@ public class ProtocolOcspHttpTest extends ProtocolOcspTestBase {
 		assertTrue("This test can only be run on a full EJBCA installation.", ((HttpURLConnection) new URL(httpReqPath + '/').openConnection())
 				.getResponseCode() == 200);
 
+        assertTrue("Unable to clean up properly.", this.configurationSessionRemote.restoreConfiguration());
 	}
 
 	public String getRoleName() {
@@ -269,7 +268,7 @@ public class ProtocolOcspHttpTest extends ProtocolOcspTestBase {
 		// Get user and ocspTestCert that we know...
 		loadUserCert(this.caid);
 
-		testOCSP( this.caid, this.cacert, this.ocspTestCert.getSerialNumber(), Status.Good);
+		this.helper.testStatusGood( this.caid, this.cacert, this.ocspTestCert.getSerialNumber());
 		log.trace("<test02OcspGood()");
 	}
 
@@ -286,7 +285,7 @@ public class ProtocolOcspHttpTest extends ProtocolOcspTestBase {
 		loadUserCert(this.caid);
 		// Now revoke the certificate and try again
 		this.revocationSession.revokeCertificate(admin, this.ocspTestCert, null, RevokedCertInfo.REVOCATION_REASON_KEYCOMPROMISE, null);
-		testOCSP( this.caid, this.cacert, this.ocspTestCert.getSerialNumber(), RevokedCertInfo.REVOCATION_REASON_KEYCOMPROMISE);
+		this.helper.testStatusRevoked( this.caid, this.cacert, this.ocspTestCert.getSerialNumber(), RevokedCertInfo.REVOCATION_REASON_KEYCOMPROMISE);
 		log.trace("<test03OcspRevoked()");
 	}
 
@@ -409,7 +408,7 @@ public class ProtocolOcspHttpTest extends ProtocolOcspTestBase {
 			// Make user and ocspTestCert that we know...
 			createUserCert(ecdsacaid);
 
-			testOCSP( ecdsacaid, ecdsacacert, this.ocspTestCert.getSerialNumber(), Status.Good );
+			this.helper.testStatusGood( ecdsacaid, ecdsacacert, this.ocspTestCert.getSerialNumber() );
 		} finally {
 			userAdminSession.deleteUser(admin, "ocsptest");
 		}
@@ -433,7 +432,7 @@ public class ProtocolOcspHttpTest extends ProtocolOcspTestBase {
 			// Make user and ocspTestCert that we know...
 			createUserCert(ecdsacaid);
 
-			testOCSP( ecdsacaid, ecdsacacert, this.ocspTestCert.getSerialNumber(), Status.Good );
+			this.helper.testStatusGood( ecdsacaid, ecdsacacert, this.ocspTestCert.getSerialNumber() );
 		} finally {
 			userAdminSession.deleteUser(admin, "ocsptest");
 		}
@@ -471,7 +470,7 @@ public class ProtocolOcspHttpTest extends ProtocolOcspTestBase {
 		assertEquals("Response code did not match. ", 200, con.getResponseCode());
 		assertNotNull(con.getContentType());
 		assertTrue(con.getContentType().startsWith("application/ocsp-response"));
-		OCSPResp response = new OCSPResp(new ByteArrayInputStream(OcspJunitHelper.inputStreamToBytes(con.getInputStream())));
+		OCSPResp response = new OCSPResp(con.getInputStream());
 		assertNotNull("Response should not be null.", response);
 		assertTrue("Should not be concidered malformed.", OCSPRespGenerator.MALFORMED_REQUEST != response.getStatus());
 		final String dubbleSlashNonEncReq = "http://127.0.0.1:"
@@ -483,12 +482,12 @@ public class ProtocolOcspHttpTest extends ProtocolOcspTestBase {
 		assertEquals("Response code did not match. ", 200, con.getResponseCode());
 		assertNotNull(con.getContentType());
 		assertTrue(con.getContentType().startsWith("application/ocsp-response"));
-		response = new OCSPResp(new ByteArrayInputStream(OcspJunitHelper.inputStreamToBytes(con.getInputStream())));
+		response = new OCSPResp(con.getInputStream());
 		assertNotNull("Response should not be null.", response);
 		assertTrue("Should not be concidered malformed.", OCSPRespGenerator.MALFORMED_REQUEST != response.getStatus());
 		// An OCSP request, ocspTestCert is already created in earlier tests
 		loadUserCert(this.caid);
-		testOCSP( this.caid, this.cacert, this.ocspTestCert.getSerialNumber(), Status.Good );
+		this.helper.testStatusGood( this.caid, this.cacert, this.ocspTestCert.getSerialNumber() );
 	}
 
 	@Test
@@ -515,14 +514,11 @@ public class ProtocolOcspHttpTest extends ProtocolOcspTestBase {
 		int dsacaid = "CN=OCSPDSATEST".hashCode();
 		X509Certificate ecdsacacert = addDSACA("CN=OCSPDSATEST", "1024");
 		helper.reloadKeys();
-		try {
+
 		// Make user and ocspTestCert that we know...
 		createUserCert(dsacaid);
 
-		testOCSP( dsacaid, ecdsacacert, this.ocspTestCert.getSerialNumber(), Status.Good);
-		} finally {
-
-		}
+		this.helper.testStatusGood( dsacaid, ecdsacacert, this.ocspTestCert.getSerialNumber() );
 	} // test16OcspDsaGood
 
 	/**
@@ -562,7 +558,7 @@ public class ProtocolOcspHttpTest extends ProtocolOcspTestBase {
 		// "application/ocsp-response; charset=UTF-8"
 		assertNotNull("No Content-Type in reply.", con.getContentType());
 		assertTrue(con.getContentType().startsWith("application/ocsp-response"));
-		OCSPResp response = new OCSPResp(new ByteArrayInputStream(OcspJunitHelper.inputStreamToBytes(con.getInputStream())));
+		OCSPResp response = new OCSPResp(con.getInputStream());
 		assertTrue("Response status not the expected.", response.getStatus() != 200);
 
 		BasicOCSPResp brep = (BasicOCSPResp) response.getResponseObject();
@@ -758,6 +754,24 @@ public class ProtocolOcspHttpTest extends ProtocolOcspTestBase {
 	}
 
 	/**
+	 * Tests ocsp message
+	 *
+	 * @throws Exception
+	 *			 error
+	 *//* Not yet ready
+	@Test
+	public void test50OcspUnknownMayBeGood() throws Exception {
+		log.trace(">test50OcspUnknownMayBeGood()");
+		loadUserCert(this.caid);
+		// An OCSP request for an unknown certificate (not exist in db)
+		this.helper.testOCSP( this.caid, this.cacert, new BigInteger("1"), Status.Unknown);
+		this.configurationSessionRemote.updateProperty(OcspConfiguration.NONE_EXISTING_IS_GOOD, "true");
+		//OCSPServletBase.updateParams();
+		this.helper.testOCSP( this.caid, this.cacert, new BigInteger("1"), Status.Good);
+		log.trace("<test50OcspUnknownMayBeGood()");
+	}*/
+
+	/**
 	 * removes DSA CA
 	 *
 	 * @throws Exception
@@ -875,7 +889,7 @@ public class ProtocolOcspHttpTest extends ProtocolOcspTestBase {
 	 * Read the payload of a HTTP response as a byte array.
 	 */
 	private byte[] getHttpResponse(InputStream ins) throws IOException {
-		byte buf[] = OcspJunitHelper.inputStreamToBytes(ins);
+		byte buf[] = inputStreamToBytes(ins);
 		int i = 0;
 		// Removing the HTTP headers. The HTTP headers end at the last
 		// occurrence of "\r\n".
@@ -891,6 +905,23 @@ public class ProtocolOcspHttpTest extends ProtocolOcspTestBase {
 		log.debug("HTTP payload length: " + (buf.length - header.length));
 		return ArrayUtils.subarray(buf, header.length, buf.length);
 	}
+
+    /**
+     * For small streams only.
+     */
+    private static byte[] inputStreamToBytes(InputStream in) throws IOException {
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        while ( true ) {
+            final int b = in.read();
+            if ( b<0 ) {
+            	break;
+            }
+        	baos.write(b);
+        }
+        baos.flush();
+        in.close();
+        return  baos.toByteArray();
+    }
 
 	/**
 	 * @return a new byte array with the two arguments concatenated.
