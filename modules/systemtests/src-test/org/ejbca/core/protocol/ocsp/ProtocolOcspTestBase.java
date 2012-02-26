@@ -51,6 +51,7 @@ import org.cesecore.util.Base64;
 import org.cesecore.util.CertTools;
 import org.ejbca.core.ejb.ca.CaTestCase;
 import org.ejbca.core.model.SecConst;
+import org.junit.After;
 
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.WebConnection;
@@ -98,7 +99,12 @@ public abstract class ProtocolOcspTestBase extends CaTestCase {
 
 	}
 
-	public void test01Access() throws Exception {
+	@After
+	public void restoreConfig() throws Exception {
+		this.helper.restoreConfig();
+	}
+
+	protected void test01Access() throws Exception {
 		// Hit with GET does work since EJBCA 3.8.2
 		final WebClient webClient = new WebClient();
 		WebConnection con = webClient.getWebConnection();
