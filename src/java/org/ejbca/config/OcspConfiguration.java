@@ -49,6 +49,7 @@ public class OcspConfiguration {
 
 	public static final int RESPONDERIDTYPE_NAME=1;
 	public static final int RESPONDERIDTYPE_KEYHASH=2;
+    public static final String NONE_EXISTING_IS_GOOD = "ocsp.nonexistingisgood";
 	
 	/**
 	 * Algorithm used by server to generate signature on OCSP responses
@@ -142,7 +143,7 @@ public class OcspConfiguration {
 	 * If true a certificate that does not exist in the database, but is issued by a CA the responder handles will be treated as not revoked.
 	 */
 	public static boolean getNonExistingIsGood() {
-		String value = ConfigurationHolder.getString("ocsp.nonexistingisgood", "false");
+		String value = ConfigurationHolder.getString(NONE_EXISTING_IS_GOOD, "false");
 		return "true".equalsIgnoreCase(value) || "yes".equalsIgnoreCase(value);
 	}
 

@@ -17,11 +17,15 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.cert.X509Certificate;
 import java.util.Hashtable;
+import java.util.Map;
 
 import junit.framework.TestCase;
 
@@ -52,13 +56,13 @@ public class OcspJunitHelper extends TestCase {
 
 	private static Logger log = Logger.getLogger(OcspJunitHelper.class);
 
-	final private String httpReqPath;
-	final private String resourceOcsp;
+	final private String sBaseURL;
+	final private URI baseURI;
 	private String urlEnding = "";
 
-	public OcspJunitHelper(String httpReqPath, String resourceOcsp) {
-		this.httpReqPath = httpReqPath;
-		this.resourceOcsp = resourceOcsp;
+	public OcspJunitHelper(String httpReqPath, String resourceOcsp) throws MalformedURLException, URISyntaxException {
+		this.sBaseURL = httpReqPath + '/' + resourceOcsp;
+		this.baseURI = new URL(this.sBaseURL).toURI();
 	}
 
 	public void setURLEnding(String ending) {
@@ -77,7 +81,7 @@ public class OcspJunitHelper extends TestCase {
 	 */
 	protected SingleResp[] sendOCSPPost(byte[] ocspPackage, String nonce, int respCode, int httpCode) throws IOException, OCSPException, NoSuchProviderException {
 		// POST the OCSP request
-		URL url = new URL(this.httpReqPath + '/' + this.resourceOcsp + this.urlEnding);
+		URL url = new URL(this.sBaseURL + this.urlEnding);
 		HttpURLConnection con = (HttpURLConnection)url.openConnection();
 		// we are going to do a POST
 		con.setDoOutput(true);
@@ -133,7 +137,7 @@ public class OcspJunitHelper extends TestCase {
 		// GET the OCSP request
 		String b64 = new String(Base64.encode(ocspPackage, false));
 		//String urls = URLEncoder.encode(b64, "UTF-8");	// JBoss/Tomcat will not accept escaped '/'-characters by default
-		URL url = new URL(this.httpReqPath + '/' + this.resourceOcsp + '/' + b64 + this.urlEnding);
+		URL url = new URL(this.sBaseURL + '/' + b64 + this.urlEnding);
 		HttpURLConnection con = (HttpURLConnection)url.openConnection();
 		if (con.getResponseCode() != httpCode) {
 			log.info("URL when request gave unexpected result: " + url.toString() + " Message was: " + con.getResponseMessage());
@@ -252,10 +256,32 @@ public class OcspJunitHelper extends TestCase {
 		}
 	}
 
-	protected void reloadKeys() throws IOException {
-		URL url = new URL(this.httpReqPath + '/' + this.resourceOcsp+"?reloadkeys=true");
-		HttpURLConnection con = (HttpURLConnection)url.openConnection();
-		assertEquals("Response code", 200, con.getResponseCode());
+	public void reloadKeys() throws IOException, URISyntaxException {
+		servletGetWithParam("reloadkeys=true");
+	}
+
+	public void alterConfig(final Map<String, String> config) throws IOException, URISyntaxException {
+		if ( config==null || config.size()<1 ) {
+			return;
+		}
+		final StringBuffer sb = new StringBuffer("newConfig=");
+		for( Map.Entry<String, String> entry : config.entrySet() ) {
+			sb.append(entry.getKey());
+			sb.append('=');
+			sb.append(entry.getValue());
+			sb.append("||");
+		}
+		sb.delete(sb.length()-2,sb.length());// remove last "<>
+		servletGetWithParam(sb.toString());
+	}
+
+	private void servletGetWithParam(String param) throws IOException, URISyntaxException {
+		final URI uriWithParam = new URI(
+				this.baseURI.getScheme(), this.baseURI.getUserInfo(), this.baseURI.getHost(),
+				this.baseURI.getPort(), this.baseURI.getPath(), param, this.baseURI.getFragment());
+		final URL url = uriWithParam.toURL();
+		final HttpURLConnection con = (HttpURLConnection)url.openConnection();
+		assertEquals("Response code", HttpURLConnection.HTTP_OK, con.getResponseCode());
 		con.disconnect();
 	}
 }

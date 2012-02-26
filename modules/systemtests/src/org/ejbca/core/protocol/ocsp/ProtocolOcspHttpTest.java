@@ -21,7 +21,9 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
+import java.net.MalformedURLException;
 import java.net.Socket;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.KeyPair;
 import java.security.KeyStore;
@@ -35,7 +37,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Map;
 
 import javax.ejb.ObjectNotFoundException;
 
@@ -59,6 +63,7 @@ import org.bouncycastle.ocsp.OCSPRespGenerator;
 import org.bouncycastle.ocsp.SingleResp;
 import org.bouncycastle.ocsp.UnknownStatus;
 import org.cesecore.core.ejb.authorization.AdminGroupSessionRemote;
+import org.ejbca.config.OcspConfiguration;
 import org.ejbca.config.WebConfiguration;
 import org.ejbca.core.ejb.ca.CaTestCase;
 import org.ejbca.core.ejb.ca.caadmin.CAAdminSessionRemote;
@@ -113,10 +118,12 @@ public class ProtocolOcspHttpTest extends CaTestCase {
 
 	private static final Logger log = Logger.getLogger(ProtocolOcspHttpTest.class);
 
-	protected final String httpReqPath;
-	protected final String resourceOcsp;
+	final protected String httpPort;
+	final protected String httpReqPath;
+	final protected String resourceOcsp;
+	final protected OcspJunitHelper helper;
 
-	protected static byte[] unknowncacertBytes = Base64.decode(("MIICLDCCAZWgAwIBAgIIbzEhUVZYO3gwDQYJKoZIhvcNAQEFBQAwLzEPMA0GA1UE"
+	protected static final byte[] unknowncacertBytes = Base64.decode(("MIICLDCCAZWgAwIBAgIIbzEhUVZYO3gwDQYJKoZIhvcNAQEFBQAwLzEPMA0GA1UE"
 			+ "AxMGVGVzdENBMQ8wDQYDVQQKEwZBbmFUb20xCzAJBgNVBAYTAlNFMB4XDTAyMDcw" + "OTEyNDc1OFoXDTA0MDgxNTEyNTc1OFowLzEPMA0GA1UEAxMGVGVzdENBMQ8wDQYD"
 			+ "VQQKEwZBbmFUb20xCzAJBgNVBAYTAlNFMIGdMA0GCSqGSIb3DQEBAQUAA4GLADCB" + "hwKBgQDZlACHRwJnQKlgpMqlZQmxvCrJPpPFyhxvjDHlryhp/AQ6GCm+IkGUVlwL"
 			+ "sCnjgZH5BXDNaVXpkmME8334HFsxVlXqmZ2GqyP6kptMjbWZ2SRLBRKjAcI7EJIN" + "FPDIep9ZHXw1JDjFGoJ4TLFd99w9rQ3cB6zixORoyCZMw+iebwIBEaNTMFEwDwYD"
@@ -130,9 +137,7 @@ public class ProtocolOcspHttpTest extends CaTestCase {
 	protected static X509Certificate ocspTestCert = null;
 	private static X509Certificate unknowncacert = null;
 
-	protected OcspJunitHelper helper = null;
-
-	private static byte[] ks3 = Base64.decode(("MIACAQMwgAYJKoZIhvcNAQcBoIAkgASCAyYwgDCABgkqhkiG9w0BBwGggCSABIID"
+	private static final byte[] ks3 = Base64.decode(("MIACAQMwgAYJKoZIhvcNAQcBoIAkgASCAyYwgDCABgkqhkiG9w0BBwGggCSABIID"
 			+ "DjCCAwowggMGBgsqhkiG9w0BDAoBAqCCAqkwggKlMCcGCiqGSIb3DQEMAQMwGQQU" + "/h0pQXq7ZVjYWlDvzEwwmiJ8O8oCAWQEggJ4MZ12+kTVGd1w7SP4ZWlq0bCc4MsJ"
 			+ "O0FFSX3xeVp8Bx16io1WkEFOW3xfqjuxKOL6YN9atoOZdfhlOMhmbhglm2PJSzIg" + "JSDHvWk2xKels5vh4hY1iXWOh48077Us4wP4Qt94iKglCq4xwxYcSCW8BJwbu93F"
 			+ "uxE1twnWXbH192nMhaeIAy0v4COdduQamJEtHRmIJ4GZwIhH+lNHj/ARdIfNw0Dm" + "uPspuSu7rh6rQ8SrRsjg63EoxfSH4Lz6zIJKF0OjNX07T8TetFgznCdGCrqOZ1fK"
@@ -166,7 +171,7 @@ public class ProtocolOcspHttpTest extends CaTestCase {
 			+ "BAEABAEABAEABAEABAEABAEABAEABAEABAEAAAAAAAAAMDwwITAJBgUrDgMCGgUA" + "BBSS2GOUxqv3IT+aesPrMPNn9RQ//gQUYhjCLPh/h2ULjh+1L2s3f5JIZf0CAWQA" + "AA==")
 			.getBytes());
 
-	private static byte[] ksexpired = Base64.decode(("MIACAQMwgAYJKoZIhvcNAQcBoIAkgASCA+gwgDCABgkqhkiG9w0BBwGggCSABIID"
+	private static final byte[] ksexpired = Base64.decode(("MIACAQMwgAYJKoZIhvcNAQcBoIAkgASCA+gwgDCABgkqhkiG9w0BBwGggCSABIID"
 			+ "FzCCAxMwggMPBgsqhkiG9w0BDAoBAqCCArIwggKuMCgGCiqGSIb3DQEMAQMwGgQU" + "+FPoYyKdBmCiikns2YwMZh4pPSkCAgQABIICgC5leUCbJ8w3O8KEUMRvHOA+Xhzm"
 			+ "R5y7aHJHL1z3ZnoskDL4YW/r1TQ5AFliaH7e7kuA7NYOjv9HdFsZ9BekLkWPybit" + "rcryLkPbRF+YdAXNkbGluukY0F8O4FP9n7FtfBd5uKitvOHZgHp3JAC9A+jYfayk"
 			+ "ULfZRRGmzUys+D4czobY1tkCbQIb3kzR1kaqBownMkie+y5P56dRB2lJXpkpeilM" + "H0PZvckG5jQw7ua4sVUkIzyDAZpiCtNmOF5nvyRwQRLWAHwn7Yid5e8w2A6xTq6P"
@@ -198,8 +203,6 @@ public class ProtocolOcspHttpTest extends CaTestCase {
 			+ "KuCHXrnUlw5RLeublCbUAAAAAAAAAAAAAAAAAAAAAAAAMD0wITAJBgUrDgMCGgUA" + "BBRo3arw4fuHPsqvDnvA8Q/TLyjoRQQU3Xm6ZsAJT0/iLV7S3mKeme0FVGACAgQA" + "AAA=")
 			.getBytes());
 
-	private final String httpPort;
-
 	private AdminGroupSessionRemote adminGroupSession = null;
 	private CAAdminSessionRemote caAdminSession = null;
 	private CaSessionRemote caSession = null;
@@ -212,15 +215,13 @@ public class ProtocolOcspHttpTest extends CaTestCase {
 		return new TestSuite(ProtocolOcspHttpTest.class);
 	}
 
-	public ProtocolOcspHttpTest(String name) throws CertificateException {
+	public ProtocolOcspHttpTest(String name) throws CertificateException, MalformedURLException, URISyntaxException {
 		super(name);
 		// Setup remote interface access if we run EJBCA in CA-mode
 		caAdminSession = InterfaceCache.getCAAdminSession();
 		caSession = InterfaceCache.getCaSession();
 		configurationSessionRemote = InterfaceCache.getConfigurationSession();
 		certificateStoreSession = InterfaceCache.getCertificateStoreSession();
-
-		this.configurationSessionRemote.backupConfiguration();
 		signSession = InterfaceCache.getSignSession();
 		userAdminSession = InterfaceCache.getUserAdminSession();
 		adminGroupSession = InterfaceCache.getAdminGroupSession();
@@ -232,11 +233,9 @@ public class ProtocolOcspHttpTest extends CaTestCase {
 		// Install BouncyCastle provider
 		CryptoProviderTools.installBCProvider();
 		unknowncacert = (X509Certificate) CertTools.getCertfromByteArray(unknowncacertBytes);
-
-        assertTrue("Unable to clean up properly.", this.configurationSessionRemote.restoreConfiguration());
 	}
 
-	public ProtocolOcspHttpTest(String name, String httpPort, String resourceOcsp) throws CertificateException {
+	public ProtocolOcspHttpTest(String name, String httpPort, String resourceOcsp) throws CertificateException, MalformedURLException, URISyntaxException {
 		super(name, false);
 		this.httpPort = httpPort;
 		httpReqPath = "http://127.0.0.1:" + httpPort + "/ejbca";
@@ -930,18 +929,18 @@ public class ProtocolOcspHttpTest extends CaTestCase {
 	 *
 	 * @throws Exception
 	 *			 error
-	 *//* Not yet ready
-	@Test
+	 */
 	public void test50OcspUnknownMayBeGood() throws Exception {
 		log.trace(">test50OcspUnknownMayBeGood()");
 		loadUserCert(this.caid);
 		// An OCSP request for an unknown certificate (not exist in db)
-		this.helper.testOCSP( this.caid, this.cacert, new BigInteger("1"), Status.Unknown);
-		this.configurationSessionRemote.updateProperty(OcspConfiguration.NONE_EXISTING_IS_GOOD, "true");
-		//OCSPServletBase.updateParams();
-		this.helper.testOCSP( this.caid, this.cacert, new BigInteger("1"), Status.Good);
+		this.helper.testStatusUnknown( this.caid, this.cacert, new BigInteger("1") );
+		final Map<String,String> map = new HashMap<String, String>();
+		map.put(OcspConfiguration.NONE_EXISTING_IS_GOOD, "true");
+		this.helper.alterConfig(map);
+		this.helper.testStatusGood( this.caid, this.cacert, new BigInteger("1") );
 		log.trace("<test50OcspUnknownMayBeGood()");
-	}*/
+	}
 
 	/**
 	 * removes DSA CA
