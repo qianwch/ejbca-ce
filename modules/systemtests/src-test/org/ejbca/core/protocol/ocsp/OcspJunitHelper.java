@@ -69,6 +69,9 @@ public class OcspJunitHelper {
 	}
 
 	public void setURLEnding(String ending) {
+		if ( ending==null || ending.length()<1 ) {
+			this.urlEnding = "";
+		}
 		this.urlEnding = "/" + ending;
 	}
 	/**
@@ -190,8 +193,8 @@ public class OcspJunitHelper {
 	 * @throws IOException
 	 * @throws OCSPException
 	 */
-	public void testStatusUnknown(int caid, X509Certificate cacert, BigInteger certSerial) throws NoSuchProviderException, IOException, OCSPException {
-		testStatus(caid, cacert, certSerial, Status.Unknown, Integer.MIN_VALUE);
+	public void verifyStatusUnknown(int caid, X509Certificate cacert, BigInteger certSerial) throws NoSuchProviderException, IOException, OCSPException {
+		verifyStatus(caid, cacert, certSerial, Status.Unknown, Integer.MIN_VALUE);
 	}
 	/**
 	 * Verify that the status is "Good"
@@ -202,8 +205,8 @@ public class OcspJunitHelper {
 	 * @throws IOException
 	 * @throws OCSPException
 	 */
-	public void testStatusGood(int caid, X509Certificate cacert, BigInteger certSerial) throws NoSuchProviderException, IOException, OCSPException {
-		testStatus(caid, cacert, certSerial, Status.Good, Integer.MIN_VALUE);
+	public void verifyStatusGood(int caid, X509Certificate cacert, BigInteger certSerial) throws NoSuchProviderException, IOException, OCSPException {
+		verifyStatus(caid, cacert, certSerial, Status.Good, Integer.MIN_VALUE);
 	}
 
 	/**
@@ -216,11 +219,11 @@ public class OcspJunitHelper {
 	 * @throws IOException
 	 * @throws OCSPException
 	 */
-	public void testStatusRevoked(int caid, X509Certificate cacert, BigInteger certSerial, int expectedReason) throws NoSuchProviderException, IOException, OCSPException {
-		testStatus(caid, cacert, certSerial, Status.Revoked, expectedReason);
+	public void verifyStatusRevoked(int caid, X509Certificate cacert, BigInteger certSerial, int expectedReason) throws NoSuchProviderException, IOException, OCSPException {
+		verifyStatus(caid, cacert, certSerial, Status.Revoked, expectedReason);
 	}
 
-	private void testStatus(int caid, X509Certificate cacert, BigInteger certSerial, Status expectedStatus, 
+	private void verifyStatus(int caid, X509Certificate cacert, BigInteger certSerial, Status expectedStatus, 
 			int expectedReason) throws NoSuchProviderException, IOException, OCSPException {
 		// And an OCSP request
 		final OCSPReqGenerator gen = new OCSPReqGenerator();
