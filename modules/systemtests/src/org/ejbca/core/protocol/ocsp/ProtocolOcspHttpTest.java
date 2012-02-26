@@ -256,6 +256,7 @@ public class ProtocolOcspHttpTest extends CaTestCase {
 
 	public void tearDown() throws Exception {
 		cacert = null;
+		this.helper.restoreConfig();
 	}
 
 	public void test01Access() throws Exception {

@@ -399,11 +399,12 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 			final boolean doReload = StringUtils.equals(request.getParameter("reloadkeys"), "true");
 			final String newConfig = request.getParameter("newConfig");
 			final boolean doNewConfig = newConfig!=null && newConfig.length()>0;
+			final boolean doRestoreConfig = request.getParameter("restoreConfig")!=null;
 			final String remote;
-			if ( doReload || doNewConfig ) {
+			if ( doReload || doNewConfig || doRestoreConfig ) {
 				remote = request.getRemoteAddr();
 				if ( !StringUtils.equals(remote, "127.0.0.1") ) {
-					m_log.info("Got reloadKeys or updateConfig command from unauthorized ip: "+remote);
+					m_log.info("Got reloadkeys or updateConfig of restoreConfig command from unauthorized ip: "+remote);
 					response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
 					return;
 				}
@@ -437,6 +438,12 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 				}
 				reloadConfig();
 				m_log.info( "Call from "+remote+" to update configuration" );
+				return;
+			}
+			if ( doRestoreConfig ) {
+				ConfigurationHolder.restoreConfiguration();
+				reloadConfig();
+				m_log.info( "Call from "+remote+" to restore configuration." );
 				return;
 			}
 			serviceOCSP(request, response);

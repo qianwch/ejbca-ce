@@ -260,6 +260,10 @@ public class OcspJunitHelper extends TestCase {
 		servletGetWithParam("reloadkeys=true");
 	}
 
+	public void restoreConfig() throws IOException, URISyntaxException {
+		servletGetWithParam("restoreConfig=");
+	}
+
 	public void alterConfig(final Map<String, String> config) throws IOException, URISyntaxException {
 		if ( config==null || config.size()<1 ) {
 			return;
@@ -271,7 +275,7 @@ public class OcspJunitHelper extends TestCase {
 			sb.append(entry.getValue());
 			sb.append("||");
 		}
-		sb.delete(sb.length()-2,sb.length());// remove last "<>
+		sb.delete(sb.length()-2,sb.length());// remove last "||"
 		servletGetWithParam(sb.toString());
 	}
 
