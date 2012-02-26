@@ -22,6 +22,9 @@ import static org.junit.Assert.fail;
 
 import java.lang.reflect.Field;
 import java.math.BigInteger;
+import java.rmi.RemoteException;
+import java.rmi.ServerException;
+import java.security.InvalidKeyException;
 import java.security.Principal;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
@@ -38,6 +41,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
+import javax.ejb.EJBException;
 import javax.security.auth.x500.X500Principal;
 
 import org.apache.log4j.Logger;
@@ -48,6 +52,7 @@ import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authentication.tokens.UsernamePrincipal;
 import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.certificates.ca.CA;
+import org.cesecore.certificates.ca.CAConstants;
 import org.cesecore.certificates.ca.CADoesntExistsException;
 import org.cesecore.certificates.ca.CAExistsException;
 import org.cesecore.certificates.ca.CAInfo;
@@ -326,7 +331,7 @@ public class CAsTest extends CaTestCase {
             ArrayList<ExtendedCAServiceInfo> extendedcaservices = new ArrayList<ExtendedCAServiceInfo>();
             extendedcaservices.add(new OCSPCAServiceInfo(ExtendedCAServiceInfo.STATUS_ACTIVE));
             extendedcaservices.add(new XKMSCAServiceInfo(ExtendedCAServiceInfo.STATUS_INACTIVE, "CN=XKMSSignerCertificate, " + "CN=TESTECDSA", "",
-                    "prime192v1", AlgorithmConstants.KEYALGORITHM_ECDSA));
+                    "secp256r1", AlgorithmConstants.KEYALGORITHM_ECDSA));
             extendedcaservices.add(new HardTokenEncryptCAServiceInfo(ExtendedCAServiceInfo.STATUS_ACTIVE));
             extendedcaservices.add(new KeyRecoveryCAServiceInfo(ExtendedCAServiceInfo.STATUS_ACTIVE));
 
@@ -336,7 +341,7 @@ public class CAsTest extends CaTestCase {
             Properties prop = catokeninfo.getProperties();
             // Set some CA token properties if they are not set already
             if (prop.getProperty(CryptoToken.KEYSPEC_PROPERTY) == null) {
-                prop.setProperty(CryptoToken.KEYSPEC_PROPERTY, String.valueOf("prime192v1"));
+                prop.setProperty(CryptoToken.KEYSPEC_PROPERTY, String.valueOf("secp256r1"));
             }
             if (prop.getProperty(CATokenConstants.CAKEYPURPOSE_CERTSIGN_STRING) == null) {
                 prop.setProperty(CATokenConstants.CAKEYPURPOSE_CERTSIGN_STRING, CAToken.SOFTPRIVATESIGNKEYALIAS);
@@ -394,14 +399,16 @@ public class CAsTest extends CaTestCase {
             assertEquals(AlgorithmConstants.SIGALG_SHA256_WITH_ECDSA, sigAlg);
             assertTrue("Error in created ca certificate", cert.getSubjectDN().toString().equals("CN=TESTECDSA"));
             assertTrue("Creating CA failed", info.getSubjectDN().equals("CN=TESTECDSA"));
-            PublicKey pk = cert.getPublicKey();
+            // Make BC cert instead to make sure the public key is BC provider type (to make our test below easier)
+            X509Certificate bccert = (X509Certificate)CertTools.getCertfromByteArray(cert.getEncoded());
+            PublicKey pk = bccert.getPublicKey();
             if (pk instanceof JCEECPublicKey) {
                 JCEECPublicKey ecpk = (JCEECPublicKey) pk;
                 assertEquals(ecpk.getAlgorithm(), "EC");
                 org.bouncycastle.jce.spec.ECParameterSpec spec = ecpk.getParameters();
                 assertNotNull("ImplicitlyCA must have null spec", spec);
             } else {
-                assertTrue("Public key is not EC", false);
+                assertTrue("Public key is not EC: "+pk.getClass().getName(), false);
             }
 
             ret = true;
@@ -459,7 +466,7 @@ public class CAsTest extends CaTestCase {
             extendedcaservices.add(new OCSPCAServiceInfo(ExtendedCAServiceInfo.STATUS_ACTIVE));
 
             extendedcaservices.add(new XKMSCAServiceInfo(ExtendedCAServiceInfo.STATUS_INACTIVE, "CN=XKMSCertificate, " + "CN=TESTECDSAImplicitlyCA",
-                    "", "prime192v1", AlgorithmConstants.KEYALGORITHM_ECDSA));
+                    "", "secp256r1", AlgorithmConstants.KEYALGORITHM_ECDSA));
             extendedcaservices.add(new HardTokenEncryptCAServiceInfo(ExtendedCAServiceInfo.STATUS_ACTIVE));
             extendedcaservices.add(new KeyRecoveryCAServiceInfo(ExtendedCAServiceInfo.STATUS_ACTIVE));
 
@@ -2074,6 +2081,198 @@ public class CAsTest extends CaTestCase {
         log.trace("<test21UnprivilegedCaProcessRequest()");
     }
 
+    /** Test that we can not create CAs with too short key lengths.
+     * CA creation dwith too short keys should result in an InvalidKeyException (wrapped in EJBException of course).
+    */
+   @Test
+   public void test22IllegalKeyLengths() throws Exception {
+
+       int caid = 0;
+
+       CATokenInfo catokeninfo = new CATokenInfo();
+       catokeninfo.setSignatureAlgorithm(AlgorithmConstants.SIGALG_SHA1_WITH_RSA);
+       catokeninfo.setEncryptionAlgorithm(AlgorithmConstants.SIGALG_SHA1_WITH_RSA);
+       catokeninfo.setKeySequence(CAToken.DEFAULT_KEYSEQUENCE);
+       catokeninfo.setKeySequenceFormat(StringTools.KEY_SEQUENCE_FORMAT_NUMERIC);
+       catokeninfo.setClassPath(SoftCryptoToken.class.getName());
+
+       Properties prop = catokeninfo.getProperties();
+       // Set some CA token properties if they are not set already
+       if (prop.getProperty(CryptoToken.KEYSPEC_PROPERTY) == null) {
+           prop.setProperty(CryptoToken.KEYSPEC_PROPERTY, String.valueOf("512"));
+       }
+       if (prop.getProperty(CATokenConstants.CAKEYPURPOSE_CERTSIGN_STRING) == null) {
+           prop.setProperty(CATokenConstants.CAKEYPURPOSE_CERTSIGN_STRING, CAToken.SOFTPRIVATESIGNKEYALIAS);
+       }
+       if (prop.getProperty(CATokenConstants.CAKEYPURPOSE_CRLSIGN_STRING) == null) {
+           prop.setProperty(CATokenConstants.CAKEYPURPOSE_CRLSIGN_STRING, CAToken.SOFTPRIVATESIGNKEYALIAS);
+       }
+       if (prop.getProperty(CATokenConstants.CAKEYPURPOSE_DEFAULT_STRING) == null) {
+           prop.setProperty(CATokenConstants.CAKEYPURPOSE_DEFAULT_STRING, CAToken.SOFTPRIVATEDECKEYALIAS);
+       }
+       catokeninfo.setProperties(prop);
+
+       try {
+           final String caName = "IllegalKeyLengthRSACA";
+           
+           prop = catokeninfo.getProperties();
+           prop.setProperty(CryptoToken.KEYSPEC_PROPERTY, String.valueOf("512"));
+           catokeninfo.setProperties(prop);
+
+           X509CAInfo cainfo = createCAInfo(catokeninfo, caName);
+
+           caid = cainfo.getCAId();
+           caAdminSession.createCA(caAdmin, cainfo);
+           fail("It should not be possoble to create a CA with 512 bit RSA keys.");
+       } catch (EJBException e) { 
+           Throwable cause = e.getCausedByException();
+           if (cause instanceof InvalidKeyException) {
+               // This is what we want in JBoss
+           } else if (cause instanceof ServerException) {
+               // Glassfish 2 throws EJBException(java.rmi.ServerException(java.rmi.RemoteException(javax.persistence.EntityExistsException)))), can
+               // you believe this?
+               Throwable t = cause.getCause();
+               if (t != null && t instanceof RemoteException) {
+                   t = t.getCause();
+                   log.debug("Exception cause thrown: " + t.getClass().getName() + " message: " + t.getMessage());
+                   if (t != null && t instanceof InvalidKeyException) {
+                       // This is what we want on glassfish
+                   } else {
+                       log.info("Error should be InvalidKeyException: ", t);
+                       fail("Error should be InvalidKeyException: "+t.toString());                       
+                   }
+               }
+           } else {
+               log.info("Error should be InvalidKeyException: ", cause);
+               fail("Error should be InvalidKeyException: "+cause.toString());
+           }
+       } finally {
+           caSession.removeCA(caAdmin, caid);
+       }
+       
+       try {
+           final String caName = "IllegalKeyLengthDSACA";
+           
+           catokeninfo.setSignatureAlgorithm(AlgorithmConstants.SIGALG_SHA1_WITH_DSA);
+           prop = catokeninfo.getProperties();
+           prop.setProperty(CryptoToken.KEYSPEC_PROPERTY, String.valueOf("DSA512"));
+           catokeninfo.setProperties(prop);
+
+           X509CAInfo cainfo = createCAInfo(catokeninfo, caName);
+
+           caid = cainfo.getCAId();
+           caAdminSession.createCA(caAdmin, cainfo);
+           fail("It should not be possoble to create a CA with 512 bit DSA keys.");
+       } catch (EJBException e) { 
+           Throwable cause = e.getCausedByException();
+           if (cause instanceof InvalidKeyException) {
+               // This is what we want in JBoss
+           } else if (cause instanceof ServerException) {
+               // Glassfish 2 throws EJBException(java.rmi.ServerException(java.rmi.RemoteException(javax.persistence.EntityExistsException)))), can
+               // you believe this?
+               Throwable t = cause.getCause();
+               if (t != null && t instanceof RemoteException) {
+                   t = t.getCause();
+                   log.debug("Exception cause thrown: " + t.getClass().getName() + " message: " + t.getMessage());
+                   if (t != null && t instanceof InvalidKeyException) {
+                       // This is what we want on glassfish
+                   } else {
+                       log.info("Error should be InvalidKeyException: ", t);
+                       fail("Error should be InvalidKeyException: "+t.toString());                       
+                   }
+               }
+           } else {
+               log.info("Error should be InvalidKeyException: ", cause);
+               fail("Error should be InvalidKeyException: "+cause.toString());
+           }
+       } finally {
+           caSession.removeCA(caAdmin, caid);
+       }
+
+       try {
+           final String caName = "IllegalKeyLengthECDSACA";
+           
+           catokeninfo.setSignatureAlgorithm(AlgorithmConstants.SIGALG_SHA1_WITH_ECDSA);
+           prop = catokeninfo.getProperties();
+           prop.setProperty(CryptoToken.KEYSPEC_PROPERTY, String.valueOf("prime192v1"));
+           catokeninfo.setProperties(prop);
+
+           X509CAInfo cainfo = createCAInfo(catokeninfo, caName);
+
+           caid = cainfo.getCAId();
+           caAdminSession.createCA(caAdmin, cainfo);
+           fail("It should not be possoble to create a CA with 192 bit ECC keys.");
+       } catch (EJBException e) { 
+           Throwable cause = e.getCausedByException();
+           if (cause instanceof InvalidKeyException) {
+               // This is what we want in JBoss
+           } else if (cause instanceof ServerException) {
+               // Glassfish 2 throws EJBException(java.rmi.ServerException(java.rmi.RemoteException(javax.persistence.EntityExistsException)))), can
+               // you believe this?
+               Throwable t = cause.getCause();
+               if (t != null && t instanceof RemoteException) {
+                   t = t.getCause();
+                   log.debug("Exception cause thrown: " + t.getClass().getName() + " message: " + t.getMessage());
+                   if (t != null && t instanceof InvalidKeyException) {
+                       // This is what we want on glassfish
+                   } else {
+                       log.info("Error should be InvalidKeyException: ", t);
+                       fail("Error should be InvalidKeyException: "+t.toString());                       
+                   }
+               }
+           } else {
+               log.info("Error should be InvalidKeyException: ", cause);
+               fail("Error should be InvalidKeyException: "+cause.toString());
+           }
+       } finally {
+           caSession.removeCA(caAdmin, caid);
+       }
+
+    }
+
+    private X509CAInfo createCAInfo(CATokenInfo catokeninfo, final String caName) {
+        // Create and active OSCP CA Service.
+           ArrayList<ExtendedCAServiceInfo> extendedcaservices = new ArrayList<ExtendedCAServiceInfo>();
+           extendedcaservices.add(new OCSPCAServiceInfo(ExtendedCAServiceInfo.STATUS_ACTIVE));
+           extendedcaservices.add(new XKMSCAServiceInfo(ExtendedCAServiceInfo.STATUS_INACTIVE, "CN=XKMSCertificate, " + "CN=TEST", "", "1024",
+                   AlgorithmConstants.KEYALGORITHM_RSA));
+           extendedcaservices.add(new HardTokenEncryptCAServiceInfo(ExtendedCAServiceInfo.STATUS_ACTIVE));
+           extendedcaservices.add(new KeyRecoveryCAServiceInfo(ExtendedCAServiceInfo.STATUS_ACTIVE));
+
+           X509CAInfo cainfo = new X509CAInfo("CN="+caName, caName, CAConstants.CA_ACTIVE, new Date(), "", CertificateProfileConstants.CERTPROFILE_FIXED_ROOTCA, 3650, null, // Expiretime
+                   CAInfo.CATYPE_X509, CAInfo.SELFSIGNED, (Collection<Certificate>) null, catokeninfo, "JUnit RSA CA", -1, null, null, // PolicyId
+                   24, // CRLPeriod
+                   0, // CRLIssueInterval
+                   10, // CRLOverlapTime
+                   10, // Delta CRL period
+                   new ArrayList<Integer>(), true, // Authority Key Identifier
+                   false, // Authority Key Identifier Critical
+                   true, // CRL Number
+                   false, // CRL Number Critical
+                   null, // defaultcrldistpoint
+                   null, // defaultcrlissuer
+                   null, // defaultocsplocator
+                   null, // Authority Information Access
+                   null, // defaultfreshestcrl
+                   true, // Finish User
+                   extendedcaservices, false, // use default utf8 settings
+                   new ArrayList<Integer>(), // Approvals Settings
+                   1, // Number of Req approvals
+                   false, // Use UTF8 subject DN by default
+                   true, // Use LDAP DN order by default
+                   false, // Use CRL Distribution Point on CRL
+                   false, // CRL Distribution Point on CRL critical
+                   true, true, // isDoEnforceUniquePublicKeys
+                   true, // isDoEnforceUniqueDistinguishedName
+                   false, // isDoEnforceUniqueSubjectDNSerialnumber
+                   true, // useCertReqHistory
+                   true, // useUserStorage
+                   true, // useCertificateStorage
+                   null // cmpRaAuthSecret
+                   );
+        return cainfo;
+    }
+    
     /**
      * Preemtively remove CA in case it was created by a previous run:
      * 
