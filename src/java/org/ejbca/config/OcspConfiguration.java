@@ -50,6 +50,8 @@ public class OcspConfiguration {
 	public static final int RESPONDERIDTYPE_NAME=1;
 	public static final int RESPONDERIDTYPE_KEYHASH=2;
     public static final String NONE_EXISTING_IS_GOOD = "ocsp.nonexistingisgood";
+    public static final String NONE_EXISTING_IS_GOOD_URI = NONE_EXISTING_IS_GOOD+".uri.";
+    public static final String NONE_EXISTING_IS_BAD_URI = "ocsp.nonexistingisbad.uri.";
 	
 	/**
 	 * Algorithm used by server to generate signature on OCSP responses
@@ -146,6 +148,47 @@ public class OcspConfiguration {
 		String value = ConfigurationHolder.getString(NONE_EXISTING_IS_GOOD, "false");
 		return "true".equalsIgnoreCase(value) || "yes".equalsIgnoreCase(value);
 	}
+
+    private static String getRegex(String prefix) {
+    	int i=1;
+    	final StringBuffer regex = new StringBuffer();
+    	while( true ) {
+    		final String key = prefix+i;
+    		final String value = ConfigurationHolder.getString(key, null);
+    		if ( value==null ) {
+    			break;
+    		}
+    		if ( i>1 ) {
+    			regex.append('|');
+    		}
+    		regex.append('(');
+    		regex.append(value);
+    		regex.append(')');
+    		i++;
+    	}
+    	if ( regex.length()<1 ) {
+    		return null;
+    	}
+    	return regex.toString();
+    }
+
+    /**
+     * Calls from client fulfilling this regex returns good for non existing certificates
+     * even if {@link #getNonExistingIsGood()} return false.
+     * @return the regex
+     */
+    public static String getNonExistingIsGoodOverideRegex() {
+    	return getRegex(NONE_EXISTING_IS_GOOD_URI);
+    }
+
+    /**
+     * Calls from client fulfilling this regex returns "not existing" for non existing certificates
+     * even if {@link #getNonExistingIsGood()} return true.
+     * @return the regex
+     */
+    public static String getNonExistingIsBadOverideRegex() {
+    	return getRegex(NONE_EXISTING_IS_BAD_URI);
+    }
 
 	/**
 	 * Specifies the subject of a certificate which is used to identify the responder which will

@@ -1,14 +1,14 @@
 /*************************************************************************
  *                                                                       *
- *  EJBCA: The OpenSource Certificate Authority						  *
- *																	   *
- *  This software is free software; you can redistribute it and/or	   *
- *  modify it under the terms of the GNU Lesser General Public		   *
- *  License as published by the Free Software Foundation; either		 *
- *  version 2.1 of the License, or any later version.					*
- *																	   *
- *  See terms of license at gnu.org.									 *
- *																	   *
+ *  EJBCA: The OpenSource Certificate Authority                          *
+ *                                                                       *
+ *  This software is free software; you can redistribute it and/or       *
+ *  modify it under the terms of the GNU Lesser General Public           *
+ *  License as published by the Free Software Foundation; either         *
+ *  version 2.1 of the License, or any later version.                    *
+ *                                                                       *
+ *  See terms of license at gnu.org.                                     *
+ *                                                                       *
  *************************************************************************/
 
 package org.ejbca.core.protocol.ocsp;
@@ -286,7 +286,7 @@ public class ProtocolOcspHttpTest extends CaTestCase {
 		// Get user and ocspTestCert that we know...
 		loadUserCert(this.caid);
 
-		this.helper.testStatusGood( this.caid, cacert, ocspTestCert.getSerialNumber() );
+		this.helper.verifyStatusGood( this.caid, cacert, ocspTestCert.getSerialNumber() );
 		log.trace("<test02OcspGood()");
 	}
 
@@ -300,7 +300,7 @@ public class ProtocolOcspHttpTest extends CaTestCase {
 		log.trace(">test03OcspRevoked()");
 		// Now revoke the certificate and try again
 		this.certificateStoreSession.revokeCertificate(admin, ocspTestCert, null, RevokedCertInfo.REVOCATION_REASON_KEYCOMPROMISE, null);
-		this.helper.testStatusRevoked( this.caid, cacert, ocspTestCert.getSerialNumber(), RevokedCertInfo.REVOCATION_REASON_KEYCOMPROMISE );
+		this.helper.verifyStatusRevoked( this.caid, cacert, ocspTestCert.getSerialNumber(), RevokedCertInfo.REVOCATION_REASON_KEYCOMPROMISE );
 		log.trace("<test03OcspRevoked()");
 	}
 
@@ -313,7 +313,7 @@ public class ProtocolOcspHttpTest extends CaTestCase {
 	public void test04OcspUnknown() throws Exception {
 		log.trace(">test04OcspUnknown()");
 		// An OCSP request for an unknown certificate (not exist in db)
-		this.helper.testStatusUnknown( this.caid, cacert, new BigInteger("1") );
+		this.helper.verifyStatusUnknown( this.caid, cacert, new BigInteger("1") );
 		log.trace("<test04OcspUnknown()");
 	}
 
@@ -326,7 +326,7 @@ public class ProtocolOcspHttpTest extends CaTestCase {
 	public void test05OcspUnknownCA() throws Exception {
 		log.trace(">test05OcspUnknownCA()");
 		// An OCSP request for a certificate from an unknwon CA
-		this.helper.testStatusUnknown( this.caid, unknowncacert, new BigInteger("1") );
+		this.helper.verifyStatusUnknown( this.caid, unknowncacert, new BigInteger("1") );
 
 		log.trace("<test05OcspUnknownCA()");
 	}
@@ -449,7 +449,7 @@ public class ProtocolOcspHttpTest extends CaTestCase {
 		// Make user and ocspTestCert that we know...
 		createUserCert(ecdsacaid);
 
-			this.helper.testStatusGood( ecdsacaid, ecdsacacert, this.ocspTestCert.getSerialNumber() );
+			this.helper.verifyStatusGood( ecdsacaid, ecdsacacert, this.ocspTestCert.getSerialNumber() );
 
 	} // test08OcspEcdsaGood
 
@@ -470,7 +470,7 @@ public class ProtocolOcspHttpTest extends CaTestCase {
 		// Make user and ocspTestCert that we know...
 		createUserCert(ecdsacaid);
 
-		this.helper.testStatusGood( ecdsacaid, ecdsacacert, ocspTestCert.getSerialNumber() );
+		this.helper.verifyStatusGood( ecdsacaid, ecdsacacert, ocspTestCert.getSerialNumber() );
 
 	} // test09OcspEcdsaImplicitlyCAGood
 
@@ -640,7 +640,7 @@ public class ProtocolOcspHttpTest extends CaTestCase {
 		assertTrue("Should not be concidered malformed.", OCSPRespGenerator.MALFORMED_REQUEST != response.getStatus());
 		// An OCSP request, ocspTestCert is already created in earlier tests
 		loadUserCert(this.caid);
-		this.helper.testStatusGood( this.caid, this.cacert, this.ocspTestCert.getSerialNumber() );
+		this.helper.verifyStatusGood( this.caid, this.cacert, this.ocspTestCert.getSerialNumber() );
 	}
 
 	/**
@@ -703,7 +703,7 @@ public class ProtocolOcspHttpTest extends CaTestCase {
 		// Make user and ocspTestCert that we know...
 		createUserCert(dsacaid);
 
-		this.helper.testStatusGood( dsacaid, ecdsacacert, this.ocspTestCert.getSerialNumber() );
+		this.helper.verifyStatusGood( dsacaid, ecdsacacert, this.ocspTestCert.getSerialNumber() );
 
 	} // test16OcspDsaGood
 
@@ -935,11 +935,36 @@ public class ProtocolOcspHttpTest extends CaTestCase {
 		log.trace(">test50OcspUnknownMayBeGood()");
 		loadUserCert(this.caid);
 		// An OCSP request for an unknown certificate (not exist in db)
-		this.helper.testStatusUnknown( this.caid, this.cacert, new BigInteger("1") );
-		final Map<String,String> map = new HashMap<String, String>();
-		map.put(OcspConfiguration.NONE_EXISTING_IS_GOOD, "true");
-		this.helper.alterConfig(map);
-		this.helper.testStatusGood( this.caid, this.cacert, new BigInteger("1") );
+		this.helper.verifyStatusUnknown( this.caid, this.cacert, new BigInteger("1") );
+		final String bad1 = "Bad";
+		final String bad2 = "Ugly";
+		final String good1 = "Good";
+		final String good2 = "Beautiful";
+		{
+			final Map<String,String> map = new HashMap<String, String>();
+			map.put(OcspConfiguration.NONE_EXISTING_IS_GOOD, "true");
+			map.put(OcspConfiguration.NONE_EXISTING_IS_BAD_URI+'1', ".*"+bad1+"$");
+			map.put(OcspConfiguration.NONE_EXISTING_IS_BAD_URI+'2', ".*"+bad2+"$");
+			map.put(OcspConfiguration.NONE_EXISTING_IS_GOOD_URI+'1', ".*"+good1+"$");
+			map.put(OcspConfiguration.NONE_EXISTING_IS_GOOD_URI+'2', ".*"+good2+"$");
+			this.helper.alterConfig(map);
+		}
+		this.helper.verifyStatusGood( this.caid, this.cacert, new BigInteger("1") );
+		this.helper.setURLEnding(bad1);
+		this.helper.verifyStatusUnknown( this.caid, this.cacert, new BigInteger("1") );
+		this.helper.setURLEnding(bad2);
+		this.helper.verifyStatusUnknown( this.caid, this.cacert, new BigInteger("1") );
+		{
+			final Map<String,String> map = new HashMap<String, String>();
+			map.put(OcspConfiguration.NONE_EXISTING_IS_GOOD, "false");
+			this.helper.alterConfig(map);
+		}
+		this.helper.setURLEnding("");
+		this.helper.verifyStatusUnknown( this.caid, this.cacert, new BigInteger("1") );
+		this.helper.setURLEnding(good1);
+		this.helper.verifyStatusGood( this.caid, this.cacert, new BigInteger("1") );
+		this.helper.setURLEnding(good2);
+		this.helper.verifyStatusGood( this.caid, this.cacert, new BigInteger("1") );
 		log.trace("<test50OcspUnknownMayBeGood()");
 	}
 
@@ -1086,22 +1111,22 @@ public class ProtocolOcspHttpTest extends CaTestCase {
 		return ArrayUtils.subarray(buf, header.length, buf.length);
 	}
 
-    /**
-     * For small streams only.
-     */
-    private static byte[] inputStreamToBytes(InputStream in) throws IOException {
-        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        while ( true ) {
-            final int b = in.read();
-            if ( b<0 ) {
-            	break;
-            }
-        	baos.write(b);
-        }
-        baos.flush();
-        in.close();
-        return  baos.toByteArray();
-    }
+	/**
+	 * For small streams only.
+	 */
+	private static byte[] inputStreamToBytes(InputStream in) throws IOException {
+		final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		while ( true ) {
+			final int b = in.read();
+			if ( b<0 ) {
+				break;
+			}
+			baos.write(b);
+		}
+		baos.flush();
+		in.close();
+		return  baos.toByteArray();
+	}
 
 	/**
 	 * @return a new byte array with the two arguments concatenated.
