@@ -40,13 +40,16 @@
  
 <div align="center">
 
-	<h2><h:outputText value="#{web.text.ACCESSRULESFORGROUP} #{adminGroupsManagedBean.currentAdminGroup}" /></h2>
+	<h2><h:outputText value="#{web.text.EDITACCESSRULES}" /></h2>
+	<h3><h:outputText value="#{web.text.ADMINGROUP} : #{adminGroupsManagedBean.currentAdminGroup}" /></h3>
 
 	<h:outputText value="#{web.text.AUTHORIZATIONDENIED}" rendered="#{!adminGroupsManagedBean.authorizedToGroup}"/>
 
+</div>
+
 
 	<h:panelGroup rendered="#{adminGroupsManagedBean.authorizedToGroup}">
-	<p><h:messages layout="table" errorClass="alert"/></p>
+	<h:messages layout="table" errorClass="alert"/>
 
 	<h:panelGrid styleClass="edit-top" width="100%" columns="1" rowClasses="Row0,Row1" style="text-align: right;">
 		<h:outputLink value="#{web.ejbcaWebBean.globalConfiguration.authorizationPath}/administratorprivileges.jsf"
@@ -110,7 +113,6 @@
 
 	</h:panelGroup>
 
-</div>
 
 <%	// Include Footer 
 	String footurl = globalconfiguration.getFootBanner(); %>

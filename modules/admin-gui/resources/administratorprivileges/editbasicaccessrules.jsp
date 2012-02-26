@@ -201,14 +201,17 @@ function checkallfields(){
 
 <div align="center">
 
-	<h2><h:outputText value="#{web.text.ACCESSRULESFORGROUP} #{adminGroupsManagedBean.currentAdminGroup}" /></h2>
+	<h2><h:outputText value="#{web.text.EDITACCESSRULES}" /></h2>
+	<h3><h:outputText value="#{web.text.ADMINGROUP} : #{adminGroupsManagedBean.currentAdminGroup}" /></h3>
 
 	<h:outputText value="#{web.text.AUTHORIZATIONDENIED}" rendered="#{!adminGroupsManagedBean.authorizedToGroup}"/>
 
+</div>
+
 
 	<h:panelGroup rendered="#{adminGroupsManagedBean.authorizedToGroup}">
-	<p><h:outputText styleClass="alert" value="#{web.text.ADVANCEDMODEREQUIRED}" rendered="#{adminGroupsManagedBean.basicRuleSet.forceAdvanced}" /></p>
-	<p><h:messages layout="table" errorClass="alert"/></p>
+	<div><h:outputText styleClass="alert" value="#{web.text.ADVANCEDMODEREQUIRED}" rendered="#{adminGroupsManagedBean.basicRuleSet.forceAdvanced}" /></div>
+	<h:messages layout="table" errorClass="alert"/>
 
   
 	<h:panelGroup rendered="#{!adminGroupsManagedBean.basicRuleSet.forceAdvanced}">
@@ -289,7 +292,6 @@ function checkallfields(){
 	</h:panelGroup>
 	</h:panelGroup>
 
-</div>
 
 <%	// Include Footer 
 	String footurl = globalconfiguration.getFootBanner(); %>

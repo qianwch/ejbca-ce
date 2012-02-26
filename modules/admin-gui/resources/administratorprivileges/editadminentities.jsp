@@ -40,14 +40,18 @@
 
 <div align="center">
 
-	<h2><h:outputText value="#{web.text.ADMINSINGROUP} #{adminGroupsManagedBean.currentAdminGroup}"
-  			rendered="#{not empty adminGroupsManagedBean.currentAdminGroup}"/></h2>
+	<h2><h:outputText value="#{web.text.EDITADMINS}"/></h2>
+	<h3><h:outputText value="#{web.text.ADMINGROUP} : #{adminGroupsManagedBean.currentAdminGroup}"
+  			rendered="#{not empty adminGroupsManagedBean.currentAdminGroup}"/></h3>
 
 	<h:outputText value="#{web.text.AUTHORIZATIONDENIED}" rendered="#{empty adminGroupsManagedBean.currentAdminGroup && !adminGroupsManagedBean.authorizedToGroup}"/>
+
+</div>
+
+
 	<h:panelGroup rendered="#{not empty adminGroupsManagedBean.currentAdminGroup && adminGroupsManagedBean.authorizedToGroup}">
- 
-	<div align="right">
-	<h:panelGrid columns="1" style="text-align: right;">
+
+	<h:panelGrid styleClass="edit-top" width="100%" columns="1" rowClasses="Row0,Row1" style="text-align: right;">
 		<h:outputLink value="#{web.ejbcaWebBean.globalConfiguration.authorizationPath}/administratorprivileges.jsf"
 			title="#{web.text.BACKTOADMINGROUPS}">
 			<h:outputText value="#{web.text.BACKTOADMINGROUPS}"/>
@@ -61,8 +65,7 @@
 			<h:outputText value="#{web.text.EDITACCESSRULES}"/>
 		</h:outputLink>
 	</h:panelGrid>
-	</div>
-  
+
 	<div align="center">
 	<h:messages layout="table" errorClass="alert"/>
 
@@ -140,10 +143,12 @@
 		</h:column>
 	</h:dataTable>
 	</h:form >
+
 	<h:outputText value="#{web.text.NOADMINSDEFINED}" rendered="#{empty adminGroupsManagedBean.admins}"/>
 	</div>
+
 	</h:panelGroup>
-</div>
+
  
 <%	// Include Footer 
 	String footurl = globalconfiguration.getFootBanner(); %>
