@@ -252,7 +252,7 @@ public class OcspJunitHelper extends TestCase {
 			assertEquals("Status is not Good: "+status.getClass().getName(), org.bouncycastle.ocsp.CertificateStatus.GOOD, status);
 			break;
 		case Revoked:
-			assertTrue("Status is not Revoked: "+status.getClass().getName(), status instanceof RevokedStatus);
+			assertTrue("Status is not Revoked: "+status != null ? status.getClass().getName() : null, status instanceof RevokedStatus);
 			final int reason = ((RevokedStatus)status).getRevocationReason();
 			assertEquals("Wrong revocation reason", expectedReason, reason);
 			break;
