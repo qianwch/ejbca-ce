@@ -363,6 +363,10 @@ public class UserAdminSessionBean implements UserAdminSessionLocal, UserAdminSes
                         profile = endEntityProfileSession.getEndEntityProfile(endEntityProfileId);
                     }
                     print(profile, endEntity);
+                } else {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Type ("+type+") does not contain SecConst.USER_PRINT, no print job created.");
+                    }
                 }
                 final String msg = intres.getLocalizedMessage("ra.addedentity", username);
                 Map<String, Object> details = new LinkedHashMap<String, Object>();
@@ -1648,6 +1652,9 @@ public class UserAdminSessionBean implements UserAdminSessionLocal, UserAdminSes
 
     private void print(EndEntityProfile profile, EndEntityInformation userdata) {
         try {
+            if (log.isDebugEnabled()) {
+                log.debug("profile.getUsePrinting(): "+profile.getUsePrinting());
+            }
             if (profile.getUsePrinting()) {
                 String[] pINs = new String[1];
                 pINs[0] = userdata.getPassword();
@@ -1769,7 +1776,7 @@ public class UserAdminSessionBean implements UserAdminSessionLocal, UserAdminSes
         } else { // if ( ((data.getType() & SecConst.USER_SENDNOTIFICATION) !=
                  // 0) )
             if (log.isDebugEnabled()) {
-                log.debug("Type does not contain SecConst.USER_SENDNOTIFICATION, no notification sent.");
+                log.debug("Type ("+data.getType()+") does not contain SecConst.USER_SENDNOTIFICATION, no notification sent.");
             }
         }
         if (log.isTraceEnabled()) {
