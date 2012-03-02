@@ -1,3 +1,16 @@
+EJBCA 4.0.10
+------------
+This is a maintenance release containing 1 new VA publisher feature, 1 security fix and GUI improvements..
+
+* Noteworthy changes: 
+- Possibility to only publish revoked certificates to VA.
+- Possibility for OCS to handle "non existing is good" different depending on OCSP uri. 
+- Fixed XSS issue in admin GUI.
+- Admin GUI improvements for looks and consistency.
+
+Read the full Changelog for details.
+For upgrade instructions, please see UPGRADE.
+
 EJBCA 4.0.9
 ------------
 This is a maintenance release containing 1 security bug fix.
