@@ -226,6 +226,9 @@ div.message {
 	margin-top: .5em;
 	text-align: center;
 }
+.hexa {
+	text-transform: uppercase;
+}
 
 /* --- Tables */
 table {
@@ -259,6 +262,21 @@ table.grid td {
 
 /*--------------------------------------------------------------------------*/
 /* CONTENT > FORMS */
+
+/* --- Forms: All tables */
+form table fieldset {
+	display: inline;
+	padding: .1em .5em .2em 0em;
+	border: 1px solid #CED0D5;		/* Keep it, for old web browsers */
+	border: 1px solid rgba(0,0,0,.15);
+	border-radius: .8em;
+	-o-border-radius: .8em;
+	-moz-border-radius: .8em;
+	-khtml-border-radius: .8em;
+	-webkit-border-radius: .8em;
+	background-color: #F2F4FA;		/* Keep it, for old web browsers */
+	background-color: rgba(0,0,0,.02);
+}
 
 /* --- Forms: List/Actions */
 table.list,
@@ -540,7 +558,11 @@ div#code input[type="submit"] {
 
 /* --- Page: RA > End-Entity profile */
 table#endentityprofile.edit tr td:first-child {
+	vertical-align: middle;
 	text-align: center;
+}
+table#endentityprofile.edit tr td input[name="textfieldpassword"] {
+	margin-bottom: .1em;
 }
 
 /* --- Page: RA > Add End-Entity */
