@@ -20,6 +20,8 @@ import java.security.NoSuchProviderException;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.bouncycastle.asn1.x509.GeneralName;
+import org.bouncycastle.asn1.x509.X509Name;
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.authorization.control.AccessControlSession;
@@ -166,7 +168,8 @@ public class ConfirmationMessageHandler extends BaseCmpMessageHandler implements
 			CmpConfirmResponseMessage cresp = new CmpConfirmResponseMessage();
 			cresp.setRecipientNonce(msg.getSenderNonce());
 			cresp.setSenderNonce(new String(Base64.encode(CmpMessageHelper.createSenderNonce())));
-			cresp.setSender(msg.getRecipient());
+			String recepientDN = CertTools.stringToBCDNString(msg.getRecipient().getName().toString());
+			cresp.setSender(new GeneralName(new X509Name(recepientDN)));
 			cresp.setRecipient(msg.getSender());
 			cresp.setTransactionId(msg.getTransactionId());
 			// Set all protection parameters

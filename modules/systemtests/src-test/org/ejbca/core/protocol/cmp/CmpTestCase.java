@@ -480,7 +480,7 @@ public abstract class CmpTestCase extends CaTestCase {
         // Check that the signer is the expected CA
         assertEquals(header.getSender().getTagNo(), 4);
         X509Name name = X509Name.getInstance(header.getSender().getName());
-        assertEquals(issuerDN, name.toString());
+        assertEquals(CertTools.stringToBCDNString(issuerDN), CertTools.stringToBCDNString(name.toString()));
 
         if (signed) {
             // Verify the signature
@@ -700,7 +700,7 @@ public abstract class CmpTestCase extends CaTestCase {
         PKIHeader header = respObject.getHeader();
         assertEquals(header.getSender().getTagNo(), 4);
         X509Name name = X509Name.getInstance(header.getSender().getName());
-        assertEquals(name.toString(), ((X509Certificate) cacert).getSubjectDN().getName());
+        assertEquals(CertTools.stringToBCDNString(((X509Certificate) cacert).getSubjectDN().getName()), name.toString());
         name = X509Name.getInstance(header.getRecipient().getName());
         assertEquals(userDN, name.toString());
 
@@ -721,7 +721,7 @@ public abstract class CmpTestCase extends CaTestCase {
         PKIHeader header = respObject.getHeader();
         assertEquals(header.getSender().getTagNo(), 4);
         X509Name name = X509Name.getInstance(header.getSender().getName());
-        assertEquals(((X509Certificate) cacert).getSubjectDN().getName(), name.toString());
+        assertEquals(CertTools.stringToBCDNString(CertTools.getSubjectDN(cacert)), CertTools.stringToBCDNString(name.toString()));
         name = X509Name.getInstance(header.getRecipient().getName());
         assertEquals(name.toString(), userDN);
 
