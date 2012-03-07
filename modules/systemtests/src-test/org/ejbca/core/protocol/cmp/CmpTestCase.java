@@ -700,7 +700,7 @@ public abstract class CmpTestCase extends CaTestCase {
         PKIHeader header = respObject.getHeader();
         assertEquals(header.getSender().getTagNo(), 4);
         X509Name name = X509Name.getInstance(header.getSender().getName());
-        assertEquals(CertTools.stringToBCDNString(((X509Certificate) cacert).getSubjectDN().getName()), name.toString());
+        assertEquals(CertTools.stringToBCDNString(CertTools.getSubjectDN(cacert)), CertTools.stringToBCDNString(name.toString()));
         name = X509Name.getInstance(header.getRecipient().getName());
         assertEquals(userDN, name.toString());
 
