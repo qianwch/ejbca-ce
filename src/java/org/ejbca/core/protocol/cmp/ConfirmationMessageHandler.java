@@ -41,7 +41,6 @@ import org.ejbca.core.ejb.authentication.web.WebAuthenticationProviderSessionLoc
 import org.ejbca.core.ejb.ra.EndEntityAccessSession;
 import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileSession;
 import org.ejbca.core.model.SecConst;
-import org.ejbca.core.protocol.cmp.authentication.EndEntityCertificateAuthenticationModule;
 import org.ejbca.core.protocol.cmp.authentication.HMACAuthenticationModule;
 
 /**
@@ -71,10 +70,6 @@ public class ConfirmationMessageHandler extends BaseCmpMessageHandler implements
     private EndEntityAccessSession endEntityAccessSession;
     /** Certificate Store Session used to authenticate the request */
     private CertificateStoreSession certificateStoreSession;
-    /** Access Control Session used to authenticate the request */
-    private AccessControlSession authorizationSession;
-    /** Authentication Provider Session used to authenticate the request */
-    private WebAuthenticationProviderSessionLocal authenticationProviderSession;
 	
 	public ConfirmationMessageHandler(AuthenticationToken admin, CaSessionLocal caSession, EndEntityProfileSession endEntityProfileSession,
             CertificateProfileSession certificateProfileSession, CertificateStoreSession certStoreSession, AccessControlSession authSession,
@@ -85,8 +80,6 @@ public class ConfirmationMessageHandler extends BaseCmpMessageHandler implements
 		this.caSession = caSession;
         this.endEntityAccessSession = eeAccessSession;
         this.certificateStoreSession = certStoreSession;
-        this.authorizationSession = authSession;
-        this.authenticationProviderSession = authProvSession;
 	}
 	public ResponseMessage handleMessage(BaseCmpMessage msg, boolean authenticated) {
 		if (LOG.isTraceEnabled()) {
@@ -96,69 +89,6 @@ public class ConfirmationMessageHandler extends BaseCmpMessageHandler implements
 		ResponseMessage resp = null;
 		// if version == 1 it is cmp1999 and we should not return a message back
 		if (version > 1) {
-			// Try to find a HMAC/SHA1 protection key
-			String owfAlg = null;
-			String macAlg = null;
-			int iterationCount = 1024;
-			String cmpRaAuthSecret = null;	
-			String keyId = getSenderKeyId(msg.getHeader());
-
-			if(msg.getMessage().getProtection() != null) {
-			    
-			    if(LOG.isDebugEnabled()) {
-			        LOG.debug("The CertConfirm message recieved is signed");
-			    }
-			    
-			    try {
-			        if(LOG.isDebugEnabled()) {
-			            LOG.debug("Trying to verify the CertConf signature using HMAC/PBE");
-			        }
-	                
-			        int eeProfileId = getUsedEndEntityProfileId(keyId);
-			        int caId = getUsedCaId(keyId, eeProfileId);
-			        CAInfo caInfo = caSession.getCAInfo(admin, caId);
-			            
-			        final HMACAuthenticationModule hmac = new HMACAuthenticationModule(getParam(CmpConfiguration.AUTHMODULE_HMAC));
-			        hmac.setSession(admin, endEntityAccessSession, certificateStoreSession);
-			        hmac.setCaInfo(caInfo);
-			        if(hmac.verifyOrExtract(msg.getMessage(), null, authenticated)) {
-			            cmpRaAuthSecret = hmac.getAuthenticationString();
-	                    owfAlg = hmac.getCmpPbeVerifyer().getOwfOid();
-	                    macAlg = hmac.getCmpPbeVerifyer().getMacOid();
-	                    iterationCount = hmac.getCmpPbeVerifyer().getIterationCount();
-	                    
-	                    if(LOG.isDebugEnabled()) {
-	                        LOG.debug("The CertConf message was verified successfully");
-	                    }
-			        }
-			    } catch (Exception e) {
-			        
-                    if(LOG.isDebugEnabled()) {
-                        LOG.debug("Verifying the CertConf message using HMAC/PBE failed.");
-                    }
-			        
-			        if(msg.getMessage().getExtraCert(0) != null) {
-			            
-			            if(LOG.isDebugEnabled()) {
-			                LOG.debug("Trying to verify the CertConf message using EndEntityCertificate");
-			            }
-			            
-			            final EndEntityCertificateAuthenticationModule eemodule = new EndEntityCertificateAuthenticationModule(getParam(CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE));
-			            eemodule.setSession(admin, caSession, certificateStoreSession, authorizationSession, endEntityProfileSession, endEntityAccessSession, authenticationProviderSession);
-			            if (eemodule.verifyOrExtract(msg.getMessage(), null, authenticated)) {
-			                cmpRaAuthSecret = eemodule.getAuthenticationString();
-			                
-		                     if(LOG.isDebugEnabled()) {
-		                         LOG.debug("The CertConf message was verified successfully");
-		                     }
-			            }
-			        }
-			    }
-			    
-		         if(cmpRaAuthSecret == null) {
-		             LOG.info("The CertConf message could not be verified. The request will be processed without verification");
-		         }
-			}
             
 			if (LOG.isDebugEnabled()) {
 				LOG.debug("Creating a PKI confirm message response");
@@ -169,45 +99,11 @@ public class ConfirmationMessageHandler extends BaseCmpMessageHandler implements
 			cresp.setSender(msg.getRecipient());
 			cresp.setRecipient(msg.getSender());
 			cresp.setTransactionId(msg.getTransactionId());
-			// Set all protection parameters
-			if (LOG.isDebugEnabled()) {
-				LOG.debug(responseProtection+", "+owfAlg+", "+macAlg+", "+keyId+", "+cmpRaAuthSecret);
-			}
-			if (StringUtils.equals(responseProtection, "pbe") && (owfAlg != null) && (macAlg != null) && (keyId != null) && (cmpRaAuthSecret != null) ) {
-				cresp.setPbeParameters(keyId, cmpRaAuthSecret, owfAlg, macAlg, iterationCount);
+			// Protect the response
+			if (StringUtils.equals(responseProtection, "pbe") && (msg.getMessage().getProtectedBytes() != null) ) {
+			    setPbeParameters(msg, authenticated, cresp);
 			} else if (StringUtils.equals(responseProtection, "signature")) {
-				try {
-					// Get the CA that should sign the response
-					String cadn = CertTools.stringToBCDNString(msg.getRecipient().getName().toString());
-					CA ca = null;
-					if (cadn == null) {
-						if (LOG.isDebugEnabled()) {
-							LOG.debug("Using Default CA to sign Certificate Confirm message: "+CmpConfiguration.getDefaultCA());
-						}
-						ca = caSession.getCA(admin, CmpConfiguration.getDefaultCA());
-					} else if (CmpConfiguration.getDefaultCA() != null) {
-						if (LOG.isDebugEnabled()) {
-							LOG.debug("Using recipient CA to sign Certificate Confirm message: '"+cadn+"', "+cadn.hashCode());
-						}
-						ca = caSession.getCA(admin, cadn.hashCode());
-					}
-					if (ca != null) {
-						CAToken catoken = ca.getCAToken();
-						cresp.setSignKeyInfo(ca.getCACertificate(), catoken.getPrivateKey(SecConst.CAKEYPURPOSE_CERTSIGN), catoken.getCryptoToken().getSignProviderName());						
-					} else {
-						if (LOG.isDebugEnabled()) {
-							LOG.info("Could not find CA to sign Certificate Confirm, either from recipient ("+cadn+") or default ("+CmpConfiguration.getDefaultCA()+"). Not signing Certificate Confirm.");
-						}
-					}
-				} catch (CADoesntExistsException e) {
-					LOG.error("Exception during CMP response signing: ", e);			
-				} catch (IllegalCryptoTokenException e) {
-					LOG.error("Exception during CMP response signing: ", e);			
-				} catch (CryptoTokenOfflineException e) {
-				    LOG.error("Exception during CMP response signing: ", e);			
-				} catch (AuthorizationDeniedException e) {
-					LOG.error("Exception during CMP response signing: ", e);
-				}
+			    signResponse(msg, cresp);
 			}
 			resp = cresp;
 			try {
@@ -229,6 +125,77 @@ public class ConfirmationMessageHandler extends BaseCmpMessageHandler implements
 			}
 		}
 		return resp;
+	}
+	
+	private void setPbeParameters(BaseCmpMessage msg, boolean authenticated, CmpConfirmResponseMessage cresp) {
+	    
+        String keyId = getSenderKeyId(msg.getHeader());
+        CAInfo caInfo = null;
+        try {
+            int caId = CertTools.stringToBCDNString(msg.getRecipient().getName().toString()).hashCode();
+            caInfo = caSession.getCAInfo(admin, caId);
+        } catch (CADoesntExistsException e) {
+            LOG.error("Exception during CMP response signing: ", e);            
+        } catch (AuthorizationDeniedException e) {
+            LOG.error("Exception during CMP response signing: ", e);
+        }
+
+        String owfAlg = null;
+        String macAlg = null;
+        int iterationCount = 1024;
+        String cmpRaAuthSecret = null;  
+
+        // Try to find a HMAC/SHA1 protection key
+        final HMACAuthenticationModule hmac = new HMACAuthenticationModule(getParam(CmpConfiguration.AUTHMODULE_HMAC));
+        hmac.setSession(admin, endEntityAccessSession, certificateStoreSession);
+        hmac.setCaInfo(caInfo);
+        if(hmac.verifyOrExtract(msg.getMessage(), null, authenticated)) {
+            cmpRaAuthSecret = hmac.getAuthenticationString();
+            owfAlg = hmac.getCmpPbeVerifyer().getOwfOid();
+            macAlg = hmac.getCmpPbeVerifyer().getMacOid();
+            iterationCount = hmac.getCmpPbeVerifyer().getIterationCount();
+        }                    
+        if((owfAlg != null) && (macAlg != null) && (keyId != null) && (cmpRaAuthSecret != null)) {
+            cresp.setPbeParameters(keyId, cmpRaAuthSecret, owfAlg, macAlg, iterationCount);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(responseProtection+", "+owfAlg+", "+macAlg+", "+keyId+", "+cmpRaAuthSecret);
+            }
+        }
+	}
+	
+	private void signResponse(BaseCmpMessage msg, CmpConfirmResponseMessage cresp) {
+        try {
+            // Get the CA that should sign the response
+            String cadn = CertTools.stringToBCDNString(msg.getRecipient().getName().toString());
+            CA ca = null;
+            if (cadn == null) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Using Default CA to sign Certificate Confirm message: "+CmpConfiguration.getDefaultCA());
+                }
+                ca = caSession.getCA(admin, CmpConfiguration.getDefaultCA());
+            } else if (CmpConfiguration.getDefaultCA() != null) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Using recipient CA to sign Certificate Confirm message: '"+cadn+"', "+cadn.hashCode());
+                }
+                ca = caSession.getCA(admin, cadn.hashCode());
+            }
+            if (ca != null) {
+                CAToken catoken = ca.getCAToken();
+                cresp.setSignKeyInfo(ca.getCACertificate(), catoken.getPrivateKey(SecConst.CAKEYPURPOSE_CERTSIGN), catoken.getCryptoToken().getSignProviderName());                     
+            } else {
+                if (LOG.isDebugEnabled()) {
+                    LOG.info("Could not find CA to sign Certificate Confirm, either from recipient ("+cadn+") or default ("+CmpConfiguration.getDefaultCA()+"). Not signing Certificate Confirm.");
+                }
+            }
+        } catch (CADoesntExistsException e) {
+            LOG.error("Exception during CMP response signing: ", e);            
+        } catch (IllegalCryptoTokenException e) {
+            LOG.error("Exception during CMP response signing: ", e);            
+        } catch (CryptoTokenOfflineException e) {
+            LOG.error("Exception during CMP response signing: ", e);            
+        } catch (AuthorizationDeniedException e) {
+            LOG.error("Exception during CMP response signing: ", e);
+        }
 	}
 
 	private String getParam(String module) {
