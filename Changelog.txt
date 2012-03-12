@@ -1,4 +1,4 @@
-EJBCA 4.0.10RC1, 2012-03-02
+EJBCA 4.0.10, 2012-03-08
 ---
 New Feature
     [ECA-2590] - Possibility to only publish revoked certificates to external VA DB
@@ -127,6 +127,16 @@ Bug
     [ECA-2283] - Hard tokens are listed in wrong order in the GUI
     [ECA-2286] - The VA page listing URLs to to CA certificates and the VA page listing URLs to CRLs is blank for some installations.
     [ECA-2299] - Reading CMP messages over http1/1 with chunked encoding can fail
+
+EJBCA 3.11.5, 2012-03-12
+---
+Bug
+    * [ECA-2594] - Fixed some XSS issues.
+     
+EJBCA 3.11.4, 2012-02-13
+---
+Bug
+    * [ECA-2557] - Minor XSS issues: merge bugfix from ECA-2482
 
 EJBCA 3.11.3, 2011-07-08
 ---

@@ -97,6 +97,56 @@ This is a maintenance release with a few new features and bug fixes. In all 33 i
 Read the full Changelog for details.
 For upgrade instructions, please see UPGRADE.
 
+EJBCA 3.11.5
+------------
+This is a maintenance release containing 1 security bug fix.
+
+* Noteworthy changes: 
+- Fixed XSS issues.
+
+Read the full Changelog for details.
+For upgrade instructions, please see UPGRADE.
+
+EJBCA 3.11.4
+------------
+This is a maintenance release containing 1 security bug fix.
+
+* Noteworthy changes: 
+- Fixed XSS issues in admin GUI.
+
+Read the full Changelog for details.
+For upgrade instructions, please see UPGRADE.
+
+EJBCA 3.11.3
+------------
+This is a maintenance release containing 3 bug fixes.
+
+* Noteworthy changes: 
+- Certificate enrollment now works also with Safari and Chrome browsers. (Backport from EJBCA 4.0.2.)
+
+Read the full Changelog for details.
+For upgrade instructions, please see UPGRADE.
+
+EJBCA 3.11.5
+------------
+This is a maintenance release containing 1 security bug fix.
+
+* Noteworthy changes: 
+- Fixed XSS issues.
+
+Read the full Changelog for details.
+For upgrade instructions, please see UPGRADE.
+
+EJBCA 3.11.4
+------------
+This is a maintenance release containing 1 security bug fix.
+
+* Noteworthy changes: 
+- Fixed XSS issues in admin GUI.
+
+Read the full Changelog for details.
+For upgrade instructions, please see UPGRADE.
+
 EJBCA 3.11.3
 ------------
 This is a maintenance release containing 3 bug fixes.
