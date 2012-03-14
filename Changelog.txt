@@ -1,4 +1,4 @@
-EJBCA 4.0.10, 2012-03-08
+EJBCA 4.0.10, 2012-03-14
 ---
 New Feature
     [ECA-2590] - Possibility to only publish revoked certificates to external VA DB
