@@ -350,6 +350,19 @@ table.edit tr:last-child td {
 	border-bottom: 3px solid #FEDD9A;
 	color: #A00;
 }
+/* Titles */
+table.edit-top tr.title td,
+table.edit-bottom tr.title td,
+table.edit tr.title td {
+	background-color: #FEF6E6;
+	/* Color: rgba(254,238,205,1) = #FEEECD */
+	background-image: -moz-linear-gradient(top, rgba(254,238,205,1) 0%, rgba(254,238,205,0) 100%);		/* FF3.6+ */
+	background-image: -webkit-linear-gradient(top, rgba(254,238,205,1) 0%,rgba(254,238,205,0) 100%);	/* Chrome10+,Safari5.1+ */
+	background-image: -o-linear-gradient(top, rgba(254,238,205,1) 0%,rgba(254,238,205,0) 100%);			/* Opera 11.10+ */
+	background-image: -ms-linear-gradient(top, rgba(254,238,205,1) 0%,rgba(254,238,205,0) 100%);		/* IE10+ */
+	background-image: linear-gradient(top, rgba(254,238,205,1) 0%,rgba(254,238,205,0) 100%);			/* W3C */
+	color: #600;
+}
 
 /* --- Form: Action */
 table.action tr td {
