@@ -46,7 +46,7 @@ new TWTR.Widget({
   </p>
   </note>
   <note>
-  EJBCA 5.0 is a CWA and Common Criteria certified version of EJBCA. EJBCA 5.0 is available exclusively from <a href="http://www.primekey.se/PKI+shop/">PrimeKey</a>. 
+  EJBCA 5.0 is a CWA certified version of EJBCA, with Common Criteria certification in progress. EJBCA 5.0 is available exclusively from <a href="http://www.primekey.se/PKI+shop/">PrimeKey</a>. 
   </note>
   <note>
   Find latest news about ejbca at the <a href="http://blog.ejbca.org/">EJBCA blog</a>.
