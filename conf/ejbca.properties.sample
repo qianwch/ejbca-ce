@@ -98,7 +98,7 @@
 # ------------- Core language configuration -------------
 # The language that should be used internally for logging, exceptions and approval notifications.
 # The languagefile is stored in 'src/intresources/intresources.xx.properties'. 
-# Should be one of EN,FR,PT,PT_BR,SE
+# Should be one of EN,FR,PT,PT_BR,SE,JA
 # Default: EN
 #intresources.preferredlanguage=EN
 
