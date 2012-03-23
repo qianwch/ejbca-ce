@@ -61,6 +61,6 @@
            } %> id="<%=EditPublisherJSPHelper.CHECKBOX_VA_STORECRL%>" />
           <label for="<%=EditPublisherJSPHelper.CHECKBOX_VA_STORECRL%>"><c:out value="<%= ejbcawebbean.getText(\"ACTIVATE\") %>" /></label>
           <br />
-          <%= ejbcawebbean.getText("STORECRLNOTE") %>
+          <%= ejbcawebbean.getText("STORECRL_HELP") %>
       </td>
     </tr>

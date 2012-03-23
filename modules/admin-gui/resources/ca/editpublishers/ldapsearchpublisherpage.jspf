@@ -22,7 +22,7 @@
          <input type="text" name="<%=EditPublisherJSPHelper.TEXTFIELD_LDAPSEARCHBASEDN%>" size="45" maxlength="255" title="<%= ejbcawebbean.getText("FORMAT_DN") %>"
                value='<c:out value="<%= ldapsearchpublisher.getSearchBaseDN() %>"/>'>
          <br />
-         <%= ejbcawebbean.getText("SEARCHBASEDNDESCR") %>
+         <%= ejbcawebbean.getText("SEARCHBASEDN_HELP") %>
       </td>
     </tr>
 	<tr id="Row<%=row++%2%>"> 
@@ -33,6 +33,6 @@
          <input type="text" name="<%=EditPublisherJSPHelper.TEXTFIELD_LDAPSEARCHFILTER%>" size="45" maxlength="255" 
                value='<c:out value="<%= ldapsearchpublisher.getSearchFilter() %>"/>'>
          <br />
-         <%= ejbcawebbean.getText("SEARCHFILTERDESCR") %>
+         <%= ejbcawebbean.getText("SEARCHFILTER_HELP") %>
       </td>
     </tr>

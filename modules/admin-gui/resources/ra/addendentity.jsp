@@ -1726,7 +1726,7 @@ function checkallfields(){
 			<td align="right"> 
 				<%= ejbcawebbean.getText("TIMEOFSTART") %> <%= ejbcawebbean.getHelpReference("/userguide.html#Certificate%20Validity") %>
 				<br />
-				<span style="white-space: normal;">(<%= ejbcawebbean.getText("DATE_INFO") %> <%= ejbcawebbean.getDateExample()
+				<span style="white-space: normal;">(<%= ejbcawebbean.getText("DATE_HELP") %> <%= ejbcawebbean.getDateExample()
 				%> <%= ejbcawebbean.getText("OR").toLowerCase() %> <%= ejbcawebbean.getText("DAYS").toLowerCase()
 				%>:<%= ejbcawebbean.getText("HOURS").toLowerCase() %>:<%= ejbcawebbean.getText("MINUTES").toLowerCase() %>)</span>
 			</td>
@@ -1754,7 +1754,7 @@ function checkallfields(){
 			<td align="right"> 
 				<%= ejbcawebbean.getText("TIMEOFEND") %> <%= ejbcawebbean.getHelpReference("/userguide.html#Certificate%20Validity") %>
 				<br />
-				<span style="white-space: normal;">(<%= ejbcawebbean.getText("DATE_INFO") %> <%= ejbcawebbean.getDateExample() 
+				<span style="white-space: normal;">(<%= ejbcawebbean.getText("DATE_HELP") %> <%= ejbcawebbean.getDateExample() 
 				%> <%= ejbcawebbean.getText("OR").toLowerCase() %> <%= ejbcawebbean.getText("DAYS").toLowerCase()
 				%>:<%= ejbcawebbean.getText("HOURS").toLowerCase() %>:<%= ejbcawebbean.getText("MINUTES").toLowerCase() %>)</span>
 			</td>

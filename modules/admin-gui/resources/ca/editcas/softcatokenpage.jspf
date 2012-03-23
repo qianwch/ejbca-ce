@@ -11,9 +11,9 @@
         <input type="password" name="<%=TEXTFIELD_AUTHENTICATIONCODE%>" size="20" maxlength="255">
         &nbsp;
     <% if(!editca){ %>
-        <%= ejbcawebbean.getText("AUTHENTICATIONCODEEMPTYFORDEFAULT") %>
+        <%= ejbcawebbean.getText("AUTHCODE_HELP_EMPTYFORDEFAULT") %>
     <% } else { %>
-        <%= ejbcawebbean.getText("AUTHENTICATIONCODEONLYACTIVATION") %>
+        <%= ejbcawebbean.getText("AUTHCODE_HELP_ONLYACTIVATION") %>
     <% } %>
       </td>
     </tr>

@@ -552,7 +552,7 @@ function fieldSetDisableAsCheckbox(field, boxTarget, boxSource) {
                id="<%=CHECKBOX_USE_EMAIL%>" />
         <label for="<%=CHECKBOX_USE_EMAIL%>"><c:out value="<%= ejbcawebbean.getText(\"USE\") %>" /></label>
         &nbsp;&nbsp;
-        <c:out value="<%= ejbcawebbean.getText(\"USEONLYDOMAIN\") %>" />
+        <c:out value="<%= ejbcawebbean.getText(\"EMAILADDRESS_HELP\") %>" />
         <br />
         <input type="text" name="<%=TEXTFIELD_EMAIL%>" size="45" maxlength="1024"  <% if(!used) out.write(" disabled "); %> title="<%= ejbcawebbean.getText("FORMAT_DOMAINNAME") %>"
            value="<% if(profiledata.getValue(EndEntityProfile.EMAIL,0) != null && used);%><c:out value="<%= profiledata.getValue(EndEntityProfile.EMAIL,0) %>"/>">
@@ -689,7 +689,7 @@ function fieldSetDisableAsCheckbox(field, boxTarget, boxSource) {
            %> id="<%=CHECKBOX_REQUIRED_SUBJECTDN + i%>">
         <label for="<%=CHECKBOX_REQUIRED_SUBJECTDN + i%>"><c:out value="<%= ejbcawebbean.getText(\"REQUIRED\") %>" /></label>
         &nbsp;&nbsp;&nbsp;
-        <c:out value="<%=ejbcawebbean.getText(\"SEEEMAILCONFIGURATION\") %>" />
+        <c:out value="<%=ejbcawebbean.getText(\"DN_PKIX_EMAILADDRESS_HELP\") %>" />
         <% }%>
       </td>
     </tr>
@@ -769,7 +769,7 @@ function fieldSetDisableAsCheckbox(field, boxTarget, boxSource) {
 				<br />
 		<%	} %>
         <%	if ( EndEntityProfile.isFieldOfType(fielddata[EndEntityProfile.FIELDTYPE], DnComponents.UPN) ) { %>
-        		<c:out value="<%= ejbcawebbean.getText(\"USEONLYUPNDOMAIN\") %>" />
+        		<c:out value="<%= ejbcawebbean.getText(\"ALT_MS_UPN_HELP\") %>" />
         		<br />
         <%	} %>
         <input type="text" name="<%=TEXTFIELD_SUBJECTALTNAME + i%>" size="45" maxlength="1024" 
@@ -1177,7 +1177,7 @@ function fieldSetDisableAsCheckbox(field, boxTarget, boxSource) {
                id="<%=CHECKBOX_MODIFYABLE_STARTTIME%>" />
         <label for="<%=CHECKBOX_MODIFYABLE_STARTTIME%>"><c:out value="<%= ejbcawebbean.getText(\"MODIFYABLE\") %>" /></label></span>
 		<br />
-		(<c:out value="<%= ejbcawebbean.getText(\"DATE_INFO\") %>" /> <c:out value="<%= ejbcawebbean.getDateExample()
+		(<c:out value="<%= ejbcawebbean.getText(\"DATE_HELP\") %>" /> <c:out value="<%= ejbcawebbean.getDateExample()
 		%>" /> <c:out value="<%= ejbcawebbean.getText(\"OR\").toLowerCase() %>" /> <c:out value="<%= ejbcawebbean.getText(\"DAYS\").toLowerCase()
 		%>" />:<c:out value="<%= ejbcawebbean.getText(\"HOURS\").toLowerCase() %>" />:<c:out value="<%= ejbcawebbean.getText(\"MINUTES\").toLowerCase() %>" />)
       </td> 
@@ -1218,7 +1218,7 @@ function fieldSetDisableAsCheckbox(field, boxTarget, boxSource) {
                id="<%=CHECKBOX_MODIFYABLE_ENDTIME%>" />
         <label for="<%=CHECKBOX_MODIFYABLE_ENDTIME%>"><c:out value="<%= ejbcawebbean.getText(\"MODIFYABLE\") %>" /></label></span>
 		<br />
-		(<c:out value="<%= ejbcawebbean.getText(\"DATE_INFO\") %>" /> <c:out value="<%= ejbcawebbean.getDateExample() 
+		(<c:out value="<%= ejbcawebbean.getText(\"DATE_HELP\") %>" /> <c:out value="<%= ejbcawebbean.getDateExample() 
 		%>" /> <c:out value="<%= ejbcawebbean.getText(\"OR\").toLowerCase() %>" /> <c:out value="<%= ejbcawebbean.getText(\"DAYS\").toLowerCase()
 		%>" />:<c:out value="<%= ejbcawebbean.getText(\"HOURS\").toLowerCase() %>" />:<c:out value="<%= ejbcawebbean.getText(\"MINUTES\").toLowerCase() %>" />)
       </td> 

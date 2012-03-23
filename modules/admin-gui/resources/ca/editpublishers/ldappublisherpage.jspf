@@ -48,7 +48,7 @@
          <input type="text" name="<%=EditPublisherJSPHelper.TEXTFIELD_LDAPBASEDN%>" size="45" maxlength="255" title="<%= ejbcawebbean.getText("FORMAT_DN") %>"
                value='<c:out value="<%= ldappublisher.getBaseDN() %>"/>'> 
          <br />
-         <%= ejbcawebbean.getText("BASEDNDESCR") %>
+         <%= ejbcawebbean.getText("BASEDN_HELP") %>
       </td>
     </tr>
 
@@ -326,6 +326,6 @@
             <%}%>
          </select>         
          <br />
-         <%= ejbcawebbean.getText("DCOCSHOULDBEDEFINED") %>
+         <%= ejbcawebbean.getText("USEFIELDSINDN_HELP") %>
       </td>
     </tr>
