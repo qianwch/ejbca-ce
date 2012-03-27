@@ -417,7 +417,7 @@ function confirmrepublish(){
 		 <td align="right" width="<%=columnwidth%>"><%= ejbcawebbean.getText("CERT_VALIDTO") %></td>
 		 <td><%= ejbcawebbean.formatAsISO8601(certificatedata.getValidTo()) %></td>
        </tr>
-       <tr id="Row<%=(row++)%2%>">
+       <tr id="Row<%=(row++)%2%>" class="title">
 		 <td align="right" width="<%=columnwidth%>"><strong><%= ejbcawebbean.getText("CERT_SUBJECTDN") %></strong></td>
 		 <td><strong class="dn"><%= certificatedata.getSubjectDN() %></strong></td>
        </tr>
@@ -450,7 +450,7 @@ function confirmrepublish(){
 	            } %>
          </td>
        </tr>
-       <tr id="Row<%=(row++)%2%>">
+       <tr id="Row<%=(row++)%2%>" class="title">
 		 <td align="right" width="<%=columnwidth%>"><strong><%= ejbcawebbean.getText("EXT_ABBR_BASICCONSTRAINTS") %></strong></td>
 		 <td><strong><%= certificatedata.getBasicConstraints(ejbcawebbean.getText("EXT_UNUSED"), ejbcawebbean.getText("EXT_PKIX_BC_CANOLIMIT"), ejbcawebbean.getText("EXT_PKIX_BC_ENDENTITY"), ejbcawebbean.getText("EXT_PKIX_BC_CAPATHLENGTH")) %></strong>
          </td>

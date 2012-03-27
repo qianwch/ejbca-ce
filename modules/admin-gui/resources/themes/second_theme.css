@@ -401,6 +401,17 @@ table.view tr:last-child td {
 	border-bottom: 3px solid #CCCCCC;
 	color: #000;
 }
+/* Titles */
+table.view tr.title td {
+	background-color: #F2F2F2;
+	/* Color: rgba(229,229,229,1) = #E5E5E5 */
+	background-image: -moz-linear-gradient(top, rgba(229,229,229,1) 0%, rgba(229,229,229,0) 100%);		/* FF3.6+ */
+	background-image: -webkit-linear-gradient(top, rgba(229,229,229,1) 0%,rgba(229,229,229,0) 100%);	/* Chrome10+,Safari5.1+ */
+	background-image: -o-linear-gradient(top, rgba(229,229,229,1) 0%,rgba(229,229,229,0) 100%);			/* Opera 11.10+ */
+	background-image: -ms-linear-gradient(top, rgba(229,229,229,1) 0%,rgba(229,229,229,0) 100%);		/* IE10+ */
+	background-image: linear-gradient(top, rgba(229,229,229,1) 0%,rgba(229,229,229,0) 100%);			/* W3C */
+	color: #000;
+}
 
 /* --- Forms: Edit/Action/View */		/* KEEP IT HERE */
 table.view table,
@@ -822,6 +833,14 @@ body.popup {
 }
 .popup#editendentity table.edit tr td:last-child {
 	text-align: center;
+}
+
+/* --- Popup: View Certificate */
+.popup#viewcertificate table.view tr.title td {			/* Set Normal size */
+	font-size: 1.0em;
+}
+.popup#viewcertificate table.view tr:first-child td {	/* Rollback Popup Title size */
+	font-size: 1.2em;
 }
 
 /* --- Popup: View History */
