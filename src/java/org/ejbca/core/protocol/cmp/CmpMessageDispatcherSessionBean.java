@@ -110,9 +110,9 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
 	 * @throws IOException 
 	 */
 	@TransactionAttribute(TransactionAttributeType.REQUIRED)
-	public ResponseMessage dispatch(AuthenticationToken admin, byte[] ba) throws IOException {
+	public ResponseMessage dispatch(final AuthenticationToken admin, final byte[] ba) throws IOException {
 		//DERObject derObject = new LimitLengthASN1Reader(new ByteArrayInputStream(ba), ba.length).readObject();
-	    DERObject derObject = getDERObject(ba);
+		final     DERObject derObject = getDERObject(ba);
 		return dispatch(admin, derObject, false);
 	}
 
@@ -121,7 +121,7 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
 	 * @param message der encoded CMP message
 	 * @return IResponseMessage containing the CMP response message or null if there is no message to send back or some internal error has occurred
 	 */
-	private ResponseMessage dispatch(AuthenticationToken admin, DERObject derObject, boolean authenticated) {
+	private ResponseMessage dispatch(final AuthenticationToken admin, final DERObject derObject, final boolean authenticated) {
 		final PKIMessage req;
 		try {
 			req = PKIMessage.getInstance(derObject);
@@ -135,11 +135,10 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
 			return CmpMessageHelper.createUnprotectedErrorMessage(null, ResponseStatus.FAILURE, FailInfo.BAD_REQUEST, eMsg);
 		}
 		try {
-			PKIHeader header = req.getHeader();
-			PKIBody body = req.getBody();
-			
-			int tagno = body.getTagNo();
+			final PKIBody body = req.getBody();
+			final int tagno = body.getTagNo();
 			if (log.isDebugEnabled()) {
+	            final PKIHeader header = req.getHeader();
 				log.debug("Received CMP message with pvno="+header.getPvno()+", sender="+header.getSender().toString()+", recipient="+header.getRecipient().toString());
 				log.debug("The CMP message is already authenticated: " + authenticated);
 				log.debug("Body is of type: "+tagno);
@@ -162,7 +161,7 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
 				break;
 			case 7:
 			    // Key Update request (kur, Key Update Request)
-			    handler = new CrmfKeyUpdateHandler(admin, caSession, certificateProfileSession, endEntityAccessSession, endEntityProfileSession, signSession, certificateStoreSession, authSession, authenticationProviderSession, userAdminSession);
+                handler = new CrmfKeyUpdateHandler(admin, caSession, certificateProfileSession, endEntityAccessSession, endEntityProfileSession, signSession, certificateStoreSession, authSession, authenticationProviderSession, userAdminSession);
 			    cmpMessage = new CrmfRequestMessage(req, CmpConfiguration.getDefaultCA(), CmpConfiguration.getAllowRAVerifyPOPO(), CmpConfiguration.getExtractUsernameComponent());
 			    break;
 			case 19:
@@ -190,10 +189,10 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
                     }
                     try {
                         final DEREncodable nested = nestedMessage.getPKIMessage().getBody().getNested();
-                        PKIMessages nestedMessages = PKIMessages.getInstance(nested);
-                        org.bouncycastle.asn1.cmp.PKIMessage[] pkiMessages = nestedMessages.toPKIMessageArray();
+                        final PKIMessages nestedMessages = PKIMessages.getInstance(nested);
+                        final org.bouncycastle.asn1.cmp.PKIMessage[] pkiMessages = nestedMessages.toPKIMessageArray();
                         
-                        DERObject msgDerObject = getDERObject(pkiMessages[0].getDERObject().getDEREncoded());
+                        final DERObject msgDerObject = getDERObject(pkiMessages[0].getDERObject().getDEREncoded());
                         return dispatch(admin, msgDerObject, true);
                       
                         //return dispatch(admin, pkiMessages[0].getDERObject().getDEREncoded());
@@ -237,7 +236,7 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
 	}
 	
 	private DERObject getDERObject(byte[] ba) throws IOException {
-	       DERObject derObject = new LimitLengthASN1Reader(new ByteArrayInputStream(ba), ba.length).readObject();
+	       final DERObject derObject = new LimitLengthASN1Reader(new ByteArrayInputStream(ba), ba.length).readObject();
 	       return derObject;
 	}
 }

@@ -45,7 +45,7 @@ public class UserDataFiller {
      * @param profile user associated profile.
      * @return update user.
      */
-    public static EndEntityInformation fillUserDataWithDefaultValues(EndEntityInformation userData, EndEntityProfile profile) {
+    public static EndEntityInformation fillUserDataWithDefaultValues(final EndEntityInformation userData, final EndEntityProfile profile) {
 
     	
     	if (StringUtils.isEmpty(userData.getUsername())) {
@@ -53,12 +53,12 @@ public class UserDataFiller {
         }
     	if (userData.getSendNotification()==false) {
     		if(StringUtils.isNotEmpty(profile.getValue(EndEntityProfile.SENDNOTIFICATION, 0))) {
-    			Boolean isSendNotification = new Boolean(profile.getValue(EndEntityProfile.SENDNOTIFICATION, 0));
+    		    final Boolean isSendNotification = new Boolean(profile.getValue(EndEntityProfile.SENDNOTIFICATION, 0));
     			userData.setSendNotification(isSendNotification.booleanValue());    			
     		}
         }
     	if (StringUtils.isEmpty(userData.getEmail())) {
-			String email = profile.getValue(EndEntityProfile.EMAIL, 0);
+    	    final String email = profile.getValue(EndEntityProfile.EMAIL, 0);
 			if (StringUtils.isNotEmpty(email) && email.indexOf("@") > 0) {
 				userData.setEmail(email);
 			}
