@@ -261,7 +261,7 @@ public class RSASignSessionBean implements SignSessionLocal, SignSessionRemote {
                     } else {
 
                         // Issue the certificate from the request
-                        ret = certificateCreateSession.createCertificate(admin, data, req, responseClass);
+                        ret = certificateCreateSession.createCertificate(admin, data, ca, req, responseClass);
                         postCreateCertificate(admin, data, ca, ret.getCertificate());
                     }
                 } catch (ObjectNotFoundException oe) {
