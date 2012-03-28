@@ -468,6 +468,12 @@ table.results tbody tr:focus,
 table.results tbody tr:active {
 	background-color: #FFB !important;
 }
+table.results tbody tr td {
+	vertical-align: middle;
+}
+table.results tbody tr td a {
+	white-space: nowrap;
+}
 
 
 /*--------------------------------------------------------------------------*/
