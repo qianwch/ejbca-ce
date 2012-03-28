@@ -21,7 +21,6 @@ import java.io.Serializable;
 import java.util.Locale;
 import java.util.Properties;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.cesecore.config.CesecoreConfiguration;
 
@@ -90,16 +89,16 @@ public class InternalResources implements Serializable {
 
             primaryStream = InternalResources.class.getResourceAsStream(resLocation + primaryLanguage + ".properties");
             if (primaryStream == null) {
-            	try {
-            		primaryStream = new FileInputStream(resLocation + primaryLanguage + ".properties");
+                try {
+                    primaryStream = new FileInputStream(resLocation + primaryLanguage + ".properties");
                 } catch (FileNotFoundException e) {
                     log.error("Localization files not found", e);
                 }
             }
             secondaryStream = InternalResources.class.getResourceAsStream(resLocation + secondaryLanguage + ".properties");
             if (secondaryStream == null) {
-            	try {
-            		secondaryStream = new FileInputStream(resLocation + secondaryLanguage + ".properties");
+                try {
+                    secondaryStream = new FileInputStream(resLocation + secondaryLanguage + ".properties");
                 } catch (FileNotFoundException e) {
                     log.error("Localization files not found", e);
                 }
@@ -162,10 +161,10 @@ public class InternalResources implements Serializable {
      *            and the resource file have "TEST = messages is {0}" will
      *            result in the string "message is hi".
      * 
-     * @return The message as a String, trimmed for whitespace
+     * @return The message as a String, not trimmed for whitespace
      */
     public String getLocalizedMessage(final String key, final Object... params) {
-        return StringUtils.trim(getLocalizedMessageCs(key, params).toString());
+        return getLocalizedMessageCs(key, params).toString();
     }
 
     /**
