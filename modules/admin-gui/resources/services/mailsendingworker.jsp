@@ -9,7 +9,7 @@
 		                         onchange="checkUseEndUserNotification()"/>
 		<h:outputLabel for="certCheckSendUserNotification" value="#{web.text.USE}" />
 		<f:verbatim>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</f:verbatim>
-		<h:outputText value="#{web.text.SENDNOTIFICATIONTOENDUSER_HELP}"/>
+		<h:outputText styleClass="help" value="#{web.text.SENDNOTIFICATIONTOENDUSER_HELP}"/>
 	</h:panelGroup>
 
 	<h:panelGroup>
@@ -24,8 +24,9 @@
 	</h:panelGroup>
 	<h:panelGroup>
 		<h:inputTextarea id="certCheckEndUserMessageTextArea" value="#{editService.notifyingType.endUserMessage}" rows="8" cols="45" />
-		<f:verbatim><br/></f:verbatim>
+		<f:verbatim><p class="help"></f:verbatim>
 		<h:outputText value="#{web.text.ENDUSERMESSAGE_HELP}"/>
+		<f:verbatim></p></f:verbatim>
 	</h:panelGroup>
 
 	<h:panelGroup>
@@ -36,7 +37,7 @@
 		                         onchange="checkUseAdminNotification()"/>
 		<h:outputLabel for="certCheckSendAdminNotification" value="#{web.text.USE}" />
 		<f:verbatim>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</f:verbatim>
-		<h:outputText value="#{web.text.SENDNOTIFICATIONTOADMIN_HELP}"/>
+		<h:outputText styleClass="help" value="#{web.text.SENDNOTIFICATIONTOADMIN_HELP}"/>
 	</h:panelGroup>
 
 	<h:panelGroup>
@@ -51,8 +52,9 @@
 	</h:panelGroup>
 	<h:panelGroup>
 		<h:inputTextarea id="certCheckAdminMessageTextArea" value="#{editService.notifyingType.adminMessage}" rows="8" cols="45" />
-		<f:verbatim><br/></f:verbatim>
+		<f:verbatim><p class="help"></f:verbatim>
 	    <h:outputText value="#{web.text.ADMINMESSAGE_HELP}"/>
+		<f:verbatim></p></f:verbatim>
 		<f:verbatim>
 <script type="text/javascript">
 <!--  

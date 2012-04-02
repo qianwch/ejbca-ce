@@ -278,6 +278,26 @@ form table fieldset {
 	background-color: rgba(0,0,0,.02);
 }
 
+/* --- Forms: Help */
+table .help {
+/*	display: none;		/* Hide all in-line help */
+	line-height: 1.40em;
+	white-space: normal;
+/*	font-size: .9em;	/* Smaller font size */
+	color: #606060;		/* Keep it, for old web browsers */
+	color: rgba(0,0,0,.6);
+}
+table p.help {
+	margin: .2em .1em;
+}
+table span.help {
+}
+/* Add End-Entity */
+table#addendentity .help {
+	font-size: .8em;
+}
+
+
 /* --- Forms: List/Actions */
 table.list,
 table.actions {
@@ -723,12 +743,6 @@ table#config tr td {
 }
 table#config tr td:first-child {
 	vertical-align: top;
-}
-table#config p.help {
-	margin: .1em .1em;
-/*	font-size: .9em;	/**/
-	color: #444;		/* Keep it, for old web browsers */
-	color: rgba(0,0,0,.75);
 }
 
 
