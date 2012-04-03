@@ -186,7 +186,9 @@
         <p class="help"><c:out value="<%= ejbcawebbean.getText(\"CASTATUSONHOMEPAGE_HELP\") %>" /></p>
       </td>
       <td width="51%" valign="top"> 
-        <input name="<%= CHECKBOX_CASTATUSFIRSTPAGE %>" type="checkbox" value="<%=CHECKBOX_VALUE%>" <%=dup.getFrontpageCaStatus() ? "checked=\"checked\"" : ""%>/>
+        <input name="<%= CHECKBOX_CASTATUSFIRSTPAGE %>" type="checkbox" value="<%=CHECKBOX_VALUE%>" <%=dup.getFrontpageCaStatus() ? "checked=\"checked\"" : ""%>
+               id="<%=CHECKBOX_CASTATUSFIRSTPAGE%>" />
+        <label for="<%=CHECKBOX_CASTATUSFIRSTPAGE%>"><c:out value="<%= ejbcawebbean.getText(\"SHOW\") %>" /></label>
       </td>
     </tr>
     <tr  id="Row0"> 
@@ -195,7 +197,9 @@
         <p class="help"><c:out value="<%= ejbcawebbean.getText(\"PUBLISHERQUEUESTATUSON_HELP\") %>" /></p>
       </td>
       <td width="51%" valign="top"> 
-        <input name="<%= CHECKBOX_PUBQSTATUSFIRSTPAGE %>" type="checkbox" value="<%=CHECKBOX_VALUE%>" <%=dup.getFrontpagePublisherQueueStatus() ? "checked=\"checked\"" : ""%>/>
+        <input name="<%= CHECKBOX_PUBQSTATUSFIRSTPAGE %>" type="checkbox" value="<%=CHECKBOX_VALUE%>" <%=dup.getFrontpagePublisherQueueStatus() ? "checked=\"checked\"" : ""%>
+               id="<%=CHECKBOX_PUBQSTATUSFIRSTPAGE%>" />
+        <label for="<%=CHECKBOX_PUBQSTATUSFIRSTPAGE%>"><c:out value="<%= ejbcawebbean.getText(\"SHOW\") %>" /></label>
       </td>
     </tr>
 

@@ -95,7 +95,7 @@ function checkuseautoenroll(){
       </td>
     </tr>
 
-<!-- /* Wait for implementation.
+<%-- /* Wait for implementation.
     <tr id="Row1"> 
       <td width="49%" valign="top"> 
         <h3>Enable Authenticated Users Only</h3>
@@ -104,10 +104,12 @@ function checkuseautoenroll(){
       <td width="51%" valign="top"> 
         <input type="checkbox" name="<%=CHECKBOX_ENABLEAUTHENTICATEDUSERSONLY%>" value="<%=CHECKBOX_VALUE %>" 
                                                                                           <% if(gc.getEnableAuthenticatedUsersOnly())
-                                                                                                out.write(" CHECKED "); %>> 
+                                                                                                out.write(" CHECKED "); %>
+               id="<%=CHECKBOX_ENABLEAUTHENTICATEDUSERSONLY%>" />
+        <label for="<%=CHECKBOX_ENABLEAUTHENTICATEDUSERSONLY%>"><c:out value="<%= ejbcawebbean.getText(\"ACTIVATE\") %>" /></label>
       </td>
     </tr>
--->
+--%>
 
     <tr id="Row1"> 
       <td width="49%" valign="top"> 
@@ -117,7 +119,9 @@ function checkuseautoenroll(){
       <td width="51%" valign="top"> 
         <input type="checkbox" name="<%=CHECKBOX_ENABLEEEPROFILELIMITATIONS%>" value="<%=CHECKBOX_VALUE %>" 
                                                                                           <% if(gc.getEnableEndEntityProfileLimitations())
-                                                                                                out.write(" CHECKED "); %>> 
+                                                                                                out.write(" CHECKED "); %>
+               id="<%=CHECKBOX_ENABLEEEPROFILELIMITATIONS%>" />
+        <label for="<%=CHECKBOX_ENABLEEEPROFILELIMITATIONS%>"><c:out value="<%= ejbcawebbean.getText(\"ACTIVATE\") %>" /></label>
       </td>
     </tr>
 
@@ -131,7 +135,9 @@ function checkuseautoenroll(){
       <td width="51%" valign="top"> 
         <input type="checkbox" name="<%=CHECKBOX_ENABLEKEYRECOVERY%>" value="<%=CHECKBOX_VALUE %>" 
                                                                                           <% if(gc.getEnableKeyRecovery())
-                                                                                                out.write(" CHECKED "); %>> 
+                                                                                                out.write(" CHECKED "); %>
+               id="<%=CHECKBOX_ENABLEKEYRECOVERY%>" />
+        <label for="<%=CHECKBOX_ENABLEKEYRECOVERY%>"><c:out value="<%= ejbcawebbean.getText(\"ACTIVATE\") %>" /></label>
       </td>
     </tr>
 
@@ -143,26 +149,29 @@ function checkuseautoenroll(){
       <td width="51%" valign="top"> 
         <input type="checkbox" name="<%=CHECKBOX_ISSUEHARDWARETOKENS%>" value="<%=CHECKBOX_VALUE %>" 
                                                                                           <% if(gc.getIssueHardwareTokens())
-                                                                                                out.write(" CHECKED "); %>> 
+                                                                                                out.write(" CHECKED "); %>
+               id="<%=CHECKBOX_ISSUEHARDWARETOKENS%>" />
+        <label for="<%=CHECKBOX_ISSUEHARDWARETOKENS%>"><c:out value="<%= ejbcawebbean.getText(\"ACTIVATE\") %>" /></label>
       </td>
     </tr>
-
-    <!--  <tr id="Row1"> 
+    <% int currentval = 0; %>
+<%--
+    <tr id="Row1"> 
       <td width="49%" valign="top"> 
         <h3><c:out value="<%= ejbcawebbean.getText(\"REQUIREAPPROVALTOVIEWPUK\") %>"/></h3>
         <p class="help"><c:out value="<%= ejbcawebbean.getText(\"REQUIREAPPROVALTOVIEWPUK_HELP\") %>"/></p>
       </td>
       <td width="51%" valign="top"> 
         <select name="<%= LIST_VIEWPUKREQUIREDAPPROVALS %>">
-          <% int currentval = gc.getNumberOfApprovalsToViewPUK();
+          <% currentval = gc.getNumberOfApprovalsToViewPUK();
              for(int i = 0; i < 5; i++){
           %>   <option <% if(currentval == i){ %> selected <% } %>
                   value='<%= i%>'><%= i %></option>
           <% } %>
         </select>
       </td>
-    </tr> -->
-
+    </tr>
+--%>
     <tr id="Row1"> 
       <td width="49%" valign="top"> 
         <h3><c:out value="<%= ejbcawebbean.getText(\"HARDTOKENENCRYPTCA\") %>"/></h3>
@@ -188,10 +197,11 @@ function checkuseautoenroll(){
         <p class="help"><c:out value="<%= ejbcawebbean.getText(\"USEAPPROVALNOTIFICATIONS_HELP\") %>"/></p>
       </td>
       <td width="51%" valign="top"> 
-      <input type="checkbox" name="<%=CHECKBOX_APPROVALUSEEMAILNOTIFICATIONS%>" onchange="checkuseapprovalnotifications()" value="<%=CHECKBOX_VALUE %>" 
+        <input type="checkbox" name="<%=CHECKBOX_APPROVALUSEEMAILNOTIFICATIONS%>" onchange="checkuseapprovalnotifications()" value="<%=CHECKBOX_VALUE %>" 
                                                                                           <% if(gc.getUseApprovalNotifications())
-                                                                                                out.write(" CHECKED "); %>> 
- 
+                                                                                                out.write(" CHECKED "); %>
+               id="<%=CHECKBOX_APPROVALUSEEMAILNOTIFICATIONS%>" />
+        <label for="<%=CHECKBOX_APPROVALUSEEMAILNOTIFICATIONS%>"><c:out value="<%= ejbcawebbean.getText(\"ACTIVATE\") %>" /></label>
       </td>
     </tr> 
     <tr id="Row0"> 
@@ -221,8 +231,10 @@ function checkuseautoenroll(){
         <p class="help"><c:out value="<%= ejbcawebbean.getText(\"AUTOENROLLUSE_HELP\") %>"/></p>
       </td>
       <td width="51%" valign="top"> 
-      <input type="checkbox" name="<%=CHECKBOX_AUTOENROLL_USE%>" onchange="checkuseautoenroll()" value="<%=CHECKBOX_VALUE %>" 
-		<% if(gc.getAutoEnrollUse()) out.write(" CHECKED "); %>> 
+        <input type="checkbox" name="<%=CHECKBOX_AUTOENROLL_USE%>" onchange="checkuseautoenroll()" value="<%=CHECKBOX_VALUE %>" 
+	      <% if(gc.getAutoEnrollUse()) out.write(" CHECKED "); %>
+		       id="<%=CHECKBOX_AUTOENROLL_USE%>" />
+        <label for="<%=CHECKBOX_AUTOENROLL_USE%>"><c:out value="<%= ejbcawebbean.getText(\"ACTIVATE\") %>" /></label>
       </td>
     </tr> 
     <tr id="Row1"> 
@@ -248,8 +260,10 @@ function checkuseautoenroll(){
         <p class="help"><c:out value="<%= ejbcawebbean.getText(\"AUTOENROLLSSLCONNECTION_HELP\") %>"/></p>
       </td>
       <td width="51%" valign="top"> 
-      <input type="checkbox" name="<%=CHECKBOX_AUTOENROLL_SSLCONNECTION%>" value="<%=CHECKBOX_VALUE %>" 
-		<% if(gc.getAutoEnrollSSLConnection()) out.write(" CHECKED "); %> <% if(!gc.getAutoEnrollUse()){ out.write(" disabled "); }%>> 
+        <input type="checkbox" name="<%=CHECKBOX_AUTOENROLL_SSLCONNECTION%>" value="<%=CHECKBOX_VALUE %>" 
+          <% if(gc.getAutoEnrollSSLConnection()) out.write(" CHECKED "); %> <% if(!gc.getAutoEnrollUse()){ out.write(" disabled "); }%>
+		     id="<%=CHECKBOX_AUTOENROLL_SSLCONNECTION%>" />
+        <label for="<%=CHECKBOX_AUTOENROLL_SSLCONNECTION%>"><c:out value="<%= ejbcawebbean.getText(\"USE\") %>" /></label>
       </td>
     </tr> 
     <tr id="Row1"> 
@@ -316,8 +330,7 @@ function checkuseautoenroll(){
           </select><br/>
           <input type="submit" name="<%=BUTTON_NODES_REMOVE %>" value="<c:out value="<%= ejbcawebbean.getText(\"REMOVENODESINCLUSTER\") %>"/>" %><br/>
           <br/>
-          <c:out value="<%= ejbcawebbean.getText(\"ADDNODEINCLUSTER\") %>"/> <input type="text" name="<%=TEXTFIELD_NODES_ADD %>" title="<%= ejbcawebbean.getText("FORMAT_HOSTNAME") %>"> <input type="submit" name="<%= BUTTON_NODES_ADD %>" value="<c:out value="<%= ejbcawebbean.getText(\"ADD\") %>"/>" %>
-        
+          <c:out value="<%= ejbcawebbean.getText(\"ADDNODEINCLUSTER\") %>"/> <input type="text" name="<%=TEXTFIELD_NODES_ADD %>" title="<%= ejbcawebbean.getText("FORMAT_HOSTNAME") %>" /> <input type="submit" name="<%= BUTTON_NODES_ADD %>" value="<c:out value="<%= ejbcawebbean.getText(\"ADD\") %>"/>" />
       </td>
     </tr>
 
@@ -327,8 +340,7 @@ function checkuseautoenroll(){
         <p class="help"><c:out value="<%= ejbcawebbean.getText(\"CLEARALLCACHES_HELP\") %>"/></p>
       </td>
       <td width="51%" valign="top">
-          <input type="submit" name="<%= BUTTON_CLEAR_ALL_CACHES %>" value="<c:out value="<%= ejbcawebbean.getText(\"CLEARALLCACHES\") %>"/>" />
-        
+        <input type="submit" name="<%= BUTTON_CLEAR_ALL_CACHES %>" value="<c:out value="<%= ejbcawebbean.getText(\"CLEARALLCACHES\") %>"/>" />
       </td>
     </tr>
 
@@ -342,6 +354,8 @@ function checkuseautoenroll(){
       <td width="51%" valign="top">
         <input type="checkbox" name="<%=CHECKBOX_ENABLECOMMANDLINEINTERFACE%>" value="<%=CHECKBOX_VALUE %>"
                                                                                           <% if(gc.getEnableCommandLineInterface())
-                                                                                                out.write(" CHECKED "); %>>
+                                                                                                out.write(" CHECKED "); %>
+               id="<%=CHECKBOX_ENABLECOMMANDLINEINTERFACE%>" />
+        <label for="<%=CHECKBOX_ENABLECOMMANDLINEINTERFACE%>"><c:out value="<%= ejbcawebbean.getText(\"ACTIVATE\") %>" /></label>
       </td>
     </tr>
