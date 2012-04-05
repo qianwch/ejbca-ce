@@ -938,11 +938,11 @@ public class CertTools {
         if (provider == null) {
             prov = "BC";
         }
+        if ("BC".equals(prov)) {
+            CryptoProviderTools.installBCProviderIfNotAvailable();
+        }
         CertificateFactory ret = certificateFactoryCache.get(prov);
         if (ret == null) {
-            if (StringUtils.equals(prov, "BC")) {
-                CryptoProviderTools.installBCProviderIfNotAvailable();
-            }
             try {
                 ret = CertificateFactory.getInstance("X.509", prov);
                 certificateFactoryCache.put(prov, ret);
