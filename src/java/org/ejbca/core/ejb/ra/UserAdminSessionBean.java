@@ -181,7 +181,9 @@ public class UserAdminSessionBean implements UserAdminSessionLocal, UserAdminSes
         return returnval;
     }
 
-    /** Checks CA authorization and logs an official error if not and throws and AuthorizationDeniedException */
+    /** Checks CA authorization and logs an official error if not and throws and AuthorizationDeniedException.
+     * Does not log access control granted if granted
+     */
     private void assertAuthorizedToCA(final AuthenticationToken admin, final int caid) throws AuthorizationDeniedException {
         if (!authorizedToCA(admin, caid)) {
             final String msg = intres.getLocalizedMessage("ra.errorauthca", Integer.valueOf(caid), admin.toString());
@@ -194,22 +196,19 @@ public class UserAdminSessionBean implements UserAdminSessionLocal, UserAdminSes
     }
 
     private boolean authorizedToEndEntityProfile(final AuthenticationToken admin, final int profileid, final String rights) {
-        boolean returnval = false;
+        final boolean returnval;
         if (profileid == SecConst.EMPTY_ENDENTITYPROFILE
                 && (rights.equals(AccessRulesConstants.CREATE_RIGHTS) || rights.equals(AccessRulesConstants.EDIT_RIGHTS))) {
-            if (authorizationSession.isAuthorizedNoLogging(admin, "/super_administrator")) {
-                returnval = true;
-            } else {
-                log.info("Admin " + admin.toString() + " was not authorized to resource /super_administrator");
-            }
+            returnval = authorizationSession.isAuthorized(admin, "/super_administrator");
         } else {
-            returnval = authorizationSession.isAuthorizedNoLogging(admin, AccessRulesConstants.ENDENTITYPROFILEPREFIX + profileid + rights)
-                    && authorizationSession.isAuthorizedNoLogging(admin, AccessRulesConstants.REGULAR_RAFUNCTIONALITY + rights);
+            returnval = authorizationSession.isAuthorized(admin, AccessRulesConstants.ENDENTITYPROFILEPREFIX + profileid + rights, AccessRulesConstants.REGULAR_RAFUNCTIONALITY + rights);
         }
         return returnval;
     }
 
-    /** Checks EEP authorization and logs an official error if not and throws and AuthorizationDeniedException */
+    /** Checks EEP authorization and logs an official error if not and throws and AuthorizationDeniedException. 
+     * Logs the access control granted if granted. 
+     */
     private void assertAuthorizedToEndEntityProfile(final AuthenticationToken admin, final int endEntityProfileId, final String accessRule,
             final int caId) throws AuthorizationDeniedException {
         if (!authorizedToEndEntityProfile(admin, endEntityProfileId, accessRule)) {
