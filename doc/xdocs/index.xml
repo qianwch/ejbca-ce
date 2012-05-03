@@ -41,7 +41,9 @@ new TWTR.Widget({
 </div>
 
   <note>
-  <p><strong>2012-03-14: EJBCA 4.0.10 is now out!</strong>
+  <p>
+  <strong>2012-03-14: EJBCA 4.0.10 is now out!</strong>
+  <br/><strong>2012-05-03: Cert-cvc 1.3.0 is now out!</strong>
   <br/>Visit the <a href="download.html">download</a> section. There is also a LiveCD!
   </p>
   </note>
