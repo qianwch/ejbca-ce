@@ -332,7 +332,7 @@ public class EndEntityProfileSessionBean implements EndEntityProfileSessionLocal
     @Override
     public EndEntityProfile getEndEntityProfileNoClone(final int id) {
         if (LOG.isTraceEnabled()) {
-            LOG.trace(">getEndEntityProfileNoClon(" + id + ")");
+            LOG.trace(">getEndEntityProfileNoClone(" + id + ")");
         }
         EndEntityProfile returnval = null;
         if (id == SecConst.EMPTY_ENDENTITYPROFILE) {
@@ -342,7 +342,7 @@ public class EndEntityProfileSessionBean implements EndEntityProfileSessionLocal
             returnval = profileCache.getProfileCache(entityManager).get(Integer.valueOf(id));
         }
         if (LOG.isTraceEnabled()) {
-            LOG.trace("<getEndEntityProfileNoClon(id): " + (returnval == null ? "null" : "not null"));
+            LOG.trace("<getEndEntityProfileNoClone(id): " + (returnval == null ? "null" : "not null"));
         }
         return returnval;
     }
