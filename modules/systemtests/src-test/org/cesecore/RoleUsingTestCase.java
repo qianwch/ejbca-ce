@@ -43,10 +43,10 @@ import org.cesecore.roles.management.RoleManagementSessionRemote;
  */
 public abstract class RoleUsingTestCase {
 
-    private RoleInitializationSessionRemote roleInitSession = JndiHelper.getRemoteSession(RoleInitializationSessionRemote.class);
-    private SimpleAuthenticationProviderRemote authenticationProvider = JndiHelper.getRemoteSession(SimpleAuthenticationProviderRemote.class);
-    private RoleManagementSessionRemote roleManagementSession = JndiHelper.getRemoteSession(RoleManagementSessionRemote.class);
-    private RoleAccessSessionRemote roleAccessSessionRemote = JndiHelper.getRemoteSession(RoleAccessSessionRemote.class);
+    private RoleInitializationSessionRemote roleInitSession;
+    private SimpleAuthenticationProviderRemote authenticationProvider;
+    private RoleManagementSessionRemote roleManagementSession;
+    private RoleAccessSessionRemote roleAccessSessionRemote;
 
     private static final AuthenticationToken alwaysAllowAdmin = new TestAlwaysAllowLocalAuthenticationToken(new UsernamePrincipal("RoleUsingTestCase"));
 
@@ -54,6 +54,12 @@ public abstract class RoleUsingTestCase {
     protected AuthenticationToken roleMgmgToken;
 
     public void setUpAuthTokenAndRole(String roleName) throws RoleExistsException, RoleNotFoundException {
+        // Lazy loading of EJBs
+        roleInitSession = JndiHelper.getRemoteSession(RoleInitializationSessionRemote.class);
+        authenticationProvider = JndiHelper.getRemoteSession(SimpleAuthenticationProviderRemote.class);
+        roleManagementSession = JndiHelper.getRemoteSession(RoleManagementSessionRemote.class);
+        roleAccessSessionRemote = JndiHelper.getRemoteSession(RoleAccessSessionRemote.class);
+
         this.roleName = roleName;       
         String commonname = this.getClass().getCanonicalName();
         roleMgmgToken = createAuthenticationToken("C=SE,O=Test,CN=" + commonname);
@@ -77,4 +83,5 @@ public abstract class RoleUsingTestCase {
         principals.add(p);
         return authenticationProvider.authenticate(subject);
     }
+    
 }

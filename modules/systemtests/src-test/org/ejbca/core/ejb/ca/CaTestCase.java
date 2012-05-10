@@ -102,15 +102,15 @@ public abstract class CaTestCase extends RoleUsingTestCase {
 
     private final static Logger log = Logger.getLogger(CaTestCase.class);
 
-    private AccessControlSessionRemote accessControlSession = JndiHelper.getRemoteSession(AccessControlSessionRemote.class);
-    private CAAdminSessionRemote caAdminSession = JndiHelper.getRemoteSession(CAAdminSessionRemote.class);
-    private CaSessionRemote caSession = JndiHelper.getRemoteSession(CaSessionRemote.class);
-    private CaTestSessionRemote caTestSession = JndiHelper.getRemoteSession(CaTestSessionRemote.class);
-    private CertificateStoreSessionRemote certificateStoreSession = JndiHelper.getRemoteSession(CertificateStoreSessionRemote.class);
-    private GlobalConfigurationSessionRemote globalConfigurationSession = JndiHelper.getRemoteSession(GlobalConfigurationSessionRemote.class);  
-    private RoleManagementSessionRemote roleManagementSession = JndiHelper.getRemoteSession(RoleManagementSessionRemote.class);
-    private RoleAccessSessionRemote roleAccessSession = JndiHelper.getRemoteSession(RoleAccessSessionRemote.class);
-    private SimpleAuthenticationProviderRemote simpleAuthenticationProvider = JndiHelper.getRemoteSession(SimpleAuthenticationProviderRemote.class);
+    private AccessControlSessionRemote accessControlSession;
+    private CAAdminSessionRemote caAdminSession;
+    private CaSessionRemote caSession;
+    private CaTestSessionRemote caTestSession;
+    private CertificateStoreSessionRemote certificateStoreSession;
+    private GlobalConfigurationSessionRemote globalConfigurationSession;  
+    private RoleManagementSessionRemote roleManagementSession;
+    private RoleAccessSessionRemote roleAccessSession;
+    private SimpleAuthenticationProviderRemote simpleAuthenticationProvider;
 
     private String roleName;
 
@@ -120,6 +120,17 @@ public abstract class CaTestCase extends RoleUsingTestCase {
     public abstract String getRoleName();
 
     protected void setUp() throws Exception {
+        // Lazy loading of EJBs
+        accessControlSession = JndiHelper.getRemoteSession(AccessControlSessionRemote.class);
+        caAdminSession = JndiHelper.getRemoteSession(CAAdminSessionRemote.class);
+        caSession = JndiHelper.getRemoteSession(CaSessionRemote.class);
+        caTestSession = JndiHelper.getRemoteSession(CaTestSessionRemote.class);
+        certificateStoreSession = JndiHelper.getRemoteSession(CertificateStoreSessionRemote.class);
+        globalConfigurationSession = JndiHelper.getRemoteSession(GlobalConfigurationSessionRemote.class);  
+        roleManagementSession = JndiHelper.getRemoteSession(RoleManagementSessionRemote.class);
+        roleAccessSession = JndiHelper.getRemoteSession(RoleAccessSessionRemote.class);
+        simpleAuthenticationProvider = JndiHelper.getRemoteSession(SimpleAuthenticationProviderRemote.class);
+
         roleName = getRoleName();
         super.setUpAuthTokenAndRole(getRoleName());
         removeTestCA(); // We cant be sure this CA was not left over from
