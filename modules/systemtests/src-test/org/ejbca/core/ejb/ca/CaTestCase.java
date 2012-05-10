@@ -102,16 +102,6 @@ public abstract class CaTestCase extends RoleUsingTestCase {
 
     private final static Logger log = Logger.getLogger(CaTestCase.class);
 
-    private AccessControlSessionRemote accessControlSession;
-    private CAAdminSessionRemote caAdminSession;
-    private CaSessionRemote caSession;
-    private CaTestSessionRemote caTestSession;
-    private CertificateStoreSessionRemote certificateStoreSession;
-    private GlobalConfigurationSessionRemote globalConfigurationSession;  
-    private RoleManagementSessionRemote roleManagementSession;
-    private RoleAccessSessionRemote roleAccessSession;
-    private SimpleAuthenticationProviderRemote simpleAuthenticationProvider;
-
     private String roleName;
 
     private AuthenticationToken internalAdmin = new TestAlwaysAllowLocalAuthenticationToken(new UsernamePrincipal("CaTestCase"));
@@ -120,17 +110,6 @@ public abstract class CaTestCase extends RoleUsingTestCase {
     public abstract String getRoleName();
 
     protected void setUp() throws Exception {
-        // Lazy loading of EJBs
-        accessControlSession = JndiHelper.getRemoteSession(AccessControlSessionRemote.class);
-        caAdminSession = JndiHelper.getRemoteSession(CAAdminSessionRemote.class);
-        caSession = JndiHelper.getRemoteSession(CaSessionRemote.class);
-        caTestSession = JndiHelper.getRemoteSession(CaTestSessionRemote.class);
-        certificateStoreSession = JndiHelper.getRemoteSession(CertificateStoreSessionRemote.class);
-        globalConfigurationSession = JndiHelper.getRemoteSession(GlobalConfigurationSessionRemote.class);  
-        roleManagementSession = JndiHelper.getRemoteSession(RoleManagementSessionRemote.class);
-        roleAccessSession = JndiHelper.getRemoteSession(RoleAccessSessionRemote.class);
-        simpleAuthenticationProvider = JndiHelper.getRemoteSession(SimpleAuthenticationProviderRemote.class);
-
         roleName = getRoleName();
         super.setUpAuthTokenAndRole(getRoleName());
         removeTestCA(); // We cant be sure this CA was not left over from
@@ -138,10 +117,12 @@ public abstract class CaTestCase extends RoleUsingTestCase {
 
         final Set<Principal> principals = new HashSet<Principal>();
         principals.add(new X500Principal("C=SE,O=CaUser,CN=CaUser"));
+        final SimpleAuthenticationProviderRemote simpleAuthenticationProvider = getAuthenticationProviderSession();
         caAdmin = (TestX509CertificateAuthenticationToken) simpleAuthenticationProvider.authenticate(new AuthenticationSubject(principals, null));
         final X509Certificate certificate = caAdmin.getCertificate();
 
-        RoleData role = roleAccessSession.findRole(roleName);
+        final RoleManagementSessionRemote roleManagementSession = getRoleManagementSession();
+        RoleData role = CaTestCase.getRoleAccessSession().findRole(roleName);
         if (role == null) {
             log.error("Role should not be null here.");
             role = roleManagementSession.create(roleMgmgToken, roleName);
@@ -155,15 +136,32 @@ public abstract class CaTestCase extends RoleUsingTestCase {
                 AccessMatchType.TYPE_EQUALCASE, CertTools.getPartFromDN(CertTools.getSubjectDN(certificate), "CN")));
         roleManagementSession.addSubjectsToRole(roleMgmgToken, role, accessUsers);
 
+        final AccessControlSessionRemote accessControlSession = JndiHelper.getRemoteSession(AccessControlSessionRemote.class);
         accessControlSession.forceCacheExpire();
+    }
+
+    private static SimpleAuthenticationProviderRemote getAuthenticationProviderSession() {
+        return JndiHelper.getRemoteSession(SimpleAuthenticationProviderRemote.class);
+    }
+
+    private static RoleManagementSessionRemote getRoleManagementSession() {
+        return JndiHelper.getRemoteSession(RoleManagementSessionRemote.class);
+    }
+
+    private static CaSessionRemote getCaSession() {
+        return JndiHelper.getRemoteSession(CaSessionRemote.class);
+    }
+
+    private static RoleAccessSessionRemote getRoleAccessSession() {
+        return JndiHelper.getRemoteSession(RoleAccessSessionRemote.class);
     }
 
     protected void tearDown() throws Exception {
         super.tearDownRemoveRole();
         removeTestCA();
-        RoleData role = roleAccessSession.findRole(roleName);
+        RoleData role = CaTestCase.getRoleAccessSession().findRole(roleName);
         if (role != null) {
-            roleManagementSession.remove(roleMgmgToken, role);
+            CaTestCase.getRoleManagementSession().remove(roleMgmgToken, role);
         }
     }
 
@@ -254,9 +252,13 @@ public abstract class CaTestCase extends RoleUsingTestCase {
             CryptoTokenAuthenticationFailedException, InvalidAlgorithmException {
         log.trace(">createTestCA");
 
+        final CAAdminSessionRemote caAdminSession = JndiHelper.getRemoteSession(CAAdminSessionRemote.class);
+        final CaSessionRemote caSession = getCaSession();
+        final CertificateStoreSessionRemote certificateStoreSession = JndiHelper.getRemoteSession(CertificateStoreSessionRemote.class);
+
         // Search for requested CA
         try {
-            this.caSession.getCAInfo(internalAdmin, caName);
+            caSession.getCAInfo(internalAdmin, caName);
             return true;
         } catch (CADoesntExistsException e) {
             // Ignore this state, continue instead. This is due to a lack of an exists-method in CaSession
@@ -329,9 +331,9 @@ public abstract class CaTestCase extends RoleUsingTestCase {
                 null // cmpRaAuthSecret
         );
 
-        this.caAdminSession.createCA(internalAdmin, cainfo);
+        caAdminSession.createCA(internalAdmin, cainfo);
 
-        final CAInfo info = this.caSession.getCAInfo(internalAdmin, caName);
+        final CAInfo info = CaTestCase.getCaSession().getCAInfo(internalAdmin, caName);
         final String normalizedDN = CertTools.stringToBCDNString(dn);
         final X509Certificate cert = (X509Certificate) info.getCertificateChain().iterator().next();
         final String normalizedCertDN = CertTools.stringToBCDNString(cert.getSubjectDN().toString());
@@ -343,7 +345,7 @@ public abstract class CaTestCase extends RoleUsingTestCase {
             log.error("Creating CA failed!");
             return false;
         }
-        if (this.certificateStoreSession.findCertificateByFingerprint(CertTools.getFingerprintAsString(cert)) == null) {
+        if (certificateStoreSession.findCertificateByFingerprint(CertTools.getFingerprintAsString(cert)) == null) {
             log.error("CA certificate not available in database!!");
             return false;
         }
@@ -375,7 +377,7 @@ public abstract class CaTestCase extends RoleUsingTestCase {
     public Certificate getTestCACert(String caName) throws CADoesntExistsException, AuthorizationDeniedException {
         Certificate cacert = null;
         final AuthenticationToken admin = new TestAlwaysAllowLocalAuthenticationToken(new UsernamePrincipal("CaTestCase"));
-        CAInfo cainfo = caSession.getCAInfo(admin, getTestCAId(caName));
+        CAInfo cainfo = CaTestCase.getCaSession().getCAInfo(admin, getTestCAId(caName));
         Collection<Certificate> certs = cainfo.getCertificateChain();
         if (certs.size() > 0) {
             Iterator<Certificate> certiter = certs.iterator();
@@ -420,8 +422,8 @@ public abstract class CaTestCase extends RoleUsingTestCase {
      * @throws CADoesntExistsException
      */
     public void removeTestCA(String caName) throws AuthorizationDeniedException {
-        // Search for requested CA
-
+        final CaSessionRemote caSession = CaTestCase.getCaSession();
+        final CaTestSessionRemote caTestSession = JndiHelper.getRemoteSession(CaTestSessionRemote.class);
         try {
             CA ca = caTestSession.getCA(internalAdmin, caName);
             caSession.removeCA(internalAdmin, ca.getCAId());
@@ -482,6 +484,7 @@ public abstract class CaTestCase extends RoleUsingTestCase {
                 ApprovalDataVO approvalData = (ApprovalDataVO) (approvalSession.query(internalAdmin, q, 0, 1, "cAId=" + approvalCAID,
                         "(endEntityProfileId=" + SecConst.EMPTY_ENDENTITYPROFILE + ")").get(0));
                 Approval approval = new Approval("Approved during testing.");
+                final GlobalConfigurationSessionRemote globalConfigurationSession = JndiHelper.getRemoteSession(GlobalConfigurationSessionRemote.class);
                 approvalExecutionSession.approve(approvingAdmin, approvalID, approval, globalConfigurationSession.getCachedGlobalConfiguration());
                 approvalData = (ApprovalDataVO) approvalSession.findApprovalDataVO(internalAdmin, approvalID).iterator().next();
                 Assert.assertEquals(approvalData.getStatus(), ApprovalDataVO.STATUS_EXECUTED);
@@ -495,7 +498,7 @@ public abstract class CaTestCase extends RoleUsingTestCase {
     }
 
     public CAInfo getCAInfo(AuthenticationToken admin, String name) throws CADoesntExistsException, AuthorizationDeniedException {
-        return this.caSession.getCAInfo(admin, name);
+        return CaTestCase.getCaSession().getCAInfo(admin, name);
     }
 
     protected void createTestRSAReverseCa(AuthenticationToken admin) throws CAExistsException, CryptoTokenOfflineException,
@@ -577,6 +580,7 @@ public abstract class CaTestCase extends RoleUsingTestCase {
                 null // cmpRaAuthSecret
         );
 
+        final CAAdminSessionRemote caAdminSession = JndiHelper.getRemoteSession(CAAdminSessionRemote.class);
         caAdminSession.createCA(admin, cainfo);
     }
     
@@ -593,6 +597,6 @@ public abstract class CaTestCase extends RoleUsingTestCase {
         Set<Certificate> credentials = new HashSet<Certificate>();
         credentials.add(getTestCACert());
         AuthenticationSubject subject = new AuthenticationSubject(principals, credentials);
-        return simpleAuthenticationProvider.authenticate(subject);
+        return CaTestCase.getAuthenticationProviderSession().authenticate(subject);
     }
 }
