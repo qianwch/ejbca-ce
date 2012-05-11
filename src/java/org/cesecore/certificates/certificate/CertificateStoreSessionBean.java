@@ -157,10 +157,10 @@ public class CertificateStoreSessionBean implements CertificateStoreSessionRemot
             throw ce;
         }
         final String serialNo = CertTools.getSerialNumberAsString(incert);
-		final String msg = INTRES.getLocalizedMessage("store.storecert", username, data1.getFingerprint(), data1.getSubjectDN(), data1.getIssuerDN(), serialNo);
+		final CharSequence msg = INTRES.getLocalizedMessageCs("store.storecert", username, data1.getFingerprint(), data1.getSubjectDN(), data1.getIssuerDN(), serialNo);
 		Map<String, Object> details = new LinkedHashMap<String, Object>();
 		details.put("msg", msg);
-		final String caId = Integer.valueOf(CertTools.getIssuerDN(incert).hashCode()).toString();
+		final String caId = String.valueOf(CertTools.getIssuerDN(incert).hashCode());
 		logSession.log(EventTypes.CERT_STORED, EventStatus.SUCCESS, ModuleTypes.CERTIFICATE, ServiceTypes.CORE, adminForLogging.toString(), caId, serialNo, username, details);
         if (log.isTraceEnabled()) {
             log.trace("<storeCertificateNoAuth()");
