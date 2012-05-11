@@ -228,11 +228,17 @@ public class RSASignSessionBean implements SignSessionLocal, SignSessionRemote {
         // Get CA that will receive request
         EndEntityInformation data = null;
         CertificateResponseMessage ret = null;
-        CA ca;
+        // Get CA object and make sure it is active
+        // Do not log access control to the CA here, that is logged later on when we use the CA to issue a certificate (if we get that far).
+        final CA ca;
         if (suppliedUserData == null) {
-            ca = getCAFromRequest(admin, req);
+            ca = getCAFromRequest(admin, req, false);
         } else {
-            ca = caSession.getCA(admin, suppliedUserData.getCAId()); // Take the CAId from the supplied userdata, if any
+            ca = caSession.getCANoLog(admin, suppliedUserData.getCAId()); // Take the CAId from the supplied userdata, if any
+        }
+        if (ca.getStatus() != SecConst.CA_ACTIVE) {
+            final String msg = intres.getLocalizedMessage("signsession.canotactive", ca.getSubjectDN());
+            throw new EJBException(msg);
         }
         try {
             // See if we need some key material to decrypt request
@@ -362,7 +368,7 @@ public class RSASignSessionBean implements SignSessionLocal, SignSessionRemote {
             log.trace(">createRequestFailedResponse(IRequestMessage)");
         }
         CertificateResponseMessage ret = null;
-        CA ca = getCAFromRequest(admin, req);
+        CA ca = getCAFromRequest(admin, req, true);
         try {
             CAToken catoken = ca.getCAToken();
             decryptAndVerify(req, ca);
@@ -402,7 +408,7 @@ public class RSASignSessionBean implements SignSessionLocal, SignSessionRemote {
             log.trace(">decryptAndVerifyRequest(IRequestMessage)");
         }
         // Get CA that will receive request
-        CA ca = getCAFromRequest(admin, req);
+        CA ca = getCAFromRequest(admin, req, true);
         try {
             // See if we need some key material to decrypt request
             decryptAndVerify(req, ca);
@@ -460,7 +466,7 @@ public class RSASignSessionBean implements SignSessionLocal, SignSessionRemote {
         }
         ResponseMessage ret = null;
         // Get CA that will receive request
-        CA ca = getCAFromRequest(admin, req);
+        CA ca = getCAFromRequest(admin, req, true);
         try {
             CAToken catoken = ca.getCAToken();
             if (ca.getStatus() != SecConst.CA_ACTIVE) {
@@ -516,7 +522,7 @@ public class RSASignSessionBean implements SignSessionLocal, SignSessionRemote {
 
     /** Help Method that extracts the CA specified in the request. 
      * @throws AuthorizationDeniedException */
-    private CA getCAFromRequest(AuthenticationToken admin, RequestMessage req) throws AuthStatusException, AuthLoginException,
+    private CA getCAFromRequest(final AuthenticationToken admin, final RequestMessage req, final boolean doLog) throws AuthStatusException, AuthLoginException,
             CADoesntExistsException, AuthorizationDeniedException {
         CA ca = null;
         try {
@@ -524,14 +530,18 @@ public class RSASignSessionBean implements SignSessionLocal, SignSessionRemote {
             if (req.getIssuerDN() != null) {
                 String dn = CertificateCreateSessionBean.getCADnFromRequest(req, certificateStoreSession);
                 try {
-                    ca = caSession.getCA(admin, dn.hashCode());
+                    if (doLog) {
+                        ca = caSession.getCA(admin, dn.hashCode());
+                    } else {
+                        ca = caSession.getCANoLog(admin, dn.hashCode());                        
+                    }
                     if (log.isDebugEnabled()) {
                         log.debug("Using CA (from issuerDN) with id: " + ca.getCAId() + " and DN: " + ca.getSubjectDN());
                     }
                 } catch (CADoesntExistsException e) {
                     // We could not find a CA from that DN, so it might not be a CA. Try to get from username instead
                     if (req.getUsername() != null) {
-                        ca = getCAFromUsername(admin, req);
+                        ca = getCAFromUsername(admin, req, doLog);
                         if (log.isDebugEnabled()) {
                             log.debug("Using CA from username: " + req.getUsername());
                         }
@@ -541,7 +551,7 @@ public class RSASignSessionBean implements SignSessionLocal, SignSessionRemote {
                     }
                 }
             } else if (req.getUsername() != null) {
-                ca = getCAFromUsername(admin, req);
+                ca = getCAFromUsername(admin, req, doLog);
                 if (log.isDebugEnabled()) {
                     log.debug("Using CA from username: " + req.getUsername());
                 }
@@ -561,7 +571,7 @@ public class RSASignSessionBean implements SignSessionLocal, SignSessionRemote {
         return ca;
     }
 
-    private CA getCAFromUsername(final AuthenticationToken admin, final RequestMessage req) throws ObjectNotFoundException, AuthStatusException,
+    private CA getCAFromUsername(final AuthenticationToken admin, final RequestMessage req, final boolean doLog) throws ObjectNotFoundException, AuthStatusException,
             AuthLoginException, CADoesntExistsException, AuthorizationDeniedException {
         // See if we can get username and password directly from request
         final String username = req.getUsername();
@@ -570,7 +580,12 @@ public class RSASignSessionBean implements SignSessionLocal, SignSessionRemote {
         if (data == null) {
             throw new ObjectNotFoundException("Could not find username " + username);
         }
-        final CA ca = caSession.getCA(admin, data.getCaId());
+        final CA ca;
+        if (doLog) {
+            ca = caSession.getCA(admin, data.getCaId());
+        } else {
+            ca = caSession.getCANoLog(admin, data.getCaId());
+        }
         if (log.isDebugEnabled()) {
             log.debug("Using CA (from username) with id: " + ca.getCAId() + " and DN: " + ca.getSubjectDN());
         }
