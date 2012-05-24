@@ -369,13 +369,13 @@ public class UserAdminSessionBean implements UserAdminSessionLocal, UserAdminSes
                     }
                 }
                 final Map<String, Object> details = new LinkedHashMap<String, Object>();
-                details.put("msg", intres.getLocalizedMessageCs("ra.addedentity", username));
+                details.put("msg", intres.getLocalizedMessageCs("ra.addedentity", username).toString());
                 auditSession.log(EjbcaEventTypes.RA_ADDENDENTITY, EventStatus.SUCCESS, EjbcaModuleTypes.RA, ServiceTypes.CORE, admin.toString(),
                         String.valueOf(caid), null, username, details);
             } catch (PersistenceException e) {
                 // PersistenceException could also be caused by various database problems.
                 final Map<String, Object> details = new LinkedHashMap<String, Object>();
-                details.put("msg", intres.getLocalizedMessageCs("ra.errorentityexist", username));
+                details.put("msg", intres.getLocalizedMessageCs("ra.errorentityexist", username).toString());
                 details.put("error", e.getMessage());
                 auditSession.log(EjbcaEventTypes.RA_ADDENDENTITY, EventStatus.FAILURE, EjbcaModuleTypes.RA, ServiceTypes.CORE, admin.toString(),
                         String.valueOf(caid), null, username, details);
@@ -552,7 +552,7 @@ public class UserAdminSessionBean implements UserAdminSessionLocal, UserAdminSes
                 }
             } catch (UserDoesntFullfillEndEntityProfile e) {
                 final Map<String, Object> details = new LinkedHashMap<String, Object>();
-                details.put("msg", intres.getLocalizedMessageCs("ra.errorfullfillprofile", Integer.valueOf(endEntityProfileId), dn, e.getMessage()));
+                details.put("msg", intres.getLocalizedMessageCs("ra.errorfullfillprofile", Integer.valueOf(endEntityProfileId), dn, e.getMessage()).toString());
                 auditSession.log(EjbcaEventTypes.RA_EDITENDENTITY, EventStatus.FAILURE, EjbcaModuleTypes.RA, ServiceTypes.CORE, admin.toString(),
                         String.valueOf(caid), null, username, details);
                 throw e;
