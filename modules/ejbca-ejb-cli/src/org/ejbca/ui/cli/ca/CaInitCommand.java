@@ -137,23 +137,23 @@ public class CaInitCommand extends BaseCaAdminCommand {
         }
             
         try {             	
-    		// Get and remove optional switches
-    		List<String> argsList = CliTools.getAsModifyableList(args);
-    		int profileInd = argsList.indexOf("-certprofile");
-    		String profileName = null;
-    		if (profileInd > -1) {
-    			profileName = argsList.get(profileInd+1);
-    			argsList.remove(profileName);
-    			argsList.remove("-certprofile");
-    		}
-    		int superAdminCNInd = argsList.indexOf("-superadmincn");
-    		String superAdminCN = null;
-    		if (superAdminCNInd > -1) {
-    			superAdminCN = argsList.get(superAdminCNInd+1);
-    			argsList.remove(superAdminCN);
-    			argsList.remove("-superadmincn");
-    		}
-    		int typeIndex = argsList.indexOf("-type");
+         // Get and remove optional switches
+            List<String> argsList = CliTools.getAsModifyableList(args);
+            int profileInd = argsList.indexOf("-certprofile");
+            String profileName = null;
+            if (profileInd > -1) {
+                profileName = argsList.get(profileInd + 1);
+                argsList.remove(profileInd + 1);
+                argsList.remove("-certprofile");
+            }
+            int superAdminCNInd = argsList.indexOf("-superadmincn");
+            String superAdminCN = null;
+            if (superAdminCNInd > -1) {
+                superAdminCN = argsList.get(superAdminCNInd + 1);
+                argsList.remove(superAdminCNInd + 1);
+                argsList.remove("-superadmincn");
+            }
+            int typeIndex = argsList.indexOf("-type");
             //Default is X509
             CaType type = CaType.X509;
             if (typeIndex > -1) {
@@ -162,7 +162,7 @@ public class CaInitCommand extends BaseCaAdminCommand {
                 if (type == null) {
                     throw new InvalidParameterException("CA type of name " + typeName + " unknown. Available types: " + CaType.getTypeNames());
                 }
-                argsList.remove(type.getTypeName());
+                argsList.remove(typeIndex + 1);
                 argsList.remove("-type");
             }
     		
