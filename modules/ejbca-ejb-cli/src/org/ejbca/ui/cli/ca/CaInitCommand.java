@@ -82,12 +82,12 @@ enum CaType {
     }
 
     public static String getTypeNames() {
-        StringBuilder stringBuilder = new StringBuilder("<");
+        StringBuilder stringBuilder = new StringBuilder("[");
         for (CaType type : CaType.values()) {
             stringBuilder.append(type.getTypeName());
             stringBuilder.append(",");
         }
-        stringBuilder.setCharAt(stringBuilder.length() - 1, '>');
+        stringBuilder.setCharAt(stringBuilder.length() - 1, ']');
         return stringBuilder.toString();
     }
 }
@@ -114,7 +114,7 @@ public class CaInitCommand extends BaseCaAdminCommand {
     	// Create new CA.
         if (args.length < 10) {
     		getLogger().info("Description: " + getDescription());
-    		getLogger().info("Usage: " + getCommand() + " <caname> <dn> <catokentype> <catokenpassword> <keyspec> <keytype> <validity-days> <policyID> <signalgorithm> [-certprofile profileName] [-superadmincn SuperAdmin] [<catokenproperties> or null] [<signed by caid>]");
+    		getLogger().info("Usage: " + getCommand() + " <caname> <dn> <catokentype> <catokenpassword> <keyspec> <keytype> <validity-days> <policyID> <signalgorithm> [-certprofile profileName]  [-type  "+ CaType.getTypeNames()+"] [-superadmincn SuperAdmin] [<catokenproperties> or null] [<signed by caid>]");
     		getLogger().info(" catokentype defines if the CA should be created with soft keys or on a HSM. Use 'soft' for software keys and 'org.cesecore.keys.token.PKCS11CryptoToken' for PKCS#11 HSMs.");
     		getLogger().info(" catokenpassword is the password for the CA token. Set to 'null' to use the default system password for Soft token CAs. Set to 'prompt' to prompt for the password on the terminal.");
     		getLogger().info(" catokenpassword is the password for the CA token. Set to 'null' to use the default system password for Soft token CAs");
@@ -122,6 +122,20 @@ public class CaInitCommand extends BaseCaAdminCommand {
     		getLogger().info(" keyspec for RSA keys is size of RSA keys (1024, 2048, 4096, 8192).");
     		getLogger().info(" keyspec for DSA keys is size of DSA keys (1024).");
     		getLogger().info(" keyspec for ECDSA keys is name of curve or 'implicitlyCA', see docs.");
+    		StringBuilder typesStringBuilder = new StringBuilder();
+            CaType[] typeArray = CaType.values();
+            for(int i = 0; i < typeArray.length; ++i) {
+                CaType type = typeArray[i];
+                typesStringBuilder.append(type.getTypeName());
+                if(i == typeArray.length-2) {
+                    typesStringBuilder.append(" or ");
+                } else if(i == typeArray.length-1) {
+                    break;
+                } else {
+                    typesStringBuilder.append(",");
+                } 
+            }
+            getLogger().info(" type is the CA type. May be [" + typesStringBuilder.toString() + "]");
     		getLogger().info(" policyId can be 'null' if no Certificate Policy extension should be present, or\nobjectID as '2.5.29.32.0' or objectID and cpsurl as \"2.5.29.32.0 http://foo.bar.com/mycps.txt\".");
     		getLogger().info("    you can add multiple policies such as \"2.5.29.32.0 http://foo.bar.com/mycps.txt 1.1.1.1.1 http://foo.bar.com/111cps.txt\".");
     		String availableSignAlgs = "";
@@ -296,7 +310,7 @@ public class CaInitCommand extends BaseCaAdminCommand {
             if (!catokenpassword.equalsIgnoreCase("null")) {
 	        	catokeninfo.setAuthenticationCode(catokenpassword);	            	
             }
-            if ( catokentype.equals("soft")) {
+            if ( catokentype.equalsIgnoreCase("soft")) {
             	catokeninfo.setClassPath(SoftCryptoToken.class.getName());
             } else {
             	catokeninfo.setClassPath(catokentype);
@@ -305,6 +319,19 @@ public class CaInitCommand extends BaseCaAdminCommand {
             CAInfo cainfo = null;
             switch (type) {
             case CVC:
+                // Get keysequence from SERIALNUMBER in DN is it exists
+                final String keysequence = CertTools.getPartFromDN(dn, "SN");
+                if (keysequence != null) {
+                    getLogger().info("CVC key sequence: "+keysequence);
+                    catokeninfo.setKeySequence(keysequence);
+                    if (StringUtils.isNumeric(keysequence)) {
+                        getLogger().info("CVC key sequence format is numeric.");
+                        catokeninfo.setKeySequenceFormat(StringTools.KEY_SEQUENCE_FORMAT_NUMERIC);
+                    } else {
+                        getLogger().info("CVC key sequence format is alphanumeric.");
+                        catokeninfo.setKeySequenceFormat(StringTools.KEY_SEQUENCE_FORMAT_ALPHANUMERIC);
+                    }
+                }
                 cainfo = createCVCCAInfo(dn, caname, certificateProfileId, validity, signedByCAId, catokeninfo);
                 break;
             case X509:
