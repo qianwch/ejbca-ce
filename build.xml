@@ -437,7 +437,6 @@
                 <include name="crlstore.war" />
                 <include name="renew.war" />
                 <include name="ejbca-cmp-tcp.war" />
-                <include name="PrimeCardWS.war" />
             </fileset>
         	<zipfileset prefix="lib" dir="${ejbca.home}/modules/dist">
                 <include name="externalra-service.jar" />
