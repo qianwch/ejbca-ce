@@ -103,6 +103,7 @@ import org.ejbca.core.model.ra.ExtendedInformationFields;
 import org.ejbca.core.model.ra.FieldValidator;
 import org.ejbca.core.model.ra.NotFoundException;
 import org.ejbca.core.model.ra.RAAuthorization;
+import org.ejbca.core.model.ra.RevokeBackDateNotAllowedForProfileException;
 import org.ejbca.core.model.ra.UserAdminConstants;
 import org.ejbca.core.model.ra.UserDataConstants;
 import org.ejbca.core.model.ra.UserDataFiller;
@@ -1240,12 +1241,16 @@ public class UserAdminSessionBean implements UserAdminSessionLocal, UserAdminSes
     @Override
     public void revokeCert(final AuthenticationToken admin, final BigInteger certserno, final String issuerdn, final int reason)
             throws AuthorizationDeniedException, FinderException, ApprovalException, WaitingForApprovalException, AlreadyRevokedException {
-        revokeCert(admin, certserno, new Date(), issuerdn, reason);
+        try {
+            revokeCert(admin, certserno, null, issuerdn, reason, false);
+        } catch (RevokeBackDateNotAllowedForProfileException e) {
+            throw new Error("This is should not happen since there is no back dating.",e);
+        }
     }
 
     @Override
-    public void revokeCert(AuthenticationToken admin, BigInteger certserno, Date revocationdate, String issuerdn, int reason)
-            throws AuthorizationDeniedException, FinderException, ApprovalException, WaitingForApprovalException, AlreadyRevokedException {
+    public void revokeCert(AuthenticationToken admin, BigInteger certserno, Date revocationdate, String issuerdn, int reason, boolean checkDate)
+            throws AuthorizationDeniedException, FinderException, ApprovalException, WaitingForApprovalException, RevokeBackDateNotAllowedForProfileException, AlreadyRevokedException {
         if (log.isTraceEnabled()) {
             log.trace(">revokeCert(" + certserno.toString(16) + ", IssuerDN: " + issuerdn + ")");
         }
