@@ -31,6 +31,7 @@ import org.ejbca.core.model.approval.ApprovalException;
 import org.ejbca.core.model.approval.WaitingForApprovalException;
 import org.ejbca.core.model.ra.AlreadyRevokedException;
 import org.ejbca.core.model.ra.NotFoundException;
+import org.ejbca.core.model.ra.RevokeBackDateNotAllowedForProfileException;
 import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
 import org.ejbca.util.query.IllegalQueryException;
 import org.ejbca.util.query.Query;
