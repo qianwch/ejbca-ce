@@ -24,21 +24,27 @@ public enum RFC4387URL {
 	sHash,
 	iHash,
 	sKIDHash;
-	private String appendQueryToURL(String url, HashID hash, boolean isDelta, boolean isWeb) {
+	private String getID(HashID hash, boolean isDelta, boolean isWeb) {
 		final String theAmp = isWeb ? "&amp;" : "&";
 		final String deltaParam = isDelta ? theAmp+"delta=" : "";
-		return url+"?"+this.toString()+"="+hash.b64+deltaParam;
+		return (isWeb ? hash.b64url : hash.b64) + deltaParam;
+	}
+	private String appendQueryToURL(String url, String id) {
+		return url+"?"+this.toString()+"="+id;
 	}
 	/**
+	 * Append the query of the RFC hash to a URL
 	 * @param url The URL except the query
 	 * @param hash of the object to fetch
 	 * @param isDelta true if it is a link to a delta CRL.
 	 * @return URL to fetch certificate or CRL.
 	 */
 	public String appendQueryToURL(String url, HashID hash, boolean isDelta) {
-		return appendQueryToURL(url, hash, isDelta, false);
+		final String id = getID(hash, isDelta, false);
+		return appendQueryToURL(url, id);
 	}
 	/**
+	 * See {@link #appendQueryToURL(String, HashID, boolean)}, isDelta is false.
 	 * @param url The URL except the query
 	 * @param hash of the object to fetch
 	 * @return URL to fetch certificate or CRL.
@@ -54,10 +60,11 @@ public enum RFC4387URL {
 	 * @return URL to fetch certificate or CRL.
 	 */
 	public String getRef(String url, HashID hash, boolean isDelta) {
-		final String resURL = appendQueryToURL(url, hash, isDelta, true);
-		return "<a href=\""+resURL+"\">"+resURL+"</a>";
+		final String resURL = appendQueryToURL(url, getID(hash, isDelta, true));
+		return this.toString()+" = "+getID(hash, isDelta, false)+" <a href=\""+resURL+"\">Download</a>";
 	}
 	/**
+	 * See {@link #getRef(String, HashID, boolean)}, isDelta is false.
 	 * @param url The URL except the query
 	 * @param hash of the object to fetch
 	 * @return URL to fetch certificate or CRL.
