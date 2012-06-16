@@ -1349,9 +1349,14 @@ public class UserAdminSessionBean implements UserAdminSessionLocal, UserAdminSes
         } else {
             log.warn("No certificate profile for certificate with serial #" + certserno.toString(16) + " issued by " + issuerdn);
         }
+        if ( checkDate && revocationdate!=null && (certificateProfile==null || !certificateProfile.getAllowBackdatedRevocation()) ) {
+        	final String profileName = this.certificateProfileSession.getCertificateProfileName(certificateProfileId);
+        	final String m = intres.getLocalizedMessage("ra.norevokebackdate", profileName, certserno.toString(16), issuerdn);
+        	throw new RevokeBackDateNotAllowedForProfileException(m);
+        }
         // Revoke certificate in database and all publishers
         try {
-            revocationSession.revokeCertificate(admin, issuerdn, certserno, revocationdate, publishers, reason, userDataDN);
+            this.revocationSession.revokeCertificate(admin, issuerdn, certserno, revocationdate!=null ? revocationdate : new Date(), publishers, reason, userDataDN);
         } catch (CertificateRevokeException e) {
             final String msg = intres.getLocalizedMessage("ra.errorfindentitycert", issuerdn, certserno.toString(16));
             log.info(msg);
