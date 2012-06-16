@@ -84,6 +84,7 @@ import org.ejbca.core.model.ra.ExtendedInformation;
 import org.ejbca.core.model.ra.FieldValidator;
 import org.ejbca.core.model.ra.NotFoundException;
 import org.ejbca.core.model.ra.RAAuthorization;
+import org.ejbca.core.model.ra.RevokeBackDateNotAllowedForProfileException;
 import org.ejbca.core.model.ra.UserAdminConstants;
 import org.ejbca.core.model.ra.UserDataConstants;
 import org.ejbca.core.model.ra.UserDataFiller;
@@ -1182,12 +1183,15 @@ public class UserAdminSessionBean implements UserAdminSessionLocal, UserAdminSes
     @Override
     public void revokeCert(final Admin admin, final BigInteger certserno, final String issuerdn, final int reason) throws AuthorizationDeniedException,
             FinderException, ApprovalException, WaitingForApprovalException, AlreadyRevokedException {
-    	revokeCert(admin, certserno, new Date(), issuerdn, reason);
+    	try {
+			revokeCert(admin, certserno, null, issuerdn, reason, false);
+		} catch (RevokeBackDateNotAllowedForProfileException e) {
+			throw new Error("This is should not happen since there is no back dating.",e);
+		}
     }
 
     @Override
-    public void revokeCert(Admin admin, BigInteger certserno, Date revocationdate, String issuerdn, int reason) throws AuthorizationDeniedException,
-    		FinderException, ApprovalException, WaitingForApprovalException, AlreadyRevokedException {
+    public void revokeCert(Admin admin, BigInteger certserno, Date revocationdate, String issuerdn, int reason, boolean checkDate) throws AuthorizationDeniedException, FinderException, WaitingForApprovalException, RevokeBackDateNotAllowedForProfileException, AlreadyRevokedException, ApprovalException {
         if (log.isTraceEnabled()) {
             log.trace(">revokeCert(" + certserno.toString(16) + ", IssuerDN: " + issuerdn + ")");
         }
@@ -1280,8 +1284,13 @@ public class UserAdminSessionBean implements UserAdminSessionLocal, UserAdminSes
         } else {
             log.warn("No certificate profile for certificate with serial #"+certserno.toString(16)+" issued by "+issuerdn);
         }
+        if ( checkDate && revocationdate!=null && (certificateProfile==null || !certificateProfile.getAllowBackdatedRevocation()) ) {
+        	final String profileName = this.certificateProfileSession.getCertificateProfileName(admin, certificateProfileId);
+        	final String m = intres.getLocalizedMessage("ra.norevokebackdate", profileName, certserno.toString(16), issuerdn);
+        	throw new RevokeBackDateNotAllowedForProfileException(m);
+        }
         // Revoke certificate in database and all publishers
-        certificateStoreSession.setRevokeStatus(admin, issuerdn, certserno, revocationdate, publishers, reason, userDataDN);
+        this.certificateStoreSession.setRevokeStatus(admin, issuerdn, certserno, revocationdate!=null ? revocationdate : new Date(), publishers, reason, userDataDN);
         if (XkmsConfiguration.getEnabled() && data != null) {
         	// Reset the revocation code identifier used in XKMS
         	final ExtendedInformation inf = data.getExtendedInformation();

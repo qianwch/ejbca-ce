@@ -149,9 +149,14 @@ public class EjbcaWSTest extends CommonEjbcaWS {
         findCerts();
     }
 
-    public void test06RevokeCert() throws Exception {
+    public void test060RevokeCert() throws Exception {
         setUpAdmin();
         revokeCert();
+    }
+
+    public void test061RevokeCertBackdated() throws Exception {
+        setUpAdmin();
+        revokeCertBackdated();
     }
 
     public void test07RevokeToken() throws Exception {

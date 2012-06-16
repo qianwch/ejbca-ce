@@ -29,6 +29,7 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.xml.bind.DatatypeConverter;
 import javax.xml.namespace.QName;
 
 import org.apache.commons.lang.StringUtils;
@@ -94,6 +95,7 @@ import org.ejbca.core.protocol.ws.client.gen.KeyStore;
 import org.ejbca.core.protocol.ws.client.gen.NameAndId;
 import org.ejbca.core.protocol.ws.client.gen.NotFoundException_Exception;
 import org.ejbca.core.protocol.ws.client.gen.PinDataWS;
+import org.ejbca.core.protocol.ws.client.gen.RevokeBackDateNotAllowedForProfileException_Exception;
 import org.ejbca.core.protocol.ws.client.gen.RevokeStatus;
 import org.ejbca.core.protocol.ws.client.gen.TokenCertificateRequestWS;
 import org.ejbca.core.protocol.ws.client.gen.TokenCertificateResponseWS;
@@ -177,8 +179,7 @@ public abstract class CommonEjbcaWS extends CaTestCase {
     private static final String CA1 = "CA1";
     private static final String CA2 = "CA2";
     private static final String WS_EEPROF_EI = "WS_EEPROF_EI";
-
-	private static final String WSTESTPROFILE = "WSTESTPROFILE";
+    final private static String WS_CERTPROFILE = "userTestProfile";
 
     final private AdminGroupSessionRemote adminGroupSession = InterfaceCache.getAdminGroupSession();
     final private CaSessionRemote caSession = InterfaceCache.getCaSession();
@@ -315,7 +316,7 @@ public abstract class CommonEjbcaWS extends CaTestCase {
         user.setStatus(UserDataVOWS.STATUS_NEW);
         user.setTokenType(UserDataVOWS.TOKEN_TYPE_USERGENERATED);
         user.setEndEntityProfileName(WS_EEPROF_EI);
-        user.setCertificateProfileName("ENDUSER");
+        user.setCertificateProfileName(WS_CERTPROFILE);
 
         List<ExtendedInformationWS> ei = new ArrayList<ExtendedInformationWS> ();
 		ei.add(new ExtendedInformationWS (ExtendedInformation.CUSTOMDATA+ExtendedInformation.CUSTOM_REVOCATIONREASON,
@@ -342,7 +343,7 @@ public abstract class CommonEjbcaWS extends CaTestCase {
         assertTrue(userdata.getCaName().equals(caName));
         assertTrue(userdata.getSubjectAltName() == null);
         assertTrue(userdata.getEmail() == null);
-        assertTrue(userdata.getCertificateProfileName().equals("ENDUSER"));
+        assertTrue(userdata.getCertificateProfileName().equals(WS_CERTPROFILE));
         assertTrue(userdata.getEndEntityProfileName().equals(WS_EEPROF_EI));
         assertTrue(userdata.getTokenType().equals(UserDataVOWS.TOKEN_TYPE_USERGENERATED));
         assertTrue(userdata.getStatus() == UserDataVOWS.STATUS_NEW);
@@ -416,7 +417,7 @@ public abstract class CommonEjbcaWS extends CaTestCase {
         createTestCA(CA2);
         // Create suitable EE prof
         try {
-            EndEntityProfile profile = new EndEntityProfile();
+            final EndEntityProfile profile = new EndEntityProfile();
             profile.addField(DnComponents.ORGANIZATION);
             profile.addField(DnComponents.COUNTRY);
             profile.addField(DnComponents.COMMONNAME);
@@ -425,8 +426,15 @@ public abstract class CommonEjbcaWS extends CaTestCase {
             profile.setUse(EndEntityProfile.CLEARTEXTPASSWORD, 0, true);
             profile.setUse(EndEntityProfile.ISSUANCEREVOCATIONREASON, 0, true);
             profile.setValue(EndEntityProfile.ISSUANCEREVOCATIONREASON,0,""+RevokedCertInfo.REVOCATION_REASON_CERTIFICATEHOLD);
-            endEntityProfileSession.addEndEntityProfile(intAdmin, WS_EEPROF_EI, profile);
-            endEntityProfileSession.getEndEntityProfileId(intAdmin, WS_EEPROF_EI);
+            if ( this.certificateProfileSession.getCertificateProfileId(intAdmin, WS_CERTPROFILE)==0 ) {
+            	final CertificateProfile certProfile = new EndUserCertificateProfile();
+            	this.certificateProfileSession.addCertificateProfile(intAdmin, WS_CERTPROFILE, certProfile);
+            }
+            final int cpid = CommonEjbcaWS.this.certificateProfileSession.getCertificateProfileId(intAdmin, WS_CERTPROFILE);
+            profile.setValue(EndEntityProfile.AVAILCERTPROFILES, 0, Integer.toString(cpid));
+            if ( this.endEntityProfileSession.getEndEntityProfileId(intAdmin, WS_EEPROF_EI)==0 ) {
+            	this.endEntityProfileSession.addEndEntityProfile(intAdmin, WS_EEPROF_EI, profile);
+            }
         } catch (EndEntityProfileExistsException pee) {
         	assertTrue("Can not create end entity profile", false);
         }
@@ -437,76 +445,77 @@ public abstract class CommonEjbcaWS extends CaTestCase {
 
     protected void findUser() throws Exception {
 
-        // Nonexisting users should return null
-        UserMatch usermatch = new UserMatch();
-        usermatch.setMatchwith(UserMatch.MATCH_WITH_USERNAME);
-        usermatch.setMatchtype(UserMatch.MATCH_TYPE_EQUALS);
-        usermatch.setMatchvalue("noneExsisting");
-        List<UserDataVOWS> userdatas = ejbcaraws.findUser(usermatch);
-        assertTrue(userdatas != null);
-        assertTrue(userdatas.size() == 0);
+    	{// Nonexisting users should return null
+    		final UserMatch usermatch = new UserMatch();
+    		usermatch.setMatchwith(UserMatch.MATCH_WITH_USERNAME);
+    		usermatch.setMatchtype(UserMatch.MATCH_TYPE_EQUALS);
+    		usermatch.setMatchvalue("noneExsisting");
+    		final List<UserDataVOWS> userdatas = ejbcaraws.findUser(usermatch);
+    		assertTrue(userdatas != null);
+    		assertTrue(userdatas.size() == 0);
+    	}
+    	{// Find an exising user
+    		final UserMatch usermatch = new UserMatch();
+    		usermatch.setMatchwith(UserMatch.MATCH_WITH_USERNAME);
+    		usermatch.setMatchtype(UserMatch.MATCH_TYPE_EQUALS);
+    		usermatch.setMatchvalue(CA1_WSTESTUSER1);
 
-        // Find an exising user
-        usermatch = new UserMatch();
-        usermatch.setMatchwith(UserMatch.MATCH_WITH_USERNAME);
-        usermatch.setMatchtype(UserMatch.MATCH_TYPE_EQUALS);
-        usermatch.setMatchvalue(CA1_WSTESTUSER1);
-
-        List<UserDataVOWS> userdatas2 = ejbcaraws.findUser(usermatch);
-        assertTrue(userdatas2 != null);
-        assertTrue(userdatas2.size() == 1);
-
-        // Find by O
-        usermatch = new UserMatch();
-        usermatch.setMatchwith(UserMatch.MATCH_WITH_ORGANIZATION);
-        usermatch.setMatchtype(UserMatch.MATCH_TYPE_BEGINSWITH);
-        usermatch.setMatchvalue("2Te");
-        List<UserDataVOWS> userdatas3 = ejbcaraws.findUser(usermatch);
-        assertTrue(userdatas3 != null);
-        assertTrue(userdatas3.size() == 1);
-        assertTrue(userdatas3.get(0).getSubjectDN().equals(getDN(CA1_WSTESTUSER2)));
-
-        // Find by subjectDN pattern
-        usermatch = new UserMatch();
-        usermatch.setMatchwith(UserMatch.MATCH_WITH_DN);
-        usermatch.setMatchtype(UserMatch.MATCH_TYPE_CONTAINS);
-        usermatch.setMatchvalue(CA1_WSTESTUSER1);
-        List<UserDataVOWS> userdatas4 = ejbcaraws.findUser(usermatch);
-        assertNotNull(userdatas4);
-        assertEquals(1, userdatas4.size());
-        assertEquals(getDN(CA1_WSTESTUSER1), userdatas4.get(0).getSubjectDN());
-
-        usermatch = new UserMatch();
-        usermatch.setMatchwith(UserMatch.MATCH_WITH_ENDENTITYPROFILE);
-        usermatch.setMatchtype(UserMatch.MATCH_TYPE_EQUALS);
-        usermatch.setMatchvalue("EMPTY");
-        List<UserDataVOWS> userdatas5 = ejbcaraws.findUser(usermatch);
-        assertTrue(userdatas5 != null);
-        assertTrue(userdatas5.size() > 0);
-
-        usermatch = new UserMatch();
-        usermatch.setMatchwith(UserMatch.MATCH_WITH_CERTIFICATEPROFILE);
-        usermatch.setMatchtype(UserMatch.MATCH_TYPE_EQUALS);
-        usermatch.setMatchvalue("ENDUSER");
-        List<UserDataVOWS> userdatas6 = ejbcaraws.findUser(usermatch);
-        assertTrue(userdatas6 != null);
-        assertTrue(userdatas6.size() > 0);
-
-        usermatch = new UserMatch();
-        usermatch.setMatchwith(UserMatch.MATCH_WITH_CA);
-        usermatch.setMatchtype(UserMatch.MATCH_TYPE_EQUALS);
-        usermatch.setMatchvalue(getAdminCAName());
-        List<UserDataVOWS> userdatas7 = ejbcaraws.findUser(usermatch);
-        assertTrue(userdatas7 != null);
-        assertTrue(userdatas7.size() > 0);
-
-        usermatch = new UserMatch();
-        usermatch.setMatchwith(UserMatch.MATCH_WITH_TOKEN);
-        usermatch.setMatchtype(UserMatch.MATCH_TYPE_EQUALS);
-        usermatch.setMatchvalue(UserDataVOWS.TOKEN_TYPE_USERGENERATED);
-        List<UserDataVOWS> userdatas8 = ejbcaraws.findUser(usermatch);
-        assertTrue(userdatas8 != null);
-        assertTrue(userdatas8.size() > 0);
+    		final List<UserDataVOWS> userdatas = ejbcaraws.findUser(usermatch);
+    		assertTrue(userdatas != null);
+    		assertTrue(userdatas.size() == 1);
+    	}
+    	{// Find by O
+    		final UserMatch usermatch = new UserMatch();
+    		usermatch.setMatchwith(UserMatch.MATCH_WITH_ORGANIZATION);
+    		usermatch.setMatchtype(UserMatch.MATCH_TYPE_BEGINSWITH);
+    		usermatch.setMatchvalue("2Te");
+    		final List<UserDataVOWS> userdatas = ejbcaraws.findUser(usermatch);
+    		assertTrue(userdatas != null);
+    		assertTrue(userdatas.size() == 1);
+    		assertTrue(userdatas.get(0).getSubjectDN().equals(getDN(CA1_WSTESTUSER2)));
+    	}
+    	{// Find by subjectDN pattern
+    		final UserMatch usermatch = new UserMatch();
+    		usermatch.setMatchwith(UserMatch.MATCH_WITH_DN);
+    		usermatch.setMatchtype(UserMatch.MATCH_TYPE_CONTAINS);
+    		usermatch.setMatchvalue(CA1_WSTESTUSER1);
+    		final List<UserDataVOWS> userdatas = ejbcaraws.findUser(usermatch);
+    		assertNotNull(userdatas);
+    		assertEquals(1, userdatas.size());
+    		assertEquals(getDN(CA1_WSTESTUSER1), userdatas.get(0).getSubjectDN());
+    	}{
+    		final UserMatch usermatch = new UserMatch();
+    		usermatch.setMatchwith(UserMatch.MATCH_WITH_ENDENTITYPROFILE);
+    		usermatch.setMatchtype(UserMatch.MATCH_TYPE_EQUALS);
+    		usermatch.setMatchvalue(WS_EEPROF_EI);
+    		final List<UserDataVOWS> userdatas = ejbcaraws.findUser(usermatch);
+    		assertNotNull(userdatas);
+    		assertEquals("not right number of users from end entity profile match.", 3, userdatas.size());
+    	}{
+    		final UserMatch usermatch = new UserMatch();
+    		usermatch.setMatchwith(UserMatch.MATCH_WITH_CERTIFICATEPROFILE);
+    		usermatch.setMatchtype(UserMatch.MATCH_TYPE_EQUALS);
+    		usermatch.setMatchvalue(WS_CERTPROFILE);
+    		final List<UserDataVOWS> userdatas = ejbcaraws.findUser(usermatch);
+    		assertNotNull(userdatas);
+    		assertEquals("not right number of users from certificate profile match.", 3, userdatas.size());
+    	}{
+    		final UserMatch usermatch = new UserMatch();
+    		usermatch.setMatchwith(UserMatch.MATCH_WITH_CA);
+    		usermatch.setMatchtype(UserMatch.MATCH_TYPE_EQUALS);
+    		usermatch.setMatchvalue(CA1);
+    		final List<UserDataVOWS> userdatas = ejbcaraws.findUser(usermatch);
+    		assertTrue(userdatas != null);
+    		assertEquals("not right number of users from CA match.", 2, userdatas.size());
+    	}{
+    		final UserMatch usermatch = new UserMatch();
+    		usermatch.setMatchwith(UserMatch.MATCH_WITH_TOKEN);
+    		usermatch.setMatchtype(UserMatch.MATCH_TYPE_EQUALS);
+    		usermatch.setMatchvalue(UserDataVOWS.TOKEN_TYPE_USERGENERATED);
+    		final List<UserDataVOWS> userdatas = ejbcaraws.findUser(usermatch);
+    		assertTrue(userdatas != null);
+    		assertTrue(userdatas.size() > 0);
+    	}
     }
 
     protected void generatePkcs10() throws Exception {
@@ -885,30 +894,8 @@ public abstract class CommonEjbcaWS extends CaTestCase {
     protected void findCerts() throws Exception {
 
         // First find all certs
-        UserMatch usermatch = new UserMatch();
-        usermatch.setMatchwith(UserMatch.MATCH_WITH_USERNAME);
-        usermatch.setMatchtype(UserMatch.MATCH_TYPE_EQUALS);
-        usermatch.setMatchvalue(CA1_WSTESTUSER1);
-        List<UserDataVOWS> userdatas = ejbcaraws.findUser(usermatch);
-        assertTrue(userdatas != null);
-        assertTrue(userdatas.size() == 1);
-        userdatas.get(0).setTokenType(UserDataVOWS.TOKEN_TYPE_P12);
-        userdatas.get(0).setStatus(UserDataVOWS.STATUS_NEW);
-        userdatas.get(0).setPassword(PASSWORD);
-        userdatas.get(0).setClearPwd(true);
-        ejbcaraws.editUser(userdatas.get(0));
-        KeyStore ksenv = null;
-        try {
-            ksenv = ejbcaraws.pkcs12Req(CA1_WSTESTUSER1, PASSWORD, null, "1024", AlgorithmConstants.KEYALGORITHM_RSA);
-        } catch (EjbcaException_Exception e) {
-            assertTrue(e.getMessage(), false);
-        }
-        java.security.KeyStore ks = KeyStoreHelper.getKeyStore(ksenv.getKeystoreData(), "PKCS12", PASSWORD);
-
-        assertNotNull(ks);
-        Enumeration<String> en = ks.aliases();
-        String alias = en.nextElement();
-        java.security.cert.Certificate gencert = (java.security.cert.Certificate) ks.getCertificate(alias);
+        final P12TestUser p12TestUser = new P12TestUser();
+        final java.security.cert.Certificate gencert = p12TestUser.getCertificate(null);
 
         List<Certificate> foundcerts = ejbcaraws.findCerts(CA1_WSTESTUSER1, false);
         assertTrue(foundcerts != null);
@@ -945,106 +932,88 @@ public abstract class CommonEjbcaWS extends CaTestCase {
 
     protected void revokeCert() throws Exception {
 
-        UserMatch usermatch = new UserMatch();
-        usermatch.setMatchwith(UserMatch.MATCH_WITH_USERNAME);
-        usermatch.setMatchtype(UserMatch.MATCH_TYPE_EQUALS);
-        usermatch.setMatchvalue(CA1_WSTESTUSER1);
-        List<UserDataVOWS> userdatas = ejbcaraws.findUser(usermatch);
-        assertTrue(userdatas != null);
-        assertTrue(userdatas.size() == 1);
-        userdatas.get(0).setTokenType(UserDataVOWS.TOKEN_TYPE_P12);
-        userdatas.get(0).setStatus(UserDataVOWS.STATUS_NEW);
-        userdatas.get(0).setPassword("foo456");
-        userdatas.get(0).setClearPwd(true);
-        ejbcaraws.editUser(userdatas.get(0));
+        final P12TestUser p12TestUser = new P12TestUser();
+        final X509Certificate cert = p12TestUser.getCertificate(null);
 
-        KeyStore ksenv = null;
-        try {
-            ksenv = ejbcaraws.pkcs12Req(CA1_WSTESTUSER1, "foo456", null, "1024", AlgorithmConstants.KEYALGORITHM_RSA);
-        } catch (EjbcaException_Exception e) {
-            assertTrue(e.getMessage(), false);
+        final String issuerdn = cert.getIssuerDN().toString();
+        final String serno = cert.getSerialNumber().toString(16);
+
+        this.ejbcaraws.revokeCert(issuerdn, serno, RevokedCertInfo.REVOCATION_REASON_CERTIFICATEHOLD);
+
+        {
+        	final RevokeStatus revokestatus = this.ejbcaraws.checkRevokationStatus(issuerdn, serno);
+        	assertNotNull(revokestatus);
+        	assertTrue(revokestatus.getReason() == RevokedCertInfo.REVOCATION_REASON_CERTIFICATEHOLD);
+
+        	assertTrue(revokestatus.getCertificateSN().equals(serno));
+        	assertTrue(revokestatus.getIssuerDN().equals(issuerdn));
+        	assertNotNull(revokestatus.getRevocationDate());
         }
-
-        java.security.KeyStore ks = KeyStoreHelper.getKeyStore(ksenv.getKeystoreData(), "PKCS12", "foo456");
-        assertNotNull(ks);
-        Enumeration<String> en = ks.aliases();
-        String alias = en.nextElement();
-        X509Certificate cert = (X509Certificate) ks.getCertificate(alias);
-        assertEquals("Returned certificates SubjectDN '" + CertTools.getSubjectDN(cert) + "' is not requested '" + getDN(CA1_WSTESTUSER1) + "'", CertTools.getSubjectDN(cert), getDN(CA1_WSTESTUSER1));
-
-        String issuerdn = cert.getIssuerDN().toString();
-        String serno = cert.getSerialNumber().toString(16);
-
-        ejbcaraws.revokeCert(issuerdn, serno, RevokedCertInfo.REVOCATION_REASON_CERTIFICATEHOLD);
-
-        RevokeStatus revokestatus = ejbcaraws.checkRevokationStatus(issuerdn, serno);
-        assertNotNull(revokestatus);
-        assertTrue(revokestatus.getReason() == RevokedCertInfo.REVOCATION_REASON_CERTIFICATEHOLD);
-
-        assertTrue(revokestatus.getCertificateSN().equals(serno));
-        assertTrue(revokestatus.getIssuerDN().equals(issuerdn));
-        assertNotNull(revokestatus.getRevocationDate());
-
-        ejbcaraws.revokeCert(issuerdn, serno, RevokedCertInfo.NOT_REVOKED);
-
-        revokestatus = ejbcaraws.checkRevokationStatus(issuerdn, serno);
-        assertNotNull(revokestatus);
-        assertTrue(revokestatus.getReason() == RevokedCertInfo.NOT_REVOKED);
-
-        ejbcaraws.revokeCert(issuerdn, serno, RevokedCertInfo.REVOCATION_REASON_KEYCOMPROMISE);
-
-        revokestatus = ejbcaraws.checkRevokationStatus(issuerdn, serno);
-        assertNotNull(revokestatus);
-        assertTrue(revokestatus.getReason() == RevokedCertInfo.REVOCATION_REASON_KEYCOMPROMISE);
-
+        this.ejbcaraws.revokeCert(issuerdn, serno, RevokedCertInfo.NOT_REVOKED);
+        {
+        	final RevokeStatus revokestatus = this.ejbcaraws.checkRevokationStatus(issuerdn, serno);
+        	assertNotNull(revokestatus);
+        	assertTrue(revokestatus.getReason() == RevokedCertInfo.NOT_REVOKED);
+        }
+        {
+        	//final long beforeTimeMilliseconds = new Date().getTime();
+        	final Date beforeRevoke = new Date();
+        	this.ejbcaraws.revokeCert(issuerdn, serno, RevokedCertInfo.REVOCATION_REASON_KEYCOMPROMISE);
+        	final Date afterRevoke = new Date();
+        	//final Date beforeRevoke = new Date(beforeTimeMilliseconds-beforeTimeMilliseconds%1000);
+        	final RevokeStatus revokestatus = this.ejbcaraws.checkRevokationStatus(issuerdn, serno);
+        	assertNotNull(revokestatus);
+        	assertTrue(revokestatus.getReason() == RevokedCertInfo.REVOCATION_REASON_KEYCOMPROMISE);
+        	final Date revokeDate  = revokestatus.getRevocationDate().toGregorianCalendar().getTime();
+        	assertTrue("Too early revocation date. Before time '"+beforeRevoke+"'. Revoke time '"+revokeDate+"'.", !revokeDate.before(beforeRevoke));
+        	assertTrue("Too late revocation date. After time '"+afterRevoke+"'. Revoke time '"+revokeDate+"'.", !revokeDate.after(afterRevoke));
+        }
         try {
-            ejbcaraws.revokeCert(issuerdn, serno, RevokedCertInfo.NOT_REVOKED);
+            this.ejbcaraws.revokeCert(issuerdn, serno, RevokedCertInfo.NOT_REVOKED);
             assertTrue(false);
         }catch(AlreadyRevokedException_Exception e){}
 
     }
 
+	protected void revokeCertBackdated() throws Exception {
+
+		final P12TestUser p12TestUser = new P12TestUser();
+		final X509Certificate cert = p12TestUser.getCertificate(null);
+
+		final String issuerdn = cert.getIssuerDN().toString();
+		final String serno = cert.getSerialNumber().toString(16);
+		final String sDate = "2012-06-07T23:55:59+02:00";
+
+		final CertificateProfile certProfile = this.certificateProfileSession.getCertificateProfile(intAdmin, WS_CERTPROFILE);
+		certProfile.setAllowBackdatedRevocation(false);
+		this.certificateProfileSession.changeCertificateProfile(intAdmin, WS_CERTPROFILE, certProfile);
+		try {
+			this.ejbcaraws.revokeCertBackdated(issuerdn, serno, RevokedCertInfo.REVOCATION_REASON_KEYCOMPROMISE, sDate);
+			assertTrue(false);
+		} catch (RevokeBackDateNotAllowedForProfileException_Exception e) {
+			// do nothing
+		}
+		certProfile.setAllowBackdatedRevocation(true);
+		this.certificateProfileSession.changeCertificateProfile(intAdmin, WS_CERTPROFILE, certProfile);
+		this.ejbcaraws.revokeCertBackdated(issuerdn, serno, RevokedCertInfo.REVOCATION_REASON_KEYCOMPROMISE, sDate);
+		final RevokeStatus revokestatus = this.ejbcaraws.checkRevokationStatus(issuerdn, serno);
+		assertNotNull(revokestatus);
+		final Date realRevokeDate  = revokestatus.getRevocationDate().toGregorianCalendar().getTime();
+		final Date expectedRevokeDate;
+		try {
+			expectedRevokeDate = DatatypeConverter.parseDateTime(sDate).getTime();
+		} catch (IllegalArgumentException e) {
+			assertTrue("Not a valid ISO8601 date revocation date", false);
+			return;
+		}
+		assertEquals("Revocation date not the expected.", expectedRevokeDate, realRevokeDate);
+	}
+
     protected void revokeToken() throws Exception {
 
-        UserMatch usermatch = new UserMatch();
-        usermatch.setMatchwith(UserMatch.MATCH_WITH_USERNAME);
-        usermatch.setMatchtype(UserMatch.MATCH_TYPE_EQUALS);
-        usermatch.setMatchvalue(CA1_WSTESTUSER1);
-        List<UserDataVOWS> userdatas = ejbcaraws.findUser(usermatch);
-        userdatas.get(0).setTokenType(UserDataVOWS.TOKEN_TYPE_P12);
-        userdatas.get(0).setStatus(UserDataVOWS.STATUS_NEW);
-        userdatas.get(0).setPassword(PASSWORD);
-        userdatas.get(0).setClearPwd(true);
-        ejbcaraws.editUser(userdatas.get(0));
-        KeyStore ksenv = null;
-        try {
-            ksenv = ejbcaraws.pkcs12Req(CA1_WSTESTUSER1, PASSWORD, "12345678", "1024", AlgorithmConstants.KEYALGORITHM_RSA);
-        } catch (EjbcaException_Exception e) {
-            assertTrue(e.getMessage(), false);
-        }
-        java.security.KeyStore ks = KeyStoreHelper.getKeyStore(ksenv.getKeystoreData(), "PKCS12", PASSWORD);
-
-        assertNotNull(ks);
-        Enumeration<String> en = ks.aliases();
-        String alias = en.nextElement();
-        X509Certificate cert1 = (X509Certificate) ks.getCertificate(alias);
-
-        userdatas.get(0).setStatus(UserDataVOWS.STATUS_NEW);
-        userdatas.get(0).setPassword(PASSWORD);
-        userdatas.get(0).setClearPwd(true);
-        ejbcaraws.editUser(userdatas.get(0));
-
-        try {
-            ksenv = ejbcaraws.pkcs12Req(CA1_WSTESTUSER1, PASSWORD, "12345678", "1024", AlgorithmConstants.KEYALGORITHM_RSA);
-        } catch (EjbcaException_Exception e) {
-            assertTrue(e.getMessage(), false);
-        }
-        ks = KeyStoreHelper.getKeyStore(ksenv.getKeystoreData(), "PKCS12", PASSWORD);
-
-        assertNotNull(ks);
-        en = ks.aliases();
-        alias = (String) en.nextElement();
-        X509Certificate cert2 = (X509Certificate) ks.getCertificate(alias);
+        final P12TestUser p12TestUser = new P12TestUser();
+        final X509Certificate cert1 = p12TestUser.getCertificate("12345678");
+        final X509Certificate cert2 = p12TestUser.getCertificate("12345678");
 
         ejbcaraws.revokeToken("12345678", RevokeStatus.REVOKATION_REASON_KEYCOMPROMISE);
 
@@ -1063,31 +1032,46 @@ public abstract class CommonEjbcaWS extends CaTestCase {
         assertTrue(revokestatus.getReason() == RevokeStatus.REVOKATION_REASON_KEYCOMPROMISE);
 
     }
+    private class P12TestUser {
+    	final private List<UserDataVOWS> userdatas;
+    	public P12TestUser() throws Exception {
+            UserMatch usermatch = new UserMatch();
+            usermatch.setMatchwith(UserMatch.MATCH_WITH_USERNAME);
+            usermatch.setMatchtype(UserMatch.MATCH_TYPE_EQUALS);
+            usermatch.setMatchvalue(CA1_WSTESTUSER1);
+            this.userdatas = CommonEjbcaWS.this.ejbcaraws.findUser(usermatch);
+            assertTrue(this.userdatas != null);
+            assertTrue(this.userdatas.size() == 1);
+            this.userdatas.get(0).setTokenType(UserDataVOWS.TOKEN_TYPE_P12);
+            this.userdatas.get(0).setEndEntityProfileName(WS_EEPROF_EI);
+            this.userdatas.get(0).setCertificateProfileName(WS_CERTPROFILE);
+    	}
+    	public X509Certificate getCertificate(String hardTokenSN) throws Exception {
+            this.userdatas.get(0).setStatus(UserDataVOWS.STATUS_NEW);
+            this.userdatas.get(0).setPassword(PASSWORD);
+            this.userdatas.get(0).setClearPwd(true);
+            CommonEjbcaWS.this.ejbcaraws.editUser(userdatas.get(0));
+            final KeyStore ksenv;
+            try {
+                ksenv = CommonEjbcaWS.this.ejbcaraws.pkcs12Req(CA1_WSTESTUSER1, PASSWORD, hardTokenSN, "1024", AlgorithmConstants.KEYALGORITHM_RSA);
+            } catch (EjbcaException_Exception e) {
+                assertTrue(e.getMessage(), false);
+                return null;
+            }
+            java.security.KeyStore ks = KeyStoreHelper.getKeyStore(ksenv.getKeystoreData(), "PKCS12", PASSWORD);
 
+            assertNotNull(ks);
+            final Enumeration<String> en = ks.aliases();
+            final String alias = en.nextElement();
+            final X509Certificate cert = (X509Certificate)ks.getCertificate(alias);
+            assertEquals("Returned certificates SubjectDN '" + CertTools.getSubjectDN(cert) + "' is not requested '" + getDN(CA1_WSTESTUSER1) + "'", CertTools.getSubjectDN(cert), getDN(CA1_WSTESTUSER1));
+            return cert;
+    	}
+    }
     protected void checkRevokeStatus() throws Exception {
 
-        UserMatch usermatch = new UserMatch();
-        usermatch.setMatchwith(UserMatch.MATCH_WITH_USERNAME);
-        usermatch.setMatchtype(UserMatch.MATCH_TYPE_EQUALS);
-        usermatch.setMatchvalue(CA1_WSTESTUSER1);
-        List<UserDataVOWS> userdatas = ejbcaraws.findUser(usermatch);
-        userdatas.get(0).setTokenType(UserDataVOWS.TOKEN_TYPE_P12);
-        userdatas.get(0).setStatus(UserDataVOWS.STATUS_NEW);
-        userdatas.get(0).setPassword(PASSWORD);
-        userdatas.get(0).setClearPwd(true);
-        ejbcaraws.editUser(userdatas.get(0));
-        KeyStore ksenv = null;
-        try {
-            ksenv = ejbcaraws.pkcs12Req(CA1_WSTESTUSER1, PASSWORD, "12345678", "1024", AlgorithmConstants.KEYALGORITHM_RSA);
-        } catch (EjbcaException_Exception e) {
-            assertTrue(e.getMessage(), false);
-        }
-        java.security.KeyStore ks = KeyStoreHelper.getKeyStore(ksenv.getKeystoreData(), "PKCS12", PASSWORD);
-
-        assertNotNull(ks);
-        Enumeration<String> en = ks.aliases();
-        String alias = en.nextElement();
-        X509Certificate cert = (X509Certificate) ks.getCertificate(alias);
+        final P12TestUser p12TestUser = new P12TestUser();
+        final X509Certificate cert = p12TestUser.getCertificate("12345678");
 
         String issuerdn = cert.getIssuerDN().toString();
         String serno = cert.getSerialNumber().toString(16);
@@ -1159,13 +1143,14 @@ public abstract class CommonEjbcaWS extends CaTestCase {
         boolean originalProfileSetting = gc.getEnableEndEntityProfileLimitations();
         gc.setEnableEndEntityProfileLimitations(false);
         globalConfigurationSession.saveGlobalConfigurationRemote(intAdmin, gc);
-        if (certificateProfileSession.getCertificateProfileId(intAdmin, WSTESTPROFILE) != 0) {
-            certificateProfileSession.removeCertificateProfile(intAdmin, WSTESTPROFILE);
+        final String WS_TOKEN_CERTPROFILE = "WS_TOKEN_CERTPROFILE";
+        if (certificateProfileSession.getCertificateProfileId(intAdmin, WS_TOKEN_CERTPROFILE) != 0) {
+            certificateProfileSession.removeCertificateProfile(intAdmin, WS_TOKEN_CERTPROFILE);
         }
         {
         	final CertificateProfile profile = new EndUserCertificateProfile();
         	profile.setAllowValidityOverride(true);
-        	certificateProfileSession.addCertificateProfile(intAdmin, WSTESTPROFILE, profile);
+        	certificateProfileSession.addCertificateProfile(intAdmin, WS_TOKEN_CERTPROFILE, profile);
         }
         // first a simple test
         UserDataVOWS tokenUser1 = new UserDataVOWS();
@@ -1188,7 +1173,7 @@ public abstract class CommonEjbcaWS extends CaTestCase {
         ArrayList<TokenCertificateRequestWS> requests = new ArrayList<TokenCertificateRequestWS>();
         TokenCertificateRequestWS tokenCertReqWS = new TokenCertificateRequestWS();
         tokenCertReqWS.setCAName(getAdminCAName());
-        tokenCertReqWS.setCertificateProfileName(WSTESTPROFILE);
+        tokenCertReqWS.setCertificateProfileName(WS_TOKEN_CERTPROFILE);
         tokenCertReqWS.setValidityIdDays("1");
         tokenCertReqWS.setPkcs10Data(basicpkcs10.getDEREncoded());
         tokenCertReqWS.setType(HardTokenConstants.REQUESTTYPE_PKCS10_REQUEST);
@@ -1230,7 +1215,7 @@ public abstract class CommonEjbcaWS extends CaTestCase {
             }
         }
 
-        certificateProfileSession.removeCertificateProfile(intAdmin, WSTESTPROFILE);
+        certificateProfileSession.removeCertificateProfile(intAdmin, WS_TOKEN_CERTPROFILE);
         gc.setEnableEndEntityProfileLimitations(originalProfileSetting);
         globalConfigurationSession.saveGlobalConfigurationRemote(intAdmin, gc);
 

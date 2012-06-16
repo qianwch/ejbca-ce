@@ -158,6 +158,12 @@ public class EjbcaWSNonAdminTest extends CommonEjbcaWS {
         }
 
         try {
+            revokeCertBackdated();
+            assertTrue(false);
+        } catch (AuthorizationDeniedException_Exception e) {
+        }
+
+        try {
             revokeToken();
             assertTrue(false);
         } catch (AuthorizationDeniedException_Exception e) {

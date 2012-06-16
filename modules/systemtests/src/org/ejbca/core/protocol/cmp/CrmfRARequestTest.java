@@ -451,6 +451,12 @@ public class CrmfRARequestTest extends CmpTestCase {
         certProfileSession.removeCertificateProfile(admin, "CMPKEYIDTESTPROFILE");
         eeProfileSession.removeEndEntityProfile(admin, "CMPTESTPROFILE");
         eeProfileSession.removeEndEntityProfile(admin, "CMPKEYIDTESTPROFILE");
-    	log.trace("<testZZZCleanUp");
+        try {
+        	userAdminSession.deleteUser(admin, "keyidtest2");
+        } catch( Throwable t) {}
+        try {
+        	userAdminSession.deleteUser(admin, "keyIDTestUser");
+        } catch( Throwable t) {}
+        log.trace("<testZZZCleanUp");
     }
 }

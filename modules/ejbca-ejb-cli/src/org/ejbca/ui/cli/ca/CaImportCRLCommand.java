@@ -144,7 +144,7 @@ public class CaImportCRLCommand extends BaseCaAdminCommand {
 					}
 					getLogger().info("Revoking '" + serialHex +"' " + "(" + serialNr.toString() + ")");
 					try {
-						ejb.getUserAdminSession().revokeCert(getAdmin(), serialNr, entry.getRevocationDate(), issuer, RevokedCertInfo.REVOCATION_REASON_UNSPECIFIED);
+						ejb.getUserAdminSession().revokeCert(getAdmin(), serialNr, entry.getRevocationDate(), issuer, RevokedCertInfo.REVOCATION_REASON_UNSPECIFIED, false);
 						revoked++;
 					} catch (AlreadyRevokedException e) {
 						already_revoked++;
