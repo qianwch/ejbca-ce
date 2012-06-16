@@ -622,7 +622,6 @@ function checkallfields(){
            <% if(certificateprofiledata.getAllowBackdatedRevocation())
                  out.write("CHECKED");
            %> id="<%=CHECKBOX_ALLOWBACKDATEDREVOCATION%>">
-           <label for="<%=CHECKBOX_ALLOWBACKDATEDREVOCATION%>"><c:out value="<%= ejbcawebbean.getText(\"ALLOW\") %>" /></label>
       </td>
     </tr>
 
