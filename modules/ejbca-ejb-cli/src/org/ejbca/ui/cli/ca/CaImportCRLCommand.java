@@ -161,7 +161,7 @@ public class CaImportCRLCommand extends BaseCaAdminCommand {
 	                try {
 	                    int reason = getCRLReasonValue(entry);
 	                    getLogger().info("Reason code: "+reason);
-	                    ejb.getUserAdminSession().revokeCert(getAdmin(cliUserName, cliPassword), serialNr, entry.getRevocationDate(), issuer, reason);
+	                    ejb.getUserAdminSession().revokeCert(getAdmin(cliUserName, cliPassword), serialNr, entry.getRevocationDate(), issuer, reason, false);
 	                    revoked++;
 	                } catch (AlreadyRevokedException e) {
 	                    already_revoked++;
