@@ -80,7 +80,7 @@ class ValidationAuthorityTst {
 			final String sURI = urlType.appendQueryToURL(sBaseURI, id, isDelta);
 			testURI( pw, createCrlSession, sURI, caSubjectDN, isDelta );
 		}
-		if ( !aliasTest || !urlType.equals(RFC4387URL.sKIDHash) ) {
+		if ( !aliasTest ) {
 			return;
 		}
 		final String alias = "alias";
