@@ -87,6 +87,10 @@ class ValidationAuthorityTst {
 		final String key = "va.sKIDHash.alias."+alias;
 		final String value = id.b64url;
 		configuration.updateProperty(key, value);
+		if ( configuration.verifyProperty(key, value) ) {
+			pw.println("Not possible to set property '"+key+"' to '"+value+"'.");
+			return;
+		}
 		final String sURI = sBaseURI + "?alias="+alias+(isDelta ? "&delta=" : "");
 		testURI( pw, createCrlSession, sURI, caSubjectDN, isDelta );
 	}
