@@ -23,6 +23,7 @@ import org.apache.log4j.Logger;
 import org.bouncycastle.util.Arrays;
 import org.cesecore.certificates.crl.CrlStoreSessionRemote;
 import org.cesecore.jndi.JndiHelper;
+import org.ejbca.config.VAConfiguration;
 import org.ejbca.core.ejb.config.ConfigurationSessionRemote;
 import org.ejbca.core.protocol.certificatestore.HashID;
 
@@ -36,10 +37,10 @@ import org.ejbca.core.protocol.certificatestore.HashID;
  */
 class ValidationAuthorityTst {
 	private final static Logger log = Logger.getLogger(ValidationAuthorityTst.class);
-    private final static ConfigurationSessionRemote configuration = JndiHelper.getRemoteSession(ConfigurationSessionRemote.class);
+	private final static ConfigurationSessionRemote configuration = JndiHelper.getRemoteSession(ConfigurationSessionRemote.class);
 	static String testCRLStore(X509Certificate caCert, CrlStoreSessionRemote crlSession, String port) throws Exception {
-        // Before running this we need to make sure the certificate cache is refreshed, there may be a cache delay which is acceptable in real life, 
-        // but not when running JUnit tests  
+		// Before running this we need to make sure the certificate cache is refreshed, there may be a cache delay which is acceptable in real life, 
+		// but not when running JUnit tests  
 		final String sURI = "http://localhost:" + port + "/crls/search.cgi?reloadcache=true";
 		log.debug("Reload cache URL: '"+sURI+"'.");
 		final HttpURLConnection connection = (HttpURLConnection)new URI(sURI).toURL().openConnection();
@@ -84,7 +85,7 @@ class ValidationAuthorityTst {
 			return;
 		}
 		final String alias = "alias";
-		final String key = "va.sKIDHash.alias."+alias;
+		final String key = VAConfiguration.S_HASH_ALIAS_PREFIX+alias;
 		final String value = id.b64url;
 		configuration.updateProperty(key, value);
 		if ( !configuration.verifyProperty(key, value) ) {
