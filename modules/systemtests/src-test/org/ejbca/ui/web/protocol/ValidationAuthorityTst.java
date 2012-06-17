@@ -23,7 +23,6 @@ import org.apache.log4j.Logger;
 import org.bouncycastle.util.Arrays;
 import org.cesecore.certificates.crl.CrlStoreSessionRemote;
 import org.cesecore.jndi.JndiHelper;
-import org.ejbca.config.VAConfiguration;
 import org.ejbca.core.ejb.config.ConfigurationSessionRemote;
 import org.ejbca.core.protocol.certificatestore.HashID;
 
@@ -85,7 +84,7 @@ class ValidationAuthorityTst {
 			return;
 		}
 		final String alias = "alias";
-		final String key = VAConfiguration.S_HASH_ALIAS_PREFIX+alias;
+		final String key = "va.sKIDHash.alias."+alias;
 		final String value = id.b64url;
 		configuration.updateProperty(key, value);
 		if ( !configuration.verifyProperty(key, value) ) {

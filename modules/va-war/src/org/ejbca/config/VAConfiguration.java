@@ -21,7 +21,7 @@ import org.cesecore.config.ConfigurationHolder;
  * @version $Id$
  */
 public class VAConfiguration {
-	public final static String S_HASH_ALIAS_PREFIX = "va.sKIDHash.alias.";
+	private final static String S_HASH_ALIAS_PREFIX = "va.sKIDHash.alias.";
 
 	public static String sKIDHashFromName(String name) {
 		return ConfigurationHolder.getString(S_HASH_ALIAS_PREFIX+name);
