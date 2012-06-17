@@ -96,11 +96,11 @@ class ValidationAuthorityTst {
 		connection.connect();
 		final int responseCode = connection.getResponseCode();
 		if ( HttpURLConnection.HTTP_OK!=responseCode ) {
-			if ( responseCode==HttpURLConnection.HTTP_NOT_FOUND ) {
+/*			if ( responseCode==HttpURLConnection.HTTP_NOT_FOUND ) {
 				pw.println("crlstore test not done because crlstore not enabled. To run the test set 'crlstore.enabled' in ./conf/crl.properties and then 'ant deploy' and restart appserver.");
 				return;
-			}
-			pw.println(" Fetching CRL with '"+sURI+"' is not working. responseCode="+connection.getResponseCode());
+			}*/
+			pw.println(" Fetching CRL with '"+sURI+"' is not working. responseCode="+responseCode);
 			return;
 		}
 
