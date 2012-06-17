@@ -80,7 +80,7 @@ class ValidationAuthorityTst {
 			final String sURI = urlType.appendQueryToURL(sBaseURI, id, isDelta);
 			testURI( pw, createCrlSession, sURI, caSubjectDN, isDelta );
 		}
-		if ( !aliasTest ) {
+		if ( !aliasTest || !urlType.equals(RFC4387URL.sKIDHash) ) {
 			return;
 		}
 		final String alias = "alias";
@@ -91,7 +91,7 @@ class ValidationAuthorityTst {
 		testURI( pw, createCrlSession, sURI, caSubjectDN, isDelta );
 	}
 	private static void testURI( PrintWriter pw, CrlStoreSessionRemote createCrlSession, String sURI, String caSubjectDN, boolean isDelta ) throws Exception {
-		log.debug("URL: '"+sURI+"'.");
+		log.debug("Testing URL: '"+sURI+"'.");
 		final HttpURLConnection connection = (HttpURLConnection)new URI(sURI).toURL().openConnection();
 		connection.connect();
 		final int responseCode = connection.getResponseCode();
