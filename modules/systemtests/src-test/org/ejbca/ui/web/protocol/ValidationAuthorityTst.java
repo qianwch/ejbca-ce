@@ -22,8 +22,6 @@ import java.security.cert.X509Certificate;
 import org.apache.log4j.Logger;
 import org.bouncycastle.util.Arrays;
 import org.cesecore.certificates.crl.CrlStoreSessionRemote;
-import org.cesecore.jndi.JndiHelper;
-import org.ejbca.core.ejb.config.ConfigurationSessionRemote;
 import org.ejbca.core.protocol.certificatestore.HashID;
 
 /**
@@ -36,7 +34,6 @@ import org.ejbca.core.protocol.certificatestore.HashID;
  */
 class ValidationAuthorityTst {
 	private final static Logger log = Logger.getLogger(ValidationAuthorityTst.class);
-	private final static ConfigurationSessionRemote configuration = JndiHelper.getRemoteSession(ConfigurationSessionRemote.class);
 	static String testCRLStore(X509Certificate caCert, CrlStoreSessionRemote crlSession, String port) throws Exception {
 		// Before running this we need to make sure the certificate cache is refreshed, there may be a cache delay which is acceptable in real life, 
 		// but not when running JUnit tests  
@@ -84,12 +81,14 @@ class ValidationAuthorityTst {
 			return;
 		}
 		final String alias = "alias";
-		final String key = "va.sKIDHash.alias."+alias;
-		final String value = id.b64url;
-		configuration.updateProperty(key, value);
-		if ( !configuration.verifyProperty(key, value) ) {
-			pw.println("Not possible to set property '"+key+"' to '"+value+"'.");
-			return;
+		{
+			final String sURI = sBaseURI + "?setAlias="+alias+"="+id.b64url;
+			final HttpURLConnection connection = (HttpURLConnection)new URI(sURI).toURL().openConnection();
+			connection.connect();
+			if ( connection.getResponseCode()!=HttpURLConnection.HTTP_OK ) {
+				pw.println("Not possible to set alias");
+				return;
+			}
 		}
 		final String sURI = sBaseURI + "?alias="+alias+(isDelta ? "&delta=" : "");
 		testURI( pw, createCrlSession, sURI, caSubjectDN, isDelta );

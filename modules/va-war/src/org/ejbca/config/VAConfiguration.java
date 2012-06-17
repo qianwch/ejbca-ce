@@ -27,4 +27,8 @@ public class VAConfiguration {
 		return ConfigurationHolder.getString(S_HASH_ALIAS_PREFIX+name);
 	}
 
+	public static boolean sKIDHashSetAlias(String name, String hash) {
+		return ConfigurationHolder.updateConfiguration(S_HASH_ALIAS_PREFIX+name, hash);
+	}
+
 }

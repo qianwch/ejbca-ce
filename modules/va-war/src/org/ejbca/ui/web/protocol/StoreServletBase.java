@@ -102,6 +102,9 @@ public abstract class StoreServletBase extends HttpServlet {
 			log.trace(">doGet()");			
 		}
 		try {
+			if ( alias(req, resp) ) {
+				return;
+			}
 			if ( reload(req, resp) ) {
 				return;
 			}
@@ -138,6 +141,25 @@ public abstract class StoreServletBase extends HttpServlet {
 		}
 		printInfo(req, resp);
 	}
+	private boolean alias(HttpServletRequest req, HttpServletResponse resp) {
+		final String alias = req.getParameter("setAlias");
+		if ( alias==null ) {
+			return false;
+		}
+		final int ix = alias.indexOf('=');
+		if ( ix<1 || alias.length()<=ix+2 ) {
+			log.debug("No valid alias definition string: ");
+			return true;
+		}
+		final String key = alias.substring(0, ix).trim();
+		final String hash = alias.substring(ix+1).trim();
+		if ( !VAConfiguration.sKIDHashSetAlias(key, hash) ) {
+			log.error("Not possible to add: "+alias);
+			return true;
+		}
+		log.debug("Alias '"+key+"' defined for hash '"+hash+"'.");
+		return true;
+	}
 	private boolean fromName(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
 		final String alias = req.getParameter("alias");
 		if ( alias==null ) {
@@ -145,7 +167,9 @@ public abstract class StoreServletBase extends HttpServlet {
 		}
 		final String sKIDHash = VAConfiguration.sKIDHashFromName(alias);
 		if ( sKIDHash==null || sKIDHash.length()<1 ) {
-			resp.sendError(HttpServletResponse.SC_NOT_FOUND, "No '"+alias+"' alias defined in va.properties .");
+			final String m = "No '"+alias+"' alias defined in va.properties .";
+			resp.sendError(HttpServletResponse.SC_NOT_FOUND, m);
+			log.debug(m);
 			return true;
 		}
 		sKIDHash( sKIDHash, resp, req, alias );
