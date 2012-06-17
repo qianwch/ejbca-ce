@@ -141,14 +141,17 @@ public abstract class StoreServletBase extends HttpServlet {
 		}
 		printInfo(req, resp);
 	}
-	private boolean alias(HttpServletRequest req, HttpServletResponse resp) {
+	private boolean alias(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		final String alias = req.getParameter("setAlias");
 		if ( alias==null ) {
 			return false;
 		}
+		if ( !checkIfAutorizedIP(req, resp) ) {
+			return true;
+		}
 		final int ix = alias.indexOf('=');
 		if ( ix<1 || alias.length()<=ix+2 ) {
-			log.debug("No valid alias definition string: ");
+			log.debug("No valid alias definition string: "+alias);
 			return true;
 		}
 		final String key = alias.substring(0, ix).trim();
@@ -182,17 +185,23 @@ public abstract class StoreServletBase extends HttpServlet {
 		if ( !doReload ) {
 			return false;
 		}
+		if ( !checkIfAutorizedIP(req, resp) ) {
+			return true;
+		}
+		log.info("Reloading certificate and CRL caches due to request from "+req.getRemoteAddr());
+		// Reload CA certificates
+		this.certCache.forceReload();
+		return true;
+	}
+	private boolean checkIfAutorizedIP(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		final String remote = req.getRemoteAddr();
 		// localhost in either ipv4 and ipv6
-		if (StringUtils.equals(remote, "127.0.0.1") || (StringUtils.equals(remote, "0:0:0:0:0:0:0:1"))) {
-			log.info("Reloading certificate and CRL caches due to request from "+remote);
-			// Reload CA certificates
-			this.certCache.forceReload();
+		if ( StringUtils.equals(remote, "127.0.0.1") || StringUtils.equals(remote, "0:0:0:0:0:0:0:1") ) {
 			return true;
 		}
 		log.info("Got reloadcache command from unauthorized ip: "+remote);
 		resp.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-		return true;
+		return false;
 	}
 	private void printInfo(X509Certificate certs[], String indent, PrintWriter pw, String url) {
 		for ( int i=0; i<certs.length; i++ ) {
