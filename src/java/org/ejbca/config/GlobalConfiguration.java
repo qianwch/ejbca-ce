@@ -23,7 +23,7 @@ import org.ejbca.core.model.UpgradeableDataHashMap;
 /**
  * This is a  class containing global configuration parameters.
  *
- * @version $Id: GlobalConfiguration.java 10397 2010-11-08 14:18:57Z anatom $
+ * @version $Id$
  */
 public class GlobalConfiguration extends UpgradeableDataHashMap implements java.io.Serializable {
 

@@ -20,7 +20,7 @@ import org.ejbca.ui.cli.IAdminCommand;
 /**
  * Implements the EJBCA RA WS command line interface
  *
- * @version $Id: ejbcawsracli.java 11009 2010-12-29 15:20:37Z jeklund $
+ * @version $Id$
  */
 public class cmpnestedmessagetest  {
     /**
