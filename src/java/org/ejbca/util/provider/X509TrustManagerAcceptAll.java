@@ -28,32 +28,26 @@ import javax.net.ssl.X509TrustManager;
  */
 public class X509TrustManagerAcceptAll implements X509TrustManager {
 
-    /**
-     */
-    public X509TrustManagerAcceptAll() {
-        // TODO Auto-generated constructor stub
-    }
+	/**
+	 */
+	public X509TrustManagerAcceptAll() {
+		// TODO Auto-generated constructor stub
+	}
 
-    /* (non-Javadoc)
-     * @see javax.net.ssl.X509TrustManager#checkClientTrusted(java.security.cert.X509Certificate[], java.lang.String)
-     */
-    public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-        // do nothing
-    }
+	@Override
+	public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+		// do nothing
+	}
 
-    /* (non-Javadoc)
-     * @see javax.net.ssl.X509TrustManager#checkServerTrusted(java.security.cert.X509Certificate[], java.lang.String)
-     */
-    public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-        // do nothing
-    }
+	@Override
+	public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+		// do nothing
+	}
 
-    /* (non-Javadoc)
-     * @see javax.net.ssl.X509TrustManager#getAcceptedIssuers()
-     */
-    public X509Certificate[] getAcceptedIssuers() {
-        // only called from server side
-        return null;
-    }
+	@Override
+	public X509Certificate[] getAcceptedIssuers() {
+		// only called from server side
+		return null;
+	}
 
 }
