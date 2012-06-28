@@ -28,6 +28,7 @@
 	<classpathentry kind="src" path="modules/externalra/src"/>
 	<classpathentry kind="src" path="modules/externalra/src-test"/>
 	<classpathentry kind="src" path="modules/healtcheck-war/src"/>
+	<classpathentry kind="src" path="modules/healtcheck-war/src-test"/>
 	<classpathentry kind="src" path="modules/oldlogexport-cli/src"/>
 	<classpathentry kind="src" path="modules/publicweb-gui/src"/>
 	<classpathentry kind="src" path="modules/va-war/src"/>
@@ -77,7 +78,7 @@
 	<classpathentry kind="lib" path="lib/hibernate/hibernate-core.jar"/>
 	<classpathentry kind="lib" path="lib/hibernate/dom4j-1.6.1.jar"/>
 	<classpathentry kind="lib" path="lib/hibernate/hibernate-commons-annotations.jar"/>
-    <classpathentry kind="lib" path="lib/hibernate/hibernate-annotations.jar"/>
+	<classpathentry kind="lib" path="lib/hibernate/hibernate-annotations.jar"/>
 	<classpathentry kind="lib" path="lib/ext/junit-4.8.2.jar"/>
 	<classpathentry kind="lib" path="lib/ext/jaxb-NamespacePrefixMapper-interfaces-2.0.0.jar"/>
 	<classpathentry kind="lib" path="lib/ext/easymock/easymock-3.0.jar"/>
