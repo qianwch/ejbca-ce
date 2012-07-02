@@ -17,18 +17,14 @@ import java.util.Collection;
 
 /**
  * Class representing an Worker Type, should be registered in the 
- * ServiceTypesManager. Should be inhereted by all worker managed beans.
+ * ServiceTypesManager. Should be inherited by all worker managed beans.
  * 
  * Defines which actions and interval that are compatible with this worker
- *
- * @author Philip Vendil 2006 sep 29
  *
  * @version $Id$
  */
 public abstract class WorkerType extends ServiceType {
 
-
-	
 	public WorkerType(String subViewPage, String name, boolean translatable) {
 		super(subViewPage, name, translatable);
 	}

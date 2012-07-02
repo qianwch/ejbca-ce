@@ -16,12 +16,14 @@ import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.ejbca.core.ejb.ca.caadmin.CAAdminSessionLocal;
+import org.ejbca.core.ejb.ca.caadmin.CaSessionLocal;
 import org.ejbca.core.ejb.ca.store.CertificateStoreSessionLocal;
 import org.ejbca.core.ejb.ra.UserAdminSessionLocal;
 import org.ejbca.core.model.InternalResources;
@@ -38,7 +40,6 @@ import org.ejbca.core.model.services.actions.MailActionInfo;
  * number of days and creates an notification sent to either the end user or the
  * administrator.
  * 
- * @author Philip Vendil, Tomas Gustavsson
  * 
  * @version: $Id$
  */
@@ -49,7 +50,8 @@ public class CertificateExpirationNotifierWorker extends EmailSendingWorker {
     private static final InternalResources intres = InternalResources.getInstance();
     
     private CertificateStoreSessionLocal certificateStoreSession;
-
+    private transient Set<Integer> certificateProfileIds;
+    
     /**
      * Worker that makes a query to the Certificate Store about expiring
      * certificates.
@@ -58,6 +60,7 @@ public class CertificateExpirationNotifierWorker extends EmailSendingWorker {
      */
     public void work(Map<Class<?>, Object> ejbs) throws ServiceExecutionFailedException {
         log.trace(">CertificateExpirationNotifierWorker.work started");
+        final CaSessionLocal caSession = (CaSessionLocal) ejbs.get(CaSessionLocal.class);
         final CAAdminSessionLocal caAdminSession = ((CAAdminSessionLocal)ejbs.get(CAAdminSessionLocal.class));
         certificateStoreSession = ((CertificateStoreSessionLocal)ejbs.get(CertificateStoreSessionLocal.class));
         final UserAdminSessionLocal userAdminSession = ((UserAdminSessionLocal)ejbs.get(UserAdminSessionLocal.class));
@@ -67,16 +70,26 @@ public class CertificateExpirationNotifierWorker extends EmailSendingWorker {
 
         // Build Query
         String cASelectString = "";
-        Collection<Integer> ids = getCAIdsToCheck(false);
-        if (ids.size() > 0) {
-            Iterator<Integer> iter = ids.iterator();
-            while (iter.hasNext()) {
-                Integer caid = iter.next();
+        Collection<Integer> caIds = getCAIdsToCheck(false);
+        Set<Integer> certificateProfileIds = getCertificateProfileIdsToCheck();
+       
+        if (!caIds.isEmpty()) {
+            //if caIds contains SecConst.ALLCAS, reassign caIds to contain just that.
+            if(caIds.contains(SecConst.ALLCAS)) {
+                caIds = caSession.getAvailableCAs();
+            }
+            for(Integer caid : caIds) {
                 CAInfo caInfo = caAdminSession.getCAInfo(getAdmin(), caid);
                 if (caInfo == null) {
                     String msg = intres.getLocalizedMessage("services.errorworker.errornoca", caid, null);
                     log.info(msg);
                     continue;
+                } else if(!certificateProfileIds.isEmpty()) {
+                    //If there are certificate profiles specified, then the selected CAs must be 
+                    //using one of them. Otherwise business as usual.
+                    if(!certificateProfileIds.contains(caInfo.getCertificateProfileId())) {
+                        continue;
+                    }
                 }
                 String cadn = caInfo.getSubjectDN();
                 if (cASelectString.equals("")) {
@@ -209,5 +222,24 @@ public class CertificateExpirationNotifierWorker extends EmailSendingWorker {
     	if (!certificateStoreSession.setStatus(pk, status)) {
             log.error("Error updating certificate status for certificate with fingerprint: " + pk);
     	}
+    }
+	
+	/**
+	 * Returns the Set of Certificate Profile IDs. For performance reasons cached as a 
+	 * transient class variable.
+	 * 
+	 * @return
+	 */
+    private Set<Integer> getCertificateProfileIdsToCheck() {
+        if (this.certificateProfileIds == null) {
+            this.certificateProfileIds = new HashSet<Integer>();
+            String idString = properties.getProperty(PROP_CERTIFICATE_PROFILE_IDS_TO_CHECK);
+            if (idString != null) {
+                for (String id : idString.split(";")) {
+                    certificateProfileIds.add(Integer.valueOf(id));
+                }
+            }
+        }
+        return certificateProfileIds;
     }
 }

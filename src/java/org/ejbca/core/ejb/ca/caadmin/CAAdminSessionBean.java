@@ -146,7 +146,6 @@ import org.ejbca.util.keystore.KeyTools;
 @TransactionAttribute(TransactionAttributeType.REQUIRED)
 public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRemote {
 
-    private static final long serialVersionUID = 1L;
     private static final Logger log = Logger.getLogger(CAAdminSessionBean.class);
 
     @PersistenceContext(unitName="ejbca")

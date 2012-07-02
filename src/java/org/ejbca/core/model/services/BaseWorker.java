@@ -25,7 +25,6 @@ import org.ejbca.core.model.services.intervals.DummyInterval;
 /**
  * Abstract base class that initializes the worker and its interval and action.
  * 
- * @author Philip Vendil 2006 sep 27
  *
  * @version $Id$
  */
@@ -161,8 +160,10 @@ public abstract class BaseWorker implements IWorker {
     }
 
 	/** returns a collection of String with CAIds as gotten from the property  BaseWorker.PROP_CAIDSTOCHECK.
-	 * @param includeAllCAsIfNonce set to true if the 'catch all' SecConst.ALLCAS should be included in the list IF there does not exist a list. This CAId is not recognized by all recipients...
-     * This is due to that the feature of selecting CAs was enabled in EJBCA 3.9.1, and we want the service to keep working even after an upgrade from an earlier version.
+	 * @param includeAllCAsIfNonce set to true if the 'catch all' SecConst.ALLCAS should be included in the list 
+	 * IF there does not exist a list. This CAId is not recognized by all recipients...
+     * This is due to that the feature of selecting CAs was enabled in EJBCA 3.9.1, and we want the service to keep working 
+     * even after an upgrade from an earlier version.
 	 * 
 	 * @return Collection<String> of integer CA ids in String form, use Integer.valueOf to convert to int.
 	 */

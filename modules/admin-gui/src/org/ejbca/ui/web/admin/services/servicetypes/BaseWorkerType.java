@@ -2,12 +2,13 @@ package org.ejbca.ui.web.admin.services.servicetypes;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
 import org.ejbca.core.model.services.BaseWorker;
+import org.ejbca.core.model.services.IWorker;
 
 public abstract class BaseWorkerType extends WorkerType {
 
@@ -17,6 +18,7 @@ public abstract class BaseWorkerType extends WorkerType {
 	public static final String DEFAULT_TIMEVALUE = "7";
 	
 	private List<String> selectedCANamesToCheck = new ArrayList<String>();
+	private List<String> selectedCertificateProfilesToCheck = new ArrayList<String>();
 	private Collection<String> compatibleActionTypeNames = new ArrayList<String>();
 	private Collection<String> compatibleIntervalTypeNames = new ArrayList<String>();
 	private String classpath = null;
@@ -41,55 +43,44 @@ public abstract class BaseWorkerType extends WorkerType {
 	protected void deleteAllCompatibleIntervalTypes() {
 		compatibleIntervalTypeNames = new ArrayList<String>();
 	}
+	
+	/**
+	 * 
+	 * @return a list of selected CAs.
+	 */
 	public List<String> getSelectedCANamesToCheck() {
 		return selectedCANamesToCheck;
 	}
-	public void setSelectedCANamesToCheck(List<String> selectedCANamesToCheck) {
+	
+	public synchronized void setSelectedCANamesToCheck(List<String> selectedCANamesToCheck) {
 		this.selectedCANamesToCheck = selectedCANamesToCheck;
 	}
 
-	//
-	// Methods implementing WorkerType
-	// 
-	/**
-	 * @see org.ejbca.ui.web.admin.services.servicetypes.ServiceType#isCustom()
-	 */
+	@Override
 	public boolean isCustom() {		
 		return false;
 	}
 
-	/**
-	 * @see org.ejbca.ui.web.admin.services.servicetypes.WorkerType#getCompatibleActionTypeNames()
-	 */
+	@Override
 	public Collection<String> getCompatibleActionTypeNames() {
 		return compatibleActionTypeNames;
 	}
 
-	/**
-	 * @see org.ejbca.ui.web.admin.services.servicetypes.WorkerType#getCompatibleIntervalTypeNames()
-	 */
+	@Override
 	public Collection<String> getCompatibleIntervalTypeNames() {
 		return compatibleIntervalTypeNames;
 	}
 
-	/**
-	 * 
-	 * @see org.ejbca.ui.web.admin.services.servicetypes.ServiceType#getClassPath()
-	 */
+	@Override
 	public String getClassPath() {		
 		return classpath;
 	}
 
-	/**
-	 * @see org.ejbca.ui.web.admin.services.servicetypes.ServiceType#getProperties()
-	 */
+	@Override
 	public Properties getProperties(ArrayList<String> errorMessages) throws IOException {		
-		Properties retval = new Properties();
-
-		Iterator<String> iter = getSelectedCANamesToCheck().iterator();		
+		Properties retval = new Properties();		
 		String caIdString = null;
-		while(iter.hasNext()){
-			String cAid = (String) iter.next();
+		for(String cAid  : getSelectedCANamesToCheck()) {	
 			if(!cAid.trim().equals("")){
 			  if(caIdString == null) {
 				caIdString = cAid;
@@ -99,21 +90,47 @@ public abstract class BaseWorkerType extends WorkerType {
 			}
 		}
 		if (caIdString != null) {			
-			retval.setProperty(BaseWorker.PROP_CAIDSTOCHECK, caIdString);
+			retval.setProperty(IWorker.PROP_CAIDSTOCHECK, caIdString);
 		}
+		String certificateProfileIdString = null;
+		for(String certificateProfileId : getSelectedCertificateProfilesToCheck()) {
+		    if(!certificateProfileId.trim().equals("")){
+	              if(certificateProfileIdString == null) {
+	                  certificateProfileIdString = certificateProfileId;
+	              }else{
+	                  certificateProfileIdString += ";"+certificateProfileId;
+	              }
+	            }
+		}
+		if (certificateProfileIdString != null) {         
+            retval.setProperty(IWorker.PROP_CERTIFICATE_PROFILE_IDS_TO_CHECK, certificateProfileIdString);
+        }
 		return retval;
 	}
 
-	/**
-	 * @see org.ejbca.ui.web.admin.services.servicetypes.ServiceType#setProperties(java.util.Properties)
-	 */
-	public void setProperties(Properties properties) throws IOException {
-		ArrayList<String> selectedCANamesToCheck = new ArrayList<String>();
-		String[] caIdsToCheck = properties.getProperty(BaseWorker.PROP_CAIDSTOCHECK,"").split(";");
-		for(int i=0;i<caIdsToCheck.length;i++){
-			selectedCANamesToCheck.add(caIdsToCheck[i]);
-		}
-		setSelectedCANamesToCheck(selectedCANamesToCheck);			
-	}
+	@Override
+    public void setProperties(Properties properties) throws IOException {
+        ArrayList<String> selectedCANamesToCheck = new ArrayList<String>();
+        selectedCANamesToCheck.addAll(Arrays.asList(properties.getProperty(IWorker.PROP_CAIDSTOCHECK, "").split(";")));
+        setSelectedCANamesToCheck(selectedCANamesToCheck);
+        ArrayList<String> selectedCertificateProfileNamesToCheck = new ArrayList<String>();
+        selectedCertificateProfileNamesToCheck.addAll(Arrays.asList(properties.getProperty(IWorker.PROP_CERTIFICATE_PROFILE_IDS_TO_CHECK, "")
+                .split(";")));
+        setSelectedCertificateProfilesToCheck(selectedCertificateProfileNamesToCheck);
+    }
+
+    /**
+     * @return the selectedCertificateProfilesToCheck
+     */
+    public List<String> getSelectedCertificateProfilesToCheck() {
+        return selectedCertificateProfilesToCheck;
+    }
+
+    /**
+     * @param selectedCertificateProfilesToCheck the selectedCertificateProfilesToCheck to set
+     */
+    public void setSelectedCertificateProfilesToCheck(List<String> selectedCertificateProfilesToCheck) {
+        this.selectedCertificateProfilesToCheck = selectedCertificateProfilesToCheck;
+    }
 
 }

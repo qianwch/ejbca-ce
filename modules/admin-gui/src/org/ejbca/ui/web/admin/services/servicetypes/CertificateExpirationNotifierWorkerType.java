@@ -13,20 +13,21 @@
 package org.ejbca.ui.web.admin.services.servicetypes;
 
 
+
 /**
- * Class managing the view of the Certificate Exiration Notifier Worker
+ * Class managing the view of the Certificate Expiration Notifier Worker
  * 
- * @author Philip Vendil
  *
  * @version $Id$
  */
 public class CertificateExpirationNotifierWorkerType extends BaseEmailNotifyingWorkerType {
 
-	public static final String NAME = "CERTNOTIFICATIONWORKER";
-	
-	
+    private static final long serialVersionUID = -2770753379431913965L;
+
+    public static final String NAME = "CERTNOTIFICATIONWORKER";
+    
 	public CertificateExpirationNotifierWorkerType(){
-		super(NAME, "certnotificationworker.jsp", org.ejbca.core.model.services.workers.CertificateExpirationNotifierWorker.class.getName());
-		
+		super(NAME, "certnotificationworker.jsp", org.ejbca.core.model.services.workers.CertificateExpirationNotifierWorker.class.getName());	
 	}
+
 }

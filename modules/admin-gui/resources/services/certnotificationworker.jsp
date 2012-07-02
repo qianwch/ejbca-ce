@@ -48,9 +48,18 @@ function checkUseEndUserNotification(){
 	</h:panelGroup>
 	<h:panelGroup>
 		<h:selectManyListbox id="certCheckCASelect" value="#{editService.notifyingType.selectedCANamesToCheck}" size="10">
-			<f:selectItems value="#{editService.availableCAs}"/>
+			<f:selectItems value="#{editService.availableCAsWithAnyOption}" />
 		</h:selectManyListbox>
 	</h:panelGroup>
+
+   	<h:panelGroup>
+		<h:outputText value="#{web.text.CERTIFICATEPROFILESTOCHECK}"/>
+	</h:panelGroup>
+	<h:panelGroup>							
+		<h:selectManyListbox id="certCheckCertificateProfileSelect" value="#{editService.baseWorkerType.selectedCertificateProfilesToCheck}" size="10">
+			<f:selectItems value="#{editService.certificateProfiles}"/>
+		</h:selectManyListbox>		
+	</h:panelGroup>	
 
 	<h:panelGroup>
 		<h:outputText value="#{web.text.TIMEBEFOREEXPIRATION}"/>

@@ -18,14 +18,17 @@ import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.Properties;
 
-import org.apache.log4j.Logger;
+import org.cesecore.core.ejb.ca.store.CertificateProfileSessionRemote;
 import org.ejbca.core.ejb.ca.CaTestCase;
+import org.ejbca.core.ejb.ca.caadmin.CAAdminSessionRemote;
 import org.ejbca.core.ejb.ca.sign.SignSessionRemote;
 import org.ejbca.core.ejb.ca.store.CertificateStoreSessionRemote;
 import org.ejbca.core.ejb.ra.UserAdminSessionRemote;
 import org.ejbca.core.ejb.services.ServiceDataSessionRemote;
 import org.ejbca.core.ejb.services.ServiceSessionRemote;
 import org.ejbca.core.model.SecConst;
+import org.ejbca.core.model.ca.caadmin.CAInfo;
+import org.ejbca.core.model.ca.certificateprofiles.CertificateProfile;
 import org.ejbca.core.model.ca.store.CertificateInfo;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.model.services.actions.NoAction;
@@ -36,6 +39,9 @@ import org.ejbca.util.CertTools;
 import org.ejbca.util.CryptoProviderTools;
 import org.ejbca.util.InterfaceCache;
 import org.ejbca.util.keystore.KeyTools;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Tests the certificate expiration notifications.
@@ -44,22 +50,26 @@ import org.ejbca.util.keystore.KeyTools;
  */
 public class CertificateExpireTest extends CaTestCase {
 
-    private static final Logger log = Logger.getLogger(CertificateExpireTest.class);
     private static final Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
     private static final String CA_NAME = "CertExpNotifCA";
+    private static final String USERNAME = "CertificateExpireTest";
+    private static final String PASSWORD = "foo123";
     private int caid = getTestCAId(CA_NAME);
-
-    private static String username;
-    private static String pwd;
 
     private static final String CERTIFICATE_EXPIRATION_SERVICE = "CertificateExpirationService";
 
+    private CAAdminSessionRemote caAdminSession = InterfaceCache.getCAAdminSession();
+    private CertificateProfileSessionRemote certificateProfileSession = InterfaceCache.getCertificateProfileSession();
     private CertificateStoreSessionRemote certificateStoreSession = InterfaceCache.getCertificateStoreSession();
     private ServiceSessionRemote serviceSession = InterfaceCache.getServiceSession();
     private SignSessionRemote signSession = InterfaceCache.getSignSession();
     private UserAdminSessionRemote userAdminSession = InterfaceCache.getUserAdminSession();
     private ServiceDataSessionRemote serviceDataSession = InterfaceCache.getServiceDataSessionRemote();
 
+    private X509Certificate cert;
+    private CertificateInfo info;
+    private String fingerprint;
+    
     public CertificateExpireTest() {
         super();
     }
@@ -68,53 +78,49 @@ public class CertificateExpireTest extends CaTestCase {
         super(name);
     }
 
+    @Before
     public void setUp() throws Exception {
+        CryptoProviderTools.installBCProviderIfNotAvailable();
+        createTestCA(CA_NAME);  
+        // Create a new user
+        userAdminSession.addUser(admin, USERNAME, PASSWORD, "C=SE,O=AnaTom,CN=" + USERNAME, null, null, false, SecConst.EMPTY_ENDENTITYPROFILE,
+                SecConst.CERTPROFILE_FIXED_ENDUSER, SecConst.USER_ENDUSER, SecConst.TOKEN_SOFT_PEM, 0, caid);
+        KeyPair keys = KeyTools.genKeys("1024", "RSA");
+        cert = (X509Certificate) signSession.createCertificate(admin, USERNAME, PASSWORD, keys.getPublic());
+        assertNotNull("Failed to create certificate", cert);
+        fingerprint = CertTools.getFingerprintAsString(cert);
+        X509Certificate ce = (X509Certificate) certificateStoreSession.findCertificateByFingerprint(admin, fingerprint);
+        if(ce == null) {
+            throw new Exception("Cannot find certificate with fp=" + fingerprint);
+        }
+        info = certificateStoreSession.getCertificateInfo(admin, fingerprint);
+        if (!fingerprint.equals(info.getFingerprint())) {
+            throw new Exception("fingerprint does not match.");
+        }
+        if (!cert.getSerialNumber().equals(info.getSerialNumber())) {
+            throw new Exception("serialnumber does not match.");
+        }
+        if (!CertTools.getIssuerDN(cert).equals(info.getIssuerDN())) {
+            throw new Exception("issuerdn does not match.");
+        }
+        if (!CertTools.getSubjectDN(cert).equals(info.getSubjectDN())) {
+            throw new Exception("subjectdn does not match.");
+        }
+        // The cert was just stored above with status INACTIVE
+        if (!(SecConst.CERT_ACTIVE == info.getStatus())) {
+            throw new Exception("status does not match.");
+        }
+
     }
 
-    public void tearDown() throws Exception {
-    }
-
-    /**
-     * FIXME: Make this into a @BeforeClass method in JUNIT4
-     */
-    public void test00BeforeClass() {
-        CryptoProviderTools.installBCProvider();
-        assertTrue("Could not create TestCA.", createTestCA(CA_NAME));
-    }
-    
     /**
      * Add a new user and an expire service. Test that the service expires the
      * users password
      * 
      */
-    public void test01ExpireCertificate() throws Exception {
-        log.trace(">test01CreateNewUser()");
-
-        // Create a new user
-        username = genRandomUserName();
-        pwd = genRandomPwd();
-        userAdminSession.addUser(admin, username, pwd, "C=SE,O=AnaTom,CN=" + username, null, null, false, SecConst.EMPTY_ENDENTITYPROFILE,
-                SecConst.CERTPROFILE_FIXED_ENDUSER, SecConst.USER_ENDUSER, SecConst.TOKEN_SOFT_PEM, 0, caid);
-        log.debug("created user: " + username);
-
-        KeyPair keys = KeyTools.genKeys("1024", "RSA");
-        X509Certificate cert = (X509Certificate) signSession.createCertificate(admin, username, pwd, keys.getPublic());
-        assertNotNull("Failed to create certificate", cert);
-
-        String fp = CertTools.getFingerprintAsString(cert);
-        X509Certificate ce = (X509Certificate) certificateStoreSession.findCertificateByFingerprint(admin, fp);
-        assertNotNull("Cannot find certificate with fp=" + fp, ce);
-        CertificateInfo info = certificateStoreSession.getCertificateInfo(admin, fp);
-        // log.info("Got certificate info for cert with fp="+fp);
-        assertEquals("fingerprint does not match.", fp, info.getFingerprint());
-        assertEquals("serialnumber does not match.", cert.getSerialNumber(), info.getSerialNumber());
-        assertEquals("issuerdn does not match.", CertTools.getIssuerDN(cert), info.getIssuerDN());
-        assertEquals("subjectdn does not match.", CertTools.getSubjectDN(cert), info.getSubjectDN());
-        // The cert was just stored above with status INACTIVE
-        assertEquals("status does not match.", SecConst.CERT_ACTIVE, info.getStatus());
+    @Test
+    public void testExpireCertificate() throws Exception {
         long seconds = (cert.getNotAfter().getTime() - new Date().getTime()) / 1000l;
-        log.debug("ceritificate OK in store, expires in " + seconds + " seconds");
-
         // Create a new UserPasswordExpireService
         ServiceConfiguration config = new ServiceConfiguration();
         config.setActive(true);
@@ -133,48 +139,157 @@ public class CertificateExpireTest extends CaTestCase {
         workerprop.setProperty(EmailSendingWorkerConstants.PROP_SENDTOADMINS, "FALSE");
         workerprop.setProperty(EmailSendingWorkerConstants.PROP_SENDTOENDUSERS, "FALSE");
         workerprop.setProperty(BaseWorker.PROP_CAIDSTOCHECK, String.valueOf(caid));
-        workerprop.setProperty(BaseWorker.PROP_TIMEBEFOREEXPIRING, String.valueOf(seconds - 10));
+        workerprop.setProperty(BaseWorker.PROP_TIMEBEFOREEXPIRING, String.valueOf(seconds - 5));
         workerprop.setProperty(BaseWorker.PROP_TIMEUNIT, BaseWorker.UNIT_SECONDS);
         config.setWorkerProperties(workerprop);
-
         if (serviceSession.getService(admin, CERTIFICATE_EXPIRATION_SERVICE) == null) {
             serviceSession.addService(admin, 4711, CERTIFICATE_EXPIRATION_SERVICE, config);
         }
         serviceSession.activateServiceTimer(admin, CERTIFICATE_EXPIRATION_SERVICE);
-
-        // The service will run... the cert should still be active after 5 seconds..
-        Thread.sleep(5000);
-        info = certificateStoreSession.getCertificateInfo(admin, fp);
+        // The service will run... the cert should still be active after 2
+        // seconds..
+        Thread.sleep(2000);
+        info = certificateStoreSession.getCertificateInfo(admin, fingerprint);
         assertEquals("status dotes not match.", SecConst.CERT_ACTIVE, info.getStatus());
-  
         // The service will run...We need some tolerance since timers cannot
-        // be guaranteed to executed at the exact interval. 
-        Thread.sleep(4000);
+        // be guaranteed to executed at the exact interval.
+        Thread.sleep(3000);
         int tries = 0;
-        while (info.getStatus() != SecConst.CERT_NOTIFIEDABOUTEXPIRATION && tries<5) {
-        	Thread.sleep(1000);
-        	info = certificateStoreSession.getCertificateInfo(admin, fp);
-        	tries++;
+        while (info.getStatus() != SecConst.CERT_NOTIFIEDABOUTEXPIRATION && tries < 5) {
+            Thread.sleep(500);
+            info = certificateStoreSession.getCertificateInfo(admin, fingerprint);
+            tries++;
         }
-        info = certificateStoreSession.getCertificateInfo(admin, fp);
+        info = certificateStoreSession.getCertificateInfo(admin, fingerprint);
         assertEquals("Status does not match.", SecConst.CERT_NOTIFIEDABOUTEXPIRATION, info.getStatus());
-    	log.debug("It took >" + (9+tries) + " seconds before the certificate was expired!");
-
-        log.trace("<test01CreateNewUser()");
     }
 
     /**
-     * Remove all data stored by JUnit tests
+     * Add a new user and an expire service. Test running on all CAs.
+     * 
      */
-    public void test99CleanUp() throws Exception {
-        log.trace(">test99CleanUp()");
-        userAdminSession.deleteUser(admin, username);
-        log.debug("Removed user: " + username);
+    @Test
+    public void testExpireCertificateWithAllCAs() throws Exception {
+        long seconds = (cert.getNotAfter().getTime() - new Date().getTime()) / 1000l;
+        // Create a new UserPasswordExpireService
+        ServiceConfiguration config = new ServiceConfiguration();
+        config.setActive(true);
+        config.setDescription("This is a description");
+        // No mailsending for this Junit test service
+        config.setActionClassPath(NoAction.class.getName());
+        config.setActionProperties(null);
+        config.setIntervalClassPath(PeriodicalInterval.class.getName());
+        Properties intervalprop = new Properties();
+        // Run the service every 3:rd second
+        intervalprop.setProperty(PeriodicalInterval.PROP_VALUE, "3");
+        intervalprop.setProperty(PeriodicalInterval.PROP_UNIT, PeriodicalInterval.UNIT_SECONDS);
+        config.setIntervalProperties(intervalprop);
+        config.setWorkerClassPath(CertificateExpirationNotifierWorker.class.getName());
+        Properties workerprop = new Properties();
+        workerprop.setProperty(EmailSendingWorkerConstants.PROP_SENDTOADMINS, "FALSE");
+        workerprop.setProperty(EmailSendingWorkerConstants.PROP_SENDTOENDUSERS, "FALSE");
+        //Here is the line that matters for this test
+        workerprop.setProperty(BaseWorker.PROP_CAIDSTOCHECK, Integer.valueOf(SecConst.ALLCAS).toString());
+        
+        workerprop.setProperty(BaseWorker.PROP_TIMEBEFOREEXPIRING, String.valueOf(seconds - 5));
+        workerprop.setProperty(BaseWorker.PROP_TIMEUNIT, BaseWorker.UNIT_SECONDS);
+        config.setWorkerProperties(workerprop);
+        if (serviceSession.getService(admin, CERTIFICATE_EXPIRATION_SERVICE) == null) {
+            serviceSession.addService(admin, 4711, CERTIFICATE_EXPIRATION_SERVICE, config);
+        }
+        serviceSession.activateServiceTimer(admin, CERTIFICATE_EXPIRATION_SERVICE);
+        // The service will run... the cert should still be active after 2
+        // seconds..
+        Thread.sleep(2000);
+        info = certificateStoreSession.getCertificateInfo(admin, fingerprint);
+        assertEquals("status dotes not match.", SecConst.CERT_ACTIVE, info.getStatus());
+        // The service will run...We need some tolerance since timers cannot
+        // be guaranteed to executed at the exact interval.
+        Thread.sleep(3000);
+        int tries = 0;
+        while (info.getStatus() != SecConst.CERT_NOTIFIEDABOUTEXPIRATION && tries < 5) {
+            Thread.sleep(500);
+            info = certificateStoreSession.getCertificateInfo(admin, fingerprint);
+            tries++;
+        }
+        info = certificateStoreSession.getCertificateInfo(admin, fingerprint);
+        assertEquals("Status does not match.", SecConst.CERT_NOTIFIEDABOUTEXPIRATION, info.getStatus());
+    }
+    
+    /**
+     * Add a new user and an expire service. Test that the service expires the
+     * users password
+     * 
+     */
+    @Test
+    public void testExpireCertificateWithCertificateProfiles() throws Exception {
+        final String certificateprofilename = "foo";
+        certificateProfileSession.addCertificateProfile(admin, certificateprofilename, new CertificateProfile());
+        try {
+            //Modify the CA to use the Certificate Profile
+            CAInfo caInfo = caAdminSession.getCAInfo(admin, caid);
+            caInfo.setCertificateProfileId(certificateProfileSession.getCertificateProfileId(admin, certificateprofilename));
+            caAdminSession.editCA(admin, caInfo);
+            
+            long seconds = (cert.getNotAfter().getTime() - new Date().getTime()) / 1000l;
+            // Create a new UserPasswordExpireService
+            ServiceConfiguration config = new ServiceConfiguration();
+            config.setActive(true);
+            config.setDescription("This is a description");
+            // No mailsending for this Junit test service
+            config.setActionClassPath(NoAction.class.getName());
+            config.setActionProperties(null);
+            config.setIntervalClassPath(PeriodicalInterval.class.getName());
+            Properties intervalprop = new Properties();
+            // Run the service every 3:rd second
+            intervalprop.setProperty(PeriodicalInterval.PROP_VALUE, "3");
+            intervalprop.setProperty(PeriodicalInterval.PROP_UNIT, PeriodicalInterval.UNIT_SECONDS);
+            config.setIntervalProperties(intervalprop);
+            config.setWorkerClassPath(CertificateExpirationNotifierWorker.class.getName());
+            Properties workerprop = new Properties();
+            workerprop.setProperty(EmailSendingWorkerConstants.PROP_SENDTOADMINS, "FALSE");
+            workerprop.setProperty(EmailSendingWorkerConstants.PROP_SENDTOENDUSERS, "FALSE");
+            // All CAs
+            workerprop.setProperty(BaseWorker.PROP_CAIDSTOCHECK, String.valueOf(caid));
+
+            workerprop.setProperty(BaseWorker.PROP_TIMEBEFOREEXPIRING, String.valueOf(seconds - 5));
+            workerprop.setProperty(BaseWorker.PROP_TIMEUNIT, BaseWorker.UNIT_SECONDS);
+            config.setWorkerProperties(workerprop);
+            if (serviceSession.getService(admin, CERTIFICATE_EXPIRATION_SERVICE) == null) {
+                serviceSession.addService(admin, 4711, CERTIFICATE_EXPIRATION_SERVICE, config);
+            }
+            serviceSession.activateServiceTimer(admin, CERTIFICATE_EXPIRATION_SERVICE);
+            // The service will run... the cert should still be active after 2
+            // seconds..
+            Thread.sleep(2000);
+            info = certificateStoreSession.getCertificateInfo(admin, fingerprint);
+            assertEquals("status dotes not match.", SecConst.CERT_ACTIVE, info.getStatus());
+            // The service will run...We need some tolerance since timers cannot
+            // be guaranteed to executed at the exact interval.
+            Thread.sleep(3000);
+            int tries = 0;
+            while (info.getStatus() != SecConst.CERT_NOTIFIEDABOUTEXPIRATION && tries < 5) {
+                Thread.sleep(500);
+                info = certificateStoreSession.getCertificateInfo(admin, fingerprint);
+                tries++;
+            }
+            info = certificateStoreSession.getCertificateInfo(admin, fingerprint);
+            assertEquals("Status does not match.", SecConst.CERT_NOTIFIEDABOUTEXPIRATION, info.getStatus());
+        } finally {
+            //Clean the certificate profile
+            certificateProfileSession.removeCertificateProfile(admin, certificateprofilename);
+        }
+    }
+    
+    @After
+    public void tearDown() {
+        try {
+            userAdminSession.deleteUser(admin, USERNAME);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         serviceSession.removeService(admin, CERTIFICATE_EXPIRATION_SERVICE);
-        log.debug("Removed service:" + CERTIFICATE_EXPIRATION_SERVICE);
-        assertNull("ServiceData object with id 4711 was not removed properly.", serviceDataSession.findById(4711));
-        assertTrue("Could not remove test CA properly.", removeTestCA(CA_NAME));
-        log.debug("Removed test CA");
-        log.trace("<test99CleanUp()");
+        serviceDataSession.findById(4711);
+        removeTestCA(CA_NAME);
     }
 }

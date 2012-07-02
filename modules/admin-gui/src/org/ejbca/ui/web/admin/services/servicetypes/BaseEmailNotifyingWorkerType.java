@@ -27,7 +27,6 @@ import org.ejbca.ui.web.admin.configuration.EjbcaJSFHelper;
 /**
  * Class managing the view of the Certificate Exiration Notifier Worker
  * 
- * @author Philip Vendil
  * 
  * @version $Id$
  *

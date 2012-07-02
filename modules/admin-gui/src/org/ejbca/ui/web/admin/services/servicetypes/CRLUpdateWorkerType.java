@@ -15,7 +15,6 @@ package org.ejbca.ui.web.admin.services.servicetypes;
 import org.ejbca.core.model.services.workers.CRLUpdateWorker;
 
 /**
- * @author Philip Vendil
  *
  * @version $Id$
  */
@@ -33,5 +32,4 @@ public class CRLUpdateWorkerType extends BaseWorkerType {
 		// Only periodical interval available for this worker
 		addCompatibleIntervalTypeName(PeriodicalIntervalType.NAME);
 	}
-
 }

@@ -17,6 +17,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -46,7 +47,7 @@ import org.ejbca.ui.web.admin.services.servicetypes.WorkerType;
  *
  * @version $Id$
  */
-public class ServiceTypeManager implements java.io.Serializable {
+public class ServiceTypeManager implements Serializable {
 	
     /**
      * Determines if a de-serialized file is compatible with this class.
