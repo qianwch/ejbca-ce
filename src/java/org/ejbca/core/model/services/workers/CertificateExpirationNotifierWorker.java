@@ -71,8 +71,7 @@ public class CertificateExpirationNotifierWorker extends EmailSendingWorker {
         // Build Query
         String cASelectString = "";
         Collection<Integer> caIds = getCAIdsToCheck(false);
-        Set<Integer> certificateProfileIds = getCertificateProfileIdsToCheck();
-       
+        Set<Integer> certificateProfileIds = getCertificateProfileIdsToCheck();      
         if (!caIds.isEmpty()) {
             //if caIds contains SecConst.ALLCAS, reassign caIds to contain just that.
             if(caIds.contains(SecConst.ALLCAS)) {

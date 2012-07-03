@@ -43,8 +43,6 @@ import org.ejbca.ui.web.admin.services.servicetypes.WorkerType;
  * 
  * To this there is also a need for a JSFSubView page with it's managed beans.
  *
- * @author Philip Vendil 2006 sep 29
- *
  * @version $Id$
  */
 public class ServiceTypeManager implements Serializable {
