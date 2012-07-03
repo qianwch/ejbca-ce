@@ -257,41 +257,51 @@ public class EditServiceManagedBean extends BaseManagedBean {
 	 * @return List<javax.faces.model.SelectItem>(String, String) of CA id's (as String) and CA names
 	 */
 	public List<SelectItem> getAvailableCAs() {
-		return getAvailableCAs(false);
+        List<SelectItem> availableCANames = new ArrayList<SelectItem>();
+        for (Integer caid : ejb.getCaSession().getAvailableCAs(getAdmin())) {
+            try {
+                availableCANames.add(new SelectItem(caid.toString(), ejb.getCaSession().getCAInfo(getAdmin(), caid).getName()));
+            } catch (CADoesntExistsException e) {
+                log.debug("CA does not exist: " + caid);
+            } catch (AuthorizationDeniedException e) {
+                log.debug("Not authorized to CA: " + caid);
+            }
+        }
+        return availableCANames;
 	}
 	/** Returns the list of available CAs, also including the special option 'Any CA'.
 	 * 
 	 * @return List<javax.faces.model.SelectItem>(String, String) of CA id's (as String) and CA names
 	 */
 	public List<SelectItem> getAvailableCAsWithAnyOption() {
-		return getAvailableCAs(true);
+	    List<SelectItem> availableCANames = new ArrayList<SelectItem>();
+        String caname = (String)EjbcaJSFHelper.getBean().getText().get("ANYCA");
+        availableCANames.add(new SelectItem(Integer.valueOf(SecConst.ALLCAS).toString(), caname));
+        availableCANames.addAll(getAvailableCAs());
+        return availableCANames;
 	}
-
-	/** Returns the list of available CAs
-	 * 
-	 * @param includeAllCAs if the returned list should include the constant ALLCAs or only the actually available CAs.
-	 * @return List<javax.faces.model.SelectItem>(String, String) of CA id's (as String) and CA names
-	 */
-	private List<SelectItem> getAvailableCAs(boolean includeAllCAs) {
-		List<SelectItem> availableCANames = new ArrayList<SelectItem>();
-		Collection<Integer> cAIds = ejb.getCaSession().getAvailableCAs(getAdmin());
-		Iterator<Integer> iter = cAIds.iterator();
-		while(iter.hasNext()){
-			int next = iter.next().intValue();
-			try {
-				availableCANames.add(new SelectItem(Integer.valueOf(next).toString(), ejb.getCaSession().getCAInfo(getAdmin(), next).getName()));
-			} catch (CADoesntExistsException e) {
-				log.debug("CA does not exist: "+next);
-			} catch (AuthorizationDeniedException e) {
-				log.debug("Not authorized to CA: "+next);
-			}
-		}
-		if (includeAllCAs) {
-			String caname = (String) EjbcaJSFHelper.getBean().getText().get("ANYCA");
-			availableCANames.add(new SelectItem(Integer.valueOf(SecConst.ALLCAS).toString(), caname));
-		}
-		return availableCANames;		
-	}
+	
+	/**
+     * 
+     * 
+     * @return a {@link List} of {@link SelectItem}s containing the ID's and names of all ROOTCA and SUBCA 
+     * certificate profiles current admin is authorized to.
+     */
+    public List<SelectItem> getCertificateProfiles() {
+        List<SelectItem> certificateProfiles = new ArrayList<SelectItem>();
+        Collection<Integer> caIds = ejb.getCaSession().getAvailableCAs(getAdmin());
+        Collection<Integer> rootCaProfiles = ejb.getCertificateProfileSession().getAuthorizedCertificateProfileIds(SecConst.CERTTYPE_ROOTCA, caIds);
+        Collection<Integer> subCaProfiles = ejb.getCertificateProfileSession().getAuthorizedCertificateProfileIds(SecConst.CERTTYPE_SUBCA, caIds);
+        for (Integer certificateProfile : rootCaProfiles) {
+            certificateProfiles.add(new SelectItem(certificateProfile.toString(), ejb.getCertificateProfileSession().getCertificateProfileName(
+                    certificateProfile)));
+        }
+        for (Integer certificateProfile : subCaProfiles) {
+            certificateProfiles.add(new SelectItem(certificateProfile.toString(), ejb.getCertificateProfileSession().getCertificateProfileName(
+                    certificateProfile)));
+        }
+        return certificateProfiles;
+    }
 
 	public List<SelectItem> getAvailablePublishers(){
 		List<SelectItem> availablePublisherNames = new ArrayList<SelectItem>();

@@ -16,9 +16,10 @@ import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.cesecore.authorization.AuthorizationDeniedException;
@@ -35,10 +36,8 @@ import org.ejbca.core.model.services.ServiceExecutionFailedException;
 import org.ejbca.core.model.services.actions.MailActionInfo;
 
 /**
- * Makes queries about which certificates that is about to expire in a given number of days and creates an notification sent to either the end user or
- * the administrator.
- * 
- * @author Philip Vendil, Tomas Gustavsson
+ * Makes queries about which certificates that is about to expire in a given number of days and creates an 
+ * notification sent to either the end user or the administrator.
  * 
  * @version: $Id$
  */
@@ -50,6 +49,7 @@ public class CertificateExpirationNotifierWorker extends EmailSendingWorker {
 
     private CertificateStoreSessionLocal certificateStoreSession;
     private EndEntityAccessSessionLocal endEntityAccessSession;
+    private transient Set<Integer> certificateProfileIds;
 
     /**
      * Worker that makes a query to the Certificate Store about expiring certificates.
@@ -67,14 +67,24 @@ public class CertificateExpirationNotifierWorker extends EmailSendingWorker {
 
         // Build Query
         Collection<String> cas = new ArrayList<String>();
-        Collection<Integer> ids = getCAIdsToCheck(false);
-        if (ids.size() > 0) {
-            Iterator<Integer> iter = ids.iterator();
-            while (iter.hasNext()) {
-                Integer caid = iter.next();
+        Collection<Integer> caIds = getCAIdsToCheck(false);
+        Set<Integer> certificateProfileIds = getCertificateProfileIdsToCheck();
+        if (!caIds.isEmpty()) {
+            //if caIds contains SecConst.ALLCAS, reassign caIds to contain just that.
+            if(caIds.contains(SecConst.ALLCAS)) {
+                caIds = caSession.getAvailableCAs();
+            }
+            for(Integer caid : caIds) {
                 CAInfo caInfo;
                 try {
                     caInfo = caSession.getCAInfo(getAdmin(), caid);
+                    if(!certificateProfileIds.isEmpty()) {
+                        //If there are certificate profiles specified, then the selected CAs must be 
+                        //using one of them. Otherwise business as usual.
+                        if(!certificateProfileIds.contains(caInfo.getCertificateProfileId())) {
+                            continue;
+                        }
+                    }
                 } catch (CADoesntExistsException e) {
                     String msg = intres.getLocalizedMessage("services.errorworker.errornoca", caid, null);
                     log.info(msg);
@@ -83,7 +93,7 @@ public class CertificateExpirationNotifierWorker extends EmailSendingWorker {
                     String msg = intres.getLocalizedMessage("authorization.notuathorizedtoresource", caid, "CAId");
                     log.info(msg);
                     continue;
-                }
+                } 
                 String cadn = caInfo.getSubjectDN();
                 cas.add(cadn);
             }
@@ -218,5 +228,24 @@ public class CertificateExpirationNotifierWorker extends EmailSendingWorker {
             log.error("Internal admin not authorized: ", e);
             throw new RuntimeException(e);
         }
+    }
+    
+    /**
+     * Returns the Set of Certificate Profile IDs. For performance reasons cached as a 
+     * transient class variable.
+     * 
+     * @return
+     */
+    private Set<Integer> getCertificateProfileIdsToCheck() {
+        if (this.certificateProfileIds == null) {
+            this.certificateProfileIds = new HashSet<Integer>();
+            String idString = properties.getProperty(PROP_CERTIFICATE_PROFILE_IDS_TO_CHECK);
+            if (idString != null) {
+                for (String id : idString.split(";")) {
+                    certificateProfileIds.add(Integer.valueOf(id));
+                }
+            }
+        }
+        return certificateProfileIds;
     }
 }
