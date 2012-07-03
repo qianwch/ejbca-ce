@@ -72,7 +72,7 @@ public abstract class BaseWorkerType extends WorkerType {
 		return selectedCANamesToCheck;
 	}
 	
-	public synchronized void setSelectedCANamesToCheck(List<String> selectedCANamesToCheck) {
+	public void setSelectedCANamesToCheck(List<String> selectedCANamesToCheck) {
 		this.selectedCANamesToCheck = selectedCANamesToCheck;
 	}
 
