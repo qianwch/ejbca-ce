@@ -67,7 +67,7 @@ public abstract class BaseWorkerType extends WorkerType {
      * @return the selectedCertificateProfilesToCheck
      */
     public List<String> getSelectedCANamesToCheck() {
-        return selectedCertificateProfilesToCheck;
+        return selectedCANamesToCheck;
     }
 	public synchronized void setSelectedCANamesToCheck(List<String> selectedCANamesToCheck) {
 		this.selectedCANamesToCheck = selectedCANamesToCheck;
