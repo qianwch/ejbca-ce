@@ -147,7 +147,7 @@ public class CertificateStoreOnlyDataSessionBean extends CertificateDataUtil imp
 	}
 
 	@Override
-	public List<Object[]> findExpirationInfo(String cASelectString, long activeNotifiedExpireDateMin, long activeNotifiedExpireDateMax, long activeExpireDateMin) {
+	public List<Object[]> findExpirationInfo(String cASelectString, Collection<Integer> certificateProfiles, long activeNotifiedExpireDateMin, long activeNotifiedExpireDateMax, long activeExpireDateMin) {
 		throw new RuntimeException("Not implemented in stand alone version.");
 	}
 

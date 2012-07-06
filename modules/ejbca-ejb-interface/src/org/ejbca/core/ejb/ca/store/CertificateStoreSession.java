@@ -371,9 +371,16 @@ public interface CertificateStoreSession {
     
     /**
      * Fetch a List of all certificate fingerprints and corresponding username
+     * 
+     * @param cASelectString A select statement that gives the CAs that the sought certificates should be issued from
+     * @param certificateProfiles A list if certificateprofiles to sort from. Will be ignored if left empty. 
+     * @param activeNotifiedExpireDateMin The minimal date for expiration notification
+     * @param activeNotifiedExpireDateMax The maxmimal date for expiration notification
+     * @param activeExpireDateMin the current rune timestamp + the threshold 
+     * 
      * @return [0] = (String) fingerprint, [1] = (String) username
      */
-    public List<Object[]> findExpirationInfo(String cASelectString, long activeNotifiedExpireDateMin, long activeNotifiedExpireDateMax, long activeExpireDateMin);
+    public List<Object[]> findExpirationInfo(String cASelectString, Collection<Integer> certificateProfiles, long activeNotifiedExpireDateMin, long activeNotifiedExpireDateMax, long activeExpireDateMin);
     
     /**
      * Update the status of a cert in the database.

@@ -709,8 +709,9 @@ public class CertificateStoreSessionBean extends CertificateDataUtil implements 
     }
     
     @Override
-    public List<Object[]> findExpirationInfo(String cASelectString, long activeNotifiedExpireDateMin, long activeNotifiedExpireDateMax, long activeExpireDateMin) {
-    	return CertificateData.findExpirationInfo(entityManager, cASelectString, activeNotifiedExpireDateMin, activeNotifiedExpireDateMax, activeExpireDateMin);
+    public List<Object[]> findExpirationInfo(String cASelectString, Collection<Integer> certificateProfiles, 
+            long activeNotifiedExpireDateMin, long activeNotifiedExpireDateMax, long activeExpireDateMin) {
+    	return CertificateData.findExpirationInfo(entityManager, cASelectString, certificateProfiles, activeNotifiedExpireDateMin, activeNotifiedExpireDateMax, activeExpireDateMin);
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
