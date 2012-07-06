@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.TreeMap;
 
 import javax.faces.application.Application;
 import javax.faces.context.FacesContext;
@@ -27,6 +28,7 @@ import javax.faces.model.SelectItem;
 import org.apache.log4j.Logger;
 import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.certificates.ca.CADoesntExistsException;
+import org.cesecore.certificates.certificate.CertificateConstants;
 import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.services.ServiceConfiguration;
 import org.ejbca.core.model.services.workers.CRLUpdateWorker;
@@ -55,8 +57,6 @@ import org.ejbca.ui.web.admin.services.servicetypes.WorkerType;
 
 /**
  * Class used to manage the GUI editing of a Service Configuration
- * 
- * @author Philip Vendil 2006 sep 30
  *
  * @version $Id$
  */
@@ -284,23 +284,25 @@ public class EditServiceManagedBean extends BaseManagedBean {
 	/**
      * 
      * 
-     * @return a {@link List} of {@link SelectItem}s containing the ID's and names of all ROOTCA and SUBCA 
+     * @return a {@link List} of {@link SelectItem}s containing the ID's and names of all  
      * certificate profiles current admin is authorized to.
      */
-    public List<SelectItem> getCertificateProfiles() {
-        List<SelectItem> certificateProfiles = new ArrayList<SelectItem>();
+	public Collection<SelectItem> getCertificateProfiles() {
+        TreeMap<String, SelectItem> certificateProfiles = new TreeMap<String, SelectItem>();
         Collection<Integer> caIds = ejb.getCaSession().getAvailableCAs(getAdmin());
-        Collection<Integer> rootCaProfiles = ejb.getCertificateProfileSession().getAuthorizedCertificateProfileIds(SecConst.CERTTYPE_ROOTCA, caIds);
-        Collection<Integer> subCaProfiles = ejb.getCertificateProfileSession().getAuthorizedCertificateProfileIds(SecConst.CERTTYPE_SUBCA, caIds);
-        for (Integer certificateProfile : rootCaProfiles) {
-            certificateProfiles.add(new SelectItem(certificateProfile.toString(), ejb.getCertificateProfileSession().getCertificateProfileName(
-                    certificateProfile)));
+
+        final Integer[] certificateProfileTypes = new Integer[] { CertificateConstants.CERTTYPE_ENDENTITY, CertificateConstants.CERTTYPE_HARDTOKEN,
+                CertificateConstants.CERTTYPE_ROOTCA, CertificateConstants.CERTTYPE_SUBCA };
+        
+        for (Integer certificateProfileType : certificateProfileTypes) {
+            Collection<Integer> profiles = ejb.getCertificateProfileSession().getAuthorizedCertificateProfileIds(certificateProfileType, caIds);
+            for (Integer certificateProfile : profiles) {
+                String profileName = ejb.getCertificateProfileSession().getCertificateProfileName(
+                        certificateProfile);
+                certificateProfiles.put(profileName.toLowerCase(), new SelectItem(certificateProfile.toString(), profileName));
+            }
         }
-        for (Integer certificateProfile : subCaProfiles) {
-            certificateProfiles.add(new SelectItem(certificateProfile.toString(), ejb.getCertificateProfileSession().getCertificateProfileName(
-                    certificateProfile)));
-        }
-        return certificateProfiles;
+        return certificateProfiles.values();
     }
 
 	public List<SelectItem> getAvailablePublishers(){
