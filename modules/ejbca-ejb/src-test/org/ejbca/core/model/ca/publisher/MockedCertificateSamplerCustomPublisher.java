@@ -14,6 +14,8 @@ package org.ejbca.core.model.ca.publisher;
 
 import java.io.File;
 import java.security.cert.Certificate;
+import org.ejbca.core.model.ca.publisher.CertificateSamplerCustomPublisher;
+import org.ejbca.core.model.ca.publisher.PublisherException;
 
 /**
  * Mocked version of CertificateSamplerCustomPublisher to be able to easily test 

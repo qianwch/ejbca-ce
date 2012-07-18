@@ -17,6 +17,10 @@ import java.security.cert.Certificate;
 import java.util.Properties;
 import junit.framework.TestCase;
 import org.ejbca.core.model.SecConst;
+import org.ejbca.core.model.ca.publisher.CertificateSamplerCustomPublisher;
+import org.ejbca.core.model.ca.publisher.ICustomPublisher;
+import org.ejbca.core.model.ca.publisher.PublisherConnectionException;
+import org.ejbca.core.model.ca.publisher.PublisherException;
 import org.ejbca.core.model.log.Admin;
 
 /**
