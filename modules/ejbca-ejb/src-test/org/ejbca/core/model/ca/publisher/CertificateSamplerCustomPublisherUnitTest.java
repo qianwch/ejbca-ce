@@ -28,7 +28,6 @@ import org.ejbca.core.model.log.Admin;
  * 
  * This is a unit test and does not require EJBCA to be running.
  *
- * @author Markus Kilas
  * @version $Id$
  */
 public class CertificateSamplerCustomPublisherUnitTest extends TestCase {

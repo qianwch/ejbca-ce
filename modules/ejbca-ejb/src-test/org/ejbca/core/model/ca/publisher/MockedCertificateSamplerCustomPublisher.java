@@ -21,7 +21,6 @@ import org.ejbca.core.model.ca.publisher.PublisherException;
  * Mocked version of CertificateSamplerCustomPublisher to be able to easily test 
  * if the writeCertificate method was called.
  *
- * @author Markus Kilås
  * @version $Id$
  */
 public class MockedCertificateSamplerCustomPublisher extends CertificateSamplerCustomPublisher {
