@@ -57,9 +57,6 @@ public class CertificateSamplerCustomPublisher implements ICustomPublisher {
         this.config = config;
     }
     
-    /**
-     * @see org.ejbca.core.model.ca.publisher.ICustomPublisher#testConnection(org.ejbca.core.model.log.Admin)
-     */
     @Override
     public void testConnection(Admin admin) throws PublisherConnectionException {
         if (LOG.isTraceEnabled()) {
