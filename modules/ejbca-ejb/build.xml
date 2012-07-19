@@ -515,6 +515,7 @@
 			<include name="org/cesecore/certificates/certificate/CertificateStoreSessionBean.java" />
 			<include name="org/cesecore/certificates/crl/CrlStoreSessionBean.java" />
 			<include name="org/ejbca/cesecoreintegration/StandAloneVaMockSessionBean.java" />
+			<include name="org/ejbca/core/ejb/config/HealthCheckSessionBean.java" />
 		</javac>
 	</target>
 

@@ -12,18 +12,24 @@
  *************************************************************************/
 package org.ejbca.ui.web.pub;
 
+import javax.ejb.EJB;
+
+import org.ejbca.core.ejb.config.HealthCheckSessionLocal;
 import org.ejbca.ui.web.pub.cluster.IHealthCheck;
 import org.ejbca.ui.web.pub.cluster.IHealthResponse;
 import org.ejbca.ui.web.pub.cluster.TextResponse;
 import org.ejbca.ui.web.pub.cluster.ValidationAuthorityHealthCheck;
 
 /**
- * @author mikek
- * 
+ * OCSP/Validation Authority health check entry point.
+ * @version $Id$
  */
 public class OCSPHealthServlet extends AbstractHealthServlet {
 
     private static final long serialVersionUID = 1L;
+
+    @EJB
+    private HealthCheckSessionLocal healthCheckSession;
 
     private IHealthCheck validationAuthorityHealthCheck;
     private TextResponse textResponse;
@@ -40,8 +46,7 @@ public class OCSPHealthServlet extends AbstractHealthServlet {
 
     @Override
     public void initializeServlet() {
-        validationAuthorityHealthCheck = new ValidationAuthorityHealthCheck();  
+        validationAuthorityHealthCheck = new ValidationAuthorityHealthCheck(healthCheckSession);  
         textResponse = new TextResponse();
     }
-
 }
