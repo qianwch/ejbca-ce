@@ -65,6 +65,7 @@ import org.ejbca.core.model.InternalResources;
 import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.model.log.LogConstants;
+import org.ejbca.core.model.services.BaseWorker;
 import org.ejbca.core.model.services.IInterval;
 import org.ejbca.core.model.services.IWorker;
 import org.ejbca.core.model.services.ServiceConfiguration;
@@ -839,6 +840,27 @@ public class ServiceSessionBean implements ServiceSessionLocal, ServiceSessionRe
             returnval.put(next.getId(), next.getName());
         }
         return returnval;
+    }
+    
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    @Override
+    public List<String> getServicesUsingCertificateProfile(Integer certificateProfileId) {
+        List<String> result = new ArrayList<String>();
+        //Since the service types are embedded in the data objects there is no more elegant way to to this.
+        List<ServiceData> allServices = serviceDataSession.findAll();
+        for (ServiceData service : allServices) {
+            String[] certificateProfiles = service.getServiceConfiguration().getWorkerProperties()
+                    .getProperty(BaseWorker.PROP_CERTIFICATE_PROFILE_IDS_TO_CHECK).split(";");
+            if (certificateProfiles != null) {
+                for (String certificateProfile : certificateProfiles) {
+                    if (certificateProfile.equals(certificateProfileId.toString())) {
+                        result.add(service.getName());
+                        break;
+                    }
+                }
+            }
+        }
+        return result;
     }
     
     /**

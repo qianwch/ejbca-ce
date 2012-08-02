@@ -18,19 +18,22 @@ import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.Properties;
 
+import javax.ejb.RemoveException;
+
+import org.apache.log4j.Logger;
 import org.cesecore.core.ejb.ca.store.CertificateProfileSessionRemote;
 import org.ejbca.core.ejb.ca.CaTestCase;
-import org.ejbca.core.ejb.ca.caadmin.CAAdminSessionRemote;
 import org.ejbca.core.ejb.ca.sign.SignSessionRemote;
 import org.ejbca.core.ejb.ca.store.CertificateStoreSessionRemote;
 import org.ejbca.core.ejb.ra.UserAdminSessionRemote;
 import org.ejbca.core.ejb.services.ServiceDataSessionRemote;
 import org.ejbca.core.ejb.services.ServiceSessionRemote;
 import org.ejbca.core.model.SecConst;
-import org.ejbca.core.model.ca.caadmin.CAInfo;
+import org.ejbca.core.model.authorization.AuthorizationDeniedException;
 import org.ejbca.core.model.ca.certificateprofiles.CertificateProfile;
 import org.ejbca.core.model.ca.store.CertificateInfo;
 import org.ejbca.core.model.log.Admin;
+import org.ejbca.core.model.ra.NotFoundException;
 import org.ejbca.core.model.services.actions.NoAction;
 import org.ejbca.core.model.services.intervals.PeriodicalInterval;
 import org.ejbca.core.model.services.workers.CertificateExpirationNotifierWorker;
@@ -50,6 +53,7 @@ import org.junit.Test;
  */
 public class CertificateExpireTest extends CaTestCase {
 
+    private static final Logger log = Logger.getLogger(CertificateExpireTest.class);
     private static final Admin admin = new Admin(Admin.TYPE_CACOMMANDLINE_USER);
     private static final String CA_NAME = "CertExpNotifCA";
     private static final String USERNAME = "CertificateExpireTest";
@@ -58,7 +62,6 @@ public class CertificateExpireTest extends CaTestCase {
 
     private static final String CERTIFICATE_EXPIRATION_SERVICE = "CertificateExpirationService";
 
-    private CAAdminSessionRemote caAdminSession = InterfaceCache.getCAAdminSession();
     private CertificateProfileSessionRemote certificateProfileSession = InterfaceCache.getCertificateProfileSession();
     private CertificateStoreSessionRemote certificateStoreSession = InterfaceCache.getCertificateStoreSession();
     private ServiceSessionRemote serviceSession = InterfaceCache.getServiceSession();
@@ -85,9 +88,16 @@ public class CertificateExpireTest extends CaTestCase {
         // Create a new user
         userAdminSession.addUser(admin, USERNAME, PASSWORD, "C=SE,O=AnaTom,CN=" + USERNAME, null, null, false, SecConst.EMPTY_ENDENTITYPROFILE,
                 SecConst.CERTPROFILE_FIXED_ENDUSER, SecConst.USER_ENDUSER, SecConst.TOKEN_SOFT_PEM, 0, caid);
+    }
+
+    private void createCertificate() throws Exception {
+        createCertificate(SecConst.CERTPROFILE_NO_PROFILE);
+    }
+    
+    private void createCertificate(int certificateProfileId) throws Exception {
         KeyPair keys = KeyTools.genKeys("1024", "RSA");
-        cert = (X509Certificate) signSession.createCertificate(admin, USERNAME, PASSWORD, keys.getPublic());
-        assertNotNull("Failed to create certificate", cert);
+        cert = (X509Certificate) signSession.createCertificate(admin, USERNAME, PASSWORD, keys.getPublic(), -1, null, null, certificateProfileId,
+                SecConst.CAID_USEUSERDEFINED);
         fingerprint = CertTools.getFingerprintAsString(cert);
         X509Certificate ce = (X509Certificate) certificateStoreSession.findCertificateByFingerprint(admin, fingerprint);
         if(ce == null) {
@@ -110,9 +120,8 @@ public class CertificateExpireTest extends CaTestCase {
         if (!(SecConst.CERT_ACTIVE == info.getStatus())) {
             throw new Exception("status does not match.");
         }
-
     }
-
+    
     /**
      * Add a new user and an expire service. Test that the service expires the
      * users password
@@ -120,6 +129,7 @@ public class CertificateExpireTest extends CaTestCase {
      */
     @Test
     public void testExpireCertificate() throws Exception {
+        createCertificate();
         long seconds = (cert.getNotAfter().getTime() - new Date().getTime()) / 1000l;
         // Create a new UserPasswordExpireService
         ServiceConfiguration config = new ServiceConfiguration();
@@ -162,6 +172,7 @@ public class CertificateExpireTest extends CaTestCase {
         }
         info = certificateStoreSession.getCertificateInfo(admin, fingerprint);
         assertEquals("Status does not match.", SecConst.CERT_NOTIFIEDABOUTEXPIRATION, info.getStatus());
+        log.debug("It took >" + (9+tries) + " seconds before the certificate was expired!");
     }
 
     /**
@@ -170,6 +181,7 @@ public class CertificateExpireTest extends CaTestCase {
      */
     @Test
     public void testExpireCertificateWithAllCAs() throws Exception {
+        createCertificate();
         long seconds = (cert.getNotAfter().getTime() - new Date().getTime()) / 1000l;
         // Create a new UserPasswordExpireService
         ServiceConfiguration config = new ServiceConfiguration();
@@ -225,12 +237,9 @@ public class CertificateExpireTest extends CaTestCase {
     public void testExpireCertificateWithCertificateProfiles() throws Exception {
         final String certificateprofilename = "foo";
         certificateProfileSession.addCertificateProfile(admin, certificateprofilename, new CertificateProfile());
+        int certificateProfileId = certificateProfileSession.getCertificateProfileId(admin, certificateprofilename);
         try {
-            //Modify the CA to use the Certificate Profile
-            CAInfo caInfo = caAdminSession.getCAInfo(admin, caid);
-            caInfo.setCertificateProfileId(certificateProfileSession.getCertificateProfileId(admin, certificateprofilename));
-            caAdminSession.editCA(admin, caInfo);
-            
+            createCertificate(certificateProfileId);
             long seconds = (cert.getNotAfter().getTime() - new Date().getTime()) / 1000l;
             // Create a new UserPasswordExpireService
             ServiceConfiguration config = new ServiceConfiguration();
@@ -249,7 +258,6 @@ public class CertificateExpireTest extends CaTestCase {
             Properties workerprop = new Properties();
             workerprop.setProperty(EmailSendingWorkerConstants.PROP_SENDTOADMINS, "FALSE");
             workerprop.setProperty(EmailSendingWorkerConstants.PROP_SENDTOENDUSERS, "FALSE");
-            // All CAs
             workerprop.setProperty(BaseWorker.PROP_CAIDSTOCHECK, String.valueOf(caid));
 
             workerprop.setProperty(BaseWorker.PROP_TIMEBEFOREEXPIRING, String.valueOf(seconds - 5));
@@ -282,12 +290,8 @@ public class CertificateExpireTest extends CaTestCase {
     }
     
     @After
-    public void tearDown() {
-        try {
-            userAdminSession.deleteUser(admin, USERNAME);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public void tearDown() throws NotFoundException, AuthorizationDeniedException, RemoveException {
+        userAdminSession.deleteUser(admin, USERNAME);
         serviceSession.removeService(admin, CERTIFICATE_EXPIRATION_SERVICE);
         serviceDataSession.findById(4711);
         removeTestCA(CA_NAME);

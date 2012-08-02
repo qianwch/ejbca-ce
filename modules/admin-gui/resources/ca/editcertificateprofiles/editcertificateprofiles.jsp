@@ -137,7 +137,8 @@
   boolean  triedtodeletefixedcertificateprofile = false;
   boolean  triedtoaddfixedcertificateprofile    = false;
   boolean  certificateprofileexists             = false;
-  boolean  certificateprofiledeletefailed       = false;
+  boolean  certificteDeletionFailed = false;
+  List<String> servicesContainingCertificateProfile = new ArrayList<String>();
 
   GlobalConfiguration globalconfiguration = ejbcawebbean.initialize(request, "/ca_functionality/edit_certificate_profiles"); 
                                             cabean.initialize(request, ejbcawebbean); 
@@ -193,14 +194,24 @@
           // Delete profile and display profilespage. 
           certprofile = request.getParameter(SELECT_CERTIFICATEPROFILES);
           if(certprofile != null){
-            if(!certprofile.trim().equals("")){
-              if(!certprofile.endsWith("(FIXED)")){ 
-                certificateprofiledeletefailed = !cabean.removeCertificateProfile(certprofile);
-              }else{
-                triedtodeletefixedcertificateprofile=true;
+              if(!certprofile.trim().equals("")){
+                if(!certprofile.endsWith("(FIXED)")){ 
+                    servicesContainingCertificateProfile = cabean.getServicesUsingCertificateProfile(certprofile);   
+                    if(!servicesContainingCertificateProfile.isEmpty()) {
+                        certificteDeletionFailed = true;
+                    }
+                    if(cabean.ifCertificateProfileExistsInEndEntityOrCAs(certprofile)) {
+                        //Reviewer: The below is temporary and will be replaced with proper error message in ECA-2723/ECA-2724       
+                        certificteDeletionFailed = true;
+                    }
+                    if (!certificteDeletionFailed) {
+                        cabean.removeCertificateProfile(certprofile);
+                    }
+                }else{
+                  triedtodeletefixedcertificateprofile=true;
+                }
               }
             }
-          }
           includefile="certificateprofilespage.jspf";             
       }
       if( request.getParameter(BUTTON_RENAME_CERTIFICATEPROFILES) != null){ 

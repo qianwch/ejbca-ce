@@ -13,8 +13,9 @@
 package org.ejbca.core.ejb.services;
 
 import java.util.Collection;
+import java.util.List;
 
-import javax.ejb.EJBException; // NOPMD imported from javadoc
+import javax.ejb.EJBException;
 
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.model.services.ServiceConfiguration;
@@ -89,6 +90,13 @@ public interface ServiceSession {
      */
     public String getServiceName(Admin admin, int id);
 
+    /**
+     * Checks if a list of certificate profiles is used by any service.
+     * 
+     * @param certificateProfileId IDs of the certificate profile to check
+     * @return a list of ServiceData objects using the given ID, or an empty list if nothing is found
+     */
+    List<String> getServicesUsingCertificateProfile(Integer certificateProfileId);
  
     /** Loads and activates all the services from database that are active. */
     public void load();
