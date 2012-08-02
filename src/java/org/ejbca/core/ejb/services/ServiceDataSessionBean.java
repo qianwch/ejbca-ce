@@ -28,7 +28,6 @@ import org.ejbca.core.model.services.ServiceConfiguration;
 /**
  * Session bean for the Service Data table.
  *
- * @author mikek
  * @version $Id$
  */
 @Stateless(mappedName = JndiConstants.APP_JNDI_PREFIX + "ServiceDataSessionRemote")

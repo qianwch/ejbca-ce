@@ -11,7 +11,7 @@
     		New valid dependencies can be added by <include ...>-ing the appropriate source-code
     		for each 'javac' or dependency in the
     			<classpath>
-			<pathelement location="${build-temp.dir}/......"/>...</classpath>
+			<pathelement location="${build-temp.dir}/......"/>...</classp<!-- Services component -->ath>
     		element. However, please double-check that you do not introduce any new circular or
     		otherwise undesired dependencies.
     		
@@ -991,10 +991,13 @@
 				</fileset>
 				<fileset dir="${src.dir}">
 					<include name="org/ejbca/core/ejb/services/*SessionBean.java"/>
+					<include name="org/ejbca/core/model/services/BaseWorker.java"/>
+					<include name="org/ejbca/core/model/services/BaseInterval.java"/>
 					<include name="org/ejbca/core/model/services/I*.java"/>
 					<include name="org/ejbca/core/model/services/ServiceConfiguration.java"/>
 					<include name="org/ejbca/core/model/services/*Exception.java"/>
 					<include name="org/ejbca/core/model/services/ActionInfo.java"/>
+					<include name="org/ejbca/core/model/services/intervals/DummyInterval.java"/>
 					<!-- Depends on EjbLocalHelper
        			<include name="org/ejbca/core/model/services/*.java"/>
     			<include name="org/ejbca/core/model/services/actions/*.java"/>

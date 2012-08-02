@@ -137,7 +137,8 @@
   boolean  triedtodeletefixedcertificateprofile = false;
   boolean  triedtoaddfixedcertificateprofile    = false;
   boolean  certificateprofileexists             = false;
-  boolean  certificateprofiledeletefailed       = false;
+  boolean  certificteDeletionFailed = false;
+  List<String> servicesContainingCertificateProfile = new ArrayList<String>();
 
   GlobalConfiguration globalconfiguration = ejbcawebbean.initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, AccessRulesConstants.REGULAR_EDITCERTIFICATEPROFILES); 
                                             cabean.initialize(request, ejbcawebbean); 
@@ -171,20 +172,24 @@
           // Display  profilepage.jsp
          certprofile = request.getParameter(SELECT_CERTIFICATEPROFILES);
          if(certprofile != null){
-           // clear any stored temporary certificate profile
-           cabean.setTempCertificateProfile(null);
-           if(!certprofile.trim().equals("")){
-             if(!certprofile.endsWith("(FIXED)")){ 
-               includefile="certificateprofilepage.jspf"; 
-             }else{
-                triedtoeditfixedcertificateprofile=true;
-                certprofile= null;
+             if(!certprofile.trim().equals("")){
+               if(!certprofile.endsWith("(FIXED)")){ 
+                   servicesContainingCertificateProfile = cabean.getServicesUsingCertificateProfile(certprofile);   
+                   if(!servicesContainingCertificateProfile.isEmpty()) {
+                       certificteDeletionFailed = true;
+                   }
+                   if(cabean.ifCertificateProfileExistsInEndEntityOrCAs(certprofile)) {
+                       //Reviewer: The below is temporary and will be replaced with proper error message in ECA-2723/ECA-2724       
+                       certificteDeletionFailed = true;
+                   }
+                   if (!certificteDeletionFailed) {
+                       cabean.removeCertificateProfile(certprofile);
+                   }
+               }else{
+                 triedtodeletefixedcertificateprofile=true;
+               }
              }
-           } 
-           else{ 
-            certprofile= null;
-          } 
-        }
+           }
         if(certprofile == null){   
           includefile="certificateprofilespage.jspf";     
         }
@@ -195,7 +200,17 @@
           if(certprofile != null){
             if(!certprofile.trim().equals("")){
               if(!certprofile.endsWith("(FIXED)")){ 
-                certificateprofiledeletefailed = !cabean.removeCertificateProfile(certprofile);
+                  servicesContainingCertificateProfile = cabean.getServicesUsingCertificateProfile(certprofile);   
+                  if(!servicesContainingCertificateProfile.isEmpty()) {
+                      certificteDeletionFailed = true;
+                  }
+                  if(cabean.ifCertificateProfileExistsInEndEntityOrCAs(certprofile)) {
+                      //Reviewer: The below is temporary and will be replaced with proper error message in ECA-2723/ECA-2724       
+                      certificteDeletionFailed = true;
+                  }
+                  if (!certificteDeletionFailed) {
+                      cabean.removeCertificateProfile(certprofile);
+                  }
               }else{
                 triedtodeletefixedcertificateprofile=true;
               }

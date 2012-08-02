@@ -62,6 +62,7 @@ import org.ejbca.core.ejb.config.GlobalConfigurationSession;
 import org.ejbca.core.ejb.hardtoken.HardTokenSession;
 import org.ejbca.core.ejb.ra.UserAdminSessionLocal;
 import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileSession;
+import org.ejbca.core.ejb.services.ServiceSessionLocal;
 import org.ejbca.core.model.ca.store.CertReqHistory;
 import org.ejbca.core.model.util.EjbLocalHelper;
 import org.ejbca.ui.web.CertificateView;
@@ -73,7 +74,6 @@ import org.ejbca.ui.web.admin.configuration.InformationMemory;
 /**
  * A class used as an interface between CA jsp pages and CA ejbca functions.
  *
- * @author  Philip Vendil
  * @version $Id$
  */
 public class CAInterfaceBean implements Serializable {
@@ -87,28 +87,31 @@ public class CAInterfaceBean implements Serializable {
 	private EjbLocalHelper ejb = new EjbLocalHelper();
 
     // Private fields
-    private CertificateStoreSession certificatesession;
-    private CertReqHistorySession certreqhistorysession;
-    private CAAdminSession caadminsession;
-    private CaSession caSession;
-    private CrlStoreSession crlStoreSession;
-    private CrlCreateSession crlCreateSession;
-    private AccessControlSessionLocal authorizationsession;
+	private AccessControlSessionLocal authorizationsession;
     private AccessRuleManagementSessionLocal accessRuleManagementSession;
     private AccessUserAspectManagerSessionLocal accessUserAspectManagerSession;
-    private UserAdminSessionLocal adminsession;
+	private CAAdminSession caadminsession;
+	private CaSession caSession;
+	private CertificateCreateSessionLocal certcreatesession;
+	private CertificateProfileSession certificateProfileSession;
+    private CertificateStoreSession certificatesession;
+    private CertReqHistorySession certreqhistorysession;  
+    private CrlStoreSession crlStoreSession;
+    private CrlCreateSession crlCreateSession;
+    private EndEntityProfileSession endEntityProfileSession;
     private GlobalConfigurationSession globalconfigurationsession;
-    private SignSession signsession;
-    private CertificateCreateSessionLocal certcreatesession;
     private HardTokenSession hardtokensession;
-    private PublisherSessionLocal publishersession;
     private PublisherQueueSession publisherqueuesession;
+    private PublisherSessionLocal publishersession;
+    private RevocationSessionLocal revocationSession;
+    private ServiceSessionLocal serviceSession;
+    private SignSession signsession;
+    private UserAdminSessionLocal userAdminSession;
+
     private CertificateProfileDataHandler certificateprofiles;
     private CADataHandler cadatahandler;
     private PublisherDataHandler publisherdatahandler;
-    private CertificateProfileSession certificateProfileSession;
-    private EndEntityProfileSession endEntityProfileSession;
-    private RevocationSessionLocal revocationSession;
+    
     private boolean initialized;
     private AuthenticationToken administrator;
     private InformationMemory informationmemory;
@@ -134,7 +137,7 @@ public class CAInterfaceBean implements Serializable {
           crlCreateSession = ejb.getCrlCreateSession();
           caadminsession = ejb.getCaAdminSession();
           authorizationsession = ejb.getAccessControlSession();
-          adminsession = ejb.getUserAdminSession();
+          userAdminSession = ejb.getUserAdminSession();
           globalconfigurationsession = ejb.getGlobalConfigurationSession();               
           signsession = ejb.getSignSession();
           certcreatesession = ejb.getCertificateCreateSession();
@@ -144,11 +147,12 @@ public class CAInterfaceBean implements Serializable {
           certificateProfileSession = ejb.getCertificateProfileSession();
           endEntityProfileSession = ejb.getEndEntityProfileSession(); 
           revocationSession = ejb.getRevocationSession();
+          serviceSession = ejb.getServiceSession();
           this.informationmemory = ejbcawebbean.getInformationMemory();
           this.administrator = ejbcawebbean.getAdminObject();
             
           certificateprofiles = new CertificateProfileDataHandler(administrator, authorizationsession, caSession, certificateProfileSession, informationmemory);;
-            cadatahandler = new CADataHandler(administrator, accessRuleManagementSession, accessUserAspectManagerSession,caadminsession, caSession, endEntityProfileSession, adminsession, globalconfigurationsession,
+            cadatahandler = new CADataHandler(administrator, accessRuleManagementSession, accessUserAspectManagerSession,caadminsession, caSession, endEntityProfileSession, userAdminSession, globalconfigurationsession,
                     certificateProfileSession, revocationSession, ejbcawebbean);
           publisherdatahandler = new PublisherDataHandler(administrator, publishersession, authorizationsession, caadminsession, certificateProfileSession,  informationmemory);
           isUniqueIndex = certcreatesession.isUniqueCertificateSerialNumberIndex();
@@ -233,28 +237,41 @@ public class CAInterfaceBean implements Serializable {
        certificateprofiles.changeCertificateProfile(name, profile);
     }
     
-    /** Returns false if certificate type is used by any user or in profiles. */
-    public boolean removeCertificateProfile(String name) throws Exception{
-
+    /**
+     * Returns a {@link List} of service names using the given certificate profile
+     * 
+     * @param certificateProfileName the name of the profile to look for.
+     * @return a {@link List} of service names using the given certificate profile
+     */
+    public List<String> getServicesUsingCertificateProfile(String certificateProfileName) {
+        Integer certificateProfileId = certificateProfileSession.getCertificateProfileId(certificateProfileName);
+        return serviceSession.getServicesUsingCertificateProfile(certificateProfileId);
+    }
+    
+    /**
+     * Check if certificate profile is in use by any end entity, end entity profile, hardtoken or CA
+     * 
+     * @param certificateProfileName the name of the sought profile
+     * @return true if found
+     */
+    public boolean ifCertificateProfileExistsInEndEntityOrCAs(String certificateProfileName) {
         boolean certificateprofileused = false;
-        int certificateprofileid = certificateProfileSession.getCertificateProfileId(name);        
-        CertificateProfile certprofile = this.certificateProfileSession.getCertificateProfile(name);
-        
+        int certificateprofileid = certificateProfileSession.getCertificateProfileId(certificateProfileName);        
+        CertificateProfile certprofile = this.certificateProfileSession.getCertificateProfile(certificateProfileName);        
         if(certprofile.getType() == CertificateConstants.CERTTYPE_ENDENTITY){
-          // Check if any users or profiles use the certificate id.
-          certificateprofileused = adminsession.checkForCertificateProfileId(certificateprofileid)
-                                || endEntityProfileSession.existsCertificateProfileInEndEntityProfiles(certificateprofileid)
-								|| hardtokensession.existsCertificateProfileInHardTokenProfiles(administrator, certificateprofileid);
-        }else{
-           certificateprofileused = caadminsession.existsCertificateProfileInCAs(certificateprofileid);
-        }
-            
-          
-        if(!certificateprofileused){
-          certificateprofiles.removeCertificateProfile(name);
-        }
-
-        return !certificateprofileused;
+            // Check if any users or profiles use the certificate id.
+            certificateprofileused = userAdminSession.checkForCertificateProfileId(certificateprofileid)
+                                  || endEntityProfileSession.existsCertificateProfileInEndEntityProfiles(certificateprofileid)
+                                  || hardtokensession.existsCertificateProfileInHardTokenProfiles(administrator, certificateprofileid);
+          }else{
+             certificateprofileused = caadminsession.existsCertificateProfileInCAs(certificateprofileid);
+          }
+        return certificateprofileused;
+    }
+    
+    
+    public void removeCertificateProfile(String certificateProfileName) throws Exception {
+        certificateprofiles.removeCertificateProfile(certificateProfileName);
     }
 
     public void renameCertificateProfile(String oldname, String newname) throws CertificateProfileExistsException, AuthorizationDeniedException {
