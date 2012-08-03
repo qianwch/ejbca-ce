@@ -47,7 +47,7 @@ new TWTR.Widget({
 
 <td valign="top">
 <div class="frame note">
-<div class="label"><a style="color:white; padding:1.8em;" href="http://www.primekey.se/PKI+shop/">PKI Course in California!</a><a style="color:white; padding:1.8em;" href="http://www.primekey.se/PKI+shop/">Learn PKI in Sweden!</a><a style="color:white; padding:1.8em;" href="http://www.primekey.se/services/training/Open+schedule">PKI Training Schedule</a></div>
+<div class="label"><a style="color:white; padding:1.8em;" href="http://www.primekey.se/PKI+shop/">Learn PKI in Sweden!</a><a style="color:white; padding:1.8em;" href="http://www.primekey.se/services/training/Open+schedule">PKI Training Schedule</a></div>
 <div class="content">
   <p><strong>EJBCA 4.0.11 is now out!</strong>
   <br />Visit the <a href="download.html">download</a> section. There is also a LiveCD!
