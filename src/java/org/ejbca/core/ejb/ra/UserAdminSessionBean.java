@@ -1626,18 +1626,24 @@ public class UserAdminSessionBean implements UserAdminSessionLocal, UserAdminSes
         }
         return count > 0;
     }
-
+    
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     @Override
-    public boolean checkForCertificateProfileId(int certificateprofileid) {
+    public List<String> findByCertificateProfileId(int certificateprofileid) {
         if (log.isTraceEnabled()) {
-            log.trace(">checkForCertificateProfileId(" + certificateprofileid + ")");
+            log.trace(">checkForCertificateProfileId("+certificateprofileid+")");
         }
-        long count = UserData.countByCertificateProfileId(entityManager, certificateprofileid);
+        final javax.persistence.Query query = entityManager.createQuery("SELECT a FROM UserData a WHERE a.certificateProfileId=:certificateProfileId");
+        query.setParameter("certificateProfileId", certificateprofileid);
+
+        List<String> result = new ArrayList<String>();
+        for(Object userDataObject : query.getResultList()) {
+                result.add(((UserData) userDataObject).getUsername());
+        }
         if (log.isTraceEnabled()) {
-            log.trace("<checkForCertificateProfileId(" + certificateprofileid + "): " + count);
+            log.trace("<checkForCertificateProfileId("+certificateprofileid+"): "+result.size());
         }
-        return count > 0;
+        return result;  
     }
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)

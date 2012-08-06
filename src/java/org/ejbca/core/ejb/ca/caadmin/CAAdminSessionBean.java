@@ -42,6 +42,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -2316,18 +2317,19 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
     /** Method used to check if certificate profile id exists in any CA. */
     @Override
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
-    public boolean existsCertificateProfileInCAs(final int certificateprofileid) {
+    public List<String> getCAsUsingCertificateProfile(final int certificateprofileid) {
+        List<String> result = new ArrayList<String>();
         for (final Integer caid : caSession.getAvailableCAs()) {
             try {
                 final CAInfo caInfo = caSession.getCAInfoInternal(caid.intValue(), null, true);
                 if (caInfo.getCertificateProfileId() == certificateprofileid) {
-                    return true;
+                    result.add(caInfo.getName());
                 }
             } catch (CADoesntExistsException e) {
                 log.error("\"Available\" CA is no longer available. caid=" + caid.toString());
             }
         }
-        return false;
+        return result;
     }
 
     @Override

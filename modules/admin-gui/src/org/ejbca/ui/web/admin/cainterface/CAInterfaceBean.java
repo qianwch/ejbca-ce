@@ -15,6 +15,7 @@ package org.ejbca.ui.web.admin.cainterface;
 
 import java.io.Serializable;
 import java.security.cert.Certificate;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -36,7 +37,6 @@ import org.cesecore.certificates.ca.CADoesntExistsException;
 import org.cesecore.certificates.ca.CAInfo;
 import org.cesecore.certificates.ca.CAOfflineException;
 import org.cesecore.certificates.ca.CaSession;
-import org.cesecore.certificates.certificate.CertificateConstants;
 import org.cesecore.certificates.certificate.CertificateCreateSessionLocal;
 import org.cesecore.certificates.certificate.CertificateInfo;
 import org.cesecore.certificates.certificate.CertificateStatus;
@@ -63,6 +63,7 @@ import org.ejbca.core.ejb.hardtoken.HardTokenSession;
 import org.ejbca.core.ejb.ra.UserAdminSessionLocal;
 import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileSession;
 import org.ejbca.core.ejb.services.ServiceSessionLocal;
+import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.ca.store.CertReqHistory;
 import org.ejbca.core.model.util.EjbLocalHelper;
 import org.ejbca.ui.web.CertificateView;
@@ -249,26 +250,69 @@ public class CAInterfaceBean implements Serializable {
     }
     
     /**
-     * Check if certificate profile is in use by any end entity, end entity profile, hardtoken or CA
+     * Check if certificate profile is in use by any end entity
      * 
      * @param certificateProfileName the name of the sought profile
-     * @return true if found
+     * @return a list of end entity names using the sought profile
      */
-    public boolean ifCertificateProfileExistsInEndEntityOrCAs(String certificateProfileName) {
-        boolean certificateprofileused = false;
-        int certificateprofileid = certificateProfileSession.getCertificateProfileId(certificateProfileName);        
-        CertificateProfile certprofile = this.certificateProfileSession.getCertificateProfile(certificateProfileName);        
-        if(certprofile.getType() == CertificateConstants.CERTTYPE_ENDENTITY){
-            // Check if any users or profiles use the certificate id.
-            certificateprofileused = userAdminSession.checkForCertificateProfileId(certificateprofileid)
-                                  || endEntityProfileSession.existsCertificateProfileInEndEntityProfiles(certificateprofileid)
-                                  || hardtokensession.existsCertificateProfileInHardTokenProfiles(administrator, certificateprofileid);
-          }else{
-             certificateprofileused = caadminsession.existsCertificateProfileInCAs(certificateprofileid);
-          }
-        return certificateprofileused;
+    public List<String> getEndEntitiesUsingCertificateProfile(String certificateProfileName) {
+        int certificateprofileid = certificateProfileSession.getCertificateProfileId(certificateProfileName);
+        CertificateProfile certprofile = this.certificateProfileSession.getCertificateProfile(certificateProfileName);   
+        if(certprofile.getType() == SecConst.CERTTYPE_ENDENTITY){
+            return userAdminSession.findByCertificateProfileId(certificateprofileid);
+        } else {
+            return new ArrayList<String>();
+        }
     }
     
+    /**
+     * Check if certificate profile is in use by any end entity profile
+     * 
+     * @param certificateProfileName the name of the sought profile
+     * @return a list of end entity profile names using the sought profile
+     */
+    public List<String> getEndEntityProfilesUsingCertificateProfile(String certificateProfileName) {
+        int certificateprofileid = certificateProfileSession.getCertificateProfileId(certificateProfileName);
+        CertificateProfile certprofile = this.certificateProfileSession.getCertificateProfile(certificateProfileName); 
+        if(certprofile.getType() == SecConst.CERTTYPE_ENDENTITY){
+            return endEntityProfileSession.getEndEntityProfilesUsingCertificateProfile(certificateprofileid);
+        } else {
+            return new ArrayList<String>();
+        }   
+    }
+    
+    /**
+     * Check if certificate profile is in use by any hard token profile
+     * 
+     * @param certificateProfileName the name of the sought profile
+     * @return a list of hard token profile names using the sought profile
+     */
+    public List<String> getHardTokenTokensUsingCertificateProfile(String certificateProfileName) {
+        int certificateprofileid = certificateProfileSession.getCertificateProfileId(certificateProfileName);
+        CertificateProfile certprofile = this.certificateProfileSession.getCertificateProfile(certificateProfileName); 
+        if(certprofile.getType() == SecConst.CERTTYPE_ENDENTITY){
+            return hardtokensession.getHardTokenProfileUsingCertificateProfile(certificateprofileid);
+        } else {
+            return new ArrayList<String>();
+        }   
+    }
+    
+    /**
+     * Check if certificate profile is in use by any CA
+     * 
+     * @param certificateProfileName the name of the sought profile
+     * @return a list of CA names using the sought profile
+     */
+    public List<String> getCaUsingCertificateProfile(String certificateProfileName) {
+        int certificateprofileid = certificateProfileSession.getCertificateProfileId(certificateProfileName);  
+        CertificateProfile certprofile = this.certificateProfileSession.getCertificateProfile(certificateProfileName); 
+        if(certprofile.getType() != SecConst.CERTTYPE_ENDENTITY){
+             return caadminsession.getCAsUsingCertificateProfile(certificateprofileid);
+        } else {
+            return new ArrayList<String>();
+        }
+       
+    }
     
     public void removeCertificateProfile(String certificateProfileName) throws Exception {
         certificateprofiles.removeCertificateProfile(certificateProfileName);
