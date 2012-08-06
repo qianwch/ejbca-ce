@@ -16,6 +16,7 @@ import java.math.BigInteger;
 import java.security.cert.Certificate;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.TreeMap;
 
 import org.ejbca.core.model.authorization.AuthorizationDeniedException;
@@ -328,11 +329,10 @@ public interface HardTokenSession {
      * Method to check if a certificate profile exists in any of the hard token
      * profiles. Used to avoid desynchronization of certificate profile data.
      * 
-     * @param id the CertificateProfile id to search for.
-     * @return true if CertificateProfile id exists in any of the hard token
-     *         profiles.
+     * @param certificateProfileId the CertificateProfile id to search for.
+     * @return a {@link List} of hard token profile names 
      */
-    public boolean existsCertificateProfileInHardTokenProfiles(Admin admin, int id);
+    List<String> getHardTokenProfileUsingCertificateProfile(Admin admin, int certificateProfileId);
 
     /**
      * Method to check if a hard token profile exists in any of the hard token

@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -154,21 +155,19 @@ public class EndEntityProfileSessionBean implements EndEntityProfileSessionLocal
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     @Override
-    public boolean existsCertificateProfileInEndEntityProfiles(final Admin admin, final int profileid) {
+    public List<String> getEndEntityProfilesUsingCertificateProfile(final Admin admin, final int certificateProfileId) {
         String[] availprofiles = null;
-        boolean exists = false;
-        final Collection<EndEntityProfileData> result = EndEntityProfileData.findAll(entityManager);
-        final Iterator<EndEntityProfileData> i = result.iterator();
-        while (i.hasNext() && !exists) {
-            availprofiles = i.next().getProfile().getValue(EndEntityProfile.AVAILCERTPROFILES, 0).split(EndEntityProfile.SPLITCHAR);
-            for (int j = 0; j < availprofiles.length; j++) {
-                if (Integer.parseInt(availprofiles[j]) == profileid) {
-                    exists = true;
+        List<String> result = new ArrayList<String>();
+        for(EndEntityProfileData profileData : EndEntityProfileData.findAll(entityManager)) {
+            availprofiles = profileData.getProfile().getValue(EndEntityProfile.AVAILCERTPROFILES, 0).split(EndEntityProfile.SPLITCHAR);
+            for (String profileId : availprofiles) {
+                if (Integer.parseInt(profileId) == certificateProfileId) {
+                    result.add(profileData.getProfileName());
                     break;
                 }
             }
         }
-        return exists;
+        return result;
     }
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)

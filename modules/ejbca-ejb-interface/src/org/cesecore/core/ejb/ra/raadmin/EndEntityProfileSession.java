@@ -13,6 +13,7 @@
 package org.cesecore.core.ejb.ra.raadmin;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import org.ejbca.core.model.log.Admin;
@@ -113,9 +114,9 @@ public interface EndEntityProfileSession {
      * profiles. Used to avoid desynchronization of certificate profile data.
      * 
      * @param certificateprofileid the CertificateProfile's id to search for.
-     * @return true if CertificateProfile exists in any EndEntityProfile.
+     * @return  a collection of EndEntityProfile names using the sought CertificateProfile
      */
-    boolean existsCertificateProfileInEndEntityProfiles(Admin admin, int certificateprofileid);
+    List<String> getEndEntityProfilesUsingCertificateProfile(Admin admin, int certificateprofileid);
 
     /**
      * Method to check if a CA exists in any of the end entity profiles. Used to

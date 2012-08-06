@@ -43,6 +43,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 
 import javax.annotation.PostConstruct;
 import javax.ejb.CreateException;
@@ -2191,21 +2192,19 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
         }
     }
 
-    /** Method used to check if certificate profile id exists in any CA. */
     @Override
-    public boolean exitsCertificateProfileInCAs(Admin admin, int certificateprofileid) {
-        boolean returnval = false;
-        try {
-        	Collection<CAData> result = CAData.findAll(entityManager);
-            Iterator<CAData> iter = result.iterator();
-            while (iter.hasNext()) {
-                CAData cadata = iter.next();
-                returnval = returnval || (cadata.getCA().getCertificateProfileId() == certificateprofileid);
-            }
-        } catch (java.io.UnsupportedEncodingException e) {
-        } catch (IllegalKeyStoreException e) {
-        }
-        return returnval;
+    public List<String> getCAsUsingCertificateProfile(Admin admin, int certificateprofileid) {
+        List<String> result = new ArrayList<String>();
+            for(CAData cadata : CAData.findAll(entityManager)) {    
+                try {
+                    if(cadata.getCA().getCertificateProfileId() == certificateprofileid) {
+                        result.add(cadata.getCA().getName());
+                    }
+                } catch (UnsupportedEncodingException e) {
+                } catch (IllegalKeyStoreException e) {
+                }
+            }   
+        return result;
     }
 
     @Override

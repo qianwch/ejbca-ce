@@ -484,14 +484,14 @@ public interface UserAdminSession {
     public boolean checkForEndEntityProfileId(Admin admin, int endentityprofileid);
 
     /**
-     * Methods that checks if a user exists in the database having the given
+     * Method that checks if a user exists in the database having the given
      * CertificateProfile id. This function is mainly for avoiding
      * desynchronization when a CertificateProfile is deleted.
      * 
      * @param certificateprofileid the id of CertificateProfile to look for.
-     * @return true if certificateproileid exists in UserData table.
+     * @return a list of end entities using the certificate profile
      */
-    public boolean checkForCertificateProfileId(Admin admin, int certificateprofileid);
+    public List<String> findByCertificateProfileId(Admin admin, int certificateprofileid);
 
     /**
      * Methods that checks if a user exists in the database having the given

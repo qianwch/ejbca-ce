@@ -16,6 +16,7 @@ import java.io.UnsupportedEncodingException;
 import java.security.cert.CertPathValidatorException;
 import java.security.cert.Certificate;
 import java.util.Collection;
+import java.util.List;
 
 import javax.ejb.CreateException;
 import javax.ejb.EJBException;
@@ -466,8 +467,14 @@ public interface CAAdminSession {
      */
     public void editCA(Admin admin, CAInfo cainfo) throws AuthorizationDeniedException;
     
-    /** Method used to check if certificate profile id exists in any CA. */
-    public boolean exitsCertificateProfileInCAs(Admin admin, int certificateprofileid);
+    /**
+     * Method used to check if certificate profile id exists in any CA.
+     * 
+     * @param admin The admin performing the action 
+     * @param certificateprofileid the ID of the sought certificate profile
+     * @return a list of names of the CAs using the certificate profile 
+     */
+    public List<String> getCAsUsingCertificateProfile(Admin admin, int certificateprofileid);
 
     /**
      * Encrypts data with a CA key.
