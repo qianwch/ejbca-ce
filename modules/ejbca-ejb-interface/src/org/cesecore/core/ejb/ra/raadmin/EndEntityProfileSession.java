@@ -22,7 +22,6 @@ import org.ejbca.core.model.ra.raadmin.EndEntityProfileExistsException;
 
 /** Session bean for managing End Entity Profiles.
  * 
- * @author Mike Kushner
  * @version $Id$
  */
 public interface EndEntityProfileSession {
