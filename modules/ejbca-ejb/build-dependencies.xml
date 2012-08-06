@@ -11,7 +11,7 @@
     		New valid dependencies can be added by <include ...>-ing the appropriate source-code
     		for each 'javac' or dependency in the
     			<classpath>
-			<pathelement location="${build-temp.dir}/......"/>...</classp<!-- Services component -->ath>
+			<pathelement location="${build-temp.dir}/......"/>...</classpath>
     		element. However, please double-check that you do not introduce any new circular or
     		otherwise undesired dependencies.
     		

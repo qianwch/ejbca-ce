@@ -137,7 +137,7 @@
   boolean  triedtodeletefixedcertificateprofile = false;
   boolean  triedtoaddfixedcertificateprofile    = false;
   boolean  certificateprofileexists             = false;
-  boolean  certificateDeletionFailed = false;
+  boolean  certificateProfileDeletionFailed = false;
   List<String> servicesContainingCertificateProfile = new ArrayList<String>();
   List<String> endEntitiesContainingCertificateProfile = new ArrayList<String>();
   List<String> endEntityProfilesContainingCertificateProfile = new ArrayList<String>();
@@ -188,7 +188,7 @@
        		     || !endEntityProfilesContainingCertificateProfile.isEmpty()
        		     || !hardTokenProfilesContainingCertificateProfile.isEmpty()
        		     || !casUsingCertificateProfile.isEmpty()) {
-       		        certificateDeletionFailed = true;
+       		        certificateProfileDeletionFailed = true;
        		    } else {
        		        cabean.removeCertificateProfile(certprofile);
        		    }
@@ -217,7 +217,7 @@
       		     || !endEntityProfilesContainingCertificateProfile.isEmpty()
       		     || !hardTokenProfilesContainingCertificateProfile.isEmpty()
       		     || !casUsingCertificateProfile.isEmpty()) {
-      		        certificateDeletionFailed = true;
+      		      certificateProfileDeletionFailed = true;
       		    } else {
       		        cabean.removeCertificateProfile(certprofile);
       		    }
