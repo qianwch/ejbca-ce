@@ -470,11 +470,10 @@ public interface CAAdminSession {
     /**
      * Method used to check if certificate profile id exists in any CA.
      * 
-     * @param admin The admin performing the action 
      * @param certificateprofileid the ID of the sought certificate profile
      * @return a list of names of the CAs using the certificate profile 
      */
-    public List<String> getCAsUsingCertificateProfile(Admin admin, int certificateprofileid);
+    public List<String> getCAsUsingCertificateProfile(int certificateprofileid);
 
     /**
      * Encrypts data with a CA key.

@@ -979,7 +979,7 @@ public class HardTokenSessionBean implements HardTokenSessionLocal, HardTokenSes
 
     @SuppressWarnings("unchecked")
     @Override
-    public List<String> getHardTokenProfileUsingCertificateProfile(Admin admin, int certificateProfileId) {
+    public List<String> getHardTokenProfileUsingCertificateProfile(int certificateProfileId) {
         List<String> result = new ArrayList<String>();
         Collection<Integer> certprofiles = null;
         HardTokenProfile profile = null;

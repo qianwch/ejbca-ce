@@ -2193,7 +2193,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
     }
 
     @Override
-    public List<String> getCAsUsingCertificateProfile(Admin admin, int certificateprofileid) {
+    public List<String> getCAsUsingCertificateProfile(int certificateprofileid) {
         List<String> result = new ArrayList<String>();
             for(CAData cadata : CAData.findAll(entityManager)) {    
                 try {

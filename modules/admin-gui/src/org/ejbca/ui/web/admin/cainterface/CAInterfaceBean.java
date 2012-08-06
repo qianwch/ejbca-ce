@@ -234,7 +234,7 @@ public class CAInterfaceBean implements Serializable {
         int certificateprofileid = certificateProfileSession.getCertificateProfileId(administrator, certificateProfileName);
         CertificateProfile certprofile = this.certificateProfileSession.getCertificateProfile(administrator, certificateProfileName);   
         if(certprofile.getType() == SecConst.CERTTYPE_ENDENTITY){
-            return userAdminSession.findByCertificateProfileId(administrator, certificateprofileid);
+            return userAdminSession.findByCertificateProfileId(certificateprofileid);
         } else {
             return new ArrayList<String>();
         }
@@ -250,7 +250,7 @@ public class CAInterfaceBean implements Serializable {
         int certificateprofileid = certificateProfileSession.getCertificateProfileId(administrator, certificateProfileName);
         CertificateProfile certprofile = this.certificateProfileSession.getCertificateProfile(administrator, certificateProfileName); 
         if(certprofile.getType() == SecConst.CERTTYPE_ENDENTITY){
-            return endEntityProfileSession.getEndEntityProfilesUsingCertificateProfile(administrator, certificateprofileid);
+            return endEntityProfileSession.getEndEntityProfilesUsingCertificateProfile(certificateprofileid);
         } else {
             return new ArrayList<String>();
         }   
@@ -266,7 +266,7 @@ public class CAInterfaceBean implements Serializable {
         int certificateprofileid = certificateProfileSession.getCertificateProfileId(administrator, certificateProfileName);
         CertificateProfile certprofile = this.certificateProfileSession.getCertificateProfile(administrator, certificateProfileName); 
         if(certprofile.getType() == SecConst.CERTTYPE_ENDENTITY){
-            return hardtokensession.getHardTokenProfileUsingCertificateProfile(administrator, certificateprofileid);
+            return hardtokensession.getHardTokenProfileUsingCertificateProfile(certificateprofileid);
         } else {
             return new ArrayList<String>();
         }   
@@ -282,7 +282,7 @@ public class CAInterfaceBean implements Serializable {
         int certificateprofileid = certificateProfileSession.getCertificateProfileId(administrator, certificateProfileName);  
         CertificateProfile certprofile = this.certificateProfileSession.getCertificateProfile(administrator, certificateProfileName); 
         if(certprofile.getType() != SecConst.CERTTYPE_ENDENTITY){
-             return caadminsession.getCAsUsingCertificateProfile(administrator, certificateprofileid);
+             return caadminsession.getCAsUsingCertificateProfile(certificateprofileid);
         } else {
             return new ArrayList<String>();
         }

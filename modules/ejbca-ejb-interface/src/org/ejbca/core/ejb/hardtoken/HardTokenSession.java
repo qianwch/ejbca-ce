@@ -332,7 +332,7 @@ public interface HardTokenSession {
      * @param certificateProfileId the CertificateProfile id to search for.
      * @return a {@link List} of hard token profile names 
      */
-    List<String> getHardTokenProfileUsingCertificateProfile(Admin admin, int certificateProfileId);
+    List<String> getHardTokenProfileUsingCertificateProfile(int certificateProfileId);
 
     /**
      * Method to check if a hard token profile exists in any of the hard token

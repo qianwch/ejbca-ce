@@ -115,7 +115,7 @@ public interface EndEntityProfileSession {
      * @param certificateprofileid the CertificateProfile's id to search for.
      * @return  a collection of EndEntityProfile names using the sought CertificateProfile
      */
-    List<String> getEndEntityProfilesUsingCertificateProfile(Admin admin, int certificateprofileid);
+    List<String> getEndEntityProfilesUsingCertificateProfile(int certificateprofileid);
 
     /**
      * Method to check if a CA exists in any of the end entity profiles. Used to

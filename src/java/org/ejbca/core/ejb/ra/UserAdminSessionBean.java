@@ -1702,7 +1702,7 @@ public class UserAdminSessionBean implements UserAdminSessionLocal, UserAdminSes
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     @Override
-    public List<String> findByCertificateProfileId(Admin admin, int certificateprofileid) {
+    public List<String> findByCertificateProfileId(int certificateprofileid) {
         if (log.isTraceEnabled()) {
         	log.trace(">checkForCertificateProfileId("+certificateprofileid+")");
         }

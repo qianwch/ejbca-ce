@@ -491,7 +491,7 @@ public interface UserAdminSession {
      * @param certificateprofileid the id of CertificateProfile to look for.
      * @return a list of end entities using the certificate profile
      */
-    public List<String> findByCertificateProfileId(Admin admin, int certificateprofileid);
+    public List<String> findByCertificateProfileId(int certificateprofileid);
 
     /**
      * Methods that checks if a user exists in the database having the given

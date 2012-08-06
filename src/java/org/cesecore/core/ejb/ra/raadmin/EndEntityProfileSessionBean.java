@@ -155,7 +155,7 @@ public class EndEntityProfileSessionBean implements EndEntityProfileSessionLocal
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     @Override
-    public List<String> getEndEntityProfilesUsingCertificateProfile(final Admin admin, final int certificateProfileId) {
+    public List<String> getEndEntityProfilesUsingCertificateProfile(final int certificateProfileId) {
         String[] availprofiles = null;
         List<String> result = new ArrayList<String>();
         for(EndEntityProfileData profileData : EndEntityProfileData.findAll(entityManager)) {
