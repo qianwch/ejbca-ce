@@ -306,3 +306,16 @@ ocsp.defaultresponder=CN=AdminCA1,O=EJBCA Sample,C=SE
 # This option needs other configuration changes as well, see HOWTO-OCSP-RESPONDER for more information
 # Default: false
 #ocsp.log-safer = true
+
+
+#------------------- OCSP administration settings -------------
+# Settings used to administer the responder with 'get
+
+# Host from which adminstation is allowed separated by ';'
+# Default: 127.0.0.1
+#ocsp.admin.hosts=127.0.0.1;192.168.0.3
+
+# Password for admin tasks. 'reloadkeys' is excluded.
+# Not specified (null) means that no password is need.
+# Default is that no password is needed.
+#ocsp.admin.password=foobar123

@@ -77,4 +77,6 @@ interface PrivateKeyContainer {
      */
     public abstract void destroy();
 
+	public abstract void renew();
+
 }

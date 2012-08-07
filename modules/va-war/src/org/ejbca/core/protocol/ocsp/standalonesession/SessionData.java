@@ -98,6 +98,10 @@ class SessionData {
      */
     final Set<String> keyAlias;
     /**
+     * Automatic key renewal disabled since key renewal called from servlet
+     */
+    private boolean isAutomaticKeyRenewal = true;
+    /**
      * Set time for next key update.
      * @param currentTime the time from which the to measure next update.
      */
@@ -130,7 +134,7 @@ class SessionData {
      * @return true if we should renew the key.
      */
     boolean doKeyRenewal() {
-        return this.webURL!=null && this.webURL.length()>0 && this.mRenewTimeBeforeCertExpiresInSeconds>=0;
+        return this.isAutomaticKeyRenewal && this.webURL!=null && this.webURL.length()>0 && this.mRenewTimeBeforeCertExpiresInSeconds>=0;
     }
 
     /* (non-Javadoc)
@@ -141,4 +145,7 @@ class SessionData {
         m_log.info("Object finalized");
         super.finalize();
     }
+	void disableAutomaticKeyRenewal() {
+		this.isAutomaticKeyRenewal = false;
+	}
 }

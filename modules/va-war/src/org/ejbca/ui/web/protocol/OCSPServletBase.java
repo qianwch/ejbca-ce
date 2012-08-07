@@ -28,6 +28,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import javax.servlet.ServletConfig;
@@ -164,6 +165,9 @@ public abstract class OCSPServletBase extends HttpServlet implements SaferAppend
 	private int mTransactionID = 0;
 	private final String m_SessionID = GUIDGenerator.generateGUID(this);
 	private final boolean mDoSaferLogging = OcspConfiguration.getLogSafer();
+	private final Set<String> adminHosts = OcspConfiguration.getAdminHosts();
+	private final String adminPassword = OcspConfiguration.getAdminPassword();
+
 	/** Method gotten through reflection, we put it in a variable so we don't have to use
 	 * reflection every time we use the audit or transaction log */
 	private Method m_errorHandlerMethod = null;
@@ -422,6 +426,8 @@ public abstract class OCSPServletBase extends HttpServlet implements SaferAppend
 		}
 	} //doPost
 
+	protected abstract void renew(String signerSubjectDN);
+
 	@Override
 	public void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws IOException, ServletException {
@@ -434,11 +440,19 @@ public abstract class OCSPServletBase extends HttpServlet implements SaferAppend
 			final String newConfig = request.getParameter("newConfig");
 			final boolean doNewConfig = newConfig!=null && newConfig.length()>0;
 			final boolean doRestoreConfig = request.getParameter("restoreConfig")!=null;
+			final String renewSignerDN =  request.getParameter("renewSigner");
+			final boolean doRenew = renewSignerDN!=null && renewSignerDN.length()>0;
+			final String passin = request.getParameter("password");
 			final String remote;
-			if ( doReload || doNewConfig || doRestoreConfig ) {
+			if ( doReload || doNewConfig || doRestoreConfig || doRenew ) {
 				remote = request.getRemoteAddr();
-				if ( !StringUtils.equals(remote, "127.0.0.1") ) {
+				if ( !this.adminHosts.contains(remote) ) {
 					m_log.info("Got reloadkeys or updateConfig of restoreConfig command from unauthorized ip: "+remote);
+					response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+					return;
+				}
+				if ( !doReload && this.adminPassword!=null && !this.adminPassword.equals(passin) ) {
+					m_log.info("Password from host "+remote+" not correct");
 					response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
 					return;
 				}
@@ -478,6 +492,10 @@ public abstract class OCSPServletBase extends HttpServlet implements SaferAppend
 				ConfigurationHolder.restoreConfiguration();
 				reloadConfig();
 				m_log.info( "Call from "+remote+" to restore configuration." );
+				return;
+			}
+			if ( doRenew ) {
+				renew(renewSignerDN);
 				return;
 			}
 			serviceOCSP(request, response);

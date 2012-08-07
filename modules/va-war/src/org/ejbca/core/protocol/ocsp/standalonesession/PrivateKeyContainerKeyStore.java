@@ -74,6 +74,8 @@ class PrivateKeyContainerKeyStore implements PrivateKeyContainer {
      * Nr of users using the key.
      */
     private int nrOfusers = 0;
+	private List<X509Certificate> caChain;
+	private int caid;
     /**
      * Constructs the key reference.
      * @param _sessionData data of the session.
@@ -97,7 +99,9 @@ class PrivateKeyContainerKeyStore implements PrivateKeyContainer {
     /* (non-Javadoc)
      * @see org.ejbca.ui.web.protocol.OCSPServletStandAloneSession.PrivateKeyContainer#init(java.util.List, int)
      */
-    public void init(List<X509Certificate> caChain, int caid) {
+    public void init(List<X509Certificate> _caChain, int _caid) {
+    	this.caChain = _caChain;
+    	this.caid = _caid;
         destroy();
         if ( !this.sessionData.doKeyRenewal() ) {
             return;
@@ -106,7 +110,7 @@ class PrivateKeyContainerKeyStore implements PrivateKeyContainer {
             m_log.error("Not possible to renew keys whith no stored keystore password for certificate with DN: "+caChain.get(0).getSubjectDN());
             return;
         }
-        this.keyRenewer = new KeyRenewer(this, caChain, caid);
+        this.keyRenewer = new KeyRenewer(this, this.caChain, this.caid, false);
     }
     /**
      * Sets the private key.
@@ -229,5 +233,14 @@ class PrivateKeyContainerKeyStore implements PrivateKeyContainer {
                 }
             }
         }
+    }
+    @Override
+    public void renew() {
+    	// first disable auto renewal after key loading
+    	this.sessionData.disableAutomaticKeyRenewal();
+    	// then destroy running auto removal thread.
+    	destroy();
+    	// create new thread but just for one renew
+    	new KeyRenewer(this, this.caChain, this.caid, true);
     }
 }

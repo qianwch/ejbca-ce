@@ -80,6 +80,11 @@ public class OCSPServletStandAlone extends OCSPServletBase implements IHealtChec
          * @throws IllegalExtendedCAServiceRequestException
          */
         OCSPCAServiceResponse extendedService(int caid, OCSPCAServiceRequest request) throws ExtendedCAServiceRequestException, ExtendedCAServiceNotActiveException, IllegalExtendedCAServiceRequestException;
+		/**
+		 * renew signer with this DN
+		 * @param signerSubjectDN
+		 */
+		void renew(String signerSubjectDN);
     }
 
     /* (non-Javadoc)
@@ -131,5 +136,10 @@ public class OCSPServletStandAlone extends OCSPServletBase implements IHealtChec
      */
     protected ICertificateCache createCertificateCache() {
 		return CertificateCacheFactory.getInstance(certificateStoreSession);
+	}
+
+	@Override
+	protected void renew(String signerSubjectDN) {
+		this.session.renew(signerSubjectDN);
 	}
 }

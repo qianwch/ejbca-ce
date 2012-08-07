@@ -1,6 +1,6 @@
 /*************************************************************************
  *                                                                       *
- *  CESeCore: CE Security Core                                           *
+ *  EJBCA: The OpenSource Certificate Authority                          *
  *                                                                       *
  *  This software is free software; you can redistribute it and/or       *
  *  modify it under the terms of the GNU Lesser General Public           *
@@ -17,43 +17,71 @@ import java.security.cert.X509Certificate;
 
 import javax.net.ssl.X509TrustManager;
 
+import org.apache.log4j.Logger;
+
 /**
  * This trust manager may be used used by a client that does not bother to verify the TLS certificate chain of the server.
  * Could be us used when you are fetching things from the server that are signed by the server (like certificates).
  * The class must not be used on the server side.
  *
- * Based on X509TrustManagerAcceptAll.java 8373 2009-11-30 14:07:00Z jeklund from cesecore
- * 
+ * @author Lars Silven PrimeKey
  * @version  $Id$
  *
  */
 public class X509TrustManagerAcceptAll implements X509TrustManager {
+	/**
+	 * Log object.
+	 */
+	static private final Logger m_log = Logger.getLogger(X509TrustManagerAcceptAll.class);
 
-    /**
-     */
-    public X509TrustManagerAcceptAll() {
-    }
+	/**
+	 */
+	public X509TrustManagerAcceptAll() {
+		if ( !m_log.isTraceEnabled() ) {
+			return;
+		}
+		try {
+			throw new Exception();
+		} catch( Exception e ) {
+			m_log.trace("X509TrustManagerAcceptAll constructor called", e);
+		}
+	}
 
-    /* (non-Javadoc)
-     * @see javax.net.ssl.X509TrustManager#checkClientTrusted(java.security.cert.X509Certificate[], java.lang.String)
-     */
-    public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-        // do nothing
-    }
+	@Override
+	public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+		if ( !m_log.isTraceEnabled() ) {
+			return;
+		}
+		try {
+			throw new Exception();
+		} catch( Exception e ) {
+			m_log.trace("checkClientTrusted called", e);
+		}
+	}
 
-    /* (non-Javadoc)
-     * @see javax.net.ssl.X509TrustManager#checkServerTrusted(java.security.cert.X509Certificate[], java.lang.String)
-     */
-    public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-        // do nothing
-    }
+	@Override
+	public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+		if ( !m_log.isTraceEnabled() ) {
+			return;
+		}
+		try {
+			throw new Exception();
+		} catch( Exception e ) {
+			m_log.trace("checkServerTrusted called", e);
+		}
+	}
 
-    /* (non-Javadoc)
-     * @see javax.net.ssl.X509TrustManager#getAcceptedIssuers()
-     */
-    public X509Certificate[] getAcceptedIssuers() {
-        // only called from server side
-        return null;
-    }
+	@Override
+	public X509Certificate[] getAcceptedIssuers() {
+		if ( !m_log.isTraceEnabled() ) {
+			return new X509Certificate[0];
+		}
+		try {
+			throw new Exception();
+		} catch( Exception e ) {
+			m_log.trace("getAcceptedIssuers called", e);
+		}
+		return new X509Certificate[0];
+	}
 
 }

@@ -15,7 +15,9 @@ package org.cesecore.config;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConversionException;
@@ -512,6 +514,21 @@ public class OcspConfiguration {
     public static String getWsSwKeystorePassword() {
         return ConfigurationHolder.getString(WSSWKEYSTOREPASSWORD);
     }
+	/**
+	 * Get an array of host IPs that is allowed to administer the responder.
+	 * @return the array
+	 */
+	public static Set<String> getAdminHosts() {
+		final String sHosts = ConfigurationHolder.getString("ocsp.admin.hosts");
+		return new HashSet<String>(Arrays.asList(StringUtils.split(sHosts.trim(), ';')));
+	}
+	/**
+	 * Get password needed for some administration tasks. 'null' is return if no password is needed.
+	 * @return the password
+	 */
+	public static String getAdminPassword() {
+		return ConfigurationHolder.getString("ocsp.admin.password");
+	}
 
     /**
      * @return alias for keys that could be used as signer keys. null means all keys
