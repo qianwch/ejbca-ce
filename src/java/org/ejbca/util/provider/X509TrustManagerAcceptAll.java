@@ -17,6 +17,8 @@ import java.security.cert.X509Certificate;
 
 import javax.net.ssl.X509TrustManager;
 
+import org.apache.log4j.Logger;
+
 /**
  * This trust manager may be used used by a client that does not bother to verify the TLS certificate chain of the server.
  * Could be us used when you are fetching things from the server that are signed by the server (like certificates).
@@ -27,27 +29,59 @@ import javax.net.ssl.X509TrustManager;
  *
  */
 public class X509TrustManagerAcceptAll implements X509TrustManager {
+	/**
+	 * Log object.
+	 */
+	static private final Logger m_log = Logger.getLogger(X509TrustManagerAcceptAll.class);
 
 	/**
 	 */
 	public X509TrustManagerAcceptAll() {
-		// TODO Auto-generated constructor stub
+		if ( !m_log.isTraceEnabled() ) {
+			return;
+		}
+		try {
+			throw new Exception();
+		} catch( Exception e ) {
+			m_log.trace("X509TrustManagerAcceptAll constructor called", e);
+		}
 	}
 
 	@Override
 	public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-		// do nothing
+		if ( !m_log.isTraceEnabled() ) {
+			return;
+		}
+		try {
+			throw new Exception();
+		} catch( Exception e ) {
+			m_log.trace("checkClientTrusted called", e);
+		}
 	}
 
 	@Override
 	public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-		// do nothing
+		if ( !m_log.isTraceEnabled() ) {
+			return;
+		}
+		try {
+			throw new Exception();
+		} catch( Exception e ) {
+			m_log.trace("checkServerTrusted called", e);
+		}
 	}
 
 	@Override
 	public X509Certificate[] getAcceptedIssuers() {
-		// only called from server side
-		return null;
+		if ( !m_log.isTraceEnabled() ) {
+			return new X509Certificate[0];
+		}
+		try {
+			throw new Exception();
+		} catch( Exception e ) {
+			m_log.trace("getAcceptedIssuers called", e);
+		}
+		return new X509Certificate[0];
 	}
 
 }

@@ -28,6 +28,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import javax.servlet.ServletConfig;
@@ -163,6 +164,9 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 	private AuditLogger auditLogger;
 	private static final String PROBEABLE_ERRORHANDLER_CLASS = "org.ejbca.appserver.jboss.ProbeableErrorHandler";
 	private static final String SAFER_LOG4JAPPENDER_CLASS = "org.ejbca.appserver.jboss.SaferDailyRollingFileAppender";
+
+	private final Set<String> adminHosts = OcspConfiguration.getAdminHosts();
+	private final String adminPassword = OcspConfiguration.getAdminPassword();
 
 	OCSPData data;	// Data to be used also by the standalone session.
 	/**
@@ -410,6 +414,8 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 		}
 	} //doPost
 
+	protected abstract void renew(String signerSubjectDN);
+
 	@Override
 	public void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws IOException, ServletException {
@@ -422,11 +428,19 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 			final String newConfig = request.getParameter("newConfig");
 			final boolean doNewConfig = newConfig!=null && newConfig.length()>0;
 			final boolean doRestoreConfig = request.getParameter("restoreConfig")!=null;
+			final String renewSignerDN =  request.getParameter("renewSigner");
+			final boolean doRenew = renewSignerDN!=null && renewSignerDN.length()>0;
+			final String passin = request.getParameter("password");
 			final String remote;
-			if ( doReload || doNewConfig || doRestoreConfig ) {
+			if ( doReload || doNewConfig || doRestoreConfig || doRenew ) {
 				remote = request.getRemoteAddr();
-				if ( !StringUtils.equals(remote, "127.0.0.1") ) {
+				if ( !this.adminHosts.contains(remote) ) {
 					m_log.info("Got reloadkeys or updateConfig of restoreConfig command from unauthorized ip: "+remote);
+					response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+					return;
+				}
+				if ( !doReload && this.adminPassword!=null && !this.adminPassword.equals(passin) ) {
+					m_log.info("Password from host "+remote+" not correct");
 					response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
 					return;
 				}
@@ -466,6 +480,10 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 				ConfigurationHolder.restoreConfiguration();
 				reloadConfig();
 				m_log.info( "Call from "+remote+" to restore configuration." );
+				return;
+			}
+			if ( doRenew ) {
+				renew(renewSignerDN);
 				return;
 			}
 			serviceOCSP(request, response);

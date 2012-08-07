@@ -15,7 +15,9 @@ package org.ejbca.config;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConversionException;
@@ -511,6 +513,21 @@ public class OcspConfiguration {
         }
         return StringUtils.split(sConf.trim(), ';');
     }
+	/**
+	 * Get an array of host IPs that is allowed to administer the responder.
+	 * @return the array
+	 */
+	public static Set<String> getAdminHosts() {
+		final String sHosts = ConfigurationHolder.getString("ocsp.admin.hosts", "127.0.0.1");
+		return new HashSet<String>(Arrays.asList(StringUtils.split(sHosts.trim(), ';')));
+	}
+	/**
+	 * Get password needed for some administration tasks. 'null' is return if no password is needed.
+	 * @return the password
+	 */
+	public static String getAdminPassword() {
+		return ConfigurationHolder.getString("ocsp.admin.password", null);
+	}
     /**
      * @return The interval on which new OCSP signing certificates are loaded in seconds
      */

@@ -36,6 +36,7 @@ import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.DERSet;
 import org.bouncycastle.jce.PKCS10CertificationRequest;
 import org.bouncycastle.util.encoders.Base64;
+import org.ejbca.core.model.InternalResources;
 import org.ejbca.core.model.ra.UserDataConstants;
 import org.ejbca.core.protocol.ws.client.gen.CertificateResponse;
 import org.ejbca.core.protocol.ws.client.gen.EjbcaWS;
@@ -58,6 +59,10 @@ class KeyRenewer {
      * Log object.
      */
     static final private Logger m_log = Logger.getLogger(KeyRenewer.class);
+	/**
+	 * Internal localization of logs and errors
+	 */
+	static private final InternalResources intres = InternalResources.getInstance();
     /**
      * The keystore containing the key to authenticate with.
      * The {@link PrivateKeyContainerKeyStore} object must delete the reference to the {@link KeyRenewer}
@@ -83,25 +88,31 @@ class KeyRenewer {
     /**
      * Class used for the thread doing the renewing.
      */
-    private class Runner implements Runnable {
-        /* (non-Javadoc)
-         * @see java.lang.Runnable#run()
-         */
+    private class Runner implements Runnable { // NOPMD: we need to use threads, even if it's a JEE app
+        final private boolean runOnce;
+        Runner(boolean once) {
+            this.runOnce = once;
+        }
+        @Override
         public synchronized void run() {
+            if ( KeyRenewer.this.privateKeyContainerKeyStore.certificate==null ) {
+                return;
+            }
+            if ( this.runOnce ) {
+                m_log.debug("Servlet triggered rekeying started for CA \'"+KeyRenewer.this.privateKeyContainerKeyStore.certificate.getIssuerDN()+"\'");
+                updateKey();
+                return;
+            }
             while( KeyRenewer.this.doUpdateKey ) {
-                if ( KeyRenewer.this.privateKeyContainerKeyStore.certificate==null ) {
-                    return;
-                }
                 final long timeToRenew = KeyRenewer.this.privateKeyContainerKeyStore.certificate.getNotAfter().getTime()-new Date().getTime()-1000*(long)KeyRenewer.this.privateKeyContainerKeyStore.sessionData.mRenewTimeBeforeCertExpiresInSeconds;
-                if (m_log.isDebugEnabled()) {
-                    m_log.debug("time to renew signing key for CA \'"+KeyRenewer.this.privateKeyContainerKeyStore.certificate.getIssuerDN()+"\' : "+timeToRenew );
-                }
+                m_log.debug("time to renew signing key for CA \'"+KeyRenewer.this.privateKeyContainerKeyStore.certificate.getIssuerDN()+"\' : "+timeToRenew );
                 try {
                     wait(Math.max(timeToRenew, 15000)); // set to 15 seconds if long time to renew before expire 
                 } catch (InterruptedException e) {
                     throw new Error(e);
                 }
                 try {
+                    m_log.debug("Automatic rekeying started for CA \'"+KeyRenewer.this.privateKeyContainerKeyStore.certificate.getIssuerDN()+"\'");
                     updateKey();
                 } catch( Throwable t ) {
                     m_log.error("Unknown problem when rekeying. Trying again.", t);
@@ -117,7 +128,6 @@ class KeyRenewer {
             return;
         }
         this.privateKeyContainerKeyStore.sessionData.setNextKeyUpdate(new Date().getTime()); //  since a key is now reloaded we should wait an whole interval for next key update
-        m_log.debug("rekeying started for CA \'"+this.privateKeyContainerKeyStore.certificate.getIssuerDN()+"\'");
         // Check that we at least potentially have a RA key available for P11 sessions
         if ("pkcs11".equalsIgnoreCase(System.getProperty("javax.net.ssl.keyStoreType")) && this.privateKeyContainerKeyStore.sessionData.mP11Password == null &&
                 !this.privateKeyContainerKeyStore.sessionData.doNotStorePasswordsInMemory) {
@@ -155,10 +165,10 @@ class KeyRenewer {
             }
             this.privateKeyContainerKeyStore.privateKey = keyPair.getPrivate();
             this.privateKeyContainerKeyStore.certificate = certChain[0];
+            m_log.info( intres.getLocalizedMessage("ocsp.info.new.cert", certChain[0].getIssuerX500Principal().getName(), userData.getUsername(), certChain[0].getSubjectX500Principal().getName(), certChain[0].getNotAfter()) );
         } finally {
             this.privateKeyContainerKeyStore.keyGenerationFinished();
         }
-        m_log.info("New OCSP signing key generated for CA '"+ userData.getCaName()+"'. Username: '"+userData.getUsername()+"'. Subject DN: '"+userData.getSubjectDN()+"'.");
     }
     /**
      * Get WS object.
@@ -217,7 +227,7 @@ class KeyRenewer {
             return null;
         }
         if ( result==null || result.size()<1) {
-            m_log.info("no match for subject DN:"+subjectDN);
+            m_log.error(intres.getLocalizedMessage("ocsp.no.user.with.subject.dn", subjectDN) );
             return null;
         }
         m_log.debug("at least one user found for cert with DN: "+subjectDN+" Trying to match it with CA name: "+caName);
@@ -306,8 +316,9 @@ class KeyRenewer {
                 tmpCert = null;
                 continue;
             }
-            if ( keyPair.getPublic().equals(tmpCert.getPublicKey()) )
+            if ( keyPair.getPublic().equals(tmpCert.getPublicKey()) ) {
                 break;
+            }
             tmpCert = null;
         }
         if ( tmpCert==null ) {
@@ -345,18 +356,24 @@ class KeyRenewer {
      * @param _caChain sets {@link #caChain}
      * @param _caid sets {@link #caid}
      */
-    KeyRenewer(PrivateKeyContainerKeyStore privateKeyContainerKeyStore, List<X509Certificate> _caChain, int _caid) {
+    KeyRenewer(PrivateKeyContainerKeyStore privateKeyContainerKeyStore, List<X509Certificate> _caChain, int _caid, boolean runOnce) {
         this.privateKeyContainerKeyStore = privateKeyContainerKeyStore;
         this.caid = _caid;
         this.caChain = _caChain;
         this.doUpdateKey = false;
-        if ( this.privateKeyContainerKeyStore.sessionData.doKeyRenewal() ) {
-            this.runner = new Runner();
+        if ( runOnce ) {
+            this.runner = new Runner(true);
             this.doUpdateKey = true;
-            new Thread(this.runner).start();
-        } else {
-            this.runner = null;
+            new Thread(this.runner).start(); // NOPMD: we need to use threads, even if it's a JEE app
+            return;
         }
+        if ( !this.privateKeyContainerKeyStore.sessionData.doKeyRenewal() ) {
+            this.runner = null;
+            return;
+        }
+        this.runner = new Runner(false);
+        this.doUpdateKey = true;
+        new Thread(this.runner).start();
     }
     /**
      * Shuts down the rekeying thread. Done when reloading OCSP signing keys.

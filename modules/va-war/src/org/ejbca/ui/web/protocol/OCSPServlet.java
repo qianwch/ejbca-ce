@@ -64,4 +64,9 @@ public class OCSPServlet extends OCSPServletBase {
 	protected void loadPrivateKeys(Admin adm, String password) {
         // not used by this servlet
     }
+
+	@Override
+	protected void renew(String signerSubjectDN) {
+		// not used by this servlet
+	}
 }

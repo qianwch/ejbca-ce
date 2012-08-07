@@ -13,20 +13,40 @@
 
 package org.ejbca.core.protocol.ocsp.standalonesession;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStore.Builder;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.Provider;
-import java.security.Security;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.KeyStoreBuilderParameters;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.auth.x500.X500Principal;
 import javax.servlet.ServletException;
 
 import org.apache.log4j.Logger;
@@ -44,7 +64,7 @@ import org.ejbca.ui.web.protocol.OCSPServletStandAlone;
 import org.ejbca.util.keystore.KeyTools;
 import org.ejbca.util.keystore.P11Slot;
 import org.ejbca.util.keystore.P11Slot.P11SlotUser;
-import org.ejbca.util.provider.TLSProvider;
+import org.ejbca.util.provider.X509TrustManagerAcceptAll;
 
 /** 
  * This instance is created when the OCSP Servlet session is initiated with {@link OCSPServletStandAlone#init()}. It will be only one instance of this class.
@@ -70,6 +90,7 @@ class StandAloneSession implements P11SlotUser,  OCSPServletStandAlone.IStandAlo
 	 * The data of the session.
 	 */
 	final private SessionData sessionData;
+
 	/**
 	 * Called when a servlet is initialized. This should only occur once.
 	 * 
@@ -100,8 +121,9 @@ class StandAloneSession implements P11SlotUser,  OCSPServletStandAlone.IStandAlo
 					final Iterator<String> i = sError.iterator();
 					while( i.hasNext() ) {
 						pw.print(i.next());
-						if ( i.hasNext() )
+						if ( i.hasNext() ) {
 							pw.print("\" and \"");
+						}
 					}
 					pw.println("\".");
 				}
@@ -149,41 +171,12 @@ class StandAloneSession implements P11SlotUser,  OCSPServletStandAlone.IStandAlo
 			final String webURL = OcspConfiguration.getEjbcawsracliUrl();
 			final int renewTimeBeforeCertExpiresInSeconds = OcspConfiguration.getRenewTimeBeforeCertExpiresInSeconds();
 			if ( webURL!=null && webURL.length()>0 ){
-				if ( renewTimeBeforeCertExpiresInSeconds<0 ) {
-					throw new ServletException(OcspConfiguration.RENEW_TIMR_BEFORE_CERT_EXPIRES_IN_SECONDS+" must be defined if "+OcspConfiguration.REKEYING_WSURL+" is defined.");
-				}
-				final String wsSwKeystorePath = OcspConfiguration.getWsSwKeystorePath();
-				// Setting system properties to ssl resources to be used
-				if ( wsSwKeystorePath!=null && wsSwKeystorePath.length()>0 ) {
-					final String password = OcspConfiguration.getWsSwKeystorePassword();
-					if ( password==null ) {
-						throw new ServletException(OcspConfiguration.WSSWKEYSTOREPASSWORD+" must be specified if "+OcspConfiguration.WSSWKEYSTOREPATH+" is specified.");
-					}
-					System.setProperty("javax.net.ssl.keyStore", wsSwKeystorePath);
-					System.setProperty("javax.net.ssl.keyStorePassword", password);
-				} else if ( slot!=null ) {
-					System.setProperty("javax.net.ssl.keyStoreType", "pkcs11");
-					final String sslProviderName = slot.getProvider().getName();
-					if ( sslProviderName==null ) {
-						throw new ServletException("Problem with provider. No name.");
-					}
-					m_log.debug("P11 provider name for WS: "+sslProviderName);
-					System.setProperty("javax.net.ssl.keyStoreProvider", sslProviderName);
-					System.setProperty("javax.net.ssl.trustStore", "NONE");
-					System.setProperty("javax.net.ssl.keyStore", "NONE");
-				} else {
-					throw new ServletException("If "+OcspConfiguration.REKEYING_WSURL+" is defined, either "+OcspConfiguration.WSSWKEYSTOREPATH+" or P11 must be defined.");
-				}
-				// setting ejbca trust provider that accept all server certs
-				final Provider tlsProvider = new TLSProvider();
-				Security.addProvider(tlsProvider);
-				Security.setProperty("ssl.TrustManagerFactory.algorithm", "AcceptAll");
-				Security.setProperty("ssl.KeyManagerFactory.algorithm", "NewSunX509");
+				HttpsURLConnection.setDefaultSSLSocketFactory( getSSLSocketFactory(renewTimeBeforeCertExpiresInSeconds, slot) );
 			} else {
 				if ( renewTimeBeforeCertExpiresInSeconds>=0 ) {
 					throw new ServletException(OcspConfiguration.RENEW_TIMR_BEFORE_CERT_EXPIRES_IN_SECONDS+" must not be defined if "+OcspConfiguration.REKEYING_WSURL+" is not defined.");
 				}
-				m_log.debug("Key renewal is not enabled.");
+				m_log.info(intres.getLocalizedMessage("ocsp.info.key.renewal.not.enabled"));
 			}
 			// Load OCSP responders private keys into cache in init to speed things up for the first request
 			// signEntityMap is also set
@@ -192,7 +185,9 @@ class StandAloneSession implements P11SlotUser,  OCSPServletStandAlone.IStandAlo
 				final String aKeyAlias[] = OcspConfiguration.getKeyAlias();
 				keyAlias = aKeyAlias!=null && aKeyAlias.length>0 ? new HashSet<String>(Arrays.asList(aKeyAlias)) : null;
 			}
-			this.sessionData = new SessionData(slot, tmpData, webURL, renewTimeBeforeCertExpiresInSeconds, storePassword, cardPassword, keystoreDirectoryName, keyAlias, doNotStorePasswordsInMemory, p11Password);
+			this.sessionData = new SessionData(
+					slot, tmpData, webURL, renewTimeBeforeCertExpiresInSeconds, storePassword, cardPassword,
+					keystoreDirectoryName, keyAlias, doNotStorePasswordsInMemory, p11Password);
 			this.signEntitycontainer = new SigningEntityContainer(this.sessionData);
 			loadPrivateKeys(tmpData.m_adm, null);
 		} catch( ServletException e ) {
@@ -200,6 +195,82 @@ class StandAloneSession implements P11SlotUser,  OCSPServletStandAlone.IStandAlo
 		} catch (Exception e) {
 			throw new ServletException(e);
 		}
+	}
+	private class MyCallbackHandler implements CallbackHandler {
+
+		@Override
+		public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+			final StringWriter sw = new StringWriter();
+			final PrintWriter pw = new PrintWriter(sw, true);
+			pw.println("Callback handle not implemented for:");
+			for ( int i=0; i<callbacks.length; i++) {
+				pw.println("	Class " +callbacks[i].getClass().getCanonicalName()+ " toString "+callbacks[i].toString());
+			}
+			m_log.error(sw.toString());
+		}
+	}
+	private SSLSocketFactory getSSLSocketFactory(KeyManagerFactory kmf) throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, KeyManagementException {
+		final TrustManager tms[] = new X509TrustManagerAcceptAll[] {new X509TrustManagerAcceptAll()};
+
+		// Now construct a SSLContext using these (possibly wrapped)
+		// KeyManagers, and the TrustManagers. We still use a null
+		// SecureRandom, indicating that the defaults should be used.
+		final SSLContext context = SSLContext.getInstance("TLS");
+		context.init(
+				kmf.getKeyManagers(),
+				tms,
+				null);
+		// Finally, we get a SocketFactory, and pass it to SimpleSSLClient.
+		return  context.getSocketFactory();
+	}
+	private SSLSocketFactory getSSLSocketFactory(int renewTimeBeforeCertExpiresInSeconds, P11Slot slot) throws ServletException, NoSuchAlgorithmException, KeyManagementException, InvalidAlgorithmParameterException, IOException, KeyStoreException, CertificateException, UnrecoverableKeyException {
+		if ( renewTimeBeforeCertExpiresInSeconds<0 ) {
+			m_log.info( intres.getLocalizedMessage("ocsp.info.no.auto.key.renewal", OcspConfiguration.RENEW_TIMR_BEFORE_CERT_EXPIRES_IN_SECONDS, OcspConfiguration.REKEYING_WSURL) );
+		}
+		final String wsSwKeystorePath = OcspConfiguration.getWsSwKeystorePath();
+		final KeyManagerFactory kmf = KeyManagerFactory.getInstance("NewSunX509");
+		if ( wsSwKeystorePath!=null && wsSwKeystorePath.length()>0 ) {
+			final char password[] = OcspConfiguration.getWsSwKeystorePassword().toCharArray();
+			if ( password==null ) {
+				throw new ServletException(OcspConfiguration.WSSWKEYSTOREPASSWORD+" must be specified if "+OcspConfiguration.WSSWKEYSTOREPATH+" is specified.");
+			}
+			final KeyStore keyStore = KeyStore.getInstance("jks");
+			keyStore.load(new FileInputStream(wsSwKeystorePath), password);
+			kmf.init(keyStore, password);
+			return getSSLSocketFactory(kmf);
+		}
+		if ( slot==null ) {
+			throw new ServletException("If "+OcspConfiguration.REKEYING_WSURL+" is defined, either "+OcspConfiguration.WSSWKEYSTOREPATH+" or P11 must be defined.");
+		}
+		final Provider provider = slot.getProvider();
+		final Builder p11builder = Builder.newInstance("PKCS11", provider, new KeyStore.CallbackHandlerProtection(new MyCallbackHandler()));
+		kmf.init(new KeyStoreBuilderParameters(p11builder));
+		return getSSLSocketFactory(kmf);
+	}
+	@Override
+	public void renew(String signerSubjectDN) {
+		final Set<Entry<Integer, SigningEntity>> set = this.signEntitycontainer.getSigningEntityMap().entrySet();
+		final X500Principal target;
+		try {
+			target = signerSubjectDN.trim().toLowerCase().equals("all") ? null : new X500Principal(signerSubjectDN);
+		} catch ( IllegalArgumentException e ) {
+			m_log.error(intres.getLocalizedMessage("ocsp.error.renewsigner.not.valid", signerSubjectDN));
+			return;
+		}
+		final StringBuffer sb = new StringBuffer();
+		for ( Entry<Integer, SigningEntity> entry : set ) {
+			entry.getValue().keyContainer.destroy();
+			if ( target!=null && !entry.getValue().getCertificateChain()[0].getSubjectX500Principal().equals(target) ){
+				continue;
+			}
+			entry.getValue().keyContainer.renew();
+			sb.append(" '"+entry.getValue().getCertificateChain()[0].getIssuerX500Principal().getName()+'\'');
+		}
+		if ( sb.length()<1 ) {
+			m_log.error(intres.getLocalizedMessage("ocsp.error.renewsigner.not.existing", target.getName()));
+			return;
+		}
+		m_log.info( intres.getLocalizedMessage("ocsp.info.servlet.renewing", sb.toString()) );
 	}
 	@Override
 	public String healthCheck( boolean doSignTest, boolean doValidityTest) {
@@ -318,7 +389,7 @@ class StandAloneSession implements P11SlotUser,  OCSPServletStandAlone.IStandAlo
 			throw e;
 		}
 		final SignerThread runnable = new SignerThread(se,request);
-		final Thread thread = new Thread(runnable);
+		final Thread thread = new Thread(runnable); // NOPMD: we need to use threads, even if it's a JEE app
 		thread.start();
 		final OCSPCAServiceResponse result = runnable.getSignResult();
 		thread.interrupt();
