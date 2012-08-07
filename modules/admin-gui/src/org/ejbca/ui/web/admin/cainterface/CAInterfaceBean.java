@@ -51,6 +51,7 @@ import org.ejbca.core.model.ca.caadmin.CADoesntExistsException;
 import org.ejbca.core.model.ca.caadmin.CAInfo;
 import org.ejbca.core.model.ca.catoken.CATokenOfflineException;
 import org.ejbca.core.model.ca.certificateprofiles.CertificateProfile;
+import org.ejbca.core.model.ca.certificateprofiles.CertificateProfileDoesntExistsException;
 import org.ejbca.core.model.ca.certificateprofiles.CertificateProfileExistsException;
 import org.ejbca.core.model.ca.crl.RevokedCertInfo;
 import org.ejbca.core.model.ca.store.CRLInfo;
@@ -218,10 +219,15 @@ public class CAInterfaceBean implements Serializable {
      * 
      * @param certificateProfileName the name of the profile to look for.
      * @return a {@link List} of service names using the given certificate profile
+     * @throws CertificateProfileDoesntExistsException if sought certificate profile was not found.
      */
-    public List<String> getServicesUsingCertificateProfile(String certificateProfileName) {
+    public List<String> getServicesUsingCertificateProfile(final String certificateProfileName) throws CertificateProfileDoesntExistsException {
         Integer certificateProfileId = certificateProfileSession.getCertificateProfileId(administrator, certificateProfileName);
-        return serviceSession.getServicesUsingCertificateProfile(certificateProfileId);
+        if (certificateProfileId == 0) {
+            throw new CertificateProfileDoesntExistsException(certificateProfileName + " was not found.");
+        } else {
+            return serviceSession.getServicesUsingCertificateProfile(certificateProfileId);
+        }
     }
     
     /**
@@ -229,31 +235,41 @@ public class CAInterfaceBean implements Serializable {
      * 
      * @param certificateProfileName the name of the sought profile
      * @return a list of end entity names using the sought profile
+     * @throws CertificateProfileDoesntExistsException if sought certificate profile was not found.
      */
-    public List<String> getEndEntitiesUsingCertificateProfile(String certificateProfileName) {
+    public List<String> getEndEntitiesUsingCertificateProfile(final String certificateProfileName) throws CertificateProfileDoesntExistsException {
         int certificateprofileid = certificateProfileSession.getCertificateProfileId(administrator, certificateProfileName);
-        CertificateProfile certprofile = this.certificateProfileSession.getCertificateProfile(administrator, certificateProfileName);   
-        if(certprofile.getType() == SecConst.CERTTYPE_ENDENTITY){
-            return userAdminSession.findByCertificateProfileId(certificateprofileid);
+        CertificateProfile certprofile = this.certificateProfileSession.getCertificateProfile(administrator, certificateProfileName);
+        if (certprofile == null) {
+            throw new CertificateProfileDoesntExistsException(certificateProfileName + " was not found.");
         } else {
-            return new ArrayList<String>();
+            if (certprofile.getType() == SecConst.CERTTYPE_ENDENTITY) {
+                return userAdminSession.findByCertificateProfileId(certificateprofileid);
+            } else {
+                return new ArrayList<String>();
+            }
         }
     }
-    
+
     /**
      * Check if certificate profile is in use by any end entity profile
      * 
      * @param certificateProfileName the name of the sought profile
      * @return a list of end entity profile names using the sought profile
+     * @throws CertificateProfileDoesntExistsException if sought certificate profile was not found.
      */
-    public List<String> getEndEntityProfilesUsingCertificateProfile(String certificateProfileName) {
+    public List<String> getEndEntityProfilesUsingCertificateProfile(final String certificateProfileName) throws CertificateProfileDoesntExistsException {
         int certificateprofileid = certificateProfileSession.getCertificateProfileId(administrator, certificateProfileName);
-        CertificateProfile certprofile = this.certificateProfileSession.getCertificateProfile(administrator, certificateProfileName); 
-        if(certprofile.getType() == SecConst.CERTTYPE_ENDENTITY){
-            return endEntityProfileSession.getEndEntityProfilesUsingCertificateProfile(certificateprofileid);
+        CertificateProfile certprofile = this.certificateProfileSession.getCertificateProfile(administrator, certificateProfileName);
+        if (certprofile == null) {
+            throw new CertificateProfileDoesntExistsException(certificateProfileName + " was not found.");
         } else {
-            return new ArrayList<String>();
-        }   
+            if (certprofile.getType() == SecConst.CERTTYPE_ENDENTITY) {
+                return endEntityProfileSession.getEndEntityProfilesUsingCertificateProfile(certificateprofileid);
+            } else {
+                return new ArrayList<String>();
+            }
+        }
     }
     
     /**
@@ -261,15 +277,20 @@ public class CAInterfaceBean implements Serializable {
      * 
      * @param certificateProfileName the name of the sought profile
      * @return a list of hard token profile names using the sought profile
+     * @throws CertificateProfileDoesntExistsException if sought certificate profile was not found.
      */
-    public List<String> getHardTokenTokensUsingCertificateProfile(String certificateProfileName) {
+    public List<String> getHardTokenTokensUsingCertificateProfile(final String certificateProfileName) throws CertificateProfileDoesntExistsException {
         int certificateprofileid = certificateProfileSession.getCertificateProfileId(administrator, certificateProfileName);
-        CertificateProfile certprofile = this.certificateProfileSession.getCertificateProfile(administrator, certificateProfileName); 
-        if(certprofile.getType() == SecConst.CERTTYPE_ENDENTITY){
-            return hardtokensession.getHardTokenProfileUsingCertificateProfile(certificateprofileid);
+        CertificateProfile certprofile = this.certificateProfileSession.getCertificateProfile(administrator, certificateProfileName);
+        if (certprofile == null) {
+            throw new CertificateProfileDoesntExistsException(certificateProfileName + " was not found.");
         } else {
-            return new ArrayList<String>();
-        }   
+            if (certprofile.getType() == SecConst.CERTTYPE_ENDENTITY) {
+                return hardtokensession.getHardTokenProfileUsingCertificateProfile(certificateprofileid);
+            } else {
+                return new ArrayList<String>();
+            }
+        }
     }
     
     /**
@@ -277,16 +298,20 @@ public class CAInterfaceBean implements Serializable {
      * 
      * @param certificateProfileName the name of the sought profile
      * @return a list of CA names using the sought profile
+     * @throws CertificateProfileDoesntExistsException if sought certificate profile was not found.
      */
-    public List<String> getCaUsingCertificateProfile(String certificateProfileName) {
+    public List<String> getCaUsingCertificateProfile(final String certificateProfileName) throws CertificateProfileDoesntExistsException {
         int certificateprofileid = certificateProfileSession.getCertificateProfileId(administrator, certificateProfileName);  
-        CertificateProfile certprofile = this.certificateProfileSession.getCertificateProfile(administrator, certificateProfileName); 
-        if(certprofile.getType() != SecConst.CERTTYPE_ENDENTITY){
-             return caadminsession.getCAsUsingCertificateProfile(certificateprofileid);
+        CertificateProfile certprofile = this.certificateProfileSession.getCertificateProfile(administrator, certificateProfileName);
+        if (certprofile == null) {
+            throw new CertificateProfileDoesntExistsException(certificateProfileName + " was not found.");
         } else {
-            return new ArrayList<String>();
-        }
-       
+            if (certprofile.getType() != SecConst.CERTTYPE_ENDENTITY) {
+                return caadminsession.getCAsUsingCertificateProfile(certificateprofileid);
+            } else {
+                return new ArrayList<String>();
+            }
+        }    
     }
     
     
