@@ -92,4 +92,8 @@ class PrivateKeyContainerCard implements PrivateKeyContainer {
     public void destroy() {
         // do nothing
     }
+	@Override
+	public void renew() {
+        // do nothing
+	}
 }
