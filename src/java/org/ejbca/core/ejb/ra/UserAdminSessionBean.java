@@ -918,6 +918,11 @@ public class UserAdminSessionBean implements UserAdminSessionLocal, UserAdminSes
         setUserStatus(admin, data, status);
     }
 
+    @Override 
+    public long countEndEntitiesUsingCertificateProfile(int certificateprofileid) {
+       return UserData.countByCertificateProfileId(entityManager, certificateprofileid);
+    }
+    
     private void setUserStatus(final Admin admin, final UserData data1, final int status) throws AuthorizationDeniedException, FinderException, ApprovalException,
             WaitingForApprovalException {
         final int caid = data1.getCaId();
