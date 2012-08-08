@@ -284,14 +284,14 @@ public class EditServiceManagedBean extends BaseManagedBean {
 	/**
      * 
      * 
-     * @return a {@link List} of {@link SelectItem}s containing the ID's and names of all  
-     * certificate profiles current admin is authorized to.
+     * @return a {@link List} of {@link SelectItem}s containing the ID's and names of all ENDENTITY, ROOTCA and SUBCA 
+     * (and HARDTOKEN if available) certificate profiles current admin is authorized to.
      */
-	public Collection<SelectItem> getCertificateProfiles() {
+    public Collection<SelectItem> getCertificateProfiles() {
         TreeMap<String, SelectItem> certificateProfiles = new TreeMap<String, SelectItem>();
         Collection<Integer> caIds = ejb.getCaSession().getAvailableCAs(getAdmin());
 
-        final Integer[] certificateProfileTypes = new Integer[] { CertificateConstants.CERTTYPE_ENDENTITY, CertificateConstants.CERTTYPE_HARDTOKEN,
+        final Integer[] certificateProfileTypes = new Integer[] { CertificateConstants.CERTTYPE_ENDENTITY,
                 CertificateConstants.CERTTYPE_ROOTCA, CertificateConstants.CERTTYPE_SUBCA };
         
         for (Integer certificateProfileType : certificateProfileTypes) {
@@ -302,9 +302,19 @@ public class EditServiceManagedBean extends BaseManagedBean {
                 certificateProfiles.put(profileName.toLowerCase(), new SelectItem(certificateProfile.toString(), profileName));
             }
         }
+        //Only add hardprofile certificate profiles if enabled. 
+        if(ejb.getGlobalConfigurationSession().getCachedGlobalConfiguration().getIssueHardwareTokens()) {
+            Collection<Integer> profiles = ejb.getCertificateProfileSession().getAuthorizedCertificateProfileIds(CertificateConstants.CERTTYPE_HARDTOKEN, caIds);
+            for (Integer certificateProfile : profiles) {
+                String profileName = ejb.getCertificateProfileSession().getCertificateProfileName(
+                        certificateProfile);
+                certificateProfiles.put(profileName.toLowerCase(), new SelectItem(certificateProfile.toString(), profileName));
+            }
+        }
+        
         return certificateProfiles.values();
     }
-
+	
 	public List<SelectItem> getAvailablePublishers(){
 		List<SelectItem> availablePublisherNames = new ArrayList<SelectItem>();
 		Collection<Integer> publisherIds = ejb.getCaAdminSession().getAuthorizedPublisherIds(getAdmin());
