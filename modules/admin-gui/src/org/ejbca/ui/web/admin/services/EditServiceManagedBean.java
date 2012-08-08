@@ -27,6 +27,7 @@ import javax.faces.model.SelectItem;
 
 import org.apache.log4j.Logger;
 import org.ejbca.core.model.SecConst;
+import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.model.services.ServiceConfiguration;
 import org.ejbca.core.model.services.workers.CRLUpdateWorker;
 import org.ejbca.core.model.services.workers.CertificateExpirationNotifierWorker;
@@ -273,25 +274,38 @@ public class EditServiceManagedBean extends BaseManagedBean {
 	}
 	
 	/**
-	 * 
-	 * 
-	 * @return a {@link List} of {@link SelectItem}s containing the ID's and names of all ROOTCA and SUBCA 
-	 * certificate profiles current admin is authorized to.
-	 */
-	public Collection<SelectItem> getCertificateProfiles() {
-	    TreeMap<String, SelectItem> certificateProfiles = new TreeMap<String, SelectItem>();
+     * 
+     * 
+     * @return a {@link List} of {@link SelectItem}s containing the ID's and names of all ENDENTITY, ROOTCA and SUBCA 
+     * (and HARDTOKEN if available) certificate profiles current admin is authorized to.
+     */
+    public Collection<SelectItem> getCertificateProfiles() {
+        TreeMap<String, SelectItem> certificateProfiles = new TreeMap<String, SelectItem>();
         Collection<Integer> caIds = ejb.getCaSession().getAvailableCAs(getAdmin());
-      
-        final Integer[] certificateProfileTypes = new Integer[] { SecConst.CERTTYPE_ENDENTITY, SecConst.CERTTYPE_HARDTOKEN, SecConst.CERTTYPE_ROOTCA,
-                SecConst.CERTTYPE_SUBCA };
+
+        final Integer[] certificateProfileTypes = new Integer[] { SecConst.CERTTYPE_ENDENTITY,
+                SecConst.CERTTYPE_ROOTCA, SecConst.CERTTYPE_SUBCA };
+        
+        Admin admin = getAdmin(); 
+        
         for (Integer certificateProfileType : certificateProfileTypes) {
-            Collection<Integer> profiles = ejb.getCertificateProfileSession().getAuthorizedCertificateProfileIds(getAdmin(),certificateProfileType, caIds);
+            Collection<Integer> profiles = ejb.getCertificateProfileSession().getAuthorizedCertificateProfileIds(admin, certificateProfileType, caIds);
             for (Integer certificateProfile : profiles) {
-                String profileName = ejb.getCertificateProfileSession().getCertificateProfileName(getAdmin(),
+                String profileName = ejb.getCertificateProfileSession().getCertificateProfileName(admin, 
                         certificateProfile);
                 certificateProfiles.put(profileName.toLowerCase(), new SelectItem(certificateProfile.toString(), profileName));
             }
         }
+        //Only add hardprofile certificate profiles if enabled. 
+        if(ejb.getGlobalConfigurationSession().getCachedGlobalConfiguration(admin).getIssueHardwareTokens()) {
+            Collection<Integer> profiles = ejb.getCertificateProfileSession().getAuthorizedCertificateProfileIds(admin, SecConst.CERTTYPE_HARDTOKEN, caIds);
+            for (Integer certificateProfile : profiles) {
+                String profileName = ejb.getCertificateProfileSession().getCertificateProfileName(admin, 
+                        certificateProfile);
+                certificateProfiles.put(profileName.toLowerCase(), new SelectItem(certificateProfile.toString(), profileName));
+            }
+        }
+        
         return certificateProfiles.values();
     }
 
