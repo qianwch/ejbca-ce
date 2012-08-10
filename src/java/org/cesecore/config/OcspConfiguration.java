@@ -514,6 +514,16 @@ public class OcspConfiguration {
     public static String getWsSwKeystorePassword() {
         return ConfigurationHolder.getString(WSSWKEYSTOREPASSWORD);
     }
+    /**
+     * @return alias for keys that could be used as signer keys. null means all keys
+     */
+    public static String[] getKeyAlias() {
+        final String sConf = ConfigurationHolder.getString("ocsp.rekeying.listOfAliases");
+        if (sConf == null) {
+            return null;
+        }
+        return StringUtils.split(sConf.trim(), ';');
+    }
 	/**
 	 * Get an array of host IPs that is allowed to administer the responder.
 	 * @return the array
@@ -529,18 +539,6 @@ public class OcspConfiguration {
 	public static String getAdminPassword() {
 		return ConfigurationHolder.getString("ocsp.rekeying.trigging.password");
 	}
-
-    /**
-     * @return alias for keys that could be used as signer keys. null means all keys
-     */
-    public static String[] getKeyAlias() {
-        final String sConf = ConfigurationHolder.getString("ocsp.rekeying.listOfAliases");
-        if (sConf == null) {
-            return null;
-        }
-        return StringUtils.split(sConf.trim(), ';');
-    }
-
     /**
      * @return The interval on which new OCSP signing certificates are loaded in seconds
      */
