@@ -514,22 +514,6 @@ public class OcspConfiguration {
     public static String getWsSwKeystorePassword() {
         return ConfigurationHolder.getString(WSSWKEYSTOREPASSWORD);
     }
-	/**
-	 * Get an array of host IPs that is allowed to administer the responder.
-	 * @return the array
-	 */
-	public static Set<String> getAdminHosts() {
-		final String sHosts = ConfigurationHolder.getString("ocsp.admin.hosts");
-		return new HashSet<String>(Arrays.asList(StringUtils.split(sHosts.trim(), ';')));
-	}
-	/**
-	 * Get password needed for some administration tasks. 'null' is return if no password is needed.
-	 * @return the password
-	 */
-	public static String getAdminPassword() {
-		return ConfigurationHolder.getString("ocsp.admin.password");
-	}
-
     /**
      * @return alias for keys that could be used as signer keys. null means all keys
      */
@@ -540,7 +524,21 @@ public class OcspConfiguration {
         }
         return StringUtils.split(sConf.trim(), ';');
     }
-
+	/**
+	 * Get set of host IPs that are allowed to trigger rekeying.
+	 * @return the array
+	 */
+	public static Set<String> getRekeyTriggingHosts() {
+		final String sHosts = ConfigurationHolder.getString("ocsp.rekeying.trigging.hosts");
+		return new HashSet<String>(Arrays.asList(StringUtils.split(sHosts.trim(), ';')));
+	}
+	/**
+	 * Get password needed for triggering rekey. Null means that it is not possible to trigger rekey.
+	 * @return the password
+	 */
+	public static String getRekeyTriggingPassword() {
+		return ConfigurationHolder.getString("ocsp.rekeying.trigging.password");
+	}
     /**
      * @return The interval on which new OCSP signing certificates are loaded in seconds
      */
