@@ -519,15 +519,15 @@ public class OcspConfiguration {
 	 * @return the array
 	 */
 	public static Set<String> getAdminHosts() {
-		final String sHosts = ConfigurationHolder.getString("ocsp.admin.hosts");
+		final String sHosts = ConfigurationHolder.getString("ocsp.rekeying.trigging.hosts");
 		return new HashSet<String>(Arrays.asList(StringUtils.split(sHosts.trim(), ';')));
 	}
 	/**
-	 * Get password needed for some administration tasks. 'null' is return if no password is needed.
+	 * Get password needed for triggering rekey. Null means that it is not possible to trigger rekey.
 	 * @return the password
 	 */
 	public static String getAdminPassword() {
-		return ConfigurationHolder.getString("ocsp.admin.password");
+		return ConfigurationHolder.getString("ocsp.rekeying.trigging.password");
 	}
 
     /**

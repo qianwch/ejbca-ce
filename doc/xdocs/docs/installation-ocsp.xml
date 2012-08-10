@@ -140,15 +140,14 @@ If the "update time before the OCSP signer certificate expires time" is defined 
 The updating may also be manually triggered by a "GET" to the OCSP status URL with the parameter "renewSigner". "renewSigner" should then have the value of the DN of the OCSP signer certificate to be renewed.
 </p>
 <p>
-This update is restricted to only be done from certain IPs. This IP list is specified in ocsp.properties. If nothing is defined 127.0.0.1 is the default. The update may also be protected by a password given in the URL
-as the "password" parameter. The password is defined in ocsp.properties. If no password is defined then no password is needed in the URL.
+This update is restricted to only be done from certain IPs. This IP list is specified in ocsp.properties. If nothing is defined localhost is the default. The update is also protected by a password given in the URL
+as the "password" parameter. The password is defined in ocsp.properties. If no password is defined then update with "GET" is disabled.
 </p>
 <p>
-Examples for the responder with DN "CN=OCSP Responder CMP" with and without password:
+Examples for the responder with DN "CN=OCSP Responder 123, O=PrimeKey Solutions AB, C=SE":
 </p>
 <source>
-wget http://va.virtual:8080/status/ocsp?renewSigner=CN=OCSP\ Responder\ CMP\&amp;password=foobar123
-wget http://va.virtual:8080/status/ocsp?renewSigner=CN=OCSP\ Responder\ CMP
+wget http://va.virtual:8080/status/ocsp?renewSigner=CN=OCSP\ Responder\ 123,\ O=PrimeKey\ Solutions\ AB,\ C=SE\&amp;password=foobar123
 </source>
 <p>
 You got to generate a certificate for a user with permissions to create a user generated certificate for all OCSP signers.
