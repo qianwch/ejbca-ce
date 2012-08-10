@@ -59,6 +59,7 @@ import org.bouncycastle.ocsp.SingleResp;
 import org.bouncycastle.ocsp.UnknownStatus;
 import org.bouncycastle.util.encoders.Hex;
 import org.ejbca.config.ConfigurationHolder;
+import org.ejbca.config.EjbcaConfiguration;
 import org.ejbca.config.OcspConfiguration;
 import org.ejbca.core.ejb.ca.store.CertificateStatus;
 import org.ejbca.core.model.InternalResources;
@@ -165,8 +166,8 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 	private static final String PROBEABLE_ERRORHANDLER_CLASS = "org.ejbca.appserver.jboss.ProbeableErrorHandler";
 	private static final String SAFER_LOG4JAPPENDER_CLASS = "org.ejbca.appserver.jboss.SaferDailyRollingFileAppender";
 
-	private final Set<String> adminHosts = OcspConfiguration.getAdminHosts();
-	private final String adminPassword = OcspConfiguration.getAdminPassword();
+	private final Set<String> triggingHosts = OcspConfiguration.getRekeyTriggingHosts();
+	private final String triggingPassword = OcspConfiguration.getRekeyTriggingPassword();
 
 	OCSPData data;	// Data to be used also by the standalone session.
 	/**
@@ -431,23 +432,13 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 			final String renewSignerDN =  request.getParameter("renewSigner");
 			final boolean doRenew = renewSignerDN!=null && renewSignerDN.length()>0;
 			final String passin = request.getParameter("password");
-			final String remote;
-			if ( doReload || doNewConfig || doRestoreConfig || doRenew ) {
-				remote = request.getRemoteAddr();
-				if ( !this.adminHosts.contains(remote) ) {
-					m_log.info("Got reloadkeys or updateConfig of restoreConfig command from unauthorized ip: "+remote);
-					response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-					return;
-				}
-				if ( !doReload && this.adminPassword!=null && !this.adminPassword.equals(passin) ) {
-					m_log.info("Password from host "+remote+" not correct");
-					response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-					return;
-				}
-			} else {
-				remote = null;
-			}
+			final String remote = request.getRemoteAddr();
 			if ( doReload ) {
+				if ( !remote.equals("127.0.0.1") && !remote.equals("0:0:0:0:0:0:0:1") ) {
+					m_log.info(intres.getLocalizedMessage("ocsp.reloadkeys.not.localhost", remote));
+					response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+					return;
+				}
 				m_log.info( intres.getLocalizedMessage("ocsp.reloadkeys", remote) );
 				// Reload CA certificates
 				this.data.m_caCertCache.forceReload();
@@ -459,6 +450,11 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 					m_log.error("Problem loading keys.", e);
 					response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Problem. See ocsp responder server log.");
 				}
+				return;
+			}
+			if ( (doNewConfig || doRestoreConfig) && EjbcaConfiguration.getIsInProductionMode() ) {
+				m_log.info("Change of configuration not allowed since the mode is production. Call from: "+remote);
+				response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
 				return;
 			}
 			if ( doNewConfig ) {
@@ -483,6 +479,21 @@ public abstract class OCSPServletBase extends HttpServlet implements ISaferAppen
 				return;
 			}
 			if ( doRenew ) {
+				if ( !this.triggingHosts.contains(remote) ) {
+					m_log.info( intres.getLocalizedMessage("ocsp.rekey.triggered.unauthorized.ip", remote) );
+					response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+					return;
+				}
+				if ( this.triggingPassword==null ) {
+					m_log.info( intres.getLocalizedMessage("ocsp.rekey.triggered.not.enabled",remote) );
+					response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+					return;
+				}
+				if ( !this.triggingPassword.equals(passin) ) {
+					m_log.info( intres.getLocalizedMessage("ocsp.rekey.triggered.wrong.password", remote) );
+					response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+					return;
+				}
 				renew(renewSignerDN);
 				return;
 			}

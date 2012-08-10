@@ -250,6 +250,15 @@ ocsp.defaultresponder=CN=AdminCA1,O=EJBCA Sample,C=SE
 # Default: null
 #ocsp.rekeying.listOfAliases=reponder2key1;responder2key2;responder2key3
 
+# Host from which a triggering of rekey is allowed separated by ';'
+# Default: 127.0.0.1;0:0:0:0:0:0:0:1
+#ocsp.rekeying.trigging.hosts=127.0.0.1;192.168.0.3
+
+# Password for triggering the rekey.
+# Not specified (null) means that rekey can not be triggered with http get
+# Default is that rekey triggering is disabled.
+#ocsp.rekeying.trigging.password=foobar123
+
 
 #------------------- External OCSP responder activation------------------------------
 # 'ocsp.keys.storePassword' and 'ocsp.p11.p11password' and 'ocsp.keys.cardPassword' should not be defined if you are using the activation feature.
@@ -306,16 +315,3 @@ ocsp.defaultresponder=CN=AdminCA1,O=EJBCA Sample,C=SE
 # This option needs other configuration changes as well, see HOWTO-OCSP-RESPONDER for more information
 # Default: false
 #ocsp.log-safer = true
-
-
-#------------------- OCSP administration settings -------------
-# Settings used to administer the responder with 'get
-
-# Host from which adminstation is allowed separated by ';'
-# Default: 127.0.0.1
-#ocsp.admin.hosts=127.0.0.1;192.168.0.3
-
-# Password for admin tasks. 'reloadkeys' is excluded.
-# Not specified (null) means that no password is need.
-# Default is that no password is needed.
-#ocsp.admin.password=foobar123

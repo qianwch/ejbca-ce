@@ -514,19 +514,19 @@ public class OcspConfiguration {
         return StringUtils.split(sConf.trim(), ';');
     }
 	/**
-	 * Get an array of host IPs that is allowed to administer the responder.
+	 * Get set of host IPs that are allowed to trigger rekeying.
 	 * @return the array
 	 */
-	public static Set<String> getAdminHosts() {
-		final String sHosts = ConfigurationHolder.getString("ocsp.admin.hosts", "127.0.0.1");
+	public static Set<String> getRekeyTriggingHosts() {
+		final String sHosts = ConfigurationHolder.getString("ocsp.rekeying.trigging.hosts", "127.0.0.1;0:0:0:0:0:0:0:1");
 		return new HashSet<String>(Arrays.asList(StringUtils.split(sHosts.trim(), ';')));
 	}
 	/**
-	 * Get password needed for some administration tasks. 'null' is return if no password is needed.
+	 * Get password needed for triggering rekey. Null means that it is not possible to trigger rekey.
 	 * @return the password
 	 */
-	public static String getAdminPassword() {
-		return ConfigurationHolder.getString("ocsp.admin.password", null);
+	public static String getRekeyTriggingPassword() {
+		return ConfigurationHolder.getString("ocsp.rekeying.trigging.password", null);
 	}
     /**
      * @return The interval on which new OCSP signing certificates are loaded in seconds

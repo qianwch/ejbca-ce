@@ -23,6 +23,9 @@ import org.apache.log4j.Logger;
  * This trust manager may be used used by a client that does not bother to verify the TLS certificate chain of the server.
  * Could be us used when you are fetching things from the server that are signed by the server (like certificates).
  * The class must not be used on the server side.
+ * 
+ * Setting log level to trace makes it possible to see who is calling the methods of this class.
+ * Could help when finding out which WS implementation that is being used. 
  *
  * @author Lars Silven PrimeKey
  * @version  $Id$

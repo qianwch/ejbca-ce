@@ -176,7 +176,7 @@ class StandAloneSession implements P11SlotUser,  OCSPServletStandAlone.IStandAlo
 				if ( renewTimeBeforeCertExpiresInSeconds>=0 ) {
 					throw new ServletException(OcspConfiguration.RENEW_TIMR_BEFORE_CERT_EXPIRES_IN_SECONDS+" must not be defined if "+OcspConfiguration.REKEYING_WSURL+" is not defined.");
 				}
-				m_log.info(intres.getLocalizedMessage("ocsp.info.key.renewal.not.enabled"));
+				m_log.info(intres.getLocalizedMessage("ocsp.rekey.notenabled"));
 			}
 			// Load OCSP responders private keys into cache in init to speed things up for the first request
 			// signEntityMap is also set
@@ -196,7 +196,12 @@ class StandAloneSession implements P11SlotUser,  OCSPServletStandAlone.IStandAlo
 			throw new ServletException(e);
 		}
 	}
-	private class MyCallbackHandler implements CallbackHandler {
+	/**
+	 * This callback handler is used for a p11 keystore that uses a slot which must already be in the login state.
+	 * If a callback is done anyway (this should never happen) an error is logged.
+	 *
+	 */
+	private class DoNothingCallbackHandler implements CallbackHandler {
 
 		@Override
 		public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
@@ -225,7 +230,7 @@ class StandAloneSession implements P11SlotUser,  OCSPServletStandAlone.IStandAlo
 	}
 	private SSLSocketFactory getSSLSocketFactory(int renewTimeBeforeCertExpiresInSeconds, P11Slot slot) throws ServletException, NoSuchAlgorithmException, KeyManagementException, InvalidAlgorithmParameterException, IOException, KeyStoreException, CertificateException, UnrecoverableKeyException {
 		if ( renewTimeBeforeCertExpiresInSeconds<0 ) {
-			m_log.info( intres.getLocalizedMessage("ocsp.info.no.auto.key.renewal", OcspConfiguration.RENEW_TIMR_BEFORE_CERT_EXPIRES_IN_SECONDS, OcspConfiguration.REKEYING_WSURL) );
+			m_log.info( intres.getLocalizedMessage("ocsp.rekey.noauto", OcspConfiguration.RENEW_TIMR_BEFORE_CERT_EXPIRES_IN_SECONDS, OcspConfiguration.REKEYING_WSURL) );
 		}
 		final String wsSwKeystorePath = OcspConfiguration.getWsSwKeystorePath();
 		final KeyManagerFactory kmf = KeyManagerFactory.getInstance("NewSunX509");
@@ -243,7 +248,8 @@ class StandAloneSession implements P11SlotUser,  OCSPServletStandAlone.IStandAlo
 			throw new ServletException("If "+OcspConfiguration.REKEYING_WSURL+" is defined, either "+OcspConfiguration.WSSWKEYSTOREPATH+" or P11 must be defined.");
 		}
 		final Provider provider = slot.getProvider();
-		final Builder p11builder = Builder.newInstance("PKCS11", provider, new KeyStore.CallbackHandlerProtection(new MyCallbackHandler()));
+		// the application should already be logged in to the slot.
+		final Builder p11builder = Builder.newInstance("PKCS11", provider, new KeyStore.CallbackHandlerProtection(new DoNothingCallbackHandler()));
 		kmf.init(new KeyStoreBuilderParameters(p11builder));
 		return getSSLSocketFactory(kmf);
 	}
@@ -254,23 +260,26 @@ class StandAloneSession implements P11SlotUser,  OCSPServletStandAlone.IStandAlo
 		try {
 			target = signerSubjectDN.trim().toLowerCase().equals("all") ? null : new X500Principal(signerSubjectDN);
 		} catch ( IllegalArgumentException e ) {
-			m_log.error(intres.getLocalizedMessage("ocsp.error.renewsigner.not.valid", signerSubjectDN));
+			m_log.error(intres.getLocalizedMessage("ocsp.rekey.triggered.dn.not.valid", signerSubjectDN));
 			return;
 		}
-		final StringBuffer sb = new StringBuffer();
+		final StringBuffer matched = new StringBuffer();
+		final StringBuffer unMatched = new StringBuffer();
 		for ( Entry<Integer, SigningEntity> entry : set ) {
 			entry.getValue().keyContainer.destroy();
-			if ( target!=null && !entry.getValue().getCertificateChain()[0].getSubjectX500Principal().equals(target) ){
+			final X500Principal src = entry.getValue().getCertificateChain()[0].getSubjectX500Principal();
+			if ( target!=null && !src.equals(target) ){
+				unMatched.append(" '"+src.getName()+'\'');
 				continue;
 			}
 			entry.getValue().keyContainer.renew();
-			sb.append(" '"+entry.getValue().getCertificateChain()[0].getIssuerX500Principal().getName()+'\'');
+			matched.append(" '"+entry.getValue().getCertificateChain()[0].getIssuerX500Principal().getName()+'\'');
 		}
-		if ( sb.length()<1 ) {
-			m_log.error(intres.getLocalizedMessage("ocsp.error.renewsigner.not.existing", target.getName()));
+		if ( matched.length()<1 ) {
+			m_log.error(intres.getLocalizedMessage("ocsp.rekey.triggered.dn.not.existing", target.getName(), unMatched));
 			return;
 		}
-		m_log.info( intres.getLocalizedMessage("ocsp.info.servlet.renewing", sb.toString()) );
+		m_log.info( intres.getLocalizedMessage("ocsp.rekey.triggered", matched) );
 	}
 	@Override
 	public String healthCheck( boolean doSignTest, boolean doValidityTest) {
