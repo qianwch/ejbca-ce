@@ -525,10 +525,10 @@ public class OcspConfiguration {
         return StringUtils.split(sConf.trim(), ';');
     }
 	/**
-	 * Get an array of host IPs that is allowed to administer the responder.
+	 * Get set of host IPs that are allowed to trigger rekeying.
 	 * @return the array
 	 */
-	public static Set<String> getAdminHosts() {
+	public static Set<String> getRekeyTriggingHosts() {
 		final String sHosts = ConfigurationHolder.getString("ocsp.rekeying.trigging.hosts");
 		return new HashSet<String>(Arrays.asList(StringUtils.split(sHosts.trim(), ';')));
 	}
@@ -536,7 +536,7 @@ public class OcspConfiguration {
 	 * Get password needed for triggering rekey. Null means that it is not possible to trigger rekey.
 	 * @return the password
 	 */
-	public static String getAdminPassword() {
+	public static String getRekeyTriggingPassword() {
 		return ConfigurationHolder.getString("ocsp.rekeying.trigging.password");
 	}
     /**

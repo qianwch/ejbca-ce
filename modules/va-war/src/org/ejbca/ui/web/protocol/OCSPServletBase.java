@@ -166,8 +166,8 @@ public abstract class OCSPServletBase extends HttpServlet implements SaferAppend
 	private int mTransactionID = 0;
 	private final String m_SessionID = GUIDGenerator.generateGUID(this);
 	private final boolean mDoSaferLogging = OcspConfiguration.getLogSafer();
-	private final Set<String> adminHosts = OcspConfiguration.getAdminHosts();
-	private final String adminPassword = OcspConfiguration.getAdminPassword();
+	private final Set<String> triggingHosts = OcspConfiguration.getRekeyTriggingHosts();
+	private final String triggingPassword = OcspConfiguration.getRekeyTriggingPassword();
 
 	/** Method gotten through reflection, we put it in a variable so we don't have to use
 	 * reflection every time we use the audit or transaction log */
@@ -491,17 +491,17 @@ public abstract class OCSPServletBase extends HttpServlet implements SaferAppend
 				return;
 			}
 			if ( doRenew ) {
-				if ( !this.adminHosts.contains(remote) ) {
+				if ( !this.triggingHosts.contains(remote) ) {
 					m_log.info( intres.getLocalizedMessage("ocsp.rekey.triggered.unauthorized.ip", remote) );
 					response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
 					return;
 				}
-				if ( this.adminPassword==null ) {
+				if ( this.triggingPassword==null ) {
 					m_log.info( intres.getLocalizedMessage("ocsp.rekey.triggered.not.enabled",remote) );
 					response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
 					return;
 				}
-				if ( !this.adminPassword.equals(passin) ) {
+				if ( !this.triggingPassword.equals(passin) ) {
 					m_log.info( intres.getLocalizedMessage("ocsp.rekey.triggered.wrong.password", remote) );
 					response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
 					return;
