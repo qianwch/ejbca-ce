@@ -298,11 +298,11 @@ public class CAInterfaceBean implements Serializable {
         if (certprofile == null) {
             throw new CertificateProfileDoesNotExistException(certificateProfileName + " was not found.");
         } else {
-            if (certprofile.getType() == SecConst.CERTTYPE_ENDENTITY) {
-                if(countEndEntitiesUsingCertificateProfile(certificateprofileid) < 1000) {
+            if ((certprofile.getType() == SecConst.CERTTYPE_ENDENTITY) || (certprofile.getType() == SecConst.CERTTYPE_SUBCA)) {
+                if(countEndEntitiesUsingCertificateProfile(certificateprofileid) < 100) {
                     return userAdminSession.findByCertificateProfileId(certificateprofileid);
                 } else {
-                    throw new ExcessiveResultsException("Excessive amount of end entities (+1000) encountered.");
+                    throw new ExcessiveResultsException("Excessive amount of end entities (+100) encountered.");
                 }
             } else {
                 return new ArrayList<String>();
