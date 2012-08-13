@@ -177,31 +177,20 @@
           // Display  profilepage.jsp
          certprofile = request.getParameter(SELECT_CERTIFICATEPROFILES);
          if(certprofile != null){
-             if(!certprofile.trim().equals("")){
-               if(!certprofile.endsWith("(FIXED)")){ 
-                   servicesContainingCertificateProfile = cabean.getServicesUsingCertificateProfile(certprofile); 
-                   numberOfEndEntitiesContainingCertificateProfile = cabean.countEndEntitiesUsingCertificateProfile(certprofile);
-                   //Don't query for end entities of their number exceeds 1000
-                   if(numberOfEndEntitiesContainingCertificateProfile > 0 && numberOfEndEntitiesContainingCertificateProfile < 1000) {
-                       endEntitiesContainingCertificateProfile = cabean.getEndEntitiesUsingCertificateProfile(certprofile);
-                   }
-                   endEntityProfilesContainingCertificateProfile = cabean.getEndEntityProfilesUsingCertificateProfile(certprofile);
-       		      hardTokenProfilesContainingCertificateProfile = cabean.getHardTokenTokensUsingCertificateProfile(certprofile);
-       		      casUsingCertificateProfile = cabean.getCaUsingCertificateProfile(certprofile);
-       		      if( !servicesContainingCertificateProfile.isEmpty() 
-       		       || numberOfEndEntitiesContainingCertificateProfile > 0
-       		       || !endEntityProfilesContainingCertificateProfile.isEmpty()
-       		       || !hardTokenProfilesContainingCertificateProfile.isEmpty()
-       		       || !casUsingCertificateProfile.isEmpty()) {
-       		          certificateProfileDeletionFailed = true;
-       		    } else {
-       		        cabean.removeCertificateProfile(certprofile);
-       		    }
-               }else{
-                 triedtodeletefixedcertificateprofile=true;
-               }
+           // clear any stored temporary certificate profile
+           cabean.setTempCertificateProfile(null);
+           if(!certprofile.trim().equals("")){
+             if(!certprofile.endsWith("(FIXED)")){ 
+               includefile="certificateprofilepage.jspf"; 
+             }else{
+                triedtoeditfixedcertificateprofile=true;
+                certprofile= null;
              }
-           }
+           } 
+           else{ 
+            certprofile= null;
+          } 
+        }
         if(certprofile == null){   
           includefile="certificateprofilespage.jspf";     
         }
@@ -213,16 +202,20 @@
             if(!certprofile.trim().equals("")){
               if(!certprofile.endsWith("(FIXED)")){ 
                   servicesContainingCertificateProfile = cabean.getServicesUsingCertificateProfile(certprofile); 
-      		    endEntitiesContainingCertificateProfile = cabean.getEndEntitiesUsingCertificateProfile(certprofile);
-      		    endEntityProfilesContainingCertificateProfile = cabean.getEndEntityProfilesUsingCertificateProfile(certprofile);
-      		    hardTokenProfilesContainingCertificateProfile = cabean.getHardTokenTokensUsingCertificateProfile(certprofile);
-      		    casUsingCertificateProfile = cabean.getCaUsingCertificateProfile(certprofile);
-      		    if( !servicesContainingCertificateProfile.isEmpty() 
-      		     || !endEntitiesContainingCertificateProfile.isEmpty()
-      		     || !endEntityProfilesContainingCertificateProfile.isEmpty()
-      		     || !hardTokenProfilesContainingCertificateProfile.isEmpty()
-      		     || !casUsingCertificateProfile.isEmpty()) {
-      		      certificateProfileDeletionFailed = true;
+                  numberOfEndEntitiesContainingCertificateProfile = cabean.countEndEntitiesUsingCertificateProfile(certprofile);
+                  //Don't query for end entities of their number exceeds 1000
+                  if(numberOfEndEntitiesContainingCertificateProfile > 0 && numberOfEndEntitiesContainingCertificateProfile < 1000) {
+                      endEntitiesContainingCertificateProfile = cabean.getEndEntitiesUsingCertificateProfile(certprofile);
+                  }
+                  endEntityProfilesContainingCertificateProfile = cabean.getEndEntityProfilesUsingCertificateProfile(certprofile);
+      		      hardTokenProfilesContainingCertificateProfile = cabean.getHardTokenTokensUsingCertificateProfile(certprofile);
+      		      casUsingCertificateProfile = cabean.getCaUsingCertificateProfile(certprofile);
+      		      if( !servicesContainingCertificateProfile.isEmpty() 
+      		       || numberOfEndEntitiesContainingCertificateProfile > 0
+      		       || !endEntityProfilesContainingCertificateProfile.isEmpty()
+      		       || !hardTokenProfilesContainingCertificateProfile.isEmpty()
+      		       || !casUsingCertificateProfile.isEmpty()) {
+      		          certificateProfileDeletionFailed = true;
       		    } else {
       		        cabean.removeCertificateProfile(certprofile);
       		    }
