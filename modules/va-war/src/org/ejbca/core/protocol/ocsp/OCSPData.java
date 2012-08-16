@@ -57,6 +57,12 @@ public class OCSPData {
         if (cacert == null) {
             m_log.debug("No correct CA-certificate available to sign response, signing with default CA: "+this.m_defaultResponderId);
             cert = this.m_caCertCache.findLatestBySubjectDN(HashID.getFromDN(this.m_defaultResponderId));           
+
+            //@TODO: Currently we will still get the NPE below, but at least
+            //with this 'if' we get some sensible logging about what happened.
+            if ( cert == null) {
+                m_log.error("The CA certificate of the default OCSP responder (" + this.m_defaultResponderId + ") was not found in the database. Please verify your OCSP settings for the default OCSP responder signer (ocsp.defaultresponder setting in ocsp.properties).");
+            }
         }
 
         int result = CertTools.stringToBCDNString(cert.getSubjectDN().toString()).hashCode();
