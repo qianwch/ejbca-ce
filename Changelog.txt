@@ -11,7 +11,7 @@ Improvement
     [ECA-2724] - When deleting a Certificate Profile, list which end entities/end entity profiles that use it.
 
 Bug
-    [ECA-2077] - OCSP Rekeying does not work on JBoss 6.0.0.FINAL and jboss5 EAP
+    [ECA-2077] - OCSP rekeying does not work on JBoss 6.1.0 and JBoss EAP5
     [ECA-2719] - Download of certificates from Admin GUI fails in Chrome when using "strange" usernames
 
 Task
