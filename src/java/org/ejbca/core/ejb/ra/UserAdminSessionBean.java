@@ -217,6 +217,22 @@ public class UserAdminSessionBean implements UserAdminSessionLocal, UserAdminSes
         addUser(admin, userdata, clearpwd);
     }
 
+    @Override
+    public void canonicalizeUser(Admin admin, final UserDataVO userdata) throws EjbcaException, UserDoesntFullfillEndEntityProfile {
+        final int endEntityProfileId = userdata.getEndEntityProfileId();
+        final String endEntityProfileName = endEntityProfileSession.getEndEntityProfileName(admin, endEntityProfileId);
+        try {
+            FieldValidator.validate(userdata, endEntityProfileId, endEntityProfileName);
+        } catch (CustomFieldException e1) {
+            throw new EjbcaException(ErrorCode.FIELD_VALUE_NOT_VALID, e1.getMessage(), e1);
+        }
+        
+        final String dn = CertTools.stringToBCDNString(StringTools.strip(userdata.getDN()));
+        userdata.setDN(dn);
+        userdata.setSubjectAltName(StringTools.strip(userdata.getSubjectAltName()));
+        userdata.setEmail(StringTools.strip(userdata.getEmail()));
+    }
+
     // TODO: Try to throw an application exception instead if the PersistenceException, since this becomes
     // EJBException(java.rmi.ServerException(java.rmi.RemoteException(javax.persistence.EntityExistsException)))) on Glassfish
     // See UserAdminSessionTest
@@ -233,23 +249,16 @@ public class UserAdminSessionBean implements UserAdminSessionLocal, UserAdminSes
             // Check if administrator is authorized to add user.
         	assertAuthorizedToEndEntityProfile(admin, endEntityProfileId, AccessRulesConstants.CREATE_RIGHTS, caid, username, LogConstants.EVENT_ERROR_ADDEDENDENTITY);
         }
-    	final String endEntityProfileName = endEntityProfileSession.getEndEntityProfileName(admin, endEntityProfileId);
-        try {
-            FieldValidator.validate(userDataVO, endEntityProfileId, endEntityProfileName);
-        } catch (CustomFieldException e1) {
-            throw new EjbcaException(ErrorCode.FIELD_VALUE_NOT_VALID, e1.getMessage(), e1);
-        }
-        final String dn = CertTools.stringToBCDNString(StringTools.strip(userDataVO.getDN()));
+    	final String originalDN = userDataVO.getDN();
+        canonicalizeUser(admin, userDataVO);
         if (log.isTraceEnabled()) {
-            log.trace(">addUser(" + userDataVO.getUsername() + ", password, " + dn + ", " + userDataVO.getDN() + ", " + userDataVO.getSubjectAltName() + ", "
+            log.trace(">addUser(" + userDataVO.getUsername() + ", password, " + userDataVO.getDN() + ", " + originalDN + ", " + userDataVO.getSubjectAltName() + ", "
                     + userDataVO.getEmail() + ", profileId: " + endEntityProfileId + ")");
         }
-        final String altName = StringTools.strip(userDataVO.getSubjectAltName());
-        final String email = StringTools.strip(userDataVO.getEmail());
-        userDataVO.setUsername(username);
-        userDataVO.setDN(dn);
-        userDataVO.setSubjectAltName(altName);
-        userDataVO.setEmail(email);
+        final String endEntityProfileName = endEntityProfileSession.getEndEntityProfileName(admin, endEntityProfileId);
+        final String dn = userDataVO.getDN();
+        final String altName = userDataVO.getSubjectAltName();
+        final String email = userDataVO.getEmail();
         final int type = userDataVO.getType();
         String newpassword = userDataVO.getPassword();
         EndEntityProfile profile = null;	// Only look this up if we need it..

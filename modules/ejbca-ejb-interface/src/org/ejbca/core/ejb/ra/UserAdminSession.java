@@ -128,6 +128,12 @@ public interface UserAdminSession {
             PersistenceException, WaitingForApprovalException, CADoesntExistsException, EjbcaException;
 
     /**
+     * Validates the name and DN in an end entity and canonicalizes/strips
+     * the attributes. This method is called by addUser.
+     */
+    public void canonicalizeUser(Admin admin, final UserDataVO userdata) throws EjbcaException, UserDoesntFullfillEndEntityProfile;
+    
+    /**
      * Changes data for a user in the database specified by username.
      * 
      * Important, this method is old and shouldn't be used, user
