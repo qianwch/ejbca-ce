@@ -32,7 +32,7 @@ function check()
         &nbsp;
       </td>
       <td width="51%" valign="top" align="right"> 
-        <a href="<%=THIS_FILENAME %>"><%= ejbcawebbean.getText("BACKTOPROFILES") %></a>
+        <a href="<%=THIS_FILENAME %>"><%= ejbcawebbean.getText("BACKTOENDENTITYPROFILES") %></a>
       </td>
     </tr>
     <tr  id="Row<%=row++%2%>"> 

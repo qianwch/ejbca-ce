@@ -184,7 +184,7 @@
            out.write("<li id=\"cat2\" class=\"section\"><strong>" + ejbcawebbean.getText("RAFUNCTIONS")+"</strong><ul>"); 
            raheaderprinted=true;
          }  %>
-				<li><a href="<%= RA_EDITPROFILESLINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("EDITPROFILES") %></a></li>
+				<li><a href="<%= RA_EDITPROFILESLINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("EDITENDENTITYPROFILES") %></a></li>
 <%   }
    }catch(AuthorizationDeniedException e){}
 
