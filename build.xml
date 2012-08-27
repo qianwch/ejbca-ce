@@ -625,6 +625,13 @@
     <target name="ocsp-deploy" depends="va-deploy" description="Deprecated, use va-deploy instead" >
         <echo message="Deprecated use va-deploy instead." />
     </target>
+    
+    <!-- ======================================================================= -->
+    <!-- Renew the keystore used by the web interface on the application server. -->
+    <!-- ======================================================================= -->
+    <target name="renew-keystore" description="Renews the keystore for the application server web interface. Don't forget to deploy the new keystore afterwards. The old keystore in p12/tomcat.jks will be overwritten.">
+      <ant dir="${ejbca.home}/bin" antfile="cli.xml" target="ejbca:renew-keystore" />
+    </target>
 
     <!-- ======================================================================= -->
     <!-- Make a ZIP release file of EJBCA, and a SHA1 checksum of the release    -->
