@@ -37,7 +37,7 @@
                 <a href="../enrol/keystore.jsp">Create Keystore</a>
               </li>
               <li>
-                <a href="../enrol/reg.jsp">Request Registration</a>
+                <a href="../enrol/cvcert.jsp">Create CV certificate</a>
               </li>
               <% if(org.ejbca.config.WebConfiguration.getRenewalEnabled()) { %>
               <li>
@@ -98,6 +98,11 @@
               </li>
               <%  }
                  } %>
+              <% if (org.ejbca.config.WebConfiguration.isProxiedAuthenticationEnabled()) { %>
+              <li>
+                <a href="/logout">Logout</a>
+              </li>
+              <% } %>
             </ul>
           </li>  
         </ul>
