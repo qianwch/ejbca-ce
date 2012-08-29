@@ -11,7 +11,7 @@
 <%@page import="org.ejbca.config.WebConfiguration"%><html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=<%= org.ejbca.config.WebConfiguration.getWebContentEncoding() %>" />
-    <title>${THIS_TITLE} - <%= org.ejbca.config.InternalConfiguration.getAppNameCapital() %></title>
+    <title>${THIS_TITLE} - <%= org.ejbca.config.InternalConfiguration.getAppNameCapital() %> Public Web</title>
 	<link rel="shortcut icon" href="../images/favicon.png" type="image/png" />
     <link rel="stylesheet" href="../styles.css" type="text/css" />
     <script type="text/javascript" src="../scripts/functions.js"></script>
@@ -21,7 +21,7 @@
   <body>
     <div id="header">
 		<div id="banner">
-			<a href="../index.jsp"><img src="../images/logotype.png" alt="EJBCA" /></a>
+			<a href="../"><img src="../images/logotype.png" alt="EJBCA" /></a>
 		</div>
     </div>
     <div class="menucontainer">
@@ -86,7 +86,7 @@
               <li>
                 <% java.net.URL adminURL = new java.net.URL("https",request.getServerName(),
                 		org.ejbca.config.WebConfiguration.getExternalPrivateHttpsPort(),
-                		"/"+org.ejbca.config.InternalConfiguration.getAppNameLower()+"/adminweb/index.jsp");  %>
+                		"/"+org.ejbca.config.InternalConfiguration.getAppNameLower()+"/adminweb/");  %>
                 <a href="<%=adminURL.toString() %>">Administration</a>
             </li>
               <% if (!"disabled".equalsIgnoreCase(org.ejbca.config.WebConfiguration.getDocBaseUri())) {
