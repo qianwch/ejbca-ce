@@ -1,3 +1,4 @@
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ page pageEncoding="ISO-8859-1"%>
 <% response.setContentType("text/html; charset="+org.ejbca.config.WebConfiguration.getWebContentEncoding()); %>
 <%@page errorPage="errorpage.jsp" import="org.ejbca.config.GlobalConfiguration,
@@ -51,7 +52,7 @@
   final String ADMINISTRATORPRIV_LINK   =  ejbcawebbean.getBaseUrl() + globalconfiguration.getAuthorizationPath() 
                                                   + "/administratorprivileges.jsf";
   
-  final String PUBLICWEB_LINK          = ejbcawebbean.getBaseUrl()+"index.jsp";
+  final String PUBLICWEB_LINK          = ejbcawebbean.getBaseUrl();
   
   final String MYPREFERENCES_LINK     =  ejbcawebbean.getBaseUrl() + globalconfiguration.getAdminWebPath() + "mypreferences.jsp";
   final String HELP_LINK                =  ejbcawebbean.getBaseUrl() + globalconfiguration.getAdminWebPath() + globalconfiguration.getHelpPath() 
@@ -90,7 +91,7 @@
 
 %>
 <head>
-  <title><%= "" %></title>
+  <title><c:out value="<%= globalconfiguration.getEjbcaTitle() %>" /></title>
   <base href="<%= ejbcawebbean.getBaseUrl() %>" />
   <link rel="stylesheet" type="text/css" href="<%= ejbcawebbean.getCssFile() %>" />
   <!--[if IE]><link rel="stylesheet" type="text/css" href="<%= ejbcawebbean.getIeFixesCssFile() %>" /><![endif]-->
@@ -343,24 +344,23 @@
 		<li id="cat8"><a href="<%= PUBLICWEB_LINK %>" target="_ejbcapublicweb"><%=ejbcawebbean.getText("PUBLICWEB") %></a>
 		</li>
 
-
 <% if (ejbcawebbean.isHelpEnabled()) { %>
 		<li id="cat9"><a href="<%= ejbcawebbean.getHelpBaseURI() %>/concepts.html" target="<%= GlobalConfiguration.DOCWINDOW %>"
 			title="<%= ejbcawebbean.getText("OPENHELPSECTION") %>"><%=ejbcawebbean.getText("DOCUMENTATION") %></a>
 		</li>
 <% } %>
-		<li id="cat10"><a href="<%= LOGOUT_LINK %>" target="_top"><%=ejbcawebbean.getText("LOGOUT") %></a></li>
-
 <%
     // If authorized to view help pages then display related links.
 /*  try{
      if(ejbcawebbean.isAuthorizedNoLog(MAIN_RESOURCE)){ */%>
-<!--
+<%--
 		<li id="cat9"><a onclick='displayHelpWindow("<%= ejbcawebbean.getHelpfileInfix("index_help.html") %>")'><%=ejbcawebbean.getText("HELP") %></a>
 		</li>
--->
+--%>
 <% /*  }
     }catch(AuthorizationDeniedException e){} */%>
+
+		<li id="cat10"><a href="<%= LOGOUT_LINK %>" target="_top"><%=ejbcawebbean.getText("LOGOUT") %></a></li>
 
 
 	</ul>
