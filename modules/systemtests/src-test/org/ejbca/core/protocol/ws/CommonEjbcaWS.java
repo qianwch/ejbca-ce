@@ -48,6 +48,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DERInteger;
 import org.bouncycastle.asn1.DERObjectIdentifier;
@@ -697,8 +698,8 @@ public abstract class CommonEjbcaWS extends CaTestCase {
         // Add a custom extension (dummy)
         ASN1EncodableVector attr = new ASN1EncodableVector();
         attr.add(PKCSObjectIdentifiers.pkcs_9_at_extensionRequest);
-        Vector<DERObjectIdentifier> oidvec = new Vector<DERObjectIdentifier>();
-        oidvec.add(new DERObjectIdentifier("1.2.3.4"));
+        Vector<ASN1ObjectIdentifier> oidvec = new Vector<ASN1ObjectIdentifier>();
+        oidvec.add(new ASN1ObjectIdentifier("1.2.3.4"));
         Vector<X509Extension> valuevec = new Vector<X509Extension>();
         valuevec.add(new X509Extension(false, new DEROctetString("foo123".getBytes())));
         X509Extensions exts = new X509Extensions(oidvec, valuevec);
