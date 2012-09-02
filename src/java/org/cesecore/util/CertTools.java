@@ -65,7 +65,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Vector;
 
 import org.apache.commons.lang.CharUtils;
@@ -1531,8 +1530,13 @@ public class CertTools {
             // First in sequence is the object identifier, that we must check
             DERObjectIdentifier id = DERObjectIdentifier.getInstance(seq.getObjectAt(0));
             if (id.getId().equals(CertTools.UPN_OBJECTID)) {
-                ASN1TaggedObject obj = (ASN1TaggedObject) seq.getObjectAt(1);
-                DERUTF8String str = DERUTF8String.getInstance(obj.getObject());
+                ASN1TaggedObject oobj = (ASN1TaggedObject) seq.getObjectAt(1);
+                // Due to bug in java cert.getSubjectAltName regarding OtherName, it can be tagged an extra time...
+                DERObject obj = oobj.getObject();
+                if (obj instanceof ASN1TaggedObject) {
+                    obj = ASN1TaggedObject.getInstance(obj).getObject();
+                }
+                DERUTF8String str = DERUTF8String.getInstance(obj);
                 return str.getString();
             }
         }
@@ -2354,7 +2358,12 @@ public class CertTools {
                         if(accessDescription.getAccessMethod().equals(X509ObjectIdentifiers.id_ad_caIssuers)) {
                             GeneralName generalName = accessDescription.getAccessLocation();
                             if(generalName.getTagNo() == GeneralName.uniformResourceIdentifier) { 
-                                DERIA5String deria5String = DERIA5String.getInstance(generalName.getDERObject());
+                                // Due to bug in java getting some ASN.1 objects, it can be tagged an extra time...
+                                DERObject obj = generalName.getDERObject();
+                                if (obj instanceof ASN1TaggedObject) {
+                                    obj = ASN1TaggedObject.getInstance(obj).getObject();
+                                }
+                                final DERIA5String deria5String = DERIA5String.getInstance(obj);
                                 result.add(deria5String.getString());
                             }
                         }
@@ -2387,7 +2396,12 @@ public class CertTools {
                         if (ad[i].getAccessMethod().equals(X509ObjectIdentifiers.ocspAccessMethod)) {
                             GeneralName gn = ad[i].getAccessLocation();
                             if (gn.getTagNo() == GeneralName.uniformResourceIdentifier) {
-                                DERIA5String str = DERIA5String.getInstance(gn.getDERObject());
+                                // After encoding in a cert, it is tagged an extra time...
+                                DERObject gnobj = gn.getDERObject();
+                                if (gnobj instanceof ASN1TaggedObject) {
+                                    gnobj = ASN1TaggedObject.getInstance(gnobj).getObject();
+                                }
+                                final DERIA5String str = DERIA5String.getInstance(gnobj);
                                 ret = str.getString();
                                 break; // no need to go on any further, we got a value
                             }
