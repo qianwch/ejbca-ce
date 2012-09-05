@@ -267,10 +267,11 @@ public abstract class CA extends UpgradeableDataHashMap implements Serializable 
     public CATokenContainer getCAToken(int caid) throws IllegalKeyStoreException {
         CATokenContainer ret = CATokenManager.instance().getCAToken(caid);
         if (ret == null) {
-        	Integer tokentype = (Integer) ((HashMap)data.get(CATOKENDATA)).get(CATokenContainer.CATOKENTYPE);
+        	final HashMap tokendata = (HashMap)data.get(CATOKENDATA);
+        	Integer tokentype = (Integer) tokendata.get(CATokenContainer.CATOKENTYPE);
         	if (tokentype == null) {
         		// Probably a downgraded EJBCA 5.0 installation, so some hacks to handle it...
-                final String classpath = (String) data.get("classpath");
+                final String classpath = (String) tokendata.get("classpath");
                 if (log.isDebugEnabled()) {
                     log.debug("tokentype is null, but CA token classpath is: " + classpath);
                 }
