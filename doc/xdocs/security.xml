@@ -32,11 +32,13 @@ Locally on the host, a number of ports are used in order for your application se
 
 <section name="Securing JBoss">
 <note>
-Before putting anything on JBoss up on the internet, at least do the following:
+Before putting anything on JBoss up on the internet, at least do the following (commands for JBoss 5):
 <ul>
-<li>Remove jmx-console (in jboss_home/server/default/deploy)</li>
-<li>Remove management console (in jboss_home/server/default/deploy)</li>
-<li>Remove ROOT.war (in jboss_home/server/default/deploy or jboss_home/server/default/deploy/jboss-web.deployer)</li>
+<li>rm /opt/jboss/server/default/deploy/jmx-console.war/ -R</li>
+<li>rm /opt/jboss/server/default/deploy/management/ -R</li>
+<li>rm /opt/jboss/server/default/deploy/ROOT.war/ -R</li>
+<li>rm /opt/jboss/server/default/deploy/http-invoker.sar/ -R</li>
+<li>rm /opt/jboss/server/default/deploy/admin-console.war/ -R</li>
 </ul>
 </note>
 <p>
