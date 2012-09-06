@@ -61,6 +61,7 @@ import org.cesecore.jndi.JndiHelper;
 import org.cesecore.keys.token.CryptoToken;
 import org.cesecore.keys.token.CryptoTokenAuthenticationFailedException;
 import org.cesecore.keys.token.CryptoTokenOfflineException;
+import org.cesecore.keys.token.IllegalCryptoTokenException;
 import org.cesecore.keys.token.SoftCryptoToken;
 import org.cesecore.mock.authentication.SimpleAuthenticationProviderRemote;
 import org.cesecore.mock.authentication.tokens.TestAlwaysAllowLocalAuthenticationToken;
@@ -175,9 +176,10 @@ public abstract class CaTestCase extends RoleUsingTestCase {
      * @throws CryptoTokenAuthenticationFailedException
      * @throws CryptoTokenOfflineException
      * @throws CAExistsException
+     * @throws IllegalCryptoTokenException
      */
     private boolean createTestCA() throws CADoesntExistsException, AuthorizationDeniedException, CAExistsException, CryptoTokenOfflineException,
-            CryptoTokenAuthenticationFailedException, InvalidAlgorithmException {
+            CryptoTokenAuthenticationFailedException, InvalidAlgorithmException, IllegalCryptoTokenException {
         return createTestCA(getTestCAName(), 1024);
     }
 
@@ -191,9 +193,10 @@ public abstract class CaTestCase extends RoleUsingTestCase {
      * @throws CryptoTokenAuthenticationFailedException
      * @throws CryptoTokenOfflineException
      * @throws CAExistsException
+     * @throws IllegalCryptoTokenException
      */
     public boolean createTestCA(int keyStrength) throws CADoesntExistsException, AuthorizationDeniedException, CAExistsException,
-            CryptoTokenOfflineException, CryptoTokenAuthenticationFailedException, InvalidAlgorithmException {
+            CryptoTokenOfflineException, CryptoTokenAuthenticationFailedException, InvalidAlgorithmException, IllegalCryptoTokenException {
         return createTestCA(getTestCAName(), keyStrength);
     }
 
@@ -207,9 +210,10 @@ public abstract class CaTestCase extends RoleUsingTestCase {
      * @throws CryptoTokenAuthenticationFailedException
      * @throws CryptoTokenOfflineException
      * @throws CAExistsException
+     * @throws IllegalCryptoTokenException
      */
     public boolean createTestCA(String caName) throws CADoesntExistsException, AuthorizationDeniedException, CAExistsException,
-            CryptoTokenOfflineException, CryptoTokenAuthenticationFailedException, InvalidAlgorithmException {
+            CryptoTokenOfflineException, CryptoTokenAuthenticationFailedException, InvalidAlgorithmException, IllegalCryptoTokenException {
         return createTestCA(caName, 1024);
     }
 
@@ -223,9 +227,10 @@ public abstract class CaTestCase extends RoleUsingTestCase {
      * @throws CryptoTokenAuthenticationFailedException
      * @throws CryptoTokenOfflineException
      * @throws CAExistsException
+     * @throws IllegalCryptoTokenException
      */
     public boolean createTestCA(String caName, int keyStrength) throws CADoesntExistsException, AuthorizationDeniedException, CAExistsException,
-            CryptoTokenOfflineException, CryptoTokenAuthenticationFailedException, InvalidAlgorithmException {
+            CryptoTokenOfflineException, CryptoTokenAuthenticationFailedException, InvalidAlgorithmException, IllegalCryptoTokenException {
         return createTestCA(caName, keyStrength, "CN=" + caName, CAInfo.SELFSIGNED, null);
     }
 
@@ -246,10 +251,11 @@ public abstract class CaTestCase extends RoleUsingTestCase {
      * @throws CryptoTokenAuthenticationFailedException
      * @throws CryptoTokenOfflineException
      * @throws CAExistsException
+     * @throws IllegalCryptoTokenException
      */
     public boolean createTestCA(String caName, int keyStrength, String dn, int signedBy, Collection<Certificate> certificateChain)
             throws CADoesntExistsException, AuthorizationDeniedException, CAExistsException, CryptoTokenOfflineException,
-            CryptoTokenAuthenticationFailedException, InvalidAlgorithmException {
+            CryptoTokenAuthenticationFailedException, InvalidAlgorithmException, IllegalCryptoTokenException {
         log.trace(">createTestCA");
 
         final CAAdminSessionRemote caAdminSession = JndiHelper.getRemoteSession(CAAdminSessionRemote.class);
@@ -502,7 +508,7 @@ public abstract class CaTestCase extends RoleUsingTestCase {
     }
 
     protected void createTestRSAReverseCa(AuthenticationToken admin) throws CAExistsException, CryptoTokenOfflineException,
-            CryptoTokenAuthenticationFailedException, AuthorizationDeniedException, InvalidAlgorithmException {
+            CryptoTokenAuthenticationFailedException, AuthorizationDeniedException, InvalidAlgorithmException, IllegalCryptoTokenException {
         String dn = TEST_RSA_REVSERSE_CA_DN;
         String name = TEST_RSA_REVERSE_CA_NAME;
 
