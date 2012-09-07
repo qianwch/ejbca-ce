@@ -65,6 +65,7 @@ import org.cesecore.certificates.certificateprofile.CertificateProfile;
 import org.cesecore.certificates.certificateprofile.CertificateProfileConstants;
 import org.cesecore.certificates.certificateprofile.CertificateProfileSessionLocal;
 import org.cesecore.certificates.crl.RevokedCertInfo;
+import org.cesecore.certificates.endentity.EndEntityConstants;
 import org.cesecore.certificates.endentity.EndEntityInformation;
 import org.cesecore.certificates.endentity.ExtendedInformation;
 import org.cesecore.certificates.util.DnComponents;
@@ -1205,7 +1206,7 @@ public class UserAdminSessionBean implements UserAdminSessionLocal, UserAdminSes
         if (getGlobalConfiguration().getEnableEndEntityProfileLimitations()) {
             assertAuthorizedToEndEntityProfile(admin, userData.getEndEntityProfileId(), AccessRulesConstants.REVOKE_RIGHTS, caid);
         }
-        if (userData.getStatus() == UserDataConstants.STATUS_REVOKED) {
+        if ((userData.getStatus() == EndEntityConstants.STATUS_REVOKED) && ((reason == RevokedCertInfo.NOT_REVOKED) || (reason == RevokedCertInfo.REVOCATION_REASON_REMOVEFROMCRL)) ){
             final String msg = intres.getLocalizedMessage("ra.errorbadrequest", Integer.valueOf(userData.getEndEntityProfileId()));
             log.info(msg);
             throw new AlreadyRevokedException(msg);
