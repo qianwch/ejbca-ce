@@ -17,7 +17,6 @@ import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.certificates.endentity.EndEntityInformation;
 import org.ejbca.core.model.approval.ApprovalException;
 import org.ejbca.core.model.approval.WaitingForApprovalException;
-import org.ejbca.core.model.ra.AlreadyRevokedException;
 import org.ejbca.ui.cli.CliUsernameException;
 import org.ejbca.ui.cli.ErrorAdminCommandException;
 
@@ -73,8 +72,6 @@ public class RaRevokeUserCommand extends BaseRaAdminCommand {
                 	getLogger().error("Revocation already requested.");
                 } catch (WaitingForApprovalException e) {
                 	getLogger().info("Revocation request has been sent for approval.");
-                } catch (AlreadyRevokedException e) {
-                	getLogger().error("User is already revoked.");
                 }
             }
         } catch (Exception e) {
