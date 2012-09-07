@@ -13,6 +13,8 @@
  
 package org.ejbca.ui.cli.ra;
 
+import javax.ejb.FinderException;
+
 import org.cesecore.authorization.AuthorizationDeniedException;
 import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
 import org.ejbca.ui.cli.CliUsernameException;
@@ -52,8 +54,9 @@ public class RaSetClearPwdCommand extends BaseRaAdminCommand {
             } catch (AuthorizationDeniedException e) {
             	getLogger().error("Not authorized to change userdata.");
             } catch (UserDoesntFullfillEndEntityProfile e) {
-            	getLogger().error("Given userdata doesn't fullfill end entity profile. : " +
-                    e.getMessage());
+            	getLogger().error("Given userdata doesn't fullfill end entity profile. : " + e.getMessage());
+            } catch (FinderException e) {
+                getLogger().error("User '"+username+"' does not exist.");
             }
         } catch (Exception e) {
             throw new ErrorAdminCommandException(e);
