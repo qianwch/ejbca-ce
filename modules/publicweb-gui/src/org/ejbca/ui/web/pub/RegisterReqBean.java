@@ -41,6 +41,7 @@ import org.ejbca.core.model.ra.raadmin.EndEntityProfile;
 import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
 import org.ejbca.core.model.util.EjbLocalHelper;
 import org.ejbca.util.DNFieldDescriber;
+import org.ejbca.util.dn.DNFieldExtractor;
 
 /**
  * Used by enrol/reg*.jsp for self-registration. This bean implements
@@ -62,7 +63,8 @@ public class RegisterReqBean {
     private final GlobalConfiguration globalConfiguration = ejbLocalHelper.getGlobalConfigurationSession().getCachedGlobalConfiguration(admin);
 
     // Form fields
-    private final Map<String,String> formFields = new HashMap<String,String>();
+    private final Map<String,String> formDNFields = new HashMap<String,String>();
+    private String subjectAltName = "";
     
     private String certType;
     
@@ -118,6 +120,10 @@ public class RegisterReqBean {
         return endEntityProfileSession.getEndEntityProfileId(admin, getCertTypeInfo(certType, "eeprofile"));
     }
     
+    public EndEntityProfile getEndEntityProfile() {
+        return endEntityProfileSession.getEndEntityProfile(admin, getCertTypeInfo(certType, "eeprofile"));
+    }
+    
     public int getCertificateProfileId() {
         return certificateProfileSession.getCertificateProfileId(admin, getCertTypeInfo(certType, "certprofile"));
     }
@@ -127,12 +133,12 @@ public class RegisterReqBean {
     }
     
     /**
-     * Returns a list of all modifiable certificate fields in the
+     * Returns a list of all modifiable certificate DN fields in the
      * end-entity profile of the given certtype.
      */
-    public List<DNFieldDescriber> getModifiableCertFields() {
+    public List<DNFieldDescriber> getModifiableDNFields() {
         List<DNFieldDescriber> fields = new ArrayList<DNFieldDescriber>();
-        EndEntityProfile eeprofile = endEntityProfileSession.getEndEntityProfile(admin, getCertTypeInfo(certType, "eeprofile"));
+        EndEntityProfile eeprofile = getEndEntityProfile();
         
         int numberofsubjectdnfields = eeprofile.getSubjectDNFieldOrderLength();
         for (int i=0; i < numberofsubjectdnfields; i++) {
@@ -140,7 +146,24 @@ public class RegisterReqBean {
             int fieldType = fielddata[EndEntityProfile.FIELDTYPE];
             
             if (eeprofile.isModifyable(fieldType, 0)) {
-                fields.add(new DNFieldDescriber(fieldType, eeprofile));
+                fields.add(new DNFieldDescriber(i, fieldType, eeprofile, DNFieldExtractor.TYPE_SUBJECTDN));
+            }
+        }
+        
+        return fields;
+    }
+    
+    public List<DNFieldDescriber> getModifiableAltNameFields() {
+        List<DNFieldDescriber> fields = new ArrayList<DNFieldDescriber>();
+        EndEntityProfile eeprofile = getEndEntityProfile();
+        
+        int numberofaltnamefields = eeprofile.getSubjectAltNameFieldOrderLength();
+        for (int i=0; i < numberofaltnamefields; i++) {
+            int[] fielddata = eeprofile.getSubjectAltNameFieldsInOrder(i);
+            int fieldType = fielddata[EndEntityProfile.FIELDTYPE];
+            
+            if (eeprofile.isModifyable(fieldType, 0)) {
+                fields.add(new DNFieldDescriber(i, fieldType, eeprofile, DNFieldExtractor.TYPE_SUBJECTALTNAME));
             }
         }
         
@@ -170,24 +193,41 @@ public class RegisterReqBean {
         if (!"POST".equalsIgnoreCase(request.getMethod())) {
             internalError("Internal error: Invalid request method.");
         }
+        
+        certType = request.getParameter("certType");
+        
+        checkConfig();
+        checkCertEEProfilesExist();
+        EndEntityProfile eeprofile = getEndEntityProfile();
 
         // Get all fields
         @SuppressWarnings("rawtypes")
         Enumeration en = request.getParameterNames();
         while (en.hasMoreElements()) {
             String key = (String)en.nextElement();
-            if (key.startsWith("field_")) {
-                String value = request.getParameter(key);
-                if (!value.trim().isEmpty()) {
-                    formFields.put(key.replaceFirst("^field_", ""), value);
+            String value = request.getParameter(key).trim();
+            
+            String id = key.replaceFirst("^[a-z]+_", ""); // format is e.g. dnfield_cn or altnamefield_123 
+            if (key.startsWith("dnfield_")) {
+                if (!value.isEmpty()) {
+                    String dnName = DNFieldDescriber.extractSubjectDnNameFromId(eeprofile, id);
+                    formDNFields.put(dnName, value);
+                }
+            }
+            
+            if (key.startsWith("altnamefield_")) {
+                if (!value.isEmpty()) {
+                    String altName = DNFieldDescriber.extractSubjectAltNameFromId(eeprofile, id);
+                    String field = org.ietf.ldap.LDAPDN.escapeRDN(altName + "=" + value);
+                    
+                    if (subjectAltName.isEmpty()) {
+                        subjectAltName = field;
+                    } else {
+                        subjectAltName += ", " + field;
+                    }
                 }
             }
         }
-        
-        certType = request.getParameter("certType");
-        
-        checkConfig();
-        checkCertEEProfilesExist();
         
         // User account
         username = request.getParameter("username");
@@ -239,7 +279,7 @@ public class RegisterReqBean {
     private String getSubjectDN() {
         boolean first = true;
         StringBuilder sb = new StringBuilder();
-        for (Entry<String,String> field : formFields.entrySet()) {
+        for (Entry<String,String> field : formDNFields.entrySet()) {
             if (first) { first = false; } 
             else { sb.append(", "); }
             
@@ -291,7 +331,7 @@ public class RegisterReqBean {
         final String subjectDN = getSubjectDN();
         final int numApprovalsRequired = 1;
         
-        final UserDataVO userdata = new UserDataVO(username, subjectDN, caid, null, 
+        final UserDataVO userdata = new UserDataVO(username, subjectDN, caid, subjectAltName, 
                 null, UserDataConstants.STATUS_NEW, SecConst.USER_ENDUSER, eeProfileId, certProfileId,
                 null,null, SecConst.TOKEN_SOFT_BROWSERGEN, 0, null);
         userdata.setSendNotification(true);
