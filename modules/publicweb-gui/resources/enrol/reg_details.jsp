@@ -33,35 +33,97 @@
         <input type="hidden" name="certType" value="<c:out value="${reg.certType}" />"  />
         <br />
         
-        <c:forEach var="field" items="${reg.modifiableCertFields}">
-            <c:set var="name" value="field_${field.name}" />
+        <!-- Subject DN fields -->
+        <c:forEach var="field" items="${reg.dnFields}">
+            <c:set var="id" value="dnfield_${field.id}" />
             
-            <label for="<c:out value="${name}" />" title="<c:out value="${field.description}" />"><c:out value="${field.humanReadableName}" /></label>
+            <label for="<c:out value="${id}" />" title="<c:out value="${field.description}" />"><c:out value="${field.humanReadableName}" /></label>
             <c:choose>
                 <c:when test='${field.name == "c"}'>
-                    <select name="<c:out value="${name}" />" id="<c:out value="${name}" />" title="<c:out value="${field.description}" />">
+                    <!-- Country field -->
+                    <select name="<c:out value="${id}" />" id="<c:out value="${id}" />" title="<c:out value="${field.description}" />">
                       <c:forEach var="country" items="${countrycodes.countriesFromBean}">
-                        <option value="<c:out value="${country.code}" />"<c:if test="${field.defaultValue == country.code}"> selected="selected"</c:if>><c:out value="${country.name}" /></option>
+                        <c:if test="${field.modifiable || field.allowedValuesMap[country.code] != null}">
+                          <option value="<c:out value="${country.code}" />"<c:if test="${field.defaultValue == country.code}"> selected="selected"</c:if>><c:out value="${country.name}" /></option>
+                        </c:if>
                       </c:forEach>
                     </select>
                 </c:when>
+                <c:when test='${field.name == "e"}'>
+                    <!-- E-mail -->
+                    <c:if test="${!field.required}">
+                        <input type="checkbox" name="emailindn" value="1" />
+                    </c:if>
+                    <c:if test="${field.required}">
+                        <input type="checkbox" checked="checked" disabled="disabled" />
+                        <input type="hidden" name="emailindn" value="1" />
+                    </c:if>
+                    Include e-mail
+                </c:when>
                 <c:otherwise>
-                    <input name="<c:out value="${name}" />" id="<c:out value="${name}" />" type="text" size="25" title="<c:out value="${field.description}" />" value="<c:out value="${field.defaultValue}" />" />
+                    <!-- Other field -->
+                    <c:if test="${field.modifiable}">
+                        <input name="<c:out value="${id}" />" id="<c:out value="${id}" />" type="text" size="25" title="<c:out value="${field.description}" />" value="<c:out value="${field.defaultValue}" />" />
+                    </c:if>
+                    <c:if test="${!field.modifiable}">
+                        <select name="<c:out value="${id}" />" id="<c:out value="${id}" />" title="<c:out value="${field.description}" />">
+                          <c:forEach var="value" items="${field.allowedValuesList}">
+                            <option value="<c:out value="${value}" />"><c:out value="${value}" /></option>
+                          </c:forEach>
+                        </select>
+                    </c:if>
                 </c:otherwise>
             </c:choose>
             <br />
         </c:forEach>
         
+        <!-- Subject alt name fields -->
+        <c:forEach var="field" items="${reg.altNameFields}">
+            <c:set var="id" value="altnamefield_${field.id}" />
+            
+            <label for="<c:out value="${id}" />" title="<c:out value="${field.description}" />"><c:out value="${field.humanReadableName}" /></label>
+            
+            <c:if test="${field.modifiable}">
+                <input name="<c:out value="${id}" />" id="<c:out value="${id}" />" type="text" size="25" title="<c:out value="${field.description}" />" value="<c:out value="${field.defaultValue}" />" />
+            </c:if>
+            <c:if test="${!field.modifiable}">
+                <select name="<c:out value="${id}" />" id="<c:out value="${id}" />" title="<c:out value="${field.description}" />">
+                  <c:forEach var="value" items="${field.allowedValuesList}">
+                    <option value="<c:out value="${value}" />"><c:out value="${value}" /></option>
+                  </c:forEach>
+                </select>
+            </c:if>
+            <br />
+        </c:forEach>
+        
         <br />
         
+        <!-- Username -->
         <label for="username">Username</label>
         <input name="username" id="username" type="text" size="20" accesskey="u" />
         <br />
+        
+        <!-- E-mail -->
         <label for="email">E-mail</label>
         <input name="email" id="email" type="text" size="25" accesskey="e" />
+        <c:choose>
+            <c:when test='${reg.emailDomainFrozen}'>
+                <b>@ <c:out value="${reg.selectableEmailDomains[0]}" /></b>
+                <input name="emaildomain" id="emaildomain" type="hidden" value="<c:out value="${reg.selectableEmailDomains[0]}" />" />
+            </c:when>
+            <c:when test='${reg.emailDomainSelectable}'>
+                <b>@</b>
+                <select name="emaildomain">
+                    <c:forEach var="domain" items="${reg.selectableEmailDomains}">
+                        <option value="<c:out value="${domain}" />"><c:out value="${domain}" /></option>
+                    </c:forEach>
+                </select>
+            </c:when>
+        </c:choose>
         <br />
         <br />
         
+        <!-- CAPTCHA -->
         <b>Prevention of automatic registration (CAPTCHA)</b><br />
         <label for="code" style="font-size: 85%">Last character in username</label>
         <input name="code" id="code" type="text" size="3" accesskey="t" />
