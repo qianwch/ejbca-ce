@@ -314,7 +314,9 @@ public class RegisterReqBean {
             throw new IllegalStateException("initialize not called before submit");
         }
         
-        // Set up config for admingui (e.g. for e-mails to admins with links to it) 
+        // Set up config for admingui (e.g. for e-mails to admins with links to it)
+        // This should be OK to do here and to do per request, since it just
+        // sets up some hard-coded config strings, etc.
         globalConfiguration.initializeAdminWeb();
         
         checkFormFields();
@@ -328,11 +330,6 @@ public class RegisterReqBean {
         final int caid = eeprofile.getDefaultCA();
         if (caid == -1) {
             internalError("The end-entity profile "+getCertTypeInfo(certType, "eeprofile")+" for cert type "+certType+" does not have any default CA.");
-        }
-        
-        String domainRequirement = eeprofile.getValue(EndEntityProfile.EMAIL, 0);
-        if (domainRequirement != null && domainRequirement.matches("[^\\s]")) {
-            throw new UnsupportedOperationException("Self-registration does not yet support e-mail domain restrictions in end-entity profiles.");
         }
         
         final int certProfileId = getCertificateProfileId();
