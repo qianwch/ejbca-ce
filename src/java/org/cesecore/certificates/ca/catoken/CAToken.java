@@ -97,29 +97,32 @@ public class CAToken extends UpgradeableDataHashMap {
 
     public CAToken(final CryptoToken token) {
         super();
-        this.token = internalInit(token);
+        this.token = getToken(token);
+        internalInit();
     }
 
 	/**
-	 * Common code to initialize object called from all constructors.
-	 * Also checks that {@link #token} is not null.
+	 * Used to set {@link #token} to an object (never null).
 	 * Since {@link #token} is declared as final we know that the it will never be null.
 	 * @param inToken 
 	 * @return inToken if not null otherwise {@link NullCryptoToken}
 	 */
-	private CryptoToken internalInit(final CryptoToken inToken) {
-		final CryptoToken tmpToken;
-        if ( inToken==null ) {
-        	log.error("Crypto token not existing (null).");
-        	tmpToken = new NullCryptoToken();
-        } else {
-        	tmpToken = inToken;
-        }
-        Properties p = tmpToken.getProperties();
-        this.keyStrings = new PurposeMapping(p);
-        setProperties(p);
-        setClassPath(tmpToken.getClass().getName());
-        return tmpToken;
+	private static CryptoToken getToken(final CryptoToken inToken) {
+		if ( inToken!=null ) {
+			return inToken;
+		}
+		log.error("Crypto token not existing (null).");
+		return new NullCryptoToken();
+	}
+
+	/**
+	 * Common code to initialize object called from all constructors.
+	 */
+	private void internalInit() {
+		final Properties p = this.token.getProperties();
+		this.keyStrings = new PurposeMapping(p);
+		setProperties(p);
+		setClassPath(this.token.getClass().getName());
 	}
 
     /** Constructor used to initialize a stored CA token, when the UpgradeableHashMap has been stored as is.
@@ -141,7 +144,8 @@ public class CAToken extends UpgradeableDataHashMap {
         if (log.isDebugEnabled()) {
             log.debug("CA token classpath: " + classpath);
         }
-        this.token = internalInit( CryptoTokenFactory.createCryptoToken(classpath, prop, keyStoreData, caid) );
+        this.token = getToken( CryptoTokenFactory.createCryptoToken(classpath, prop, keyStoreData, caid) );
+        internalInit();
     }
     
     public int getTokenStatus() {
