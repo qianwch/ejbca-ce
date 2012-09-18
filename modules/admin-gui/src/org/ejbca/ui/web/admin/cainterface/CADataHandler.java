@@ -122,7 +122,7 @@ public class CADataHandler implements Serializable {
   /**
    * @see org.ejbca.core.ejb.ca.caadmin.CAAdminSessionBean
    */    
-  public void createCA(CAInfo cainfo) throws CAExistsException, CryptoTokenOfflineException, CryptoTokenAuthenticationFailedException, AuthorizationDeniedException, InvalidAlgorithmException, IllegalCryptoTokenException{
+  public void createCA(CAInfo cainfo) throws CAExistsException, CryptoTokenOfflineException, CryptoTokenAuthenticationFailedException, AuthorizationDeniedException, InvalidAlgorithmException{
     caadminsession.createCA(administrator, cainfo);
     info.cAsEdited();
   }

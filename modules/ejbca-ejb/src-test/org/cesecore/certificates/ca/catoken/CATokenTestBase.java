@@ -59,7 +59,7 @@ public abstract class CATokenTestBase {
 	CryptoTokenOfflineException, NoSuchProviderException,
 	InvalidKeyException, SignatureException,
 	CryptoTokenAuthenticationFailedException,
-	InvalidAlgorithmParameterException, IllegalCryptoTokenException {
+	InvalidAlgorithmParameterException {
 		CAToken catoken = new CAToken(cryptoToken);
 		try {
 			// Set key sequence so that next sequence will be 00001 (this is the default though so not really needed here)
@@ -246,7 +246,7 @@ public abstract class CATokenTestBase {
 	CryptoTokenOfflineException, NoSuchProviderException,
 	InvalidKeyException, SignatureException,
 	CryptoTokenAuthenticationFailedException,
-	InvalidAlgorithmParameterException, IllegalCryptoTokenException {
+	InvalidAlgorithmParameterException {
 		CAToken catoken = new CAToken(cryptoToken);
 		// Set key sequence so that next sequence will be 00001 (this is the default though so not really needed here)
 		catoken.setKeySequence(CAToken.DEFAULT_KEYSEQUENCE);
@@ -309,7 +309,7 @@ public abstract class CATokenTestBase {
 	CryptoTokenOfflineException, NoSuchProviderException,
 	InvalidKeyException, SignatureException,
 	CryptoTokenAuthenticationFailedException,
-	InvalidAlgorithmParameterException, IllegalCryptoTokenException {
+	InvalidAlgorithmParameterException {
 		CAToken catoken = new CAToken(cryptoToken);
 		try {
 			// Set key sequence so that next sequence will be 00001 (this is the default though so not really needed here)
@@ -455,7 +455,7 @@ public abstract class CATokenTestBase {
 	CertificateException, IOException, CryptoTokenOfflineException,
 	NoSuchProviderException, InvalidKeyException, SignatureException,
 	CryptoTokenAuthenticationFailedException,
-	InvalidAlgorithmParameterException, IllegalCryptoTokenException {
+	InvalidAlgorithmParameterException {
 		// Remove auto activate
 		Properties prop = cryptoToken.getProperties();
 		prop.remove(CryptoToken.AUTOACTIVATE_PIN_PROPERTY);
