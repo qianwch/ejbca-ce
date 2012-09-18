@@ -48,6 +48,7 @@ import org.cesecore.certificates.ca.CAInfo;
 import org.cesecore.certificates.ca.InvalidAlgorithmException;
 import org.cesecore.keys.token.CryptoTokenAuthenticationFailedException;
 import org.cesecore.keys.token.CryptoTokenOfflineException;
+import org.cesecore.keys.token.IllegalCryptoTokenException;
 import org.cesecore.mock.authentication.tokens.TestAlwaysAllowLocalAuthenticationToken;
 import org.ejbca.core.ejb.ca.CaTestCase;
 import org.ejbca.core.protocol.certificatestore.HashID;
@@ -89,11 +90,12 @@ public class CertStoreServletTest extends CaTestCase {
      * @throws CryptoTokenAuthenticationFailedException 
      * @throws CryptoTokenOfflineException 
      * @throws CAExistsException 
+     * @throws IllegalCryptoTokenException
      */
 
     @Test
     public void testIt() throws MalformedURLException, CertificateException, IOException, URISyntaxException, MessagingException,
-            CADoesntExistsException, AuthorizationDeniedException, CAExistsException, CryptoTokenOfflineException, CryptoTokenAuthenticationFailedException, InvalidAlgorithmException {
+            CADoesntExistsException, AuthorizationDeniedException, CAExistsException, CryptoTokenOfflineException, CryptoTokenAuthenticationFailedException, InvalidAlgorithmException, IllegalCryptoTokenException {
         final CAInHierarchy ca1 = new CAInHierarchy("root", this);
         final CAInHierarchy ca1_1 = new CAInHierarchy("1 from root", this);
         ca1.subs.add(ca1_1);
@@ -161,13 +163,13 @@ class CAInHierarchy {
     }
 
     X509Certificate createCA(Set<Integer> setOfSubjectKeyIDs) throws CADoesntExistsException, AuthorizationDeniedException, CAExistsException,
-            CryptoTokenOfflineException, CryptoTokenAuthenticationFailedException, InvalidAlgorithmException {
+            CryptoTokenOfflineException, CryptoTokenAuthenticationFailedException, InvalidAlgorithmException, IllegalCryptoTokenException {
         return createCA(CAInfo.SELFSIGNED, null, setOfSubjectKeyIDs);
     }
 
     private X509Certificate createCA(int signedBy, Collection<Certificate> certificateChain, Set<Integer> setOfSubjectKeyIDs)
             throws CADoesntExistsException, AuthorizationDeniedException, CAExistsException, CryptoTokenOfflineException,
-            CryptoTokenAuthenticationFailedException, InvalidAlgorithmException {
+            CryptoTokenAuthenticationFailedException, InvalidAlgorithmException, IllegalCryptoTokenException {
         Assert.assertTrue("Failed to created certificate.",
                 this.testCase.createTestCA(this.name, 1024, "CN=" + this.name + ",O=EJBCA junit,OU=CertStoreServletTest", signedBy, certificateChain));
         final CAInfo info = getCAInfo();

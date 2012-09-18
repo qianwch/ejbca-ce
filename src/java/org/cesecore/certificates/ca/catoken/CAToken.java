@@ -91,23 +91,30 @@ public class CAToken extends UpgradeableDataHashMap {
     public static final String SIGNATUREALGORITHM = "signaturealgorithm";
     public static final String ENCRYPTIONALGORITHM = "encryptionalgorithm";
 
-    private CryptoToken token;
+    final private CryptoToken token;
     private PurposeMapping keyStrings;
 
-    public CAToken(final CryptoToken token) {
+    public CAToken(final CryptoToken token) throws IllegalCryptoTokenException {
         super();
-        internalInit(token);
+		this.token = token;
+        internalInit();
     }
 
 	/**
+	 * Common code to initialize object called from all constructors.
+	 * Also checks that {@link #token} is not null.
+	 * Since {@link #token} is declared as final we know that the it will never be null.
 	 * @param token
+	 * @throws IllegalCryptoTokenException 
 	 */
-	private void internalInit(final CryptoToken token) {
-		this.token = token;
-        Properties p = token.getProperties();
+	private void internalInit() throws IllegalCryptoTokenException {
+        if ( this.token==null ) {
+        	throw new IllegalCryptoTokenException("Crypto token not existing (null).");
+        }
+        Properties p = this.token.getProperties();
         this.keyStrings = new PurposeMapping(p);
         setProperties(p);
-        setClassPath(token.getClass().getName());
+        setClassPath(this.token.getClass().getName());
 	}
 
     /** Constructor used to initialize a stored CA token, when the UpgradeableHashMap has been stored as is.
@@ -130,11 +137,8 @@ public class CAToken extends UpgradeableDataHashMap {
             log.debug("CA token classpath: " + classpath);
         }
         final CryptoToken token = CryptoTokenFactory.createCryptoToken(classpath, prop, keyStoreData, caid);
-        if (token != null) {
-            internalInit(token);
-        } else {
-            log.error("CryptoToken is null, can not initialize CAToken for CA with id "+caid);
-        }
+		this.token = token;
+        internalInit();
     }
     
     public int getTokenStatus() {
@@ -330,10 +334,6 @@ public class CAToken extends UpgradeableDataHashMap {
 
     public CryptoToken getCryptoToken() {
         return token;
-    }
-
-    public void setCryptoToken(final CryptoToken token) {
-        this.token = token;
     }
 
     /**
