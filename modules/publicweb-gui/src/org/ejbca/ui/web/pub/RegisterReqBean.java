@@ -36,6 +36,7 @@ import org.cesecore.core.ejb.ra.raadmin.EndEntityProfileSessionLocal;
 import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.approval.approvalrequests.AddEndEntityApprovalRequest;
 import org.ejbca.core.model.log.Admin;
+import org.ejbca.core.model.ra.ExtendedInformation;
 import org.ejbca.core.model.ra.UserDataConstants;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfile;
 import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
@@ -65,6 +66,7 @@ public class RegisterReqBean {
     // Form fields
     private final Map<String,String> formDNFields = new HashMap<String,String>();
     private String subjectAltName = "";
+    private String subjectDirAttrs = "";
     
     private String certType;
     private EndEntityProfile eeprofile; // of cert type
@@ -161,6 +163,18 @@ public class RegisterReqBean {
         return fields;
     }
     
+    public List<DNFieldDescriber> getDirAttrFields() {
+        List<DNFieldDescriber> fields = new ArrayList<DNFieldDescriber>();
+        
+        int count = eeprofile.getSubjectDirAttrFieldOrderLength();
+        for (int i=0; i < count; i++) {
+            int[] fielddata = eeprofile.getSubjectDirAttrFieldsInOrder(i);
+            fields.add(new DNFieldDescriber(i, fielddata, eeprofile, DNFieldExtractor.TYPE_SUBJECTDIRATTR));
+        }
+        
+        return fields;
+    }
+    
     public boolean isEmailDomainFrozen() {
         if (eeprofile.isModifyable(EndEntityProfile.EMAIL, 0)) return false;
         String value = eeprofile.getValue(EndEntityProfile.EMAIL, 0);
@@ -215,7 +229,7 @@ public class RegisterReqBean {
             String key = (String)en.nextElement();
             String value = request.getParameter(key).trim();
             
-            String id = key.replaceFirst("^[a-z]+_", ""); // format is e.g. dnfield_cn or altnamefield_123 
+            String id = key.replaceFirst("^[a-z]+_", ""); // format is e.g. dnfield_cn, altnamefield_123 or dirattrfield_123 
             if (key.startsWith("dnfield_")) {
                 if (!value.isEmpty()) {
                     String dnName = DNFieldDescriber.extractSubjectDnNameFromId(eeprofile, id);
@@ -232,6 +246,19 @@ public class RegisterReqBean {
                         subjectAltName = field;
                     } else {
                         subjectAltName += ", " + field;
+                    }
+                }
+            }
+            
+            if (key.startsWith("dirattrfield_")) {
+                if (!value.isEmpty()) {
+                    String dirAttr = DNFieldDescriber.extractSubjectDirAttrFromId(eeprofile, id);
+                    String field = org.ietf.ldap.LDAPDN.escapeRDN(dirAttr + "=" + value);
+                    
+                    if (subjectDirAttrs.isEmpty()) {
+                        subjectDirAttrs = field;
+                    } else {
+                        subjectDirAttrs += ", " + field;
                     }
                 }
             }
@@ -314,6 +341,15 @@ public class RegisterReqBean {
         return sb.toString();
     }
     
+    private void assignDirAttrs(UserDataVO userdata) {
+        ExtendedInformation ext = userdata.getExtendedinformation();
+        if (ext == null) {
+            ext = new ExtendedInformation();
+        }
+        ext.setSubjectDirectoryAttributes(subjectDirAttrs);
+        userdata.setExtendedinformation(ext);
+    }
+    
     /**
      * Creates a approval request from the given information in the form.
      * initialize() must have been called before this method is called.  
@@ -358,6 +394,7 @@ public class RegisterReqBean {
                 null, UserDataConstants.STATUS_NEW, SecConst.USER_ENDUSER, eeProfileId, certProfileId,
                 null,null, SecConst.TOKEN_SOFT_BROWSERGEN, 0, null);
         userdata.setSendNotification(true);
+        assignDirAttrs(userdata);
         if (email != null) {
             userdata.setEmail(email);
         }
