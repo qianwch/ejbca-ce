@@ -42,6 +42,7 @@ import org.cesecore.keys.token.CryptoTokenAuthenticationFailedException;
 import org.cesecore.keys.token.CryptoTokenFactory;
 import org.cesecore.keys.token.CryptoTokenOfflineException;
 import org.cesecore.keys.token.IllegalCryptoTokenException;
+import org.cesecore.keys.token.NullCryptoToken;
 import org.cesecore.keys.token.PKCS11CryptoToken;
 import org.cesecore.keys.util.KeyTools;
 import org.cesecore.util.Base64;
@@ -91,23 +92,34 @@ public class CAToken extends UpgradeableDataHashMap {
     public static final String SIGNATUREALGORITHM = "signaturealgorithm";
     public static final String ENCRYPTIONALGORITHM = "encryptionalgorithm";
 
-    private CryptoToken token;
+    final private CryptoToken token;
     private PurposeMapping keyStrings;
 
     public CAToken(final CryptoToken token) {
         super();
-        internalInit(token);
+        this.token = internalInit(token);
     }
 
 	/**
-	 * @param token
+	 * Common code to initialize object called from all constructors.
+	 * Also checks that {@link #token} is not null.
+	 * Since {@link #token} is declared as final we know that the it will never be null.
+	 * @param inToken 
+	 * @return inToken if not null otherwise {@link NullCryptoToken}
 	 */
-	private void internalInit(final CryptoToken token) {
-		this.token = token;
-        Properties p = token.getProperties();
+	private CryptoToken internalInit(final CryptoToken inToken) {
+		final CryptoToken tmpToken;
+        if ( inToken==null ) {
+        	log.error("Crypto token not existing (null).");
+        	tmpToken = new NullCryptoToken();
+        } else {
+        	tmpToken = inToken;
+        }
+        Properties p = tmpToken.getProperties();
         this.keyStrings = new PurposeMapping(p);
         setProperties(p);
-        setClassPath(token.getClass().getName());
+        setClassPath(tmpToken.getClass().getName());
+        return tmpToken;
 	}
 
     /** Constructor used to initialize a stored CA token, when the UpgradeableHashMap has been stored as is.
@@ -129,12 +141,7 @@ public class CAToken extends UpgradeableDataHashMap {
         if (log.isDebugEnabled()) {
             log.debug("CA token classpath: " + classpath);
         }
-        final CryptoToken token = CryptoTokenFactory.createCryptoToken(classpath, prop, keyStoreData, caid);
-        if (token != null) {
-            internalInit(token);
-        } else {
-            log.error("CryptoToken is null, can not initialize CAToken for CA with id "+caid);
-        }
+        this.token = internalInit( CryptoTokenFactory.createCryptoToken(classpath, prop, keyStoreData, caid) );
     }
     
     public int getTokenStatus() {
@@ -330,10 +337,6 @@ public class CAToken extends UpgradeableDataHashMap {
 
     public CryptoToken getCryptoToken() {
         return token;
-    }
-
-    public void setCryptoToken(final CryptoToken token) {
-        this.token = token;
     }
 
     /**
