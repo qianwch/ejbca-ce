@@ -121,11 +121,11 @@
     <target name="cond-deprecated-healthcheck">
         <condition property="is-deprecated-healthcheck">
             <or>
-                <isset property="ocsphealthcheck.amountfreemem"/>
-                <isset property="ocsphealthcheck.authorizedips"/>
-                <isset property="ocsphealthcheck.dbquery"/>
+                <not><equals arg1="${ocsphealthcheck.amountfreemem}" arg2="1"/></not>
+                <not><equals arg1="${ocsphealthcheck.authorizedips}" arg2="127.0.0.1"/></not>
+                <not><equals arg1="${ocsphealthcheck.dbquery}" arg2="Select 1 From CertificateData where fingerprint='XX'"/></not>
                 <isset property="ocsphealthcheck.maintenancefile"/>
-                <isset property="ocsphealthcheck.maintenancepropertyname"/>
+                <not><equals arg1="${ocsphealthcheck.maintenancepropertyname}" arg2="DOWN_FOR_MAINTENANCE"/></not>
             </or>
         </condition>
     </target>
@@ -136,17 +136,17 @@
     </target>
     
     <target name="check-deprecated-logmaxqueryrowcount" if="log.maxqueryrowcount">
-        <echo level="error">The property "log.maxqueryrowcount" is deprecated. Please update your configuration!</echo>
+        <echo level="error">The property "log.maxqueryrowcount" is deprecated. It can safely be removed from your configuration.</echo>
         <property name="has-deprecated-properties" value="true" />
     </target>
     
     <target name="check-deprecated-logconfigurationcachetime" if="logconfiguration.cachetime">
-        <echo level="error">The property "logconfiguration.cachetime" is deprecated. Please update your configuration!</echo>
+        <echo level="error">The property "logconfiguration.cachetime" is deprecated. It can safely be removed from your configuration.</echo>
         <property name="has-deprecated-properties" value="true" />
     </target>
     
     <target name="check-deprecated-webpromptForPassword" if="web.promptForPassword">
-        <echo level="error">The property "web.promptForPassword" is deprecated. Please update your configuration!</echo>
+        <echo level="error">The property "web.promptForPassword" is deprecated. It can safely be removed from your configuration.</echo>
         <property name="has-deprecated-properties" value="true" />
     </target>
     
