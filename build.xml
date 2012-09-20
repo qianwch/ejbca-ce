@@ -132,15 +132,39 @@
     
     <target name="check-deprecated-healthcheck" depends="cond-deprecated-healthcheck" if="is-deprecated-healthcheck">
         <echo level="error">The ocsphealthcheck.* properties have been renamed to healthcheck.*. Please update your configuration!</echo>
+        <property name="has-deprecated-properties" value="true" />
     </target>
     
-    <target name="check-deprecated-logmaxqueryrowcount" if="log.maxqueryrowcount"><echo level="error">The property "log.maxqueryrowcount" is deprecated. Please update your configuration!</echo></target>
+    <target name="check-deprecated-logmaxqueryrowcount" if="log.maxqueryrowcount">
+        <echo level="error">The property "log.maxqueryrowcount" is deprecated. Please update your configuration!</echo>
+        <property name="has-deprecated-properties" value="true" />
+    </target>
     
-    <target name="check-deprecated-logconfigurationcachetime" if="logconfiguration.cachetime"><echo level="error">The property "logconfiguration.cachetime" is deprecated. Please update your configuration!</echo></target>
+    <target name="check-deprecated-logconfigurationcachetime" if="logconfiguration.cachetime">
+        <echo level="error">The property "logconfiguration.cachetime" is deprecated. Please update your configuration!</echo>
+        <property name="has-deprecated-properties" value="true" />
+    </target>
     
-    <target name="check-deprecated-webpromptForPassword" if="web.promptForPassword"><echo level="error">The property "web.promptForPassword" is deprecated. Please update your configuration!</echo></target>
+    <target name="check-deprecated-webpromptForPassword" if="web.promptForPassword">
+        <echo level="error">The property "web.promptForPassword" is deprecated. Please update your configuration!</echo>
+        <property name="has-deprecated-properties" value="true" />
+    </target>
     
-    <target name="check-deprecated" depends="check-deprecated-logmaxqueryrowcount, check-deprecated-logconfigurationcachetime, check-deprecated-webpromptForPassword, check-deprecated-healthcheck">
+    <target name="check-deprecated" depends="check-deprecated-logmaxqueryrowcount, check-deprecated-logconfigurationcachetime, check-deprecated-webpromptForPassword, check-deprecated-healthcheck, sleep-if-deprecated">
+    </target>
+    
+    <target name="sleep-if-deprecated" if="has-deprecated-properties">
+        <echo level="error">
+
+**** You're using deprecated features! ****
+See the messages above. Be aware that those features will be
+removed in the next release!
+
+Proceeding automatically in 10 seconds. You can stop the build
+process now by pressing Ctrl-C.
+
+        </echo>
+        <sleep seconds="10" />
     </target>
 
     <!-- =================================================================== -->
