@@ -150,7 +150,70 @@
         <property name="has-deprecated-properties" value="true" />
     </target>
     
-    <target name="check-deprecated" depends="check-deprecated-logmaxqueryrowcount, check-deprecated-logconfigurationcachetime, check-deprecated-webpromptForPassword, check-deprecated-healthcheck, sleep-if-deprecated">
+    <!-- Check for properties that have been moved from ejbca.properties to cesecore.properties -->
+    <target name="load-ejbca-properties-with-prefix">
+      <loadproperties srcFile="conf/ejbca.properties">
+        <filterchain>
+          <prefixlines prefix="ejbca-properties-file." />
+        </filterchain>
+      </loadproperties>
+    </target>
+    
+    <target name="check-moved-cakeystorepass" depends="load-ejbca-properties-with-prefix" if="ejbca-properties-file.ca.keystorepass">
+        <echo level="error">The property "ca.keystorepass" has been moved from "ejbca.properties" to "cesecore.properties".</echo>
+        <property name="has-deprecated-properties" value="true" />
+    </target>
+    
+    <target name="check-moved-caserialnumberoctetsize" depends="load-ejbca-properties-with-prefix" if="ejbca-properties-file.ca.serialnumberoctetsize">
+        <echo level="error">The property "ca.serialnumberoctetsize" has been moved from "ejbca.properties" to "cesecore.properties".</echo>
+        <property name="has-deprecated-properties" value="true" />
+    </target>
+    
+    <target name="check-moved-carngalgorithm" depends="load-ejbca-properties-with-prefix" if="ejbca-properties-file.ca.rngalgorithm">
+        <echo level="error">The property "ca.rngalgorithm" has been moved from "ejbca.properties" to "cesecore.properties".</echo>
+        <property name="has-deprecated-properties" value="true" />
+    </target>
+    
+    <target name="check-moved-catoolateexpiredate" depends="load-ejbca-properties-with-prefix" if="ejbca-properties-file.ca.toolateexpiredate">
+        <echo level="error">The property "ca.toolateexpiredate" has been moved from "ejbca.properties" to "cesecore.properties".</echo>
+        <property name="has-deprecated-properties" value="true" />
+    </target>
+    
+    <target name="check-moved-cadoPermitExtractablePrivateKeys" depends="load-ejbca-properties-with-prefix" if="ejbca-properties-file.ca.doPermitExtractablePrivateKeys">
+        <echo level="error">The property "ca.doPermitExtractablePrivateKeys" has been moved from "ejbca.properties" to "cesecore.properties".</echo>
+        <property name="has-deprecated-properties" value="true" />
+    </target>
+    
+    <target name="check-moved-intresourcespreferredlanguage" depends="load-ejbca-properties-with-prefix" if="ejbca-properties-file.intresources.preferredlanguage">
+        <echo level="error">The property "intresources.preferredlanguage" has been moved from "ejbca.properties" to "cesecore.properties".</echo>
+        <property name="has-deprecated-properties" value="true" />
+    </target>
+    
+    <target name="check-moved-intresourcessecondarylanguage" depends="load-ejbca-properties-with-prefix" if="ejbca-properties-file.intresources.secondarylanguage">
+        <echo level="error">The property "intresources.secondarylanguage" has been moved from "ejbca.properties" to "cesecore.properties".</echo>
+        <property name="has-deprecated-properties" value="true" />
+    </target>
+    
+    <target name="check-moved-ecdsaimplicitlyca-properties">
+        <condition property="using-moved-ecdsaimplicitlyca-properties">
+            <or>
+                <isset property="ejbca-properties-file.ecdsa.implicitlyca.q" />
+                <isset property="ejbca-properties-file.ecdsa.implicitlyca.a" />
+                <isset property="ejbca-properties-file.ecdsa.implicitlyca.b" />
+                <isset property="ejbca-properties-file.ecdsa.implicitlyca.g" />
+                <isset property="ejbca-properties-file.ecdsa.implicitlyca.n" />
+            </or>
+        </condition>
+    </target>
+    
+    <target name="check-moved-ecdsaimplicitlyca" depends="check-moved-ecdsaimplicitlyca-properties" if="using-moved-ecdsaimplicitlyca-properties">
+        <echo level="error">The properties ecdsa.implicitlyca.* have been moved from "ejbca.properties" to "cesecore.properties".</echo>
+        <property name="has-deprecated-properties" value="true" />
+    </target>
+    
+    
+    <!-- depends on all deprecation checks -->
+    <target name="check-deprecated" depends="check-deprecated-logmaxqueryrowcount, check-deprecated-logconfigurationcachetime, check-deprecated-webpromptForPassword, check-deprecated-healthcheck, check-moved-cakeystorepass, check-moved-caserialnumberoctetsize, check-moved-carngalgorithm, check-moved-catoolateexpiredate, check-moved-cadoPermitExtractablePrivateKeys, check-moved-intresourcespreferredlanguage, check-moved-intresourcessecondarylanguage, check-moved-ecdsaimplicitlyca, sleep-if-deprecated">
     </target>
     
     <target name="sleep-if-deprecated" if="has-deprecated-properties">
