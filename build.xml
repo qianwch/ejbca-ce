@@ -151,7 +151,15 @@
     </target>
     
     <!-- Check for properties that have been moved from ejbca.properties to cesecore.properties -->
-    <target name="load-ejbca-properties-with-prefix">
+    <target name="check-ejbca-properties-exists">
+      <condition property="ejbca-properties-exists">
+        <resourceexists>
+          <file file="conf/ejbca.properties"/>
+        </resourceexists>
+      </condition>
+    </target>
+    
+    <target name="load-ejbca-properties-with-prefix" depends="check-ejbca-properties-exists" if="ejbca-properties-exists">
       <loadproperties srcFile="conf/ejbca.properties">
         <filterchain>
           <prefixlines prefix="ejbca-properties-file." />
