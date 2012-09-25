@@ -70,6 +70,7 @@ public class RegisterReqBean {
     
     private String certType;
     private EndEntityProfile eeprofile; // of cert type
+    private String usernameMapping;
     
     private String username;
     private String email;
@@ -129,6 +130,11 @@ public class RegisterReqBean {
     
     public int getCertificateProfileId() {
         return certificateProfileSession.getCertificateProfileId(admin, getCertTypeInfo(certType, "certprofile"));
+    }
+    
+    public String getUsernameMapping() {
+        String um = getCertTypeInfo(certType, "usernamemapping");
+        return um != null ? um.toLowerCase(Locale.ROOT) : null; 
     }
     
     public String getDefaultCertType() {
@@ -192,6 +198,10 @@ public class RegisterReqBean {
         return value.trim().split(";");
     }
     
+    public boolean isUsernameVisible() {
+        return getUsernameMapping() == null;
+    }
+    
     private void checkCertEEProfilesExist() {
         String eeprofName = getCertTypeInfo(certType, "eeprofile");
         if (eeprofName != null && endEntityProfileSession.getEndEntityProfile(admin, eeprofName) == null) {
@@ -221,6 +231,7 @@ public class RegisterReqBean {
         checkConfig();
         checkCertEEProfilesExist();
         eeprofile = getEndEntityProfile();
+        usernameMapping = getUsernameMapping();
 
         // Get all fields
         @SuppressWarnings("rawtypes")
@@ -265,7 +276,15 @@ public class RegisterReqBean {
         }
         
         // User account
-        username = request.getParameter("username");
+        if (isUsernameVisible()) {
+            username = request.getParameter("username");
+        } else {
+            username = formDNFields.get(usernameMapping);
+            if (!formDNFields.isEmpty() && username == null) {
+                internalError("DN field of usernamemapping doesn't exist: "+usernameMapping);
+            }
+        }
+        
         email = request.getParameter("email");
         String domain = request.getParameter("emaildomain");
         if (domain != null && !email.isEmpty()) email += "@" + domain;
@@ -292,7 +311,7 @@ public class RegisterReqBean {
     }
     
     private void checkFormFields() {
-        boolean nameError = false;
+        boolean cantDoCaptcha = false;
         
         if (certType == null || certType.isEmpty()) {
             errors.add("Certificate type is not specified.");
@@ -301,15 +320,18 @@ public class RegisterReqBean {
         // User account
         if (username == null || username.isEmpty()) {
             errors.add("Username is not specified.");
-            nameError = true;
+            if (isUsernameVisible()) cantDoCaptcha = true;
         }
         
         if (email == null || !email.matches("[^@]+@.+")) {
             errors.add("E-mail is not specified.");
+            if (!isUsernameVisible()) cantDoCaptcha = true;
         }
 
+        String captchaField = isUsernameVisible() ? username : email;
+        
         // The captcha simply is the last character of the name
-        if (!nameError && (captcha == null || !captcha.equalsIgnoreCase(username.substring(username.length()-1)))) {
+        if (!cantDoCaptcha && (captcha == null || !captcha.equalsIgnoreCase(captchaField.substring(captchaField.length()-1)))) {
             errors.add("Captcha code is incorrect.");
         }
     }
@@ -393,7 +415,9 @@ public class RegisterReqBean {
         final UserDataVO userdata = new UserDataVO(username, subjectDN, caid, subjectAltName, 
                 null, UserDataConstants.STATUS_NEW, SecConst.USER_ENDUSER, eeProfileId, certProfileId,
                 null,null, SecConst.TOKEN_SOFT_BROWSERGEN, 0, null);
-        userdata.setSendNotification(true);
+        if (eeprofile.getUse(EndEntityProfile.SENDNOTIFICATION, 0)) {
+            userdata.setSendNotification(true);
+        }
         assignDirAttrs(userdata);
         if (email != null) {
             userdata.setEmail(email);
