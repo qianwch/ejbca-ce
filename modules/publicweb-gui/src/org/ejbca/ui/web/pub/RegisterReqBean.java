@@ -133,7 +133,7 @@ public class RegisterReqBean {
     }
     
     public String getUsernameMapping() {
-        String um = getCertTypeInfo(certType, "usernamemapping");
+        String um = EjbcaConfigurationHolder.getString("web.selfreg.certtypes."+certType+".usernamemapping");
         return um != null ? um.toLowerCase(Locale.ROOT) : null; 
     }
     
