@@ -53,7 +53,7 @@
 	<h:dataTable value="#{adminGroupsManagedBean.adminGroups}" var="adminGroup"
 		headerClass="listHeader" rowClasses="Row0,Row1">
 		<f:facet name="header">
-			<h:outputText value="#{web.text.CURRENTADMINGROUPS}" />
+			<h:outputText value="#{web.text.LISTOFADMINISTRATORGROUPS}" />
 		</f:facet>
 		<h:column>
 			<h:outputText value="#{adminGroup.adminGroupName}"/>

@@ -32,7 +32,7 @@
 	<h:panelGrid styleClass="list" columns="2" columnClasses="listColumn1,listColumn2">
 		<h:panelGroup>
 			<h:messages styleClass="alert" layout="table" />
-			<h3><h:outputText value="#{web.text.CURRENTSERVICES}"/></h3>
+			<h3><h:outputText value="#{web.text.LISTOFSERVICES}"/></h3>
 		</h:panelGroup>
 		<h:panelGroup>
 		</h:panelGroup>
