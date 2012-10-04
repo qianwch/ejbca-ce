@@ -37,6 +37,7 @@ import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.ocsp.OCSPObjectIdentifiers;
 import org.bouncycastle.asn1.x509.X509Extension;
 import org.bouncycastle.asn1.x509.X509Extensions;
+import org.bouncycastle.ocsp.BasicOCSPResp;
 import org.bouncycastle.ocsp.CertificateID;
 import org.bouncycastle.ocsp.OCSPReq;
 import org.bouncycastle.ocsp.OCSPReqGenerator;
@@ -334,7 +335,8 @@ public abstract class ProtocolOcspTestBase extends CaTestCase {
 		loadUserCert(this.caid);
 		gen.addRequest(new CertificateID(CertificateID.HASH_SHA1, cacert, ocspTestCert.getSerialNumber()));
 		OCSPReq req = gen.generate();
-		SingleResp[] singleResps = helper.sendOCSPGet(req.getEncoded(), null, OCSPRespGenerator.SUCCESSFUL, 200);
+		BasicOCSPResp brep = helper.sendOCSPGet(req.getEncoded(), null, OCSPRespGenerator.SUCCESSFUL, 200);
+		SingleResp[] singleResps = brep.getResponses();        
 		assertNotNull("SingleResps should not be null.", singleResps);
 		CertificateID certId = singleResps[0].getCertID();
 		assertEquals("Serno in response does not match serno in request.", certId.getSerialNumber(), ocspTestCert.getSerialNumber());
@@ -380,7 +382,8 @@ public abstract class ProtocolOcspTestBase extends CaTestCase {
 		gen.addRequest(new CertificateID(CertificateID.HASH_SHA1, cacert, ocspTestCert.getSerialNumber()));
 		gen.addRequest(new CertificateID(CertificateID.HASH_SHA1, cacert, new BigInteger("1")));
 		OCSPReq req = gen.generate();
-		SingleResp[] singleResps = helper.sendOCSPGet(req.getEncoded(), null, OCSPRespGenerator.SUCCESSFUL, 200);
+		BasicOCSPResp brep = helper.sendOCSPGet(req.getEncoded(), null, OCSPRespGenerator.SUCCESSFUL, 200);
+		SingleResp[] singleResps = brep.getResponses();
 		assertNotNull("SingleResps should not be null.", singleResps);
 		assertEquals("Serno in response does not match serno in request.", singleResps[0].getCertID().getSerialNumber(), ocspTestCert.getSerialNumber());
 		assertTrue("Serno in response does not match serno in request.", singleResps[1].getCertID().getSerialNumber().toString().equals("1"));

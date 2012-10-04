@@ -53,6 +53,7 @@ import javax.ejb.ObjectNotFoundException;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.DERObjectIdentifier;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DERTags;
@@ -85,6 +86,8 @@ import org.cesecore.certificates.certificateprofile.CertificatePolicy;
 import org.cesecore.certificates.crl.RevokedCertInfo;
 import org.cesecore.certificates.util.AlgorithmConstants;
 import org.cesecore.config.OcspConfiguration;
+import org.cesecore.configuration.CesecoreConfigurationProxySessionRemote;
+import org.cesecore.jndi.JndiHelper;
 import org.cesecore.keys.token.CryptoToken;
 import org.cesecore.keys.token.SoftCryptoToken;
 import org.cesecore.keys.util.KeyTools;
@@ -109,6 +112,7 @@ import org.ejbca.core.model.ra.UserDataConstants;
 import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
 import org.ejbca.core.protocol.certificatestore.CertificateCacheTstFactory;
 import org.ejbca.core.protocol.certificatestore.ICertificateCache;
+import org.ejbca.core.protocol.ocsp.extension.certhash.OcspCertHashExtension;
 import org.ejbca.ui.web.LimitLengthASN1Reader;
 import org.ejbca.util.InterfaceCache;
 import org.junit.After;
@@ -199,6 +203,8 @@ public class ProtocolOcspHttpTest extends ProtocolOcspTestBase {
 
 	final private CAAdminSessionRemote caAdminSession = InterfaceCache.getCAAdminSession();
 	final private CaSessionRemote caSession = InterfaceCache.getCaSession();
+    private final CesecoreConfigurationProxySessionRemote cesecoreConfigurationProxySession = JndiHelper
+            .getRemoteSession(CesecoreConfigurationProxySessionRemote.class);
 	final private RevocationSessionRemote revocationSession = InterfaceCache.getRevocationSession();
 	final private SignSessionRemote signSession = InterfaceCache.getSignSession();
 	final private UserAdminSessionRemote userAdminSession = InterfaceCache.getUserAdminSession();
@@ -797,6 +803,55 @@ public class ProtocolOcspHttpTest extends ProtocolOcspTestBase {
 		log.trace("<test50OcspUnknownMayBeGood()");
 	}
 
+	/**
+	 * This test tests the feature of extensions of setting a '*' in front of the value in ocsp.extensionoid
+	 * forces that extension to be used for all requests.
+	 * 
+	 * @throws Exception
+	 */
+    @Test
+    public void testUseAlwaysExtensions() throws Exception {
+        final String EXTENSION_OID = "ocsp.extensionoid";
+      //  final String EXTENSION_CLASS = "ocsp.extensionclass";
+        
+        /**
+         * NOTE:    This test can't be run under EJBCA 5.0.x unless extensions have been preconfigured in 
+         *          ocsp.properties 
+         */
+        
+        if(!cesecoreConfigurationProxySession.getConfigurationValue(EXTENSION_OID).contains("*" + OcspCertHashExtension.CERT_HASH_OID)) {
+            //No way to run this test, return.
+            log.warn("Could not run testUseAlwaysExtensions test. Extensions have not been configured in ocsp.properties.");
+            return;
+        }
+        
+        /*
+            final String oldOidValue = cesecoreConfigurationProxySession.getConfigurationValue(EXTENSION_OID);
+              final String oldClass = cesecoreConfigurationProxySession.getConfigurationValue(EXTENSION_CLASS);
+              try {
+                  cesecoreConfigurationProxySession.setConfigurationValue(EXTENSION_OID, "*" + OcspCertHashExtension.CERT_HASH_OID);
+                  cesecoreConfigurationProxySession.setConfigurationValue(EXTENSION_CLASS,
+                          "org.ejbca.core.protocol.ocsp.extension.certhash.OcspCertHashExtension");
+                          */
+        // An OCSP request, ocspTestCert is already created in earlier tests
+        OCSPReqGenerator gen = new OCSPReqGenerator();
+        loadUserCert(this.caid);
+        gen.addRequest(new CertificateID(CertificateID.HASH_SHA1, cacert, ocspTestCert.getSerialNumber()));
+        OCSPReq req = gen.generate();
+        BasicOCSPResp response = helper.sendOCSPGet(req.getEncoded(), null, OCSPRespGenerator.SUCCESSFUL, 200);
+        if (response == null) {
+            throw new Exception("Could not retrieve response, test could not continue.");
+        }
+        X509Extension responseExtension = response.getResponseExtensions()
+                .getExtension(new ASN1ObjectIdentifier(OcspCertHashExtension.CERT_HASH_OID));
+        assertNotNull("No extension sent with reply", responseExtension);
+        
+        /*     } finally {
+                  cesecoreConfigurationProxySession.setConfigurationValue(EXTENSION_OID, oldOidValue);
+                  cesecoreConfigurationProxySession.setConfigurationValue(EXTENSION_CLASS, oldClass);
+              }*/
+    }
+	
 	/**
 	 * removes DSA CA
 	 *

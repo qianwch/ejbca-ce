@@ -26,8 +26,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -88,7 +90,7 @@ import org.ejbca.core.protocol.certificatestore.HashID;
 import org.ejbca.core.protocol.certificatestore.ICertificateCache;
 import org.ejbca.core.protocol.ocsp.AuditLogger;
 import org.ejbca.core.protocol.ocsp.IAuditLogger;
-import org.ejbca.core.protocol.ocsp.IOCSPExtension;
+import org.ejbca.core.protocol.ocsp.OcspExtension;
 import org.ejbca.core.protocol.ocsp.IOCSPLogger;
 import org.ejbca.core.protocol.ocsp.ITransactionLogger;
 import org.ejbca.core.protocol.ocsp.OCSPData;
@@ -154,7 +156,7 @@ public abstract class OCSPServletBase extends HttpServlet implements SaferAppend
 	 */
 	private final Collection<String> m_extensionOids = OcspConfiguration.getExtensionOids();
 	private final Collection<String> m_extensionClasses = OcspConfiguration.getExtensionClasses();
-	private HashMap<String, IOCSPExtension> m_extensionMap = null;
+	private HashMap<String, OcspExtension> m_extensionMap = null;
 	private final boolean mDoAuditLog = OcspConfiguration.getAuditLog();
 	private final boolean mDoTransactionLog = OcspConfiguration.getTransactionLog();
 
@@ -326,19 +328,27 @@ public abstract class OCSPServletBase extends HttpServlet implements SaferAppend
 		}
 		Iterator<String> iter = m_extensionClasses.iterator();
 		Iterator<String> iter2 = m_extensionOids.iterator();
-		m_extensionMap = new HashMap<String, IOCSPExtension>();
+		m_extensionMap = new HashMap<String, OcspExtension>();
 		while (iter.hasNext()) {
-			String clazz = (String)iter.next();
-			String oid = (String)iter2.next();
-			IOCSPExtension ext = null;
+			String clazz = iter.next();
+			String oid = iter2.next();
+			OcspExtension ext = null;
 			try {
-				ext = (IOCSPExtension)Class.forName(clazz).newInstance();
+				ext = (OcspExtension)Class.forName(clazz).newInstance();
 				ext.init(config);
 			} catch (Exception e) {
 				m_log.error("Can not create extension with class "+clazz, e);
 				continue;
 			}
-			m_extensionMap.put(oid,ext);
+			/* If prefaced with an asterisk, then this extension should always be used, but
+			 * this will be decided using the values in m_extensionOids
+			 */
+			if(oid.startsWith("*")) {
+			    String strippedOid = oid.substring(1, oid.length());
+			    m_extensionMap.put(strippedOid,ext);
+			} else {
+			    m_extensionMap.put(oid,ext);
+			}
 		}
 		// Cache-friendly parameters
 		if (m_log.isDebugEnabled()) {
@@ -906,39 +916,47 @@ public abstract class OCSPServletBase extends HttpServlet implements SaferAppend
 						transactionLogger.paramPut(ITransactionLogger.CERT_STATUS, OCSPUnidResponse.OCSP_REVOKED);
 						transactionLogger.writeln();
 					}
-					// Look for extension OIDs
-					Iterator<String> iter = m_extensionOids.iterator();
-					while (iter.hasNext()) {
-						String oidstr = (String)iter.next();
+                    // Look for extension OIDs
+                    for (String oidstr : m_extensionOids) {
+                        boolean useAlways = false;
+                        if(oidstr.startsWith("*")) {
+                            oidstr = oidstr.substring(1, oidstr.length()); 
+                            useAlways = true;
+                        }
 						DERObjectIdentifier oid = new DERObjectIdentifier(oidstr);
 						X509Extensions reqexts = req.getRequestExtensions();
+						X509Extension ext = null;
 						if (reqexts != null) {
-							X509Extension ext = reqexts.getExtension(oid);
-							if (null != ext) {
-								// We found an extension, call the extenstion class
-								if (m_log.isDebugEnabled()) {
-									m_log.debug("Found OCSP extension oid: "+oidstr);
-								}
-								IOCSPExtension extObj = (IOCSPExtension)m_extensionMap.get(oidstr);
-								if (extObj != null) {
-									// Find the certificate from the certId
-									X509Certificate cert = null;
-									cert = (X509Certificate)this.data.certificateStoreSession.findCertificateByIssuerAndSerno(cacert.getSubjectDN().getName(), certId.getSerialNumber());
-									if (cert != null) {
-										// Call the OCSP extension
-										Hashtable<DERObjectIdentifier, X509Extension> retext = extObj.process(request, cert, certStatus);
-										if (retext != null) {
-											// Add the returned X509Extensions to the responseExtension we will add to the basic OCSP response
-											responseExtensions.putAll(retext);
-										} else {
-											String errMsg = intres.getLocalizedMessage("ocsp.errorprocessextension", extObj.getClass().getName(),  Integer.valueOf(extObj.getLastErrorCode()));
-											m_log.error(errMsg);
-										}
-									}
-								}
-							}
-						}
-					}
+						    ext = reqexts.getExtension(oid);
+                        }
+                        //If found, or if it should be used anyway
+                        if (null != ext || useAlways) {
+                            // We found an extension, call the extension class
+                            if (m_log.isDebugEnabled()) {
+                                m_log.debug("Found OCSP extension oid: " + oidstr);
+                            }
+                            OcspExtension extObj = (OcspExtension) m_extensionMap.get(oidstr);
+                            if (extObj != null) {
+                                // Find the certificate from the certId
+                                X509Certificate cert = null;
+                                cert = (X509Certificate) this.data.certificateStoreSession.findCertificateByIssuerAndSerno(cacert.getSubjectDN()
+                                        .getName(), certId.getSerialNumber());
+                                if (cert != null) {
+                                    // Call the OCSP extension
+                                    Hashtable<DERObjectIdentifier, X509Extension> retext = extObj.process(request, cert, certStatus);
+                                    if (retext != null) {
+                                        // Add the returned X509Extensions to the responseExtension we will add to the basic OCSP response
+                                        responseExtensions.putAll(retext);
+                                    } else {
+                                        String errMsg = intres.getLocalizedMessage("ocsp.errorprocessextension", extObj.getClass().getName(),
+                                                Integer.valueOf(extObj.getLastErrorCode()));
+                                        m_log.error(errMsg);
+                                    }
+                                }
+                            }
+
+                        }
+                    }
 				} // end of huge for loop
 				if (cacert != null) {
 					// Add responseExtensions
@@ -1041,7 +1059,7 @@ public abstract class OCSPServletBase extends HttpServlet implements SaferAppend
 			m_log.trace("<service()");
 		}
 	}
-
+	
 	/**
 	 * RFC 2560 does not specify how cache headers should be used, but RFC 5019 does. Therefore we will only
 	 * add the headers if the requirements of RFC 5019 is fulfilled: A GET-request, a single embedded reponse,

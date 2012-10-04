@@ -80,7 +80,9 @@
 	<target name="va-common-compile" depends="va-ejb">
 	</target>
 	<condition property="use.ocsp.extensionclass">
-		<equals arg1="${ocsp.extensionclass}" arg2="org.ejbca.core.protocol.ocsp.OCSPUnidExtension"/>
+		<not>
+			<equals arg1="${ocsp.extensionclass}" arg2=""/>
+		</not>
 	</condition>
 	<condition property="none.existing.ocsp.extensionclass">
 		<and>
@@ -104,6 +106,7 @@
 			<include name="org/ejbca/ui/web/protocol/OCSPServletStandAlone.java"/>
 			<include name="org/ejbca/core/protocol/ocsp/OCSPUnidExtension.java" if="use.ocsp.extensionclass"/>
 			<include name="org/ejbca/core/protocol/ocsp/FnrFromUnidExtension.java" if="use.ocsp.extensionclass"/>
+			<include name="org/ejbca/core/protocol/ocsp/extension/certhash/OcspCertHashExtension.java" if="use.ocsp.extensionclass"/>
 			<src path="${src.dir}"/>
 		</javac>
 	</target>
@@ -133,6 +136,7 @@
         	<include name="org/ejbca/ui/web/protocol/OCSPServlet.java"/>
 			<include name="org/ejbca/core/protocol/ocsp/OCSPUnidExtension.java" if="use.ocsp.extensionclass"/>
         	<include name="org/ejbca/core/protocol/ocsp/FnrFromUnidExtension.java" if="use.ocsp.extensionclass"/>
+        	<include name="org/ejbca/core/protocol/ocsp/extension/certhash/OcspCertHashExtension.java" if="use.ocsp.extensionclass"/>
 			<src path="${src.dir}"/>
         </javac>
 	</target>

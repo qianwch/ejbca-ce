@@ -17,7 +17,7 @@ package org.ejbca.core.protocol.ocsp;
 /**
  * Transaction logger constants.
  * @author lars
- * @version $Id:
+ * @version $Id$
  *
  */
 public interface ITransactionLogger extends IOCSPLogger {

@@ -47,11 +47,10 @@ import org.ejbca.util.JDBCUtil;
 
 /** ASN.1 OCSP extension used to map a UNID to a Fnr, OID for this extension is 2.16.578.1.16.3.2
  * 
- * @author tomas
  * @version $Id$
  *
  */
-public class OCSPUnidExtension implements IOCSPExtension {
+public class OCSPUnidExtension implements OcspExtension {
 
 	private static final Logger m_log = Logger.getLogger(OCSPUnidExtension.class);
     /** Internal localization of logs and errors */
@@ -73,10 +72,7 @@ public class OCSPUnidExtension implements IOCSPExtension {
     private Certificate cacert = null;
     private int errCode = OCSPUnidExtension.ERROR_NO_ERROR;
     
-	/** Called after construction
-	 * 
-	 * @param config ServletConfig that can be used to read init-params from web-xml
-	 */
+	@Override
 	public void init(ServletConfig config) {
 		// DataSource
 		dataSourceJndi = OcspConfiguration.getUnidDataSource();
@@ -149,13 +145,7 @@ public class OCSPUnidExtension implements IOCSPExtension {
 
 	}
 	
-	/** Called by OCSP responder when the configured extension is found in the request.
-	 * 
-	 * @param request HttpServletRequest that can be used to find out information about caller, TLS certificate etc.
-	 * @param cert X509Certificate the caller asked for in the OCSP request
-     * @param status CertificateStatus the status the certificate has according to the OCSP responder, null means the cert is good
-	 * @return X509Extension that will be added to responseExtensions by OCSP responder, or null if an error occurs
-	 */
+	@Override
 	public Hashtable<DERObjectIdentifier, X509Extension> process(HttpServletRequest request, X509Certificate cert, CertificateStatus status) {
         if (m_log.isTraceEnabled()) {
             m_log.trace(">process()");            
@@ -227,10 +217,7 @@ public class OCSPUnidExtension implements IOCSPExtension {
 		return ret;
 	}
 	
-	/** Returns the last error that occured during process(), when process returns null
-	 * 
-	 * @return error code as defined by implementing class
-	 */
+	@Override
 	public int getLastErrorCode() {
 		return errCode;
 	}

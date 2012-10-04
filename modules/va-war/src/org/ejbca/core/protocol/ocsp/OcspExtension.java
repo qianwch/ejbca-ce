@@ -25,12 +25,11 @@ import org.bouncycastle.ocsp.CertificateStatus;
 
 /** Interface that must be implemented by OCSP extensions that are added to the OCSPServlet
  * 
- * @author tomas
  * @version $Id$
  * @see org.ejbca.ui.web.protocol.OCSPServlet
  *
  */
-public interface IOCSPExtension {
+public interface OcspExtension {
 
 	/** Called after construction
 	 * 
@@ -46,7 +45,7 @@ public interface IOCSPExtension {
 	 */
 	public Hashtable<DERObjectIdentifier, X509Extension> process(HttpServletRequest request, X509Certificate cert, CertificateStatus status);
 	
-	/** Returns the last error that occured during process(), when process returns null
+	/** Returns the last error that occurred during process(), when process returns null
 	 * 
 	 * @return error code as defined by implementing class
 	 */

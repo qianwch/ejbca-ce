@@ -19,7 +19,7 @@ import org.bouncycastle.asn1.DERObject;
 import org.bouncycastle.asn1.DERObjectIdentifier;
 
 /** The ASN.1 extension with OID 2.16.578.1.16.3.2 used to request an FNR from a UNID 
- * and respond with the FNR. When requesting, the fnr passed in the extension deas not matter, use 1.
+ * and respond with the FNR. When requesting, the fnr passed in the extension does not matter, use 1.
  * 
  * id-fnrFromUnid OBJECT IDENTIFIER ::= { 2 16 578 1 16 3 2 }
  * 
