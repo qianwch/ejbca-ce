@@ -232,8 +232,8 @@ public class Query implements java.io.Serializable {
     static final String[] CONNECTOR_SQL_NAMES = { " AND ", " OR ", " AND NOT ", " OR NOT " };
 
     // Private fields.
-    private Vector matches = null; // Should only contain BasicMatch objects.
-    private Vector connectors = null; // Should only containg CONNECTOR constants.
-    protected int type = 0;
+    final private Vector matches; // Should only contain BasicMatch objects.
+    final private Vector connectors; // Should only containg CONNECTOR constants.
+    final protected int type;
     private boolean hasIllegalSqlChars = false;
 }
