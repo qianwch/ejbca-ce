@@ -812,7 +812,6 @@ public class ProtocolOcspHttpTest extends ProtocolOcspTestBase {
     @Test
     public void testUseAlwaysExtensions() throws Exception {
         final String EXTENSION_OID = "ocsp.extensionoid";
-      //  final String EXTENSION_CLASS = "ocsp.extensionclass";
         
         /**
          * NOTE:    This test can't be run under EJBCA 5.0.x unless extensions have been preconfigured in 
@@ -821,18 +820,9 @@ public class ProtocolOcspHttpTest extends ProtocolOcspTestBase {
         
         if(!cesecoreConfigurationProxySession.getConfigurationValue(EXTENSION_OID).contains("*" + OcspCertHashExtension.CERT_HASH_OID)) {
             //No way to run this test, return.
-            log.warn("Could not run testUseAlwaysExtensions test. Extensions have not been configured in ocsp.properties.");
-            return;
+            log.error("Could not run testUseAlwaysExtensions test. Extensions have not been configured in ocsp.properties.");
+            throw new IllegalStateException("Could not run testUseAlwaysExtensions test. Extensions have not been configured in ocsp.properties.");
         }
-        
-        /*
-            final String oldOidValue = cesecoreConfigurationProxySession.getConfigurationValue(EXTENSION_OID);
-              final String oldClass = cesecoreConfigurationProxySession.getConfigurationValue(EXTENSION_CLASS);
-              try {
-                  cesecoreConfigurationProxySession.setConfigurationValue(EXTENSION_OID, "*" + OcspCertHashExtension.CERT_HASH_OID);
-                  cesecoreConfigurationProxySession.setConfigurationValue(EXTENSION_CLASS,
-                          "org.ejbca.core.protocol.ocsp.extension.certhash.OcspCertHashExtension");
-                          */
         // An OCSP request, ocspTestCert is already created in earlier tests
         OCSPReqGenerator gen = new OCSPReqGenerator();
         loadUserCert(this.caid);
@@ -845,11 +835,6 @@ public class ProtocolOcspHttpTest extends ProtocolOcspTestBase {
         X509Extension responseExtension = response.getResponseExtensions()
                 .getExtension(new ASN1ObjectIdentifier(OcspCertHashExtension.CERT_HASH_OID));
         assertNotNull("No extension sent with reply", responseExtension);
-        
-        /*     } finally {
-                  cesecoreConfigurationProxySession.setConfigurationValue(EXTENSION_OID, oldOidValue);
-                  cesecoreConfigurationProxySession.setConfigurationValue(EXTENSION_CLASS, oldClass);
-              }*/
     }
 	
 	/**
