@@ -28,7 +28,6 @@ import java.util.Hashtable;
 import org.bouncycastle.asn1.DERObjectIdentifier;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.isismtt.ocsp.CertHash;
-import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.x509.X509Extension;
 import org.bouncycastle.util.encoders.Hex;
 import org.cesecore.certificates.util.AlgorithmConstants;
@@ -68,7 +67,7 @@ public class OcspCertHashExtensionTest {
         X509Extension extension = result.get(new DERObjectIdentifier(OcspCertHashExtension.CERT_HASH_OID));
         DERSequence derSequence = (DERSequence) extension.getParsedValue();
         CertHash certHash = CertHash.getInstance(derSequence);
-        assertEquals("Algorithm was not extracted correctly from CertHash", PKCSObjectIdentifiers.sha256WithRSAEncryption, certHash.getHashAlgorithm().getAlgorithm());
+        assertEquals("Algorithm was not extracted correctly from CertHash", OcspCertHashExtension.SHA256, certHash.getHashAlgorithm().getAlgorithm());
         MessageDigest md = MessageDigest.getInstance("SHA256");
         String fingerprint = new String(Hex.encode(md.digest(cert.getEncoded())));
         String certificateHashAsString = new String(Hex.encode(certHash.getCertificateHash()));

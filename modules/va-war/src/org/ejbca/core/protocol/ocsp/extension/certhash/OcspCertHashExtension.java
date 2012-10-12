@@ -22,10 +22,10 @@ import javax.servlet.ServletConfig;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.DERObjectIdentifier;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.isismtt.ocsp.CertHash;
-import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.X509Extension;
 import org.bouncycastle.ocsp.CertificateStatus;
@@ -44,7 +44,8 @@ import org.ejbca.core.protocol.ocsp.OcspExtension;
 public class OcspCertHashExtension implements OcspExtension{
 
     public static final String CERT_HASH_OID = "1.3.36.8.3.13";
-
+    public static final ASN1ObjectIdentifier SHA256 = new ASN1ObjectIdentifier("2.16.840.1.101.3.4.2.1");
+    
     private static final Logger log = Logger.getLogger(OcspCertHashExtension.class);
     
     @Override
@@ -64,7 +65,7 @@ public class OcspCertHashExtension implements OcspExtension{
         }
         CertHash certHash;
         try {
-            certHash = new CertHash(new AlgorithmIdentifier(PKCSObjectIdentifiers.sha256WithRSAEncryption), md.digest(cert.getEncoded()));
+            certHash = new CertHash(new AlgorithmIdentifier(SHA256), md.digest(cert.getEncoded()));
         } catch (CertificateEncodingException e) {
             //This state can't be handled, shouldn't return null 
             log.error("Could not encode certificate " + cert, e);
