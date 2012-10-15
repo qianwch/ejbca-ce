@@ -1,6 +1,3 @@
-
-Release Notes - EJBCA
-
 EJBCA 5.0.6, 2012-10-15
 ---
 ** Bug
@@ -46,6 +43,8 @@ EJBCA 5.0.6, 2012-10-15
 
 ** Task
     * [ECA-2716] - Remove unused properties
+
+
 EJBCA 5.0.5, 2012-06-03
 
 Bug
