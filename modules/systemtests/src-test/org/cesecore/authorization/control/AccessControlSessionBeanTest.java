@@ -30,6 +30,7 @@ import org.cesecore.authorization.user.AccessMatchType;
 import org.cesecore.authorization.user.AccessUserAspectData;
 import org.cesecore.authorization.user.matchvalues.X500PrincipalAccessMatchValue;
 import org.cesecore.jndi.JndiHelper;
+import org.cesecore.mock.authentication.tokens.TestAlwaysAllowLocalAuthenticationToken;
 import org.cesecore.mock.authentication.tokens.UsernameAccessMatchValue;
 import org.cesecore.mock.authentication.tokens.UsernameBasedAuthenticationToken;
 import org.cesecore.roles.RoleData;
@@ -57,6 +58,9 @@ public class AccessControlSessionBeanTest extends RoleUsingTestCase {
     private AccessControlSessionRemote accessControlSession = JndiHelper.getRemoteSession(AccessControlSessionRemote.class);
     private RoleAccessSessionRemote roleAccessSession = JndiHelper.getRemoteSession(RoleAccessSessionRemote.class);
     private RoleManagementSessionRemote roleManagementSession = JndiHelper.getRemoteSession(RoleManagementSessionRemote.class);
+    
+    private final AuthenticationToken alwaysAllowAuthenticationToken = new TestAlwaysAllowLocalAuthenticationToken(new UsernamePrincipal(
+            "AccessControlSessionBeanTest"));
 
     @Before
     public void setUp() throws Exception {    	
@@ -99,7 +103,7 @@ public class AccessControlSessionBeanTest extends RoleUsingTestCase {
             accessRules.add(new AccessRuleData(nerfHerder.getRoleName(), "/decline/accept", AccessRuleState.RULE_ACCEPT, false));
             accessRules.add(new AccessRuleData(nerfHerder.getRoleName(), "/decline/notused", AccessRuleState.RULE_NOTUSED, false));
             accessRules.add(new AccessRuleData(nerfHerder.getRoleName(), "/decline/decline", AccessRuleState.RULE_DECLINE, false));    
-            roleManagementSession.addAccessRulesToRole(roleMgmgToken, nerfHerder, accessRules);            
+            roleManagementSession.addAccessRulesToRole(alwaysAllowAuthenticationToken, nerfHerder, accessRules);            
 
             assertFalse(accessControlSession.isAuthorized(roleMgmgToken, AccessRulesConstants.ROLE_ROOT));
            
@@ -162,10 +166,10 @@ public class AccessControlSessionBeanTest extends RoleUsingTestCase {
             AccessUserAspectData flynn = new AccessUserAspectData(roleName, flynnDn.hashCode(), X500PrincipalAccessMatchValue.WITH_COMMONNAME, AccessMatchType.TYPE_EQUALCASE, "Flynn");
             subjects.add(tron);
             subjects.add(flynn);
-            role = roleManagementSession.addSubjectsToRole(roleMgmgToken, role, subjects);
+            role = roleManagementSession.addSubjectsToRole(alwaysAllowAuthenticationToken, role, subjects);
             Collection<AccessRuleData> accessRules = new ArrayList<AccessRuleData>();
             accessRules.add(new AccessRuleData(roleName, resourceName, AccessRuleState.RULE_ACCEPT, false));
-            role = roleManagementSession.addAccessRulesToRole(roleMgmgToken, role, accessRules);
+            role = roleManagementSession.addAccessRulesToRole(alwaysAllowAuthenticationToken, role, accessRules);
             
             //Let's produce two valid tokens.          
             AuthenticationToken validUsernameToken = new UsernameBasedAuthenticationToken(new UsernamePrincipal("Tron"));

@@ -34,6 +34,7 @@ import javax.security.auth.x500.X500Principal;
 import org.apache.log4j.Logger;
 import org.cesecore.RoleUsingTestCase;
 import org.cesecore.authentication.tokens.AuthenticationToken;
+import org.cesecore.authentication.tokens.UsernamePrincipal;
 import org.cesecore.authentication.tokens.X509CertificateAuthenticationToken;
 import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.authorization.control.StandardRules;
@@ -46,6 +47,7 @@ import org.cesecore.certificates.util.AlgorithmConstants;
 import org.cesecore.certificates.util.DnComponents;
 import org.cesecore.jndi.JndiHelper;
 import org.cesecore.keys.util.KeyTools;
+import org.cesecore.mock.authentication.tokens.TestAlwaysAllowLocalAuthenticationToken;
 import org.cesecore.roles.RoleData;
 import org.cesecore.roles.access.RoleAccessSessionRemote;
 import org.cesecore.roles.management.RoleManagementSessionRemote;
@@ -73,6 +75,9 @@ public class EndEntityProfileSessionBeanTest extends RoleUsingTestCase {
     private RoleAccessSessionRemote roleAccessSession = JndiHelper.getRemoteSession(RoleAccessSessionRemote.class);
     private RoleManagementSessionRemote roleManagementSession = JndiHelper.getRemoteSession(RoleManagementSessionRemote.class);
     private CaSessionRemote caSession = InterfaceCache.getCaSession();
+    
+    private final AuthenticationToken alwaysAllowToken = new TestAlwaysAllowLocalAuthenticationToken(new UsernamePrincipal("EndEntityProfileSessionBeanTest"));
+    
     @BeforeClass
     public static void setUpCryptoProvider() throws Exception {
         CryptoProviderTools.installBCProvider();
@@ -90,7 +95,7 @@ public class EndEntityProfileSessionBeanTest extends RoleUsingTestCase {
         List<AccessRuleData> accessRules = new ArrayList<AccessRuleData>();
         accessRules.add(new AccessRuleData(role.getRoleName(), StandardRules.CAACCESSBASE.resource(), AccessRuleState.RULE_ACCEPT, true));
         accessRules.add(new AccessRuleData(role.getRoleName(), AccessRulesConstants.REGULAR_EDITENDENTITYPROFILES, AccessRuleState.RULE_ACCEPT, true));
-        roleManagementSession.addAccessRulesToRole(roleMgmgToken, role, accessRules);
+        roleManagementSession.addAccessRulesToRole(alwaysAllowToken, role, accessRules);
     }
 
     @After
