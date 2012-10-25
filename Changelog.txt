@@ -1,3 +1,7 @@
+EJBCA 4.0.13, 2012-11-xy
+---
+TODO
+
 EJBCA 4.0.12, 2012-08-16
 ---
 New Feature
