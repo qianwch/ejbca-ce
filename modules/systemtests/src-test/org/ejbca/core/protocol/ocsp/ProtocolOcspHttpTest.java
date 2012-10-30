@@ -814,14 +814,14 @@ public class ProtocolOcspHttpTest extends ProtocolOcspTestBase {
         final String EXTENSION_OID = "ocsp.extensionoid";
         
         /**
-         * NOTE:    This test can't be run under EJBCA 5.0.x unless extensions have been preconfigured in 
+         * NOTE:    This test can't be run under EJBCA 5.0.x unless CertHash extension have been preconfigured in 
          *          ocsp.properties 
          */
         
         if(!cesecoreConfigurationProxySession.getConfigurationValue(EXTENSION_OID).contains("*" + OcspCertHashExtension.CERT_HASH_OID)) {
             //No way to run this test, return.
-            log.error("Could not run testUseAlwaysExtensions test. Extensions have not been configured in ocsp.properties.");
-            throw new IllegalStateException("Could not run testUseAlwaysExtensions test. Extensions have not been configured in ocsp.properties.");
+            log.error("Could not run testUseAlwaysExtensions test. Extensions have not been configured in ocsp.properties. Configure CertHash to run this test.");
+            throw new IllegalStateException("Could not run testUseAlwaysExtensions test. Extensions have not been configured in ocsp.properties. Configure CertHash to run this test.");
         }
         // An OCSP request, ocspTestCert is already created in earlier tests
         OCSPReqGenerator gen = new OCSPReqGenerator();
