@@ -1,3 +1,14 @@
+EJBCA 5.0.7
+-----------
+This is a maintenance release with only a security fix.
+
+* Noteworthy changes:
+- Fixed minor administrator escalation issue
+
+Read the full Changelog for details.
+For upgrade instructions, please see UPGRADE.
+Please notice the upgrade of BC jars if you are using Oracle JDK.
+
 EJBCA 5.0.6
 -----------
 This is a maintenance release with a few bug fixes but also new features. In all, 34 issues have been resolved.
