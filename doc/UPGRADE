@@ -78,9 +78,11 @@ If you are upgrading a cluster, update the software on all the nodes.
    This will also upgrade CertificateProfile objects and possible CA objects in the database.
    After this upgrade, it may not be possible to downgrade to EJBCA 4.0.x again. 
 
-8. Stop JBoss, clear the tmp and work directories in the servers, then start JBoss again to flush all caches.
+8. Stop JBoss, clear the tmp and work directories in the servers.
 
-9. Go into the Admin GUI and verify you settings.
+9. Issue the command 'ant deploy' then start JBoss again.
+
+10. Go into the Admin GUI and verify you settings.
 
 The database schema upgrade is normally done automatically for you when you run 'ant post-upgrade'. 
 Some application servers will not let you deploy unless the database is in sync though (or your database user
