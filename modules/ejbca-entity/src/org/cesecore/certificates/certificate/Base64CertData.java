@@ -15,8 +15,6 @@ package org.cesecore.certificates.certificate;
 import java.io.Serializable;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 
 import javax.persistence.ColumnResult;
 import javax.persistence.Entity;
@@ -25,7 +23,6 @@ import javax.persistence.Query;
 import javax.persistence.SqlResultSetMapping;
 import javax.persistence.SqlResultSetMappings;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 
 import org.apache.log4j.Logger;
 import org.cesecore.dbprotection.ProtectedData;
@@ -61,10 +58,7 @@ public class Base64CertData implements Serializable {
         // Extract all fields to store with the certificate.
         try {
             setBase64Cert(new String(Base64.encode(incert.getEncoded())));
-
-            String fp = CertTools.getFingerprintAsString(incert);
-            setFingerprint(fp);
-
+            setFingerprint( CertTools.getFingerprintAsString(incert) );
         } catch (CertificateEncodingException cee) {
             final String msg = "Can't extract DER encoded certificate information.";
             log.error(msg, cee);
@@ -111,44 +105,6 @@ public class Base64CertData implements Serializable {
      */
     public void setBase64Cert(String base64Cert) {
         this.base64Cert = base64Cert;
-    }
-
-    //
-    // Public business methods used to help us manage certificates
-    //
-
-    /**
-     * certificate itself
-     * 
-     * @return certificate
-     */
-    @Transient
-    public Certificate getCertificate() {
-        Certificate cert = null;
-        try {
-            cert = CertTools.getCertfromByteArray(Base64.decode(getBase64Cert().getBytes()));
-        } catch (CertificateException ce) {
-            log.error("Can't decode certificate.", ce);
-            return null;
-        }
-        return cert;
-    }
-
-    /**
-     * certificate itself
-     * 
-     * @param incert certificate
-     */
-    public void setCertificate(Certificate incert) {
-        try {
-            final String b64Cert = new String(Base64.encode(incert.getEncoded()));
-            setBase64Cert(b64Cert);
-            final X509Certificate tmpcert = (X509Certificate) incert;
-            String fp = CertTools.getFingerprintAsString(tmpcert);
-            setFingerprint(fp);
-        } catch (CertificateEncodingException cee) {
-            log.error("Can't extract DER encoded certificate information.", cee);
-        }
     }
 
     //

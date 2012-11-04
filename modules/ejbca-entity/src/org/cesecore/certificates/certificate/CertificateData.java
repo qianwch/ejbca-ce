@@ -114,10 +114,12 @@ public class CertificateData extends ProtectedData implements Serializable {
      * @param updatetime the time the certificate was updated in the database, i.e. System.currentTimeMillis().
      */
     public CertificateData(Certificate incert, PublicKey enrichedpubkey, String username, String cafp, int status, int type, int certprofileid,
-            String tag, long updatetime) {
+            String tag, long updatetime, boolean storeBase64Cert) {
         // Extract all fields to store with the certificate.
         try {
-            setBase64Cert(new String(Base64.encode(incert.getEncoded())));
+            if ( storeBase64Cert ) {
+                setBase64Cert(new String(Base64.encode(incert.getEncoded())));
+            }
 
             String fp = CertTools.getFingerprintAsString(incert);
             setFingerprint(fp);
@@ -488,20 +490,36 @@ public class CertificateData extends ProtectedData implements Serializable {
     //
 
     /**
+     * Return the certificate . From this table if contained here. From {link Base64CertData} if contained there.
+     * @param entityManager To be used if the cert is in the {@link Base64CertData} table.
+     * @return The certificate
+     */
+    private String getBase64Cert(EntityManager entityManager) {
+        if ( this.base64Cert!=null && this.base64Cert.length()>0 ) {
+            return this.base64Cert; // the cert was in this table.
+        }
+        // try the other table.
+        final Base64CertData res = Base64CertData.findByFingerprint(entityManager, this.fingerprint);
+        if ( res==null ) {
+            log.error("No certificate found.");
+            return null;
+        }
+        // it was in the other table.
+        return res.getBase64Cert();
+    }
+    /**
      * certificate itself
      * 
      * @return certificate
      */
     @Transient
-    public Certificate getCertificate() {
-        Certificate cert = null;
+    public Certificate getCertificate(EntityManager entityManager) {
         try {
-            cert = CertTools.getCertfromByteArray(Base64.decode(getBase64Cert().getBytes()));
+            return CertTools.getCertfromByteArray(Base64.decode(getBase64Cert(entityManager).getBytes()));
         } catch (CertificateException ce) {
             log.error("Can't decode certificate.", ce);
             return null;
         }
-        return cert;
     }
 
     /**
@@ -570,28 +588,25 @@ public class CertificateData extends ProtectedData implements Serializable {
 
     // Comparators
 
-    public boolean equals(Object obj) {
+    public boolean equals(Object obj, EntityManager entityManager) {
         if (!(obj instanceof CertificateData)) {
             return false;
         }
-        return equals((CertificateData) obj, true);
+        return equals((CertificateData) obj, true, entityManager);
     }
 
-    public boolean equals(CertificateData certificateData, boolean mode, boolean strictStatus) {
+    public boolean equals(CertificateData certificateData, boolean mode, boolean strictStatus, EntityManager entityManager) {
         if (mode) {
             return equalsNonSensitive(certificateData, strictStatus);
         }
-        return equals(certificateData, strictStatus);
+        return equals(certificateData, strictStatus, entityManager);
     }
 
-    public boolean equals(CertificateData certificateData, boolean strictStatus) {
+    public boolean equals(CertificateData certificateData, boolean strictStatus, EntityManager entityManager) {
         if (!equalsNonSensitive(certificateData, strictStatus)) {
             return false;
         }
-        if (!base64Cert.equals(certificateData.base64Cert)) {
-            return false;
-        }
-        return true;
+        return getBase64Cert(entityManager).equals(certificateData.getBase64Cert(entityManager));
     }
 
     public boolean equalsNonSensitive(CertificateData certificateData, boolean strictStatus) {
