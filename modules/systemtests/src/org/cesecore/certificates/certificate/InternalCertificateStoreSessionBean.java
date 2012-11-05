@@ -14,7 +14,6 @@ package org.cesecore.certificates.certificate;
 
 import java.math.BigInteger;
 import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -33,7 +32,6 @@ import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.certificates.crl.CRLData;
 import org.cesecore.config.CesecoreConfiguration;
 import org.cesecore.jndi.JndiConstants;
-import org.cesecore.util.Base64;
 import org.cesecore.util.CertTools;
 
 /**
@@ -90,28 +88,18 @@ public class InternalCertificateStoreSessionBean implements InternalCertificateS
                 activeExpireDateMin);
     }
 
+	@SuppressWarnings("unchecked")
 	@Override
-    public Collection<Certificate> findCertificatesByIssuer(String issuerDN) {
-        final List<Certificate> certificateList = new ArrayList<Certificate>();
-        if (null == issuerDN || issuerDN.length() <= 0) {
-            return certificateList;
-        } else {
-            final Query query = entityManager.createQuery("SELECT a.base64Cert FROM CertificateData a WHERE a.issuerDN=:issuerDN");
-            query.setParameter("issuerDN", issuerDN);
-            @SuppressWarnings("unchecked")
-            final List<String> base64CertificateList = query.getResultList();
-            for (String base64Certificate : base64CertificateList) {
-                try {
-                    certificateList.add(CertTools.getCertfromByteArray(Base64.decode(base64Certificate.getBytes())));
-                } catch (CertificateException ce) {
+	public Collection<Certificate> findCertificatesByIssuer(String issuerDN) {
+		if (null == issuerDN || issuerDN.length() <= 0) {
+			return new ArrayList<Certificate>();
+		}
+		final Query query = this.entityManager.createQuery("SELECT a FROM CertificateData a WHERE a.issuerDN=:issuerDN");
+		query.setParameter("issuerDN", issuerDN);
+		return CertificateData.getCertificateList( query.getResultList(), this.entityManager );
+	}
 
-                }
-            }
-            return certificateList;
-        }
-    }
-    
-    @Override
+	@Override
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void removeCRL(final AuthenticationToken admin, final String fingerprint) throws AuthorizationDeniedException {
         final CRLData crld = CRLData.findByFingerprint(entityManager, fingerprint);

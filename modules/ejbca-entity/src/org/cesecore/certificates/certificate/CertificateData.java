@@ -970,7 +970,13 @@ public class CertificateData extends ProtectedData implements Serializable {
         return query.getResultList();
     }
 
-    final static private List<Certificate> getCertificateList(List<CertificateData> cdl, EntityManager entityManager) {
+    /**
+     * Get a list of {@link Certificate} from a list of list of {@link CertificateData}.
+     * @param cdl
+     * @param entityManager
+     * @return The resulting list.
+     */
+    public static List<Certificate> getCertificateList(List<CertificateData> cdl, EntityManager entityManager) {
         final List<Certificate> cl = new LinkedList<Certificate>();
         for ( CertificateData cd : cdl) {
             final Certificate cert = cd.getCertificate(entityManager);
@@ -981,6 +987,7 @@ public class CertificateData extends ProtectedData implements Serializable {
         }
         return cl;
     }
+    @SuppressWarnings("unchecked")
     public static List<Certificate> findCertificatesByIssuerDnAndSerialNumbers(EntityManager entityManager, String issuerDN,
             Collection<BigInteger> serialNumbers) {
         final StringBuilder sb = new StringBuilder();
