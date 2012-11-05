@@ -38,8 +38,6 @@ import org.cesecore.util.CertTools;
  */
 @Entity
 @Table(name = "Base64CertData")
-@SqlResultSetMappings(value = {
-        @SqlResultSetMapping(name = "FingerprintUsernameSubset", columns = { @ColumnResult(name = "fingerprint"), @ColumnResult(name = "username") }) })
 public class Base64CertData implements Serializable {
 
     private static final long serialVersionUID = 4132839902195978822L;
