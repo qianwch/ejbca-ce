@@ -51,34 +51,41 @@ public class InternalCertificateStoreSessionBean implements InternalCertificateS
 
     @Override
     public void removeCertificate(BigInteger serno) {
-        if (serno != null) {
-            Collection<CertificateData> coll = CertificateData.findBySerialNumber(entityManager, serno.toString());
-            for (CertificateData certificateData : coll) {
-                entityManager.remove(certificateData);
+        if ( serno==null ) {
+            return;
+        }
+        final Collection<CertificateData> coll = CertificateData.findBySerialNumber(this.entityManager, serno.toString());
+        for (CertificateData certificateData : coll) {
+            this.entityManager.remove(certificateData);
+            final Base64CertData b64cert = Base64CertData.findByFingerprint(this.entityManager, certificateData.getFingerprint());
+            if ( b64cert!=null ) {
+                this.entityManager.remove(b64cert);
             }
         }
     }
 
     @Override
     public void removeCertificate(String fingerprint) {
-        if (fingerprint != null) {
-            CertificateData cert = CertificateData.findByFingerprint(entityManager, fingerprint);
-            if (cert != null) {
-                entityManager.remove(cert);
-            }
+        if ( fingerprint==null ) {
+            return;
+        }
+        final CertificateData cert = CertificateData.findByFingerprint(this.entityManager, fingerprint);
+        if ( cert!=null ) {
+            this.entityManager.remove(cert);
+        }
+        final Base64CertData b64cert = Base64CertData.findByFingerprint(this.entityManager, fingerprint);
+        if ( b64cert!=null ) {
+            this.entityManager.remove(b64cert);
         }
     }
 
     @Override
     public void removeCertificate(Certificate certificate) {
-        if (certificate != null) {
-            // Do this as a native query because we do not want to be depending on rowProtection validating
-            // correctly, since some systemtests may insert directly in the database with null rowProtection (publisher tests)
-            String fingerprint = CertTools.getFingerprintAsString(certificate);
-            final Query query = entityManager.createNativeQuery("DELETE from CertificateData where fingerprint=:fingerprint");
-            query.setParameter("fingerprint", fingerprint);
-            query.executeUpdate();
+        if ( certificate==null ) {
+            return;
         }
+        final String fingerprint = CertTools.getFingerprintAsString(certificate);
+        removeCertificate(fingerprint);
     }
 
     @Override
