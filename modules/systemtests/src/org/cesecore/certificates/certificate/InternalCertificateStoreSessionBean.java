@@ -89,6 +89,16 @@ public class InternalCertificateStoreSessionBean implements InternalCertificateS
     }
 
     @Override
+    public void removePublishedCertificate(Certificate certificate) {
+        if (certificate != null) {
+            String fingerprint = CertTools.getFingerprintAsString(certificate);
+            final Query query = this.entityManager.createNativeQuery("DELETE from CertificateData where fingerprint=:fingerprint");
+            query.setParameter("fingerprint", fingerprint);
+            query.executeUpdate();
+        }
+    }
+
+    @Override
     public List<Object[]> findExpirationInfo(Collection<String> cas, long activeNotifiedExpireDateMin, long activeNotifiedExpireDateMax,
             long activeExpireDateMin) {
         return certStore.findExpirationInfo(cas, new ArrayList<Integer>(), activeNotifiedExpireDateMin, activeNotifiedExpireDateMax,
