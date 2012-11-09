@@ -14,7 +14,7 @@
 
     <tr id="Row0" class="section">
       <td width="50%" valign="top">
-        <strong><c:out value="<%= ejbcawebbean.getText(\"EJBCADEFAULTADMINPREF\") %>"/></strong>
+        <strong><c:out value="<%= ejbcawebbean.getText(\"DEFAULTADMINPREFERENCES\") %>"/></strong>
       </td>
       <td width="50%" valign="top">
         &nbsp;

@@ -50,7 +50,7 @@ function checkuseautoenroll(){
 
 <body>
 
-<h1><c:out value="<%= ejbcawebbean.getText(\"EJBCAWEBCONFIGURATION\") %>"/></h1> 
+<h1><c:out value="<%= ejbcawebbean.getText(\"SYSTEMCONFIGURATION\") %>"/></h1> 
 
 <form name="webconfiguration" method="post" action="<%= globalconfiguration .getConfigPath() + "/" + THIS_FILENAME %>">
   <table class="action" id="config" width="100%" border="0" cellspacing="3" cellpadding="3">

@@ -55,7 +55,7 @@ public class BasicAccessRuleSet implements java.io.Serializable {
 																						  "REVOKEENDENTITYRULE", "KEYRECOVERENDENTITYRULE",
 																						  "APPROVEENDENTITYRULE"};
     		
-    public static final String[]  OTHERTEXTS = {"","VIEWLOG","ISSUEHARDTOKENS"};
+    public static final String[]  OTHERTEXTS = {"","VIEWLOGS","ISSUEHARDTOKENS"};
         
    /**
      * This class should not be able to be instantiated.

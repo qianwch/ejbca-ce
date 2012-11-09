@@ -106,7 +106,7 @@
 <% // If authorized to use the main page then display related links.
    try{
      if(ejbcawebbean.isAuthorizedNoLog(MAIN_RESOURCE)){ %>
-		<li id="cat0"><a href="<%=MAIN_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("MAINPAGE") %></a>
+		<li id="cat0"><a href="<%=MAIN_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("NAV_HOME") %></a>
 		</li>
 <%    }
    }catch(AuthorizationDeniedException e){} 
@@ -119,45 +119,45 @@
    try{
      if(ejbcawebbean.isAuthorizedNoLog(CABASICFUNCTIONS_RESOURCE)){ 
        caheaderprinted=true;%>
-		<li id="cat1" class="section"><strong><%=ejbcawebbean.getText("CAFUNCTIONS") %></strong>
+		<li id="cat1" class="section"><strong><%=ejbcawebbean.getText("NAV_CAFUNCTIONS") %></strong>
 			<ul>
-				<li><a href="<%= CA_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("BASICFUNCTIONS") %></a></li>
+				<li><a href="<%= CA_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("NAV_CASTRUCTUREANDCRL") %></a></li>
 <%    }
    }catch(AuthorizationDeniedException e){} 
    try{
      if(ejbcawebbean.isAuthorizedNoLog(ACTIVATECA_RESOURCE)){ 
         if(!caheaderprinted){
-          out.write("<li id=\"cat1\" class=\"section\"><strong>" + ejbcawebbean.getText("CAFUNCTIONS")+"</strong><ul>"); 
+          out.write("<li id=\"cat1\" class=\"section\"><strong>" + ejbcawebbean.getText("NAV_CAFUNCTIONS")+"</strong><ul>"); 
            caheaderprinted=true;
         } %>
-				<li><a href="<%= CA_ACTIVATION_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("CAACTIVATION") %></a></li>
+				<li><a href="<%= CA_ACTIVATION_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("NAV_CAACTIVATION") %></a></li>
 <%    }
    }catch(AuthorizationDeniedException e){} 
    try{
      if(ejbcawebbean.isAuthorizedNoLog(EDITCERTIFICATEPROFILES_RESOURCE)){ 
         if(!caheaderprinted){
-          out.write("<li id=\"cat1\" class=\"section\"><strong>" + ejbcawebbean.getText("CAFUNCTIONS")+"</strong><ul>"); 
+          out.write("<li id=\"cat1\" class=\"section\"><strong>" + ejbcawebbean.getText("NAV_CAFUNCTIONS")+"</strong><ul>"); 
            caheaderprinted=true;
         } %>
-				<li><a href="<%= CA_CERTIFICATEPROFILELINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("EDITCERTIFICATEPROFILES") %></a></li>
+				<li><a href="<%= CA_CERTIFICATEPROFILELINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("NAV_CERTIFICATEPROFILES") %></a></li>
 <%    }
    }catch(AuthorizationDeniedException e){} 
    try{
      if(ejbcawebbean.isAuthorizedNoLog(EDITPUBLISHERS_RESOURCE)){ 
         if(!caheaderprinted){
-          out.write("<li id=\"cat1\" class=\"section\"><strong>" + ejbcawebbean.getText("CAFUNCTIONS")+"</strong><ul>"); 
+          out.write("<li id=\"cat1\" class=\"section\"><strong>" + ejbcawebbean.getText("NAV_CAFUNCTIONS")+"</strong><ul>"); 
            caheaderprinted=true;
         } %>
-				<li><a href="<%= EDITPUBLISHERS_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("EDITPUBLISHERS") %></a></li>
+				<li><a href="<%= EDITPUBLISHERS_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("NAV_PUBLISHERS") %></a></li>
 <%    }
    }catch(AuthorizationDeniedException e){} 
    try{
      if(ejbcawebbean.isAuthorizedNoLog(EDITCAS_RESOURCE)){ 
         if(!caheaderprinted){
-          out.write("<li id=\"cat1\" class=\"section\"><strong>" + ejbcawebbean.getText("CAFUNCTIONS")+"</strong><ul>"); 
+          out.write("<li id=\"cat1\" class=\"section\"><strong>" + ejbcawebbean.getText("NAV_CAFUNCTIONS")+"</strong><ul>"); 
            caheaderprinted=true;
         } %>
-				<li><a href="<%= EDITCA_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("EDITCAS") %></a></li>     
+				<li><a href="<%= EDITCA_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("NAV_CAS") %></a></li>     
 <%    }
    }catch(AuthorizationDeniedException e){} 
    if(caheaderprinted){
@@ -172,9 +172,9 @@
    try{
      if(ejbcawebbean.isAuthorizedNoLog(RAEDITUSERDATASOURCES_RESOURCE)){ 
           raheaderprinted=true;%> 
-		<li id="cat2" class="section"><strong><%=ejbcawebbean.getText("RAFUNCTIONS") %></strong>
+		<li id="cat2" class="section"><strong><%=ejbcawebbean.getText("NAV_RAFUNCTIONS") %></strong>
 			<ul>
-				<li><a href="<%= RA_EDITUSERDATASOURCESLINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("EDITUSERDATASOURCES") %></a></li>
+				<li><a href="<%= RA_EDITUSERDATASOURCESLINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("NAV_USERDATASOURCES") %></a></li>
 <%   }
   }catch(AuthorizationDeniedException e){}   
 
@@ -182,10 +182,10 @@
     try{
       if(ejbcawebbean.isAuthorizedNoLog(RAEDITENDENTITYPROFILES_RESOURCE)){            
          if(!raheaderprinted){
-           out.write("<li id=\"cat2\" class=\"section\"><strong>" + ejbcawebbean.getText("RAFUNCTIONS")+"</strong><ul>"); 
+           out.write("<li id=\"cat2\" class=\"section\"><strong>" + ejbcawebbean.getText("NAV_RAFUNCTIONS")+"</strong><ul>"); 
            raheaderprinted=true;
          }  %>
-				<li><a href="<%= RA_EDITPROFILESLINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("EDITENDENTITYPROFILES") %></a></li>
+				<li><a href="<%= RA_EDITPROFILESLINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("NAV_ENDENTITYPROFILES") %></a></li>
 <%   }
    }catch(AuthorizationDeniedException e){}
 
@@ -193,20 +193,20 @@
     try{
       if(ejbcawebbean.isAuthorizedNoLog(RAADDENDENTITY_RESOURCE)){ 
          if(!raheaderprinted){
-           out.write("<li id=\"cat2\" class=\"section\"><strong>" + ejbcawebbean.getText("RAFUNCTIONS")+"</strong><ul>"); 
+           out.write("<li id=\"cat2\" class=\"section\"><strong>" + ejbcawebbean.getText("NAV_RAFUNCTIONS")+"</strong><ul>"); 
            raheaderprinted=true;
          }  %>
-				<li><a href="<%= RA_ADDENDENTITYLINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("ADDENDENTITY") %></a></li>
+				<li><a href="<%= RA_ADDENDENTITYLINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("NAV_ADDENDENTITY") %></a></li>
 <%   }
    }catch(AuthorizationDeniedException e){}
     // If authorized to use the ra then display related links. 
     try{
       if(ejbcawebbean.isAuthorizedNoLog(RALISTEDITENDENTITY_RESOURCE)){ 
             if(!raheaderprinted){
-              out.write("<li id=\"cat2\" class=\"section\"><strong>" + ejbcawebbean.getText("RAFUNCTIONS")+"</strong><ul>"); 
+              out.write("<li id=\"cat2\" class=\"section\"><strong>" + ejbcawebbean.getText("NAV_RAFUNCTIONS")+"</strong><ul>"); 
               raheaderprinted=true;
             }  %>
-				<li><a href="<%=RA_LISTENDENTITIESLINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("SEARCHEDITENDENTITIES") %></a></li>
+				<li><a href="<%=RA_LISTENDENTITIESLINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("NAV_SEARCHENDENTITIES") %></a></li>
 <%   }
    }catch(AuthorizationDeniedException e){}
    if(raheaderprinted){
@@ -223,9 +223,9 @@
      try{
        if(ejbcawebbean.isAuthorizedNoLog(HTEDITHARDTOKENPROFILES_RESOURCE)){ 
            htheaderprinted=true;%> 
-		<li id="cat3" class="section"><strong><%=ejbcawebbean.getText("HARDTOKENFUNCTIONS") %></strong>
+		<li id="cat3" class="section"><strong><%=ejbcawebbean.getText("NAV_HARDTOKENFUNCTIONS") %></strong>
 			<ul>
-				<li><a href="<%= HT_EDITHARDTOKENPROFILES_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("EDITHARDTOKENPROFILES") %></a></li>
+				<li><a href="<%= HT_EDITHARDTOKENPROFILES_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("NAV_HARDTOKENPROFILES") %></a></li>
 <%     }
       }catch(AuthorizationDeniedException e){}
     
@@ -234,10 +234,10 @@
        if(ejbcawebbean.isAuthorizedNoLog(HTEDITHARDTOKENISSUERS_RESOURCE)){ 
            if(!htheaderprinted){
              htheaderprinted=true;%> 
-		<li id="cat3" class="section"><strong><%=ejbcawebbean.getText("HARDTOKENFUNCTIONS") %></strong>
+		<li id="cat3" class="section"><strong><%=ejbcawebbean.getText("NAV_HARDTOKENFUNCTIONS") %></strong>
 			<ul>
            <% } %>
-				<li><a href="<%= HT_EDITHARDTOKENISSUERS_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("EDITHARDTOKENISSUERS") %></a></li>
+				<li><a href="<%= HT_EDITHARDTOKENISSUERS_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("NAV_HARDTOKENISSUERS") %></a></li>
 <%     }
       }catch(AuthorizationDeniedException e){}
       if(htheaderprinted){
@@ -260,19 +260,19 @@
 		}catch(AuthorizationDeniedException e){}
 		if(approveendentity || approvecaaction){
 			logheaderprinted = true;%>
-		<li id="cat4" class="section"><strong><%=ejbcawebbean.getText("SUPERVISIONFUNCTIONS") %></strong>
+		<li id="cat4" class="section"><strong><%=ejbcawebbean.getText("NAV_SUPERVISIONFUNCTIONS") %></strong>
 			<ul>
-				<li><a href="<%= APPROVAL_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("APPROVEACTIONS") %></a></li>
+				<li><a href="<%= APPROVAL_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("NAV_APPROVEACTIONS") %></a></li>
 <%      }
    
     // If authorized to view log then display related links.
     try{
       if(ejbcawebbean.isAuthorizedNoLog(LOGVIEW_RESOURCE)){
             if(!logheaderprinted){
-              out.write("<li id=\"cat4\" class=\"section\"><strong>" + ejbcawebbean.getText("SUPERVISIONFUNCTIONS")+"</strong><ul>"); 
+              out.write("<li id=\"cat4\" class=\"section\"><strong>" + ejbcawebbean.getText("NAV_SUPERVISIONFUNCTIONS")+"</strong><ul>"); 
               logheaderprinted=true;
             }  %>
-				<li><a href="<%= LOG_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("VIEWLOG") %></a></li>
+				<li><a href="<%= LOG_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("NAV_VIEWLOG") %></a></li>
 <%    }
    }catch(AuthorizationDeniedException e){} 
 
@@ -280,10 +280,10 @@
    try{
      if(ejbcawebbean.isAuthorizedNoLog(LOGCONFIGURATION_RESOURCE)){ 
             if(!logheaderprinted){
-              out.write("<li id=\"cat4\" class=\"section\"><strong>" + ejbcawebbean.getText("SUPERVISIONFUNCTIONS")+"</strong><ul>"); 
+              out.write("<li id=\"cat4\" class=\"section\"><strong>" + ejbcawebbean.getText("NAV_SUPERVISIONFUNCTIONS")+"</strong><ul>"); 
               logheaderprinted=true;
             }  %>
-				<li><a href="<%= LOG_CONFIGURATION_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("LOGCONFIGURATION") %></a></li>
+				<li><a href="<%= LOG_CONFIGURATION_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("NAV_LOGCONFIGURATION") %></a></li>
 <%   }
    }catch(AuthorizationDeniedException e){}
 
@@ -299,9 +299,9 @@
     try{
       if(ejbcawebbean.isAuthorizedNoLog(SYSTEMCONFIGURATION_RESOURCE)){ 
         systemheaderprinted = true;%>
-		<li id="cat7" class="section"><strong><%=ejbcawebbean.getText("SYSTEMFUNCTIONS") %></strong>
+		<li id="cat7" class="section"><strong><%=ejbcawebbean.getText("NAV_SYSTEMFUNCTIONS") %></strong>
 			<ul>
-				<li><a href="<%= CONFIGURATION_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("SYSTEMCONFIGURATION") %></a></li>
+				<li><a href="<%= CONFIGURATION_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("NAV_SYSTEMCONFIGURATION") %></a></li>
 <%   }
    }catch(AuthorizationDeniedException e){}
 
@@ -309,10 +309,10 @@
    try{
      if(ejbcawebbean.isAuthorizedNoLog(SERVICES_RESOURCE)){
        if(!systemheaderprinted){
-         out.write("<li id=\"cat7\" class=\"section\"><strong>" + ejbcawebbean.getText("SYSTEMFUNCTIONS")+"</strong><ul>"); 
+         out.write("<li id=\"cat7\" class=\"section\"><strong>" + ejbcawebbean.getText("NAV_SYSTEMFUNCTIONS")+"</strong><ul>"); 
          systemheaderprinted=true;
          }  %>
-				<li><a href="<%= SERVICES_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("EDITSERVICES") %></a></li>
+				<li><a href="<%= SERVICES_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("NAV_SERVICES") %></a></li>
 <%   }
   }catch(AuthorizationDeniedException e){} 
 
@@ -320,17 +320,17 @@
     try{
       if(ejbcawebbean.isAuthorizedNoLog(ADMINPRIVILEGES_RESOURCE)){
         if(!systemheaderprinted){
-          out.write("<li id=\"cat7\" class=\"section\"><strong>" + ejbcawebbean.getText("SYSTEMFUNCTIONS")+"</strong><ul>"); 
+          out.write("<li id=\"cat7\" class=\"section\"><strong>" + ejbcawebbean.getText("NAV_SYSTEMFUNCTIONS")+"</strong><ul>"); 
           systemheaderprinted=true;
           }  %>
-				<li><a href="<%= ADMINISTRATORPRIV_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("EDITADMINISTRATORPRIV") %></a></li>
+				<li><a href="<%= ADMINISTRATORPRIV_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("NAV_ADMINISTRATORGROUPS") %></a></li>
 <%   }
    }catch(AuthorizationDeniedException e){}
 
     // If authorized to edit user preferences then display related links.
     try{
       if(ejbcawebbean.isAuthorizedNoLog(MAIN_RESOURCE)){ %>
-				<li><a href="<%= MYPREFERENCES_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("MYPREFERENCES") %></a></li>
+				<li><a href="<%= MYPREFERENCES_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("NAV_MYPREFERENCES") %></a></li>
 <%   }
    }catch(AuthorizationDeniedException e){
    //     throw new AuthorizationDeniedException();

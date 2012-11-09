@@ -99,7 +99,7 @@ function getPasswordAndSubmit(formname) {
 
 <body>
 
-  <h1><%= ejbcawebbean.getText("CAFUNCTIONS") %></h1>
+  <h1><%= ejbcawebbean.getText("CASTRUCTUREANDCRL") %></h1>
 
 <!--  <div align="right"><A  onclick='displayHelpWindow("<%= ejbcawebbean.getHelpfileInfix("ca_help.html") %>")'>
     <u><%= ejbcawebbean.getText("HELP") %></u> </A> 
