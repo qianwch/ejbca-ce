@@ -6,7 +6,7 @@ The following databases have in some stage been tested with EJBCA:
 * Hypersoniq (hsqldb) (default in JBoss)
 * PostegreSQL 7.2 and 8.x (http://www.postgresql.org/)
 * MySQL 4.x and 5.x (http://www.mysql.com/)
-* Oracle 8i, 9i and 10g (http://www.oracle.com/)
+* Oracle 10g and 11g (http://www.oracle.com/)
 * Sybase
 * MS-SQL2000, 2003, 2008
 * DB2
@@ -182,19 +182,20 @@ so you can actually connect locally as the ejbca user.
 Oracle specifics
 ----------------
 Note that the default Oracle JDBC driver for Oracle 8 and 9 is seriously flawed and will not update 
-BLOBS larger than a certain size. EJBCA uses some BLOBs, so unfortunately is doesn't work.
-The driver from Oracle 10 works fine and can be downloaded from:
-http://www.oracle.com/technetwork/database/features/jdbc/index-091264.html
+BLOBS larger than a certain size. EJBCA uses some CLOBs/BLOBs, so unfortunately is doesn't work.
+The driver from Oracle 11 works fine and can be downloaded from:
+http://www.oracle.com/technetwork/database/features/jdbc/
 
-The JDBC-driver from http://www.datadirect.com/ also works fine, but it's not for free.
+JDBC driver for Java 6: ojdbc6.zip
 
-JDBC driver: ojdbc14.zip
+Use latest driver from at least Oracle 11 that can be downloaded from http://www.oracle.com/.
 
-Use latest driver from at least Oracle 10 that can be downloaded from http://www.oracle.com/.
-We also had reports that some version of the Oracle 10 driver does not work, but that the driver 
-from Oracle 9.2i works. Since oracles JDBC driver seems to be of such bad quality, we have to 
-recommend that you try different versions until you find one that works...or use another database.
-Version 10.1.0.4.0 is confirmed to work.
+From EJBCA 4.0 hibernate is used as the JPA (Java Persistence) provider. If startup is slow, when
+hibernate is loading/updating the schema you should add the following to 
+modules/ejbca-entity/resources/persistense-ds-template.xml, and then do a "ant clean bootstrap" 
+-----	
+<property name="hibernate.default_schema">YOUR_SCHEMANAME_IN_UPPERCASE</property> 
+-----
 
 The SQL command to show tables in Oracle is:
 select table_name from user_tables;
