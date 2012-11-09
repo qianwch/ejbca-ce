@@ -168,8 +168,7 @@ public class CrmfRequestMessageTest {
     	assertEquals("foo123", msg.getPassword());
     	// Verify PBE protection
     	PKIHeader head = msg.getHeader();
-    	final DEROctetString os = head.getSenderKID();
-    	String keyId = new String(os.getOctets(), "UTF-8");
+    	String keyId = CmpMessageHelper.getSenderKeyId(head.getSenderKID());
     	assertEquals("mykeyid", keyId);
     	final CmpPbeVerifyer verifyer = new CmpPbeVerifyer(msg.getMessage());
     	assertTrue(verifyer.verify("foo123"));
@@ -273,8 +272,7 @@ public class CrmfRequestMessageTest {
     	assertEquals("foo123", msg.getPassword());
     	// Verify PBE protection
     	PKIHeader head = msg.getHeader();
-    	final DEROctetString os = head.getSenderKID();
-    	String keyId = new String(os.getOctets(), "UTF-8");
+    	String keyId = CmpMessageHelper.getSenderKeyId(head.getSenderKID());
     	assertEquals("KeyId", keyId);
     	final CmpPbeVerifyer verifyer = new CmpPbeVerifyer(msg.getMessage());
     	assertTrue(verifyer.verify("password"));

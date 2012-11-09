@@ -512,7 +512,7 @@ public abstract class CmpTestCase extends CaTestCase {
         if (pbe) {
             DEROctetString os = header.getSenderKID();
             assertNotNull(os);
-            String keyId = new String(os.getOctets());
+            String keyId = CmpMessageHelper.getSenderKeyId(os);
             log.debug("Found a sender keyId: " + keyId);
             // Verify the PasswordBased protection of the message
             byte[] protectedBytes = respObject.getProtectedBytes();

@@ -48,6 +48,7 @@ import org.ejbca.core.model.InternalEjbcaResources;
 import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.core.model.ra.NotFoundException;
+import org.ejbca.core.protocol.cmp.CmpMessageHelper;
 import org.ejbca.core.protocol.cmp.CmpPKIBodyConstants;
 import org.ejbca.util.passgen.IPasswordGenerator;
 import org.ejbca.util.passgen.PasswordGeneratorFactory;
@@ -486,10 +487,10 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
         int ret = 0;
         String endEntityProfile = CmpConfiguration.getRAEndEntityProfile();
         if (StringUtils.equals(endEntityProfile, "KeyId") && (keyId != null)) {
+            endEntityProfile = CmpMessageHelper.getSenderKeyId(keyId);
             if (log.isDebugEnabled()) {
-                log.debug("Using End Entity Profile with same name as KeyId in request: "+keyId);
+                log.debug("Using End Entity Profile with same name as KeyId in request: "+endEntityProfile);
             }
-            endEntityProfile = keyId.toString();
         } 
         ret = eeProfileSession.getEndEntityProfileId(endEntityProfile);
         if (ret == 0) {
