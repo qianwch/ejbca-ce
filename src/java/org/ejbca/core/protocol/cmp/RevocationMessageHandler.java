@@ -130,7 +130,7 @@ public class RevocationMessageHandler extends BaseCmpMessageHandler implements I
 		String macAlg = null;
 		final int iterationCount = 1024;
 		String cmpRaAuthSecret = null;
-		final String keyId = CmpMessageHelper.getSenderKeyId(msg.getHeader().getSenderKID());
+		final String keyId = CmpMessageHelper.getStringFromOctets(msg.getHeader().getSenderKID());
 		ResponseStatus status = ResponseStatus.FAILURE;
         FailInfo failInfo = FailInfo.BAD_MESSAGE_CHECK;
         String failText = null;

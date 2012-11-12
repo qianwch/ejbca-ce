@@ -392,27 +392,26 @@ public class CmpMessageHelper {
 	/** 
 	 * @return SenderKeyId of in the header or null none was found. 
 	 */
-    public static String getSenderKeyId(final DEROctetString keyIdOctets) { //PKIHeader head) {
-        String keyId = null;
-        //final DEROctetString os = head.getSenderKID();
-        if (keyIdOctets != null) {
+    public static String getStringFromOctets(final DEROctetString octets) {
+        String str = null;
+        if (octets != null) {
             try {
-                keyId = new String(keyIdOctets.getOctets(), "UTF-8");
+                str = new String(octets.getOctets(), "UTF-8");
             } catch (UnsupportedEncodingException e2) {
-                keyId = new String(keyIdOctets.getOctets());
+                str = new String(octets.getOctets());
                 LOG.info("UTF-8 not available, using platform default encoding for keyId.");
             }
-            if (!StringUtils.isAsciiPrintable(keyId)) {
-                keyId = new String(Hex.encode(keyIdOctets.getOctets()));
+            if (!StringUtils.isAsciiPrintable(str)) {
+                str = new String(Hex.encode(octets.getOctets()));
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("keyId is not asciiPrintable, converting to hex: " + keyId);
+                    LOG.debug("DEROctetString content is not asciiPrintable, converting to hex: " + str);
                 }
             }
             
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Found a sender keyId: "+keyId);
+                LOG.debug("Found string: "+str);
             }
         }
-        return keyId;
+        return str;
     }
 }

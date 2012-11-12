@@ -379,12 +379,12 @@ public class CrmfRequestTest extends CmpTestCase {
         log.trace(">test08KeyIdTest()");
         
         DEROctetString octs = new DEROctetString("foo123".getBytes());
-        String keyid = CmpMessageHelper.getSenderKeyId(octs);
+        String keyid = CmpMessageHelper.getStringFromOctets(octs);
         assertEquals("foo123", keyid);
         
         PKIHeader header = new PKIHeader(new DERInteger(2), new GeneralName(new X509Name("CN=Sender")), new GeneralName(new X509Name("CN=Recipient")));
         header.setSenderKID(new DEROctetString("foo123".getBytes()));
-        keyid = CmpMessageHelper.getSenderKeyId(header.getSenderKID());
+        keyid = CmpMessageHelper.getStringFromOctets(header.getSenderKID());
         assertEquals("foo123", keyid);
         
         log.trace("<test08KeyIdTest()");

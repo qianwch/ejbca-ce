@@ -129,7 +129,7 @@ public class ConfirmationMessageHandler extends BaseCmpMessageHandler implements
 	}
 	
 	private void setPbeParameters(final CmpConfirmResponseMessage cresp, final BaseCmpMessage msg, final boolean authenticated) {
-        final String keyId = CmpMessageHelper.getSenderKeyId(msg.getHeader().getSenderKID());
+        final String keyId = CmpMessageHelper.getStringFromOctets(msg.getHeader().getSenderKID());
 	    
         String owfAlg = null;
         String macAlg = null;
