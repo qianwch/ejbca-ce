@@ -13,12 +13,8 @@
 
 package org.ejbca.core.protocol.cmp;
 
-import java.io.UnsupportedEncodingException;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
-import org.bouncycastle.asn1.DEROctetString;
-import org.bouncycastle.util.encoders.Hex;
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.certificates.ca.CADoesntExistsException;
@@ -30,8 +26,6 @@ import org.ejbca.config.CmpConfiguration;
 import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileSessionLocal;
 import org.ejbca.core.model.ra.NotFoundException;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfile;
-
-import com.novosec.pkix.asn1.cmp.PKIHeader;
 
 /**
  * Base class for CMP message handlers that require RA mode secret verification.
@@ -71,7 +65,7 @@ public class BaseCmpMessageHandler {
 	}
 
 	/** @return the end entity profile id to use for a request based on the current configuration and keyId. 
-	 * @throws UnsupportedEncodingException */
+	 * @throws NotFoundException */
 	protected int getUsedEndEntityProfileId(final String keyId) throws NotFoundException {
 		int ret = 0;
 		String endEntityProfile = CmpConfiguration.getRAEndEntityProfile();
