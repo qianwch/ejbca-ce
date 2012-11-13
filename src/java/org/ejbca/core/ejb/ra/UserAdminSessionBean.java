@@ -1332,6 +1332,8 @@ public class UserAdminSessionBean implements UserAdminSessionLocal, UserAdminSes
             }
         } else {
             if (    info.getRevocationReason()!=RevokedCertInfo.NOT_REVOKED &&
+                    // it should be possible to revoke a certificate on hold for good.
+                    info.getRevocationReason()!=RevokedCertInfo.REVOCATION_REASON_CERTIFICATEHOLD &&
                     // a valid certificate could have reason "REVOCATION_REASON_REMOVEFROMCRL" if it has been revoked in the past.
                     info.getRevocationReason()!=RevokedCertInfo.REVOCATION_REASON_REMOVEFROMCRL ) {
                 final String msg = intres.getLocalizedMessage("ra.errorrevocationexists");
