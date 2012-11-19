@@ -80,7 +80,18 @@ public class RequestInstance {
 	private SignSessionLocal signSession;
 	private UserAdminSessionLocal userAdminSession;
 	private GlobalConfigurationSession globalConfigurationSession;
-	
+
+	private String password=null;
+	private String username=null;
+	private String openvpn=null;
+	private String certprofile=null;
+	private String keylength="1024";
+	private String keyalg=AlgorithmConstants.KEYALGORITHM_RSA;
+	// Possibility to override by code and ignore parameters
+	private String keylengthstring=null;
+	private String keyalgstring=null;
+
+
 	protected RequestInstance(ServletContext servletContext, ServletConfig servletConfig, AuthenticationSessionLocal authenticationSession, CAAdminSessionLocal caAdminSession,
 	        CertificateProfileSessionLocal certificateProfileSession, EndEntityProfileSessionLocal endEntityProfileSession, KeyRecoverySessionLocal keyRecoverySession, RaAdminSessionLocal raAdminSession,
 			SignSessionLocal signSession, UserAdminSessionLocal userAdminSession, GlobalConfigurationSession globalConfigurationSession) {
@@ -96,6 +107,92 @@ public class RequestInstance {
 		this.globalConfigurationSession = globalConfigurationSession;
 	}
 
+	/**************************************************************
+	 ** If you want to force some parameters, you
+	 ** may set them here. These settings will
+	 ** override parameters in request
+	 **************************************************************/
+	public String getPassword() {
+		return password;
+	}
+
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+
+	public String getUsername() {
+		return username;
+	}
+
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public String getOpenvpn() {
+		return openvpn;
+	}
+
+
+	public void setOpenvpn(String openvpn) {
+		this.openvpn = openvpn;
+	}
+
+
+	public String getCertprofile() {
+		return certprofile;
+	}
+
+
+	public void setCertprofile(String certprofile) {
+		this.certprofile = certprofile;
+	}
+
+
+	public String getKeylength() {
+		return keylength;
+	}
+
+
+	// set key lengths, but can be overridden by request parameter 
+	public void setKeylength(String keylength) {
+		this.keylength = keylength;
+	}
+
+
+	public String getKeyalg() {
+		return keyalg;
+	}
+
+	// set key algorithm, but can be overridden by request parameter 
+	public void setKeyalg(String keyalg) {
+		this.keyalg = keyalg;
+	}
+
+	public String getKeylengthstring() {
+		return keylengthstring;
+	}
+
+
+	// Override request parameters with "hardcoded" key length from your code
+	public void setKeylengthstring(String keylengthstring) {
+		this.keylengthstring = keylengthstring;
+	}
+
+
+	public String getKeyalgstring() {
+		return keyalgstring;
+	}
+
+
+	// Override request parameters with "hardcoded" key algorithm from your code
+	public void setKeyalgstring(String keyalgstring) {
+		this.keyalgstring = keyalgstring;
+	}
+
+
 	void doPost(HttpServletRequest request, HttpServletResponse response)
 	throws IOException, ServletException {
 		ServletDebug debug = new ServletDebug(request, response);
@@ -106,14 +203,37 @@ public class RequestInstance {
 		try {
 			setParameters(request);
 
-			final String username = StringUtils.strip(getParameter("user"));
-			String password = getParameter("password");
-			String keylengthstring = getParameter("keylength");
-			String keyalgstring = getParameter("keyalg");
-			String openvpn = getParameter("openvpn");
-			String certprofile = getParameter("certprofile");
-			String keylength = "1024";
-			String keyalg = AlgorithmConstants.KEYALGORITHM_RSA;
+			/*********************************************************************
+			 ** If parameters are not set by Set... they must be
+			 ** provided by request
+			 *********************************************************************/
+			if (username==null) { 
+				username = StringUtils.strip(getParameter("user")); 
+			}
+			if (password==null) { 
+				password = getParameter("password"); 
+			}
+			if (openvpn==null) { 
+				openvpn = getParameter("openvpn"); 
+			}
+			if (certprofile==null) { 
+				certprofile = getParameter("certprofile"); 
+			}
+
+			if (keylengthstring==null) { 
+				keylengthstring = getParameter("keylength"); 
+			}
+			if (keyalgstring==null) { 
+				keyalgstring = getParameter("keyalg"); 
+			}
+			// If nothing has been set by setKeyLengthString and nothing is received by request parameters use default value of keylength
+			if (keylengthstring != null) {
+				keylength = keylengthstring;
+			}
+			// If nothing has been set by setKeyAlgString and nothing is received by request parameters use default value of keyalg
+			if (keyalgstring != null) {
+				keyalg = keyalgstring;
+			}
 
 			int resulttype = 0;
 			if(getParameter("resulttype") != null) {
@@ -125,13 +245,6 @@ public class RequestInstance {
 			if ((getParameter("classid") != null) &&
 					!getParameter("classid").equals("")) {
 				classid = getParameter("classid");
-			}
-
-			if (keylengthstring != null) {
-				keylength = keylengthstring;
-			}
-			if (keyalgstring != null) {
-				keyalg = keyalgstring;
 			}
 
 			Admin administrator = new Admin(Admin.TYPE_PUBLIC_WEB_USER, request.getRemoteAddr());
