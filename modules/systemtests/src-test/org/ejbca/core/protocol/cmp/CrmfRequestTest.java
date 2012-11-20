@@ -13,6 +13,7 @@
 
 package org.ejbca.core.protocol.cmp;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -32,6 +33,8 @@ import javax.ejb.FinderException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.ASN1Sequence;
+import org.bouncycastle.asn1.DERInteger;
+import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DEROutputStream;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.X509Name;
@@ -65,6 +68,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.novosec.pkix.asn1.cmp.PKIHeader;
 import com.novosec.pkix.asn1.cmp.PKIMessage;
 
 /**
@@ -370,6 +374,22 @@ public class CrmfRequestTest extends CmpTestCase {
         log.trace("<test07SignedConfirmationMessage()");
     }
 
+    @Test
+    public void test08KeyIdTest() {
+        log.trace(">test08KeyIdTest()");
+        
+        DEROctetString octs = new DEROctetString("foo123".getBytes());
+        String keyid = CmpMessageHelper.getStringFromOctets(octs);
+        assertEquals("foo123", keyid);
+        
+        PKIHeader header = new PKIHeader(new DERInteger(2), new GeneralName(new X509Name("CN=Sender")), new GeneralName(new X509Name("CN=Recipient")));
+        header.setSenderKID(new DEROctetString("foo123".getBytes()));
+        keyid = CmpMessageHelper.getStringFromOctets(header.getSenderKID());
+        assertEquals("foo123", keyid);
+        
+        log.trace("<test08KeyIdTest()");
+    }
+    
     private void createCmpUser() throws AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, WaitingForApprovalException,
             EjbcaException, FinderException, CADoesntExistsException {
         // Make user that we know...

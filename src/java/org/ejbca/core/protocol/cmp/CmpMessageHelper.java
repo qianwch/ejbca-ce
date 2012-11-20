@@ -51,6 +51,7 @@ import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.X509CertificateStructure;
 import org.bouncycastle.cms.CMSSignedGenerator;
 import org.bouncycastle.ocsp.BasicOCSPResp;
+import org.bouncycastle.util.encoders.Hex;
 import org.cesecore.certificates.ca.SignRequestException;
 import org.cesecore.certificates.certificate.request.FailInfo;
 import org.cesecore.certificates.certificate.request.ResponseMessage;
@@ -387,4 +388,30 @@ public class CmpMessageHelper {
 		
 		return myPKIBody;
 	}
+	
+	/** 
+	 * @return SenderKeyId of in the header or null none was found. 
+	 */
+    public static String getStringFromOctets(final DEROctetString octets) {
+        String str = null;
+        if (octets != null) {
+            try {
+                str = new String(octets.getOctets(), "UTF-8");
+            } catch (UnsupportedEncodingException e2) {
+                str = new String(octets.getOctets());
+                LOG.info("UTF-8 not available, using platform default encoding for keyId.");
+            }
+            if (!StringUtils.isAsciiPrintable(str)) {
+                str = new String(Hex.encode(octets.getOctets()));
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("DEROctetString content is not asciiPrintable, converting to hex: " + str);
+                }
+            }
+            
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Found string: "+str);
+            }
+        }
+        return str;
+    }
 }
