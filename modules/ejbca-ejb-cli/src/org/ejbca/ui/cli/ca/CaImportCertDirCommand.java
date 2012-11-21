@@ -215,7 +215,7 @@ public class CaImportCertDirCommand extends BaseCaAdminCommand {
 		if (CertTools.getNotAfter(certificate).compareTo(now) < 0) {
 			status = SecConst.CERT_ARCHIVED;
 		}
-		if (!cacert.getSubjectX500Principal().getName().equals(certificate.getIssuerX500Principal().getName())){
+		if (!cacert.getSubjectX500Principal().equals(certificate.getIssuerX500Principal())){
 			getLogger().info("REJECTED, CA issuer mismatch, file: " + filename);
 			return STATUS_CAMISMATCH;
 		}
