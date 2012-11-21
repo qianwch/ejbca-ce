@@ -128,21 +128,22 @@ public abstract class ProtectedData {
 	}
 
 	protected void protectData() {
-		if (ProtectedDataConfiguration.useDatabaseIntegrityProtection(getTableName())) {
-			final int rowversion = getProtectVersion();
-			final String str = getProtectString(rowversion);
-			// Always protect new and updated rows with default keyid
-			final int keyid = ProtectedDataConfiguration.instance().getKeyId(getTableName()).intValue();
-			// HMAC or digital signature
-			final int protectVersion = ProtectedDataConfiguration.instance().getProtectVersion(keyid).intValue();
-			final String protection = calculateProtection(protectVersion, keyid, str);
-			final String pstring = rowversion + ":" + protectVersion + ":" + keyid + ":" + protection;
-			if (log.isTraceEnabled()) {
-				log.trace("Protected string (" + this.getClass().getName() + "): " + str);
-				log.trace("Protecting row string with protection '" + protection + "': " + pstring);
-			}
-			setRowProtection(pstring);
+		if ( !ProtectedDataConfiguration.useDatabaseIntegrityProtection(getTableName()) ) {
+			return;
 		}
+		final int rowversion = getProtectVersion();
+		final String str = getProtectString(rowversion);
+		// Always protect new and updated rows with default keyid
+		final int keyid = ProtectedDataConfiguration.instance().getKeyId(getTableName()).intValue();
+		// HMAC or digital signature
+		final int protectVersion = ProtectedDataConfiguration.instance().getProtectVersion(keyid).intValue();
+		final String protection = calculateProtection(protectVersion, keyid, str);
+		final String pstring = rowversion + ":" + protectVersion + ":" + keyid + ":" + protection;
+		if (log.isTraceEnabled()) {
+			log.trace("Protected string (" + this.getClass().getName() + "): " + str);
+			log.trace("Protecting row string with protection '" + protection + "': " + pstring);
+		}
+		setRowProtection(pstring);
 	}
 
 	protected void verifyData() {
