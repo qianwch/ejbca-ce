@@ -138,27 +138,23 @@ public class CaImportCertDirCommand extends BaseCaAdminCommand {
 					String dn = CertTools.getSubjectDN(certificate);
 					if (dn == null || dn.length() == 0) {
 						getLogger().info("Certificate with serial '" + CertTools.getSerialNumberAsString(certificate) + "' lacks DN, filename used instead, file: " + filename);
-					}
-					else {
+					} else {
 						username = dn;
 					}
-				}
 				// Use CN if requested, but fallback to DN if it's empty, or if
 				// DN is empty as well, fall back to filename.
-				else if (usernameFilter.equalsIgnoreCase("CN")) {
+				} else if (usernameFilter.equalsIgnoreCase("CN")) {
 					String dn = CertTools.getSubjectDN(certificate);
 					String cn = CertTools.getPartFromDN(dn, "CN");
 
 					if (cn == null || cn.length() == 0) {
 						if (dn == null || dn.length() == 0) {
 							getLogger().info("Certificate with serial '" + CertTools.getSerialNumberAsString(certificate) + "' lacks both CN and DN, filename used instead, file: " +filename);
-						}
-						else {
+						} else {
 							username = dn;
 							getLogger ().info("Certificate with serial '" + CertTools.getSerialNumberAsString(certificate) + "' lacks CN, DN used instead, file: " +filename);
 						}
-					}
-					else {
+					} else {
 						username = cn;
 					}
 				}
@@ -169,12 +165,10 @@ public class CaImportCertDirCommand extends BaseCaAdminCommand {
 
 				try {
 					performImportStatus = performImport(cliUserName, cliPassword, certificate, status, endEntityProfileId, certificateProfileId, cacert, caInfo, filename, issuer, username);
-				}
-				catch (UserDoesntFullfillEndEntityProfile e) {
+				} catch (UserDoesntFullfillEndEntityProfile e) {
 					getLogger().info("Import error, end entity profile constraints violated, file: " + filename);
 					throw e;
-				}
-				catch (Exception e) {
+				} catch (Exception e) {
 					getLogger().info("General import error, file: " + filename);
 					throw e;
 				}
