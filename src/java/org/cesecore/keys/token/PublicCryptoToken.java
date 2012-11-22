@@ -1,6 +1,15 @@
-/**
- * 
- */
+/*************************************************************************
+ *                                                                       *
+ *  CESeCore: CE Security Core                                           *
+ *                                                                       *
+ *  This software is free software; you can redistribute it and/or       *
+ *  modify it under the terms of the GNU Lesser General Public           *
+ *  License as published by the Free Software Foundation; either         *
+ *  version 2.1 of the License, or any later version.                    *
+ *                                                                       *
+ *  See terms of license at gnu.org.                                     *
+ *                                                                       *
+ *************************************************************************/
 package org.cesecore.keys.token;
 
 import java.io.ByteArrayInputStream;
@@ -17,70 +26,98 @@ import java.security.PublicKey;
 import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 import java.security.spec.AlgorithmParameterSpec;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Enumeration;
 import java.util.Properties;
+import java.util.Vector;
 
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
+import org.apache.log4j.Logger;
+
 /**
- * @author lars
- *
+ * Handles maintenance of the soft devices producing signatures and handling the private key and stored in database.
+ * 
+ * CESeCore version:
+ * 
+ * @version $Id$
  */
 public class PublicCryptoToken implements CryptoToken {
 
 	private static final long serialVersionUID = 1L;
 	private int id;
+    private static final Logger log = Logger.getLogger(PublicCryptoToken.class);
+    private PublicKey pk;
+    private final static String providerName = "BC";
 
 	@Override
 	public void init(Properties properties, byte[] data, int _id)
 			throws Exception {
 		this.id = _id;
-		final PublicKey pk= CertificateFactory.getInstance( "X509" ).generateCertificate(new ByteArrayInputStream(data)).getPublicKey();
-		KeyFactory.
-		// TODO Auto-generated method stub
-
+		if ( data==null || data.length<1 ) {
+			final String msg = "No data for public key in token with id: "+this.id;
+			log.error(msg);
+			throw new Exception( msg );
+		}
+		this.pk = getPublicKey(data);
+		if ( this.pk==null ) {
+			final String msg = "Not possible to initiate public key.";
+			log.error(msg);
+			throw new Exception( msg );
+		}
 	}
 
+	private PublicKey getPublicKey(final byte data[]) {
+		try {
+			return KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(data));
+		} catch (InvalidKeySpecException e) {
+			log.debug("Not an X509 key.", e);
+		} catch (NoSuchAlgorithmException e) {
+			log.debug("No RSA key factory available. Try to read key from cert instead.", e);
+		}
+		try {
+			return CertificateFactory.getInstance("X.509").generateCertificate(new ByteArrayInputStream(data)).getPublicKey();
+		} catch (CertificateException e) {
+			log.debug("Public key data is not a certificate.", e);
+		}
+		return null; // no more formats to try
+	}
 	@Override
 	public int getId() {
-		// TODO Auto-generated method stub
-		return 0;
+		return this.id;
 	}
 
 	@Override
 	public void activate(char[] authenticationcode)
 			throws CryptoTokenOfflineException,
 			CryptoTokenAuthenticationFailedException {
-		// TODO Auto-generated method stub
-
+		// no private key to activate
 	}
 
 	@Override
 	public void deactivate() {
-		// TODO Auto-generated method stub
-
+		// no private key to deactivate
 	}
 
 	@Override
 	public PrivateKey getPrivateKey(String alias)
 			throws CryptoTokenOfflineException {
-		// TODO Auto-generated method stub
+		// no private key for this token
 		return null;
 	}
 
 	@Override
 	public PublicKey getPublicKey(String alias)
 			throws CryptoTokenOfflineException {
-		// TODO Auto-generated method stub
-		return null;
+		return this.pk;
 	}
 
 	@Override
 	public Key getKey(String alias) throws CryptoTokenOfflineException {
-		// TODO Auto-generated method stub
+		// no symmetric key for this token.
 		return null;
 	}
 
@@ -88,8 +125,7 @@ public class PublicCryptoToken implements CryptoToken {
 	public void deleteEntry(char[] authenticationcode, String alias)
 			throws KeyStoreException, NoSuchAlgorithmException,
 			CertificateException, IOException, CryptoTokenOfflineException {
-		// TODO Auto-generated method stub
-
+		// static do nothing
 	}
 
 	@Override
@@ -98,8 +134,7 @@ public class PublicCryptoToken implements CryptoToken {
 			InvalidAlgorithmParameterException, InvalidKeyException,
 			SignatureException, KeyStoreException, CertificateException,
 			IOException, CryptoTokenOfflineException {
-		// TODO Auto-generated method stub
-
+		// static do nothing
 	}
 
 	@Override
@@ -108,8 +143,7 @@ public class PublicCryptoToken implements CryptoToken {
 			InvalidAlgorithmParameterException, InvalidKeyException,
 			SignatureException, KeyStoreException, CertificateException,
 			IOException, CryptoTokenOfflineException {
-		// TODO Auto-generated method stub
-
+		// static do nothing
 	}
 
 	@Override
@@ -119,57 +153,51 @@ public class PublicCryptoToken implements CryptoToken {
 			InvalidKeyException, InvalidAlgorithmParameterException,
 			SignatureException, CertificateException, IOException,
 			NoSuchPaddingException, IllegalBlockSizeException {
-		// TODO Auto-generated method stub
-
+		// static do nothing
 	}
 
 	@Override
 	public String getSignProviderName() {
-		// TODO Auto-generated method stub
-		return null;
+		return providerName;
 	}
 
 	@Override
 	public String getEncProviderName() {
-		// TODO Auto-generated method stub
-		return null;
+		return providerName;
 	}
 
 	@Override
 	public void reset() {
-		// TODO Auto-generated method stub
-
+		// do nothing
 	}
 
 	@Override
 	public int getTokenStatus() {
-		// TODO Auto-generated method stub
-		return 0;
+		if ( this.pk==null ) {
+			return CryptoToken.STATUS_OFFLINE;
+		}
+		return CryptoToken.STATUS_ACTIVE;
 	}
 
 	@Override
 	public Properties getProperties() {
-		// TODO Auto-generated method stub
-		return null;
+		return new Properties();
 	}
 
 	@Override
 	public void setProperties(Properties properties) {
-		// TODO Auto-generated method stub
-
+		// do nothing
 	}
 
 	@Override
 	public byte[] getTokenData() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.pk.getEncoded();
 	}
 
 	@Override
 	public void testKeyPair(PrivateKey privateKey, PublicKey publicKey)
 			throws InvalidKeyException, NoSuchProviderException {
-		// TODO Auto-generated method stub
-
+		// be positive
 	}
 
 	@Override
@@ -180,7 +208,6 @@ public class PublicCryptoToken implements CryptoToken {
 			IllegalBlockSizeException, CryptoTokenOfflineException,
 			PrivateKeyNotExtractableException,
 			InvalidAlgorithmParameterException {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -192,21 +219,20 @@ public class PublicCryptoToken implements CryptoToken {
 			InvalidKeyException, IllegalBlockSizeException,
 			CryptoTokenOfflineException, PrivateKeyNotExtractableException,
 			InvalidAlgorithmParameterException {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public boolean doPermitExtractablePrivateKey() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
 	public Enumeration<String> getAliases() throws KeyStoreException,
 			CryptoTokenOfflineException {
-		// TODO Auto-generated method stub
-		return null;
+		final Vector<String> v = new Vector<String>();
+		v.add("dummy");
+		return v.elements();
 	}
 
 }
