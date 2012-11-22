@@ -64,7 +64,7 @@ public class PublicCryptoToken implements CryptoToken {
 		}
 		this.pk = getPublicKey(data);
 		if ( this.pk==null ) {
-			final String msg = "Not possible to initiate public key.";
+			final String msg = "Not possible to initiate public key id: "+this.id;
 			log.error(msg);
 			throw new Exception( msg );
 		}
