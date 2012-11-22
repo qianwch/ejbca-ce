@@ -250,6 +250,8 @@ public class CMPNestedMessageTestBaseCommand {
     protected PKIMessage signPKIMessage(final PKIMessage msg, PrivateKey signingKey) throws NoSuchAlgorithmException, NoSuchProviderException, 
     		InvalidKeyException, SignatureException {
     	PKIMessage message = msg;
+		AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha256WithRSAEncryption);
+		msg.getHeader().setProtectionAlg(pAlg);
     	final Signature sig = Signature.getInstance(PKCSObjectIdentifiers.sha256WithRSAEncryption.getId(), "BC");
     	sig.initSign(signingKey);
     	sig.update(message.getProtectedBytes());
