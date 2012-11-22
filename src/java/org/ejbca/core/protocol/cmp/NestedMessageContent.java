@@ -131,7 +131,7 @@ public class NestedMessageContent extends BaseCmpMessage implements RequestMessa
             }
             if(racerts.size() <= 0) {
                 String errorMessage = "No certificate files were found in " + CmpConfiguration.getRaCertificatePath();
-                log.error(errorMessage);
+                log.info(errorMessage);
             }
 
             final Iterator<X509Certificate> itr = racerts.iterator();
@@ -152,16 +152,25 @@ public class NestedMessageContent extends BaseCmpMessage implements RequestMessa
                     continue;
                 }
                 
-                Signature sig = Signature.getInstance(cert.getSigAlgName(), "BC");
-                sig.initVerify(cert.getPublicKey());
-                sig.update(raSignedMessage.getProtectedBytes());
                 if(raSignedMessage.getProtection() != null) {
+                    final String algId; 
+                    if (raSignedMessage.getHeader().getProtectionAlg() != null) {
+                        algId = raSignedMessage.getHeader().getProtectionAlg().getAlgorithm().getId();    
+                    } else {
+                        algId = cert.getSigAlgName();
+                    }
+                    if (log.isDebugEnabled()) {
+                        log.debug("Verifying message signature using algorithm id: "+algId);
+                    }
+                    Signature sig = Signature.getInstance(algId, "BC");
+                    sig.initVerify(cert.getPublicKey());
+                    sig.update(raSignedMessage.getProtectedBytes());
                     ret = sig.verify(raSignedMessage.getProtection().getBytes());
                     if(log.isDebugEnabled()) {
                         log.debug("Verifying the NestedMessageContent using the RA certificate with subjectDN '" + cert.getSubjectDN() + "' returned " + ret);
                     }
                 } else {
-                    log.error("No signature was found in NestedMessageContent");
+                    log.info("No signature was found in NestedMessageContent");
                 }
             }
 
@@ -217,7 +226,7 @@ public class NestedMessageContent extends BaseCmpMessage implements RequestMessa
 
         final File raCertDirectory = new File(raCertsPath);
         final String[] files = raCertDirectory.list();
-        if(log.isDebugEnabled()) {
+        if(log.isDebugEnabled() && (files != null)) {
             log.debug("Found " + files.length + " trusted RA certificate in " + raCertsPath);
         }
 
@@ -235,7 +244,7 @@ public class NestedMessageContent extends BaseCmpMessage implements RequestMessa
                 }
 
             }
-        }       
+        }
         return racerts;
     }
     
