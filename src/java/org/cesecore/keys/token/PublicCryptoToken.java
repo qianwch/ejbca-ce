@@ -70,7 +70,7 @@ public class PublicCryptoToken implements CryptoToken {
 		}
 	}
 
-	private PublicKey getPublicKey(final byte data[]) {
+	private static PublicKey getPublicKey(final byte data[]) {
 		try {
 			return KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(data));
 		} catch (InvalidKeySpecException e) {
