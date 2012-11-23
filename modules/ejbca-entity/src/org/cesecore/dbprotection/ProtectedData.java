@@ -219,7 +219,7 @@ public abstract class ProtectedData {
 		// the signature, and for that we do not need the private key, only the public
 		// Decrypt the signature (realprot) and extract the desired hash
 		final CryptoToken token = ProtectedDataConfiguration.instance().getCryptoToken(keyid);
-		final Signature signature = Signature.getInstance("SHA256WithRSA", token.getSignProviderName());
+		final Signature signature = Signature.getInstance("SHA256WithRSA");
 		final PublicKey pubKey = token.getPublicKey(ProtectedDataConfiguration.instance().getKeyLabel(keyid));
 		signature.initVerify(pubKey);
 		signature.update(str.getBytes("UTF-8"));
