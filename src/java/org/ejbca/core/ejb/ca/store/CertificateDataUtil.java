@@ -134,14 +134,14 @@ public abstract class CertificateDataUtil {
         return ret;
     }
     
-    protected Collection<Certificate> findCertificatesByUsername(Admin admin, String username, EntityManager entityManager) {
+    protected List<Certificate> findCertificatesByUsername(Admin admin, String username, EntityManager entityManager) {
     	if (LOG.isTraceEnabled()) {
     		LOG.trace(">findCertificatesByUsername(),  username=" + username);
     	}
     	// Strip dangerous chars
     	username = StringTools.strip(username);
     	// This method on the entity bean does the ordering in the database
-    	Collection<CertificateData> coll = CertificateData.findByUsernameOrdered(entityManager, username);
+    	List<CertificateData> coll = CertificateData.findByUsernameOrdered(entityManager, username);
     	ArrayList<Certificate> ret = new ArrayList<Certificate>();
     	Iterator<CertificateData> iter = coll.iterator();
     	while (iter.hasNext()) {

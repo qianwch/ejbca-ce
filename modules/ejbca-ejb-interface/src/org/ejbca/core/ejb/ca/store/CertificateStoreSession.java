@@ -173,7 +173,7 @@ public interface CertificateStoreSession {
      * @param username the username of the certificate(s) that will be retrieved
      * @return Collection of Certificates ordered by expire date, with last expire date first, or null if none found.
      */
-    public Collection<Certificate> findCertificatesByUsername(Admin admin, String username);
+    public List<Certificate> findCertificatesByUsername(Admin admin, String username);
 
     /**
      * Finds certificate(s) for a given username and status.

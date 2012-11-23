@@ -88,7 +88,7 @@ public class CertificateStoreOnlyDataSessionBean extends CertificateDataUtil imp
     }
 
 	@Override
-    public Collection<Certificate> findCertificatesByUsername(Admin admin, String username) {
+    public List<Certificate> findCertificatesByUsername(Admin admin, String username) {
     	return findCertificatesByUsername(admin, username, entityManager);
     }
 

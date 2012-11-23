@@ -352,7 +352,7 @@ public class CertificateStoreSessionBean extends CertificateDataUtil implements 
     }
 
     @Override
-    public Collection<Certificate> findCertificatesByUsername(Admin admin, String username) {
+    public List<Certificate> findCertificatesByUsername(Admin admin, String username) {
     	return findCertificatesByUsername(admin, username, entityManager);
     }
 
