@@ -31,8 +31,6 @@ import java.security.cert.Certificate;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.Arrays;
 import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 
 import javax.crypto.BadPaddingException;
@@ -84,8 +82,6 @@ public abstract class BaseCryptoToken implements CryptoToken {
     /** Identifies if crypto token is allowed to create extractable private keys */
     protected boolean allowsExtractablePrivateKey = false;
 
-    // caching of public keys. it might take a lot of time to read the certificate from a HSM.
-    final private Map<String, PublicKey> publicKeys = new HashMap<String, PublicKey>();
     /** public constructor */
     public BaseCryptoToken() {
         super();
@@ -156,38 +152,29 @@ public abstract class BaseCryptoToken implements CryptoToken {
     }
 
     /**
-     * Reads the public key object, does so from the certificate retrieved from the alias from the KeyStore if not cached sine a previous call.
+     * Reads the public key object, does so from the certificate retrieved from the alias from the KeyStore.
      *
      * @param alias alias the key alias to retrieve from the token
      * @return the public key for the certificate represented by the given alias.
      * @throws KeyStoreException if the keystore has not been initialized.
      * @throws CryptoTokenOfflineException if Crypto Token is not available or connected.
      */
-	protected PublicKey readPublicKey(String alias) throws KeyStoreException, CryptoTokenOfflineException {
-		{
-			final PublicKey key = this.publicKeys.get(alias);
-			if ( key!=null ) {
-				return key;
-			}
-		}
-		final Certificate cert = getKeyStore().getCertificate(alias);
-		if ( cert==null ) {
-			log.warn(intres.getLocalizedMessage("token.nopublic", alias));
-			if (log.isDebugEnabled()) {
-				final Enumeration<String> en = getKeyStore().aliases();
-				final StringBuffer sb = new StringBuffer("Existing alias: ");
-				while (en.hasMoreElements()) {
-					sb.append(" ");
-					sb.append( en.nextElement() );
-				}
-				log.debug(sb.toString());
-			}
-			return null;
-		}
-		final PublicKey key = cert.getPublicKey();
-		this.publicKeys.put(alias, key);
-		return key;
-	}
+    protected PublicKey readPublicKey(String alias) throws KeyStoreException, CryptoTokenOfflineException {
+        Certificate cert = getKeyStore().getCertificate(alias);
+        PublicKey pubk = null;
+        if (cert != null) {
+            pubk = cert.getPublicKey();
+        } else {
+            log.warn(intres.getLocalizedMessage("token.nopublic", alias));
+            if (log.isDebugEnabled()) {
+                Enumeration<String> en = getKeyStore().aliases();
+                while (en.hasMoreElements()) {
+                    log.debug("Existing alias: " + en.nextElement());
+                }
+            }
+        }
+        return pubk;
+    }
 
     /**
      * Initiates the class members of this crypto token.
@@ -198,7 +185,6 @@ public abstract class BaseCryptoToken implements CryptoToken {
      * @param id ID of this crypto token.
      */
     protected void init(String sSlotLabelKey, Properties properties, boolean doAutoActivate, int id) {
-        this.publicKeys.clear();
         if (log.isDebugEnabled()) {
             log.debug(">init: sSlotLabelKey=" + sSlotLabelKey + ", doAutoActivate=" + doAutoActivate);
         }
