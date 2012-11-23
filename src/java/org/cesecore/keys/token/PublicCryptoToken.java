@@ -49,9 +49,9 @@ public class PublicCryptoToken implements CryptoToken {
 
 	private static final long serialVersionUID = 1L;
 	private int id;
-    private static final Logger log = Logger.getLogger(PublicCryptoToken.class);
-    private PublicKey pk;
-    private final static String providerName = "BC";
+	private static final Logger log = Logger.getLogger(PublicCryptoToken.class);
+	private PublicKey pk;
+	private final static String providerName = "SunRsaSign";
 
 	@Override
 	public void init(Properties properties, byte[] data, int _id)
