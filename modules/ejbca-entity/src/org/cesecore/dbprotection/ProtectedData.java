@@ -180,8 +180,8 @@ public abstract class ProtectedData {
 		// Strip away the first stuff
 		final int index = prot.lastIndexOf(':');
 		final String realprot = prot.substring(index + 1);
+		final boolean result;
 		try {
-			final boolean result;
 			switch( protectVersion ) {
 			case 1:
 				result = verifyHmac(realprot, str, keyid, protectVersion);
@@ -193,19 +193,19 @@ public abstract class ProtectedData {
 				result = false;
 				break;
 			}
-			if ( !result ) {
-				final String msg = INTRES.getLocalizedMessage("databaseprotection.errorverify", str, realprot, this.getClass().getName(),getRowId());
-				log.error(msg);
-				if (ProtectedDataConfiguration.errorOnVerifyFail()) {
-					throw new DatabaseProtectionError(msg, this);
-				}
-			} else if (log.isTraceEnabled()) {
-				log.trace("Verifying row string ok");
-			}
 		} catch (Exception e) { // DatabaseProtectionError will not be caught since it is a RuntimeException
 			log.error(e);
 			throw new DatabaseProtectionError(e);
 		}
+		if ( !result ) {
+			final String msg = INTRES.getLocalizedMessage("databaseprotection.errorverify", str, realprot, this.getClass().getName(),getRowId());
+			log.error(msg);
+			if (ProtectedDataConfiguration.errorOnVerifyFail()) {
+				throw new DatabaseProtectionError(msg, this);
+			}
+			return;
+		}
+		log.trace("Verifying row string ok");
 	}
 
 	private static boolean verifyHmac(final String realprot, final String str, final int keyid, final int protectVersion) {
