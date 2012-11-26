@@ -176,6 +176,18 @@ public abstract class ProtectedData {
 		}
 		verifyProtection(prot, str, protectVersion, keyid);
 	}
+	void throwException( String str, String realprot, Exception cause) throws DatabaseProtectionError {
+		final String msg = INTRES.getLocalizedMessage("databaseprotection.errorverify", str, realprot, this.getClass().getName(),getRowId());
+		log.error(msg);
+		if ( !ProtectedDataConfiguration.errorOnVerifyFail() ) {
+			return;
+		}
+		final DatabaseProtectionError dpe = new DatabaseProtectionError(msg, this);
+		if ( cause!=null ) {
+			dpe.initCause(cause);
+		}
+		throw dpe;
+	}
 	private void verifyProtection(final String prot, final String str, final int protectVersion, final int keyid) {
 		// Strip away the first stuff
 		final int index = prot.lastIndexOf(':');
@@ -194,15 +206,11 @@ public abstract class ProtectedData {
 				break;
 			}
 		} catch (Exception e) { // DatabaseProtectionError will not be caught since it is a RuntimeException
-			log.error(e);
-			throw new DatabaseProtectionError(e);
+			throwException( str, realprot, e );
+			return;
 		}
 		if ( !result ) {
-			final String msg = INTRES.getLocalizedMessage("databaseprotection.errorverify", str, realprot, this.getClass().getName(),getRowId());
-			log.error(msg);
-			if (ProtectedDataConfiguration.errorOnVerifyFail()) {
-				throw new DatabaseProtectionError(msg, this);
-			}
+			throwException( str, realprot, null );
 			return;
 		}
 		log.trace("Verifying row string ok");
