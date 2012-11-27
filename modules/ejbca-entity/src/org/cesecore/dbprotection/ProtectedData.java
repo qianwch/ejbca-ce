@@ -152,11 +152,7 @@ public abstract class ProtectedData {
 		}
 		final String prot = getRowProtection();
 		if ( prot==null ) {
-			final String msg = INTRES.getLocalizedMessage("databaseprotection.errorverify", "non null", "null", getTableName(), getRowId());
-			log.error(msg);
-			if ( ProtectedDataConfiguration.errorOnVerifyFail() ) {
-				throw new DatabaseProtectionError(msg, this);
-			}
+			throwException("non null", "null", null);
 			return;
 		}
 		final int verindex = prot.indexOf(":");
@@ -176,8 +172,8 @@ public abstract class ProtectedData {
 		}
 		verifyProtection(prot, str, protectVersion, keyid);
 	}
-	void throwException( String str, String realprot, Exception cause) throws DatabaseProtectionError {
-		final String msg = INTRES.getLocalizedMessage("databaseprotection.errorverify", str, realprot, this.getClass().getName(),getRowId());
+	void throwException( String data, String realprot, Exception cause) throws DatabaseProtectionError {
+		final String msg = INTRES.getLocalizedMessage("databaseprotection.errorverify", data, realprot, this.getClass().getName(),getRowId());
 		log.error(msg);
 		if ( !ProtectedDataConfiguration.errorOnVerifyFail() ) {
 			return;
@@ -188,7 +184,7 @@ public abstract class ProtectedData {
 		}
 		throw dpe;
 	}
-	private void verifyProtection(final String prot, final String str, final int protectVersion, final int keyid) {
+	private void verifyProtection(final String prot, final String data, final int protectVersion, final int keyid) {
 		// Strip away the first stuff
 		final int index = prot.lastIndexOf(':');
 		final String realprot = prot.substring(index + 1);
@@ -196,33 +192,33 @@ public abstract class ProtectedData {
 		try {
 			switch( protectVersion ) {
 			case 1:
-				result = verifyHmac(realprot, str, keyid, protectVersion);
+				result = verifyHmac(realprot, data, keyid, protectVersion);
 				break;
 			case 2:
-				result = verifySignature(realprot, str, keyid);
+				result = verifySignature(realprot, data, keyid);
 				break;
 			default:
 				result = false;
 				break;
 			}
 		} catch (Exception e) { // DatabaseProtectionError will not be caught since it is a RuntimeException
-			throwException( str, realprot, e );
+			throwException( data, realprot, e );
 			return;
 		}
 		if ( !result ) {
-			throwException( str, realprot, null );
+			throwException( data, realprot, null );
 			return;
 		}
 		log.trace("Verifying row string ok");
 	}
 
-	private static boolean verifyHmac(final String realprot, final String str, final int keyid, final int protectVersion) {
+	private static boolean verifyHmac(final String macInHex, final String data, final int keyid, final int protectVersion) {
 		// For HMAC (and possibly others) we need to calculate the protection and compare
-		final String mustbeprot = calculateProtection(protectVersion, keyid, str);
-		return mustbeprot.equals(realprot);
+		final String mustbeprot = calculateProtection(protectVersion, keyid, data);
+		return mustbeprot.equals(macInHex);
 	}
 
-	private static boolean verifySignature(final String realprot, final String str, final int keyid) throws Exception {
+	private static boolean verifySignature(final String signatureInHex, final String data, final int keyid) throws Exception {
 		// For signature protection we don't need to calculate the protection again, we only have to verify 
 		// the signature, and for that we do not need the private key, only the public
 		// Decrypt the signature (realprot) and extract the desired hash
@@ -230,8 +226,8 @@ public abstract class ProtectedData {
 		final Signature signature = Signature.getInstance("SHA256WithRSA");
 		final PublicKey pubKey = token.getPublicKey(ProtectedDataConfiguration.instance().getKeyLabel(keyid));
 		signature.initVerify(pubKey);
-		signature.update(str.getBytes("UTF-8"));
-		return signature.verify(Hex.decode(realprot));
+		signature.update(data.getBytes("UTF-8"));
+		return signature.verify(Hex.decode(signatureInHex));
 	}
 
 	private static String calculateProtection(final int protectVersion, final int keyid, final String toBesigned) {
