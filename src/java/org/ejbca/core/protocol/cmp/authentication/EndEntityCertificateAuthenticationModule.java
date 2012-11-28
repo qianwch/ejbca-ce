@@ -299,6 +299,7 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
                 
                 //set the password of the request to this user's password so it can later be used when issuing the certificate
                 if (log.isDebugEnabled()) {
+                    log.debug("The End Entity certificate attached to the PKIMessage in the extraCert field belongs to user '"+username+"'.");
                     log.debug("Extracting and setting password for user '"+username+"'.");
                 }
                 try {

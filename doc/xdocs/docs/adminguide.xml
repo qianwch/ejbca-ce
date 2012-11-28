@@ -2441,6 +2441,19 @@ Since EJBCA 3.6 the recommended HSM connector is to use the PKCS#11 interface. O
 <p>
 PrimeKey Solutions is selling a module called PrimeCardHSM that implements a flexible HSM using low cost smart cards. 
 </p>
+<subsection name="Testing PKCS#11 keys for use by EJBCA">
+<p>
+To test keys on the HSM for use by EJBCA you can use the <a href="userguide.html#EJBCA%20client%20toolbox">EJBCA Client Toolbox</a>. 
+</p>
+<source>
+ant clientToolBox
+cd dist/clientToolBox
+./ejbcaClientToolBox.sh PKCS11HSMKeyTool test
+</source>
+<p>
+The command will give further instructions about the parameters requires, PKCS#11 library and slot.
+</p>
+</subsection>
 <subsection name="Auto-activation of CA tokens">
 <p>
 The 'pin' property is used to be able to automatically activate a CA token. The activation code may be specified in the property field with the keyword 'pin'. 
@@ -3302,6 +3315,27 @@ certSignKey=myECCKey
 crlSignKey=myECCKey
 defaultKey=default
 </source>
+</subsubsection>
+<subsubsection name="Some useful Luna commands">
+<p>Here are some useful native Luna cmu commands.
+</p><p> 
+List objects and their handles:
+</p>
+<source>
+./cmu list -display=index,handle,class,keyType,label
+</source>
+<p>
+If you have created keys with natvie commands, or imported keys, there is probably no certificate object as required by Java PKCS#11 provider.
+Create a self signed certificate referencing the private handle:
+</p>
+<source>
+./cmu selfSign -privatehandle=87 -CN="caSign00001" -startDate=20020101
+-endDate=20451231 -serialNum=0133337f
+</source>
+<p>
+Notice that they will have to replace 87 with the handle of the private
+key they found when running the list command.
+</p>
 </subsubsection>
 </subsection>
 
