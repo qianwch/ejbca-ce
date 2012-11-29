@@ -17,7 +17,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.Vector;
 
-import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.asn1.x509.X509Name;
 import org.cesecore.util.CertTools;
@@ -91,6 +90,8 @@ public class DnComponentsTest {
         assertEquals(BCStyle.NAME, oids.elementAt(1));
         assertEquals(BCStyle.SERIALNUMBER, oids.elementAt(2));
         assertEquals(BCStyle.C, oids.elementAt(3));
+        // The reason it says SERIALNUMBER here instead of SN is that we have not installed the BC provider
+        // CryptoProviderTools.installBCProvider();
         assertEquals("CN=oid,Name=name,SERIALNUMBER=12345,C=se", dn);
 
         String dn1 = CertTools.stringToBCDNString("SURNAME=Json,=fff,CN=oid,SN=12345,NAME=name,C=se");
