@@ -39,7 +39,8 @@ import javax.crypto.NoSuchPaddingException;
 import org.apache.log4j.Logger;
 
 /**
- * Handles maintenance of the soft devices producing signatures and handling the private key and stored in database.
+ * Just to be used for encryption (not decryption) and verifying (not signing)
+ * by the public part of an asymmetric key.
  * 
  * CESeCore version:
  * 
