@@ -603,7 +603,7 @@ public class NestedMessageContentTest extends CmpTestCase {
         PKIBody body = respObject.getBody();
         assertEquals(23, body.getTagNo());
         String errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
-        assertEquals("Wrong error message", "Could not verify the RA", errMsg);
+        assertEquals("Wrong error message", "Could not verify the RA, signature verification on NestedMessageContent failed.", errMsg);
         
         NestedMessageContent nestedContent = new NestedMessageContent(myPKIMessage);
         boolean ret = nestedContent.verify();
@@ -766,7 +766,7 @@ public class NestedMessageContentTest extends CmpTestCase {
         PKIBody body = respObject.getBody();
         assertEquals(23, body.getTagNo());
         String errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
-        assertEquals("Wrong error message", "Could not verify the RA", errMsg);
+        assertEquals("Wrong error message", "Could not verify the RA, signature verification on NestedMessageContent failed.", errMsg);
         log.info("<test07ExpiredRACert()");
     }
     
@@ -830,7 +830,7 @@ public class NestedMessageContentTest extends CmpTestCase {
         PKIBody body = respObject.getBody();
         assertEquals(23, body.getTagNo());
         String errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
-        assertEquals("Wrong error message", "Could not verify the RA", errMsg);
+        assertEquals("Wrong error message", "Could not verify the RA, signature verification on NestedMessageContent failed.", errMsg);
         log.info("<test07ExpiredRACert()");
     }
     
