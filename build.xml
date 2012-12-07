@@ -153,9 +153,7 @@
     <!-- Check for properties that have been moved from ejbca.properties to cesecore.properties -->
     <target name="check-ejbca-properties-exists">
       <condition property="ejbca-properties-exists">
-        <resourceexists>
-          <file file="conf/ejbca.properties"/>
-        </resourceexists>
+        <available file="conf/ejbca.properties" type="file"/>
       </condition>
     </target>
     
