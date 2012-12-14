@@ -1,3 +1,17 @@
+EJBCA 4.0.13
+------------
+This is a maintenance release containing a few new features and improvements. In all 25 issues have been resolved.
+
+* Noteworthy changes: 
+- New self-registration work-flow available in the public web.
+- Added extended key usage for WiFi EAP authentication. 
+- Some build improvements to avoid issues on some platforms (no javascript, no jasper).
+- More minor GUI improvements by David Carella of Linagora.
+- Minor bug fixes.
+
+Read the full Changelog for details.
+For upgrade instructions, please see UPGRADE.
+
 EJBCA 4.0.12
 ------------
 This is a maintenance release containing a few new features and improvements.

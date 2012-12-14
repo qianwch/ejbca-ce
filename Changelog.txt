@@ -1,6 +1,38 @@
-EJBCA 4.0.13, 2012-11-xy
+EJBCA 4.0.13, 2012-12-17
 ---
-TODO
+Bug
+
+    [ECA-2376] - Republishing certificates to LDAP when multiple certificates per user are allowed fails if certificate is already present
+    [ECA-2704] - Error in usage text for 'ejbca.sh ra listusers'
+    [ECA-2710] - Last certificate gets republished twice when using '-all' in cli
+    [ECA-2745] - GUI: Request Browser Certificate Renewal page update
+    [ECA-2750] - GUI: Logout links miss on some Web Public pages
+    [ECA-2759] - Unexpected form closing, when editing Certificate Profile
+    [ECA-2761] - Downgraded EJBCA from 5 to 4 get NULL CA Token
+    [ECA-2778] - Plus character in CA DN breaks Download of Certificates
+    [ECA-2786] - GUI: Remove "OCSP" text in navigation menu of Public Web
+    [ECA-2809] - Unable to use "modified" at the "Search End Entities" page.
+
+Improvement
+    [ECA-2746] - Clean up message keys, and some titles
+    [ECA-2753] - GUI: Web Public pages improvement
+    [ECA-2755] - GUI: Administration pages improvement (adding home link)
+    [ECA-2769] - GUI: Key Usage form improvement
+    [ECA-2776] - Disable jasper compilation in default build
+    [ECA-2802] - Clean up message keys, and section titles
+    [ECA-2813] - Class RequestInstance should allow to provide a password
+    [ECA-2823] - Backport ECA-2244, don't require javascript to build
+    [ECA-2829] - GUI: Update Renew title in the Public Web navigation
+    [ECA-2832] - GUI: Fix 'Fetch CA certificate' title in the Public Web page
+    [ECA-2875] - Able to use unlimited no of arguments for clientToolBox on Windows
+
+New Feature
+    [ECA-2727] - Self-registration with admin approval
+    [ECA-2740] - Ant target for renewing application server keystore
+    [ECA-2747] - Extended Key Usage for WiFi EAP authentication
+
+Task
+    [ECA-2624] - Clean up message keys
 
 EJBCA 4.0.12, 2012-08-16
 ---
