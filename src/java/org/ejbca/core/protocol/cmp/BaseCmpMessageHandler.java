@@ -26,6 +26,7 @@ import org.ejbca.config.CmpConfiguration;
 import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileSessionLocal;
 import org.ejbca.core.model.ra.NotFoundException;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfile;
+import org.ejbca.core.model.ra.raadmin.EndEntityProfileNotFoundException;
 
 /**
  * Base class for CMP message handlers that require RA mode secret verification.
@@ -64,10 +65,11 @@ public class BaseCmpMessageHandler {
 		this.certificateProfileSession = certificateProfileSession;
 	}
 
-	/** @return the end entity profile id to use for a request based on the current configuration and keyId. 
-	 * @throws NotFoundException */
+	/** 
+	 * @return the end entity profile id to use for a request based on the current configuration and keyId. 
+	 * @throws NotFoundException if no ID was found.
+	 */
 	protected int getUsedEndEntityProfileId(final String keyId) throws NotFoundException {
-		int ret = 0;
 		String endEntityProfile = CmpConfiguration.getRAEndEntityProfile();
 		if (StringUtils.equals(endEntityProfile, "KeyId")) {
             if(keyId != null) {
@@ -79,18 +81,20 @@ public class BaseCmpMessageHandler {
                 LOG.error("Expecting the End Entity Profile ID to be specified in the KeyID parameter, but the KeyID parameter is 'null'");
             }
 		} 
-		ret = endEntityProfileSession.getEndEntityProfileId(endEntityProfile);
-		if (ret == 0) {
-			final String msg = "No end entity profile found with name: "+endEntityProfile;
-			LOG.info(msg);
-			throw new NotFoundException(msg);
-		}
-		return ret;
+		try {
+            return endEntityProfileSession.getEndEntityProfileId(endEntityProfile);
+        } catch (EndEntityProfileNotFoundException e) {
+            final String msg = "No end entity profile found with name: " + endEntityProfile;
+            LOG.info(msg);
+            throw new NotFoundException(msg, e);
+        }  
 	}
 
-	/** @return the CA id to use for a request based on the current configuration, used end entity profile and keyId. 
+	/** 
+	 * @return the CA id to use for a request based on the current configuration, used end entity profile and keyId. 
 	 * @throws AuthorizationDeniedException 
-	 * @throws CADoesntExistsException */
+	 * @throws CADoesntExistsException 
+	 */
 	protected int getUsedCaId(final String keyId, final int eeProfileId) throws CADoesntExistsException, AuthorizationDeniedException {
 		int ret = 0;
 		final String caName = CmpConfiguration.getRACAName();
