@@ -99,7 +99,6 @@ import org.ejbca.core.model.ra.ExtendedInformationFields;
 import org.ejbca.core.model.ra.UserDataConstants;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfile;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfileExistsException;
-import org.ejbca.core.model.ra.raadmin.EndEntityProfileNotFoundException;
 import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
 import org.ejbca.cvc.CardVerifiableCertificate;
 import org.ejbca.util.InterfaceCache;
@@ -370,9 +369,7 @@ public class SignSessionTest extends CaTestCase {
         return this.getClass().getSimpleName(); 
     }
 
-    private void createUsers() throws CertificateProfileExistsException, AuthorizationDeniedException, EndEntityProfileExistsException,
-            PersistenceException, CADoesntExistsException, UserDoesntFullfillEndEntityProfile, WaitingForApprovalException, EjbcaException,
-            FinderException, EndEntityProfileNotFoundException {
+    private void createUsers() throws CertificateProfileExistsException, AuthorizationDeniedException, EndEntityProfileExistsException, PersistenceException, CADoesntExistsException, UserDoesntFullfillEndEntityProfile, WaitingForApprovalException, EjbcaException, FinderException {
         final CertificateProfile certprof = new CertificateProfile(CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER);
         certprof.setAllowKeyUsageOverride(true);
         certificateProfileSession.addCertificateProfile(internalAdmin, "FOOCERTPROFILE", certprof);
@@ -464,7 +461,8 @@ public class SignSessionTest extends CaTestCase {
 
 
     @Test
-    public void test01CreateNewUser() throws Exception {
+    public void test01CreateNewUser() throws PersistenceException, CADoesntExistsException, AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile,
+            WaitingForApprovalException, EjbcaException, EndEntityProfileExistsException, FinderException, CertificateProfileExistsException {
         log.trace(">test01CreateNewUser()");
 
         createUsers();

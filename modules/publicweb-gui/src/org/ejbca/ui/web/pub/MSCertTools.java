@@ -32,7 +32,6 @@ import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileSession;
 import org.ejbca.core.ejb.ra.raadmin.AdminPreferenceSession;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfile;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfileExistsException;
-import org.ejbca.core.model.ra.raadmin.EndEntityProfileNotFoundException;
 
 /**
  * @version $Id$
@@ -217,9 +216,8 @@ public class MSCertTools {
 	}
 
     public static int getOrCreateEndEndtityProfile(AuthenticationToken admin, int templateIndex, int certProfileId, int caid, String usernameShort,
-            String fetchedSubjectDN, AdminPreferenceSession raAdminSession, EndEntityProfileSession endEntityProfileSession)
-            throws AuthorizationDeniedException, EndEntityProfileNotFoundException {
-        // Create end entity profile if necessary
+            String fetchedSubjectDN, AdminPreferenceSession raAdminSession, EndEntityProfileSession endEntityProfileSession) throws AuthorizationDeniedException {
+		// Create end endity profile if neccesary
 		String endEntityProfileName = "Autoenroll-" + SUPPORTEDCERTIFICATETEMPLATES[templateIndex];
 
 		boolean newEndEntityProfile = false;
@@ -247,7 +245,7 @@ public class MSCertTools {
 			if (GET_SUBJECTDN_FROM_AD.equals(requiredFields[i])) {
 				log.info("Got DN "+ fetchedSubjectDN + " for user " + usernameShort);
 				if (fetchedSubjectDN == null) {
-					throw new IllegalArgumentException("fetchedSubjectDN was null for user " + usernameShort);
+					return -1;
 				}
 			}
 		}
@@ -280,10 +278,8 @@ public class MSCertTools {
 				}
 			}
 		}
-		
-		    endEntityProfileSession.changeEndEntityProfile(admin, endEntityProfileName, endEntityProfile);
-            return endEntityProfileSession.getEndEntityProfileId(endEntityProfileName);
-  
+		endEntityProfileSession.changeEndEntityProfile(admin, endEntityProfileName, endEntityProfile);
+		return endEntityProfileSession.getEndEntityProfileId(endEntityProfileName);
 	}
 
 	

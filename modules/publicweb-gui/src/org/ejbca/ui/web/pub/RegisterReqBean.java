@@ -42,7 +42,6 @@ import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.approval.approvalrequests.AddEndEntityApprovalRequest;
 import org.ejbca.core.model.ra.UserDataConstants;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfile;
-import org.ejbca.core.model.ra.raadmin.EndEntityProfileNotFoundException;
 import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
 import org.ejbca.core.model.util.EjbLocalHelper;
 import org.ejbca.util.DNFieldDescriber;
@@ -123,7 +122,7 @@ public class RegisterReqBean {
         return getCertTypeInfo(certType, "description");
     }
     
-    public int getEndEntityProfileId() throws EndEntityProfileNotFoundException {
+    public int getEndEntityProfileId() {
         return endEntityProfileSession.getEndEntityProfileId(getCertTypeInfo(certType, "eeprofile"));
     }
     
@@ -396,13 +395,7 @@ public class RegisterReqBean {
             return;
         }
         
-        int eeProfileId;
-        try {
-            eeProfileId = getEndEntityProfileId();
-        } catch (EndEntityProfileNotFoundException e) {
-            errors.add("Validation error: "+e.getMessage());
-            return;
-        }
+        final int eeProfileId = getEndEntityProfileId();
         final EndEntityProfile eeprofile = endEntityProfileSession.getEndEntityProfile(eeProfileId);
         final int caid = eeprofile.getDefaultCA();
         if (caid == -1) {

@@ -73,7 +73,6 @@ import org.ejbca.core.model.ca.caadmin.extendedcaservices.KeyRecoveryCAServiceIn
 import org.ejbca.core.model.keyrecovery.KeyRecoveryData;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfile;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfileExistsException;
-import org.ejbca.core.model.ra.raadmin.EndEntityProfileNotFoundException;
 import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
 import org.ejbca.ui.cli.batch.BatchMakeP12;
 import org.ejbca.util.InterfaceCache;
@@ -510,7 +509,7 @@ public class ApprovalEnforcedByCertificateProfileTest extends CaTestCase {
     }
 
     private int createEndEntityProfile(AuthenticationToken admin, String endEntityProfileName, int[] certProfiles)
-            throws EndEntityProfileExistsException, AuthorizationDeniedException, EndEntityProfileNotFoundException {
+            throws EndEntityProfileExistsException, AuthorizationDeniedException {
         EndEntityProfile profile;
         endEntityProfileSession.removeEndEntityProfile(admin, endEntityProfileName);
 
@@ -531,11 +530,10 @@ public class ApprovalEnforcedByCertificateProfileTest extends CaTestCase {
         profile.setValue(EndEntityProfile.DEFAULTCA, 0, Integer.valueOf(approvalCAID).toString());
         endEntityProfileSession.addEndEntityProfile(admin, endEntityProfileName, profile);
 
-        int endEntityProfileId;
+        int endEntityProfileId = endEntityProfileSession.getEndEntityProfileId(endEntityProfileName);
+        assertTrue(endEntityProfileId != 0);
 
-        endEntityProfileId = endEntityProfileSession.getEndEntityProfileId(endEntityProfileName);
         return endEntityProfileId;
-        
     }
 
 }

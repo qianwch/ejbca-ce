@@ -20,7 +20,6 @@ import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authorization.AuthorizationDeniedException;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfile;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfileExistsException;
-import org.ejbca.core.model.ra.raadmin.EndEntityProfileNotFoundException;
 
 /** Session bean for managing End Entity Profiles.
  * 
@@ -38,8 +37,7 @@ public interface EndEntityProfileSession {
      * @param profile profile to be added
      * @throws AuthorizationDeniedException 
      */
-    void addEndEntityProfile(AuthenticationToken admin, String profilename, EndEntityProfile profile) throws EndEntityProfileExistsException,
-            AuthorizationDeniedException;
+    void addEndEntityProfile(AuthenticationToken admin, String profilename, EndEntityProfile profile) throws EndEntityProfileExistsException, AuthorizationDeniedException;
 
     /**
      * Adds a profile to the database.
@@ -51,16 +49,14 @@ public interface EndEntityProfileSession {
      * @param profile profile to be added
      * @throws AuthorizationDeniedException 
      */
-    void addEndEntityProfile(AuthenticationToken admin, int profileid, String profilename, EndEntityProfile profile)
-            throws EndEntityProfileExistsException, AuthorizationDeniedException;
+    void addEndEntityProfile(AuthenticationToken admin, int profileid, String profilename, EndEntityProfile profile) throws EndEntityProfileExistsException, AuthorizationDeniedException;
 
     /**
      * Adds a end entity profile to a group with the same content as the
      * original profile.
      * @throws AuthorizationDeniedException 
      */
-    void cloneEndEntityProfile(AuthenticationToken admin, String originalprofilename, String newprofilename) throws EndEntityProfileExistsException,
-            AuthorizationDeniedException;
+    void cloneEndEntityProfile(AuthenticationToken admin, String originalprofilename, String newprofilename) throws EndEntityProfileExistsException, AuthorizationDeniedException;
 
     /** @return an unused end id number. */
     int findFreeEndEntityProfileId();
@@ -74,26 +70,18 @@ public interface EndEntityProfileSession {
 
     /** Renames a end entity profile. 
      * @throws AuthorizationDeniedException */
-    void renameEndEntityProfile(AuthenticationToken admin, String oldprofilename, String newprofilename) throws EndEntityProfileExistsException,
-            AuthorizationDeniedException;
+    void renameEndEntityProfile(AuthenticationToken admin, String oldprofilename, String newprofilename) throws EndEntityProfileExistsException, AuthorizationDeniedException;
 
     /** Updates profile data. 
-     * @throws AuthorizationDeniedException 
-     * @throws EndEntityProfileNotFoundException if sought end entity profile was not found.
-     */
-    void changeEndEntityProfile(AuthenticationToken admin, String profilename, EndEntityProfile profile) throws AuthorizationDeniedException, EndEntityProfileNotFoundException;
+     * @throws AuthorizationDeniedException */
+    void changeEndEntityProfile(AuthenticationToken admin, String profilename, EndEntityProfile profile) throws AuthorizationDeniedException;
 
     /**
      * Do NOT use, use changeEndEntityProfile instead. Used internally for
      * testing only. Updates a profile without flushing caches.
-     * 
-     * TODO: Move this method out of production code.
-     * 
      * @throws AuthorizationDeniedException 
-     * @throws EndEntityProfileNotFoundException if sought end entity profile was not found.
      */
-    void internalChangeEndEntityProfileNoFlushCache(AuthenticationToken admin, String profilename, EndEntityProfile profile)
-            throws AuthorizationDeniedException, EndEntityProfileNotFoundException;
+    void internalChangeEndEntityProfileNoFlushCache(AuthenticationToken admin, String profilename, EndEntityProfile profile) throws AuthorizationDeniedException;
 
     /** Retrieves a Collection of id:s (Integer) to authorized profiles. */
     Collection<Integer> getAuthorizedEndEntityProfileIds(AuthenticationToken admin);
@@ -114,14 +102,13 @@ public interface EndEntityProfileSession {
      * Get a copy of an EndEntityProfile.
      * @return EndEntityProfile (cloned) or null if it does not exist
      */
-    EndEntityProfile getEndEntityProfile(String profilename);
+    EndEntityProfile getEndEntityProfile(java.lang.String profilename);
 
     /**
-     * Returns a end entity profile's ID, given its name
-     * @return the id
-     * @throws EndEntityProfileNotFoundException if profile wasn't found
+     * Returns a end entity profiles id, given it's profilename
+     * @return the id or 0 if profile cannot be found.
      */
-    int getEndEntityProfileId(String profilename) throws EndEntityProfileNotFoundException;
+    int getEndEntityProfileId(java.lang.String profilename);
 
     /**
      * Returns a end entity profiles name given it's id.

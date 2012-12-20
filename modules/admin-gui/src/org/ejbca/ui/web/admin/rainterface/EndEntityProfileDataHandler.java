@@ -21,7 +21,6 @@ import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileSession;
 import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileSessionLocal;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfile;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfileExistsException;
-import org.ejbca.core.model.ra.raadmin.EndEntityProfileNotFoundException;
 import org.ejbca.ui.web.admin.configuration.InformationMemory;
 
 /**
@@ -51,10 +50,8 @@ public class EndEntityProfileDataHandler implements Serializable {
         this.info.endEntityProfilesEdited();
     }
       
-    /** Method to change a end entity profile. 
-     * @throws EndEntityProfileNotFoundException if sought end entity profile was not found
-     */     
-    public void changeEndEntityProfile(String name, EndEntityProfile profile) throws AuthorizationDeniedException, EndEntityProfileNotFoundException{
+    /** Method to change a end entity profile. */     
+    public void changeEndEntityProfile(String name, EndEntityProfile profile) throws AuthorizationDeniedException{
         endEntityProfileSession.changeEndEntityProfile(administrator, name,profile);   
         this.info.endEntityProfilesEdited();
     }
@@ -88,12 +85,8 @@ public class EndEntityProfileDataHandler implements Serializable {
         return profile;
     }
    
-    /**  
-     * @param profilename the name of the sought profile
-     * @return the ID of the sought profile
-     * @throws EndEntityProfileNotFoundException if no such profile exists
-     */
-    public int getEndEntityProfileId(String profilename) throws EndEntityProfileNotFoundException{
+      
+    public int getEndEntityProfileId(String profilename){
       return endEntityProfileSession.getEndEntityProfileId(profilename);  
     }
        

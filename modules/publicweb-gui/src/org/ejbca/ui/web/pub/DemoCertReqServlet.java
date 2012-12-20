@@ -44,7 +44,6 @@ import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileSessionLocal;
 import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.ca.AuthLoginException;
 import org.ejbca.core.model.ca.AuthStatusException;
-import org.ejbca.core.model.ra.raadmin.EndEntityProfileNotFoundException;
 import org.ejbca.ui.web.RequestHelper;
 import org.ejbca.util.HTMLTools;
 
@@ -208,10 +207,9 @@ public class DemoCertReqServlet extends HttpServlet {
         String tmp = null;
         int eProfileId = SecConst.EMPTY_ENDENTITYPROFILE;
         if ((tmp = request.getParameter("entityprofile")) != null) {
-            try {
-                eProfileId = endEntityProfileSession.getEndEntityProfileId(request.getParameter("entityprofile"));
-            } catch (EndEntityProfileNotFoundException e) {
-                throw new ServletException("No such end entity profile: " + tmp, e);
+            eProfileId = endEntityProfileSession.getEndEntityProfileId(request.getParameter("entityprofile"));
+            if (eProfileId == 0) {
+                throw new ServletException("No such end entity profile: " + tmp);
             }
         }
         newuser.setEndEntityProfileId(eProfileId);
