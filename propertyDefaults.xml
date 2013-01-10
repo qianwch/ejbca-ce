@@ -155,6 +155,7 @@
 	<property name="httpserver.pubhttp" value="8080" />
 	<property name="httpserver.pubhttps" value="8442" />
 	<property name="httpserver.privhttps" value="8443" />
+	<property name="httpserver.external.fqdn" value="" />
 	<property name="httpsserver.bindaddress.pubhttp" value="0.0.0.0" />
 	<property name="httpsserver.bindaddress.pubhttps" value="0.0.0.0" />
 	<property name="httpsserver.bindaddress.privhttps" value="0.0.0.0" />
@@ -245,6 +246,7 @@ httpserver.pubhttps	     = ${httpserver.pubhttps}
 httpserver.privhttps     = ${httpserver.privhttps}
 httpsserver.hostname     = ${httpsserver.hostname}
 httpsserver.password     = ${httpsserver.password}
+httpserver.external.fqdn = ${httpserver.external.fqdn}
 web.contentencoding      = ${web.contentencoding}
 web.renewalenabled       = ${web.renewalenabled}
 ejbcaws.enabled          = ${ejbcaws.enabled}
