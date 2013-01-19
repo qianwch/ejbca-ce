@@ -124,8 +124,11 @@ import org.ejbca.util.InterfaceCache;
 import org.hibernate.ObjectNotFoundException;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runners.MethodSorters;
 
 import com.novosec.pkix.asn1.cmp.PKIBody;
 import com.novosec.pkix.asn1.cmp.PKIHeader;
@@ -146,6 +149,7 @@ import com.novosec.pkix.asn1.crmf.ProofOfPossession;
  * @version $Id$
  *
  */
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class NestedMessageContentTest extends CmpTestCase {
 
     private static final Logger log = Logger.getLogger(NestedMessageContentTest.class);
@@ -172,7 +176,8 @@ public class NestedMessageContentTest extends CmpTestCase {
     private String subjectDN;
     private String issuerDN;
     private String raCertsPath = "/tmp/racerts";
-    private TemporaryFolder folder = new TemporaryFolder();
+    @Rule
+    public TemporaryFolder folder = new TemporaryFolder();
     
     @Before
     public void setUp() throws Exception {
@@ -274,6 +279,13 @@ public class NestedMessageContentTest extends CmpTestCase {
         
         issuerDN = cacert != null ? ((X509Certificate) cacert).getIssuerDN().getName() : "CN=AdminCA1,O=EJBCA Sample,C=SE";
         
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        super.tearDown();        
+        // The TemporaryFolder and all it's contents are guaranteed to be deleted automaticallly by JUnit
+        // so we don't have to delete temporary files
     }
 
     @Test
@@ -939,23 +951,6 @@ public class NestedMessageContentTest extends CmpTestCase {
         log.trace("<testZZZCleanUp");
     }
     
-    @After
-    public void tearDown() throws Exception {
-        super.tearDown();
-        
-        File createdFolder = new File(raCertsPath);
-        File[] certs = createdFolder.listFiles();
-        for(int i=0; i<certs.length; i++) {
-            certs[i].delete();
-        }
-        createdFolder.delete();
-    }
-    
-    
-    
-    
-    
-
     private Certificate createRACertificate(String username, String password, KeyPair keys, Date notBefore, 
             Date notAfter) throws AuthorizationDeniedException, EjbcaException, CertificateException, FileNotFoundException,
             IOException, UserDoesntFullfillEndEntityProfile, ObjectNotFoundException, Exception {
@@ -972,9 +967,7 @@ public class NestedMessageContentTest extends CmpTestCase {
         
         String raCertPath = configurationSession.getProperty(CmpConfiguration.CONFIG_RACERT_PATH);
         String filename = raCertPath + "/" + username + ".pem";
-        File file = folder.newFile(filename);
-        assertNotNull(file);
-        FileOutputStream fout = new FileOutputStream(file);
+        FileOutputStream fout = new FileOutputStream(filename);
         fout.write(pemRaCert);
         fout.flush();
         fout.close();        

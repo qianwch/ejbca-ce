@@ -103,7 +103,9 @@ import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
 import org.ejbca.util.InterfaceCache;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
 import com.novosec.pkix.asn1.cmp.CertOrEncCert;
 import com.novosec.pkix.asn1.cmp.CertRepMessage;
@@ -129,6 +131,7 @@ import com.novosec.pkix.asn1.crmf.ProofOfPossession;
  * @version $Id$
  *
  */
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class CrmfKeyUpdateTest extends CmpTestCase {
 
     

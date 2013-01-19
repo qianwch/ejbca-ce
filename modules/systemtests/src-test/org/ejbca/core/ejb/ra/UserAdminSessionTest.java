@@ -90,13 +90,16 @@ import org.ejbca.util.query.UserMatch;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
 /**
  * Tests the UserData entity bean and some parts of UserAdminSession.
  * 
  * @version $Id$
  */
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class UserAdminSessionTest extends CaTestCase {
 
     private static final Logger log = Logger.getLogger(UserAdminSessionTest.class);
