@@ -170,6 +170,13 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
      */
     public boolean verifyOrExtract(final PKIMessage msg, final String username, boolean authenticated) {
         
+        //Check that msg is signed
+        if(msg.getProtection() == null) {
+            errorMessage = "PKI Message is not athenticated properly. No PKI protection is found.";
+            log.info(errorMessage);
+            return false;
+        }
+        
         //Check that there is a certificate in the extraCert field in msg
         final X509CertificateStructure extraCertStruct = msg.getExtraCert(0);
         if(extraCertStruct == null) {

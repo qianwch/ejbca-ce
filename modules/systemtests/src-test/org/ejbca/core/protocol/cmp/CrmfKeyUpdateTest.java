@@ -1133,7 +1133,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         final PKIBody body = respObject.getBody();
         assertEquals(23, body.getTagNo());
         final String errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
-        final String expectedErrMsg = "CA does not exist:   ";
+        final String expectedErrMsg = "CA does not exist: ";
         assertEquals(expectedErrMsg, errMsg);
         
         removeAuthenticationToken(admToken, admCert, "cmpTestAdmin");
