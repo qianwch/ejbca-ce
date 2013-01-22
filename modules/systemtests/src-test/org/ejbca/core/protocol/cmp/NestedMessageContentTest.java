@@ -26,16 +26,19 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.InvalidKeyException;
+import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.Principal;
+import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -86,6 +89,7 @@ import org.cesecore.certificates.ca.CADoesntExistsException;
 import org.cesecore.certificates.ca.CAInfo;
 import org.cesecore.certificates.ca.CaSessionRemote;
 import org.cesecore.certificates.certificate.CertificateStoreSession;
+import org.cesecore.certificates.certificate.InternalCertificateStoreSessionRemote;
 import org.cesecore.certificates.certificateprofile.CertificateProfile;
 import org.cesecore.certificates.certificateprofile.CertificateProfileConstants;
 import org.cesecore.certificates.certificateprofile.CertificateProfileExistsException;
@@ -103,11 +107,13 @@ import org.cesecore.roles.RoleExistsException;
 import org.cesecore.roles.RoleNotFoundException;
 import org.cesecore.roles.access.RoleAccessSessionRemote;
 import org.cesecore.roles.management.RoleManagementSessionRemote;
+import org.cesecore.util.Base64;
 import org.cesecore.util.CertTools;
 import org.cesecore.util.CryptoProviderTools;
 import org.ejbca.config.CmpConfiguration;
 import org.ejbca.config.EjbcaConfigurationHolder;
 import org.ejbca.core.EjbcaException;
+import org.ejbca.core.ejb.ca.caadmin.CAAdminSessionRemote;
 import org.ejbca.core.ejb.ca.sign.SignSessionRemote;
 import org.ejbca.core.ejb.config.ConfigurationSessionRemote;
 import org.ejbca.core.ejb.ra.UserAdminSessionRemote;
@@ -156,7 +162,7 @@ public class NestedMessageContentTest extends CmpTestCase {
     
     final private AuthenticationToken admin = new TestAlwaysAllowLocalAuthenticationToken(new UsernamePrincipal("NestedMessageContentTest"));
 
-    //private CAAdminSessionRemote caAdminSession = InterfaceCache.getCAAdminSession();
+    private CAAdminSessionRemote caAdminSession = InterfaceCache.getCAAdminSession();
     private CaSessionRemote caSession = InterfaceCache.getCaSession();
     private UserAdminSessionRemote userAdminSession = InterfaceCache.getUserAdminSession();
     private SignSessionRemote signSession = InterfaceCache.getSignSession();
@@ -170,6 +176,7 @@ public class NestedMessageContentTest extends CmpTestCase {
     //private RoleInitializationSessionRemote roleInitSession = JndiHelper.getRemoteSession(RoleInitializationSessionRemote.class);
     private RoleManagementSessionRemote roleManagementSession = JndiHelper.getRemoteSession(RoleManagementSessionRemote.class);
     private RoleAccessSessionRemote roleAccessSessionRemote = JndiHelper.getRemoteSession(RoleAccessSessionRemote.class);
+    private InternalCertificateStoreSessionRemote internalCertStoreSession = JndiHelper.getRemoteSession(InternalCertificateStoreSessionRemote.class);
     
     private int caid;
     private Certificate cacert;
@@ -291,7 +298,7 @@ public class NestedMessageContentTest extends CmpTestCase {
     @Test
     public void test01CrmfReq() throws ObjectNotFoundException, InvalidKeyException, SignatureException, AuthorizationDeniedException, EjbcaException, UserDoesntFullfillEndEntityProfile, WaitingForApprovalException, Exception {
         
-        //-----------------Creating CRMF reguest
+        //-----------------Creating CRMF request
         //PKIMessage crmfMsg = createEESignedCrmfReq(subjectDN);
         byte[] senderNonce = CmpMessageHelper.createSenderNonce();
         byte[] transactionID = CmpMessageHelper.createSenderNonce();
@@ -313,7 +320,7 @@ public class NestedMessageContentTest extends CmpTestCase {
         AuthenticationToken adminToken = createAdminToken(admkeys, adminName, "CN=" + adminName + ",C=SE");
         Certificate admCert = getCertFromCredentials(adminToken);
         addExtraCert(crmfMsg, admCert);
-        signPKIMessage(crmfMsg, admkeys);
+        signPKIMessage(crmfMsg, admkeys.getPrivate());
         assertNotNull(crmfMsg);
         int reqID = crmfMsg.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue();
         
@@ -343,7 +350,7 @@ public class NestedMessageContentTest extends CmpTestCase {
         assertNotNull("Failed to created nested message PKIMessage", myPKIMessage);
         KeyPair raKeys = KeyTools.genKeys("1024", "RSA");
         createRACertificate("raCrmfSigner", "foo123", raKeys, null, null);
-        signPKIMessage(myPKIMessage, raKeys);
+        signPKIMessage(myPKIMessage, raKeys.getPrivate());
             
             
         assertNotNull("Failed to create myPKIHeader", myPKIHeader);
@@ -401,7 +408,7 @@ public class NestedMessageContentTest extends CmpTestCase {
         PKIMessage myPKIMessage = new PKIMessage(myPKIHeader, myPKIBody);
         KeyPair raKeys = KeyTools.genKeys("1024", "RSA");
         createRACertificate("raSignerVerify", "foo123", raKeys, null, null);
-        signPKIMessage(myPKIMessage, raKeys);
+        signPKIMessage(myPKIMessage, raKeys.getPrivate());
             
             
         assertNotNull("Failed to create myPKIHeader", myPKIHeader);
@@ -445,7 +452,7 @@ public class NestedMessageContentTest extends CmpTestCase {
         AuthenticationToken adminToken = createAdminToken(admkeys, adminName, "CN=" + adminName + ",C=SE");
         Certificate admCert = getCertFromCredentials(adminToken);
         addExtraCert(revMsg, admCert);
-        signPKIMessage(revMsg, admkeys);
+        signPKIMessage(revMsg, admkeys.getPrivate());
         assertNotNull(revMsg);
         
         
@@ -469,7 +476,7 @@ public class NestedMessageContentTest extends CmpTestCase {
         PKIMessage myPKIMessage = new PKIMessage(myPKIHeader, myPKIBody);
         KeyPair raKeys = KeyTools.genKeys("1024", "RSA");
         createRACertificate("raRevSigner", "foo123", raKeys, null, null);
-        signPKIMessage(myPKIMessage, raKeys);
+        signPKIMessage(myPKIMessage, raKeys.getPrivate());
             
             
         assertNotNull("Failed to create myPKIHeader", myPKIHeader);
@@ -530,7 +537,7 @@ public class NestedMessageContentTest extends CmpTestCase {
         PKIMessage myPKIMessage = new PKIMessage(myPKIHeader, myPKIBody);
         KeyPair raKeys = KeyTools.genKeys("1024", "RSA");
         createRACertificate("raSignerTest04", "foo123", raKeys, null, null);
-        signPKIMessage(myPKIMessage, raKeys);
+        signPKIMessage(myPKIMessage, raKeys.getPrivate());
             
             
         assertNotNull("Failed to create myPKIHeader", myPKIHeader);
@@ -595,7 +602,7 @@ public class NestedMessageContentTest extends CmpTestCase {
         PKIMessage myPKIMessage = new PKIMessage(myPKIHeader, myPKIBody);
         KeyPair raKeys = KeyTools.genKeys("1024", "RSA");
         // Don't create a certificate, so there is no RA cert authorized on the server side.
-        signPKIMessage(myPKIMessage, raKeys);
+        signPKIMessage(myPKIMessage, raKeys.getPrivate());
             
             
         assertNotNull("Failed to create myPKIHeader", myPKIHeader);
@@ -688,7 +695,7 @@ public class NestedMessageContentTest extends CmpTestCase {
         PKIMessage myPKIMessage = new PKIMessage(myPKIHeader, myPKIBody);
         KeyPair raKeys = KeyTools.genKeys("1024", "RSA");
         createRACertificate("raSignerTest06", "foo123", raKeys, null, null);
-        signPKIMessage(myPKIMessage, raKeys);
+        signPKIMessage(myPKIMessage, raKeys.getPrivate());
         
         assertNotNull("Failed to create PKIHeader", myPKIHeader);
         assertNotNull("Failed to create PKIBody", myPKIBody);
@@ -755,7 +762,7 @@ public class NestedMessageContentTest extends CmpTestCase {
         na = new org.bouncycastle.asn1.x509.Time(new Date());
         createRACertificate("raExpiredSignerTest07", "foo123", raKeys, nb.getDate(), na.getDate());
         Thread.sleep(5000);
-        signPKIMessage(myPKIMessage, raKeys);
+        signPKIMessage(myPKIMessage, raKeys.getPrivate());
         
             
         assertNotNull("Failed to create myPKIHeader", myPKIHeader);
@@ -875,7 +882,7 @@ public class NestedMessageContentTest extends CmpTestCase {
         //Certificate admCert = getCertFromCredentials(adminToken);
         Certificate nonAdminCert = CertTools.genSelfCert("CN=cmpTestAdmin,C=SE", 365, null, nonAdminKeys.getPrivate(), nonAdminKeys.getPublic(), AlgorithmConstants.SIGALG_SHA1_WITH_RSA, false);
         addExtraCert(crmfMsg, nonAdminCert);
-        signPKIMessage(crmfMsg, nonAdminKeys);
+        signPKIMessage(crmfMsg, nonAdminKeys.getPrivate());
         assertNotNull(crmfMsg);
         int reqID = crmfMsg.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue();
         
@@ -905,7 +912,7 @@ public class NestedMessageContentTest extends CmpTestCase {
         assertNotNull("Failed to created nested message PKIMessage", myPKIMessage);
         KeyPair raKeys = KeyTools.genKeys("1024", "RSA");
         createRACertificate("raCrmfSigner", "foo123", raKeys, null, null);
-        signPKIMessage(myPKIMessage, raKeys);
+        signPKIMessage(myPKIMessage, raKeys.getPrivate());
             
             
         assertNotNull("Failed to create myPKIHeader", myPKIHeader);
@@ -923,10 +930,143 @@ public class NestedMessageContentTest extends CmpTestCase {
         checkCmpResponseGeneral(resp, issuerDN, subjectDN, cacert, crmfMsg.getHeader().getSenderNonce().getOctets(), crmfMsg.getHeader().getTransactionID().getOctets(), false, null);
         Certificate cert = checkCmpCertRepMessage(subjectDN, cacert, resp, reqID);
         assertNotNull("CrmfRequest did not return a certificate", cert);
+    }   
+    
+    @Test
+    public void test23NestedMessageIn3GPPMode() throws Exception {
+     
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE);
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "AdminCA1");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_OPERATIONMODE, "normal");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_3GPPMODE, "true");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_3GPPCA, "3GPPCA");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_EXTRACTUSERNAMECOMPONENT, "UID");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_ALLOWAUTOMATICKEYUPDATE, "true");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_ALLOWUPDATEWITHSAMEKEY, "true");
         
-        //removeAuthenticationToken(adminToken, admCert, adminName);
-    }
+        byte[] gppCA = Base64.decode( ("MIICHDCCAYWgAwIBAgIId2qio28kX2EwDQYJKoZIhvcNAQEFBQAwHjEPMA0GA1UE" +
+                "AwwGM0dQUENBMQswCQYDVQQGEwJTRTAeFw0xMzAxMTYxMTM4MjRaFw0xNDAxMTYx" +
+                "MTM4MjRaMB4xDzANBgNVBAMMBjNHUFBDQTELMAkGA1UEBhMCU0UwgZ8wDQYJKoZI" +
+                "hvcNAQEBBQADgY0AMIGJAoGBAIK2gGWwWJgcwvB8f83/VAcT3UOiQ1ThZXWetf33" +
+                "rcldeMD/7Rydz6SIle0MrDgc9rda4ZdVN+0FJPvL8Q3hcGHUvJeyKGwyf7mJMc8D" +
+                "P11qCajZElbmV5Axv8/+i8EZk71XrRLbz8uxSLp84hFe+RQkkJV8hrlV5S8sKGGl" +
+                "ebfRAgMBAAGjYzBhMB0GA1UdDgQWBBSZ3XmLRWJOBIt8YUHCETSEdyk4+zAPBgNV" +
+                "HRMBAf8EBTADAQH/MB8GA1UdIwQYMBaAFJndeYtFYk4Ei3xhQcIRNIR3KTj7MA4G" +
+                "A1UdDwEB/wQEAwIBhjANBgkqhkiG9w0BAQUFAAOBgQAsnWEJVneEGwD33JQuSwAH" +
+                "c9IT4S7ZM+jrN9ybrJQEV9+dlbfXG8ISdo0aC7RH94vEiVWN2vPcXv1kHcYDmCus" +
+                "TB1QaZ/ERhO8SI9x6OHMZ9E4tsgytBsndFadfKKVpODgvXkB6x3/PV96AKz/gpjd" +
+                "LYGWSWywpLuutYiiFb6a8w==").getBytes() );
 
+        byte[] gppuser = Base64.decode( ("MIICWzCCAcSgAwIBAgIIAxXKnyDArMYwDQYJKoZIhvcNAQEFBQAwHjEPMA0GA1UE" +
+                "AwwGM0dQUENBMQswCQYDVQQGEwJTRTAeFw0xMzAxMTYxMTM0MzhaFw0xNDAxMTYx" +
+                "MTM4MjRaMEExGzAZBgoJkiaJk/IsZAEBDAt1aWR1c2VybmFtZTEVMBMGA1UEAwwM" +
+                "M2dwcHRlc3R1c2VyMQswCQYDVQQGEwJTRTCBnzANBgkqhkiG9w0BAQEFAAOBjQAw" +
+                "gYkCgYEA3mEpApioQ1liwNTvrABdwiieJ9AeImQr5VFoZFDv7NXyoRitMgSZJYNT" +
+                "hv1ANPnOTSVpB49n/rVVaniAP+kvdYyZyY3jJUZunQeC6QsdQ+oAE2eTFTyvuJJS" +
+                "6bXEertb+Smv9dF+c9NMwLC3KDU4KpO+P9sXim0pCHn2iOWtaWcCAwEAAaN/MH0w" +
+                "HQYDVR0OBBYEFJw2zz8wmLbzSP1RHyu5X6/u2X30MAwGA1UdEwEB/wQCMAAwHwYD" +
+                "VR0jBBgwFoAUmd15i0ViTgSLfGFBwhE0hHcpOPswDgYDVR0PAQH/BAQDAgXgMB0G" +
+                "A1UdJQQWMBQGCCsGAQUFBwMCBggrBgEFBQcDBDANBgkqhkiG9w0BAQUFAAOBgQAG" +
+                "VYKkWoysnf999Hxh9jcOC34chJYX0LMqRLpioPEB2uSqDoZgUdpAOJlI/CxLmTJh" +
+                "Z/vCqCjWM2CX1T/NmokD3Ea4A0m99y73VEZ4dWtzBi/tFu93XSQzwWXMSRKyYp0/" +
+                "SQuEunEJEw76otrAzhCVs3tcKr/+h5F7nMQuOFh1EA==").getBytes() );
+
+        byte[] gppuserkey = Base64.decode( ("MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAN5hKQKYqENZYsDU" +
+                "76wAXcIonifQHiJkK+VRaGRQ7+zV8qEYrTIEmSWDU4b9QDT5zk0laQePZ/61VWp4" +
+                "gD/pL3WMmcmN4yVGbp0HgukLHUPqABNnkxU8r7iSUum1xHq7W/kpr/XRfnPTTMCw" +
+                "tyg1OCqTvj/bF4ptKQh59ojlrWlnAgMBAAECgYEA2LBsOa9vJlFPPP9Am6WvtqXF" +
+                "lp3g/zoE2+s7gaSsZWcEiZ12BqscX8Vb+smDaxuPvvSZJ1jByRwBI0JQFfau2lcg" +
+                "7wqRgjr6Y1rQV6/PsVJLr8xa1iKUgxI9JCktvKu+DT4cHEFMtLlOpIA6niSZP0el" +
+                "qiRBzvpsb06Ai4Ng8qECQQDx/CFXxXoIndClM1T6w7snioMapfFgaiq8Ch8c1qoM" +
+                "H/fyAfISVqlpmTd6ELHHabjl9hOUDn+0BX2jX5zNYy2LAkEA60JYOv0EruR6560B" +
+                "NsnOqiFGYO1zZ583MEGdNXStxSzthplWAEEFkwKdHhaJzW0QQxzhDJqMF+BdTYnQ" +
+                "Qh+nFQJANk+FWEK9KfPpoTpNJ18IwU4oMLHv49jQMJYA96MCVWhTaOCg6RbEPSwj" +
+                "NGVM0VncItjA+ijq5oeY9DMAaWSKEwJAE3s7+S6Im7752oN+DT5q6bW1sUMYgmUx" +
+                "2cIlNY8C8MgGp1W9RGod/w2BW0N8h9FXPmd+z19g6H1A3LHj2AXs/QJAPCWj2EPX" +
+                "ZSPn88/rmy8Rrs7owCGvl+v2jeRyDARHF5SVS/7v3pcc8qOxTdWgChS2wv1juvQR" +
+                "IgUnBaZUk5bbtw==").getBytes() ); 
+        
+        
+        String testUIDUsername = "uidusername";
+        String testUserDN = "CN=3gpptestuse,UID=" + testUIDUsername + ",C=se";
+        
+        X509Certificate gppcacert = (X509Certificate) CertTools.getCertfromByteArray(gppCA);
+        X509Certificate gppusercert = (X509Certificate) CertTools.getCertfromByteArray(gppuser);
+        
+        KeyFactory kf = KeyFactory.getInstance("RSA");
+        PKCS8EncodedKeySpec ks = new PKCS8EncodedKeySpec(gppuserkey);
+        PrivateKey privkey = kf.generatePrivate(ks);
+        
+        //importing gppcacert as an external CA
+        Collection<Certificate> cacerts = new ArrayList<Certificate>();
+        cacerts.add(gppcacert);
+        caAdminSession.importCACertificate(admin, "3GPPCA", cacerts);
+        createUser(testUIDUsername, testUserDN, "foo123");
+        
+        String fingerprint = null;
+        try {
+            
+            //------------ Creating an CertificationRequest signed by the vendor-issued certificate, not in the database, for an endentity that already exists.
+            byte[] nonce = CmpMessageHelper.createSenderNonce();
+            byte[] transid = CmpMessageHelper.createSenderNonce();
+            KeyPair keys = KeyTools.genKeys("1024", AlgorithmConstants.KEYALGORITHM_RSA);
+            AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
+            PKIMessage msg = genCertReq(issuerDN, testUserDN, keys, gppcacert, nonce, transid, false, null, null, null, null);
+            msg.getHeader().setProtectionAlg(pAlg);
+            assertNotNull("Generating CrmfRequest failed.", msg);
+            addExtraCert(msg, gppusercert);
+            signPKIMessage(msg, privkey);
+            assertNotNull(msg);
+
+            //------------------Creating NestedMessageContent
+            String nestedSubjectDN = "CN=nestedSender";
+            final byte[] noncen = CmpMessageHelper.createSenderNonce();
+            final byte[] transidn = CmpMessageHelper.createSenderNonce();
+            
+            PKIHeader myPKIHeader = new PKIHeader(new DERInteger(2), new GeneralName(new X509Name(nestedSubjectDN)), 
+                        new GeneralName(new X509Name(((X509Certificate)cacert).getSubjectDN().getName())));
+            myPKIHeader.setMessageTime(new DERGeneralizedTime(new Date()));
+            // senderNonce
+            myPKIHeader.setSenderNonce(new DEROctetString(noncen));
+            // TransactionId
+            myPKIHeader.setTransactionID(new DEROctetString(transidn));
+
+            
+            ASN1EncodableVector v = new ASN1EncodableVector();
+            v.add( msg );
+            DERSequence seq = new DERSequence(v);
+            PKIBody myPKIBody = new PKIBody(seq, 20); // NestedMessageContent
+            assertNotNull("Failed to create nested Message PKIBody", myPKIBody);
+            
+            PKIMessage myPKIMessage = new PKIMessage(myPKIHeader, myPKIBody);
+            assertNotNull("Failed to created nested message PKIMessage", myPKIMessage);
+            KeyPair raKeys = KeyTools.genKeys("1024", "RSA");
+            createRACertificate("raCrmfSigner", "foo123", raKeys, null, null);
+            signPKIMessage(myPKIMessage, raKeys.getPrivate());
+            assertNotNull("Failed to create myPKIHeader", myPKIHeader);
+            assertNotNull("myPKIBody is null", myPKIBody);
+            assertNotNull("myPKIMessage is null", myPKIMessage);
+            
+            //-------------- sending the request
+            ByteArrayOutputStream bao = new ByteArrayOutputStream();
+            DEROutputStream out = new DEROutputStream(bao);
+            out.writeObject(msg);
+            byte[] ba = bao.toByteArray();
+            byte[] resp = sendCmpHttp(ba, 200);
+            Certificate cert = checkCmpCertRepMessage(testUserDN, cacert, resp, msg.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId()
+                    .getValue().intValue());
+            assertNotNull("CrmfRequest did not return a certificate", cert);
+            fingerprint = CertTools.getFingerprintAsString(cert);
+        } finally {
+            try {
+                userAdminSession.revokeAndDeleteUser(admin, testUIDUsername, ReasonFlags.unused);
+                caSession.removeCA(admin, CertTools.getIssuerDN(gppcacert).hashCode());
+            } catch (Exception e) {}
+
+            internalCertStoreSession.removeCertificate(fingerprint);
+
+        }
+    }
     
     @Test
     public void testZZZCleanUp() throws Exception {
@@ -977,9 +1117,9 @@ public class NestedMessageContentTest extends CmpTestCase {
         return racert;
     }
     
-    private void signPKIMessage(PKIMessage msg, KeyPair keys) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException, SignatureException {
+    private void signPKIMessage(PKIMessage msg, PrivateKey key) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException, SignatureException {
         final Signature sig = Signature.getInstance(PKCSObjectIdentifiers.sha1WithRSAEncryption.getId(), "BC");
-        sig.initSign(keys.getPrivate());
+        sig.initSign(key);
         sig.update(msg.getProtectedBytes());
         byte[] eeSignature = sig.sign();            
         msg.setProtection(new DERBitString(eeSignature));   
