@@ -39,15 +39,20 @@ import org.cesecore.certificates.ca.CAInfo;
 import org.cesecore.certificates.ca.CaSession;
 import org.cesecore.certificates.certificate.CertificateInfo;
 import org.cesecore.certificates.certificate.CertificateStoreSession;
+import org.cesecore.certificates.endentity.EndEntityInformation;
 import org.cesecore.util.CertTools;
 import org.ejbca.config.CmpConfiguration;
+import org.ejbca.core.EjbcaException;
 import org.ejbca.core.ejb.authentication.web.WebAuthenticationProviderSessionLocal;
 import org.ejbca.core.ejb.ra.EndEntityAccessSession;
+import org.ejbca.core.ejb.ra.UserAdminSession;
 import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileSession;
 import org.ejbca.core.model.InternalEjbcaResources;
 import org.ejbca.core.model.SecConst;
+import org.ejbca.core.model.approval.WaitingForApprovalException;
 import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.core.model.ra.NotFoundException;
+import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
 import org.ejbca.core.protocol.cmp.CmpMessageHelper;
 import org.ejbca.core.protocol.cmp.CmpPKIBodyConstants;
 import org.ejbca.util.passgen.IPasswordGenerator;
@@ -78,6 +83,7 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
     private EndEntityProfileSession eeProfileSession;
     private EndEntityAccessSession eeAccessSession;
     private WebAuthenticationProviderSessionLocal authenticationProviderSession;
+    private UserAdminSession userAdminSession;
 
     public EndEntityCertificateAuthenticationModule(final String parameter) {
         this.authenticationParameterCAName = parameter;
@@ -92,6 +98,7 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
         eeProfileSession = null;
         eeAccessSession = null;
         authenticationProviderSession = null;
+        userAdminSession = null;
     }
     
     /**
@@ -105,7 +112,7 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
      */
     public void setSession(final AuthenticationToken adm, final CaSession caSession, final CertificateStoreSession certSession, 
             final AccessControlSession authSession, final EndEntityProfileSession eeprofSession, final EndEntityAccessSession eeaccessSession,
-            final WebAuthenticationProviderSessionLocal authProvSession) {
+            final WebAuthenticationProviderSessionLocal authProvSession, UserAdminSession userAdmSession) {
         this.admin = adm;
         this.caSession = caSession;
         this.certSession = certSession;
@@ -113,6 +120,7 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
         this.eeProfileSession = eeprofSession;
         this.eeAccessSession = eeaccessSession;
         this.authenticationProviderSession = authProvSession;
+        this.userAdminSession = userAdmSession;
     }
     
     
@@ -317,8 +325,38 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
                     log.debug("Extracting and setting password for user '"+username+"'.");
                 }
                 try {
-                    password = eeAccessSession.findUser(admin, username).getPassword();
+                    EndEntityInformation user = eeAccessSession.findUser(admin, username);
+                    password = user.getPassword();
+                    if(password == null) { // happens when the end entity was NOT created with a clear text password
+                        password = genRandomPwd();
+                        user.setPassword(password);
+                        userAdminSession.changeUser(admin, user, false);
+                    }
                 } catch (AuthorizationDeniedException e) {
+                    errorMessage = e.getLocalizedMessage();
+                    if(log.isDebugEnabled()) {
+                        log.debug(errorMessage);
+                    }
+                    return false;
+                } catch (CADoesntExistsException e) {
+                    errorMessage = e.getLocalizedMessage();
+                    if(log.isDebugEnabled()) {
+                        log.debug(errorMessage);
+                    }
+                    return false;
+                } catch (UserDoesntFullfillEndEntityProfile e) {
+                    errorMessage = e.getLocalizedMessage();
+                    if(log.isDebugEnabled()) {
+                        log.debug(errorMessage);
+                    }
+                    return false;
+                } catch (WaitingForApprovalException e) {
+                    errorMessage = e.getLocalizedMessage();
+                    if(log.isDebugEnabled()) {
+                        log.debug(errorMessage);
+                    }
+                    return false;
+                } catch (EjbcaException e) {
                     errorMessage = e.getLocalizedMessage();
                     if(log.isDebugEnabled()) {
                         log.debug(errorMessage);

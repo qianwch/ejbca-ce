@@ -279,7 +279,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
                 }
             }
             if (cert == null) {
-                createUser(revUsername, revUserDN, "foo123");
+                createUser(revUsername, revUserDN, "foo123", true);
                 KeyPair admkeys = KeyTools.genKeys("1024", "RSA");
                 cert = signSession.createCertificate(ADMIN, revUsername, "foo123", admkeys.getPublic());
             }
@@ -337,7 +337,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
             msg.getHeader().setProtectionAlg(pAlg);
             msg.getHeader().setSenderKID(new DEROctetString(nonce));
 
-            createUser(testUsername, testUserDN, "foo123");
+            createUser(testUsername, testUserDN, "foo123", true);
             KeyPair admkeys = KeyTools.genKeys("512", "RSA");
             admToken = createAdminToken(admkeys, testUsername, testUserDN);
             admCert = getCertFromCredentials(admToken);
@@ -396,7 +396,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
             }
         }
         if (cert == null) {
-            createUser("cmprevuser1", "CN=cmprevuser1,C=SE", "foo123");
+            createUser("cmprevuser1", "CN=cmprevuser1,C=SE", "foo123", true);
             KeyPair admkeys = KeyTools.genKeys("1024", "RSA");
             cert = signSession.createCertificate(ADMIN, "cmprevuser1", "foo123", admkeys.getPublic());
         }
@@ -455,7 +455,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
             }
         }
         if (cert == null) {
-            createUser("cmprevuser1", "CN=cmprevuser1,C=SE", "foo123");
+            createUser("cmprevuser1", "CN=cmprevuser1,C=SE", "foo123", true);
             KeyPair admkeys = KeyTools.genKeys("1024", "RSA");
             cert = signSession.createCertificate(ADMIN, "cmprevuser1", "foo123", admkeys.getPublic());
         }
@@ -600,7 +600,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
         assertNotNull("Crmf request did not return a certificate", cert1);
 
         VerifyPKIMessage verifier = new VerifyPKIMessage(caSession.getCAInfo(ADMIN, caid), ADMIN, caSession, eeAccessSession, certStoreSession,
-                authorizationSession, eeProfileSession, null);
+                authorizationSession, eeProfileSession, null, userAdminSession);
         boolean verify = verifier.verify(req, null, false);
         assertTrue("Verifying PKIMessage failed", verify);
         assertEquals(CmpConfiguration.AUTHMODULE_HMAC, verifier.getUsedAuthenticationModule().getName());
@@ -667,7 +667,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
         msg.getHeader().setProtectionAlg(pAlg);
 
         String adminName = "cmpTestUnauthorizedAdmin";
-        createUser(adminName, "CN=" + adminName + ",C=SE", "foo123");
+        createUser(adminName, "CN=" + adminName + ",C=SE", "foo123", true);
         KeyPair admkeys = KeyTools.genKeys("512", "RSA");
         Certificate admCert = signSession.createCertificate(ADMIN, adminName, "foo123", admkeys.getPublic());
         addExtraCert(msg, admCert);
@@ -775,7 +775,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
 
         String clientUsername = "clientTestUser";
         String clientDN = "CN=" + clientUsername + ",C=SE";
-        createUser(clientUsername, clientDN, clientPassword);
+        createUser(clientUsername, clientDN, clientPassword, true);
 
         KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
 
@@ -801,7 +801,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
 
         // 
         // Try a request with no issuerDN in the certTemplate
-        createUser(clientUsername, clientDN, clientPassword);
+        createUser(clientUsername, clientDN, clientPassword, true);
         PKIMessage msgNoIssuer = genCertReq(null, clientDN, keys, cacert, nonce, transid, true, null, null, null, null);
         assertNotNull("Generating CrmfRequest with no issuer failed.", msgNoIssuer);
         PKIMessage reqNoIssuer = protectPKIMessage(msgNoIssuer, false, clientPassword, "mykeyid", 567);
@@ -847,11 +847,8 @@ public class AuthenticationModulesTest extends CmpTestCase {
         String clientUsername = "clientTestUser";
         String clientDN = "CN=" + clientUsername + ",C=SE";
         String clientPassword = "foo123client";
-        try {
-            userAdminSession.revokeAndDeleteUser(ADMIN, clientUsername, ReasonFlags.unused);
-        } catch (Exception e) {
-        }
-        createUser(clientUsername, clientDN, clientPassword);
+
+        createUser(clientUsername, clientDN, clientPassword, true);
 
         KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
 
@@ -896,11 +893,8 @@ public class AuthenticationModulesTest extends CmpTestCase {
         String clientUsername = "clientTestUser";
         String clientDN = "CN=" + clientUsername + ",C=SE";
         String clientPassword = "foo123client";
-        try {
-            userAdminSession.revokeAndDeleteUser(ADMIN, clientUsername, ReasonFlags.unused);
-        } catch (Exception e) {
-        }
-        createUser(clientUsername, clientDN, "foo123");
+
+        createUser(clientUsername, clientDN, "foo123", true);
 
         KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
 
@@ -944,11 +938,8 @@ public class AuthenticationModulesTest extends CmpTestCase {
         String clientUsername = "clientTestUser";
         String clientDN = "CN=" + clientUsername + ",C=SE";
         //String clientPassword = "foo123client";
-        try {
-            userAdminSession.revokeAndDeleteUser(ADMIN, clientUsername, ReasonFlags.unused);
-        } catch (Exception e) {
-        }
-        createUser(clientUsername, clientDN, "foo123");
+
+        createUser(clientUsername, clientDN, "foo123", true);
 
         KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
 
@@ -968,7 +959,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
         assertNotNull("Crmf request did not return a certificate", cert1);
 
         VerifyPKIMessage verifier = new VerifyPKIMessage(caSession.getCAInfo(ADMIN, caid), ADMIN, caSession, eeAccessSession, certStoreSession,
-                authorizationSession, eeProfileSession, null);
+                authorizationSession, eeProfileSession, null, userAdminSession);
         boolean verify = verifier.verify(msg, null, false);
         assertTrue(verify);
         assertEquals(CmpConfiguration.AUTHMODULE_REG_TOKEN_PWD, verifier.getUsedAuthenticationModule().getName());
@@ -991,11 +982,8 @@ public class AuthenticationModulesTest extends CmpTestCase {
         String clientUsername = "clientTestUser";
         String clientDN = "CN=" + clientUsername + ",C=SE";
         String clientPassword = "foo123client";
-        try {
-            userAdminSession.revokeAndDeleteUser(ADMIN, clientUsername, ReasonFlags.unused);
-        } catch (Exception e) {
-        }
-        createUser(clientUsername, clientDN, "foo123ee");
+
+        createUser(clientUsername, clientDN, "foo123ee", true);
 
         KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
 
@@ -1058,7 +1046,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
         try {
             KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
             KeyPair fakeKeys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
-            createUser(testUsername, testUserDN, "foo123");
+            createUser(testUsername, testUserDN, "foo123", true);
             // A real certificate that can be used to sign the message
             Certificate cert = signSession.createCertificate(ADMIN, testUsername, "foo123", keys.getPublic());
             fingerprint = CertTools.getFingerprintAsString(cert);
@@ -1103,7 +1091,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
             // Step 2, sign the request with a certificate that does not belong to the user
             {
                 KeyPair otherKeys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
-                createUser(otherUsername, otherUserDN, "foo123");
+                createUser(otherUsername, otherUserDN, "foo123", true);
                 // A real certificate that can be used to sign the message
                 Certificate othercert = signSession.createCertificate(ADMIN, otherUsername, "foo123", otherKeys.getPublic());
                 fingerprint2 = CertTools.getFingerprintAsString(cert);
@@ -1175,7 +1163,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
             assertEquals(expectedErrMsg, errMsg);
 
             // Step 4 now set status to NEW, and a clear text password, then it should finally work
-            createUser(testUsername, testUserDN, "randompasswordhere");
+            createUser(testUsername, testUserDN, "randompasswordhere", true);
             // Send request and receive response
             final byte[] resp2 = sendCmpHttp(ba, 200);
             Certificate cert2 = checkCmpCertRepMessage(testUserDN, cacert, resp2, msg.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId()
@@ -1305,6 +1293,73 @@ public class AuthenticationModulesTest extends CmpTestCase {
     }
     
     /**
+     * Tests that EndEntityAuthentication module can be successfully used in client mode when the end entity's password is not stored in clear text.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void test21CrmfRequestClientModeEECNotClearPassword() throws Exception {
+        confSession.updateProperty(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE);
+        assertTrue("The CMP Authentication module was not configured correctly.",
+                confSession.verifyProperty(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE));
+        confSession.updateProperty(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "-");
+        assertTrue("The CMP Authentication module was not configured correctly.",
+                confSession.verifyProperty(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "-"));
+        confSession.updateProperty(CmpConfiguration.CONFIG_OPERATIONMODE, "normal");
+        assertTrue("The CMP Authentication module was not configured correctly.",
+                confSession.verifyProperty(CmpConfiguration.CONFIG_OPERATIONMODE, "normal"));
+        
+        final String testUserDN = "CN=cmptestuser21,C=SE";
+        final String testUsername = "cmptestuser21";
+        String fingerprint = null;
+        String fingerprint2 = null;
+        try {
+            KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
+            AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
+            
+            createUser(testUsername, testUserDN, "foo123", false);
+            Certificate cert = signSession.createCertificate(ADMIN, testUsername, "foo123", keys.getPublic());
+            fingerprint = CertTools.getFingerprintAsString(cert);
+            
+            //Edit the status of the user to NEW
+            createUser(testUsername, testUserDN, "foo123", false);
+            PKIMessage msg = genCertReq(issuerDN, testUserDN, keys, cacert, nonce, transid, false, null, null, null, null);
+            msg.getHeader().setProtectionAlg(pAlg);
+            assertNotNull("Generating CrmfRequest failed.", msg);
+            addExtraCert(msg, cert);
+            signPKIMessage(msg, keys.getPrivate());
+            assertNotNull(msg);
+            //******************************************''''''
+            final Signature sig = Signature.getInstance(msg.getHeader().getProtectionAlg().getAlgorithm().getId(), "BC");
+            sig.initVerify(cert.getPublicKey());
+            sig.update(msg.getProtectedBytes());
+            boolean verified = sig.verify(msg.getProtection().getBytes());
+            assertTrue("Signing the message failed.", verified);
+            //***************************************************
+            
+            final ByteArrayOutputStream bao = new ByteArrayOutputStream();
+            final DEROutputStream out = new DEROutputStream(bao);
+            out.writeObject(msg);
+            final byte[] ba = bao.toByteArray();
+            
+            // Send request and receive response
+            final byte[] resp = sendCmpHttp(ba, 200);
+            Certificate cert2 = checkCmpCertRepMessage(testUserDN, cacert, resp, msg.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId()
+                    .getValue().intValue());
+            assertNotNull("CrmfRequest did not return a certificate", cert2);
+            fingerprint2 = CertTools.getFingerprintAsString(cert2);
+        } finally {
+            try {
+                userAdminSession.revokeAndDeleteUser(ADMIN, testUsername, ReasonFlags.unused);
+            } catch (Exception e) {
+            }
+            
+            internalCertStoreSession.removeCertificate(fingerprint);
+            internalCertStoreSession.removeCertificate(fingerprint2);
+        }
+    }
+    
+    /**
      * Tests that EndEntityAuthentication module in client mode when 3GPP option is activated:
      * 
      * 1- A certification request, signed by the vendor-issued certificate (not in the database), is sent. The request should pass.
@@ -1357,7 +1412,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
         Collection<Certificate> cacerts = new ArrayList<Certificate>();
         cacerts.add(gppcacert);
         caAdminSession.importCACertificate(ADMIN, "3GPPCA", cacerts);
-        createUser(testUIDUsername, testUserDN, "foo123");
+        createUser(testUIDUsername, testUserDN, "foo123", true);
         
         String fingerprint = null;
         String fingerprint2 = null;
@@ -1577,7 +1632,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
         msg.setProtection(new DERBitString(eeSignature));
     }
 
-    private EndEntityInformation createUser(String username, String subjectDN, String password) throws AuthorizationDeniedException,
+    private EndEntityInformation createUser(String username, String subjectDN, String password, boolean clearpassword) throws AuthorizationDeniedException,
             UserDoesntFullfillEndEntityProfile, WaitingForApprovalException, EjbcaException, Exception {
 
         EndEntityInformation user = new EndEntityInformation(username, subjectDN, caid, null, username + "@primekey.se", SecConst.USER_ENDUSER,
@@ -1586,12 +1641,12 @@ public class AuthenticationModulesTest extends CmpTestCase {
         try {
             //userAdminSession. addUser(ADMIN, user, true);
             userAdminSession.addUser(ADMIN, username, password, subjectDN, "rfc822name=" + username + "@primekey.se", username + "@primekey.se",
-                    true, SecConst.EMPTY_ENDENTITYPROFILE, SecConst.CERTPROFILE_FIXED_ENDUSER, SecConst.USER_ENDUSER, SecConst.TOKEN_SOFT_PEM, 0,
+                    clearpassword, SecConst.EMPTY_ENDENTITYPROFILE, SecConst.CERTPROFILE_FIXED_ENDUSER, SecConst.USER_ENDUSER, SecConst.TOKEN_SOFT_PEM, 0,
                     caid);
             log.debug("created user: " + username);
         } catch (Exception e) {
             log.debug("User " + username + " already exists. Setting the user status to NEW");
-            userAdminSession.changeUser(ADMIN, user, true);
+            userAdminSession.changeUser(ADMIN, user, clearpassword);
             userAdminSession.setUserStatus(ADMIN, username, UserDataConstants.STATUS_NEW);
             log.debug("Reset status to NEW");
         }
@@ -1669,7 +1724,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
         }
 
         try {
-            createUser(adminName, dn, "foo123");
+            createUser(adminName, dn, "foo123", true);
         } catch (AuthorizationDeniedException e1) {
             throw new CertificateCreationException("Error encountered when creating admin user", e1);
         } catch (UserDoesntFullfillEndEntityProfile e1) {

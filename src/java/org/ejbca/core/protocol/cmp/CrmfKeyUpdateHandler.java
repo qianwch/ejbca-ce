@@ -155,7 +155,7 @@ public class CrmfKeyUpdateHandler extends BaseCmpMessageHandler implements ICmpM
                 // Authenticate the request
                 EndEntityCertificateAuthenticationModule eecmodule = new EndEntityCertificateAuthenticationModule(getEECCA());
                 eecmodule.setSession(this.admin, this.caSession, this.certStoreSession, this.authorizationSession, this.endEntityProfileSession, 
-                        this.endEntityAccessSession, authenticationProviderSession);
+                        this.endEntityAccessSession, this.authenticationProviderSession, this.userAdminSession);
                 if(!eecmodule.verifyOrExtract(crmfreq.getPKIMessage(), null, authenticated)) {
                     String errMsg = eecmodule.getErrorMessage();
                     if( errMsg == null) {
