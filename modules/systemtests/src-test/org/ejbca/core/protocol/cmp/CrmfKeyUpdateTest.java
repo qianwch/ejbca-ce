@@ -509,6 +509,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         final PKIBody body = respObject.getBody();
         assertEquals(23, body.getTagNo());
         final String errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
+        // This is the expected error message because fetching the CA is done before checking whether the attached certificate is in the database.
         final String expectedErrMsg = "CA does not exist: " + fakeUserDN.hashCode();
         assertEquals(expectedErrMsg, errMsg);
 
