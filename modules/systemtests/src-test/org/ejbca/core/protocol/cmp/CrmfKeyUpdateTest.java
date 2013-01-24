@@ -47,19 +47,12 @@ import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DERBitString;
-import org.bouncycastle.asn1.DERGeneralizedTime;
-import org.bouncycastle.asn1.DERInteger;
-import org.bouncycastle.asn1.DERNull;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DEROutputStream;
-import org.bouncycastle.asn1.DERUTF8String;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
-import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.ReasonFlags;
-import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.asn1.x509.X509CertificateStructure;
-import org.bouncycastle.asn1.x509.X509Name;
 import org.cesecore.CesecoreException;
 import org.cesecore.authentication.tokens.AuthenticationSubject;
 import org.cesecore.authentication.tokens.AuthenticationToken;
@@ -85,6 +78,7 @@ import org.cesecore.roles.RoleExistsException;
 import org.cesecore.roles.RoleNotFoundException;
 import org.cesecore.roles.access.RoleAccessSessionRemote;
 import org.cesecore.roles.management.RoleManagementSessionRemote;
+import org.cesecore.util.Base64;
 import org.cesecore.util.CertTools;
 import org.cesecore.util.CryptoProviderTools;
 import org.ejbca.config.CmpConfiguration;
@@ -111,18 +105,8 @@ import com.novosec.pkix.asn1.cmp.CertRepMessage;
 import com.novosec.pkix.asn1.cmp.CertResponse;
 import com.novosec.pkix.asn1.cmp.CertifiedKeyPair;
 import com.novosec.pkix.asn1.cmp.PKIBody;
-import com.novosec.pkix.asn1.cmp.PKIHeader;
 import com.novosec.pkix.asn1.cmp.PKIMessage;
 import com.novosec.pkix.asn1.cmp.PKIStatusInfo;
-import com.novosec.pkix.asn1.crmf.AttributeTypeAndValue;
-import com.novosec.pkix.asn1.crmf.CRMFObjectIdentifiers;
-import com.novosec.pkix.asn1.crmf.CertReqMessages;
-import com.novosec.pkix.asn1.crmf.CertReqMsg;
-import com.novosec.pkix.asn1.crmf.CertRequest;
-import com.novosec.pkix.asn1.crmf.CertTemplate;
-import com.novosec.pkix.asn1.crmf.OptionalValidity;
-import com.novosec.pkix.asn1.crmf.POPOSigningKey;
-import com.novosec.pkix.asn1.crmf.ProofOfPossession;
 
 /**
  * This will test the different cmp authentication modules.
@@ -479,13 +463,17 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         assertTrue("The CMP Authentication module was not configured correctly.", confSession.verifyProperty(CmpConfiguration.CONFIG_ALLOWAUTOMATICKEYUPDATE, "true"));
         
         //--------------- create the user and issue his first certificate -----------------
-        final String fakeUserDN = "CN=fakeuser,C=SE";
+        final String fakeUsername = "fakeusername";
+        final String fakeUserDN = "CN=" + fakeUsername + ",C=SE";
+        createUser(fakeUsername, fakeUserDN, "foo123");
+        
         KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
         Certificate fakeCert = null;
         fakeCert = CertTools.genSelfCert(fakeUserDN, 30, null, keys.getPrivate(), keys.getPublic(),
                     AlgorithmConstants.SIGALG_SHA1_WITH_RSA, false);
         assertNotNull("Failed to create a test certificate", fakeCert);
         
+        // Sending a request with a certificate that neither it nor the issuer CA is in the database
         PKIMessage req = genRenewalReq(userDN, cacert, nonce, transid, keys, false, null, null);
         assertNotNull("Failed to generate a CMP renewal request", req);
         AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
@@ -506,11 +494,60 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
         assertNotNull(respObject);
 
-        final PKIBody body = respObject.getBody();
+        PKIBody body = respObject.getBody();
         assertEquals(23, body.getTagNo());
-        final String errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
+        String errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
         // This is the expected error message because fetching the CA is done before checking whether the attached certificate is in the database.
-        final String expectedErrMsg = "CA does not exist: " + fakeUserDN.hashCode();
+        String expectedErrMsg = "CA does not exist: " + fakeUserDN.hashCode();
+        assertEquals(expectedErrMsg, errMsg);
+        
+        
+        // sending another renewal request with a certificate issued by an existing CA but the certificate itself is not in the database
+        
+        // A certificate, not in the database, issued by AdminCA1
+        byte[] fakecertBytes = Base64.decode( ("MIIDXDCCAkSgAwIBAgIIRC/jVeNAbfQwDQYJKoZIhvcNAQEFBQAwNzELMAkGA1UE" +
+                "BhMCU0UxFTATBgNVBAoTDEVKQkNBIFNhbXBsZTERMA8GA1UEAxMIQWRtaW5DQTEw" +
+                "HhcNMTMwMTI0MTAzNjQ1WhcNMTUwMTI0MTAzNjQ1WjAkMRUwEwYDVQQDDAxmYWtl" +
+                "dXNlcm5hbWUxCzAJBgNVBAYTAlNFMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB" +
+                "CgKCAQEA1S468v2pzIw+27kQQ/+wACnMaEYqvBr8Zv3ozp15ojNuXuv/WB/AtFOa" +
+                "khHrE23bDv/0m232Ax/njEz6XuNs3nx9O79cJ77gYRFKW2CWBfdr8P60nmS9CgE5" +
+                "W04XQLlFPNfoS1BfuCGA5UjuSvbt/5v1+dDxyFdOaJcgDpqhbyWbnJ47qUpERb1V" +
+                "ptVxAHW8m9w1cyNcA6MHhL39kP/OUJX26SwfUsUJJ0mkaqT1Gzd4jpGHRGWFUnF9" +
+                "s6e115a2pVx9oj8h6JwemL0ao8WXebCIgV16xny+eGMl3U1SJzMtdGxQyYOyGeXU" +
+                "9n5A0Yxc6LqNKWdyW9is8TD7jrfZiQIDAQABo38wfTAdBgNVHQ4EFgQURPEY5Hhr" +
+                "QBZqHOjxgj84PN4y3dIwDAYDVR0TAQH/BAIwADAfBgNVHSMEGDAWgBTPD2/ZscpO" +
+                "wTkwLrvJdqpEMQ6h3DAOBgNVHQ8BAf8EBAMCBeAwHQYDVR0lBBYwFAYIKwYBBQUH" +
+                "AwIGCCsGAQUFBwMEMA0GCSqGSIb3DQEBBQUAA4IBAQBZ6jdvQ3lA/73Szlu8ooGz" +
+                "RKPC0fkmcEXwcwhOPKqTIQgb3BLuLTPCaGFwr/w2sFUXyhO9bE8p/56NvjqtyXd0" +
+                "xHWYFW5Q8IcNtcpO9vMNcmI6cgFFxWeU6pEV3KvCGFSeHHiWH9haRxYg7JdirqIU" +
+                "E9s3eBou6HBWkY/zATaIIezIaURCt/osldqU0fq1j2JZJqhQiQDaVayEFP1b2N2X" +
+                "Bc6RJcOugw6Q4cWemgCQkUmEncUKlv4OSRQ/k9qk27jWfjzkbDr4OxdohHL5Cpll" +
+                "5zqAWESvmozu4bA+CZK01IPEIRkOKrMc8sZBsVwhp8I5j8ro/8TRFxNRv55bAZzG").getBytes() );
+        fakeCert = CertTools.getCertfromByteArray(fakecertBytes);
+        
+        req = genRenewalReq(fakeUserDN, cacert, nonce, transid, keys, false, null, null);
+        req.getHeader().setProtectionAlg(pAlg);
+        assertNotNull("Failed to generate a CMP renewal request", req);
+
+        addExtraCert(req, fakeCert);
+        signPKIMessage(req, keys);
+        assertNotNull(req);
+        
+        bao = new ByteArrayOutputStream();
+        out = new DEROutputStream(bao);
+        out.writeObject(req);
+        ba = bao.toByteArray();
+        // Send request and receive response
+        resp = sendCmpHttp(ba, 200);
+        checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, false, null);
+        
+        respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
+        assertNotNull(respObject);
+
+        body = respObject.getBody();
+        assertEquals(23, body.getTagNo());
+        errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
+        expectedErrMsg = "The certificate attached to the PKIMessage in the extraCert field could not be found in the database.";
         assertEquals(expectedErrMsg, errMsg);
 
         if(log.isTraceEnabled()) {
