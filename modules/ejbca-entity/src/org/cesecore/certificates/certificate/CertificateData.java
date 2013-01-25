@@ -262,7 +262,7 @@ public class CertificateData extends ProtectedData implements Serializable {
     }
 
     /**
-     * What type of user the certificate belongs to, ex SecConst.USER_ENDUSER
+     * What type of user the certificate belongs to, ex SecConst.CERTTYPE_ENDENTITY
      * 
      * @return user type
      */
@@ -272,7 +272,7 @@ public class CertificateData extends ProtectedData implements Serializable {
     }
 
     /**
-     * What type of user the certificate belongs to, ex SecConst.USER_ENDUSER
+     * What type of user the certificate belongs to, ex SecConst.CERTTYPE_ENDENTITY
      * 
      * @param type type
      */
