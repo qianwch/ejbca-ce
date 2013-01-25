@@ -1043,14 +1043,14 @@ cmp.ra.authenticationsecret=password
 <p>
 You can then use cmpclient (as an RA):</p>
 <source>
-./cmpclient --server localhost --port 8080 --path ejbca/publicweb/cmp --cacert AdminCA1.der --ir --user mykeyid --password password --newclcert clcert.der --newkey key.pem --subject "CN=User Name;O=My Organization;C=SE"
+./openssl cmp -cmd ir -server localhost:8080 -path ejbca/publicweb/cmp -srvcert AdminCA1.cacert.pem -user NewUser -pass password -certout clcert1.pem -newkey key1.pem -keyfmt PEM -certfmt PEM -subject "/CN=NewUser/O=My Organization/C=SE"
 </source>
 <p>This requests a certificate, defining the subject DN that will be used. The CA used to sign the certificate is specified in the EJBCA cmp configuration, and can be taken from the keyid.
 EJBCA authenticated the request using the HMAC protection with the password, and accepts any request upon correct authentication. See the CMP documentation above for more advanced configuration.
 </p>
-<p><strong>Client mode</strong></p>
+<p><strong>Client mode, HMAC password authentication</strong></p>
 <p>
-Cmpforopenssl works with with EJBCA in client mode with the following EJBCA configuration (cmp.properties, unset properties = default):</p>
+Cmpforopenssl works with with EJBCA in client mode, with HMAC password authentication, using the following EJBCA configuration (cmp.properties, unset properties = default):</p>
 <source>
 cmp.authenticationmodule=HMAC
 cmp.extractusernamecomponent=CN
@@ -1059,14 +1059,61 @@ cmp.extractusernamecomponent=CN
 <source>
 bin/ejbca.sh ra adduser user1 password "CN=user1,O=My Organization,C=SE" null AdminCA1 null 1 USERGENERATED
 bin/ejbca.sh ra setclearpwd user1 password
+bin/ejbca.sh ra setuserstatus user1 10
 </source>
 <p>
 You can then use cmpclient (as a client):</p>
 <source>
-./cmpclient --server localhost --port 8080 --path ejbca/publicweb/cmp --cacert AdminCA1.der --ir --user mykeyid --password password --newclcert clcert.der --newkey key.pem --subject "CN=user1;O=My Organization;C=SE"
+./openssl cmp -cmd ir -server localhost:8080 -path ejbca/publicweb/cmp -srvcert AdminCA1.cacert.pem -user user1 -pass password -certout clcert1.pem -newkey key1.pem -keyfmt PEM -certfmt PEM -subject "/CN=user1/O=My Organization/C=SE"
 </source>
 <p>This requests a certificate, and the requested subject DN must match the registered subject DN.
 EJBCA authenticates the request using the HMAC protection with the password of the registered user. See the CMP documentation above for more advanced configuration.</p>
+
+<p><strong>Client mode, client certificate authentication</strong></p>
+<p>
+Cmpforopenssl works with with EJBCA in client mode, with certificate authentication, using the following EJBCA configuration (cmp.properties, unset properties = default):</p>
+<source>
+cmp.authenticationmodule=EndEntityCertificate
+cmp.authenticationparameters=AdminCA1 (use the CA that issues your client authentication certificate)
+cmp.extractusernamecomponent=CN
+</source>
+<p>You can now issue a certificate using certificate authentication in EJBCA (the end entity needs a certificate before so we re-use user1 from above):</p>
+<source>
+bin/ejbca.sh ra setclearpwd user1 password
+bin/ejbca.sh ra setuserstatus user1 10
+</source>
+<p>
+You can then use cmpclient (as a client):</p>
+<source>
+./openssl cmp -cmd ir -server localhost:8080 -path ejbca/publicweb/cmp -srvcert AdminCA1.cacert.pem -cert clcert.pem -key key.pem -certout clcert1.pem -newkey key1.pem -keyfmt PEM -certfmt PEM -subject "/CN=user1/O=My Organization/C=SE"
+</source>
+<p>This requests a certificate, and the requested subject DN must match the registered subject DN.
+EJBCA authenticates the request using the signature protection with the certificate of the registered user. See the CMP documentation above for more advanced configuration.</p>
+<p>You can also use a 'cr' instead of an 'ir';</p>
+<source>
+bin/ejbca.sh ra setuserstatus user1 10
+./openssl cmp -cmd cr -server localhost:8080 -path ejbca/publicweb/cmp -srvcert AdminCA1.cacert.pem -cert clcert.pem -key key.pem -certout clcert1.pem -newkey key1.pem -keyfmt PEM -certfmt PEM -subject "/CN=user1/O=My Organization/C=SE"
+</source>
+
+<p><strong>Client mode, Vendor certificate authentication</strong></p>
+<p>
+If the end entity has a Vendor certificate with which it should identify itself for initial enrollment, as specified in 3GPP for example, it can also do that. 
+In this case the CA issuing the end entity certificate is not the same as the Vendor CA. The vendor CA must be imported in EJBCA as an External CA ('Import CA certificate' in the admin GUI).
+To enable vendor certificate authentication add the following to the CMP configuration for client certificate authentication:
+</p>
+<source>
+cmp.vendorcertificatemode=true
+cmp.vendorca=3GPP-CA
+</source>
+<p>With this configuration you can now request an initial certificate with the following command:
+</p>
+<source>
+./openssl cmp -cmd ir -server localhost:8080 -path ejbca/publicweb/cmp -srvcert AdminCA1.cacert.pem -cert devicecert.pem -key devicekey.pem -certout clcert1.pem -newkey key1.pem -keyfmt PEM -certfmt PEM -subject "/CN=device/O=My Organization/C=SE"
+</source>
+<p>
+In this configuration 'devicecert.pem' and 'devicekey.pem' are the device's private key and the certificate issued by the Vendor CA (3GPP-CA). 
+AdminCA1.cacert.pem is the CA certificate of the CA in EJBCA issuing the new certificate for the device.
+</p>
 </subsubsection>
 </subsection>
 <subsection name="Custom handling of certificate request">
