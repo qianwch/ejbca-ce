@@ -29,11 +29,11 @@ import org.ejbca.core.ejb.config.ConfigurationSessionRemote;
 import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.ca.crl.RevokedCertInfo;
 import org.ejbca.core.model.ca.publisher.CustomPublisherContainer;
-import org.ejbca.core.model.ca.publisher.ValidationAuthorityPublisher;
 import org.ejbca.core.model.ca.publisher.PublisherConst;
 import org.ejbca.core.model.ca.publisher.PublisherExistsException;
 import org.ejbca.core.model.ca.publisher.PublisherQueueData;
 import org.ejbca.core.model.ca.publisher.PublisherQueueVolatileData;
+import org.ejbca.core.model.ca.publisher.ValidationAuthorityPublisher;
 import org.ejbca.core.model.log.Admin;
 import org.ejbca.core.model.ra.ExtendedInformation;
 import org.ejbca.util.Base64;
@@ -353,6 +353,21 @@ public class PublisherQueueTest extends TestCase {
     		// Now this certificate fingerprint should be in the queue
     		c = publisherQueueSession.getPendingEntriesForPublisher(id);
     		assertEquals("revoked certificate should have been stored in queue", 1, c.size());
+    		i = c.iterator();
+    		d = i.next();
+    		assertEquals(CertTools.getFingerprintAsString(cert), d.getFingerprint());
+    		// Remove it for next test
+    		publisherQueueSession.removeQueueData(d.getPk());
+    		
+            // If we should use the queue for only revoked certificates and
+            // - status is not revoked
+            // - revocation reason is not REVOCATION_REASON_REMOVEFROMCRL even if status is active
+    		// This one should also should show up in the queue
+    		ret = publisherSession.storeCertificate(admin, publishers, cert, "test05", "foo123", null, null, SecConst.CERT_ACTIVE, SecConst.CERTTYPE_ENDENTITY, -1, RevokedCertInfo.REVOCATION_REASON_REMOVEFROMCRL, "foo", SecConst.CERTPROFILE_FIXED_ENDUSER, new Date().getTime(), null);
+    		assertFalse("Storing certificate to all external ocsp publisher should return false.", ret);
+    		// Now this certificate fingerprint should be in the queue
+    		c = publisherQueueSession.getPendingEntriesForPublisher(id);
+            assertEquals("activated certificate (previously on hold) should have been stored in queue", 1, c.size());
     		i = c.iterator();
     		d = i.next();
     		assertEquals(CertTools.getFingerprintAsString(cert), d.getFingerprint());
