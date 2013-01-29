@@ -150,130 +150,228 @@ public class PublisherQueueTest extends TestCase {
 
     public void test02ExternalOCSPPublisherFail() throws Exception {
     	log.trace(">test02ExternalOCSPPublisherFail");
-        boolean ret = false;
+    	boolean ret = false;
+    	try {
+    		ret = false;
+    		try {
+    			CustomPublisherContainer publisher = new CustomPublisherContainer();
+    			publisher.setClassPath(ValidationAuthorityPublisher.class.getName());
+    			// We use a datasource that we know don't exist, so we know publishing will fail
+    			String jndiNamePrefix = configurationSession.getProperty(InternalConfiguration.CONFIG_DATASOURCENAMEPREFIX, "");
+    			log.debug("jndiNamePrefix=" + jndiNamePrefix);
+    			publisher.setPropertyData("dataSource " + jndiNamePrefix + "NoExist234DS");
+    			publisher.setDescription("Used in Junit Test, Remove this one");
+    			publisherSession.addPublisher(admin, "TESTEXTOCSPQUEUE", publisher);
+    			ret = true;
+    		} catch (PublisherExistsException pee) {
+    			// Do nothing
+    		}        
+    		assertTrue("Creating External OCSP Publisher failed", ret);
+    		int id = publisherSession.getPublisherId(admin, "TESTEXTOCSPQUEUE");
 
-        ret = false;
-		try {
-            CustomPublisherContainer publisher = new CustomPublisherContainer();
-            publisher.setClassPath(ValidationAuthorityPublisher.class.getName());
-		    // We use a datasource that we know don't exist, so we know publishing will fail
-            String jndiNamePrefix = configurationSession.getProperty(InternalConfiguration.CONFIG_DATASOURCENAMEPREFIX, "");
-            log.debug("jndiNamePrefix=" + jndiNamePrefix);
-            publisher.setPropertyData("dataSource " + jndiNamePrefix + "NoExist234DS");
-            publisher.setDescription("Used in Junit Test, Remove this one");
-            publisherSession.addPublisher(admin, "TESTEXTOCSPQUEUE", publisher);
-            ret = true;
-        } catch (PublisherExistsException pee) {
-        	// Do nothing
-        }        
-        assertTrue("Creating External OCSP Publisher failed", ret);
-        int id = publisherSession.getPublisherId(admin, "TESTEXTOCSPQUEUE");
-        
-        Certificate cert = CertTools.getCertfromByteArray(testcert);
-        ArrayList<Integer> publishers = new ArrayList<Integer>();
-        publishers.add(Integer.valueOf(publisherSession.getPublisherId(admin, "TESTEXTOCSPQUEUE")));
-        
-        ret = publisherSession.storeCertificate(admin, publishers, cert, "test05", "foo123", null, null, SecConst.CERT_ACTIVE, SecConst.CERTTYPE_ENDENTITY, -1, RevokedCertInfo.NOT_REVOKED, "foo", SecConst.CERTPROFILE_FIXED_ENDUSER, new Date().getTime(), null);
-        assertFalse("Storing certificate to external ocsp publisher should fail.", ret);
-        
-        // Now this certificate fingerprint should be in the queue
-    	Collection<PublisherQueueData> c = publisherQueueSession.getPendingEntriesForPublisher(id);
-    	assertEquals(1, c.size());
-    	Iterator<PublisherQueueData> i = c.iterator();
-    	PublisherQueueData d = i.next();
-    	assertEquals(CertTools.getFingerprintAsString(cert), d.getFingerprint());
+    		Certificate cert = CertTools.getCertfromByteArray(testcert);
+    		ArrayList<Integer> publishers = new ArrayList<Integer>();
+    		publishers.add(Integer.valueOf(publisherSession.getPublisherId(admin, "TESTEXTOCSPQUEUE")));
+
+    		ret = publisherSession.storeCertificate(admin, publishers, cert, "test05", "foo123", null, null, SecConst.CERT_ACTIVE, SecConst.CERTTYPE_ENDENTITY, -1, RevokedCertInfo.NOT_REVOKED, "foo", SecConst.CERTPROFILE_FIXED_ENDUSER, new Date().getTime(), null);
+    		assertFalse("Storing certificate to external ocsp publisher should fail.", ret);
+
+    		// Now this certificate fingerprint should be in the queue
+    		Collection<PublisherQueueData> c = publisherQueueSession.getPendingEntriesForPublisher(id);
+    		assertEquals(1, c.size());
+    		Iterator<PublisherQueueData> i = c.iterator();
+    		PublisherQueueData d = i.next();
+    		assertEquals(CertTools.getFingerprintAsString(cert), d.getFingerprint());
+    	} finally { 
+    		Collection<PublisherQueueData> c = publisherQueueSession.getEntriesByFingerprint(CertTools.getFingerprintAsString(testcert));
+    		Iterator<PublisherQueueData> i = c.iterator();
+        	while (i.hasNext()) {
+        		PublisherQueueData d = i.next();
+        		publisherQueueSession.removeQueueData(d.getPk());
+        	}
+    		publisherSession.removePublisher(admin, "TESTEXTOCSPQUEUE");            
+    	}
     	log.trace("<test02ExternalOCSPPublisherFail");
     }
 
     public void test03ExternalOCSPPublisherOk() throws Exception {
     	log.trace(">test03ExternalOCSPPublisherOk");
-        boolean ret = false;
+    	boolean ret = false;
+    	try{
+    		ret = false;
+    		try {
+    			CustomPublisherContainer publisher = new CustomPublisherContainer();
+    			publisher.setClassPath(ValidationAuthorityPublisher.class.getName());
+    			// We use a datasource that we know don't exist, so we know publishing will be successful
+    			String jndiName = configurationSession.getProperty(InternalConfiguration.CONFIG_DATASOURCENAMEPREFIX, "")
+    					+ configurationSession.getProperty(DatabaseConfiguration.CONFIG_DATASOURCENAME, "EjbcaDS");
+    			log.debug("jndiName=" + jndiName);
+    			publisher.setPropertyData("dataSource " + jndiName);
+    			publisher.setDescription("Used in Junit Test, Remove this one");
+    			publisherSession.addPublisher(admin, "TESTEXTOCSPQUEUE", publisher);
+    			ret = true;
+    		} catch (PublisherExistsException pee) {
+    			// Do nothing
+    		}        
+    		assertTrue("Creating External OCSP Publisher failed", ret);
+    		int id = publisherSession.getPublisherId(admin, "TESTEXTOCSPQUEUE");
 
-        // Remove publisher since we probably have one from the test above
-    	try {
+    		Certificate cert = CertTools.getCertfromByteArray(testcert);
+    		ArrayList<Integer> publishers = new ArrayList<Integer>();
+    		publishers.add(Integer.valueOf(publisherSession.getPublisherId(admin, "TESTEXTOCSPQUEUE")));
+
+    		ret = publisherSession.storeCertificate(admin, publishers, cert, "test05", "foo123", null, null, SecConst.CERT_ACTIVE, SecConst.CERTTYPE_ENDENTITY, -1, RevokedCertInfo.NOT_REVOKED, "foo", SecConst.CERTPROFILE_FIXED_ENDUSER, new Date().getTime(), null);
+    		assertTrue("Storing certificate to external ocsp publisher should succeed.", ret);
+
+    		// Now this certificate fingerprint should NOT be in the queue
+    		Collection<PublisherQueueData> c = publisherQueueSession.getPendingEntriesForPublisher(id);
+    		assertEquals(0, c.size());
+    	} finally { 
+    		Collection<PublisherQueueData> c = publisherQueueSession.getEntriesByFingerprint(CertTools.getFingerprintAsString(testcert));
+    		Iterator<PublisherQueueData> i = c.iterator();
+        	while (i.hasNext()) {
+        		PublisherQueueData d = i.next();
+        		publisherQueueSession.removeQueueData(d.getPk());
+        	}
     		publisherSession.removePublisher(admin, "TESTEXTOCSPQUEUE");            
-    	} catch (Exception pee) {}
-
-        ret = false;
-		try {
-            CustomPublisherContainer publisher = new CustomPublisherContainer();
-            publisher.setClassPath(ValidationAuthorityPublisher.class.getName());
-		    // We use a datasource that we know don't exist, so we know publishing will be successful
-            String jndiName = configurationSession.getProperty(InternalConfiguration.CONFIG_DATASOURCENAMEPREFIX, "")
-            	+ configurationSession.getProperty(DatabaseConfiguration.CONFIG_DATASOURCENAME, "EjbcaDS");
-            log.debug("jndiName=" + jndiName);
-            publisher.setPropertyData("dataSource " + jndiName);
-            publisher.setDescription("Used in Junit Test, Remove this one");
-            publisherSession.addPublisher(admin, "TESTEXTOCSPQUEUE", publisher);
-            ret = true;
-        } catch (PublisherExistsException pee) {
-        	// Do nothing
-        }        
-        assertTrue("Creating External OCSP Publisher failed", ret);
-        int id = publisherSession.getPublisherId(admin, "TESTEXTOCSPQUEUE");
-        
-        Certificate cert = CertTools.getCertfromByteArray(testcert);
-        ArrayList<Integer> publishers = new ArrayList<Integer>();
-        publishers.add(Integer.valueOf(publisherSession.getPublisherId(admin, "TESTEXTOCSPQUEUE")));
-        
-        ret = publisherSession.storeCertificate(admin, publishers, cert, "test05", "foo123", null, null, SecConst.CERT_ACTIVE, SecConst.CERTTYPE_ENDENTITY, -1, RevokedCertInfo.NOT_REVOKED, "foo", SecConst.CERTPROFILE_FIXED_ENDUSER, new Date().getTime(), null);
-        assertTrue("Storing certificate to external ocsp publisher should succeed.", ret);
-        
-        // Now this certificate fingerprint should NOT be in the queue
-    	Collection<PublisherQueueData> c = publisherQueueSession.getPendingEntriesForPublisher(id);
-    	assertEquals(0, c.size());
+    	}    	
     	log.trace("<test03ExternalOCSPPublisherOk");
     }
-    
+
     public void test04ExternalOCSPPublisherOnlyUseQueue() throws Exception {
     	log.trace(">test04ExternalOCSPPublisherOnlyUseQueue");
-        boolean ret = false;
-
-        // Remove publisher since we probably have one from the test above
+    	boolean ret = false;
     	try {
+    		ret = false;
+    		try {
+    			ValidationAuthorityPublisher vaPublisher = new ValidationAuthorityPublisher();
+    			// We use the default EjbcaDS datasource here, because it probably exists during our junit test run
+    			String jndiName = configurationSession.getProperty(InternalConfiguration.CONFIG_DATASOURCENAMEPREFIX, "")
+    					+ configurationSession.getProperty(DatabaseConfiguration.CONFIG_DATASOURCENAME, "EjbcaDS");
+    			log.debug("jndiName=" + jndiName);
+    			vaPublisher.setDataSource(jndiName);
+    			vaPublisher.setDescription("Used in Junit Test, Remove this one");
+    			vaPublisher.setOnlyUseQueue(true);
+    			assertFalse(vaPublisher.getOnlyPublishRevoked());
+    			publisherSession.addPublisher(admin, "TESTEXTOCSPQUEUE", vaPublisher);
+    			ret = true;
+    		} catch (PublisherExistsException pee) {
+    			// Do nothing
+    		}        
+    		assertTrue("Creating External OCSP Publisher failed", ret);
+    		int id = publisherSession.getPublisherId(admin, "TESTEXTOCSPQUEUE");
+
+    		Certificate cert = CertTools.getCertfromByteArray(testcert);
+    		ArrayList<Integer> publishers = new ArrayList<Integer>();
+    		publishers.add(Integer.valueOf(publisherSession.getPublisherId(admin, "TESTEXTOCSPQUEUE")));
+
+    		// storeCertificate should return false as we have not published to all publishers but instead only pushed to the queue
+    		ret = publisherSession.storeCertificate(admin, publishers, cert, "test05", "foo123", null, null, SecConst.CERT_ACTIVE, SecConst.CERTTYPE_ENDENTITY, -1, RevokedCertInfo.NOT_REVOKED, "foo", SecConst.CERTPROFILE_FIXED_ENDUSER, new Date().getTime(), null);
+    		assertFalse("Storing certificate to all external ocsp publisher should return false.", ret);
+
+    		// Now this certificate fingerprint should be in the queue
+    		Collection<PublisherQueueData> c = publisherQueueSession.getPendingEntriesForPublisher(id);
+    		assertEquals(1, c.size());
+    		Iterator<PublisherQueueData> i = c.iterator();
+    		PublisherQueueData d = i.next();
+    		assertEquals(CertTools.getFingerprintAsString(cert), d.getFingerprint());
+    	} finally { 
+    		Collection<PublisherQueueData> c = publisherQueueSession.getEntriesByFingerprint(CertTools.getFingerprintAsString(testcert));
+    		Iterator<PublisherQueueData> i = c.iterator();
+        	while (i.hasNext()) {
+        		PublisherQueueData d = i.next();
+        		publisherQueueSession.removeQueueData(d.getPk());
+        	}
     		publisherSession.removePublisher(admin, "TESTEXTOCSPQUEUE");            
-    	} catch (Exception pee) {}
-        
-        ret = false;
-		try {
-			CustomPublisherContainer publisher = new CustomPublisherContainer();
-            publisher.setClassPath(ValidationAuthorityPublisher.class.getName());
-		    // We use the default EjbcaDS datasource here, because it probably exists during our junit test run
-            String jndiName = configurationSession.getProperty(InternalConfiguration.CONFIG_DATASOURCENAMEPREFIX, "")
-        		+ configurationSession.getProperty(DatabaseConfiguration.CONFIG_DATASOURCENAME, "EjbcaDS");
-            log.debug("jndiName=" + jndiName);
-            publisher.setPropertyData("dataSource " + jndiName);
-            publisher.setDescription("Used in Junit Test, Remove this one");
-            
-            // Set to only use the publisher queue instead of publish directly
-            publisher.setOnlyUseQueue(true);
-            
-            publisherSession.addPublisher(admin, "TESTEXTOCSPQUEUE", publisher);
-            ret = true;
-        } catch (PublisherExistsException pee) {
-        	// Do nothing
-        }        
-        assertTrue("Creating External OCSP Publisher failed", ret);
-        int id = publisherSession.getPublisherId(admin, "TESTEXTOCSPQUEUE");
-        
-        Certificate cert = CertTools.getCertfromByteArray(testcert);
-        ArrayList<Integer> publishers = new ArrayList<Integer>();
-        publishers.add(Integer.valueOf(publisherSession.getPublisherId(admin, "TESTEXTOCSPQUEUE")));
-        
-        // storeCertificate should return false as we have not published to all publishers but instead only pushed to the queue
-        ret = publisherSession.storeCertificate(admin, publishers, cert, "test05", "foo123", null, null, SecConst.CERT_ACTIVE, SecConst.CERTTYPE_ENDENTITY, -1, RevokedCertInfo.NOT_REVOKED, "foo", SecConst.CERTPROFILE_FIXED_ENDUSER, new Date().getTime(), null);
-        assertFalse("Storing certificate to all external ocsp publisher should return false.", ret);
-        
-        // Now this certificate fingerprint should be in the queue
-    	Collection<PublisherQueueData> c = publisherQueueSession.getPendingEntriesForPublisher(id);
-    	assertEquals(1, c.size());
-    	Iterator<PublisherQueueData> i = c.iterator();
-    	PublisherQueueData d = i.next();
-    	assertEquals(CertTools.getFingerprintAsString(cert), d.getFingerprint());
+    	}
     	log.trace("<test04ExternalOCSPPublisherOnlyUseQueue");
     }
+
+    public void test05ExternalOCSPPublisherOnlyUseQueueOnlyPublishRevoked() throws Exception {
+    	log.trace(">test05ExternalOCSPPublisherOnlyUseQueueOnlyPublishRevoked");
+    	boolean ret = false;
+    	try {
+    		ret = false;
+    		try {
+    			ValidationAuthorityPublisher vaPublisher = new ValidationAuthorityPublisher();
+    			// We use the default EjbcaDS datasource here, because it probably exists during our junit test run
+    			String jndiName = configurationSession.getProperty(InternalConfiguration.CONFIG_DATASOURCENAMEPREFIX, "")
+    					+ configurationSession.getProperty(DatabaseConfiguration.CONFIG_DATASOURCENAME, "EjbcaDS");
+    			log.debug("jndiName=" + jndiName);
+    			vaPublisher.setDataSource(jndiName);
+    			vaPublisher.setDescription("Used in Junit Test, Remove this one");
+    			vaPublisher.setOnlyUseQueue(true);
+    			vaPublisher.setOnlyPublishRevoked(true);
+    			publisherSession.addPublisher(admin, "TESTEXTOCSPQUEUE", vaPublisher);
+    			ret = true;
+    		} catch (PublisherExistsException pee) {
+    			// Do nothing
+    		}        
+    		assertTrue("Creating External OCSP Publisher failed", ret);
+    		int id = publisherSession.getPublisherId(admin, "TESTEXTOCSPQUEUE");
+
+    		Certificate cert = CertTools.getCertfromByteArray(testcert);
+    		ArrayList<Integer> publishers = new ArrayList<Integer>();
+    		publishers.add(Integer.valueOf(publisherSession.getPublisherId(admin, "TESTEXTOCSPQUEUE")));
+
+    		//
+    		// Publish a non revoked certificate, since this publisher only stores revoked certificates it should not show up in the queue
+    		// storeCertificate should return false as we have not published to all publishers but instead only pushed to the queue
+    		ret = publisherSession.storeCertificate(admin, publishers, cert, "test05", "foo123", null, null, SecConst.CERT_ACTIVE, SecConst.CERTTYPE_ENDENTITY, -1, RevokedCertInfo.NOT_REVOKED, "foo", SecConst.CERTPROFILE_FIXED_ENDUSER, new Date().getTime(), null);
+    		assertFalse("Storing certificate to all external ocsp publisher should return false.", ret);
+    		// Now this certificate fingerprint should be in the queue
+    		Collection<PublisherQueueData> c = publisherQueueSession.getPendingEntriesForPublisher(id);
+    		assertEquals("non revoked certificate should not have been stored in queue", 0, c.size());
+    		
+    		//
+    		// Now publish a revoked certificate, it should show up in the queue
+    		ret = publisherSession.storeCertificate(admin, publishers, cert, "test05", "foo123", null, null, SecConst.CERT_REVOKED, SecConst.CERTTYPE_ENDENTITY, new Date().getTime(), RevokedCertInfo.REVOCATION_REASON_CERTIFICATEHOLD, "foo", SecConst.CERTPROFILE_FIXED_ENDUSER, new Date().getTime(), null);
+    		assertFalse("Storing certificate to all external ocsp publisher should return false.", ret);
+    		// Now this certificate fingerprint should be in the queue
+    		c = publisherQueueSession.getPendingEntriesForPublisher(id);
+    		assertEquals("revoked certificate should have been stored in queue", 1, c.size());
+    		Iterator<PublisherQueueData> i = c.iterator();
+    		PublisherQueueData d = i.next();
+    		assertEquals(CertTools.getFingerprintAsString(cert), d.getFingerprint());
+    		// Remove it for next test
+    		publisherQueueSession.removeQueueData(d.getPk());
+    		//
+    		// Try some variants of revocation information, it should show up in the queue, but status must be SecConst.CERT_REVOKED at least
+    		ret = publisherSession.storeCertificate(admin, publishers, cert, "test05", "foo123", null, null, SecConst.CERT_REVOKED, SecConst.CERTTYPE_ENDENTITY, -1, RevokedCertInfo.REVOCATION_REASON_CERTIFICATEHOLD, "foo", SecConst.CERTPROFILE_FIXED_ENDUSER, new Date().getTime(), null);
+    		assertFalse("Storing certificate to all external ocsp publisher should return false.", ret);
+    		// Now this certificate fingerprint should be in the queue
+    		c = publisherQueueSession.getPendingEntriesForPublisher(id);
+    		assertEquals("revoked certificate should have been stored in queue", 1, c.size());
+    		i = c.iterator();
+    		d = i.next();
+    		assertEquals(CertTools.getFingerprintAsString(cert), d.getFingerprint());
+    		// Remove it for next test
+    		publisherQueueSession.removeQueueData(d.getPk());
+    		// Try some variants of revocation information, it should show up in the queue
+    		ret = publisherSession.storeCertificate(admin, publishers, cert, "test05", "foo123", null, null, SecConst.CERT_REVOKED, SecConst.CERTTYPE_ENDENTITY, -1, RevokedCertInfo.NOT_REVOKED, "foo", SecConst.CERTPROFILE_FIXED_ENDUSER, new Date().getTime(), null);
+    		assertFalse("Storing certificate to all external ocsp publisher should return false.", ret);
+    		// Now this certificate fingerprint should be in the queue
+    		c = publisherQueueSession.getPendingEntriesForPublisher(id);
+    		assertEquals("revoked certificate should have been stored in queue", 1, c.size());
+    		i = c.iterator();
+    		d = i.next();
+    		assertEquals(CertTools.getFingerprintAsString(cert), d.getFingerprint());
+    		// Remove it for next test
+    		publisherQueueSession.removeQueueData(d.getPk());
+    	} finally { 
+    		Collection<PublisherQueueData> c = publisherQueueSession.getEntriesByFingerprint(CertTools.getFingerprintAsString(testcert));
+    		Iterator<PublisherQueueData> i = c.iterator();
+        	while (i.hasNext()) {
+        		PublisherQueueData d = i.next();
+        		publisherQueueSession.removeQueueData(d.getPk());
+        	}
+    		publisherSession.removePublisher(admin, "TESTEXTOCSPQUEUE");            
+    	}
+    	log.trace("<test05ExternalOCSPPublisherOnlyUseQueueOnlyPublishRevoked");
+    }
+
     
-    public void test05PublisherQueueCountInInterval1() throws Exception {
+    public void test06PublisherQueueCountInInterval1() throws Exception {
     	// Nothing in the queue from the beginning
     	assertEquals(0, publisherQueueSession.getPendingEntriesCountForPublisher(56789));
     	assertEquals(0, publisherQueueSession.getPendingEntriesCountForPublisherInIntervals(56789, new int[]{0}, new int[]{-1})[0]);
@@ -303,7 +401,7 @@ public class PublisherQueueTest extends TestCase {
     	assertEquals(0, actual[2]); // 10s old = 0
     }
     
-    public void test06PublisherQueueCountInInterval2() throws Exception {
+    public void test07PublisherQueueCountInInterval2() throws Exception {
     	// Nothing in the queue from the beginning
     	assertEquals(0, publisherQueueSession.getPendingEntriesCountForPublisher(456789));
     	assertEquals(0, publisherQueueSession.getPendingEntriesCountForPublisherInIntervals(456789, new int[]{0}, new int[]{-1})[0]);
@@ -353,10 +451,6 @@ public class PublisherQueueTest extends TestCase {
     	while (i.hasNext()) {
     		PublisherQueueData d = i.next();
     		publisherQueueSession.removeQueueData(d.getPk());
-    	}    
-
-    	try {
-    		publisherSession.removePublisher(admin, "TESTEXTOCSPQUEUE");            
-    	} catch (Exception pee) {}
+    	}
     }
 }

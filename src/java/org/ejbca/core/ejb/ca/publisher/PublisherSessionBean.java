@@ -38,6 +38,7 @@ import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.core.model.authorization.AuthorizationDeniedException;
 import org.ejbca.core.model.authorization.Authorizer;
+import org.ejbca.core.model.ca.crl.RevokedCertInfo;
 import org.ejbca.core.model.ca.publisher.ActiveDirectoryPublisher;
 import org.ejbca.core.model.ca.publisher.BasePublisher;
 import org.ejbca.core.model.ca.publisher.CustomPublisherContainer;
@@ -114,7 +115,8 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
             if (pdl != null) {
                 String fingerprint = CertTools.getFingerprintAsString(cert);
                 // If it should be published directly
-                if (!getPublisher(pdl).getOnlyUseQueue()) {
+                final BasePublisher publ = getPublisher(pdl);
+                if (!publ.getOnlyUseQueue()) {
                     try {
                     	try {
                     		if (publisherQueueSession.storeCertificateNonTransactional(getPublisher(pdl), admin, cert, username, password, userDN, cafp, status, type, revocationDate, revocationReason,
@@ -140,27 +142,45 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
                     returnval = false;
                 }
                 if (log.isDebugEnabled()) {
-                    log.debug("KeepPublishedInQueue: " + getPublisher(pdl).getKeepPublishedInQueue());
-                    log.debug("UseQueueForCertificates: " + getPublisher(pdl).getUseQueueForCertificates());
+                    log.debug("KeepPublishedInQueue: " + publ.getKeepPublishedInQueue());
+                    log.debug("UseQueueForCertificates: " + publ.getUseQueueForCertificates());
                 }
-                if ((publishStatus != PublisherConst.STATUS_SUCCESS || getPublisher(pdl).getKeepPublishedInQueue())
-                        && getPublisher(pdl).getUseQueueForCertificates()) {
+                if ((publishStatus != PublisherConst.STATUS_SUCCESS || publ.getKeepPublishedInQueue())
+                        && publ.getUseQueueForCertificates()) {
+                	boolean doQueue = true;
+                	if (publ instanceof ValidationAuthorityPublisher) {
+						ValidationAuthorityPublisher valpubl = (ValidationAuthorityPublisher) publ;
+						if (valpubl.getOnlyPublishRevoked()) {
+							// If we should use the queue for only revoked certificates and
+							// - status is not revoked
+							// - revocation reason is not REVOCATION_REASON_REMOVEFROMCRL even if status is active
+							if ((status != SecConst.CERT_REVOKED) && (revocationReason != RevokedCertInfo.REVOCATION_REASON_REMOVEFROMCRL)) {
+								doQueue = false;
+							}
+						}
+					}
                     // Write to the publisher queue either for audit reasons or
                     // to be able try again
-                    PublisherQueueVolatileData pqvd = new PublisherQueueVolatileData();
-                    pqvd.setUsername(username);
-                    pqvd.setPassword(password);
-                    pqvd.setExtendedInformation(extendedinformation);
-                    pqvd.setUserDN(userDN);
-                    String fp = CertTools.getFingerprintAsString(cert);
-                    try {
-                        publisherQueueSession.addQueueData(id.intValue(), PublisherConst.PUBLISH_TYPE_CERT, fp, pqvd, publishStatus);
-                        String msg = intres.getLocalizedMessage("publisher.storequeue", pdl.getName(), fp, status);
-                        logSession.log(admin, cert, LogConstants.MODULE_CA, new java.util.Date(), username, cert, logInfoEvent, msg);
-                    } catch (CreateException e) {
-                        String msg = intres.getLocalizedMessage("publisher.errorstorequeue", pdl.getName(), fp, status);
-                        logSession.log(admin, cert, LogConstants.MODULE_CA, new java.util.Date(), username, cert, logErrorEvent, msg, e);
-                    }
+                	if (doQueue) {
+                        PublisherQueueVolatileData pqvd = new PublisherQueueVolatileData();
+                        pqvd.setUsername(username);
+                        pqvd.setPassword(password);
+                        pqvd.setExtendedInformation(extendedinformation);
+                        pqvd.setUserDN(userDN);
+                        String fp = CertTools.getFingerprintAsString(cert);
+                        try {
+                            publisherQueueSession.addQueueData(id.intValue(), PublisherConst.PUBLISH_TYPE_CERT, fp, pqvd, publishStatus);
+                            final String msg = intres.getLocalizedMessage("publisher.storequeue", pdl.getName(), fp, status);
+                            logSession.log(admin, cert, LogConstants.MODULE_CA, new java.util.Date(), username, cert, logInfoEvent, msg);
+                        } catch (CreateException e) {
+                            final String msg = intres.getLocalizedMessage("publisher.errorstorequeue", pdl.getName(), fp, status);
+                            logSession.log(admin, cert, LogConstants.MODULE_CA, new java.util.Date(), username, cert, logErrorEvent, msg, e);
+                        }                		
+                	} else {
+                		if (log.isDebugEnabled()) {
+                			log.debug("Not storing certificate for ValidationAuthority in queue because we should only publish revoked and status="+status+", revocationReason="+revocationReason);
+                		}
+                	}
                 }
             } else {
                 String msg = intres.getLocalizedMessage("publisher.nopublisher", id);

@@ -44,6 +44,8 @@ import org.ejbca.util.JDBCUtil.Preparer;
  */
 public class ValidationAuthorityPublisher extends BasePublisher implements ICustomPublisher {
 
+	private static final long serialVersionUID = -4830204239204586503L;
+
 	private static final Logger log = Logger.getLogger(ValidationAuthorityPublisher.class);
 	/** Internal localization of logs and errors */
 	private static final InternalResources intres = InternalResources.getInstance();
