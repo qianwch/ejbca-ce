@@ -30,13 +30,13 @@ public interface PublisherSession {
 
     /**
      * @return a BasePublisher or null of a publisher with the given id does not
-     *         exist
+     *         exist. Uses cache to get the object as quickly as possible.
      */
     BasePublisher getPublisher(int id);
     
     /**
      * @return a BasePublisher or null of a publisher with the given name does
-     *         not exist
+     *         not exist. Uses cache to get the object as quickly as possible.
      */
     BasePublisher getPublisher(String name);
 
