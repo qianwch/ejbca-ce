@@ -27,7 +27,7 @@ import org.junit.Test;
 /**
  * Test the Publisher Cache behavior.
  * 
- * @version $Id: PublisherCacheTest.java 16272 2013-02-05 12:10:28Z anatom $
+ * @version $Id$
  */
 public class PublisherCacheTest {
     

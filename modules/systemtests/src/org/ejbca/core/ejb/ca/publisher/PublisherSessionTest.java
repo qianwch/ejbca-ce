@@ -30,7 +30,7 @@ import org.junit.Test;
 /**
  * Tests Publisher session.
  * 
- * @version $Id: PublisherSessionTest.java 16272 2013-02-05 12:10:28Z anatom $
+ * @version $Id$
  */
 public class PublisherSessionTest {
 
