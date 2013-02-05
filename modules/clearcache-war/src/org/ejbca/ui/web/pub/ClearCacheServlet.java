@@ -32,6 +32,7 @@ import org.cesecore.authorization.control.AccessControlSessionLocal;
 import org.cesecore.certificates.ca.CaSessionLocal;
 import org.cesecore.certificates.certificateprofile.CertificateProfileSessionLocal;
 import org.ejbca.config.GlobalConfiguration;
+import org.ejbca.core.ejb.ca.publisher.PublisherSessionLocal;
 import org.ejbca.core.ejb.config.GlobalConfigurationSessionLocal;
 import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileSessionLocal;
 
@@ -39,8 +40,6 @@ import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileSessionLocal;
  * Servlet used to clear all caches (Global Configuration Cache, End Entity Profile Cache, 
  * Certificate Profile Cache, Log Configuration Cache, Authorization Cache and CA Cache).
  *
- * @author Aveen Ismail
- * 
  * @version $Id$
  */
 public class ClearCacheServlet extends HttpServlet {
@@ -58,7 +57,9 @@ public class ClearCacheServlet extends HttpServlet {
 	private CertificateProfileSessionLocal certificateprofilesession;
 	@EJB
 	private CaSessionLocal casession;
-	
+    @EJB
+    private PublisherSessionLocal publisherSession;
+
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
     }
@@ -104,6 +105,10 @@ public class ClearCacheServlet extends HttpServlet {
         		if(log.isDebugEnabled()) {
         			log.debug("CA cache cleared");
         		}
+                publisherSession.flushPublisherCache();
+                if(log.isDebugEnabled()) {
+                    log.debug("Publisher cache cleared");
+                }
         	}
         } else {
     		if (log.isDebugEnabled()) {
