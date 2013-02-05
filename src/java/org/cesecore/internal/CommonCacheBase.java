@@ -28,7 +28,7 @@ import org.apache.log4j.Logger;
  * will prevent memory leaks to some extent through checking for stale data
  * during updates.
  * 
- * @version $Id: CommonCacheBase.java 16262 2013-02-04 12:26:05Z anatom $
+ * @version $Id$
  */
 public abstract class CommonCacheBase<T> implements CommonCache<T> {
     

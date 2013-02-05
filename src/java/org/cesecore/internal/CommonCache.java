@@ -17,7 +17,7 @@ import java.util.Map;
 /**
  * Object and name to id lookup cache interface.
  * 
- * @version $Id: CommonCache.java 16262 2013-02-04 12:26:05Z anatom $
+ * @version $Id$
  */
 public interface CommonCache<T> {
 
