@@ -34,6 +34,7 @@ import org.cesecore.core.ejb.ra.raadmin.EndEntityProfileSessionLocal;
 import org.ejbca.config.GlobalConfiguration;
 import org.ejbca.core.ejb.authorization.AuthorizationSessionLocal;
 import org.ejbca.core.ejb.ca.caadmin.CaSessionLocal;
+import org.ejbca.core.ejb.ca.publisher.PublisherSessionLocal;
 import org.ejbca.core.ejb.config.GlobalConfigurationSessionLocal;
 import org.ejbca.core.model.log.Admin;
 
@@ -62,7 +63,9 @@ public class ClearCacheServlet extends HttpServlet {
 	private LogConfigurationSessionLocal logConfigurationsession;
 	@EJB
 	private CaSessionLocal casession;
-	
+    @EJB
+    private PublisherSessionLocal publisherSession;
+
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
     }
@@ -114,6 +117,10 @@ public class ClearCacheServlet extends HttpServlet {
         		if(log.isDebugEnabled()) {
         			log.debug("CA cache cleared");
         		}
+                publisherSession.flushPublisherCache();
+                if(log.isDebugEnabled()) {
+                    log.debug("Publisher cache cleared");
+                }
         	}
         } else {
     		if (log.isDebugEnabled()) {

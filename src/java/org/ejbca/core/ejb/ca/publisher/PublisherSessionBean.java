@@ -82,6 +82,15 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
     private LogSessionLocal logSession;
 
     @Override
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public void flushPublisherCache() {
+        PublisherCache.INSTANCE.flush();
+        if (log.isDebugEnabled()) {
+            log.debug("Flushed Publisher cache.");
+        }
+    }
+
+    @Override
     public boolean storeCertificate(Admin admin, Collection<Integer> publisherids, Certificate incert, String username, String password, String userDN, String cafp,
             int status, int type, long revocationDate, int revocationReason, String tag, int certificateProfileId, long lastUpdate,
             ExtendedInformation extendedinformation) {
@@ -106,20 +115,18 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
     	if (publisherids == null) {
     		return true;
     	}
-        Iterator<Integer> iter = publisherids.iterator();
         boolean returnval = true;
-        while (iter.hasNext()) {
+        for (Integer id : publisherids) {
             int publishStatus = PublisherConst.STATUS_PENDING;
-            Integer id = iter.next();
-            PublisherData pdl = PublisherData.findById(entityManager, Integer.valueOf(id));
-            if (pdl != null) {
+            BasePublisher publ = getPublisher(admin, id);
+            if (publ != null) {
                 String fingerprint = CertTools.getFingerprintAsString(cert);
+                final String name = getPublisherName(admin, id);
                 // If it should be published directly
-                final BasePublisher publ = getPublisher(pdl);
                 if (!publ.getOnlyUseQueue()) {
                     try {
                     	try {
-                    		if (publisherQueueSession.storeCertificateNonTransactional(getPublisher(pdl), admin, cert, username, password, userDN, cafp, status, type, revocationDate, revocationReason,
+                    		if (publisherQueueSession.storeCertificateNonTransactional(publ, admin, cert, username, password, userDN, cafp, status, type, revocationDate, revocationReason,
                     				tag, certificateProfileId, lastUpdate, extendedinformation)) {
                     			publishStatus = PublisherConst.STATUS_SUCCESS;
                     		}
@@ -131,10 +138,10 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
                         		throw e;
                         	}
                         }
-                        String msg = intres.getLocalizedMessage("publisher.store", CertTools.getSubjectDN(cert), pdl.getName());
+                        final String msg = intres.getLocalizedMessage("publisher.store", CertTools.getSubjectDN(cert), name);
                         logSession.log(admin, cert, LogConstants.MODULE_CA, new java.util.Date(), username, cert, logInfoEvent, msg);
                     } catch (PublisherException pe) {
-                        String msg = intres.getLocalizedMessage("publisher.errorstore", pdl.getName(), fingerprint);
+                        final String msg = intres.getLocalizedMessage("publisher.errorstore", name, fingerprint);
                         logSession.log(admin, cert, LogConstants.MODULE_CA, new java.util.Date(), username, cert, logErrorEvent, msg, pe);
                     }
                 }
@@ -170,10 +177,10 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
                         String fp = CertTools.getFingerprintAsString(cert);
                         try {
                             publisherQueueSession.addQueueData(id.intValue(), PublisherConst.PUBLISH_TYPE_CERT, fp, pqvd, publishStatus);
-                            final String msg = intres.getLocalizedMessage("publisher.storequeue", pdl.getName(), fp, status);
+                            final String msg = intres.getLocalizedMessage("publisher.storequeue", name, fp, status);
                             logSession.log(admin, cert, LogConstants.MODULE_CA, new java.util.Date(), username, cert, logInfoEvent, msg);
                         } catch (CreateException e) {
-                            final String msg = intres.getLocalizedMessage("publisher.errorstorequeue", pdl.getName(), fp, status);
+                            final String msg = intres.getLocalizedMessage("publisher.errorstorequeue", name, fp, status);
                             logSession.log(admin, cert, LogConstants.MODULE_CA, new java.util.Date(), username, cert, logErrorEvent, msg, e);
                         }                		
                 	} else {
@@ -193,24 +200,27 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
     
     @Override
     public boolean storeCRL(Admin admin, Collection<Integer> publisherids, byte[] incrl, String cafp, int number, String userDN) {
-        log.trace(">storeCRL");
+    	if (log.isTraceEnabled()) {
+    		log.trace(">storeCRL");
+    	}
         Iterator<Integer> iter = publisherids.iterator();
         boolean returnval = true;
         while (iter.hasNext()) {
             int publishStatus = PublisherConst.STATUS_PENDING;
             Integer id = iter.next();
-            PublisherData pdl = PublisherData.findById(entityManager, Integer.valueOf(id));
-            if (pdl != null) {
+            final BasePublisher publ = getPublisher(admin, id);
+            if (publ != null) {
+                final String name = getPublisherName(admin, id);
                 // If it should be published directly
-                if (!getPublisher(pdl).getOnlyUseQueue()) {
+                if (!publ.getOnlyUseQueue()) {
                     try {
-                    	if (publisherQueueSession.storeCRLNonTransactional(getPublisher(pdl), admin, incrl, cafp, number, userDN)) {
+                    	if (publisherQueueSession.storeCRLNonTransactional(publ, admin, incrl, cafp, number, userDN)) {
                             publishStatus = PublisherConst.STATUS_SUCCESS;
                         }
-                        String msg = intres.getLocalizedMessage("publisher.store", "CRL", pdl.getName());
+                        String msg = intres.getLocalizedMessage("publisher.store", "CRL", name);
                         logSession.log(admin, admin.getCaId(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_INFO_STORECRL, msg);
                     } catch (PublisherException pe) {
-                        String msg = intres.getLocalizedMessage("publisher.errorstore", pdl.getName(), "CRL");
+                        String msg = intres.getLocalizedMessage("publisher.errorstore", name, "CRL");
                         logSession.log(admin, admin.getCaId(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_ERROR_STORECRL,
                                 msg, pe);
                     }
@@ -219,11 +229,11 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
                     returnval = false;
                 }
                 if (log.isDebugEnabled()) {
-                    log.debug("KeepPublishedInQueue: " + getPublisher(pdl).getKeepPublishedInQueue());
-                    log.debug("UseQueueForCRLs: " + getPublisher(pdl).getUseQueueForCRLs());
+                    log.debug("KeepPublishedInQueue: " + publ.getKeepPublishedInQueue());
+                    log.debug("UseQueueForCRLs: " + publ.getUseQueueForCRLs());
                 }
-                if ((publishStatus != PublisherConst.STATUS_SUCCESS || getPublisher(pdl).getKeepPublishedInQueue())
-                        && getPublisher(pdl).getUseQueueForCRLs()) {
+                if ((publishStatus != PublisherConst.STATUS_SUCCESS || publ.getKeepPublishedInQueue())
+                        && publ.getUseQueueForCRLs()) {
                     // Write to the publisher queue either for audit reasons or
                     // to be able try again
                     final PublisherQueueVolatileData pqvd = new PublisherQueueVolatileData();
@@ -231,10 +241,10 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
                     String fp = CertTools.getFingerprintAsString(incrl);
                     try {
                         publisherQueueSession.addQueueData(id.intValue(), PublisherConst.PUBLISH_TYPE_CRL, fp, pqvd, PublisherConst.STATUS_PENDING);
-                        String msg = intres.getLocalizedMessage("publisher.storequeue", pdl.getName(), fp, "CRL");
+                        String msg = intres.getLocalizedMessage("publisher.storequeue", name, fp, "CRL");
                         logSession.log(admin, admin.getCaId(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_INFO_STORECRL, msg);
                     } catch (CreateException e) {
-                        String msg = intres.getLocalizedMessage("publisher.errorstorequeue", pdl.getName(), fp, "CRL");
+                        String msg = intres.getLocalizedMessage("publisher.errorstorequeue", name, fp, "CRL");
                         logSession.log(admin, admin.getCaId(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_ERROR_STORECRL,
                                 msg, e);
                     }
@@ -245,7 +255,9 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
                 returnval = false;
             }
         }
-        log.trace("<storeCRL");
+        if (log.isTraceEnabled()) {
+        	log.trace("<storeCRL");
+        }
         return returnval;
     }
 
@@ -322,7 +334,9 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
         PublisherData htp = PublisherData.findByName(entityManager, name);
         if (htp != null) {
             htp.setPublisher(publisher);
-            String msg = intres.getLocalizedMessage("publisher.changedpublisher", name);
+            // Since loading a Publisher is quite complex, we simple purge the cache here
+            PublisherCache.INSTANCE.removeEntry(htp.getId());            
+            final String msg = intres.getLocalizedMessage("publisher.changedpublisher", name);
             logSession.log(admin, admin.getCaId(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_INFO_PUBLISHERDATA, msg);
         } else {
             String msg = intres.getLocalizedMessage("publisher.errorchangepublisher", name);
@@ -373,6 +387,8 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
             	}
             } else {
             	entityManager.remove(htp);
+                // Purge the cache here
+                PublisherCache.INSTANCE.removeEntry(htp.getId());            
                 String msg = intres.getLocalizedMessage("publisher.removedpublisher", name);
                 logSession.log(admin, admin.getCaId(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_INFO_PUBLISHERDATA, msg);
             }
@@ -394,6 +410,8 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
         	if (htp != null) {
                 htp.setName(newname);
                 success = true;
+                // Since loading a Publisher is quite complex, we simple purge the cache here
+                PublisherCache.INSTANCE.removeEntry(htp.getId());            
             }
         }
         if (success) {
@@ -435,23 +453,13 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     @Override
     public BasePublisher getPublisher(Admin admin, String name) {
-        BasePublisher returnval = null;
-        PublisherData pd = PublisherData.findByName(entityManager, name);
-        if (pd != null) {
-        	returnval = getPublisher(pd);
-        }
-        return returnval;
+        return getPublisherInternal(-1, name, true);
     }
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     @Override
     public BasePublisher getPublisher(Admin admin, int id) {
-        BasePublisher returnval = null;
-        PublisherData pd = PublisherData.findById(entityManager, Integer.valueOf(id));
-        if (pd != null) {
-        	returnval = getPublisher(pd);
-        }
-        return returnval;
+        return getPublisherInternal(id, null, true);
     }
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
@@ -468,12 +476,9 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     @Override
     public int getPublisherId(Admin admin, String name) {
-        int returnval = 0;
-        PublisherData pd = PublisherData.findByName(entityManager, name);
-        if (pd != null) {
-        	returnval = pd.getId();
-        }
-        return returnval;
+        getPublisher(admin, name);
+        final Integer val = PublisherCache.INSTANCE.getNameToIdMap().get(name);
+        return (val != null) ? val : 0;
     }
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
@@ -482,13 +487,13 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
         if (log.isTraceEnabled()) {
             log.trace(">getPublisherName(id: " + id + ")");
         }
-        String returnval = null;
-        PublisherData pd = PublisherData.findById(entityManager, Integer.valueOf(id));
-        if (pd != null) {
-        	returnval = pd.getName();
+        // Get publisher to ensure it is in the cache
+        getPublisher(admin, id);
+        final String name = PublisherCache.INSTANCE.getName(id);
+        if (log.isTraceEnabled()) {
+        	log.trace("<getPublisherName()");
         }
-        log.trace("<getPublisherName()");
-        return returnval;
+        return name;
     }
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
@@ -514,6 +519,20 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
         return returnval;
     }
 
+    @Override
+    public void internalChangeCertificateProfileNoFlushCache(Admin admin, String name, BasePublisher publisher) throws AuthorizationDeniedException {
+        // Check that administrator has superadminstrator rights.
+        if(!authorizationSession.isAuthorizedNoLog(admin, "/super_administrator")) {
+            String msg = intres.getLocalizedMessage("caadmin.notauthorizedtoeditca", "internalChangeCertificateProfileNoFlushCache");
+            logSession.log(admin, admin.getCaId(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_ERROR_NOTAUTHORIZEDTORESOURCE, msg);
+            throw new AuthorizationDeniedException(msg);
+        }
+        PublisherData htp = PublisherData.findByName(entityManager, name);
+        if (htp != null) {
+            htp.setPublisher(publisher);
+        }
+    }
+
     private int findFreePublisherId() {
 		final ProfileID.DB db = new ProfileID.DB() {
 			@Override
@@ -522,6 +541,66 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
 			}
 		};
 		return ProfileID.getNotUsedID(db);
+    }
+
+    /**
+     * Internal method for getting Publisher, to avoid code duplication. Tries to find the Publisher even if the id is wrong due to CA certificate DN not being
+     * the same as CA DN. Uses PublisherCache directly if configured to do so.
+     * 
+     * Note! No authorization checks performed in this internal method
+     * 
+     * @param id
+     *            numerical id of Publisher that we search for, or -1 if a name is to be used instead
+     * @param name
+     *            human readable name of Publisher, used instead of id if id == -1, can be null if id != -1
+     * @param fromCache if we should use the cache or return a new, decoupled, instance from the database, to be used when you need
+     *             a completely distinct object, for edit, and not a shared cached instance.
+     * @return BasePublisher value object or null if it does not exist
+     */
+    private BasePublisher getPublisherInternal(int id, final String name, boolean fromCache) {
+        if (log.isTraceEnabled()) {
+            log.trace(">getPublisherInternal: " + id + ", " + name);
+        }
+        Integer idValue = Integer.valueOf(id);
+        if (id == -1) {
+            idValue = PublisherCache.INSTANCE.getNameToIdMap().get(name);
+        }
+        BasePublisher returnval = null;
+        // If we should read from cache, and we have an id to use in the cache, and the cache does not need to be updated
+        if (fromCache && idValue!=null && !PublisherCache.INSTANCE.shouldCheckForUpdates(idValue)) {
+            // Get from cache (or null)
+            returnval = PublisherCache.INSTANCE.getEntry(idValue);
+        }
+
+        // if we selected to not read from cache, or if the cache did not contain this entry
+        if (returnval == null) {
+        	if (log.isDebugEnabled()) {
+        	    log.debug("Publisher with ID " + idValue + " and/or name '"+name+"' will be checked for updates.");
+        	}
+            // We need to read from database because we specified to not get from cache or we don't have anything in the cache
+            final PublisherData pd;
+            if (name != null) {
+                pd = PublisherData.findByName(entityManager, name);
+            } else {
+                pd = PublisherData.findById(entityManager, idValue);
+            }
+            if (pd != null) {
+                returnval = getPublisher(pd);
+                final int digest = pd.getProtectString(0).hashCode();
+                // The cache compares the database data with what is in the cache
+                // If database is different from cache, replace it in the cache
+                PublisherCache.INSTANCE.updateWith(pd.getId(), digest, pd.getName(), returnval);
+            } else {
+                // Ensure that it is removed from cache if it exists
+                if (idValue != null) {
+                    PublisherCache.INSTANCE.removeEntry(idValue);                    
+                }
+            }
+        }
+        if (log.isTraceEnabled()) {
+            log.trace("<getPublisherInternal: " + id + ", " + name+": "+(returnval == null ? "null" : "not null"));
+        }
+        return returnval;
     }
 
     /** @return the publisher data and updates it if necessary. */

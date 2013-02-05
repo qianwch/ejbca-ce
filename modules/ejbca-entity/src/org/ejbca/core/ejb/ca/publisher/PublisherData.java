@@ -144,4 +144,17 @@ public class PublisherData implements Serializable {
 		final Query query = entityManager.createQuery("SELECT a FROM PublisherData a");
 		return query.getResultList();
 	}
+	
+	//
+    // Database integrity protection methods, not used for integrity protection just for back-ported Publisher cache
+    //
+
+    @Transient
+    public String getProtectString(final int version) {
+        final StringBuilder build = new StringBuilder();
+        // rowVersion is automatically updated by JPA, so it's not important, it is only used for optimistic locking
+        build.append(getId()).append(getName()).append(getUpdateCounter()).append(getData());
+        return build.toString();
+    }
+
 }

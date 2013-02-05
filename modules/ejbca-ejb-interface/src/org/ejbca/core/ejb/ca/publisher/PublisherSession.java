@@ -157,4 +157,15 @@ public interface PublisherSession {
      */
     // TODO: Move this to local interface!
     public java.lang.String testAllConnections();
+    
+    /**
+     * Makes sure that no Publishers are cached to ensure that we read from database
+     * next time we try to access it.
+     */
+    void flushPublisherCache(); 
+
+    /** Change a Publisher without affecting the cache */
+    void internalChangeCertificateProfileNoFlushCache(Admin admin, String name, BasePublisher publisher)
+            throws AuthorizationDeniedException; 
+
 }
