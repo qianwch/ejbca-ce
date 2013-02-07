@@ -31,6 +31,8 @@ import org.ejbca.util.Base64PutHashMap;
 
 /**
  * Representation of a publisher.
+ * 
+ * @version $Id$
  */
 @Entity
 @Table(name="PublisherData")
