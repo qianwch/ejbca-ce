@@ -274,9 +274,15 @@ public class ValidationAuthorityPublisher extends BasePublisher implements ICust
 			// - revocation reason is not REVOCATION_REASON_REMOVEFROMCRL even if status is active
 			// Then we will not publish the certificate, in all other cases we will
 			if ((status != SecConst.CERT_REVOKED) && (revocationReason != RevokedCertInfo.REVOCATION_REASON_REMOVEFROMCRL)) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Will not publish certificate. Status: "+status+", revocationReason: "+revocationReason);
+                }
 				return false;
 			}
 		}
+        if (log.isDebugEnabled()) {
+            log.debug("Will publish certificate. Status: "+status+", revocationReason: "+revocationReason);
+        }
 		return true;
     }
 
