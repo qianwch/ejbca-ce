@@ -38,7 +38,6 @@ import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.core.model.authorization.AuthorizationDeniedException;
 import org.ejbca.core.model.authorization.Authorizer;
-import org.ejbca.core.model.ca.crl.RevokedCertInfo;
 import org.ejbca.core.model.ca.publisher.ActiveDirectoryPublisher;
 import org.ejbca.core.model.ca.publisher.BasePublisher;
 import org.ejbca.core.model.ca.publisher.CustomPublisherContainer;
@@ -154,21 +153,9 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
                 }
                 if ((publishStatus != PublisherConst.STATUS_SUCCESS || publ.getKeepPublishedInQueue())
                         && publ.getUseQueueForCertificates()) {
-                	boolean doQueue = true;
-                	if (publ instanceof ValidationAuthorityPublisher) {
-						ValidationAuthorityPublisher valpubl = (ValidationAuthorityPublisher) publ;
-						if (valpubl.getOnlyPublishRevoked()) {
-							// If we should use the queue for only revoked certificates and
-							// - status is not revoked
-							// - revocation reason is not REVOCATION_REASON_REMOVEFROMCRL even if status is active
-							if ((status != SecConst.CERT_REVOKED) && (revocationReason != RevokedCertInfo.REVOCATION_REASON_REMOVEFROMCRL)) {
-								doQueue = false;
-							}
-						}
-					}
                     // Write to the publisher queue either for audit reasons or
                     // to be able try again
-                	if (doQueue) {
+                	if (publ.willPublishCertificate(publishStatus, revocationReason)) {
                         PublisherQueueVolatileData pqvd = new PublisherQueueVolatileData();
                         pqvd.setUsername(username);
                         pqvd.setPassword(password);
