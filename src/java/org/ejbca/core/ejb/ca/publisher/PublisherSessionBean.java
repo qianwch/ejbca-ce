@@ -119,63 +119,63 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
             int publishStatus = PublisherConst.STATUS_PENDING;
             BasePublisher publ = getPublisher(admin, id);
             if (publ != null) {
-                String fingerprint = CertTools.getFingerprintAsString(cert);
-                final String name = getPublisherName(admin, id);
-                // If it should be published directly
-                if (!publ.getOnlyUseQueue()) {
-                    try {
-                    	try {
-                    		if (publisherQueueSession.storeCertificateNonTransactional(publ, admin, cert, username, password, userDN, cafp, status, type, revocationDate, revocationReason,
-                    				tag, certificateProfileId, lastUpdate, extendedinformation)) {
-                    			publishStatus = PublisherConst.STATUS_SUCCESS;
-                    		}
-                        } catch (EJBException e) {
-                        	final Throwable t = e.getCause();
-                        	if (t instanceof PublisherException) {
-                        		throw (PublisherException)t;
-                        	} else {
-                        		throw e;
-                        	}
-                        }
-                        final String msg = intres.getLocalizedMessage("publisher.store", CertTools.getSubjectDN(cert), name);
-                        logSession.log(admin, cert, LogConstants.MODULE_CA, new java.util.Date(), username, cert, logInfoEvent, msg);
-                    } catch (PublisherException pe) {
-                        final String msg = intres.getLocalizedMessage("publisher.errorstore", name, fingerprint);
-                        logSession.log(admin, cert, LogConstants.MODULE_CA, new java.util.Date(), username, cert, logErrorEvent, msg, pe);
-                    }
-                }
-                if (publishStatus != PublisherConst.STATUS_SUCCESS) {
-                    returnval = false;
-                }
-                if (log.isDebugEnabled()) {
-                    log.debug("KeepPublishedInQueue: " + publ.getKeepPublishedInQueue());
-                    log.debug("UseQueueForCertificates: " + publ.getUseQueueForCertificates());
-                }
-                if ((publishStatus != PublisherConst.STATUS_SUCCESS || publ.getKeepPublishedInQueue())
-                        && publ.getUseQueueForCertificates()) {
-                    // Write to the publisher queue either for audit reasons or
-                    // to be able try again
-                	if (publ.willPublishCertificate(status, revocationReason)) {
-                        PublisherQueueVolatileData pqvd = new PublisherQueueVolatileData();
-                        pqvd.setUsername(username);
-                        pqvd.setPassword(password);
-                        pqvd.setExtendedInformation(extendedinformation);
-                        pqvd.setUserDN(userDN);
-                        String fp = CertTools.getFingerprintAsString(cert);
-                        try {
-                            publisherQueueSession.addQueueData(id.intValue(), PublisherConst.PUBLISH_TYPE_CERT, fp, pqvd, publishStatus);
-                            final String msg = intres.getLocalizedMessage("publisher.storequeue", name, fp, status);
-                            logSession.log(admin, cert, LogConstants.MODULE_CA, new java.util.Date(), username, cert, logInfoEvent, msg);
-                        } catch (CreateException e) {
-                            final String msg = intres.getLocalizedMessage("publisher.errorstorequeue", name, fp, status);
-                            logSession.log(admin, cert, LogConstants.MODULE_CA, new java.util.Date(), username, cert, logErrorEvent, msg, e);
-                        }                		
-                	} else {
-                		if (log.isDebugEnabled()) {
-                			log.debug("Not storing certificate for ValidationAuthority in queue because we should only publish revoked and status="+status+", revocationReason="+revocationReason);
-                		}
-                	}
-                }
+                // If the publisher will not publish the certificate, break out directly and do not call the publisher or queue the certificate
+            	if (publ.willPublishCertificate(status, revocationReason)) {
+            		String fingerprint = CertTools.getFingerprintAsString(cert);
+            		final String name = getPublisherName(admin, id);
+            		// If it should be published directly
+            		if (!publ.getOnlyUseQueue()) {
+            			try {
+            				try {
+            					if (publisherQueueSession.storeCertificateNonTransactional(publ, admin, cert, username, password, userDN, cafp, status, type, revocationDate, revocationReason,
+            							tag, certificateProfileId, lastUpdate, extendedinformation)) {
+            						publishStatus = PublisherConst.STATUS_SUCCESS;
+            					}
+            				} catch (EJBException e) {
+            					final Throwable t = e.getCause();
+            					if (t instanceof PublisherException) {
+            						throw (PublisherException)t;
+            					} else {
+            						throw e;
+            					}
+            				}
+            				final String msg = intres.getLocalizedMessage("publisher.store", CertTools.getSubjectDN(cert), name);
+            				logSession.log(admin, cert, LogConstants.MODULE_CA, new java.util.Date(), username, cert, logInfoEvent, msg);
+            			} catch (PublisherException pe) {
+            				final String msg = intres.getLocalizedMessage("publisher.errorstore", name, fingerprint);
+            				logSession.log(admin, cert, LogConstants.MODULE_CA, new java.util.Date(), username, cert, logErrorEvent, msg, pe);
+            			}
+            		}
+            		if (publishStatus != PublisherConst.STATUS_SUCCESS) {
+            			returnval = false;
+            		}
+            		if (log.isDebugEnabled()) {
+            			log.debug("KeepPublishedInQueue: " + publ.getKeepPublishedInQueue());
+            			log.debug("UseQueueForCertificates: " + publ.getUseQueueForCertificates());
+            		}
+            		if ((publishStatus != PublisherConst.STATUS_SUCCESS || publ.getKeepPublishedInQueue())
+            				&& publ.getUseQueueForCertificates()) {
+            			// Write to the publisher queue either for audit reasons or to be able try again
+            			PublisherQueueVolatileData pqvd = new PublisherQueueVolatileData();
+            			pqvd.setUsername(username);
+            			pqvd.setPassword(password);
+            			pqvd.setExtendedInformation(extendedinformation);
+            			pqvd.setUserDN(userDN);
+            			String fp = CertTools.getFingerprintAsString(cert);
+            			try {
+            				publisherQueueSession.addQueueData(id.intValue(), PublisherConst.PUBLISH_TYPE_CERT, fp, pqvd, publishStatus);
+            				final String msg = intres.getLocalizedMessage("publisher.storequeue", name, fp, status);
+            				logSession.log(admin, cert, LogConstants.MODULE_CA, new java.util.Date(), username, cert, logInfoEvent, msg);
+            			} catch (CreateException e) {
+            				final String msg = intres.getLocalizedMessage("publisher.errorstorequeue", name, fp, status);
+            				logSession.log(admin, cert, LogConstants.MODULE_CA, new java.util.Date(), username, cert, logErrorEvent, msg, e);
+            			}                		
+            		}
+            	} else {
+            		if (log.isDebugEnabled()) {
+            			log.debug("Not storing or queuing certificate for Publisher with id "+id+" because publisher will not publish it.");
+            		}
+            	}
             } else {
                 String msg = intres.getLocalizedMessage("publisher.nopublisher", id);
                 logSession.log(admin, cert, LogConstants.MODULE_CA, new java.util.Date(), null, cert, logErrorEvent, msg);
