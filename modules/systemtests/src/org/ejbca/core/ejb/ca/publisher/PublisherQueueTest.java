@@ -13,6 +13,8 @@
 
 package org.ejbca.core.ejb.ca.publisher;
 
+import static org.junit.Assert.assertTrue;
+
 import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -318,8 +320,8 @@ public class PublisherQueueTest extends TestCase {
     		// Publish a non revoked certificate, since this publisher only stores revoked certificates it should not show up in the queue
     		// storeCertificate should return false as we have not published to all publishers but instead only pushed to the queue
     		ret = publisherSession.storeCertificate(admin, publishers, cert, "test05", "foo123", null, null, SecConst.CERT_ACTIVE, SecConst.CERTTYPE_ENDENTITY, -1, RevokedCertInfo.NOT_REVOKED, "foo", SecConst.CERTPROFILE_FIXED_ENDUSER, new Date().getTime(), null);
-    		assertFalse("Storing certificate to all external ocsp publisher should return false.", ret);
-    		// Now this certificate fingerprint should be in the queue
+            assertTrue("Storing ACTIVE certificate to external ocsp publisher the only publishes REVOKED should return true.", ret);
+            // Now this certificate fingerprint should not be be in the queue, since we don't publish revoked
     		Collection<PublisherQueueData> c = publisherQueueSession.getPendingEntriesForPublisher(id);
     		assertEquals("non revoked certificate should not have been stored in queue", 0, c.size());
     		

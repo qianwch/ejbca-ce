@@ -36,7 +36,9 @@ public interface PublisherSession {
      * 
      * @param publisherids
      *            a Collection (Integer) of publisherids.
-     * @return true if successful result on all given publishers
+     * @return true if successful result on all given publishers, if the publisher is configured to not publish the certificate 
+     * (for example publishing an active certificate when the publisher only publishes revoked), true is still returned because 
+     * the publishing operation succeeded even though the publisher did not publish the certificate.
      * @see org.ejbca.core.model.ca.publisher.BasePublisher
      */
     public boolean storeCertificate(Admin admin, Collection<Integer> publisherids, Certificate incert,
