@@ -157,6 +157,19 @@ upgrade to 5.0, verify your roles and privileges.
 Read the full Changelog for details.
 For upgrade instructions, please see UPGRADE
 
+EJBCA 4.0.14
+------------
+This is a maintenance release containing a few new features and improvements. In all 5 issues have been resolved.
+
+* Noteworthy changes: 
+- Active certificates published to a VA publisher that only publishes revoked certificates are no longer stored in the queue.
+- Publishers are cached for improved performance.
+- New and fixed settings that makes EJBCA work better behind an Apache using ProxyPass, by David Carella.
+- Some apsswords are not displayed in the console during build anymore, by David Carella.
+
+Read the full Changelog for details.
+For upgrade instructions, please see UPGRADE.
+
 EJBCA 4.0.13
 ------------
 This is a maintenance release containing a few new features and improvements. In all 25 issues have been resolved.
