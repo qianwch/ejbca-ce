@@ -1370,24 +1370,27 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
             throw new AuthorizationDeniedException(msg);
         }
 
-        // Get CA info.
         try {
-            CA ca = caSession.getCAForEdit(admin, caid);
+            // Get CA info quickly to see if we can edit
+            CA ca = caSession.getCA(admin, caid);
 
             if (ca.getStatus() == SecConst.CA_OFFLINE) {
                 String msg = intres.getLocalizedMessage("error.catokenoffline", ca.getName());
                 throw new CryptoTokenOfflineException(msg);
             }
 
-            CAToken caToken = ca.getCAToken();
             if (regenerateKeys) {
                 boolean renew = true;
-                keystorepass = getDefaultKeyStorePassIfSWAndEmpty(keystorepass, caToken.getCryptoToken());
+                keystorepass = getDefaultKeyStorePassIfSWAndEmpty(keystorepass, ca.getCAToken().getCryptoToken());
                 // for internal CAs the new keys are always activated
                 caTokenSession.generateKeys(admin, caid, keystorepass.toCharArray(), renew, true);
-                // We save the CA later on, as the last step
+                // We save the CA later on, as the last step.
             }
-
+            // Get a CA object that we can edit.
+            ca = caSession.getCAForEdit(admin, caid);
+            // caTokenSession above actually stores a new keystore, and we must get that one
+            CAToken caToken = ca.getCAToken();
+            
             // if issuer is insystem CA or selfsigned, then generate new certificate.
             if (ca.getSignedBy() != CAInfo.SIGNEDBYEXTERNALCA) {
                 if (ca.getSignedBy() == CAInfo.SELFSIGNED) {

@@ -31,6 +31,7 @@ import javax.persistence.Transient;
 
 import org.apache.log4j.Logger;
 import org.cesecore.certificates.ca.internal.CACacheManager;
+import org.cesecore.certificates.ca.internal.CATokenCacheManager;
 import org.cesecore.dbprotection.ProtectedData;
 import org.cesecore.dbprotection.ProtectionStringBuilder;
 import org.cesecore.internal.UpgradeableDataHashMap;
@@ -284,6 +285,7 @@ public class CAData extends ProtectedData implements Serializable {
         }
         // remove the CA from the cache to force an update the next time we load it
         CACacheManager.instance().removeCA(getCaId().intValue());
+        CATokenCacheManager.instance().removeCAToken(getCaId().intValue());
         // .. and we try to load it right away
         try {
 			readAndUpgradeCAInternal();
