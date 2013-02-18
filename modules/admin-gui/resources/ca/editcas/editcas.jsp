@@ -431,6 +431,11 @@
         	if (prop.getProperty(CATokenConstants.CAKEYPURPOSE_DEFAULT_STRING) == null) {
         		prop.setProperty(CATokenConstants.CAKEYPURPOSE_DEFAULT_STRING, CAToken.SOFTPRIVATEDECKEYALIAS);
         	}
+        	// We must do this in order to not set the default password when creating a new soft CA token
+        	// A bit tricky, but thats how it is as of EJBCA 5.0.x, 2012-05.
+        	if ((authenticationcode != null) && (authenticationcode.length() > 0)){
+        	    prop.setProperty(SoftCryptoToken.NODEFAULTPWD, "true");
+        	}
             catoken.setProperties(prop);
         	catoken.setClassPath(SoftCryptoToken.class.getName());
          } 
