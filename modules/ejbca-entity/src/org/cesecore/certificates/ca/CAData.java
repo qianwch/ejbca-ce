@@ -285,7 +285,6 @@ public class CAData extends ProtectedData implements Serializable {
         }
         // remove the CA from the cache to force an update the next time we load it
         CACacheManager.instance().removeCA(getCaId().intValue());
-        CATokenCacheManager.instance().removeCAToken(getCaId().intValue());
         // .. and we try to load it right away
         try {
 			readAndUpgradeCAInternal();

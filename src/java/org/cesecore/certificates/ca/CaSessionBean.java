@@ -102,7 +102,6 @@ public class CaSessionBean implements CaSessionLocal, CaSessionRemote {
     public void flushCACache() {
         CACacheHelper.setLastCACacheUpdateTime(-1);
         CACacheManager.instance().removeAll();
-        CATokenCacheManager.instance().removeAll();
         if (log.isDebugEnabled()) {
             log.debug("Flushed CA cache.");
         }
