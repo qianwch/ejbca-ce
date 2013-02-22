@@ -15,6 +15,7 @@ package org.cesecore.keys.util;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
@@ -874,7 +875,7 @@ public final class KeyTools {
         // We will construct the PKCS11 provider (sun.security..., or iaik...) using reflection, because
         // the sun class does not exist on all platforms in jdk5, and we want to be able to compile everything.
         if ( slot==null || slot.length()<1 ) {// no slot it must be Sun with slot in the attributes file.
-            return getSunP11Provider(null, libFile, isIndex, attributesFile);
+            return getSunP11Provider(new FileInputStream(libFile));
         }
         try {
             Integer.parseInt(slot);
@@ -888,7 +889,7 @@ public final class KeyTools {
             }
         }
         {// if that does not exist, we will revert back to use the SUN provider
-            final Provider prov = getSunP11Provider(slot, libFile, isIndex, attributesFile);
+            final Provider prov = getSunP11Provider(slot, libFile, isIndex, attributesFile, privateKeyLabel);
             if ( prov!=null ) {
                 return prov;
             }
@@ -926,7 +927,7 @@ public final class KeyTools {
         }
         return ret;
     }
-    private static Provider getSunP11Provider(final String slot, final File libFile, final boolean isIndex, final String attributesFile) throws IOException {
+    private static Provider getSunP11Provider(final String slot, final File libFile, final boolean isIndex, final String attributesFile, String privateKeyLabel) throws IOException {
 
         // Properties for the SUN PKCS#11 provider
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -956,7 +957,10 @@ public final class KeyTools {
             pw.println("  CKA_EXTRACTABLE = false"); // not possible to wrap the key with another key
             pw.println("  CKA_DECRYPT = true");
             pw.println("  CKA_SIGN = true");
-            pw.println("  CKA_LABEL = 0h6b657931206b657931");
+            if ( privateKeyLabel!=null && privateKeyLabel.length()>0 ) {
+                pw.print("  CKA_LABEL = 0h");
+                pw.println(new String(Hex.encode(privateKeyLabel.getBytes())));
+            }
             pw.println("  CKA_UNWRAP = true");// for unwrapping of session keys,
             pw.println("}");
             pw.println("attributes(*, CKO_SECRET_KEY, *) = {");

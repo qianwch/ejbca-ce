@@ -136,7 +136,7 @@ public class HSMKeyTool extends ClientToolBox {
                     setModuleProtection();
                 }
                 final String keyEntryName = args.length>6 ? args[6] :"myKey";
-                KeyStoreContainer store = KeyStoreContainerFactory.getInstance(args[4], args[2], args[3], args.length>7 ? args[7] : null, null, null, "priv-"+keyEntryName);
+                final KeyStoreContainer store = KeyStoreContainerFactory.getInstance(args[4], args[2], args[3], args.length>7 ? args[7] : null, null, null, "priv-"+keyEntryName);
                 store.generate(args[5], keyEntryName);
                 System.err.println("Created certificate with entry "+keyEntryName+'.');
             }
