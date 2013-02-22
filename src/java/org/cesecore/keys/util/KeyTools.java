@@ -857,11 +857,11 @@ public final class KeyTools {
      * 
      *            See also html documentation for PKCS#11 HSMs in EJBCA.
      * @param privateKeyLabel
-     *            The private key label to be set to generated keys.
+     *            The private key label to be set to generated keys. null means no label.
      * 
      * @return AuthProvider of type "sun.security.pkcs11.SunPKCS11" or
      * @throws IOException
-     *             if the pkcs11 library can not be found, or the PKCS11 provider can not be created. null means no label.
+     *             if the pkcs11 library can not be found, or the PKCS11 provider can not be created.
      */
     public static Provider getP11Provider(final String slot, final String fileName, final boolean isIndex, final String attributesFile, final String privateKeyLabel)
             throws IOException {
