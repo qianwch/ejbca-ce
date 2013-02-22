@@ -874,7 +874,8 @@ public final class KeyTools {
         }
         // We will construct the PKCS11 provider (sun.security..., or iaik...) using reflection, because
         // the sun class does not exist on all platforms in jdk5, and we want to be able to compile everything.
-        if ( slot==null || slot.length()<1 ) {// no slot it must be Sun with slot in the attributes file.
+
+        if ( slot==null || slot.length()<1 ) {// no slot. It must be Sun with all config in the file named 'fileName'
             return getSunP11Provider(new FileInputStream(libFile));
         }
         try {
