@@ -31,7 +31,6 @@ import javax.persistence.Transient;
 
 import org.apache.log4j.Logger;
 import org.cesecore.certificates.ca.internal.CACacheManager;
-import org.cesecore.certificates.ca.internal.CATokenCacheManager;
 import org.cesecore.dbprotection.ProtectedData;
 import org.cesecore.dbprotection.ProtectionStringBuilder;
 import org.cesecore.internal.UpgradeableDataHashMap;
