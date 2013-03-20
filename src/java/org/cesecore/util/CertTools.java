@@ -1827,6 +1827,9 @@ public class CertTools {
                     int tag = gn.getTagNo();
                     DEREncodable name = gn.getName();
                     String str = CertTools.getGeneralNameString(tag, name);
+                    if ( str==null ) {
+                        continue;
+                    }
                     if (altName == null) {
                         altName = str;
                     } else {
