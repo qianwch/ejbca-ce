@@ -160,7 +160,7 @@ public class HSMKeyTool extends ClientToolBox {
             return true;
         } else */
         if ( args[1].toLowerCase().trim().contains(GENERATE_BATCH_SWITCH) ) {
-            if ( args.length < 5 ) {
+            if ( args.length < 6 ) {
                 System.err.println(commandString + "<name of batch file> " + '['+'<'+getKeyStoreDescription()+'>'+']');
                 generateComment();
                 System.err.println("The batch file is a file which specifies alias and key specification for each key to be generated.");
