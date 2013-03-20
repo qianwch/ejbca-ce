@@ -125,8 +125,6 @@ public class SimpleAuthenticationProviderSessionBean implements SimpleAuthentica
                 keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
             } catch (NoSuchAlgorithmException e) {
                 throw new InvalidAuthenticationTokenException("Could not create authentication token.", e);
-            } catch (NoSuchProviderException e) {
-                throw new InvalidAuthenticationTokenException("Could not create authentication token.", e);
             } catch (InvalidAlgorithmParameterException e) {
                 throw new InvalidAuthenticationTokenException("Could not create authentication token.", e);
             }
