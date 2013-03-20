@@ -20,14 +20,26 @@ import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Vector;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.DERIA5String;
+import org.bouncycastle.asn1.DERObject;
+import org.bouncycastle.asn1.DERObjectIdentifier;
+import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DEROutputStream;
+import org.bouncycastle.asn1.DERSequence;
+import org.bouncycastle.asn1.DERTaggedObject;
+import org.bouncycastle.asn1.x509.GeneralNames;
+import org.bouncycastle.asn1.x509.X509Extension;
+import org.bouncycastle.asn1.x509.X509Extensions;
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authentication.tokens.UsernamePrincipal;
 import org.cesecore.certificates.ca.CAInfo;
 import org.cesecore.certificates.ca.CaSessionRemote;
+import org.cesecore.certificates.certificate.InternalCertificateStoreSessionRemote;
 import org.cesecore.certificates.certificate.request.FailInfo;
 import org.cesecore.certificates.certificateprofile.CertificateProfile;
 import org.cesecore.certificates.certificateprofile.CertificateProfileConstants;
@@ -88,6 +100,7 @@ public class CrmfRARequestTest extends CmpTestCase {
     private EndEntityAccessSession eeAccessSession = InterfaceCache.getEndEntityAccessSession();
     private GlobalConfigurationProxySessionRemote globalConfigurationProxySession = JndiHelper.getRemoteSession(GlobalConfigurationProxySessionRemote.class);
     private GlobalConfigurationSession globalConfSession = InterfaceCache.getGlobalConfigurationSession();
+    private InternalCertificateStoreSessionRemote internalCertStoreSession = JndiHelper.getRemoteSession(InternalCertificateStoreSessionRemote.class);
 
     @Before
     public void setUp() throws Exception {
@@ -95,6 +108,7 @@ public class CrmfRARequestTest extends CmpTestCase {
 
         // Configure CMP for this test, we allow custom certificate serial numbers
         CertificateProfile profile = new CertificateProfile(CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER);
+        profile.setAllowExtensionOverride(true);
         // profile.setAllowCertSerialNumberOverride(true);
         try {
             certProfileSession.addCertificateProfile(admin, "CMPTESTPROFILE", profile);
@@ -474,6 +488,65 @@ public class CrmfRARequestTest extends CmpTestCase {
                 // NOPMD
             }
         }        
+    }
+
+    @Test
+    public void test04UsingOtherNameInSubjectAltName() throws Exception {
+
+        ASN1EncodableVector vec = new ASN1EncodableVector();
+        ASN1EncodableVector v = new ASN1EncodableVector();
+        v.add(new DERObjectIdentifier("2.5.5.5"));
+        v.add(new DERTaggedObject(true, 0, new DERIA5String( "2.16.528.1.1007.99.8-1-993000027-N-99300011-00.000-00000000" )));
+        // GeneralName gn = new GeneralName(new DERSequence(v), 0);
+        DERObject gn = new DERTaggedObject(false, 0, new DERSequence(v));
+        vec.add(gn);
+        GeneralNames san = new GeneralNames(new DERSequence(vec));
+        
+        ByteArrayOutputStream bOut = new ByteArrayOutputStream();
+        DEROutputStream dOut = new DEROutputStream(bOut);
+        Vector<X509Extension> values = new Vector<X509Extension>();
+        Vector<DERObjectIdentifier> oids = new Vector<DERObjectIdentifier>();
+        dOut.writeObject(san);
+        byte[] value = bOut.toByteArray();
+        X509Extension sanext = new X509Extension(false, new DEROctetString(value));
+        values.add(sanext);
+        oids.add(X509Extensions.SubjectAlternativeName);
+        X509Extensions exts = new X509Extensions(oids, values);
+        
+        String userDN = "CN=TestAltNameUser";
+        final KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
+        final byte[] nonce = CmpMessageHelper.createSenderNonce();
+        final byte[] transid = CmpMessageHelper.createSenderNonce();
+        final int reqId;
+        String fingerprint = null;
+        
+        try {
+            final PKIMessage one = genCertReq(issuerDN, userDN, keys, cacert, nonce, transid, true, exts, null, null, null);
+            final PKIMessage req = protectPKIMessage(one, false, PBEPASSWORD, "CMPKEYIDTESTPROFILE", 567);
+
+            reqId = req.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue();
+            Assert.assertNotNull(req);
+            final ByteArrayOutputStream bao = new ByteArrayOutputStream();
+            final DEROutputStream out = new DEROutputStream(bao);
+            out.writeObject(req);
+            final byte[] ba = bao.toByteArray();
+            // Send request and receive response
+            final byte[] resp = sendCmpHttp(ba, 200);
+            // do not check signing if we expect a failure (sFailMessage==null)
+            checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, false, null);
+            X509Certificate cert = checkCmpCertRepMessage(userDN, cacert, resp, reqId);
+            fingerprint = CertTools.getFingerprintAsString(cert);
+            
+        } finally {
+            try {
+                userAdminSession.revokeAndDeleteUser(admin, "TestAltNameUser", RevokedCertInfo.REVOCATION_REASON_KEYCOMPROMISE);
+            } catch (NotFoundException e) {}
+            
+            try{
+                internalCertStoreSession.removeCertificate(fingerprint);
+            } catch(Exception e) {}
+        }    
+        
     }
     
     @After
