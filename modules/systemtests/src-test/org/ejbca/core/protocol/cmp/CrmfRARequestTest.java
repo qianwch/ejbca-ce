@@ -32,6 +32,7 @@ import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DEROutputStream;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.DERTaggedObject;
+import org.bouncycastle.asn1.DERUTF8String;
 import org.bouncycastle.asn1.x509.GeneralNames;
 import org.bouncycastle.asn1.x509.X509Extension;
 import org.bouncycastle.asn1.x509.X509Extensions;
@@ -490,16 +491,30 @@ public class CrmfRARequestTest extends CmpTestCase {
         }        
     }
 
+    /**
+     * Send a CMP request with SubjectAltName containing OIDs that are not defined by Ejbca.
+     * Expected to pass and a certificate containing the unsupported OIDs is returned.
+     * 
+     * @throws Exception
+     */
     @Test
     public void test04UsingOtherNameInSubjectAltName() throws Exception {
 
         ASN1EncodableVector vec = new ASN1EncodableVector();
         ASN1EncodableVector v = new ASN1EncodableVector();
+        
+        v.add(new DERObjectIdentifier(CertTools.UPN_OBJECTID));
+        v.add(new DERTaggedObject(true, 0, new DERUTF8String( "foo@bar" )));
+        DERObject gn = new DERTaggedObject(false, 0, new DERSequence(v));
+        vec.add(gn);
+        
+        v = new ASN1EncodableVector();
         v.add(new DERObjectIdentifier("2.5.5.5"));
         v.add(new DERTaggedObject(true, 0, new DERIA5String( "2.16.528.1.1007.99.8-1-993000027-N-99300011-00.000-00000000" )));
         // GeneralName gn = new GeneralName(new DERSequence(v), 0);
-        DERObject gn = new DERTaggedObject(false, 0, new DERSequence(v));
+        gn = new DERTaggedObject(false, 0, new DERSequence(v));
         vec.add(gn);
+        
         GeneralNames san = new GeneralNames(new DERSequence(vec));
         
         ByteArrayOutputStream bOut = new ByteArrayOutputStream();
