@@ -47,9 +47,9 @@ import org.cesecore.certificates.ca.CaSessionLocal;
 import org.cesecore.certificates.ca.SignRequestException;
 import org.cesecore.certificates.ca.SignRequestSignatureException;
 import org.cesecore.certificates.ca.catoken.CAToken;
+import org.cesecore.certificates.certificate.CADnHelper;
 import org.cesecore.certificates.certificate.CertificateConstants;
 import org.cesecore.certificates.certificate.CertificateCreateException;
-import org.cesecore.certificates.certificate.CertificateCreateSessionBean;
 import org.cesecore.certificates.certificate.CertificateCreateSessionLocal;
 import org.cesecore.certificates.certificate.CertificateStoreSessionLocal;
 import org.cesecore.certificates.certificate.CustomCertSerialNumberException;
@@ -528,7 +528,7 @@ public class RSASignSessionBean implements SignSessionLocal, SignSessionRemote {
         try {
             // See if we can get issuerDN directly from request
             if (req.getIssuerDN() != null) {
-                String dn = CertificateCreateSessionBean.getCADnFromRequest(req, certificateStoreSession);
+                String dn = CADnHelper.getCADnFromRequest(req, certificateStoreSession);
                 try {
                     if (doLog) {
                         ca = caSession.getCA(admin, dn.hashCode());
