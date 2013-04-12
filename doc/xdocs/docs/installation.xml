@@ -492,6 +492,40 @@ improve performance.
 See documentation in src/appserver/tomcat60jboss5, and the JBoss documentation for installing the native connector.
 </p> 
 </subsubsection>
+
+<subsubsection name="JBoss Service Timer persistence">
+<p>EJBCA uses EJB timers to run services regularly (if you have services configured). By default JBoss persists timers in an internal, in memory, database. 
+If you run services very often this can under some circumstances fill up the memory causing the server to be non-operational due to out ofmemory errors.</p>
+<p>EJBCA does not need persistent timers since they are initialized during startup. Therefore it isrecommended to run JBoss with non-persistent timers, something that can be configured.
+</p>
+<p>
+<u>JBoss 5 configuration</u>:
+<br/>
+<ul>
+<li>Edit jboss/server/default/deploy/ejb2-timer-service.xml</li>
+<li>Remove the commenting around the following line, so the NoopPersistencePolicy is enabled:<br/>
+<pre>
+&lt;mbean code="org.jboss.ejb.txtimer.NoopPersistencePolicy" name="jboss.ejb:service=EJBTimerService,persistencePolicy=noop"/&gt;
+</pre>
+</li>
+<li>Edit the EJBTimerService and change 'PersistencePolicy' from database to noop.
+<br/>
+<pre>
+&lt;mbean code="org.jboss.ejb.txtimer.EJBTimerServiceImpl" name="jboss.ejb:service=EJBTimerService"&gt;
+  &lt;attribute name="TimerIdGeneratorClassName">org.jboss.ejb.txtimer.UUIDTimerIdGenerator&lt;/attribute&gt;
+  &lt;attribute name="TimedObjectInvokerClassName">org.jboss.ejb.txtimer.TimedObjectInvokerImpl&lt;/attribute&gt;
+  &lt;depends optional-attribute-name="RetryPolicy">jboss.ejb:service=EJBTimerService,retryPolicy=fixedDelay&lt;/depends&gt;
+  &lt;depends optional-attribute-name="PersistencePolicy">jboss.ejb:service=EJBTimerService,persistencePolicy=noop&lt;/depends&gt;
+  &lt;depends optional-attribute-name="TransactionManagerFactory" proxy-type="org.jboss.tm.TransactionManagerFactory"&gt;
+    jboss:service=TransactionManager
+  &lt;/depends&gt;
+&lt;/mbean&gt;
+</pre>
+</li>
+</ul>
+</p>
+</subsubsection>
+
 </subsection>
 
 <subsection name="Glassfish">
