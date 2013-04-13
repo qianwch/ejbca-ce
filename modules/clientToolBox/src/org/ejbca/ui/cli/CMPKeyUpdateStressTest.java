@@ -1,14 +1,14 @@
 /*************************************************************************
  *                                                                       *
- *  EJBCA: The OpenSource Certificate Authority                          *
- *                                                                       *
- *  This software is free software; you can redistribute it and/or       *
- *  modify it under the terms of the GNU Lesser General Public           *
- *  License as published by the Free Software Foundation; either         *
- *  version 2.1 of the License, or any later version.                    *
- *                                                                       *
- *  See terms of license at gnu.org.                                     *
- *                                                                       *
+ *  EJBCA: The OpenSource Certificate Authority						  *
+ *																	   *
+ *  This software is free software; you can redistribute it and/or	   *
+ *  modify it under the terms of the GNU Lesser General Public		   *
+ *  License as published by the Free Software Foundation; either		 *
+ *  version 2.1 of the License, or any later version.					*
+ *																	   *
+ *  See terms of license at gnu.org.									 *
+ *																	   *
  *************************************************************************/
 
 package org.ejbca.ui.cli;
@@ -213,7 +213,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
         }
 
         private PKIMessage signPKIMessage(final PKIMessage msg, PrivateKey signingKey) throws NoSuchAlgorithmException, NoSuchProviderException,
-                InvalidKeyException, SignatureException {
+        InvalidKeyException, SignatureException {
             PKIMessage message = msg;
             final Signature sig = Signature.getInstance(PKCSObjectIdentifiers.sha1WithRSAEncryption.getId(), "BC");
             sig.initSign(signingKey);
@@ -224,7 +224,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
         }
 
         private PKIMessage protectPKIMessage(final PKIMessage msg, final boolean badObjectId, final String password) throws NoSuchAlgorithmException,
-                InvalidKeyException {
+        InvalidKeyException {
             // SHA1
             final AlgorithmIdentifier owfAlg = new AlgorithmIdentifier("1.3.14.3.2.26");
             // 567 iterations
@@ -234,7 +234,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
             final byte[] salt = "foo123".getBytes();
             final DEROctetString derSalt = new DEROctetString(salt);
             final PKIMessage ret;
-            
+
             // Create the PasswordBased protection of the message
             final PKIHeader head = msg.getHeader();
             head.setSenderKID(new DEROctetString("EMPTY".getBytes()));
@@ -325,19 +325,19 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
             if (header.getSenderNonce().getOctets().length != 16) {
                 StressTest.this.performanceTest.getLog().error(
                         "Wrong length of received sender nonce (made up by server). Is " + header.getSenderNonce().getOctets().length
-                                + " byte but should be 16.");
+                        + " byte but should be 16.");
             }
 
             if (!Arrays.equals(header.getRecipNonce().getOctets(), sessionData.getNonce())) {
                 StressTest.this.performanceTest.getLog().error(
                         "recipient nonce not the same as we sent away as the sender nonce. Sent: " + Arrays.toString(sessionData.getNonce())
-                                + " Received: " + Arrays.toString(header.getRecipNonce().getOctets()));
+                        + " Received: " + Arrays.toString(header.getRecipNonce().getOctets()));
             }
 
             if (!Arrays.equals(header.getTransactionID().getOctets(), sessionData.getTransId())) {
                 StressTest.this.performanceTest.getLog().error("transid is not the same as the one we sent");
             }
-            
+
             // Check that the message is signed with the correct digest alg
             final AlgorithmIdentifier algId = header.getProtectionAlg();
             if (algId == null || algId.getObjectId() == null || algId.getObjectId().getId() == null) {
@@ -368,7 +368,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
                 StressTest.this.performanceTest.getLog().error("No valid algorithm.");
                 return false;
             }
-            
+
             if (this.isSign) {
                 // Verify the signature
                 byte[] protBytes = respObject.getProtectedBytes();
@@ -416,7 +416,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
                     dig.reset();
                 }
                 key = new SecretKeySpec(basekey, macOid);
-                
+
                 final Mac mac = Mac.getInstance(macOid, this.bcProvider);
                 mac.init(key);
                 mac.reset();
@@ -434,7 +434,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
         }
 
         private X509Certificate checkCmpCertRepMessage(final SessionData sessionData, final byte[] retMsg, final int requestId) throws IOException,
-                CertificateException {
+        CertificateException {
             // Parse response message
             final PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(retMsg)).readObject());
             if (respObject == null) {
@@ -744,19 +744,19 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
         final int numberOfThreads;
         final int waitTime;
         final int port;
-        //        final boolean isHttp;
+        //		final boolean isHttp;
         final String urlPath;
         final String resultFilePrefix;
         if (args.length < 5) {
             System.out
-                    .println(args[0]
-                            + " <host name> <keystore (p12)> <keystore password> <friendlyname in keystore> [<number of threads>] [<wait time (ms) between each thread is started>] [<port>] [<URL path of servlet. use 'null' to get EJBCA (not proxy) default>] [<certificate file prefix. set this if you want all received certificates stored on files>]");
+            .println(args[0]
+                    + " <host name> <keystore (p12)> <keystore password> <friendlyname in keystore> [<number of threads>] [<wait time (ms) between each thread is started>] [<port>] [<URL path of servlet. use 'null' to get EJBCA (not proxy) default>] [<certificate file prefix. set this if you want all received certificates stored on files>]");
             System.out
-                    .println("EJBCA build configuration requirements: cmp.operationmode=normal, cmp.allowraverifypopo=true, cmp.allowautomatickeyupdate=true, cmp.allowupdatewithsamekey=true");
+            .println("EJBCA build configuration requirements: cmp.operationmode=normal, cmp.allowraverifypopo=true, cmp.allowautomatickeyupdate=true, cmp.allowupdatewithsamekey=true");
             System.out
-                    .println("Ejbca expects the following: There exists an end entity with a generated certificate. The end entity's certificate and its private key are stored in the keystore used "
-                            + "in the commandline. The end entity's certificate's 'friendly name' in the keystore is the one used in the command line. Such keystore can be obtained, for example, by specifying "
-                            + "the token to be 'P12' when creating the end entity and then download the keystore by choosing 'create keystore' from the public web");
+            .println("Ejbca expects the following: There exists an end entity with a generated certificate. The end entity's certificate and its private key are stored in the keystore used "
+                    + "in the commandline. The end entity's certificate's 'friendly name' in the keystore is the one used in the command line. Such keystore can be obtained, for example, by specifying "
+                    + "the token to be 'P12' when creating the end entity and then download the keystore by choosing 'create keystore' from the public web");
             return;
         }
         hostName = args[1];
