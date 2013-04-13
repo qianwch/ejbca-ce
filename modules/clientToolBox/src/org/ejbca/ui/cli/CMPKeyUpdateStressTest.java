@@ -1,14 +1,14 @@
 /*************************************************************************
  *                                                                       *
- *  EJBCA: The OpenSource Certificate Authority						  *
- *																	   *
- *  This software is free software; you can redistribute it and/or	   *
- *  modify it under the terms of the GNU Lesser General Public		   *
- *  License as published by the Free Software Foundation; either		 *
- *  version 2.1 of the License, or any later version.					*
- *																	   *
- *  See terms of license at gnu.org.									 *
- *																	   *
+ *  EJBCA: The OpenSource Certificate Authority                          *
+ *                                                                       *
+ *  This software is free software; you can redistribute it and/or       *
+ *  modify it under the terms of the GNU Lesser General Public           *
+ *  License as published by the Free Software Foundation; either         *
+ *  version 2.1 of the License, or any later version.                    *
+ *                                                                       *
+ *  See terms of license at gnu.org.                                     *
+ *                                                                       *
  *************************************************************************/
 
 package org.ejbca.ui.cli;
@@ -16,7 +16,6 @@ package org.ejbca.ui.cli;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -27,7 +26,6 @@ import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
@@ -35,13 +33,11 @@ import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.Signature;
 import java.security.SignatureException;
-import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Arrays;
 import java.util.Date;
@@ -105,9 +101,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
     /** Internal localization of logs and errors */
     private static final InternalResources intres = InternalResources.getInstance();
 
-    private static class StressTest {
-        private final PerformanceTest performanceTest;
-
+    private static class SessionData {
         private final PrivateKey oldKey;
         private final KeyPair newKeyPair;
         private final Certificate extraCert;
@@ -119,13 +113,15 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
         private final int port;
         private final String urlPath;
         private final String resultCertFilePrefix;
+        private final PerformanceTest performanceTest;
         private boolean isSign;
         private boolean firstTime = true;
 
-        public StressTest(final String _hostName, final int _port, final int numberOfThreads, final int waitTime, final String _urlPath,
+        public SessionData(final String _hostName, final int _port, final String _urlPath,
                 final String _resultCertFilePrefix, final String _eepassword, final X509Certificate _cacert, final PrivateKey _oldKey,
-                final Certificate _extraCert) throws Exception {
+                final Certificate _extraCert, PerformanceTest _performanceTest) throws Exception {
 
+            this.performanceTest = _performanceTest;
             this.hostName = _hostName;
             this.certificateFactory = CertificateFactory.getInstance("X.509", this.bcProvider);
             this.cacert = _cacert;
@@ -139,9 +135,6 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
             this.newKeyPair = keygen.generateKeyPair();
             this.oldKey = _oldKey;
             this.extraCert = _extraCert;
-
-            this.performanceTest = new PerformanceTest();
-            this.performanceTest.execute(new MyCommandFactory(), numberOfThreads, waitTime, System.out);
         }
 
         private CertRequest genKeyUpdateReq() throws IOException {
@@ -160,7 +153,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
             return new CertRequest(new DERInteger(4), myCertTemplate);
         }
 
-        private PKIMessage genPKIMessage(final SessionData sessionData, final boolean raVerifiedPopo, final CertRequest keyUpdateRequest)
+        private PKIMessage genPKIMessage(final boolean raVerifiedPopo, final CertRequest keyUpdateRequest)
                 throws NoSuchAlgorithmException, IOException, InvalidKeyException, SignatureException {
 
             final CertReqMsg myCertReqMsg = new CertReqMsg(keyUpdateRequest);
@@ -196,34 +189,34 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
             final PKIHeader myPKIHeader = new PKIHeader(new DERInteger(2), new GeneralName(new X509Name(CertTools.getSubjectDN(extraCert))),
                     new GeneralName(new X509Name(this.cacert.getSubjectDN().getName())));
             myPKIHeader.setMessageTime(new DERGeneralizedTime(new Date()));
-            myPKIHeader.setSenderNonce(new DEROctetString(sessionData.getNonce()));
-            myPKIHeader.setSenderKID(new DEROctetString(sessionData.getNonce()));
-            myPKIHeader.setTransactionID(new DEROctetString(sessionData.getTransId()));
+            myPKIHeader.setSenderNonce(new DEROctetString(getNonce()));
+            myPKIHeader.setSenderKID(new DEROctetString(getNonce()));
+            myPKIHeader.setTransactionID(new DEROctetString(getTransId()));
 
             final PKIBody myPKIBody = new PKIBody(myCertReqMessages, 7); // key update request
             return new PKIMessage(myPKIHeader, myPKIBody);
         }
 
-        private void addExtraCert(PKIMessage msg, Certificate cert) throws CertificateEncodingException, IOException {
-            ByteArrayInputStream bIn = new ByteArrayInputStream(cert.getEncoded());
+        private void addExtraCert(PKIMessage msg) throws CertificateEncodingException, IOException {
+            ByteArrayInputStream bIn = new ByteArrayInputStream(this.extraCert.getEncoded());
             ASN1InputStream dIn = new ASN1InputStream(bIn);
             ASN1Sequence extraCertSeq = (ASN1Sequence) dIn.readObject();
-            X509CertificateStructure extraCert = new X509CertificateStructure(ASN1Sequence.getInstance(extraCertSeq));
-            msg.addExtraCert(extraCert);
+            X509CertificateStructure extraCertStruct = new X509CertificateStructure(ASN1Sequence.getInstance(extraCertSeq));
+            msg.addExtraCert(extraCertStruct);
         }
 
-        private PKIMessage signPKIMessage(final PKIMessage msg, PrivateKey signingKey) throws NoSuchAlgorithmException, NoSuchProviderException,
+        private PKIMessage signPKIMessage(final PKIMessage msg) throws NoSuchAlgorithmException, NoSuchProviderException,
         InvalidKeyException, SignatureException {
             PKIMessage message = msg;
             final Signature sig = Signature.getInstance(PKCSObjectIdentifiers.sha1WithRSAEncryption.getId(), "BC");
-            sig.initSign(signingKey);
+            sig.initSign(this.oldKey);
             sig.update(message.getProtectedBytes());
             byte[] eeSignature = sig.sign();
             message.setProtection(new DERBitString(eeSignature));
             return message;
         }
 
-        private PKIMessage protectPKIMessage(final PKIMessage msg, final boolean badObjectId, final String password) throws NoSuchAlgorithmException,
+        private PKIMessage protectPKIMessage(final PKIMessage msg, final boolean badObjectId) throws NoSuchAlgorithmException,
         InvalidKeyException {
             // SHA1
             final AlgorithmIdentifier owfAlg = new AlgorithmIdentifier("1.3.14.3.2.26");
@@ -253,7 +246,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
             ret = new PKIMessage(head, body);
 
             // Calculate the protection bits
-            final byte[] raSecret = password.getBytes();
+            final byte[] raSecret = eepassword.getBytes();
             byte basekey[] = new byte[raSecret.length + salt.length];
             for (int i = 0; i < raSecret.length; i++) {
                 basekey[i] = raSecret[i];
@@ -285,64 +278,64 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
         }
 
         private byte[] sendCmpHttp(final byte[] message) throws Exception {
-            final CMPSendHTTP send = CMPSendHTTP.doIt(message, StressTest.this.hostName, StressTest.this.port, StressTest.this.urlPath, false);
+            final CMPSendHTTP send = CMPSendHTTP.doIt(message, this.hostName, this.port, this.urlPath, false);
             if (send.responseCode != HttpURLConnection.HTTP_OK) {
-                StressTest.this.performanceTest.getLog().error(
+                this.performanceTest.getLog().error(
                         intres.getLocalizedMessage("cmp.responsecodenotok", Integer.valueOf(send.responseCode)));
                 return null;
             }
             if (send.contentType == null) {
-                StressTest.this.performanceTest.getLog().error("No content type received.");
+                this.performanceTest.getLog().error("No content type received.");
                 return null;
             }
             // Some appserver (Weblogic) responds with "application/pkixcmp; charset=UTF-8"
             if (!send.contentType.startsWith("application/pkixcmp")) {
-                StressTest.this.performanceTest.getLog().info("wrong content type: " + send.contentType);
+                this.performanceTest.getLog().info("wrong content type: " + send.contentType);
             }
             return send.response;
         }
 
-        private boolean checkCmpResponseGeneral(final byte[] retMsg, final SessionData sessionData, final boolean requireProtection) throws Exception {
+        private boolean checkCmpResponseGeneral(final byte[] retMsg, final boolean requireProtection) throws Exception {
             // Parse response message
             final PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(retMsg)).readObject());
             if (respObject == null) {
-                StressTest.this.performanceTest.getLog().error("No command response message.");
+                this.performanceTest.getLog().error("No command response message.");
                 return false;
             }
 
             // The signer, i.e. the CA, check it's the right CA
             final PKIHeader header = respObject.getHeader();
             if (header == null) {
-                StressTest.this.performanceTest.getLog().error("No header in response message.");
+                this.performanceTest.getLog().error("No header in response message.");
                 return false;
             }
             // Check that the signer is the expected CA
             final X509Name name = X509Name.getInstance(header.getSender().getName());
             if (header.getSender().getTagNo() != 4 || name == null || !name.equals(this.cacert.getSubjectDN())) {
-                StressTest.this.performanceTest.getLog().error("Not signed by right issuer.");
+                this.performanceTest.getLog().error("Not signed by right issuer.");
             }
 
             if (header.getSenderNonce().getOctets().length != 16) {
-                StressTest.this.performanceTest.getLog().error(
+                this.performanceTest.getLog().error(
                         "Wrong length of received sender nonce (made up by server). Is " + header.getSenderNonce().getOctets().length
                         + " byte but should be 16.");
             }
 
-            if (!Arrays.equals(header.getRecipNonce().getOctets(), sessionData.getNonce())) {
-                StressTest.this.performanceTest.getLog().error(
-                        "recipient nonce not the same as we sent away as the sender nonce. Sent: " + Arrays.toString(sessionData.getNonce())
+            if (!Arrays.equals(header.getRecipNonce().getOctets(), getNonce())) {
+                this.performanceTest.getLog().error(
+                        "recipient nonce not the same as we sent away as the sender nonce. Sent: " + Arrays.toString(getNonce())
                         + " Received: " + Arrays.toString(header.getRecipNonce().getOctets()));
             }
 
-            if (!Arrays.equals(header.getTransactionID().getOctets(), sessionData.getTransId())) {
-                StressTest.this.performanceTest.getLog().error("transid is not the same as the one we sent");
+            if (!Arrays.equals(header.getTransactionID().getOctets(), getTransId())) {
+                this.performanceTest.getLog().error("transid is not the same as the one we sent");
             }
 
             // Check that the message is signed with the correct digest alg
             final AlgorithmIdentifier algId = header.getProtectionAlg();
             if (algId == null || algId.getObjectId() == null || algId.getObjectId().getId() == null) {
                 if (requireProtection) {
-                    StressTest.this.performanceTest.getLog().error("Not possible to get algorithm.");
+                    this.performanceTest.getLog().error("Not possible to get algorithm.");
                     return false;
                 }
                 return true;
@@ -352,20 +345,20 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
                 if (this.firstTime) {
                     this.firstTime = false;
                     this.isSign = true;
-                    StressTest.this.performanceTest.getLog().info("Signature protection used.");
+                    this.performanceTest.getLog().info("Signature protection used.");
                 } else if (!this.isSign) {
-                    StressTest.this.performanceTest.getLog().error("Message password protected but should be signature protected.");
+                    this.performanceTest.getLog().error("Message password protected but should be signature protected.");
                 }
             } else if (id.equals(CMPObjectIdentifiers.passwordBasedMac.getId())) {
                 if (this.firstTime) {
                     this.firstTime = false;
                     this.isSign = false;
-                    StressTest.this.performanceTest.getLog().info("Password (PBE) protection used.");
+                    this.performanceTest.getLog().info("Password (PBE) protection used.");
                 } else if (this.isSign) {
-                    StressTest.this.performanceTest.getLog().error("Message signature protected but should be password protected.");
+                    this.performanceTest.getLog().error("Message signature protected but should be password protected.");
                 }
             } else {
-                StressTest.this.performanceTest.getLog().error("No valid algorithm.");
+                this.performanceTest.getLog().error("No valid algorithm.");
                 return false;
             }
 
@@ -379,10 +372,10 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
                     sig.initVerify(this.cacert);
                     sig.update(protBytes);
                     if (!sig.verify(bs.getBytes())) {
-                        StressTest.this.performanceTest.getLog().error("CA signature not verifying");
+                        this.performanceTest.getLog().error("CA signature not verifying");
                     }
                 } catch (Exception e) {
-                    StressTest.this.performanceTest.getLog().error("Not possible to verify signature.", e);
+                    this.performanceTest.getLog().error("Not possible to verify signature.", e);
                 }
             } else {
                 // Verify the PasswordBased protection of the message
@@ -427,108 +420,108 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
                 // My out should now be the same as the protection bits
                 byte[] pb = protection.getBytes();
                 if (!Arrays.equals(out, pb)) {
-                    StressTest.this.performanceTest.getLog().error("Wrong PBE hash");
+                    this.performanceTest.getLog().error("Wrong PBE hash");
                 }
             }
             return true;
         }
 
-        private X509Certificate checkCmpCertRepMessage(final SessionData sessionData, final byte[] retMsg, final int requestId) throws IOException,
+        private X509Certificate checkCmpCertRepMessage(final byte[] retMsg) throws IOException,
         CertificateException {
             // Parse response message
             final PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(retMsg)).readObject());
             if (respObject == null) {
-                StressTest.this.performanceTest.getLog().error("No PKIMessage for certificate received.");
+                this.performanceTest.getLog().error("No PKIMessage for certificate received.");
                 return null;
             }
             final PKIBody body = respObject.getBody();
             if (body == null) {
-                StressTest.this.performanceTest.getLog().error("No PKIBody for certificate received.");
+                this.performanceTest.getLog().error("No PKIBody for certificate received.");
                 return null;
             }
             if (body.getTagNo() != 8) {
-                StressTest.this.performanceTest.getLog().error("Cert body tag not 8.");
+                this.performanceTest.getLog().error("Cert body tag not 8.");
                 return null;
             }
             final CertRepMessage c = body.getKup();
             if (c == null) {
-                StressTest.this.performanceTest.getLog().error("No CertRepMessage for certificate received.");
+                this.performanceTest.getLog().error("No CertRepMessage for certificate received.");
                 return null;
             }
             final CertResponse resp = c.getResponse(0);
             if (resp == null) {
-                StressTest.this.performanceTest.getLog().error("No CertResponse for certificate received.");
+                this.performanceTest.getLog().error("No CertResponse for certificate received.");
                 return null;
             }
-            if (resp.getCertReqId().getValue().intValue() != requestId) {
-                StressTest.this.performanceTest.getLog().error(
-                        "Received CertReqId is " + resp.getCertReqId().getValue().intValue() + " but should be " + requestId);
+            if (resp.getCertReqId().getValue().intValue() != getReqId()) {
+                this.performanceTest.getLog().error(
+                        "Received CertReqId is " + resp.getCertReqId().getValue().intValue() + " but should be " + getReqId());
                 return null;
             }
             final PKIStatusInfo info = resp.getStatus();
             if (info == null) {
-                StressTest.this.performanceTest.getLog().error("No PKIStatusInfo for certificate received.");
+                this.performanceTest.getLog().error("No PKIStatusInfo for certificate received.");
                 return null;
             }
             if (info.getStatus().getValue().intValue() != 0) {
-                StressTest.this.performanceTest.getLog().error("Received Status is " + info.getStatus().getValue().intValue() + " but should be 0");
+                this.performanceTest.getLog().error("Received Status is " + info.getStatus().getValue().intValue() + " but should be 0");
                 return null;
             }
             final CertifiedKeyPair kp = resp.getCertifiedKeyPair();
             if (kp == null) {
-                StressTest.this.performanceTest.getLog().error("No CertifiedKeyPair for certificate received.");
+                this.performanceTest.getLog().error("No CertifiedKeyPair for certificate received.");
                 return null;
             }
             final CertOrEncCert cc = kp.getCertOrEncCert();
             if (cc == null) {
-                StressTest.this.performanceTest.getLog().error("No CertOrEncCert for certificate received.");
+                this.performanceTest.getLog().error("No CertOrEncCert for certificate received.");
                 return null;
             }
             final X509CertificateStructure struct = cc.getCertificate();
             if (struct == null) {
-                StressTest.this.performanceTest.getLog().error("No X509CertificateStructure for certificate received.");
+                this.performanceTest.getLog().error("No X509CertificateStructure for certificate received.");
                 return null;
             }
             final byte encoded[] = struct.getEncoded();
             if (encoded == null || encoded.length <= 0) {
-                StressTest.this.performanceTest.getLog().error("No encoded certificate received.");
+                this.performanceTest.getLog().error("No encoded certificate received.");
                 return null;
             }
             final X509Certificate cert = (X509Certificate) this.certificateFactory.generateCertificate(new ByteArrayInputStream(encoded));
             if (cert == null) {
-                StressTest.this.performanceTest.getLog().error("Not possbile to create certificate.");
+                this.performanceTest.getLog().error("Not possbile to create certificate.");
                 return null;
             }
             // Remove this test to be able to test unid-fnr
             if (cert.getSubjectDN().hashCode() != new X509Name(CertTools.getSubjectDN(extraCert)).hashCode()) {
-                StressTest.this.performanceTest.getLog().error(
+                this.performanceTest.getLog().error(
                         "Subject is '" + cert.getSubjectDN() + "' but should be '" + CertTools.getSubjectDN(extraCert) + '\'');
                 return null;
             }
             if (cert.getIssuerX500Principal().hashCode() != this.cacert.getSubjectX500Principal().hashCode()) {
-                StressTest.this.performanceTest.getLog().error(
+                this.performanceTest.getLog().error(
                         "Issuer is '" + cert.getIssuerDN() + "' but should be '" + this.cacert.getSubjectDN() + '\'');
                 return null;
             }
             try {
                 cert.verify(this.cacert.getPublicKey());
             } catch (Exception e) {
-                StressTest.this.performanceTest.getLog().error("Certificate not verifying. See exception", e);
+                this.performanceTest.getLog().error("Certificate not verifying. See exception", e);
                 return null;
             }
             return cert;
         }
 
-        private boolean checkCmpPKIConfirmMessage(final SessionData sessionData, final byte retMsg[]) throws IOException {
+        private boolean checkCmpPKIConfirmMessage(final byte retMsg[]) throws IOException {
             // Parse response message
             final PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(retMsg)).readObject());
             if (respObject == null) {
-                StressTest.this.performanceTest.getLog().error("Not possbile to get response message.");
+                this.performanceTest.getLog().error("Not possbile to get response message.");
                 return false;
             }
             final PKIHeader header = respObject.getHeader();
             if (header.getSender().getTagNo() != 4) {
-                StressTest.this.performanceTest.getLog().error(
+                this.performanceTest.getLog().error(
                         "Wrong tag in response message header. Is " + header.getSender().getTagNo() + " should be 4.");
                 return false;
             }
@@ -537,286 +530,276 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
                 String senderDN = name.toString().replaceAll(" ", "");
                 String caDN = this.cacert.getSubjectDN().toString().replaceAll(" ", "");
                 if (!StringUtils.equals(senderDN, caDN)) {
-                    StressTest.this.performanceTest.getLog().error("Wrong CA DN. Is '" + name + "' should be '" + this.cacert.getSubjectDN() + "'.");
+                    this.performanceTest.getLog().error("Wrong CA DN. Is '" + name + "' should be '" + this.cacert.getSubjectDN() + "'.");
                     return false;
                 }
             }
             {
                 final X509Name name = X509Name.getInstance(header.getRecipient().getName());
                 if (name.hashCode() != new X509Name(CertTools.getSubjectDN(extraCert)).hashCode()) {
-                    StressTest.this.performanceTest.getLog().error(
+                    this.performanceTest.getLog().error(
                             "Wrong recipient DN. Is '" + name + "' should be '" + CertTools.getSubjectDN(extraCert) + "'.");
                     return false;
                 }
             }
             final PKIBody body = respObject.getBody();
             if (body == null) {
-                StressTest.this.performanceTest.getLog().error("No PKIBody for response received.");
+                this.performanceTest.getLog().error("No PKIBody for response received.");
                 return false;
             }
             if (body.getTagNo() != 19) {
-                StressTest.this.performanceTest.getLog().error("Cert body tag not 19. It was " + body.getTagNo());
+                this.performanceTest.getLog().error("Cert body tag not 19. It was " + body.getTagNo());
 
-                StressTest.this.performanceTest.getLog().error(body.getError().getPKIStatus().getStatusString().getString(0).getString());
+                this.performanceTest.getLog().error(body.getError().getPKIStatus().getStatusString().getString(0).getString());
 
                 return false;
             }
             final DERNull n = body.getConf();
             if (n == null) {
-                StressTest.this.performanceTest.getLog().error("Confirmation is null.");
+                this.performanceTest.getLog().error("Confirmation is null.");
                 return false;
             }
             return true;
         }
 
-        private PKIMessage genCertConfirm(final SessionData sessionData, final String hash) {
+        private PKIMessage genCertConfirm(final String hash) {
             PKIHeader myPKIHeader = new PKIHeader(new DERInteger(2), new GeneralName(new X509Name(CertTools.getSubjectDN(this.extraCert))),
                     new GeneralName(new X509Name(this.cacert.getSubjectDN().getName())));
             myPKIHeader.setMessageTime(new DERGeneralizedTime(new Date()));
             // senderNonce
-            myPKIHeader.setSenderNonce(new DEROctetString(sessionData.getNonce()));
+            myPKIHeader.setSenderNonce(new DEROctetString(getNonce()));
             // TransactionId
-            myPKIHeader.setTransactionID(new DEROctetString(sessionData.getTransId()));
+            myPKIHeader.setTransactionID(new DEROctetString(getTransId()));
 
-            CertConfirmContent cc = new CertConfirmContent(new DEROctetString(hash.getBytes()), new DERInteger(sessionData.getReqId()));
+            CertConfirmContent cc = new CertConfirmContent(new DEROctetString(hash.getBytes()), new DERInteger(getReqId()));
             PKIBody myPKIBody = new PKIBody(cc, 24); // Cert Confirm
             PKIMessage myPKIMessage = new PKIMessage(myPKIHeader, myPKIBody);
             return myPKIMessage;
         }
+        private final byte[] nonce = new byte[16];
+        private final byte[] transid = new byte[16];
+        private int reqId;
+        private String newcertfp;
 
-        private class GetCertificate implements Command {
-            private final SessionData sessionData;
-
-            private GetCertificate(final SessionData sd) {
-                this.sessionData = sd;
-            }
-
-            public boolean doIt() throws Exception {
-                this.sessionData.newSession();
-
-                CertRequest keyUpdateReq = genKeyUpdateReq();
-                PKIMessage certMsg = genPKIMessage(this.sessionData, true, keyUpdateReq);
-                if (certMsg == null) {
-                    StressTest.this.performanceTest.getLog().error("No certificate request.");
-                    return false;
-                }
-                AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
-                certMsg.getHeader().setProtectionAlg(pAlg);
-                //certMsg.getHeader().setSenderKID(new DEROctetString("EMPTY".getBytes()));
-                PKIMessage signedMsg = signPKIMessage(certMsg, oldKey);
-                addExtraCert(signedMsg, extraCert);
-                if (signedMsg == null) {
-                    StressTest.this.performanceTest.getLog().error("No protected message.");
-                    return false;
-                }
-
-                this.sessionData.setReqId(signedMsg.getBody().getKur().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue());
-                final ByteArrayOutputStream bao = new ByteArrayOutputStream();
-                final DEROutputStream out = new DEROutputStream(bao);
-                out.writeObject(signedMsg);
-                final byte[] ba = bao.toByteArray();
-                // Send request and receive response
-                final byte[] resp = sendCmpHttp(ba);
-                if (resp == null || resp.length <= 0) {
-                    StressTest.this.performanceTest.getLog().error("No response message.");
-                    return false;
-                }
-                if (!checkCmpResponseGeneral(resp, this.sessionData, true)) {
-                    return false;
-                }
-                final X509Certificate cert = checkCmpCertRepMessage(this.sessionData, resp, this.sessionData.getReqId());
-                if (cert == null) {
-                    return false;
-                }
-                String fp = CertTools.getFingerprintAsString((Certificate) cert);
-                this.sessionData.setFP(fp);
-                final BigInteger serialNumber = CertTools.getSerialNumber(cert);
-                if (StressTest.this.resultCertFilePrefix != null) {
-                    new FileOutputStream(StressTest.this.resultCertFilePrefix + serialNumber + ".dat").write(cert.getEncoded());
-                }
-                StressTest.this.performanceTest.getLog().result(serialNumber);
-
-                return true;
-            }
-
-            public String getJobTimeDescription() {
-                return "Get certificate";
-            }
-
+        void newSession() {
+            this.performanceTest.getRandom().nextBytes(this.nonce);
+            this.performanceTest.getRandom().nextBytes(this.transid);
         }
 
-        private class SendConfirmMessageToCA implements Command {
-            private final SessionData sessionData;
-
-            private SendConfirmMessageToCA(final SessionData sd) {
-                this.sessionData = sd;
-            }
-
-            public boolean doIt() throws Exception {
-                final String hash = this.sessionData.getFP(); //"foo123";
-                final PKIMessage con = genCertConfirm(this.sessionData, hash);
-                if (con == null) {
-                    StressTest.this.performanceTest.getLog().error("Not possible to generate PKIMessage.");
-                    return false;
-                }
-                final PKIMessage confirm = protectPKIMessage(con, false, eepassword);
-                final ByteArrayOutputStream bao = new ByteArrayOutputStream();
-                final DEROutputStream out = new DEROutputStream(bao);
-                out.writeObject(confirm);
-                final byte ba[] = bao.toByteArray();
-                // Send request and receive response
-                final byte[] resp = sendCmpHttp(ba);
-                if (resp == null || resp.length <= 0) {
-                    StressTest.this.performanceTest.getLog().error("No response message.");
-                    return false;
-                }
-                if (!checkCmpResponseGeneral(resp, this.sessionData, false)) {
-                    return false;
-                }
-                if (!checkCmpPKIConfirmMessage(this.sessionData, resp)) {
-                    return false;
-                }
-                return true;
-            }
-
-            public String getJobTimeDescription() {
-                return "Send confirmation to CA";
-            }
+        int getReqId() {
+            return this.reqId;
         }
 
-        private class SessionData {
-            private final byte[] nonce = new byte[16];
-            private final byte[] transid = new byte[16];
-            private int reqId;
-            private String newcertfp;
-
-            SessionData() {
-                super();
-            }
-
-            void newSession() {
-                StressTest.this.performanceTest.getRandom().nextBytes(this.nonce);
-                StressTest.this.performanceTest.getRandom().nextBytes(this.transid);
-            }
-
-            int getReqId() {
-                return this.reqId;
-            }
-
-            void setReqId(int i) {
-                this.reqId = i;
-            }
-
-            void setFP(String fp) {
-                this.newcertfp = fp;
-            }
-
-            String getFP() {
-                return this.newcertfp;
-            }
-
-            byte[] getTransId() {
-                return this.transid;
-            }
-
-            byte[] getNonce() {
-                return this.nonce;
-            }
+        void setReqId(int i) {
+            this.reqId = i;
         }
 
-        private class MyCommandFactory implements CommandFactory {
-            public Command[] getCommands() throws Exception {
-                final SessionData sessionData = new SessionData();
-                return new Command[] { new GetCertificate(sessionData), new SendConfirmMessageToCA(sessionData) };//, new Revoke(sessionData)};
+        void setFP(String fp) {
+            this.newcertfp = fp;
+        }
+
+        String getFP() {
+            return this.newcertfp;
+        }
+
+        byte[] getTransId() {
+            return this.transid;
+        }
+
+        byte[] getNonce() {
+            return this.nonce;
+        }
+
+    }
+    private class GetCertificate implements Command {
+        private final SessionData sessionData;
+
+        private GetCertificate(final SessionData sd) {
+            this.sessionData = sd;
+        }
+
+        public boolean doIt() throws Exception {
+            this.sessionData.newSession();
+
+            CertRequest keyUpdateReq = this.sessionData.genKeyUpdateReq();
+            PKIMessage certMsg = this.sessionData.genPKIMessage(true, keyUpdateReq);
+            if (certMsg == null) {
+                this.sessionData.performanceTest.getLog().error("No certificate request.");
+                return false;
             }
+            AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
+            certMsg.getHeader().setProtectionAlg(pAlg);
+            //certMsg.getHeader().setSenderKID(new DEROctetString("EMPTY".getBytes()));
+            PKIMessage signedMsg = this.sessionData.signPKIMessage(certMsg);
+            this.sessionData.addExtraCert(signedMsg);
+            if (signedMsg == null) {
+                this.sessionData.performanceTest.getLog().error("No protected message.");
+                return false;
+            }
+
+            this.sessionData.setReqId(signedMsg.getBody().getKur().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue());
+            final ByteArrayOutputStream bao = new ByteArrayOutputStream();
+            final DEROutputStream out = new DEROutputStream(bao);
+            out.writeObject(signedMsg);
+            final byte[] ba = bao.toByteArray();
+            // Send request and receive response
+            final byte[] resp = this.sessionData.sendCmpHttp(ba);
+            if (resp == null || resp.length <= 0) {
+                this.sessionData.performanceTest.getLog().error("No response message.");
+                return false;
+            }
+            if (!this.sessionData.checkCmpResponseGeneral(resp, true)) {
+                return false;
+            }
+            final X509Certificate cert = this.sessionData.checkCmpCertRepMessage( resp );
+            if (cert == null) {
+                return false;
+            }
+            String fp = CertTools.getFingerprintAsString((Certificate) cert);
+            this.sessionData.setFP(fp);
+            final BigInteger serialNumber = CertTools.getSerialNumber(cert);
+            if (this.sessionData.resultCertFilePrefix != null) {
+                new FileOutputStream(this.sessionData.resultCertFilePrefix + serialNumber + ".dat").write(cert.getEncoded());
+            }
+            this.sessionData.performanceTest.getLog().result(serialNumber);
+
+            return true;
+        }
+
+        public String getJobTimeDescription() {
+            return "Get certificate";
+        }
+
+    }
+
+    private class SendConfirmMessageToCA implements Command {
+        private final SessionData sessionData;
+
+        private SendConfirmMessageToCA(final SessionData sd) {
+            this.sessionData = sd;
+        }
+
+        @Override
+        public boolean doIt() throws Exception {
+            final String hash = this.sessionData.getFP(); //"foo123";
+            final PKIMessage con = this.sessionData.genCertConfirm(hash);
+            if (con == null) {
+                this.sessionData.performanceTest.getLog().error("Not possible to generate PKIMessage.");
+                return false;
+            }
+            final PKIMessage confirm = this.sessionData.protectPKIMessage(con, false);
+            final ByteArrayOutputStream bao = new ByteArrayOutputStream();
+            final DEROutputStream out = new DEROutputStream(bao);
+            out.writeObject(confirm);
+            final byte ba[] = bao.toByteArray();
+            // Send request and receive response
+            final byte[] resp = this.sessionData.sendCmpHttp(ba);
+            if (resp == null || resp.length <= 0) {
+                this.sessionData.performanceTest.getLog().error("No response message.");
+                return false;
+            }
+            if (!this.sessionData.checkCmpResponseGeneral(resp, false)) {
+                return false;
+            }
+            if (!this.sessionData.checkCmpPKIConfirmMessage(resp)) {
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        public String getJobTimeDescription() {
+            return "Send confirmation to CA";
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.ejbca.ui.cli.ClientToolBox#execute(java.lang.String[])
-     */
+    private class MyCommandFactory implements CommandFactory {
+        final String args[];
+        final PerformanceTest performanceTest;
+        MyCommandFactory( final String _args[], final PerformanceTest _performanceTest ) {
+            this.args = _args;
+            this.performanceTest = _performanceTest;
+        }
+        @Override
+        public Command[] getCommands() throws Exception {
+            final String hostName;
+            final String keystoreFile;
+            final String keystorePassword;
+            final String certNameInKeystore;
+            final int port;
+            //		final boolean isHttp;
+            final String urlPath;
+            final String resultFilePrefix;
+            if (args.length < 5) {
+                System.out
+                .println(args[0]
+                        + " <host name> <keystore (p12)> <keystore password> <friendlyname in keystore> [<number of threads>] [<wait time (ms) between each thread is started>] [<port>] [<URL path of servlet. use 'null' to get EJBCA (not proxy) default>] [<certificate file prefix. set this if you want all received certificates stored on files>]");
+                System.out
+                .println("EJBCA build configuration requirements: cmp.operationmode=normal, cmp.allowraverifypopo=true, cmp.allowautomatickeyupdate=true, cmp.allowupdatewithsamekey=true");
+                System.out
+                .println("Ejbca expects the following: There exists an end entity with a generated certificate. The end entity's certificate and its private key are stored in the keystore used "
+                        + "in the commandline. The end entity's certificate's 'friendly name' in the keystore is the one used in the command line. Such keystore can be obtained, for example, by specifying "
+                        + "the token to be 'P12' when creating the end entity and then download the keystore by choosing 'create keystore' from the public web");
+                return null;
+            }
+            hostName = this.args[1];
+            keystoreFile = this.args[2];
+            keystorePassword = this.args[3];
+            certNameInKeystore = this.args[4];
+            port = this.args.length > 7 ? Integer.parseInt(this.args[7].trim()) : 8080;
+            urlPath = this.args.length > 8 && this.args[8].toLowerCase().indexOf("null") < 0 ? this.args[8].trim() : null;
+            resultFilePrefix = this.args.length > 9 ? this.args[9].trim() : null;
+
+            CryptoProviderTools.installBCProviderIfNotAvailable();
+
+            final Certificate cacert;
+            final Certificate extracert;
+            final PrivateKey oldCertKey;
+
+            FileInputStream file_inputstream;
+            try {
+                file_inputstream = new FileInputStream(keystoreFile);
+                KeyStore keyStore = KeyStore.getInstance("PKCS12");
+                keyStore.load(file_inputstream, keystorePassword.toCharArray());
+                Key key = keyStore.getKey(certNameInKeystore, keystorePassword.toCharArray());
+                PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(key.getEncoded());
+                KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+                oldCertKey = keyFactory.generatePrivate(keySpec);
+
+                Certificate[] certs = keyStore.getCertificateChain(certNameInKeystore);
+                extracert = certs[0];
+                cacert = certs[1];
+
+            } catch (Exception e2) {
+                e2.printStackTrace();
+                System.exit(-1);
+                return null;
+            }
+
+            final SessionData sessionData;
+            try {
+                sessionData = new SessionData(hostName, port, urlPath, resultFilePrefix, keystorePassword, (X509Certificate) cacert, oldCertKey, extracert, this.performanceTest);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            }
+
+            return new Command[] { new GetCertificate(sessionData), new SendConfirmMessageToCA(sessionData) };//, new Revoke(sessionData)};
+        }
+    }
+
     @Override
     protected void execute(String[] args) {
-        final String hostName;
-        final String keystoreFile;
-        final String keystorePassword;
-        final String certNameInKeystore;
-        final int numberOfThreads;
-        final int waitTime;
-        final int port;
-        //		final boolean isHttp;
-        final String urlPath;
-        final String resultFilePrefix;
-        if (args.length < 5) {
-            System.out
-            .println(args[0]
-                    + " <host name> <keystore (p12)> <keystore password> <friendlyname in keystore> [<number of threads>] [<wait time (ms) between each thread is started>] [<port>] [<URL path of servlet. use 'null' to get EJBCA (not proxy) default>] [<certificate file prefix. set this if you want all received certificates stored on files>]");
-            System.out
-            .println("EJBCA build configuration requirements: cmp.operationmode=normal, cmp.allowraverifypopo=true, cmp.allowautomatickeyupdate=true, cmp.allowupdatewithsamekey=true");
-            System.out
-            .println("Ejbca expects the following: There exists an end entity with a generated certificate. The end entity's certificate and its private key are stored in the keystore used "
-                    + "in the commandline. The end entity's certificate's 'friendly name' in the keystore is the one used in the command line. Such keystore can be obtained, for example, by specifying "
-                    + "the token to be 'P12' when creating the end entity and then download the keystore by choosing 'create keystore' from the public web");
-            return;
-        }
-        hostName = args[1];
-        keystoreFile = args[2];
-        keystorePassword = args[3];
-        certNameInKeystore = args[4];
-        numberOfThreads = args.length > 5 ? Integer.parseInt(args[5].trim()) : 1;
-        waitTime = args.length > 6 ? Integer.parseInt(args[6].trim()) : 0;
-        port = args.length > 7 ? Integer.parseInt(args[7].trim()) : 8080;
-        urlPath = args.length > 8 && args[8].toLowerCase().indexOf("null") < 0 ? args[8].trim() : null;
-        resultFilePrefix = args.length > 9 ? args[9].trim() : null;
-
-        CryptoProviderTools.installBCProviderIfNotAvailable();
-
-        Certificate cacert = null;
-        Certificate extracert = null;
-        PrivateKey oldCertKey = null;
-
-        FileInputStream file_inputstream;
-        try {
-            file_inputstream = new FileInputStream(keystoreFile);
-            KeyStore keyStore = KeyStore.getInstance("PKCS12");
-            keyStore.load(file_inputstream, keystorePassword.toCharArray());
-            Key key = keyStore.getKey(certNameInKeystore, keystorePassword.toCharArray());
-            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(key.getEncoded());
-            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-            oldCertKey = keyFactory.generatePrivate(keySpec);
-
-            Certificate[] certs = keyStore.getCertificateChain(certNameInKeystore);
-            extracert = certs[0];
-            cacert = certs[1];
-
-        } catch (FileNotFoundException e2) {
-            e2.printStackTrace();
-            System.exit(-1);
-        } catch (KeyStoreException e) {
-            e.printStackTrace();
-            System.exit(-1);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-            System.exit(-1);
-        } catch (CertificateException e) {
-            e.printStackTrace();
-            System.exit(-1);
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.exit(-1);
-        } catch (UnrecoverableKeyException e) {
-            e.printStackTrace();
-            System.exit(-1);
-        } catch (InvalidKeySpecException e) {
-            e.printStackTrace();
-            System.exit(-1);
-        }
 
         try {
-            new StressTest(hostName, port, numberOfThreads, waitTime, urlPath, resultFilePrefix, keystorePassword, (X509Certificate) cacert, oldCertKey, extracert);
+            final PerformanceTest performanceTest = new PerformanceTest();
+            final int waitTime = args.length > 6 ? Integer.parseInt(args[6].trim()) : 0;
+            final int numberOfThreads = args.length > 5 ? Integer.parseInt(args[5].trim()) : 1;
+            performanceTest.execute(new MyCommandFactory(args, performanceTest), numberOfThreads, waitTime, System.out);
         } catch (Exception e) {
             e.printStackTrace();
         }
+
     }
 
     @Override
