@@ -107,10 +107,15 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 		private final CertificateFactory certificateFactory;
 		private final Provider bcProvider = new BouncyCastleProvider();
 		private final PerformanceTest performanceTest;
+
+		private final X509Certificate cacert;
+		private final X509Certificate extraCert;
+		private final PrivateKey oldKey;
+
 		private boolean isSign;
 		private boolean firstTime = true;
 
-		public SessionData(final CLIArgs clia, PerformanceTest _performanceTest) throws Exception {
+		public SessionData(final CLIArgs clia, PerformanceTest _performanceTest, KeyStore keyStore) throws Exception {
 			this.cliArgs = clia;
 			this.performanceTest = _performanceTest;
 			this.certificateFactory = CertificateFactory.getInstance("X.509", this.bcProvider);
@@ -118,6 +123,15 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 			final KeyPairGenerator keygen = KeyPairGenerator.getInstance("RSA");
 			keygen.initialize(2048);
 			this.newKeyPair = keygen.generateKeyPair();
+
+			final Key key = keyStore.getKey(this.cliArgs.certNameInKeystore, this.cliArgs.keystorePassword.toCharArray());
+			PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(key.getEncoded());
+			final KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+			this.oldKey = keyFactory.generatePrivate(keySpec);
+
+			final Certificate[] certs = keyStore.getCertificateChain(this.cliArgs.certNameInKeystore);
+			this.extraCert = (X509Certificate)certs[0];
+			this.cacert = (X509Certificate)certs[1];
 		}
 
 		private CertRequest genKeyUpdateReq() throws IOException {
@@ -152,7 +166,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 				mout.close();
 				final byte[] popoProtectionBytes = baos.toByteArray();
 				final Signature sig = Signature.getInstance(PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
-				sig.initSign(this.cliArgs.oldKey);
+				sig.initSign(this.oldKey);
 				sig.update(popoProtectionBytes);
 
 				final DERBitString bs = new DERBitString(sig.sign());
@@ -169,8 +183,8 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 
 			final CertReqMessages myCertReqMessages = new CertReqMessages(myCertReqMsg);
 
-			final PKIHeader myPKIHeader = new PKIHeader(new DERInteger(2), new GeneralName(new X509Name(CertTools.getSubjectDN(this.cliArgs.extraCert))),
-					new GeneralName(new X509Name(this.cliArgs.cacert.getSubjectDN().getName())));
+			final PKIHeader myPKIHeader = new PKIHeader(new DERInteger(2), new GeneralName(new X509Name(CertTools.getSubjectDN(this.extraCert))),
+					new GeneralName(new X509Name(this.cacert.getSubjectDN().getName())));
 			myPKIHeader.setMessageTime(new DERGeneralizedTime(new Date()));
 			myPKIHeader.setSenderNonce(new DEROctetString(getNonce()));
 			myPKIHeader.setSenderKID(new DEROctetString(getNonce()));
@@ -181,7 +195,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 		}
 
 		private void addExtraCert(PKIMessage msg) throws CertificateEncodingException, IOException {
-			ByteArrayInputStream bIn = new ByteArrayInputStream(this.cliArgs.extraCert.getEncoded());
+			ByteArrayInputStream bIn = new ByteArrayInputStream(this.extraCert.getEncoded());
 			ASN1InputStream dIn = new ASN1InputStream(bIn);
 			ASN1Sequence extraCertSeq = (ASN1Sequence) dIn.readObject();
 			X509CertificateStructure extraCertStruct = new X509CertificateStructure(ASN1Sequence.getInstance(extraCertSeq));
@@ -192,7 +206,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 		InvalidKeyException, SignatureException {
 			PKIMessage message = msg;
 			final Signature sig = Signature.getInstance(PKCSObjectIdentifiers.sha1WithRSAEncryption.getId(), "BC");
-			sig.initSign(this.cliArgs.oldKey);
+			sig.initSign(this.oldKey);
 			sig.update(message.getProtectedBytes());
 			byte[] eeSignature = sig.sign();
 			message.setProtection(new DERBitString(eeSignature));
@@ -294,7 +308,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 			}
 			// Check that the signer is the expected CA
 			final X509Name name = X509Name.getInstance(header.getSender().getName());
-			if (header.getSender().getTagNo() != 4 || name == null || !name.equals(this.cliArgs.cacert.getSubjectDN())) {
+			if (header.getSender().getTagNo() != 4 || name == null || !name.equals(this.cacert.getSubjectDN())) {
 				this.performanceTest.getLog().error("Not signed by right issuer.");
 			}
 
@@ -352,7 +366,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 				final Signature sig;
 				try {
 					sig = Signature.getInstance(PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
-					sig.initVerify(this.cliArgs.cacert);
+					sig.initVerify(this.cacert);
 					sig.update(protBytes);
 					if (!sig.verify(bs.getBytes())) {
 						this.performanceTest.getLog().error("CA signature not verifying");
@@ -476,18 +490,18 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 				return null;
 			}
 			// Remove this test to be able to test unid-fnr
-			if (cert.getSubjectDN().hashCode() != new X509Name(CertTools.getSubjectDN(this.cliArgs.extraCert)).hashCode()) {
+			if (cert.getSubjectDN().hashCode() != new X509Name(CertTools.getSubjectDN(this.extraCert)).hashCode()) {
 				this.performanceTest.getLog().error(
-						"Subject is '" + cert.getSubjectDN() + "' but should be '" + CertTools.getSubjectDN(this.cliArgs.extraCert) + '\'');
+						"Subject is '" + cert.getSubjectDN() + "' but should be '" + CertTools.getSubjectDN(this.extraCert) + '\'');
 				return null;
 			}
-			if (cert.getIssuerX500Principal().hashCode() != this.cliArgs.cacert.getSubjectX500Principal().hashCode()) {
+			if (cert.getIssuerX500Principal().hashCode() != this.cacert.getSubjectX500Principal().hashCode()) {
 				this.performanceTest.getLog().error(
-						"Issuer is '" + cert.getIssuerDN() + "' but should be '" + this.cliArgs.cacert.getSubjectDN() + '\'');
+						"Issuer is '" + cert.getIssuerDN() + "' but should be '" + this.cacert.getSubjectDN() + '\'');
 				return null;
 			}
 			try {
-				cert.verify(this.cliArgs.cacert.getPublicKey());
+				cert.verify(this.cacert.getPublicKey());
 			} catch (Exception e) {
 				this.performanceTest.getLog().error("Certificate not verifying. See exception", e);
 				return null;
@@ -511,17 +525,17 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 			{
 				final X509Name name = X509Name.getInstance(header.getSender().getName());
 				String senderDN = name.toString().replaceAll(" ", "");
-				String caDN = this.cliArgs.cacert.getSubjectDN().toString().replaceAll(" ", "");
+				String caDN = this.cacert.getSubjectDN().toString().replaceAll(" ", "");
 				if (!StringUtils.equals(senderDN, caDN)) {
-					this.performanceTest.getLog().error("Wrong CA DN. Is '" + name + "' should be '" + this.cliArgs.cacert.getSubjectDN() + "'.");
+					this.performanceTest.getLog().error("Wrong CA DN. Is '" + name + "' should be '" + this.cacert.getSubjectDN() + "'.");
 					return false;
 				}
 			}
 			{
 				final X509Name name = X509Name.getInstance(header.getRecipient().getName());
-				if (name.hashCode() != new X509Name(CertTools.getSubjectDN(this.cliArgs.extraCert)).hashCode()) {
+				if (name.hashCode() != new X509Name(CertTools.getSubjectDN(this.extraCert)).hashCode()) {
 					this.performanceTest.getLog().error(
-							"Wrong recipient DN. Is '" + name + "' should be '" + CertTools.getSubjectDN(this.cliArgs.extraCert) + "'.");
+							"Wrong recipient DN. Is '" + name + "' should be '" + CertTools.getSubjectDN(this.extraCert) + "'.");
 					return false;
 				}
 			}
@@ -546,8 +560,8 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 		}
 
 		private PKIMessage genCertConfirm(final String hash) {
-			PKIHeader myPKIHeader = new PKIHeader(new DERInteger(2), new GeneralName(new X509Name(CertTools.getSubjectDN(this.cliArgs.extraCert))),
-					new GeneralName(new X509Name(this.cliArgs.cacert.getSubjectDN().getName())));
+			PKIHeader myPKIHeader = new PKIHeader(new DERInteger(2), new GeneralName(new X509Name(CertTools.getSubjectDN(this.extraCert))),
+					new GeneralName(new X509Name(this.cacert.getSubjectDN().getName())));
 			myPKIHeader.setMessageTime(new DERGeneralizedTime(new Date()));
 			// senderNonce
 			myPKIHeader.setSenderNonce(new DEROctetString(getNonce()));
@@ -594,7 +608,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 		}
 
 	}
-	private class GetCertificate implements Command {
+	private static class GetCertificate implements Command {
 		private final SessionData sessionData;
 
 		private GetCertificate(final SessionData sd) {
@@ -655,7 +669,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 
 	}
 
-	private class SendConfirmMessageToCA implements Command {
+	private static class SendConfirmMessageToCA implements Command {
 		private final SessionData sessionData;
 
 		private SendConfirmMessageToCA(final SessionData sd) {
@@ -696,19 +710,18 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 		}
 	}
 
-	class CLIArgs {
+	private static class CLIArgs {
 		final String hostName;
 		final String keystoreFile;
 		final String keystorePassword;
 		final String certNameInKeystore;
+		final int numberOfThreads;
+		final int waitTime;
 		final int port;
 		//	  final boolean isHttp;
 		final String urlPath;
 		final String resultFilePrefix;
 
-		final X509Certificate cacert;
-		final X509Certificate extraCert;
-		final PrivateKey oldKey;
 		CLIArgs( final String args[] ) throws Exception {
 			if (args.length < 5) {
 				System.out
@@ -726,39 +739,33 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 			this.keystoreFile = args[2];
 			this.keystorePassword = args[3];
 			this.certNameInKeystore = args[4];
+			this.numberOfThreads = args.length > 5 ? Integer.parseInt(args[5].trim()) : 1;
+			this.waitTime = args.length > 6 ? Integer.parseInt(args[6].trim()) : 0;
 			this.port = args.length > 7 ? Integer.parseInt(args[7].trim()) : 8080;
 			this.urlPath = args.length > 8 && args[8].toLowerCase().indexOf("null") < 0 ? args[8].trim() : null;
 			this.resultFilePrefix = args.length > 9 ? args[9].trim() : null;
 
-			CryptoProviderTools.installBCProviderIfNotAvailable();
 
-			final FileInputStream file_inputstream = new FileInputStream(this.keystoreFile);
-			final KeyStore keyStore = KeyStore.getInstance("PKCS12");
-			keyStore.load(file_inputstream, this.keystorePassword.toCharArray());
-			final Key key = keyStore.getKey(this.certNameInKeystore, this.keystorePassword.toCharArray());
-			PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(key.getEncoded());
-			final KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-			this.oldKey = keyFactory.generatePrivate(keySpec);
-
-			final Certificate[] certs = keyStore.getCertificateChain(this.certNameInKeystore);
-			this.extraCert = (X509Certificate)certs[0];
-			this.cacert = (X509Certificate)certs[1];
 
 		}
 	}
-	private class MyCommandFactory implements CommandFactory {
+
+	private static class MyCommandFactory implements CommandFactory {
 		final private PerformanceTest performanceTest;
 		final private CLIArgs cliArgs;
-		MyCommandFactory( final CLIArgs clia, final PerformanceTest _performanceTest ) {
+		final private KeyStore keyStores[];
+		static private int keyStoreIx = 0;
+		MyCommandFactory( final CLIArgs clia, final PerformanceTest _performanceTest, final KeyStore _keyStores[] ) {
 			this.performanceTest = _performanceTest;
 			this.cliArgs = clia;
+			this.keyStores = _keyStores;
 		}
 		@Override
 		public Command[] getCommands() throws Exception {
-
+			
 			final SessionData sessionData;
 			try {
-				sessionData = new SessionData(this.cliArgs, this.performanceTest);
+				sessionData = new SessionData(this.cliArgs, this.performanceTest, this.keyStores[keyStoreIx++]);
 			} catch (Exception e) {
 				e.printStackTrace();
 				return null;
@@ -768,14 +775,21 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 		}
 	}
 
+	private static KeyStore[] getKeyStores( final String fileDirectory, final String keystorePassword ) throws Exception {
+		final FileInputStream file_inputstream = new FileInputStream(fileDirectory);
+		final KeyStore keyStore = KeyStore.getInstance("PKCS12");
+		keyStore.load(file_inputstream, keystorePassword.toCharArray());
+		return new KeyStore[] { keyStore };
+	}
+
 	@Override
 	protected void execute(String[] args) {
-
+		CryptoProviderTools.installBCProviderIfNotAvailable();
 		try {
+			final CLIArgs cliArgs = new CLIArgs(args);
 			final PerformanceTest performanceTest = new PerformanceTest();
-			final int waitTime = args.length > 6 ? Integer.parseInt(args[6].trim()) : 0;
-			final int numberOfThreads = args.length > 5 ? Integer.parseInt(args[5].trim()) : 1;
-			performanceTest.execute(new MyCommandFactory(new CLIArgs(args), performanceTest), numberOfThreads, waitTime, System.out);
+			final KeyStore[] keyStores = getKeyStores(cliArgs.keystoreFile, cliArgs.keystorePassword);
+			performanceTest.execute(new MyCommandFactory(cliArgs, performanceTest, keyStores), cliArgs.numberOfThreads, cliArgs.waitTime, System.out);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
