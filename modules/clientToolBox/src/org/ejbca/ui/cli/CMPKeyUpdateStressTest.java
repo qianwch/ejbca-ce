@@ -15,6 +15,7 @@ package org.ejbca.ui.cli;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -41,6 +42,8 @@ import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
@@ -652,7 +655,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 			if (cert == null) {
 				return false;
 			}
-			String fp = CertTools.getFingerprintAsString((Certificate) cert);
+			final String fp = CertTools.getFingerprintAsString((Certificate) cert);
 			this.sessionData.setFP(fp);
 			final BigInteger serialNumber = CertTools.getSerialNumber(cert);
 			if (this.sessionData.cliArgs.resultFilePrefix != null) {
@@ -688,6 +691,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 			final ByteArrayOutputStream bao = new ByteArrayOutputStream();
 			final DEROutputStream out = new DEROutputStream(bao);
 			out.writeObject(confirm);
+			out.close();
 			final byte ba[] = bao.toByteArray();
 			// Send request and receive response
 			final byte[] resp = this.sessionData.sendCmpHttp(ba);
@@ -726,7 +730,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 			if (args.length < 5) {
 				System.out
 				.println(args[0]
-						+ " <host name> <keystore (p12)> <keystore password> <friendlyname in keystore> [<number of threads>] [<wait time (ms) between each thread is started>] [<port>] [<URL path of servlet. use 'null' to get EJBCA (not proxy) default>] [<certificate file prefix. set this if you want all received certificates stored on files>]");
+						+ " <host name> <keystore (p12) directory> <keystore password> <friendlyname in keystore> [<number of threads>] [<wait time (ms) between each thread is started>] [<port>] [<URL path of servlet. use 'null' to get EJBCA (not proxy) default>] [<certificate file prefix. set this if you want all received certificates stored on files>]");
 				System.out
 				.println("EJBCA build configuration requirements: cmp.operationmode=normal, cmp.allowraverifypopo=true, cmp.allowautomatickeyupdate=true, cmp.allowupdatewithsamekey=true");
 				System.out
@@ -744,9 +748,6 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 			this.port = args.length > 7 ? Integer.parseInt(args[7].trim()) : 8080;
 			this.urlPath = args.length > 8 && args[8].toLowerCase().indexOf("null") < 0 ? args[8].trim() : null;
 			this.resultFilePrefix = args.length > 9 ? args[9].trim() : null;
-
-
-
 		}
 	}
 
@@ -768,18 +769,43 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 				sessionData = new SessionData(this.cliArgs, this.performanceTest, this.keyStores[keyStoreIx++]);
 			} catch (Exception e) {
 				e.printStackTrace();
+				System.exit(-1);
 				return null;
 			}
-
 			return new Command[] { new GetCertificate(sessionData), new SendConfirmMessageToCA(sessionData) };//, new Revoke(sessionData)};
 		}
 	}
 
+	private static KeyStore getKeyStore( final File file, final String keystorePassword ) {
+		FileInputStream is = null;
+		try {
+			is = new FileInputStream(file);
+			final KeyStore keyStore = KeyStore.getInstance("PKCS12");
+			keyStore.load(is, keystorePassword.toCharArray());
+			return keyStore;
+		} catch( final Throwable t ) {
+			return null;
+		} finally {
+			if ( is!=null ) {
+				try {
+					is.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+
 	private static KeyStore[] getKeyStores( final String fileDirectory, final String keystorePassword ) throws Exception {
-		final FileInputStream file_inputstream = new FileInputStream(fileDirectory);
-		final KeyStore keyStore = KeyStore.getInstance("PKCS12");
-		keyStore.load(file_inputstream, keystorePassword.toCharArray());
-		return new KeyStore[] { keyStore };
+		final File dir = new File(fileDirectory);
+		final List<KeyStore> keyStores = new LinkedList<KeyStore>();
+		for ( final File file : dir.listFiles() ) {
+			final KeyStore keyStore = getKeyStore(file, keystorePassword);
+			if ( keyStore!=null ) {
+				keyStores.add(keyStore);
+			}
+		}
+		return keyStores.toArray(new KeyStore[0]);
 	}
 
 	@Override
@@ -789,6 +815,10 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 			final CLIArgs cliArgs = new CLIArgs(args);
 			final PerformanceTest performanceTest = new PerformanceTest();
 			final KeyStore[] keyStores = getKeyStores(cliArgs.keystoreFile, cliArgs.keystorePassword);
+			if ( cliArgs.numberOfThreads>keyStores.length ) {
+				System.out.println("There are only "+keyStores.length+" key store files but "+cliArgs.numberOfThreads+" threads was specified.");
+				System.exit(-1);
+			}
 			performanceTest.execute(new MyCommandFactory(cliArgs, performanceTest, keyStores), cliArgs.numberOfThreads, cliArgs.waitTime, System.out);
 		} catch (Exception e) {
 			e.printStackTrace();
