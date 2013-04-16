@@ -21,12 +21,12 @@ import org.ejbca.util.dn.DNFieldExtractor;
 
 /**
  * Variables used with userdata
- * ${USERNAME} or ${user.USERNAME} = The users username
- * ${PASSWORD} or ${user.PASSWORD} = The users password 
+ * ${USERNAME} or ${user.USERNAME} = The user's username
+ * ${PASSWORD} or ${user.PASSWORD} = The user's password 
  * ${CN} or ${user.CN}             = The common name of the user.
  * ${SN} or ${user.SN}             = The serial number (in DN) of the user.
  * ${O} or ${user.O}               = The user's organization
- * ${OU} or ${user.OU}             = The user's organization unit
+ * ${OU} or ${user.OU}             = The user's organizational unit
  * ${C} or ${user.C}               = The user's country
  * ${user.TIMECREATED}             = The time the user was created
  * ${user.TIMEMODIFIED}            = The time the user was modified          
@@ -84,6 +84,7 @@ public class UserNotificationParamGen extends ApprovalNotificationParamGen {
 			paramPut("OU", dnfields.getField(DNFieldExtractor.OU, 0));
 			paramPut("user.OU", dnfields.getField(DNFieldExtractor.OU, 0));
 			paramPut("C", dnfields.getField(DNFieldExtractor.C, 0));
+			paramPut("user.C", dnfields.getField(DNFieldExtractor.C, 0));
 			paramPut("user.E", dnfields.getField(DNFieldExtractor.E, 0));
 
 			String time = "(time not available)";
