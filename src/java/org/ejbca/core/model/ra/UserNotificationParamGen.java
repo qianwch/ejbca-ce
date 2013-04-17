@@ -23,6 +23,7 @@ import org.ejbca.util.dn.DNFieldExtractor;
  * Variables used with userdata
  * ${USERNAME} or ${user.USERNAME} = The user's username
  * ${PASSWORD} or ${user.PASSWORD} = The user's password 
+ * ${UID} or ${user.UID}           = The user's unique identifier
  * ${CN} or ${user.CN}             = The common name of the user.
  * ${SN} or ${user.SN}             = The serial number (in DN) of the user.
  * ${O} or ${user.O}               = The user's organization
@@ -75,6 +76,8 @@ public class UserNotificationParamGen extends ApprovalNotificationParamGen {
 			paramPut("user.PASSWORD", userData.getPassword());
 
 			DNFieldExtractor dnfields = new DNFieldExtractor(userData.getDN(), DNFieldExtractor.TYPE_SUBJECTDN);
+			paramPut("UID", dnfields.getField(DNFieldExtractor.UID, 0));
+			paramPut("user.UID", dnfields.getField(DNFieldExtractor.UID, 0));
 			paramPut("CN", dnfields.getField(DNFieldExtractor.CN, 0));
 			paramPut("user.CN", dnfields.getField(DNFieldExtractor.CN, 0));
 			paramPut("SN", dnfields.getField(DNFieldExtractor.SN, 0));

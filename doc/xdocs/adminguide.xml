@@ -1745,6 +1745,9 @@ Variables used with userdata:
   ${PASSWORD} or ${user.PASSWORD} = The user's password
 </li>
 <li>
+  ${UID} or ${user.UID}           = The user's unique identifier
+</li>
+<li>
   ${CN} or ${user.CN}             = The common name of the user.
 </li>
 <li>
