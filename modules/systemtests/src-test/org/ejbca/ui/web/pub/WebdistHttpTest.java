@@ -159,7 +159,7 @@ public class WebdistHttpTest {
         while (iter.hasNext()) {
         	NameValuePair pair = (NameValuePair)iter.next();
         	if (StringUtils.equalsIgnoreCase("Content-disposition", pair.getName())) {
-        		assertEquals("attachment; filename=\"chain.jks\"", pair.getValue());
+        		assertEquals("attachment; filename=\"AdminCA1-chain.jks\"", pair.getValue());
         		found = true;
         	}
         }
