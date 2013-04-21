@@ -42,6 +42,7 @@ import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -126,15 +127,20 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 			final KeyPairGenerator keygen = KeyPairGenerator.getInstance("RSA");
 			keygen.initialize(2048);
 			this.newKeyPair = keygen.generateKeyPair();
-
-			final Key key = keyStore.getKey(this.cliArgs.certNameInKeystore, this.cliArgs.keystorePassword.toCharArray());
-			PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(key.getEncoded());
-			final KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-			this.oldKey = keyFactory.generatePrivate(keySpec);
-
-			final Certificate[] certs = keyStore.getCertificateChain(this.cliArgs.certNameInKeystore);
-			this.extraCert = (X509Certificate)certs[0];
-			this.cacert = (X509Certificate)certs[1];
+			for( final Enumeration<String> aliases = keyStore.aliases(); true; ) {
+				if ( !aliases.hasMoreElements() ) {
+					throw new Exception("No key in keystore"+keyStore);
+				}
+				final String alias = aliases.nextElement();
+				if ( !keyStore.isKeyEntry(alias) ) {
+					continue;
+				}
+				this.oldKey = (PrivateKey)keyStore.getKey(alias, this.cliArgs.keystorePassword.toCharArray());
+				final Certificate[] certs = keyStore.getCertificateChain(alias);
+				this.extraCert = (X509Certificate)certs[0];
+				this.cacert = (X509Certificate)certs[1];
+				break;
+			}
 		}
 
 		private CertRequest genKeyUpdateReq() throws IOException {
@@ -718,7 +724,6 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 		final String hostName;
 		final String keystoreFile;
 		final String keystorePassword;
-		final String certNameInKeystore;
 		final int numberOfThreads;
 		final int waitTime;
 		final int port;
@@ -730,24 +735,23 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 			if (args.length < 5) {
 				System.out
 				.println(args[0]
-						+ " <host name> <keystore (p12) directory> <keystore password> <friendlyname in keystore> [<number of threads>] [<wait time (ms) between each thread is started>] [<port>] [<URL path of servlet. use 'null' to get EJBCA (not proxy) default>] [<certificate file prefix. set this if you want all received certificates stored on files>]");
+						+ " <host name> <keystore (p12) directory> <keystore password> [<number of threads>] [<wait time (ms) between each thread is started>] [<port>] [<URL path of servlet. use 'null' to get EJBCA (not proxy) default>] [<certificate file prefix. set this if you want all received certificates stored on files>]");
 				System.out
 				.println("EJBCA build configuration requirements: cmp.operationmode=normal, cmp.allowraverifypopo=true, cmp.allowautomatickeyupdate=true, cmp.allowupdatewithsamekey=true");
 				System.out
 				.println("Ejbca expects the following: There exists an end entity with a generated certificate. The end entity's certificate and its private key are stored in the keystore used "
-						+ "in the commandline. The end entity's certificate's 'friendly name' in the keystore is the one used in the command line. Such keystore can be obtained, for example, by specifying "
+						+ "in the commandline. Such keystore can be obtained, for example, by specifying "
 						+ "the token to be 'P12' when creating the end entity and then download the keystore by choosing 'create keystore' from the public web");
 				System.exit(-1);
 			}
 			this.hostName = args[1];
 			this.keystoreFile = args[2];
 			this.keystorePassword = args[3];
-			this.certNameInKeystore = args[4];
-			this.numberOfThreads = args.length > 5 ? Integer.parseInt(args[5].trim()) : 1;
-			this.waitTime = args.length > 6 ? Integer.parseInt(args[6].trim()) : 0;
-			this.port = args.length > 7 ? Integer.parseInt(args[7].trim()) : 8080;
-			this.urlPath = args.length > 8 && args[8].toLowerCase().indexOf("null") < 0 ? args[8].trim() : null;
-			this.resultFilePrefix = args.length > 9 ? args[9].trim() : null;
+			this.numberOfThreads = args.length > 4 ? Integer.parseInt(args[4].trim()) : 1;
+			this.waitTime = args.length > 5 ? Integer.parseInt(args[5].trim()) : 0;
+			this.port = args.length > 6 ? Integer.parseInt(args[6].trim()) : 8080;
+			this.urlPath = args.length > 7 && args[7].toLowerCase().indexOf("null") < 0 ? args[7].trim() : null;
+			this.resultFilePrefix = args.length > 8 ? args[8].trim() : null;
 		}
 	}
 
