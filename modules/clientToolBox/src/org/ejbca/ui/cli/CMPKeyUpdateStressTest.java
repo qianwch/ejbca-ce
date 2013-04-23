@@ -22,8 +22,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.security.InvalidKeyException;
-import java.security.Key;
-import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
@@ -39,7 +37,6 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
@@ -49,9 +46,10 @@ import java.util.List;
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import javax.security.auth.x500.X500Principal;
 
-import org.apache.commons.lang.StringUtils;
 import org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DERBitString;
 import org.bouncycastle.asn1.DERGeneralizedTime;
@@ -66,7 +64,6 @@ import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.asn1.x509.X509CertificateStructure;
-import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.cesecore.internal.InternalResources;
 import org.cesecore.util.CertTools;
@@ -164,7 +161,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 
 			final CertReqMsg myCertReqMsg = new CertReqMsg(keyUpdateRequest);
 
-			ProofOfPossession myProofOfPossession;
+			final ProofOfPossession myProofOfPossession;
 			if (raVerifiedPopo) {
 				// raVerified POPO (meaning there is no POPO)
 				myProofOfPossession = new ProofOfPossession(new DERNull(), 0);
@@ -175,7 +172,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 				mout.close();
 				final byte[] popoProtectionBytes = baos.toByteArray();
 				final Signature sig = Signature.getInstance(PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
-				sig.initSign(this.oldKey);
+				sig.initSign(this.newKeyPair.getPrivate());
 				sig.update(popoProtectionBytes);
 
 				final DERBitString bs = new DERBitString(sig.sign());
@@ -192,12 +189,14 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 
 			final CertReqMessages myCertReqMessages = new CertReqMessages(myCertReqMsg);
 
-			final PKIHeader myPKIHeader = new PKIHeader(new DERInteger(2), new GeneralName(new X509Name(CertTools.getSubjectDN(this.extraCert))),
-					new GeneralName(new X509Name(this.cacert.getSubjectDN().getName())));
+			final PKIHeader myPKIHeader = new PKIHeader(new DERInteger(2),
+					new GeneralName(GeneralName.directoryName, ASN1Object.fromByteArray(this.extraCert.getSubjectX500Principal().getEncoded())),
+					new GeneralName(GeneralName.directoryName, ASN1Object.fromByteArray(this.cacert.getSubjectX500Principal().getEncoded())));
 			myPKIHeader.setMessageTime(new DERGeneralizedTime(new Date()));
 			myPKIHeader.setSenderNonce(new DEROctetString(getNonce()));
 			myPKIHeader.setSenderKID(new DEROctetString(getNonce()));
 			myPKIHeader.setTransactionID(new DEROctetString(getTransId()));
+			myPKIHeader.setRecipNonce(new DEROctetString(getNonce())); // from example
 
 			final PKIBody myPKIBody = new PKIBody(myCertReqMessages, 7); // key update request
 			return new PKIMessage(myPKIHeader, myPKIBody);
@@ -316,9 +315,9 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 				return false;
 			}
 			// Check that the signer is the expected CA
-			final X509Name name = X509Name.getInstance(header.getSender().getName());
-			if (header.getSender().getTagNo() != 4 || name == null || !name.equals(this.cacert.getSubjectDN())) {
-				this.performanceTest.getLog().error("Not signed by right issuer.");
+			final X500Principal name = new X500Principal(header.getSender().getName().getDERObject().getEncoded());
+			if (header.getSender().getTagNo() != 4 || !name.equals(this.cacert.getSubjectX500Principal())) {
+				this.performanceTest.getLog().error("Not signed by right issuer. Tag "+header.getSender().getTagNo()+". Issuer was '"+name+"' but should be '"+this.cacert.getSubjectX500Principal()+"'.");
 			}
 
 			if (header.getSenderNonce().getOctets().length != 16) {
@@ -498,11 +497,15 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 				this.performanceTest.getLog().error("Not possbile to create certificate.");
 				return null;
 			}
-			// Remove this test to be able to test unid-fnr
-			if (cert.getSubjectDN().hashCode() != new X509Name(CertTools.getSubjectDN(this.extraCert)).hashCode()) {
-				this.performanceTest.getLog().error(
-						"Subject is '" + cert.getSubjectDN() + "' but should be '" + CertTools.getSubjectDN(this.extraCert) + '\'');
-				return null;
+			{
+				final X500Principal newCertDN = cert.getIssuerX500Principal();
+				final X500Principal oldCertDN = this.extraCert.getIssuerX500Principal();
+				// Remove this test to be able to test unid-fnr
+				if ( !oldCertDN.equals(newCertDN) ) {
+					this.performanceTest.getLog().error(
+							"Subject is '" + newCertDN + "' but should be '" + oldCertDN + '\'');
+					return null;
+				}
 			}
 			if (cert.getIssuerX500Principal().hashCode() != this.cacert.getSubjectX500Principal().hashCode()) {
 				this.performanceTest.getLog().error(
@@ -532,19 +535,18 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 				return false;
 			}
 			{
-				final X509Name name = X509Name.getInstance(header.getSender().getName());
-				String senderDN = name.toString().replaceAll(" ", "");
-				String caDN = this.cacert.getSubjectDN().toString().replaceAll(" ", "");
-				if (!StringUtils.equals(senderDN, caDN)) {
-					this.performanceTest.getLog().error("Wrong CA DN. Is '" + name + "' should be '" + this.cacert.getSubjectDN() + "'.");
+				final X500Principal senderDN = new X500Principal( header.getSender().getName().getDERObject().getDEREncoded() );
+				final X500Principal cacertDN = this.cacert.getSubjectX500Principal();
+				if ( !senderDN.equals(cacertDN) ) {
+					this.performanceTest.getLog().error("Wrong CA DN. Is '" + senderDN + "' should be '" + cacertDN + "'.");
 					return false;
 				}
 			}
 			{
-				final X509Name name = X509Name.getInstance(header.getRecipient().getName());
-				if (name.hashCode() != new X509Name(CertTools.getSubjectDN(this.extraCert)).hashCode()) {
-					this.performanceTest.getLog().error(
-							"Wrong recipient DN. Is '" + name + "' should be '" + CertTools.getSubjectDN(this.extraCert) + "'.");
+				final X500Principal recipientDN = new X500Principal( header.getRecipient().getName().getDERObject().getDEREncoded() );
+				final X500Principal extraCertDN = this.extraCert.getSubjectX500Principal();
+				if ( !recipientDN.equals(extraCertDN) ) {
+					this.performanceTest.getLog().error("Wrong recipient DN. Is '" + recipientDN + "' should be '" + extraCertDN + "'.");
 					return false;
 				}
 			}
@@ -568,9 +570,10 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 			return true;
 		}
 
-		private PKIMessage genCertConfirm(final String hash) {
-			PKIHeader myPKIHeader = new PKIHeader(new DERInteger(2), new GeneralName(new X509Name(CertTools.getSubjectDN(this.extraCert))),
-					new GeneralName(new X509Name(this.cacert.getSubjectDN().getName())));
+		private PKIMessage genCertConfirm(final String hash) throws IOException {
+			PKIHeader myPKIHeader = new PKIHeader(new DERInteger(2),
+					new GeneralName( GeneralName.directoryName, ASN1Object.fromByteArray(this.extraCert.getSubjectX500Principal().getEncoded())),
+					new GeneralName( GeneralName.directoryName, ASN1Object.fromByteArray(this.cacert.getSubjectX500Principal().getEncoded())) );
 			myPKIHeader.setMessageTime(new DERGeneralizedTime(new Date()));
 			// senderNonce
 			myPKIHeader.setSenderNonce(new DEROctetString(getNonce()));
@@ -627,8 +630,8 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 		public boolean doIt() throws Exception {
 			this.sessionData.newSession();
 
-			CertRequest keyUpdateReq = this.sessionData.genKeyUpdateReq();
-			PKIMessage certMsg = this.sessionData.genPKIMessage(true, keyUpdateReq);
+			final CertRequest keyUpdateReq = this.sessionData.genKeyUpdateReq();
+			final PKIMessage certMsg = this.sessionData.genPKIMessage(false, keyUpdateReq);
 			if (certMsg == null) {
 				this.sessionData.performanceTest.getLog().error("No certificate request.");
 				return false;
@@ -636,7 +639,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 			AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
 			certMsg.getHeader().setProtectionAlg(pAlg);
 			//certMsg.getHeader().setSenderKID(new DEROctetString("EMPTY".getBytes()));
-			PKIMessage signedMsg = this.sessionData.signPKIMessage(certMsg);
+			final PKIMessage signedMsg = this.sessionData.signPKIMessage(certMsg);
 			this.sessionData.addExtraCert(signedMsg);
 			if (signedMsg == null) {
 				this.sessionData.performanceTest.getLog().error("No protected message.");
@@ -737,7 +740,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 				.println(args[0]
 						+ " <host name> <keystore (p12) directory> <keystore password> [<number of threads>] [<wait time (ms) between each thread is started>] [<port>] [<URL path of servlet. use 'null' to get EJBCA (not proxy) default>] [<certificate file prefix. set this if you want all received certificates stored on files>]");
 				System.out
-				.println("EJBCA build configuration requirements: cmp.operationmode=normal, cmp.allowraverifypopo=true, cmp.allowautomatickeyupdate=true, cmp.allowupdatewithsamekey=true");
+				.println("EJBCA build configuration requirements: cmp.operationmode=normal, cmp.allowautomatickeyupdate=true, cmp.allowupdatewithsamekey=true");
 				System.out
 				.println("Ejbca expects the following: There exists an end entity with a generated certificate. The end entity's certificate and its private key are stored in the keystore used "
 						+ "in the commandline. Such keystore can be obtained, for example, by specifying "
