@@ -447,11 +447,13 @@ public class X509CA extends CA implements Serializable {
 	 * If request is a CSR (pkcs10) it returns null.
 	 * 
      * @param usepreviouskey must be trust otherwise null is returned, this is because this method on an X509CA should only be used to create a NewWithOld.
+     * @param certProfile Certificate profile to use when creating a link-certificate. Otherwise null is allowed.
 	 * 
 	 * @see CA#signRequest(Collection, String)
 	 */
-	public byte[] signRequest(byte[] request, boolean usepreviouskey, boolean createlinkcert) throws CATokenOfflineException {
-		byte[] ret = null;
+        @Override
+        public byte[] signRequest(final byte[] request, final boolean usepreviouskey, final boolean createlinkcert, final CertificateProfile certProfile) throws CATokenOfflineException {
+            byte[] ret = null;
 		try {
 			CATokenContainer catoken = getCAToken();
 			byte[] binbytes = request;
@@ -479,11 +481,6 @@ public class X509CA extends CA implements Serializable {
 	        		UserDataVO cadata = new UserDataVO("nobody", info.getSubjectDN(), info.getSubjectDN().hashCode(), info.getSubjectAltName(), null,
 	        				0,0,0,  info.getCertificateProfileId(), null, null, 0, 0, null);
 					
-					CertificateProfile certProfile = new RootCACertificateProfile();
-		        	if((info.getPolicies() != null) && (info.getPolicies().size() > 0)) {
-		        		certProfile.setUseCertificatePolicies(true);
-		        		certProfile.setCertificatePolicies(info.getPolicies());
-		        	}				
 		            PublicKey previousCaPublicKey = catoken.getPublicKey(SecConst.CAKEYPURPOSE_CERTSIGN_PREVIOUS);
 		            PrivateKey previousCaPrivateKey = catoken.getPrivateKey(SecConst.CAKEYPURPOSE_CERTSIGN_PREVIOUS);
 		            String provider = catoken.getProvider();

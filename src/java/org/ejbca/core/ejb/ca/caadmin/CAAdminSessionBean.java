@@ -730,7 +730,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
                 // certificate and signRequest will return the same as we pass
                 // in, i.e. do nothing.
                 try {
-                    returnval = ca.signRequest(request, usepreviouskey, createlinkcert);
+                    returnval = ca.signRequest(request, usepreviouskey, createlinkcert, null);
                 } catch (RuntimeException e) {
                     Throwable cause = e.getCause();
                     // If this is an IllegalKeyException we it's possible that
@@ -798,7 +798,14 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
         try {
             caname = signedbydata.getName();
             CA signedbyCA = signedbydata.getCA();
-            returnval = signedbyCA.signRequest(request, usepreviouskey, createlinkcert);
+            final CertificateProfile certProfile;
+            if (createlinkcert) {
+                final CAInfo cainfo = signedbyCA.getCAInfo();
+                certProfile = certificateProfileSession.getCertificateProfile(admin, cainfo.getCertificateProfileId());
+            } else {
+                certProfile = null;
+            }
+            returnval = signedbyCA.signRequest(request, usepreviouskey, createlinkcert, certProfile);
             String msg = intres.getLocalizedMessage("caadmin.certreqsigned", caname);
             logSession.log(admin, caid, LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_INFO_SIGNEDREQUEST, msg);
         } catch (Exception e) {
