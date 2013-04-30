@@ -170,7 +170,7 @@ public class X509CATest {
         assertEquals("dNSName=foobar.bar.com", p10msg.getRequestAltNames());
 
         // Try to sign the request, will return null
-        byte[] signedReq = x509ca.signRequest(p10.getDEREncoded(), false, false);
+        byte[] signedReq = x509ca.signRequest(p10.getDEREncoded(), false, false, null);
         assertNull(signedReq);
         
         // Generate a client certificate and check that it was generated correctly

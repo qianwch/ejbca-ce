@@ -736,7 +736,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
                 // certificate and signRequest will return the same as we pass
                 // in, i.e. do nothing.
                 try {
-                    returnval = ca.signRequest(request, usepreviouskey, createlinkcert);
+                    returnval = ca.signRequest(request, usepreviouskey, createlinkcert, null);
                 } catch (CryptoTokenOfflineException e) {
                     // If this is an CryptoTokenOfflineException we it's possible that
                     // we did not have a previous key, then just skip and make it un-authenticated
@@ -812,7 +812,14 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
         try {
             CA signedbyCA = caSession.getCA(admin, caid);
             caname = signedbyCA.getName();
-            returnval = signedbyCA.signRequest(request, usepreviouskey, createlinkcert);
+            final CertificateProfile certProfile;
+            if (createlinkcert) {
+                final CAInfo cainfo = signedbyCA.getCAInfo();
+                certProfile = certificateProfileSession.getCertificateProfile(cainfo.getCertificateProfileId());
+            } else {
+                certProfile = null;
+            }
+            returnval = signedbyCA.signRequest(request, usepreviouskey, createlinkcert, certProfile);
             String msg = intres.getLocalizedMessage("caadmin.certreqsigned", caname);
             Map<String, Object> details = new LinkedHashMap<String, Object>();
             details.put("msg", msg);

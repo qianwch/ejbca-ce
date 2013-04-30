@@ -96,7 +96,7 @@ public class AdminsChangeRuleCommand extends BaseAdminsCommand {
                     EjbcaConfiguration.getCustomAvailableAccessRules());
 
             if (!authorizedAvailableAccessRules.contains(accessRule)) {
-                getLogger().error("Accessrule \"" + accessRule + "\" is not available.");
+                getLogger().error("Accessrule \"" + args[2] + "\" is not available.");
                 return;
             }
             AccessRuleState rule = AccessRuleState.matchName(args[3]);
