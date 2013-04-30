@@ -6,6 +6,9 @@ This is a maintenance release containing a few new features and improvements. In
 - LDAP publisher can publish certificate serialnumber to special object class inetOrgPersonWithCertSerno.
 - 
 
+Note: There is a change in the LdapPublisher class API. Custom publishers overriding the LdapPublisher should add 
+'null' to the getModificationSet method. You will get a compilation error otherwise.
+ 
 Read the full Changelog for details.
 For upgrade instructions, please see UPGRADE.
 
