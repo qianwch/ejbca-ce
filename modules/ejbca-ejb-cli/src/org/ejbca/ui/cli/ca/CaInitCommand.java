@@ -145,6 +145,7 @@ public class CaInitCommand extends BaseCaAdminCommand {
     		getLogger().info(" signalgorithm is on of " + availableSignAlgs);
     		getLogger().info(" adding the parameters '-certprofile profileName' makes the CA use the certificate profile 'profileName' instead of the default ROOTCA or SUBCA. Optional parameter that can be completely left out.");
     		getLogger().info(" adding the parameters '-superadmincn SuperAdmin' makes an initial CA use the common name SuperAdmin and initialize the authorization module with an initial super administrator. Note only used when creating initial CA. If parameter is not given, the authorization rules are untouched.");
+    		getLogger().info(" adding the parameter '-explicitecc' when using ECC keys makes the internal CryptoToken use explicit curve parameters instead of named curves. Should only be used when creating a CSCA for ePassports.");
     		getLogger().info(" catokenproperties is a file were you define key name, password and key alias for the HSM. Same as the Hard CA Token Properties in admin gui.");
     		getLogger().info(" signed by caid is the CA id of a CA that will sign this CA. If this is omitted the new CA will be self signed (i.e. a root CA).");
     		return;
@@ -179,7 +180,13 @@ public class CaInitCommand extends BaseCaAdminCommand {
                 argsList.remove(typeIndex + 1);
                 argsList.remove("-type");
             }
-    		
+            int explicitEccInd = argsList.indexOf("-explicitecc");
+            String explicitEcc = "false";
+            if (explicitEccInd > -1) {
+                explicitEcc = "true";
+                argsList.remove("-explicitecc");
+            }
+
     		args = argsList.toArray(new String[0]); // new args array without the optional switches
 
     		final String caname = args[1];
@@ -274,6 +281,9 @@ public class CaInitCommand extends BaseCaAdminCommand {
             getLogger().info("Certificate profile: "+profileName);
             //getLogger().info("Certificate profile id: "+profileId);
             getLogger().info("CA token properties: "+catokenproperties);
+            if (StringUtils.equalsIgnoreCase(explicitEcc, "true")) {
+                getLogger().info("Explicit ECC public key parameters: " + explicitEcc);
+            }
             getLogger().info("Signed by: "+(signedByCAId == CAInfo.SELFSIGNED ? "self signed " : signedByCAId));
             if (signedByCAId != CAInfo.SELFSIGNED) {
                 try {
@@ -292,6 +302,11 @@ public class CaInitCommand extends BaseCaAdminCommand {
             catokeninfo.setEncryptionAlgorithm(AlgorithmConstants.SIGALG_SHA1_WITH_RSA);
         	catokeninfo.setProperties(catokenproperties);
         	Properties prop = catokeninfo.getProperties();
+            if (StringUtils.equalsIgnoreCase(explicitEcc, "true")) {
+                // Set if we should use explicit ECC parameters of not. On Java 6 this renders the created CA certificate not serializable
+                getLogger().info("Explicit ECC public key parameters: " + explicitEcc);
+                prop.setProperty(CryptoToken.EXPLICIT_ECC_PUBLICKEY_PARAMETERS, explicitEcc);
+            }
         	// Set some CA token properties if they are not set already
         	if (prop.getProperty(CryptoToken.KEYSPEC_PROPERTY) == null) {
         		prop.setProperty(CryptoToken.KEYSPEC_PROPERTY, keyspec);
@@ -365,9 +380,13 @@ public class CaInitCommand extends BaseCaAdminCommand {
             getLogger().info("Creating CA...");
             ejb.getCAAdminSession().createCA(getAdmin(cliUserName, cliPassword), cainfo);
             
-            CAInfo newInfo = ejb.getCaSession().getCAInfo(getAdmin(cliUserName, cliPassword), caname);
-            int caid = newInfo.getCAId();
-            getLogger().info("CAId for created CA: " + caid);
+            if (StringUtils.equalsIgnoreCase(explicitEcc, "true")) {
+                getLogger().info("Not re-reading CAInfo, since explicit ECC parameters were used, which is not serializable on Java 6. Use Web GUI for further interactions.");                
+            } else {
+                CAInfo newInfo = ejb.getCaSession().getCAInfo(getAdmin(cliUserName, cliPassword), caname);
+                int caid = newInfo.getCAId();
+                getLogger().info("CAId for created CA: " + caid);
+            }
             getLogger().info("Created and published initial CRL.");
             getLogger().info("CA initialized");
             getLogger().info("Note that any open browser sessions must be restarted to interact with this CA.");
