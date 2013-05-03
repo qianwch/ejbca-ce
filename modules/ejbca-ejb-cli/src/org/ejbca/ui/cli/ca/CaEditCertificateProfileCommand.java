@@ -19,6 +19,7 @@ import org.cesecore.certificates.certificateprofile.CertificateProfile;
 import org.cesecore.util.CryptoProviderTools;
 import org.ejbca.ui.cli.CliUsernameException;
 import org.ejbca.ui.cli.ErrorAdminCommandException;
+import org.ejbca.ui.cli.FieldEditor;
 import org.ejbca.util.CliTools;
 
 /**
@@ -55,6 +56,8 @@ public class CaEditCertificateProfileCommand extends BaseCaAdminCommand {
         } catch (CliUsernameException e) {
             return;
         }
+        
+        FieldEditor fieldEditor = new FieldEditor(getLogger());
         try {
             CryptoProviderTools.installBCProvider();
             List<String> argsList = CliTools.getAsModifyableList(args);
@@ -92,7 +95,7 @@ public class CaEditCertificateProfileCommand extends BaseCaAdminCommand {
                 getLogger().info("Certificate profile '"+name+"' does not exist.");
             } else {
                 // List fields, get values or set value
-                if (!listGetOrSet(listOnly, getOnly, name, field, value, profile)) {
+                if (!fieldEditor.listGetOrSet(listOnly, getOnly, name, field, value, profile)) {
                     
                     getLogger().info("Storing modified profile '"+name+"'...");
                     ejb.getCertificateProfileSession().changeCertificateProfile(getAdmin(cliUserName, cliPassword), name, profile);
@@ -101,7 +104,7 @@ public class CaEditCertificateProfileCommand extends BaseCaAdminCommand {
                     final CertificateProfile modprof = ejb.getCertificateProfileSession().getCertificateProfile(name);
 
                     // Print return value
-                    getBeanValue(field, modprof);                    
+                    fieldEditor.getBeanValue(field, modprof);                    
                 }
             }
         } catch (Exception e) {
