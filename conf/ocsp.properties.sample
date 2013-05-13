@@ -158,6 +158,7 @@ ocsp.defaultresponder=CN=AdminCA1,O=EJBCA Sample,C=SE
 # If you are not using SSL on the external OCSP responder (normally not needed for OCSP), you should define
 # this property, e.g. remove the comment sign. See 'Configuring TLS on the Unid lookup server' in the Howto.
 # Note! If defining this property on the EJBCA server, SSL will not be configured there either, and the admin-GUI will not work.
+# It is not possible to define this property as 'false', to configure TLS comment out the property here.
 #j2ee.web-noconfigure=true
 
 
