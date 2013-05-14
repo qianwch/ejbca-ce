@@ -26,6 +26,7 @@ import java.util.Random;
 
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.DEROutputStream;
+import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authentication.tokens.UsernamePrincipal;
 import org.cesecore.authorization.AuthorizationDeniedException;
@@ -146,7 +147,8 @@ public class CmpRaThrowAwayTest extends CmpTestCase {
         ByteArrayOutputStream bao = new ByteArrayOutputStream();
         new DEROutputStream(bao).writeObject(req);
         byte[] resp = sendCmpHttp(bao.toByteArray(), 200);
-        checkCmpResponseGeneral(resp, CertTools.getSubjectDN(caCertificate), subjectDN, caCertificate, nonce, transid, false, PBE_SECRET);
+        checkCmpResponseGeneral(resp, CertTools.getSubjectDN(caCertificate), subjectDN, caCertificate, nonce, transid, false, 
+                        PBE_SECRET, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
         X509Certificate cert = checkCmpCertRepMessage(subjectDN, caCertificate, resp, reqId);
         assertEquals("Certificate history data was or wasn't stored: ", useCertReqHistory, InterfaceCache.getCertReqHistorySession()
                 .retrieveCertReqHistory(ADMIN, CertTools.getSerialNumber(cert), CertTools.getIssuerDN(cert)) != null);
@@ -162,7 +164,7 @@ public class CmpRaThrowAwayTest extends CmpTestCase {
         bao = new ByteArrayOutputStream();
         new DEROutputStream(bao).writeObject(req1);
         resp = sendCmpHttp(bao.toByteArray(), 200);
-        checkCmpResponseGeneral(resp, CertTools.getSubjectDN(caCertificate), subjectDN, caCertificate, nonce, transid, false, PBE_SECRET);
+        checkCmpResponseGeneral(resp, CertTools.getSubjectDN(caCertificate), subjectDN, caCertificate, nonce, transid, false, PBE_SECRET, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
         checkCmpPKIConfirmMessage(subjectDN, caCertificate, resp);
 
         // We only expect revocation to work if we store certificate data and user data
@@ -175,7 +177,8 @@ public class CmpRaThrowAwayTest extends CmpTestCase {
             bao = new ByteArrayOutputStream();
             new DEROutputStream(bao).writeObject(revReq);
             resp = sendCmpHttp(bao.toByteArray(), 200);
-            checkCmpResponseGeneral(resp, CertTools.getSubjectDN(caCertificate), subjectDN, caCertificate, nonce, transid, false, PBE_SECRET);
+            checkCmpResponseGeneral(resp, CertTools.getSubjectDN(caCertificate), subjectDN, caCertificate, nonce, transid, false, 
+                            PBE_SECRET, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
             checkCmpRevokeConfirmMessage(CertTools.getSubjectDN(caCertificate), subjectDN, cert.getSerialNumber(), caCertificate, resp, true);
             int reason = InterfaceCache.getCertificateStoreSession().getStatus(CertTools.getSubjectDN(caCertificate), cert.getSerialNumber()).revocationReason;
             assertEquals("Certificate was not revoked with the right reason.", RevokedCertInfo.REVOCATION_REASON_KEYCOMPROMISE, reason);

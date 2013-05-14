@@ -44,6 +44,7 @@ import org.cesecore.certificates.certificate.request.ResponseMessage;
 import org.cesecore.certificates.certificate.request.ResponseStatus;
 import org.cesecore.certificates.certificateprofile.CertificateProfileSession;
 import org.cesecore.certificates.crl.RevokedCertInfo;
+import org.cesecore.certificates.util.AlgorithmTools;
 import org.cesecore.keys.token.CryptoTokenOfflineException;
 import org.cesecore.keys.token.IllegalCryptoTokenException;
 import org.cesecore.util.Base64;
@@ -271,9 +272,12 @@ public class RevocationMessageHandler extends BaseCmpMessageHandler implements I
         }
         if (StringUtils.equals(responseProtection, "pbe") && (owfAlg != null) && (macAlg != null) && (keyId != null) && (cmpRaAuthSecret != null) ) {
             rresp.setPbeParameters(keyId, cmpRaAuthSecret, owfAlg, macAlg, iterationCount);
-        } else {
+        } else if(StringUtils.equals(responseProtection, "signature")) {
             try {
                 rresp.setSignKeyInfo(ca.getCACertificate(), ca.getCAToken().getPrivateKey(CATokenConstants.CAKEYPURPOSE_CERTSIGN), ca.getCAToken().getCryptoToken().getSignProviderName());
+                if(msg.getHeader().getProtectionAlg() != null) {
+                    rresp.setPreferredDigestAlg(AlgorithmTools.getDigestFromSigAlg(msg.getHeader().getProtectionAlg().getAlgorithm().getId()));
+                }
             } catch (CryptoTokenOfflineException e) {
                 LOG.error(e.getLocalizedMessage(), e);
             } catch (IllegalCryptoTokenException e) {
