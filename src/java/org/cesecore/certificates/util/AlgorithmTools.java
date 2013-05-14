@@ -323,8 +323,9 @@ public final class AlgorithmTools {
                 signatureAlgorithm = AlgorithmConstants.SIGALG_SHA1_WITH_ECDSA;
             }
         }
-
-        log.debug("getSignatureAlgorithm: " + signatureAlgorithm);
+        if(log.isDebugEnabled()) {
+            log.debug("getSignatureAlgorithm: " + signatureAlgorithm);
+        }
         return signatureAlgorithm;
     } // getSignatureAlgorithm
 

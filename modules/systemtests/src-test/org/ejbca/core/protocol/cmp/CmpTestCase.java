@@ -74,6 +74,7 @@ import org.bouncycastle.asn1.x509.X509CertificateStructure;
 import org.bouncycastle.asn1.x509.X509Extension;
 import org.bouncycastle.asn1.x509.X509Extensions;
 import org.bouncycastle.asn1.x509.X509Name;
+import org.bouncycastle.asn1.x9.X9ObjectIdentifiers;
 import org.bouncycastle.jce.X509KeyUsage;
 import org.bouncycastle.jce.X509Principal;
 import org.cesecore.certificates.certificate.CertificateStatus;
@@ -573,7 +574,11 @@ public abstract class CmpTestCase extends CaTestCase {
         // Check that the message is signed with the correct digest alg
         if (signed) {
             if(StringUtils.isEmpty(expectedSignAlg)) {
-                expectedSignAlg = PKCSObjectIdentifiers.sha1WithRSAEncryption.getId();
+                if(AlgorithmTools.getSignatureAlgorithm(cacert).contains("ECDSA")) {
+                    expectedSignAlg = X9ObjectIdentifiers.ecdsa_with_SHA1.getId();
+                } else {
+                    expectedSignAlg = PKCSObjectIdentifiers.sha1WithRSAEncryption.getId();
+                }
             }
             AlgorithmIdentifier algId = header.getProtectionAlg();
             assertNotNull("The AlgorithmIdentifier in the response signature could not be read.", algId);
