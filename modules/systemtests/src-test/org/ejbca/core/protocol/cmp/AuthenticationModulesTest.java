@@ -1854,8 +1854,8 @@ public class AuthenticationModulesTest extends CmpTestCase {
     /**
      * Tests the possibility to use different signature algorithms in CMP requests and responses.
      * 
-     * A CRMF request, signed using ECDSA with SHA1, is sent to a CA that uses RSA with SHA256 as signature algorithm.
-     * The expected response is signed by RSA with SHA1.
+     * A CRMF request, signed using ECDSA with SHA256, is sent to a CA that uses RSA with SHA1 as signature algorithm.
+     * The expected response is signed by RSA with SHA256.
      * 
      * @throws Exception
      */
