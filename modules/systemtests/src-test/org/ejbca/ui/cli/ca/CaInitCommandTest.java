@@ -269,7 +269,7 @@ public class CaInitCommandTest {
             certgen.setSignatureAlgorithm("SHA1WithRSA");
             certgen.setSubjectDN(CertTools.stringToBcX509Name(msg.getRequestDN()));
             certgen.setIssuerDN(CertTools.stringToBcX509Name(externalCACert.getSubjectDN().toString()));
-            certgen.setPublicKey(keys.getPublic());
+            certgen.setPublicKey(msg.getRequestPublicKey());
             BasicConstraints bc = new BasicConstraints(true);
             certgen.addExtension(X509Extensions.BasicConstraints.getId(), true, bc);
             X509KeyUsage ku = new X509KeyUsage(X509KeyUsage.keyCertSign + X509KeyUsage.cRLSign);
@@ -294,6 +294,7 @@ public class CaInitCommandTest {
             // Clean up imported certificates from database
             internalCertStoreSession.removeCertificate(fp1);
             internalCertStoreSession.removeCertificate(fp2);
+            caSession.removeCA(admin, caInitCommand.getCAInfo(admin, CA_NAME).getCAId());
         }
     }
 }
