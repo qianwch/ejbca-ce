@@ -15,7 +15,7 @@ package org.ejbca.ui.cli.ca;
 
 import java.util.List;
 
-import org.cesecore.certificates.certificateprofile.CertificateProfile;
+import org.cesecore.certificates.ca.CAInfo;
 import org.cesecore.util.CryptoProviderTools;
 import org.ejbca.ui.cli.CliUsernameException;
 import org.ejbca.ui.cli.ErrorAdminCommandException;
@@ -23,32 +23,31 @@ import org.ejbca.ui.cli.FieldEditor;
 import org.ejbca.util.CliTools;
 
 /**
- * Changes fields in a Certificate Profile.
+ * Changes fields in a CA.
  *
  * @version $Id$
  */
-public class CaEditCertificateProfileCommand extends BaseCaAdminCommand {
+public class CaEditCaCommand extends BaseCaAdminCommand {
 
-    public String getMainCommand() { return MAINCOMMAND; }
-    public String getSubCommand() { return "editcertificateprofile"; }
-    public String getDescription() { return "Edits profile fields of an existing certificate profile in the CA."; }
+	public String getMainCommand() { return MAINCOMMAND; }
+	public String getSubCommand() { return "editca"; }
+    public String getDescription() { return "Edits CA fields of an existing CA."; }
 
     public void execute(String[] args) throws ErrorAdminCommandException {       
         if (args.length < 3) {
             getLogger().info("Description: " + getDescription());
-            getLogger().info("Usage: " + getCommand() + " <profile name> <field name> <field value>\n"+
+            getLogger().info("Usage: " + getCommand() + " <CA name> <field name> <field value>\n"+
                     "\n"+
-            "Fields that can be set are derived from setFieldName of the CertificateProfile java code. If there is a 'setFieldName(type)' method, the values to use in this command should be 'fieldName value'\n"+
-            "Example: ca editcertificateprofile CertProfileName CRLDistributionPointURI http://my-crl-distp.com/my.crl\n"+
-            "Example: ca editcertificateprofile CertProfileName caIssuers http://my-ca.issuer.com/ca\n"+
-            "Example: ca editcertificateprofile CertProfileName useOcspNoCheck true\n"+
-            "Example: ca editcertificateprofile CertProfileName numOfReqApprovals 1\n"+
+            "Fields that can be set are derived from setFieldName of the CA java code. If there is a 'setFieldName(type)' method, the values to use in this command should be 'fieldName value'\n"+
+            "Example: ca editca CAName CRLPeriod 2592000000\n"+
+            "Example: ca editca CAName CRLIssueInterval 100000\n"+
+            "Example: ca editca CAName includeInHealthCheck false\n"+
             "\n"+
-            "Use the option -listFields to only list available fields in the certificate profile.\n"+
-            "Example: ca editcertificateprofile CertProfileName -listFields\n"+
+            "Use the option -listFields to only list available fields in the CA. Note that there will always be some fields displayed which are not actually changeable.\n"+
+            "Example: ca editca CAName -listFields\n"+
             "\n"+
-            "Use the option -getValue to only get the value of a field in the certificate profile.\n"+
-            "Example: ca editcertificateprofile CertProfileName -getValue caIssuers");
+            "Use the option -getValue to only get the value of a field in the CA.\n"+
+            "Example: ca editca CAName -getValue CRLPeriod");
             return;
         }
         try {
@@ -90,21 +89,19 @@ public class CaEditCertificateProfileCommand extends BaseCaAdminCommand {
                 value = null;
             }
 
-            final CertificateProfile profile = ejb.getCertificateProfileSession().getCertificateProfile(name);
-            if (profile == null) {
-                getLogger().info("Certificate profile '"+name+"' does not exist.");
+            final CAInfo cainfo = ejb.getCaSession().getCAInfo(getAdmin(cliUserName, cliPassword), name);
+            if (cainfo == null) {
+                getLogger().info("CA '"+name+"' does not exist.");
             } else {
                 // List fields, get values or set value
-                if (!fieldEditor.listGetOrSet(listOnly, getOnly, name, field, value, profile)) {
-                    
-                    getLogger().info("Storing modified profile '"+name+"'...");
-                    ejb.getCertificateProfileSession().changeCertificateProfile(getAdmin(cliUserName, cliPassword), name, profile);
+                if (!fieldEditor.listGetOrSet(listOnly, getOnly, name, field, value, cainfo)) {
+                    getLogger().info("Storing modified CA info for CA '"+name+"'...");
+                    ejb.getCaSession().editCA(getAdmin(cliUserName, cliPassword), cainfo);
                     // Verify our new value
                     getLogger().info("Reading modified value for verification...");
-                    final CertificateProfile modprof = ejb.getCertificateProfileSession().getCertificateProfile(name);
-
+                    final CAInfo cainfomod = ejb.getCaSession().getCAInfo(getAdmin(cliUserName, cliPassword), name);
                     // Print return value
-                    fieldEditor.getBeanValue(field, modprof);                    
+                    fieldEditor.getBeanValue(field, cainfomod);                    
                 }
             }
         } catch (Exception e) {

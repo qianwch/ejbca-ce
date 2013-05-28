@@ -50,8 +50,10 @@ import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DERBitString;
 import org.bouncycastle.asn1.DERGeneralizedTime;
@@ -72,6 +74,7 @@ import org.bouncycastle.asn1.x509.X509CertificateStructure;
 import org.bouncycastle.asn1.x509.X509Extension;
 import org.bouncycastle.asn1.x509.X509Extensions;
 import org.bouncycastle.asn1.x509.X509Name;
+import org.bouncycastle.asn1.x9.X9ObjectIdentifiers;
 import org.bouncycastle.jce.X509KeyUsage;
 import org.bouncycastle.jce.X509Principal;
 import org.cesecore.certificates.certificate.CertificateStatus;
@@ -79,6 +82,7 @@ import org.cesecore.certificates.certificate.CertificateStoreSessionRemote;
 import org.cesecore.certificates.certificate.request.FailInfo;
 import org.cesecore.certificates.certificate.request.ResponseStatus;
 import org.cesecore.certificates.crl.RevokedCertInfo;
+import org.cesecore.certificates.util.AlgorithmTools;
 import org.cesecore.jndi.JndiHelper;
 import org.cesecore.util.CertTools;
 import org.ejbca.config.WebConfiguration;
@@ -242,14 +246,15 @@ public abstract class CmpTestCase extends CaTestCase {
             DEROutputStream mout = new DEROutputStream(baos);
             mout.writeObject(myCertRequest);
             mout.close();
-            byte[] popoProtectionBytes = baos.toByteArray();
-            Signature sig = Signature.getInstance(PKCSObjectIdentifiers.sha1WithRSAEncryption.getId(), "BC");
+            byte[] popoProtectionBytes = baos.toByteArray();            
+            String    sigalg = AlgorithmTools.getSignAlgOidFromDigestAndKey(null, keys.getPrivate().getAlgorithm()).getId();
+            Signature sig = Signature.getInstance(sigalg, "BC");
             sig.initSign(keys.getPrivate());
             sig.update(popoProtectionBytes);
 
             DERBitString bs = new DERBitString(sig.sign());
 
-            POPOSigningKey myPOPOSigningKey = new POPOSigningKey(new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption), bs);
+            POPOSigningKey myPOPOSigningKey = new POPOSigningKey(new AlgorithmIdentifier(new ASN1ObjectIdentifier(sigalg)), bs);
             // myPOPOSigningKey.setPoposkInput( myPOPOSigningKeyInput );
             myProofOfPossession = new ProofOfPossession(myPOPOSigningKey, 1);
         }
@@ -393,13 +398,14 @@ public abstract class CmpTestCase extends CaTestCase {
             mout.writeObject(myCertRequest);
             mout.close();
             byte[] popoProtectionBytes = baos.toByteArray();
-            Signature sig = Signature.getInstance(PKCSObjectIdentifiers.sha1WithRSAEncryption.getId(), "BC");
+            String sigalg = AlgorithmTools.getSignAlgOidFromDigestAndKey(null, keys.getPrivate().getAlgorithm()).getId();
+            Signature sig = Signature.getInstance(sigalg);
             sig.initSign(keys.getPrivate());
             sig.update(popoProtectionBytes);
 
             DERBitString bs = new DERBitString(sig.sign());
 
-            POPOSigningKey myPOPOSigningKey = new POPOSigningKey(new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption), bs);
+            POPOSigningKey myPOPOSigningKey = new POPOSigningKey(new AlgorithmIdentifier(new ASN1ObjectIdentifier(sigalg)), bs);
             // myPOPOSigningKey.setPoposkInput( myPOPOSigningKeyInput );
             myProofOfPossession = new ProofOfPossession(myPOPOSigningKey, 1);
         }
@@ -552,7 +558,7 @@ public abstract class CmpTestCase extends CaTestCase {
     }
 
     protected void checkCmpResponseGeneral(byte[] retMsg, String issuerDN, String userDN, Certificate cacert, byte[] senderNonce, byte[] transId,
-            boolean signed, String pbeSecret) throws Exception {
+            boolean signed, String pbeSecret, String expectedSignAlg) throws Exception {
         assertNotNull("No response from server.", retMsg);
         assertTrue("Response was of 0 length.", retMsg.length > 0);
         boolean pbe = (pbeSecret != null);
@@ -567,9 +573,16 @@ public abstract class CmpTestCase extends CaTestCase {
 
         // Check that the message is signed with the correct digest alg
         if (signed) {
+            if(StringUtils.isEmpty(expectedSignAlg)) {
+                if(AlgorithmTools.getSignatureAlgorithm(cacert).contains("ECDSA")) {
+                    expectedSignAlg = X9ObjectIdentifiers.ecdsa_with_SHA1.getId();
+                } else {
+                    expectedSignAlg = PKCSObjectIdentifiers.sha1WithRSAEncryption.getId();
+                }
+            }
             AlgorithmIdentifier algId = header.getProtectionAlg();
             assertNotNull("The AlgorithmIdentifier in the response signature could not be read.", algId);
-            assertEquals(PKCSObjectIdentifiers.sha1WithRSAEncryption.getId(), algId.getObjectId().getId());
+            assertEquals(expectedSignAlg, algId.getObjectId().getId());
         }
         if (pbe) {
             AlgorithmIdentifier algId = header.getProtectionAlg();
@@ -590,7 +603,7 @@ public abstract class CmpTestCase extends CaTestCase {
             DERBitString bs = respObject.getProtection();
             Signature sig;
             try {
-                sig = Signature.getInstance(PKCSObjectIdentifiers.sha1WithRSAEncryption.getId(), "BC");
+                sig = Signature.getInstance(expectedSignAlg, "BC");
                 sig.initVerify(cacert);
                 sig.update(protBytes);
                 boolean ret = sig.verify(bs.getBytes());

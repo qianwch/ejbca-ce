@@ -39,6 +39,7 @@ import org.cesecore.certificates.certificate.request.ResponseStatus;
 import org.cesecore.certificates.certificateprofile.CertificateProfileSession;
 import org.cesecore.certificates.endentity.EndEntityInformation;
 import org.cesecore.certificates.endentity.ExtendedInformation;
+import org.cesecore.certificates.util.AlgorithmTools;
 import org.cesecore.util.CertTools;
 import org.ejbca.config.CmpConfiguration;
 import org.ejbca.core.EjbcaException;
@@ -248,6 +249,9 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 			// This is a request message, so we want to enroll for a certificate, if we have not created an error already
 			if (resp == null) {
 				// Get the certificate
+			    if(crmfreq.getHeader().getProtectionAlg() != null) {
+			        crmfreq.setPreferredDigestAlg(AlgorithmTools.getDigestFromSigAlg(crmfreq.getHeader().getProtectionAlg().getAlgorithm().getId()));
+			    }
 				resp = signSession.createCertificate(admin, crmfreq, org.ejbca.core.protocol.cmp.CmpResponseMessage.class, null);				
 			}
 			if (resp == null) {
@@ -398,6 +402,9 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 			// Username and pwd in the UserDataVO and the IRequestMessage must match
 			crmfreq.setUsername(username);
 			crmfreq.setPassword(pwd);
+            if(msg.getHeader().getProtectionAlg() != null) {
+                crmfreq.setPreferredDigestAlg(AlgorithmTools.getDigestFromSigAlg(crmfreq.getHeader().getProtectionAlg().getAlgorithm().getId()));
+            }
 			// Set all protection parameters
 			CmpPbeVerifyer verifyer = null;
 			if(StringUtils.equals(authenticationModule.getName(), CmpConfiguration.AUTHMODULE_HMAC)) {

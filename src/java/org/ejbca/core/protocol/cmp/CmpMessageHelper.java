@@ -27,6 +27,7 @@ import java.security.Signature;
 import java.security.SignatureException;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
+import java.security.interfaces.RSAPrivateKey;
 import java.util.Date;
 import java.util.Random;
 
@@ -56,6 +57,7 @@ import org.cesecore.certificates.ca.SignRequestException;
 import org.cesecore.certificates.certificate.request.FailInfo;
 import org.cesecore.certificates.certificate.request.ResponseMessage;
 import org.cesecore.certificates.certificate.request.ResponseStatus;
+import org.cesecore.certificates.util.AlgorithmTools;
 import org.cesecore.util.Base64;
 import org.cesecore.util.CertTools;
 import org.ejbca.core.model.InternalEjbcaResources;
@@ -117,19 +119,20 @@ public class CmpMessageHelper {
 	throws NoSuchProviderException, NoSuchAlgorithmException, SecurityException, SignatureException, InvalidKeyException
 	{
 		// Select which signature algorithm we should use for the response, based on the digest algorithm.
-		DERObjectIdentifier oid = PKCSObjectIdentifiers.sha1WithRSAEncryption;
-		if (digestAlg.equals(CMSSignedGenerator.DIGEST_SHA256)) {
-			oid = PKCSObjectIdentifiers.sha256WithRSAEncryption;			
-		}
-		if (digestAlg.equals(CMSSignedGenerator.DIGEST_MD5)) {
-			oid = PKCSObjectIdentifiers.md5WithRSAEncryption;			
-		}
+		DERObjectIdentifier oid = AlgorithmTools.getSignAlgOidFromDigestAndKey(digestAlg, key.getAlgorithm());
     	if (LOG.isDebugEnabled()) {
     		LOG.debug("Selected signature alg oid: "+oid.getId());
     	}
     	// According to PKCS#1 AlgorithmIdentifier for RSA-PKCS#1 has null Parameters, this means a DER Null (asn.1 encoding of null), not Java null.
     	// For the RSA signature algorithms specified above RFC3447 states "...the parameters MUST be present and MUST be NULL."
-		pKIMessage.getHeader().setProtectionAlg(new AlgorithmIdentifier(oid, new DERNull()));
+        
+        AlgorithmIdentifier pAlg = null;
+        if(key instanceof RSAPrivateKey) {
+            pAlg = new AlgorithmIdentifier(oid, new DERNull());
+        } else {
+            pAlg = new AlgorithmIdentifier(oid);
+        }
+		pKIMessage.getHeader().setProtectionAlg(pAlg);
 		// Most PKCS#11 providers don't like to be fed an OID as signature algorithm, so 
 		// we use BC classes to translate it into a signature algorithm name instead
 		final String sigAlg = new BasicOCSPResp(new BasicOCSPResponse(null, new AlgorithmIdentifier(oid), null, null)).getSignatureAlgName();

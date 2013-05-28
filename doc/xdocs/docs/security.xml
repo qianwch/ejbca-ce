@@ -42,6 +42,13 @@ Before putting anything on JBoss up on the internet, at least do the following:
 </ul>
 </note>
 <p>
+For JBoss 5 you can set the HttpOnly session cookies by editing 'server/default/deploy/jbossweb.sar/context.xml':
+</p>
+<source>
+&lt;Context cookies="true" crossContext="true"&gt;
+  &lt;SessionCookie secure="true" httpOnly="true" /&gt;
+</source>
+<p>
 JBoss has a description how to secure a default installation of JBoss. You should read this document before putting
 your application in production.
 </p><p>

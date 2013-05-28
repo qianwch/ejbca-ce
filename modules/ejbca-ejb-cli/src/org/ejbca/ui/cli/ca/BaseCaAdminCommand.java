@@ -44,6 +44,7 @@ import org.cesecore.util.Base64;
 import org.cesecore.util.CertTools;
 import org.ejbca.core.model.SecConst;
 import org.ejbca.ui.cli.BaseCommand;
+import org.ejbca.ui.cli.ErrorAdminCommandException;
 
 /**
  * Base for CA commands, contains common functions for CA operations
@@ -224,78 +225,4 @@ public abstract class BaseCaAdminCommand extends BaseCommand {
 		}
 		return existingCas.toString();
     }
-    
-    /** Lists methods in a class the has "setXyz", and prints them as "Xyz".
-     * Ignores (does not list) type, version, latestVersion, upgrade and class
-     * 
-     * @param obj the Object where to look for setMethods
-     */
-    protected void listSetMethods(final Object obj) {
-        DynaBean wrapper = new WrapDynaBean(obj);
-        DynaProperty[] props = wrapper.getDynaClass().getDynaProperties();
-        for (DynaProperty dynaProperty : props) {
-            if (!dynaProperty.getName().equals("type") && !dynaProperty.getName().equals("version") 
-                    && !dynaProperty.getName().equals("class") && !dynaProperty.getName().equals("latestVersion")
-                    && !dynaProperty.getName().equals("upgraded") ) {
-                System.out.println(dynaProperty.getName()+", "+dynaProperty.getType());
-            }
-        }
-    }
-    
-    /** gets a field value from a bean
-     * 
-     * @param field the field to get
-     * @param obj the bran to get the value from
-     * @return the value
-     */
-    protected Object getBeanValue(final String field, final Object obj) {
-        final DynaBean moddb = new WrapDynaBean(obj);
-        final Object gotValue = moddb.get(field);
-        getLogger().info(field+" returned value '"+gotValue+"'.");
-        return gotValue;
-    }
-    
-    /** Lists, Gets or sets fields in a Bean.
-     * 
-     * @param listOnly if true, fields will be listed, and nothing more will happen.
-     * @param getOnly if true (and listOnly is false), will get the value of a field and nothing else will happen
-     * @param name the name of the Bean to be modified
-     * @param field the field name to get or set
-     * @param value the value to set, of we should set a new value
-     * @param obj the Bean to list, get or set fields
-     * @return true if we only listed or got a value, i.e. if nothing was modified, false is we set a value.
-     */
-    protected boolean listGetOrSet(boolean listOnly, boolean getOnly, final String name, final String field, final String value, final Object obj) {
-        if (listOnly) {
-            listSetMethods(obj);
-        } else if (getOnly) {
-            getBeanValue(field, obj);
-        } else {
-            Object val = value;
-            getLogger().info("Modifying '"+name+"'...");
-            final ConvertingWrapDynaBean db = new ConvertingWrapDynaBean(obj);
-            DynaProperty prop = db.getDynaClass().getDynaProperty(field);
-            if (prop.getType().isInterface()) {
-                System.out.print("Converting value '"+value+"' to type '"+ArrayList.class+"', ");
-                // If the value can be converted into an integer, we will use an ArrayList<Integer>
-                // Our problem here is that the type of a collection (<Integer>, <String>) is only compile time, it can not be determined in runtime.
-                List<Object> arr = new ArrayList<Object>();
-                if (StringUtils.isNumeric(value)) {
-                    System.out.println("using Integer value.");
-                    arr.add(Integer.valueOf(value));
-                } else {
-                    // Make it into an array of String
-                    System.out.println("using String value.");
-                    arr.add(value);
-                }
-                val = arr;
-            }
-            final Object gotValue = db.get(field);
-            getLogger().info("Current value of "+field+" is '"+gotValue+"'.");
-            db.set(field, val);
-        }
-        // return true of we only listed
-        return listOnly || getOnly;
-    }
-
 }

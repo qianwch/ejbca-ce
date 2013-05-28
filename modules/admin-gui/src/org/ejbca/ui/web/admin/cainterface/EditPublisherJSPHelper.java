@@ -24,6 +24,7 @@ import org.ejbca.core.model.ca.publisher.ActiveDirectoryPublisher;
 import org.ejbca.core.model.ca.publisher.BasePublisher;
 import org.ejbca.core.model.ca.publisher.CustomPublisherContainer;
 import org.ejbca.core.model.ca.publisher.LdapPublisher;
+import org.ejbca.core.model.ca.publisher.LdapPublisher.ConnectionSecurity;
 import org.ejbca.core.model.ca.publisher.LdapSearchPublisher;
 import org.ejbca.core.model.ca.publisher.PublisherConnectionException;
 import org.ejbca.core.model.ca.publisher.PublisherConst;
@@ -37,7 +38,6 @@ import org.ejbca.ui.web.admin.configuration.EjbcaWebBean;
 /**
  * Contains help methods used to parse a publisher jsp page requests.
  *
- * @author  Philip Vendil
  * @version $Id$
  */
 public class EditPublisherJSPHelper implements java.io.Serializable {
@@ -51,7 +51,7 @@ public class EditPublisherJSPHelper implements java.io.Serializable {
      * /serialization/spec/version.doc.html> details. </a>
      *
      */
-	private static final long serialVersionUID = 436830207093078434L;
+	private static final long serialVersionUID = 436830207093078435L;
 	
     public static final String ACTION                              = "action";
     public static final String ACTION_EDIT_PUBLISHERS              = "editpublishers";
@@ -111,7 +111,7 @@ public class EditPublisherJSPHelper implements java.io.Serializable {
     public static final String TEXTFIELD_VA_DATASOURCE         = "textfieldvadatasource";
     public static final String PASSWORD_LDAPLOGINPASSWORD      = "textfieldldaploginpassword";
     public static final String PASSWORD_LDAPCONFIRMLOGINPWD    = "textfieldldaploginconfirmpwd";
-    public static final String CHECKBOX_LDAPUSESSL             = "checkboxldapusessl";
+    public static final String RADIO_LDAPCONNECTIONSECURITY    = "radioldapconnectionsecurity";
     public static final String CHECKBOX_LDAPCREATENONEXISTING  = "checkboxldapcreatenonexisting";
     public static final String CHECKBOX_LDAPMODIFYEXISTING     = "checkboxldapmodifyexisting";
     public static final String CHECKBOX_LDAPMODIFYEXISTINGATTRIBUTES     = "checkboxldapmodifyexistingattributes";
@@ -374,13 +374,12 @@ public class EditPublisherJSPHelper implements java.io.Serializable {
                                     value = value.trim();
                                     ldappublisher.setARLAttribute(value);
                                 }
-                                value = request.getParameter(CHECKBOX_LDAPUSESSL);
-                                if(value != null) {
-                                    ldappublisher.setUseSSL(value.equals(CHECKBOX_VALUE));
+
+                                value = request.getParameter(RADIO_LDAPCONNECTIONSECURITY);
+                                if(value != null){
+                                    ldappublisher.setConnectionSecurity(ConnectionSecurity.valueOf(value));
                                 }
-                                else {
-                                    ldappublisher.setUseSSL(false);
-                                }
+
                                 value = request.getParameter(CHECKBOX_LDAPCREATENONEXISTING);
                                 if(value != null) {
                                     ldappublisher.setCreateNonExistingUsers(value.equals(CHECKBOX_VALUE));
