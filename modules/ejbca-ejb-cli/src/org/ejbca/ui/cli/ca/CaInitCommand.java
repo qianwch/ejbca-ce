@@ -115,7 +115,7 @@ public class CaInitCommand extends BaseCaAdminCommand {
     	// Create new CA.
         if (args.length < 10) {
     		getLogger().info("Description: " + getDescription());
-    		getLogger().info("Usage: " + getCommand() + " <caname> <dn> <catokentype> <catokenpassword> <keyspec> <keytype> <validity-days> <policyID> <signalgorithm> [-certprofile profileName]  [-type  "+ CaType.getTypeNames()+"] [-superadmincn SuperAdmin] [<catokenproperties> or null] [<signed by caid>]");
+    		getLogger().info("Usage: " + getCommand() + " <caname> <dn> <catokentype> <catokenpassword> <keyspec> <keytype> <validity-days> <policyID> <signalgorithm> [-certprofile profileName]  [-type  "+ CaType.getTypeNames()+"] [-superadmincn SuperAdmin] [<catokenproperties> or null] [<signed by caid>] [-explicitecc] [-externalcachain <externalCA chain PEM file]");
     		getLogger().info(" catokentype defines if the CA should be created with soft keys or on a HSM. Use 'soft' for software keys and 'org.cesecore.keys.token.PKCS11CryptoToken' for PKCS#11 HSMs.");
     		getLogger().info(" catokenpassword is the password for the CA token. Set to 'null' to use the default system password for Soft token CAs. Set to 'prompt' to prompt for the password on the terminal.");
     		getLogger().info(" catokenpassword is the password for the CA token. Set to 'null' to use the default system password for Soft token CAs");
@@ -149,7 +149,7 @@ public class CaInitCommand extends BaseCaAdminCommand {
     		getLogger().info(" adding the parameter '-explicitecc' when using ECC keys makes the internal CryptoToken use explicit curve parameters instead of named curves. Should only be used when creating a CSCA for ePassports.");
     		getLogger().info(" catokenproperties is a file were you define key name, password and key alias for the HSM. Same as the Hard CA Token Properties in admin gui.");
     		getLogger().info(" signed by caid is the CA id of a CA that will sign this CA. If this is omitted the new CA will be self signed (i.e. a root CA).");
-            getLogger().info("   To create a CA signed by an external CA, use the keyword 'External', this will result in a certificate request (CSR) being saved on file, to be signed by the external CA.");
+            getLogger().info("   To create a CA signed by an external CA, use the keyword 'External' as <signed by caid>, this will result in a certificate request (CSR) being saved on file, to be signed by the external CA.");
             getLogger().info("   Requires parameter '-externalcachain <externalCA chain PEM file' with the full certificate chain of the external CA.");
     		return;
         }
