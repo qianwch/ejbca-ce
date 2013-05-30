@@ -24,6 +24,11 @@ import java.util.LinkedList;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.bouncycastle.asn1.nist.NISTObjectIdentifiers;
+import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
+import org.bouncycastle.asn1.x9.X9ObjectIdentifiers;
+import org.bouncycastle.cms.CMSSignedGenerator;
 import org.bouncycastle.jce.spec.ECNamedCurveSpec;
 import org.cesecore.keys.util.KeyTools;
 import org.cesecore.util.CertTools;
@@ -318,10 +323,78 @@ public final class AlgorithmTools {
                 signatureAlgorithm = AlgorithmConstants.SIGALG_SHA1_WITH_ECDSA;
             }
         }
-
-        log.debug("getSignatureAlgorithm: " + signatureAlgorithm);
+        if(log.isDebugEnabled()) {
+            log.debug("getSignatureAlgorithm: " + signatureAlgorithm);
+        }
         return signatureAlgorithm;
     } // getSignatureAlgorithm
 
+    /** 
+     * Get the digest algorithm corresponding to the signature algorithm. This is used for the creation of
+     * PKCS7 file. SHA1 is the default digest algorithm.
+     * 
+     */
+    public static String getDigestFromSigAlg(String sigAlg) {
+        if(sigAlg.equals(X9ObjectIdentifiers.ecdsa_with_SHA1.getId()) || sigAlg.equals(PKCSObjectIdentifiers.sha1WithRSAEncryption.getId())) {
+            return CMSSignedGenerator.DIGEST_SHA1;
+        } else if(sigAlg.equals(X9ObjectIdentifiers.ecdsa_with_SHA224.getId()) || sigAlg.equals(PKCSObjectIdentifiers.sha224WithRSAEncryption.getId())) {
+            return CMSSignedGenerator.DIGEST_SHA224;
+        } else if(sigAlg.equals(X9ObjectIdentifiers.ecdsa_with_SHA256.getId()) || sigAlg.equals(PKCSObjectIdentifiers.sha256WithRSAEncryption.getId())) {
+            return CMSSignedGenerator.DIGEST_SHA256;
+        } else if(sigAlg.equals(X9ObjectIdentifiers.ecdsa_with_SHA384.getId()) || sigAlg.equals(PKCSObjectIdentifiers.sha384WithRSAEncryption.getId())) {
+            return CMSSignedGenerator.DIGEST_SHA384;
+        } else if(sigAlg.equals(X9ObjectIdentifiers.ecdsa_with_SHA512.getId()) || sigAlg.equals(PKCSObjectIdentifiers.sha512WithRSAEncryption.getId())) {
+            return CMSSignedGenerator.DIGEST_SHA512;
+        } else if(sigAlg.equals(PKCSObjectIdentifiers.md5WithRSAEncryption.getId())) {
+            return CMSSignedGenerator.DIGEST_MD5;
+        }
+        
+        return CMSSignedGenerator.DIGEST_SHA1;
+        
+    }
+
+    /** Calculates which signature algorithm to use given a key type and a digest algorithm
+     * 
+     * @param digestAlg objectId of a digest algorithm, CMSSignedGenerator.DIGEST_SHA256 etc
+     * @param keyAlg RSA, EC, DSA
+     * @return ASN1ObjectIdentifier with the id of PKCSObjectIdentifiers.sha1WithRSAEncryption, X9ObjectIdentifiers.ecdsa_with_SHA1, X9ObjectIdentifiers.id_dsa_with_sha1, etc
+     */
+    public static ASN1ObjectIdentifier getSignAlgOidFromDigestAndKey(final String digestAlg, final String keyAlg) {
+        if (log.isTraceEnabled()) {
+            log.trace(">getSignAlg("+digestAlg+","+keyAlg+")");
+        }
+        // Default to SHA1WithRSA if everything else fails    
+        ASN1ObjectIdentifier oid = PKCSObjectIdentifiers.sha1WithRSAEncryption;
+        if (keyAlg.equals(AlgorithmConstants.KEYALGORITHM_EC) || keyAlg.equals(AlgorithmConstants.KEYALGORITHM_ECDSA)) {
+            oid = X9ObjectIdentifiers.ecdsa_with_SHA1;
+        } else if (keyAlg.equals(AlgorithmConstants.KEYALGORITHM_DSA)) {
+            oid = X9ObjectIdentifiers.id_dsa_with_sha1;            
+        }
+        if (digestAlg != null) {
+            if (digestAlg.equals(CMSSignedGenerator.DIGEST_SHA256) && keyAlg.equals(AlgorithmConstants.KEYALGORITHM_RSA)) {
+                oid = PKCSObjectIdentifiers.sha256WithRSAEncryption;            
+            } else if (digestAlg.equals(CMSSignedGenerator.DIGEST_SHA512) && keyAlg.equals(AlgorithmConstants.KEYALGORITHM_RSA)) {
+                oid = PKCSObjectIdentifiers.sha512WithRSAEncryption;
+            } else if (digestAlg.equals(CMSSignedGenerator.DIGEST_MD5) && keyAlg.equals(AlgorithmConstants.KEYALGORITHM_RSA)) {
+                oid = PKCSObjectIdentifiers.md5WithRSAEncryption;           
+            } else if (digestAlg.equals(CMSSignedGenerator.DIGEST_SHA256) && (keyAlg.equals(AlgorithmConstants.KEYALGORITHM_ECDSA) || keyAlg.equals(AlgorithmConstants.KEYALGORITHM_EC)) ) {
+                oid = X9ObjectIdentifiers.ecdsa_with_SHA256;           
+            } else if (digestAlg.equals(CMSSignedGenerator.DIGEST_SHA224) && (keyAlg.equals(AlgorithmConstants.KEYALGORITHM_ECDSA) || keyAlg.equals(AlgorithmConstants.KEYALGORITHM_EC)) ) {
+                oid = X9ObjectIdentifiers.ecdsa_with_SHA224;
+            } else if (digestAlg.equals(CMSSignedGenerator.DIGEST_SHA384) && (keyAlg.equals(AlgorithmConstants.KEYALGORITHM_ECDSA) || keyAlg.equals(AlgorithmConstants.KEYALGORITHM_EC)) ) {
+                oid = X9ObjectIdentifiers.ecdsa_with_SHA384;
+            } else if (digestAlg.equals(CMSSignedGenerator.DIGEST_SHA512) && (keyAlg.equals(AlgorithmConstants.KEYALGORITHM_ECDSA) || keyAlg.equals(AlgorithmConstants.KEYALGORITHM_EC)) ) {
+                oid = X9ObjectIdentifiers.ecdsa_with_SHA512;
+            } else if (digestAlg.equals(CMSSignedGenerator.DIGEST_SHA256) && keyAlg.equals(AlgorithmConstants.KEYALGORITHM_DSA)) {
+                oid = NISTObjectIdentifiers.dsa_with_sha256;
+            } else if (digestAlg.equals(CMSSignedGenerator.DIGEST_SHA512) && keyAlg.equals(AlgorithmConstants.KEYALGORITHM_DSA)) {
+                oid = NISTObjectIdentifiers.dsa_with_sha512;
+            }
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("getSignAlgOidFromDigestAndKey: " + oid.getId());
+        }
+        return oid;
+    }
 
 }

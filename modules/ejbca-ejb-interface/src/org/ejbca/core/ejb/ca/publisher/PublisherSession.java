@@ -30,13 +30,13 @@ public interface PublisherSession {
 
     /**
      * @return a BasePublisher or null of a publisher with the given id does not
-     *         exist
+     *         exist. Uses cache to get the object as quickly as possible.
      */
     BasePublisher getPublisher(int id);
     
     /**
      * @return a BasePublisher or null of a publisher with the given name does
-     *         not exist
+     *         not exist. Uses cache to get the object as quickly as possible.
      */
     BasePublisher getPublisher(String name);
 
@@ -50,7 +50,9 @@ public interface PublisherSession {
      * 
      * @param publisherids
      *            a Collection (Integer) of publisher IDs.
-     * @return true if successful result on all given publishers
+     * @return true if successful result on all given publishers, if the publisher is configured to not publish the certificate 
+     * (for example publishing an active certificate when the publisher only publishes revoked), true is still returned because 
+     * the publishing operation succeeded even though the publisher did not publish the certificate.
      * @throws AuthorizationDeniedException if access is denied to the CA issuing incert
      * @see org.ejbca.core.model.ca.publisher.BasePublisher
      */

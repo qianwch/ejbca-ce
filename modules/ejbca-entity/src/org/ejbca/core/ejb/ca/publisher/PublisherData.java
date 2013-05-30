@@ -36,6 +36,8 @@ import org.ejbca.core.model.ca.publisher.BasePublisher;
 
 /**
  * Representation of a publisher.
+ * 
+ * @version $Id$
  */
 @Entity
 @Table(name="PublisherData")
@@ -134,7 +136,7 @@ public class PublisherData extends ProtectedData implements Serializable {
 
     @Transient
     @Override
-    protected String getProtectString(final int version) {
+    public String getProtectString(final int version) {
         final ProtectionStringBuilder build = new ProtectionStringBuilder();
         // rowVersion is automatically updated by JPA, so it's not important, it is only used for optimistic locking
         build.append(getId()).append(getName()).append(getUpdateCounter()).append(getData());

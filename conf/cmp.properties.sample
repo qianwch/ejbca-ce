@@ -79,6 +79,29 @@
 #cmp.authenticationparameters=UID;AdminCA1
 #cmp.authenticationparameters=-;O;-
 
+# The path to the catalog where the RA-certificate is stored. The RA certificate is used to verify
+# the RA signature in the NestedMessageContent
+# Default:
+#cmp.racertificatepath=/tmp/racerts
+
+# This option works in combination with the authentication module 'EndEntityCertificate' in client mode. Normally, the certificate attached in
+# the 'extraCerts' field in the PKIMessage has to be present in Ejbca's database in order for the PKIMessage to authenticate. But when vendor certificate
+# mode is activated, aka. this option is set to 'true', the certificate in 'extraCerts' does not need to be present in the database, however, 
+# it has to be issued by the CA specified in 'cmp.vendorca' (which is expected to be an external CA) and this only works with the initialization and 
+# certification requests. 
+# This mode is used for initial enrollment only, so the end entity concerned has to have status NEW in order for this to work.
+# 
+# Such enrollment method is used for example when following 3GPP standard. If you are not sure whether you are following 3GPP specifications or not, 
+# it is recommended that you leave this option set to 'false'.
+#
+# Default: false
+#cmp.vendorcertificatemode=true
+
+# Specify the name of the external CA to be used to authenticate the certificate in the 'extraCerts' field when vendor certificate mode is activated.
+#
+# Default:
+#cmp.vendorca=VendorCA
+
 # Shared secret between the CA and the RA used to authenticate valid RA messages.
 # Leave this commented out to be able to use a separate secret for each CA (see Edit Certificate Authorities configuration).
 #
@@ -126,13 +149,6 @@
 # Default: DN
 #cmp.ra.namegenerationscheme=DN
 
-# The path to the catalog where the RA-certificate is stored. The RA certificate is used to verify
-# the RA signature in the NestedMessageContent
-
-# Default:
-#cmp.racertificatepath=/tmp/racerts
-
-
 # Parameters for name generation, for DN it can be for example CN, UID or SN. 
 # Either the CN or the UID from the request can be used. 
 # You can add several in order to have fall-back in case the first does not exist in the DN, for example UID;SN;CN. First try UID, if it does not exist try SN (SerialNumber) etc. 
@@ -169,7 +185,7 @@
 # The endEntityProfile to be used when adding users in RA mode. 
 # Possible values are:
 # The name of a End Entity Profile
-# KeyId - use a End Entity Profile with the same name as the KeyId sent in the CMP request (UTF-8 encoding is used)
+# KeyId - use a End Entity Profile with the same name as the KeyId (PKIHeader.senderKID) sent in the CMP request (UTF-8 encoding is used)
 #
 # Default: EMPTY
 #cmp.ra.endentityprofile=EMPTY
@@ -178,7 +194,7 @@
 # Possible values are:
 # The name of a Certificate Profile
 # ProfileDefault - use the default certificate profile of the end entity profile used
-# KeyId - use a Certificate Profile with the same name as the KeyId sent in the CMP request (UTF-8 encoding is used)
+# KeyId - use a Certificate Profile with the same name as the KeyId (PKIHeader.senderKID) sent in the CMP request (UTF-8 encoding is used)
 #
 # Default: ENDUSER
 #cmp.ra.certificateprofile=ENDUSER
@@ -187,7 +203,7 @@
 # Possible values are:
 # The name of a CA
 # ProfileDefault - use the default CA of the end entity profile used
-# KeyId - use a CA with the same name as the KeyId sent in the CMP request (UTF-8 encoding is used)
+# KeyId - use a CA with the same name as the KeyId (PKIHeader.senderKID) sent in the CMP request (UTF-8 encoding is used)
 #
 # Default: AdminCA1
 #cmp.ra.caname=AdminCA1

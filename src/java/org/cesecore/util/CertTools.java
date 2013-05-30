@@ -280,7 +280,7 @@ public class CertTools {
                 }
 
             } else {
-                log.warn("Huh, what's this? DN: " + dn + " PAIR: " + pair);
+                log.warn("No 'key=value' pair encountered in token '" + pair + "' while converting subject DN '" + dn + "' into X509Name.");
             }
         }
 
@@ -1827,6 +1827,9 @@ public class CertTools {
                     int tag = gn.getTagNo();
                     DEREncodable name = gn.getName();
                     String str = CertTools.getGeneralNameString(tag, name);
+                    if ( str==null ) {
+                        continue;
+                    }
                     if (altName == null) {
                         altName = str;
                     } else {

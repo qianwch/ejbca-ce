@@ -142,8 +142,8 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
 				log.debug("Received CMP message with pvno="+header.getPvno()+", sender="+header.getSender().toString()+", recipient="+header.getRecipient().toString());
 				log.debug("The CMP message is already authenticated: " + authenticated);
 				log.debug("Body is of type: "+tagno);
-				log.debug(req);
-				//log.debug(ASN1Dump.dumpAsString(req));				
+                log.debug("Transaction id: "+header.getTransactionID());
+                //log.debug(ASN1Dump.dumpAsString(req));
 			}
 
 			BaseCmpMessage cmpMessage = null;
@@ -152,11 +152,11 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
 			switch (tagno) {
 			case 0:
 				// 0 (ir, Initialization Request) and 2 (cr, Certification Req) are both certificate requests
-				handler = new CrmfMessageHandler(admin, caSession,  certificateProfileSession, certificateRequestSession, endEntityAccessSession, endEntityProfileSession, signSession, certificateStoreSession, authSession, authenticationProviderSession);
+				handler = new CrmfMessageHandler(admin, caSession,  certificateProfileSession, certificateRequestSession, endEntityAccessSession, endEntityProfileSession, signSession, certificateStoreSession, authSession, authenticationProviderSession, userAdminSession);
 				cmpMessage = new CrmfRequestMessage(req, CmpConfiguration.getDefaultCA(), CmpConfiguration.getAllowRAVerifyPOPO(), CmpConfiguration.getExtractUsernameComponent());
 				break;
 			case 2:
-				handler = new CrmfMessageHandler(admin, caSession, certificateProfileSession, certificateRequestSession, endEntityAccessSession, endEntityProfileSession, signSession, certificateStoreSession, authSession, authenticationProviderSession);
+				handler = new CrmfMessageHandler(admin, caSession, certificateProfileSession, certificateRequestSession, endEntityAccessSession, endEntityProfileSession, signSession, certificateStoreSession, authSession, authenticationProviderSession, userAdminSession);
 				cmpMessage = new CrmfRequestMessage(req, CmpConfiguration.getDefaultCA(), CmpConfiguration.getAllowRAVerifyPOPO(), CmpConfiguration.getExtractUsernameComponent());
 				break;
 			case 7:
@@ -185,7 +185,7 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
                 final NestedMessageContent nestedMessage = new NestedMessageContent(req);
                 if(nestedMessage.verify()) {
                     if(log.isDebugEnabled()) {
-                        log.debug("The NestedMessageContent was verifies successfully");
+                        log.debug("The NestedMessageContent was verified successfully");
                     }
                     try {
                         final DEREncodable nested = nestedMessage.getPKIMessage().getBody().getNested();
@@ -194,17 +194,15 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
                         
                         final DERObject msgDerObject = getDERObject(pkiMessages[0].getDERObject().getDEREncoded());
                         return dispatch(admin, msgDerObject, true);
-                      
-                        //return dispatch(admin, pkiMessages[0].getDERObject().getDEREncoded());
                     } catch (IllegalArgumentException e) {
                         final String errMsg = e.getLocalizedMessage();
-                        log.error(errMsg);
+                        log.info(errMsg, e);
                         cmpMessage = new NestedMessageContent(req);
                         return CmpMessageHelper.createUnprotectedErrorMessage(cmpMessage, ResponseStatus.FAILURE, FailInfo.BAD_REQUEST, errMsg); 
                     }
                 } else {
-                    final String errMsg = "Could not verify the RA";
-                    log.error(errMsg);
+                    final String errMsg = "Could not verify the RA, signature verification on NestedMessageContent failed.";
+                    log.info(errMsg);
                     cmpMessage = new NestedMessageContent(req);
                     return CmpMessageHelper.createUnprotectedErrorMessage(cmpMessage, ResponseStatus.FAILURE, FailInfo.BAD_REQUEST, errMsg);
                 }
@@ -224,7 +222,7 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
 			}
 			final ResponseMessage ret  = handler.handleMessage(cmpMessage, authenticated);
 			if (ret != null) {
-				log.debug("Received a response message from CmpMessageHandler.");
+				log.debug("Received a response message of type '"+ret.getClass().getName()+"' from CmpMessageHandler.");
 			} else {
 				log.error( intres.getLocalizedMessage("cmp.errorresponsenull") );
 			}

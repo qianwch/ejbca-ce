@@ -50,8 +50,10 @@ import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DERBitString;
 import org.bouncycastle.asn1.DERGeneralizedTime;
@@ -72,6 +74,7 @@ import org.bouncycastle.asn1.x509.X509CertificateStructure;
 import org.bouncycastle.asn1.x509.X509Extension;
 import org.bouncycastle.asn1.x509.X509Extensions;
 import org.bouncycastle.asn1.x509.X509Name;
+import org.bouncycastle.asn1.x9.X9ObjectIdentifiers;
 import org.bouncycastle.jce.X509KeyUsage;
 import org.bouncycastle.jce.X509Principal;
 import org.cesecore.certificates.certificate.CertificateStatus;
@@ -79,6 +82,7 @@ import org.cesecore.certificates.certificate.CertificateStoreSessionRemote;
 import org.cesecore.certificates.certificate.request.FailInfo;
 import org.cesecore.certificates.certificate.request.ResponseStatus;
 import org.cesecore.certificates.crl.RevokedCertInfo;
+import org.cesecore.certificates.util.AlgorithmTools;
 import org.cesecore.jndi.JndiHelper;
 import org.cesecore.util.CertTools;
 import org.ejbca.config.WebConfiguration;
@@ -242,14 +246,15 @@ public abstract class CmpTestCase extends CaTestCase {
             DEROutputStream mout = new DEROutputStream(baos);
             mout.writeObject(myCertRequest);
             mout.close();
-            byte[] popoProtectionBytes = baos.toByteArray();
-            Signature sig = Signature.getInstance(PKCSObjectIdentifiers.sha1WithRSAEncryption.getId(), "BC");
+            byte[] popoProtectionBytes = baos.toByteArray();            
+            String    sigalg = AlgorithmTools.getSignAlgOidFromDigestAndKey(null, keys.getPrivate().getAlgorithm()).getId();
+            Signature sig = Signature.getInstance(sigalg, "BC");
             sig.initSign(keys.getPrivate());
             sig.update(popoProtectionBytes);
 
             DERBitString bs = new DERBitString(sig.sign());
 
-            POPOSigningKey myPOPOSigningKey = new POPOSigningKey(new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption), bs);
+            POPOSigningKey myPOPOSigningKey = new POPOSigningKey(new AlgorithmIdentifier(new ASN1ObjectIdentifier(sigalg)), bs);
             // myPOPOSigningKey.setPoposkInput( myPOPOSigningKeyInput );
             myProofOfPossession = new ProofOfPossession(myPOPOSigningKey, 1);
         }
@@ -336,6 +341,107 @@ public abstract class CmpTestCase extends CaTestCase {
         return myPKIMessage;
     }
 
+    protected PKIMessage genRenewalReq(String userDN, Certificate cacert, byte[] nonce, byte[] transid, KeyPair keys, 
+            boolean raVerifiedPopo, String reqSubjectDN, String reqIssuerDN) throws IOException, NoSuchAlgorithmException, 
+            NoSuchProviderException, InvalidKeyException, SignatureException {
+        
+        CertTemplate myCertTemplate = new CertTemplate();
+        
+        OptionalValidity myOptionalValidity = new OptionalValidity();
+        org.bouncycastle.asn1.x509.Time nb = new org.bouncycastle.asn1.x509.Time(new DERGeneralizedTime("20030211002120Z"));
+        org.bouncycastle.asn1.x509.Time na = new org.bouncycastle.asn1.x509.Time(new Date());
+        myOptionalValidity.setNotBefore(nb);
+        myOptionalValidity.setNotAfter(na);
+        myCertTemplate.setValidity(myOptionalValidity);
+        
+        if(reqSubjectDN != null) {
+            myCertTemplate.setSubject(new X509Name(reqSubjectDN));
+        }
+        if(reqIssuerDN != null) {
+            myCertTemplate.setIssuer(new X509Name(reqIssuerDN));
+        }
+
+
+        byte[] bytes = keys.getPublic().getEncoded();
+        ByteArrayInputStream bIn = new ByteArrayInputStream(bytes);
+        ASN1InputStream dIn = new ASN1InputStream(bIn);
+        SubjectPublicKeyInfo keyInfo = new SubjectPublicKeyInfo((ASN1Sequence) dIn.readObject());
+        myCertTemplate.setPublicKey(keyInfo);
+
+        CertRequest myCertRequest = new CertRequest(new DERInteger(4), myCertTemplate);
+        // myCertRequest.addControls(new
+        // AttributeTypeAndValue(CRMFObjectIdentifiers.regInfo_utf8Pairs, new
+        // DERInteger(12345)));
+        CertReqMsg myCertReqMsg = new CertReqMsg(myCertRequest);
+
+        // POPO
+        /*
+         * PKMACValue myPKMACValue = new PKMACValue( new AlgorithmIdentifier(new
+         * DERObjectIdentifier("8.2.1.2.3.4"), new DERBitString(new byte[] { 8,
+         * 1, 1, 2 })), new DERBitString(new byte[] { 12, 29, 37, 43 }));
+         * 
+         * POPOPrivKey myPOPOPrivKey = new POPOPrivKey(new DERBitString(new
+         * byte[] { 44 }), 2); //take choice pos tag 2
+         * 
+         * POPOSigningKeyInput myPOPOSigningKeyInput = new POPOSigningKeyInput(
+         * myPKMACValue, new SubjectPublicKeyInfo( new AlgorithmIdentifier(new
+         * DERObjectIdentifier("9.3.3.9.2.2"), new DERBitString(new byte[] { 2,
+         * 9, 7, 3 })), new byte[] { 7, 7, 7, 4, 5, 6, 7, 7, 7 }));
+         */
+        ProofOfPossession myProofOfPossession = null;
+        if (raVerifiedPopo) {
+            // raVerified POPO (meaning there is no POPO)
+            myProofOfPossession = new ProofOfPossession(new DERNull(), 0);
+        } else {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            DEROutputStream mout = new DEROutputStream(baos);
+            mout.writeObject(myCertRequest);
+            mout.close();
+            byte[] popoProtectionBytes = baos.toByteArray();
+            String sigalg = AlgorithmTools.getSignAlgOidFromDigestAndKey(null, keys.getPrivate().getAlgorithm()).getId();
+            Signature sig = Signature.getInstance(sigalg);
+            sig.initSign(keys.getPrivate());
+            sig.update(popoProtectionBytes);
+
+            DERBitString bs = new DERBitString(sig.sign());
+
+            POPOSigningKey myPOPOSigningKey = new POPOSigningKey(new AlgorithmIdentifier(new ASN1ObjectIdentifier(sigalg)), bs);
+            // myPOPOSigningKey.setPoposkInput( myPOPOSigningKeyInput );
+            myProofOfPossession = new ProofOfPossession(myPOPOSigningKey, 1);
+        }
+
+        myCertReqMsg.setPop(myProofOfPossession);
+        // myCertReqMsg.addRegInfo(new AttributeTypeAndValue(new
+        // DERObjectIdentifier("1.3.6.2.2.2.2.3.1"), new
+        // DERInteger(1122334455)));
+        AttributeTypeAndValue av = new AttributeTypeAndValue(CRMFObjectIdentifiers.regCtrl_regToken, new DERUTF8String("foo123"));
+        myCertReqMsg.addRegInfo(av);
+
+        CertReqMessages myCertReqMessages = new CertReqMessages(myCertReqMsg);
+        // myCertReqMessages.addCertReqMsg(myCertReqMsg);
+
+        // log.debug("CAcert subject name: "+cacert.getSubjectDN().getName());
+        PKIHeader myPKIHeader = new PKIHeader(new DERInteger(2), new GeneralName(new X509Name(userDN)), new GeneralName(new X509Name(
+                ((X509Certificate) cacert).getSubjectDN().getName())));
+        myPKIHeader.setMessageTime(new DERGeneralizedTime(new Date()));
+        // senderNonce
+        myPKIHeader.setSenderNonce(new DEROctetString(nonce));
+        // TransactionId
+        myPKIHeader.setTransactionID(new DEROctetString(transid));
+        // myPKIHeader.setRecipNonce(new DEROctetString(new
+        // String("RecipNonce").getBytes()));
+        // PKIFreeText myPKIFreeText = new PKIFreeText(new
+        // DERUTF8String("hello"));
+        // myPKIFreeText.addString(new DERUTF8String("free text string"));
+        // myPKIHeader.setFreeText(myPKIFreeText);
+
+        PKIBody myPKIBody = new PKIBody(myCertReqMessages, 7); // Key Update Request
+        PKIMessage myPKIMessage = new PKIMessage(myPKIHeader, myPKIBody);
+        
+        return myPKIMessage;
+
+    }
+    
     protected PKIMessage protectPKIMessage(PKIMessage msg, boolean badObjectId, String password, int iterations) throws NoSuchAlgorithmException,
             NoSuchProviderException, InvalidKeyException {
         return protectPKIMessage(msg, badObjectId, password, "primekey", iterations);
@@ -452,7 +558,7 @@ public abstract class CmpTestCase extends CaTestCase {
     }
 
     protected void checkCmpResponseGeneral(byte[] retMsg, String issuerDN, String userDN, Certificate cacert, byte[] senderNonce, byte[] transId,
-            boolean signed, String pbeSecret) throws Exception {
+            boolean signed, String pbeSecret, String expectedSignAlg) throws Exception {
         assertNotNull("No response from server.", retMsg);
         assertTrue("Response was of 0 length.", retMsg.length > 0);
         boolean pbe = (pbeSecret != null);
@@ -467,9 +573,16 @@ public abstract class CmpTestCase extends CaTestCase {
 
         // Check that the message is signed with the correct digest alg
         if (signed) {
+            if(StringUtils.isEmpty(expectedSignAlg)) {
+                if(AlgorithmTools.getSignatureAlgorithm(cacert).contains("ECDSA")) {
+                    expectedSignAlg = X9ObjectIdentifiers.ecdsa_with_SHA1.getId();
+                } else {
+                    expectedSignAlg = PKCSObjectIdentifiers.sha1WithRSAEncryption.getId();
+                }
+            }
             AlgorithmIdentifier algId = header.getProtectionAlg();
             assertNotNull("The AlgorithmIdentifier in the response signature could not be read.", algId);
-            assertEquals(PKCSObjectIdentifiers.sha1WithRSAEncryption.getId(), algId.getObjectId().getId());
+            assertEquals(expectedSignAlg, algId.getObjectId().getId());
         }
         if (pbe) {
             AlgorithmIdentifier algId = header.getProtectionAlg();
@@ -490,7 +603,7 @@ public abstract class CmpTestCase extends CaTestCase {
             DERBitString bs = respObject.getProtection();
             Signature sig;
             try {
-                sig = Signature.getInstance(PKCSObjectIdentifiers.sha1WithRSAEncryption.getId(), "BC");
+                sig = Signature.getInstance(expectedSignAlg, "BC");
                 sig.initVerify(cacert);
                 sig.update(protBytes);
                 boolean ret = sig.verify(bs.getBytes());

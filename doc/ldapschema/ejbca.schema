@@ -1,8 +1,6 @@
 #
 # EJBCA Schema for OpenLDAP
 #
-# Namespace: Primekey
-#
 # Written by Mike Jackson <mj@sci.fi>
 #
 # Namespace Primekey - 1.3.6.1.4.1.22408
@@ -22,10 +20,10 @@
 #
 #
 #
-attributetype (
+attributeType (
   1.3.6.1.4.1.22408.1.1.1.1
   NAME 'ejbcaDeviceCertificate'
-  DESC 'Cerfificate for devices'
+  DESC 'Certificate for devices'
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.5
   )
 

@@ -45,7 +45,9 @@ import org.ejbca.core.model.hardtoken.HardTokenIssuerData;
 import org.ejbca.util.InterfaceCache;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
 
 /**
@@ -53,6 +55,7 @@ import org.junit.Test;
  *
  * @version $Id$
  */
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class HardTokenIssuerTest {
     private static Logger log = Logger.getLogger(HardTokenIssuerTest.class);
     

@@ -173,7 +173,7 @@ See doc/sql-scripts for index scripts.
 
 <subsubsection name="Enforce unique DN">
 <p>
-'Enforce unique DN' guarantees that certificates with the same Subject DN can only be issued to the same user from this
+'Enforce unique DN' guarantees that users with the same Subject DN can not be issued certificates from this
 CA. This means that a user is allowed to have multiple certificates (e.g. for different uses) with the same Subject DN
 as long as the same 'username' is used, but two users can not share the same Subject DN. The check is only performed
 when new certificates are issued.
@@ -371,7 +371,28 @@ This can be useful if you have an HSM setup where only one set of keys can be ac
 two different, non-persistence, operator cards sets for the RootCA and the SubCA. Using the SubCA as an external CA you can still create
 the PKI but with only one CA active at a time.
 </p>
-</subsection> 
+<subsubsection name="Using the CLI">
+<p>You can also create a CA signed by an external CA using the CLI. The process is basically the same as when using the GUI. 
+</p><p>
+Create the CA generating a CSR (CA token password is set to foo123):
+</p> 
+<source>
+bin/ejbca.sh ca init CaSignedByExteral "CN=This CA is Signed by an external CA" soft foo123 secp256r1 ECDSA 365 null SHA256withECDSA null External -externalcachain chain.pem
+</source>
+<p>
+The file chain.pem contains the certificate chain of the external CA, just as described above.
+Running the above command a CSR named 'CaSignedByExteral_csr.der' will be saved to your disk, containing a PKCS#10 CSR in binary format. Send the CSR to the external CA and get the signed sub CA certificate returned back.
+</p><p>
+Import the sub CA certificate, activating your CA:
+</p>
+<source>
+bin/ejbca.sh ca importcacert CaSignedByExteral subcacertificate.pem
+</source>
+<p>
+The file 'subcacertificate.pem' contains the received sub CA certificate.
+</p>
+</subsubsection>
+</subsection>
 <subsection name="Signing an External CA">
 <p>
 In some cases you might want to have one of your CA:s signing another external CA. This can be done in two ways:
@@ -734,7 +755,7 @@ There are two places in EJBCA where this can be configured:
 <li>In the Certificate profile (Edit certificate profiles)</li>
 <li>In the CA configuration (Edit Certificate Authorities)</li>
 </ul>
-The relationship between the settings is that they are both evaluated in an OR expression. 
+The relationship between the settings is that they are both evaluated in a logical AND expression. 
 This means that if both are true the DN will have Ldap DN order, but if any one of them is false the DN will have X.500 order.
 </p>
 </subsubsection>
@@ -975,6 +996,10 @@ The 'number of allowed requests' in the End Entity Profile will set the default,
 When editing an existing end entity and setting the status to new, from a non-new status, the 'number of allowed requests' will automatically be altered to the default value for the profile. If the end entity profile used no longer uses the 'number of allowed requests' the request counter for the end entity will be removed when the end entity is edited.
 </p>
 </subsubsection>
+</subsection>
+<subsection name="Plug in field restrictions">
+<p>Administrators can develop further custom user field restictions using the Fieldvalidator as described in <a href="adminguide.html#Customizing%20EJBCA">Customizing EJBCA</a>.
+</p>
 </subsection>
 </section>
 
@@ -1454,9 +1479,8 @@ used.
  </p>
     <p>Below is an example using 'OpenSSL'; 'ca.pem' is the PEM format CA certificate and logexport.p7m is the file downloaded from the logging interface.</p>
     <source>
-jboss@livecd $ openssl smime -verify -nodetach -CAfile ca.pem -inform DER -in logexport.p7m -out logexport.xml
+$ openssl smime -verify -nodetach -CAfile ca.pem -inform DER -in logexport.p7m -out logexport.xml
 Verification successful
-jboss@livecd $
    </source>
     </subsection>
 </section>

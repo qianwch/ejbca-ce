@@ -493,7 +493,7 @@ public abstract class CATokenTestBase {
 						catoken.getPublicKey(CATokenConstants.CAKEYPURPOSE_CERTSIGN), catoken.getCryptoToken().getSignProviderName());
 				assertTrue(false);
 			} catch (CryptoTokenOfflineException e) {
-				assertEquals(getProvider(), e.getMessage());
+                assertEquals("Can not instantiate "+getProvider()+". keyStore (111) == null.", e.getMessage());
 			}
 			// Activate with wrong PIN should not work
 			try {
@@ -520,6 +520,7 @@ public abstract class CATokenTestBase {
 			}
 		} finally {
 			// End by deleting all old entries
+            catoken.getCryptoToken().activate(tokenpin.toCharArray());
 			catoken.getCryptoToken().deleteEntry(tokenpin.toCharArray(), "rsatest00000");
 			catoken.getCryptoToken().deleteEntry(tokenpin.toCharArray(), "rsatest00001");
 			catoken.getCryptoToken().deleteEntry(tokenpin.toCharArray(), "rsatest00002");

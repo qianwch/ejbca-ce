@@ -13,13 +13,14 @@
 
 package org.ejbca.ui.cli.ca;
 
-import java.lang.reflect.Method;
+import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
 import org.cesecore.util.CryptoProviderTools;
 import org.ejbca.core.model.ca.publisher.BasePublisher;
 import org.ejbca.ui.cli.CliUsernameException;
 import org.ejbca.ui.cli.ErrorAdminCommandException;
+import org.ejbca.ui.cli.FieldEditor;
+import org.ejbca.util.CliTools;
 
 /**
  * Changes fields in a Publisher.
@@ -36,10 +37,18 @@ public class CaEditPublisherCommand extends BaseCaAdminCommand {
 
         if (args.length < 3) {
             getLogger().info("Description: " + getDescription());
-            getLogger().info("Usage: " + getCommand() + " <publisher name> <field name>=<field value>\n"+
-                    "Only String value fields can be modified in this version.\n\n"+
-            "Fields that can be set are derived from setFieldName of the publisher java code. If there is a 'setFieldName(String)' method, the values to use in this command should be 'fieldName=value'\n"+
-            "Example: ca editpublisher PublisherName hostnames=myhost.com");
+            getLogger().info("Usage: " + getCommand() + " <publisher name> <field name> <field value>\n"+
+                    "\n"+
+            "Fields that can be set are derived from setFieldName of the publisher java code. If there is a 'setFieldName(type)' method, the values to use in this command should be 'fieldName value'\n"+
+            "Example: ca editpublisher PublisherName hostnames myhost.com\n"+
+            "Example: ca editpublisher PublisherName addMultipleCertificates true\n"+
+            "Example: ca editpublisher PublisherName connectionTimeOut 10000\n"+
+            "\n"+
+            "Use the option -listFields to only list available fields in the publisher.\n"+
+            "Example: ca editpublisher PublisherName -listFields\n"+
+            "\n"+
+            "Use the option -getValue to only get the value of a field in the publisher.\n"+
+            "Example: ca editpublisher PublisherName -getValue hostnames");
             return;
         }
         try {
@@ -47,53 +56,54 @@ public class CaEditPublisherCommand extends BaseCaAdminCommand {
         } catch (CliUsernameException e) {
             return;
         }
+        
+        FieldEditor fieldEditor = new FieldEditor(getLogger());
         try {
             CryptoProviderTools.installBCProvider();
+            List<String> argsList = CliTools.getAsModifyableList(args);
+            int index;
+            boolean listOnly = false;
+            if ((index = argsList.indexOf("-listFields")) != -1) {
+                argsList.remove(index);
+                // Only list fields available
+                listOnly = true;
+            }
+            boolean getOnly = false;
+            if ((index = argsList.indexOf("-getValue")) != -1) {
+                argsList.remove(index);
+                // Only get value of a field
+                getOnly = true;
+            }
+            args = argsList.toArray(new String[argsList.size()]);
             final String name = args[1];
-            final String fieldEdit = args[2];
+            final String field;
+            if (args.length > 2) {
+                field = args[2];
+            } else {
+                field = null;
+            }
+            final String value;
+            if (args.length > 3) {
+                value = args[3];
+            } else {
+                value = null;
+            }
+            
             final BasePublisher pub = ejb.getPublisherSession().getPublisher(name);
             if (pub == null) {
                 getLogger().info("Publisher '"+name+"' does not exist.");
-            } else {                
-                final String[] fieldArray = StringUtils.split(fieldEdit, '=');
-                if ((fieldArray == null) || (fieldArray.length == 0) || (fieldArray.length < 2)) {
-                    getLogger().info("No fields found, enter field and modifyer like 'hostname=myhost.com'");
-                    return;
-                }
-                final String field = fieldArray[0];
-                final String fieldValue = fieldArray[1];
-                char firstChar = field.charAt(0);
-                final String setmethodName = "set"+String.valueOf(firstChar).toUpperCase()+field.substring(1);
-                final String getMethodName = "get"+String.valueOf(firstChar).toUpperCase()+field.substring(1);
-                getLogger().info("Modified publisher '"+name+"'...");
-                getLogger().info("Trying to find method '"+getMethodName+"' in class "+pub.getClass());
-                final Method modMethod;
-                try {
-                    modMethod = pub.getClass().getMethod(getMethodName);                    
-                } catch (NoSuchMethodException e) {
-                    throw new ErrorAdminCommandException("Method '"+getMethodName+"' does not exist. Did you use correct case for every character of the field?");
-                }
-                getLogger().info("Invoking method '"+getMethodName+"' vith no parameters.");
-                Object o = modMethod.invoke(pub);
-                getLogger().info("Old value for '"+field+"' is '"+o+"'.");
-                getLogger().info("Trying to find method '"+setmethodName+"' in class "+pub.getClass());
-                final Method method;
-                try {
-                    method = pub.getClass().getMethod(setmethodName, String.class);
-                } catch (NoSuchMethodException e) {
-                    throw new ErrorAdminCommandException("Method '"+setmethodName+"' with parameter of type java.lang.String does not exist. Did you use correct case for every character of the field?");
-                }
-                getLogger().info("Invoking method '"+setmethodName+"' vith parameter value '"+fieldValue+"'.");
-                method.invoke(pub, fieldValue);
-                getLogger().info("Storing modified publisher '"+name+"'...");
-                ejb.getPublisherSession().changePublisher(getAdmin(cliUserName, cliPassword), name, pub);
-                // Verify our new value
-                getLogger().info("Reading modified value for verification...");
-                final BasePublisher modpub = ejb.getPublisherSession().getPublisher(name);
-                Object modo = modMethod.invoke(modpub);
-                getLogger().info(getMethodName+" returned new value '"+modo+"'.");
-                if (!modo.equals(fieldValue)) {
-                    getLogger().error("Modified value '"+modo+"' is not the expected '"+fieldValue+"'.");                
+            } else {
+                // List fields, get values or set value
+                if (!fieldEditor.listGetOrSet(listOnly, getOnly, name, field, value, pub)) {
+                    // Store the modifies object
+                    getLogger().info("Storing modified publisher '"+name+"'...");
+                    ejb.getPublisherSession().changePublisher(getAdmin(cliUserName, cliPassword), name, pub);
+                    // Verify our new value
+                    getLogger().info("Reading modified value for verification...");
+                    final BasePublisher modpub = ejb.getPublisherSession().getPublisher(name);
+                    
+                    // Print return value
+                    fieldEditor.getBeanValue(field, modpub);                    
                 }
             }
         } catch (Exception e) {

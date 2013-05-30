@@ -36,7 +36,8 @@ public final class AlgorithmConstants {
     public static final String[] AVAILABLE_SIGALGS = {SIGALG_SHA1_WITH_RSA, SIGALG_SHA256_WITH_RSA, SIGALG_SHA384_WITH_RSA, SIGALG_SHA512_WITH_RSA, SIGALG_SHA256_WITH_RSA_AND_MGF1, SIGALG_SHA1_WITH_ECDSA, SIGALG_SHA224_WITH_ECDSA, SIGALG_SHA256_WITH_ECDSA, SIGALG_SHA384_WITH_ECDSA, SIGALG_SHA1_WITH_DSA};
     
     public static final String KEYALGORITHM_RSA   = "RSA";
-    public static final String KEYALGORITHM_ECDSA = "ECDSA";
+    public static final String KEYALGORITHM_EC    = "EC";
+    public static final String KEYALGORITHM_ECDSA = "ECDSA"; //The same as "EC", just named differently sometimes. "EC" and "ECDSA" should be handled in the same way
     public static final String KEYALGORITHM_DSA   = "DSA";
     
     private AlgorithmConstants () {} // Not for instantiation

@@ -19,6 +19,8 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authorization.AuthorizationDeniedException;
@@ -37,6 +39,10 @@ import org.ejbca.core.model.ca.publisher.PublisherExistsException;
 @TransactionAttribute(TransactionAttributeType.REQUIRED)
 public class PublisherProxySessionBean implements PublisherProxySessionRemote {
 
+    @PersistenceContext(unitName="ejbca")
+    private EntityManager entityManager;
+
+
     @EJB
     private PublisherSessionLocal publisherSession;
     
@@ -54,6 +60,11 @@ public class PublisherProxySessionBean implements PublisherProxySessionRemote {
     @Override
     public int getPublisherId(String name) {
         return publisherSession.getPublisherId(name);
+    }
+
+    @Override
+    public String getPublisherName(int id) {
+        return publisherSession.getPublisherName(id);
     }
 
     @Override
@@ -80,4 +91,17 @@ public class PublisherProxySessionBean implements PublisherProxySessionRemote {
         publisherSession.testConnection(publisherid);
     }
 
+    @Override
+    public void flushPublisherCache() {
+        publisherSession.flushPublisherCache();
+    }
+
+    @Override
+    public void internalChangeCertificateProfileNoFlushCache(String name, BasePublisher publisher) throws AuthorizationDeniedException {
+        PublisherData htp = PublisherData.findByName(entityManager, name);
+        if (htp != null) {
+            htp.setPublisher(publisher);
+        }
+    }
+    
 }

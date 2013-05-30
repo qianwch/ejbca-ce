@@ -36,6 +36,7 @@ import org.cesecore.certificates.certificate.request.ResponseMessage;
 import org.cesecore.certificates.certificate.request.ResponseStatus;
 import org.cesecore.certificates.certificateprofile.CertificateProfileSession;
 import org.cesecore.certificates.endentity.EndEntityInformation;
+import org.cesecore.certificates.util.AlgorithmTools;
 import org.ejbca.config.CmpConfiguration;
 import org.ejbca.core.EjbcaException;
 import org.ejbca.core.ejb.authentication.web.WebAuthenticationProviderSessionLocal;
@@ -155,7 +156,7 @@ public class CrmfKeyUpdateHandler extends BaseCmpMessageHandler implements ICmpM
                 // Authenticate the request
                 EndEntityCertificateAuthenticationModule eecmodule = new EndEntityCertificateAuthenticationModule(getEECCA());
                 eecmodule.setSession(this.admin, this.caSession, this.certStoreSession, this.authorizationSession, this.endEntityProfileSession, 
-                        this.endEntityAccessSession, authenticationProviderSession);
+                        this.endEntityAccessSession, this.authenticationProviderSession, this.userAdminSession);
                 if(!eecmodule.verifyOrExtract(crmfreq.getPKIMessage(), null, authenticated)) {
                     String errMsg = eecmodule.getErrorMessage();
                     if( errMsg == null) {
@@ -237,7 +238,9 @@ public class CrmfKeyUpdateHandler extends BaseCmpMessageHandler implements ICmpM
                 // Set the appropriate parameters in the request
                 crmfreq.setUsername(userdata.getUsername());
                 crmfreq.setPassword(password);
-                
+                if(crmfreq.getHeader().getProtectionAlg() != null) {
+                    crmfreq.setPreferredDigestAlg(AlgorithmTools.getDigestFromSigAlg(crmfreq.getHeader().getProtectionAlg().getAlgorithm().getId()));
+                }
 
                 // Check the public key, whether it is allowed to use the old keys or not.
                 if(!CmpConfiguration.getAllowUpdateWithSameKey()) {

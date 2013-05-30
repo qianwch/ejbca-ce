@@ -269,6 +269,7 @@
 		<include name="org/ejbca/core/model/ca/certificateprofiles/CertificatePolicy.java"/>
 		<!-- Tool for tests. -->
 		<include name="org/ejbca/util/NonEjbTestTools.java"/>
+		<include name="org/ejbca/core/ejb/ProfilingStat.java"/>
 	</fileset>
 	<pathconvert refid="source.fileset.ejbca-util" pathsep=" " property="source.fileset.ejbca-util.files">
 		<map from="${src.dir}/" to=""/>
@@ -394,6 +395,10 @@
 	</target>
 
 	<target name="build" description="Build this module" depends="compile-ejbca-ejb">
+		<!-- Only include the XML defined interceptors for every EJB if we are non-production mode -->
+        <condition property="include-ejb-jar-xml" value="" else="ejb-jar.xml">
+            <equals arg1="${ejbca.productionmode}" arg2="true" casesensitive="false"/>
+        </condition>
 		<jar destfile="${mod.ejbca-ejb.lib}">
 			<fileset dir="${build.dir}"/>
 			<!--
@@ -401,7 +406,7 @@
         		<exclude name="**/META-INF/**"/>
         	</fileset>
         	-->
-			<zipfileset prefix="META-INF" dir="${resources.dir}" includes="weblogic-ejb-jar.xml ibm-ejb-jar-bnd.xml jboss.xml"/>
+			<zipfileset prefix="META-INF" dir="${resources.dir}" includes="${include-ejb-jar-xml} weblogic-ejb-jar.xml ibm-ejb-jar-bnd.xml jboss.xml"/>
 		</jar>
 		<condition property="generate-stubs" value="true">
 			<equals arg1="websphere" arg2="${appserver.type}"/>
@@ -584,16 +589,44 @@
 		<echo message=" ** Running stand-alone tests in parallel chunks. Console output will be a bit scrambled.. **"/>
 		<parallel>
 			<antcall target="test-subprocess">
-				<param name="test-subprocess.include-pattern" value="org/ejbca/core/model/**/*Test.class" />
+				<param name="test-subprocess.include-pattern" value="org/ejbca/core/model/ra/*Test.class" />
 				<param name="test-subprocess.exclude-pattern" value="" />
+			</antcall>
+			<antcall target="test-subprocess">
+				<param name="test-subprocess.include-pattern" value="org/ejbca/core/model/**/*Test.class" />
+				<param name="test-subprocess.exclude-pattern" value="org/ejbca/core/model/ra/*Test.class" />
 			</antcall>
 			<antcall target="test-subprocess">
 				<param name="test-subprocess.include-pattern" value="org/ejbca/util/**/*Test.class" />
 				<param name="test-subprocess.exclude-pattern" value="" />
 			</antcall>
 			<antcall target="test-subprocess">
+				<param name="test-subprocess.include-pattern" value="org/cesecore/certificates/ca/**/*Test.class" />
+				<param name="test-subprocess.exclude-pattern" value="${p11exclude}" />
+			</antcall>
+			<antcall target="test-subprocess">
+				<param name="test-subprocess.include-pattern" value="org/cesecore/certificates/util/**/*Test.class" />
+				<param name="test-subprocess.exclude-pattern" value="" />
+			</antcall>
+			<antcall target="test-subprocess">
+				<param name="test-subprocess.include-pattern" value="org/cesecore/certificates/**/*Test.class" />
+				<param name="test-subprocess.exclude-pattern" value="org/cesecore/certificates/ca/**/*Test.class org/cesecore/certificates/util/**/*Test.class" />
+			</antcall>
+			<antcall target="test-subprocess">
+				<param name="test-subprocess.include-pattern" value="org/cesecore/util/**/*Test.class" />
+				<param name="test-subprocess.exclude-pattern" value="" />
+			</antcall>
+			<antcall target="test-subprocess">
+				<param name="test-subprocess.include-pattern" value="org/cesecore/keys/**/*Test.class" />
+				<param name="test-subprocess.exclude-pattern" value="${p11exclude}" />
+			</antcall>
+			<antcall target="test-subprocess">
+				<param name="test-subprocess.include-pattern" value="org/ejbca/core/protocol/**/*Test.class" />
+				<param name="test-subprocess.exclude-pattern" value="" />
+			</antcall>
+			<antcall target="test-subprocess">
 				<param name="test-subprocess.include-pattern" value="**/*Test.class" />
-				<param name="test-subprocess.exclude-pattern" value="org/ejbca/core/model/**/*Test.class org/ejbca/util/**/*Test.class ${p11exclude}" />
+				<param name="test-subprocess.exclude-pattern" value="org/ejbca/core/model/**/*Test.class org/ejbca/util/**/*Test.class org/cesecore/certificates/**/*Test.class org/cesecore/util/**/*Test.class org/ejbca/core/protocol/**/*Test.class org/cesecore/keys/**/*Test.class ${p11exclude}" />
 			</antcall>
 		</parallel>
 		<antcall target="createreport"/>

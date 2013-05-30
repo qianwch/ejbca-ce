@@ -13,6 +13,9 @@
 
 package org.ejbca.core.protocol.cmp;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
 import java.security.KeyPair;
@@ -20,14 +23,29 @@ import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Vector;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.DERIA5String;
+import org.bouncycastle.asn1.DERObject;
+import org.bouncycastle.asn1.DERObjectIdentifier;
+import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DEROutputStream;
+import org.bouncycastle.asn1.DERSequence;
+import org.bouncycastle.asn1.DERTaggedObject;
+import org.bouncycastle.asn1.DERUTF8String;
+import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
+import org.bouncycastle.asn1.x509.GeneralNames;
+import org.bouncycastle.asn1.x509.X509Extension;
+import org.bouncycastle.asn1.x509.X509Extensions;
+import org.bouncycastle.asn1.x9.X9ObjectIdentifiers;
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authentication.tokens.UsernamePrincipal;
 import org.cesecore.certificates.ca.CAInfo;
 import org.cesecore.certificates.ca.CaSessionRemote;
+import org.cesecore.certificates.certificate.InternalCertificateStoreSessionRemote;
 import org.cesecore.certificates.certificate.request.FailInfo;
 import org.cesecore.certificates.certificateprofile.CertificateProfile;
 import org.cesecore.certificates.certificateprofile.CertificateProfileConstants;
@@ -36,6 +54,7 @@ import org.cesecore.certificates.certificateprofile.CertificateProfileSession;
 import org.cesecore.certificates.crl.RevokedCertInfo;
 import org.cesecore.certificates.endentity.EndEntityInformation;
 import org.cesecore.certificates.util.AlgorithmConstants;
+import org.cesecore.certificates.util.AlgorithmTools;
 import org.cesecore.certificates.util.DnComponents;
 import org.cesecore.jndi.JndiHelper;
 import org.cesecore.keys.util.KeyTools;
@@ -88,6 +107,7 @@ public class CrmfRARequestTest extends CmpTestCase {
     private EndEntityAccessSession eeAccessSession = InterfaceCache.getEndEntityAccessSession();
     private GlobalConfigurationProxySessionRemote globalConfigurationProxySession = JndiHelper.getRemoteSession(GlobalConfigurationProxySessionRemote.class);
     private GlobalConfigurationSession globalConfSession = InterfaceCache.getGlobalConfigurationSession();
+    private InternalCertificateStoreSessionRemote internalCertStoreSession = JndiHelper.getRemoteSession(InternalCertificateStoreSessionRemote.class);
 
     @Before
     public void setUp() throws Exception {
@@ -95,6 +115,7 @@ public class CrmfRARequestTest extends CmpTestCase {
 
         // Configure CMP for this test, we allow custom certificate serial numbers
         CertificateProfile profile = new CertificateProfile(CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER);
+        profile.setAllowExtensionOverride(true);
         // profile.setAllowCertSerialNumberOverride(true);
         try {
             certProfileSession.addCertificateProfile(admin, "CMPTESTPROFILE", profile);
@@ -183,12 +204,14 @@ public class CrmfRARequestTest extends CmpTestCase {
      * @param userDN for new certificate.
      * @param keys key of the new certificate.
      * @param sFailMessage if !=null then EJBCA is expected to fail. The failure response message string is checked against this parameter.
+     * @return X509Certificate the cert produced if test was successfull, null for a test that resulted in failure (can be expected if sFailMessage != null)
      * @throws Exception
      */
-    private void crmfHttpUserTest(String userDN, KeyPair keys, String sFailMessage, BigInteger customCertSerno) throws Exception {
+    private X509Certificate crmfHttpUserTest(String userDN, KeyPair keys, String sFailMessage, BigInteger customCertSerno, String sigAlg) throws Exception {
 
         // Create a new good user
 
+        X509Certificate cert = null;
         final byte[] nonce = CmpMessageHelper.createSenderNonce();
         final byte[] transid = CmpMessageHelper.createSenderNonce();
         final int reqId;
@@ -205,9 +228,10 @@ public class CrmfRARequestTest extends CmpTestCase {
             // Send request and receive response
             final byte[] resp = sendCmpHttp(ba, 200);
             // do not check signing if we expect a failure (sFailMessage==null)
-            checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, sFailMessage == null, null);
+            checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, sFailMessage == null, null, 
+                                sigAlg);
             if (sFailMessage == null) {
-                X509Certificate cert = checkCmpCertRepMessage(userDN, cacert, resp, reqId);
+                cert = checkCmpCertRepMessage(userDN, cacert, resp, reqId);
                 // verify if custom cert serial number was used
                 if (customCertSerno != null) {
                     Assert.assertTrue(cert.getSerialNumber().toString(16) + " is not same as expected " + customCertSerno.toString(16), cert
@@ -229,9 +253,10 @@ public class CrmfRARequestTest extends CmpTestCase {
             final byte[] ba = bao.toByteArray();
             // Send request and receive response
             final byte[] resp = sendCmpHttp(ba, 200);
-            checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, false, null);
+            checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
             checkCmpPKIConfirmMessage(userDN, cacert, resp);
         }
+        return cert;
     }
 
     @Test
@@ -254,29 +279,31 @@ public class CrmfRARequestTest extends CmpTestCase {
         String hostname = null;
         try {
             // check that several certificates could be created for one user and one key.
-            crmfHttpUserTest(userDN1, key1, null, null);
-            crmfHttpUserTest(userDN2, key2, null, null);
+            crmfHttpUserTest(userDN1, key1, null, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
+            crmfHttpUserTest(userDN2, key2, null, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
             // check that the request fails when asking for certificate for another user with same key.
             crmfHttpUserTest(
                     userDN2,
                     key1,
-                    "User 'cmptest2' is not allowed to use same key as the user(s) 'cmptest1' is/are using.", null);
+                    "User 'cmptest2' is not allowed to use same key as the user(s) 'cmptest1' is/are using.", null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
             crmfHttpUserTest(
                     userDN1,
                     key2,
-                    "User 'cmptest1' is not allowed to use same key as the user(s) 'cmptest2' is/are using.", null);
+                    "User 'cmptest1' is not allowed to use same key as the user(s) 'cmptest2' is/are using.", null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
             // check that you can not issue a certificate with same DN as another user.
             crmfHttpUserTest(
                     "CN=AdminCA1,O=EJBCA Sample,C=SE",
                     key3,
-                    "User 'AdminCA1' is not allowed to use same subject DN as the user(s) 'SYSTEMCA' is/are using. See setting for 'Enforce unique DN' in Edit Certificate Authorities.", null);
+                    "User 'AdminCA1' is not allowed to use same subject DN as the user(s) 'SYSTEMCA' is/are using (even if CN postfix is used). See setting for 'Enforce unique DN' in Edit Certificate Authorities.", 
+                    null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
 
             hostname = configurationSession.getProperty(WebConfiguration.CONFIG_HTTPSSERVERHOSTNAME);
 
             crmfHttpUserTest(
                     "CN=" + hostname + ",O=EJBCA Sample,C=SE",
                     key4,
-                    "User 'localhost' is not allowed to use same subject DN as the user(s) 'tomcat' is/are using. See setting for 'Enforce unique DN' in Edit Certificate Authorities.", null);
+                    "User 'localhost' is not allowed to use same subject DN as the user(s) 'tomcat' is/are using (even if CN postfix is used). See setting for 'Enforce unique DN' in Edit Certificate Authorities.", 
+                    null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
 
         } finally {
             try {
@@ -321,7 +348,7 @@ public class CrmfRARequestTest extends CmpTestCase {
         // Send request and receive response
         final byte[] resp = sendCmpHttp(ba, 200);
         // do not check signing if we expect a failure (sFailMessage==null)
-        checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, true, null);
+        checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, true, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
         X509Certificate cert = checkCmpCertRepMessage(userDN, cacert, resp, reqId);
         BigInteger serialnumber = cert.getSerialNumber();
         
@@ -335,7 +362,7 @@ public class CrmfRARequestTest extends CmpTestCase {
         final byte[] barev = baorev.toByteArray();
         // Send request and receive response
         final byte[] resprev = sendCmpHttp(barev, 200);
-        checkCmpResponseGeneral(resprev, issuerDN, userDN, cacert, nonce, transid, false, null);
+        checkCmpResponseGeneral(resprev, issuerDN, userDN, cacert, nonce, transid, false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
         int revstatus = checkRevokeStatus(issuerDN, serialnumber);
         Assert.assertEquals("Certificate revocation failed.", RevokedCertInfo.REVOCATION_REASON_KEYCOMPROMISE, revstatus);
         
@@ -418,7 +445,7 @@ public class CrmfRARequestTest extends CmpTestCase {
             // Send request and receive response
             final byte[] resp = sendCmpHttp(ba, 200);
             // do not check signing if we expect a failure (sFailMessage==null)
-            checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, false, null);
+            checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
             checkCmpFailMessage(resp, "Subject DN field 'ORGANIZATION' must exist.", CmpPKIBodyConstants.INITIALIZATIONRESPONSE, reqId, FailInfo.BAD_REQUEST.hashCode());
 
 
@@ -442,7 +469,7 @@ public class CrmfRARequestTest extends CmpTestCase {
             // Send request and receive response
             final byte[] resp2 = sendCmpHttp(ba2, 200);
             // do not check signing if we expect a failure (sFailMessage==null)
-            checkCmpResponseGeneral(resp2, issuerDN, userDN, cacert, nonce2, transid2, true, null);
+            checkCmpResponseGeneral(resp2, issuerDN, userDN, cacert, nonce2, transid2, true, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
             X509Certificate cert = checkCmpCertRepMessage(userDN, cacert, resp2, reqId2);
             BigInteger serialnumber = cert.getSerialNumber();
 
@@ -459,7 +486,7 @@ public class CrmfRARequestTest extends CmpTestCase {
             final byte[] barev = baorev.toByteArray();
             // Send request and receive response
             final byte[] resprev = sendCmpHttp(barev, 200);
-            checkCmpResponseGeneral(resprev, issuerDN, userDN, cacert, nonce2, transid2, true, null);
+            checkCmpResponseGeneral(resprev, issuerDN, userDN, cacert, nonce2, transid2, true, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
             int revstatus = checkRevokeStatus(issuerDN, serialnumber);
             Assert.assertEquals("Certificate revocation failed.", RevokedCertInfo.REVOCATION_REASON_KEYCOMPROMISE, revstatus);
         } finally {
@@ -474,6 +501,116 @@ public class CrmfRARequestTest extends CmpTestCase {
                 // NOPMD
             }
         }        
+    }
+
+    /**
+     * Send a CMP request with SubjectAltName containing OIDs that are not defined by Ejbca.
+     * Expected to pass and a certificate containing the unsupported OIDs is returned.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void test04UsingOtherNameInSubjectAltName() throws Exception {
+
+        ASN1EncodableVector vec = new ASN1EncodableVector();
+        ASN1EncodableVector v = new ASN1EncodableVector();
+        
+        v.add(new DERObjectIdentifier(CertTools.UPN_OBJECTID));
+        v.add(new DERTaggedObject(true, 0, new DERUTF8String( "foo@bar" )));
+        DERObject gn = new DERTaggedObject(false, 0, new DERSequence(v));
+        vec.add(gn);
+        
+        v = new ASN1EncodableVector();
+        v.add(new DERObjectIdentifier("2.5.5.5"));
+        v.add(new DERTaggedObject(true, 0, new DERIA5String( "2.16.528.1.1007.99.8-1-993000027-N-99300011-00.000-00000000" )));
+        // GeneralName gn = new GeneralName(new DERSequence(v), 0);
+        gn = new DERTaggedObject(false, 0, new DERSequence(v));
+        vec.add(gn);
+        
+        GeneralNames san = new GeneralNames(new DERSequence(vec));
+        
+        ByteArrayOutputStream bOut = new ByteArrayOutputStream();
+        DEROutputStream dOut = new DEROutputStream(bOut);
+        Vector<X509Extension> values = new Vector<X509Extension>();
+        Vector<DERObjectIdentifier> oids = new Vector<DERObjectIdentifier>();
+        dOut.writeObject(san);
+        byte[] value = bOut.toByteArray();
+        X509Extension sanext = new X509Extension(false, new DEROctetString(value));
+        values.add(sanext);
+        oids.add(X509Extensions.SubjectAlternativeName);
+        X509Extensions exts = new X509Extensions(oids, values);
+        
+        String userDN = "CN=TestAltNameUser";
+        final KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
+        final byte[] nonce = CmpMessageHelper.createSenderNonce();
+        final byte[] transid = CmpMessageHelper.createSenderNonce();
+        final int reqId;
+        String fingerprint = null;
+        
+        try {
+            final PKIMessage one = genCertReq(issuerDN, userDN, keys, cacert, nonce, transid, true, exts, null, null, null);
+            final PKIMessage req = protectPKIMessage(one, false, PBEPASSWORD, "CMPKEYIDTESTPROFILE", 567);
+
+            reqId = req.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue();
+            Assert.assertNotNull(req);
+            final ByteArrayOutputStream bao = new ByteArrayOutputStream();
+            final DEROutputStream out = new DEROutputStream(bao);
+            out.writeObject(req);
+            final byte[] ba = bao.toByteArray();
+            // Send request and receive response
+            final byte[] resp = sendCmpHttp(ba, 200);
+            // do not check signing if we expect a failure (sFailMessage==null)
+            checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
+            X509Certificate cert = checkCmpCertRepMessage(userDN, cacert, resp, reqId);
+            fingerprint = CertTools.getFingerprintAsString(cert);
+            
+        } finally {
+            try {
+                userAdminSession.revokeAndDeleteUser(admin, "TestAltNameUser", RevokedCertInfo.REVOCATION_REASON_KEYCOMPROMISE);
+            } catch (NotFoundException e) {}
+            
+            try{
+                internalCertStoreSession.removeCertificate(fingerprint);
+            } catch(Exception e) {}
+        }    
+        
+    }
+    
+    @Test
+    public void test06CrmfEcdsaCA() throws Exception {
+        final String oldIssuerDN = issuerDN;
+        final X509Certificate oldCaCert = cacert;
+        try {
+            createEllipticCurveDsaCa(admin);
+            CAInfo caInfo = caSession.getCAInfo(admin, "TESTECDSA");
+            updatePropertyOnServer(CmpConfiguration.CONFIG_RACANAME, "TESTECDSA");
+
+            issuerDN = caInfo.getSubjectDN(); // Make sure this CA is used for the test
+            cacert = (X509Certificate)caInfo.getCertificateChain().iterator().next();
+            final KeyPair key1 = KeyTools.genKeys("secp256r1", AlgorithmConstants.KEYALGORITHM_ECDSA);
+            final String userName1 = "cmptestecdsa1";
+            final String userDN1 = "C=SE,O=PrimeKey,CN=" + userName1;
+            try {
+                // check that we can get a certificate from this ECDSA CA.
+                X509Certificate cert = crmfHttpUserTest(userDN1, key1, null, null, X9ObjectIdentifiers.ecdsa_with_SHA1.getId());
+                assertNotNull(cert);
+                // Check that this was really signed using SHA256WithECDSA and that the users key algo is in there
+                assertEquals(AlgorithmConstants.SIGALG_SHA256_WITH_ECDSA, AlgorithmTools.getSignatureAlgorithm(cert));
+                // Keyspec we get back from AlgorithmTools.getKeySpecification seems to differ between OracleJDK and OpenJDK so we only check key type
+                assertEquals(AlgorithmConstants.KEYALGORITHM_ECDSA, AlgorithmTools.getKeyAlgorithm(cert.getPublicKey()));
+            } finally {
+                try {
+                    userAdminSession.deleteUser(admin, userName1);
+                } catch (NotFoundException e) {
+                }
+            }
+        } finally {
+            // Reset this test class as it was before this test
+            issuerDN = oldIssuerDN;
+            cacert = oldCaCert;
+            updatePropertyOnServer(CmpConfiguration.CONFIG_RACANAME, "TestCA");
+            removeTestCA("TESTECDSA");
+        }
     }
     
     @After

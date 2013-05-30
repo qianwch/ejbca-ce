@@ -23,8 +23,8 @@
 # For normal installations, where extreme speeds and response times are not required, leave as default.
 # Value is milliseconds.
 # Default: -1 (don't use cache)
-# Possible values -1 (no caching) to 9223372036854775807 (2^63-1 = Long.MAX_VALUE), 
-#  anything more than 157680000000 (5 years) should mean infinitely in practice.
+# Possible values -1 (no caching) to 9223372036854775807 (2^63-1 = Long.MAX_VALUE).
+#  If you want caching for an infinite time then set something high for example 157680000000 (5years). 
 #cainfo.cachetime=157680000000
 #cainfo.cachetime=-1
 
@@ -37,8 +37,8 @@
 # For normal installations, where extreme speeds and response times are not required, leave as default.
 # Value is milliseconds.
 # Default: 1000 (1 second)
-# Possible values -1 (no caching) to 9223372036854775807 (2^63-1 = Long.MAX_VALUE), 
-#  anything more than 157680000000 (5 years) should mean infinitely in practice.
+# Possible values -1 (no caching) to 9223372036854775807 (2^63-1 = Long.MAX_VALUE).
+#  If you want caching for an infinite time then set something high for example 157680000000 (5years). 
 #eeprofiles.cachetime=157680000000
 #eeprofiles.cachetime=-1
 
@@ -51,10 +51,24 @@
 # For normal installations, where extreme speeds and response times are not required, leave as default.
 # Value is milliseconds.
 # Default: 1000 (1 second)
-# Possible values -1 (no caching) to 9223372036854775807 (2^63-1 = Long.MAX_VALUE), 
-#  anything more than 157680000000 (5 years) should mean infinitely in practice.
+# Possible values -1 (no caching) to 9223372036854775807 (2^63-1 = Long.MAX_VALUE).
+#  If you want caching for an infinite time then set something high for example 157680000000 (5years). 
 #certprofiles.cachetime=157680000000
 #certprofiles.cachetime=-1
+
+# Set to a value for caching calls to getPublisher and getPublisherId/Name in StoreSession. This means that for Publishers to be updated
+# the cache time expires, an "Edit publisher" or server restart is done, or flushPublisherCache is called on StoreSession. 
+# This cache works fine in a single server environment. In a multi server (clustered) environment, 
+# this can be used to disable the check if a profile has been edited on another node, so the profile must be edited on all nodes, 
+# or nodes caches flushed after editing on one node.
+# Setting this value will improve performance when publishing a lot. 
+# For normal installations, where extreme speeds and response times are not required, leave as default.
+# Value is milliseconds.
+# Default: 1000 (1 second)
+# Possible values -1 (no caching) to 9223372036854775807 (2^63-1 = Long.MAX_VALUE).
+#  If you want caching for an infinite time then set something high for example 157680000000 (5years). 
+#publisher.cachetime=157680000000
+#publisher.cachetime=-1
 
 # Set to a value for caching calls to loadGlobalConfiguration. This means that for globalConfiguration to be updated
 # the cache time expires, an "Edit configuration" or server restart is done, or flushGlobalConfigurationCache is called on RAAdminSession.
@@ -65,8 +79,8 @@
 # For normal installations, where extreme speeds and response times are not required, leave as default.
 # Value is milliseconds.
 # Default: 30000 (30 seconds)
-# Possible values -1 (no caching) to 9223372036854775807 (2^63-1 = Long.MAX_VALUE), 
-#  anything more than 157680000000 (5 years) should mean infinitely in practice.
+# Possible values -1 (no caching) to 9223372036854775807 (2^63-1 = Long.MAX_VALUE).
+#  If you want caching for an infinite time then set something high for example 157680000000 (5years). 
 #globalconfiguration.cachetime=157680000000
 #globalconfiguration.cachetime=-1
 
@@ -79,8 +93,8 @@
 # For normal installations, where extreme speeds and response times are not required, leave as default.
 # Value is milliseconds.
 # Default: 30000 (30 seconds)
-# Possible values -1 (no caching) to 9223372036854775807 (2^63-1 = Long.MAX_VALUE), 
-#  anything more than 157680000000 (5 years) should mean infinitely in practice.
+# Possible values -1 (no caching) to 9223372036854775807 (2^63-1 = Long.MAX_VALUE).
+#  If you want caching for an infinite time then set something high for example 157680000000 (5years). 
 #authorization.cachetime=157680000000
 #authorization.cachetime=-1
 

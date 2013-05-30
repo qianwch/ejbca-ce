@@ -18,6 +18,7 @@ CREATE UNIQUE INDEX cadata_idx1 ON CAData (name);
 CREATE INDEX certificatedata_idx2 ON CertificateData (username);
 CREATE INDEX certificatedata_idx4 ON CertificateData (subjectDN);
 CREATE INDEX certificatedata_idx5 ON CertificateData (type);
+CREATE INDEX certificatedata_idx6 ON CertificateData (issuerDN,status);
 CREATE INDEX certificatedata_idx7 ON CertificateData(certificateProfileId);
 CREATE INDEX certificatedata_idx11 ON CertificateData (subjectKeyId);
 -- UNIQUE increases certainty the no two certificate with the same issuer and serial number can be issued
@@ -28,6 +29,8 @@ CREATE INDEX certificatedata_idx11 ON CertificateData (subjectKeyId);
 DELETE FROM CertificateData WHERE fingerprint='caba75f68c833c3c2d33f3f5052b7d5a76e80383';
 DELETE FROM CertificateData WHERE fingerprint='05a219d835622653192c30eeeee8f01f918b30fb';
 CREATE UNIQUE INDEX certificatedata_idx12 ON CertificateData (serialNumber, issuerDN);
+-- If using CVC CA remove the above UNIQUE index, and apply the below NON UNIQUE index instead
+-- Do not apply both of them!
 -- CREATE INDEX certificatedata_idx12 ON CertificateData (serialNumber, issuerDN);
 
 CREATE INDEX historydata_idx1 ON CertReqHistoryData (username);

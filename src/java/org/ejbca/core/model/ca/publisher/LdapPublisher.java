@@ -29,7 +29,7 @@ import java.util.StringTokenizer;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
-import org.bouncycastle.asn1.x509.X509Extensions;
+import org.bouncycastle.asn1.x509.X509Extension;
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.certificates.endentity.ExtendedInformation;
 import org.cesecore.certificates.util.DNFieldExtractor;
@@ -46,6 +46,7 @@ import com.novell.ldap.LDAPConstraints;
 import com.novell.ldap.LDAPEntry;
 import com.novell.ldap.LDAPException;
 import com.novell.ldap.LDAPJSSESecureSocketFactory;
+import com.novell.ldap.LDAPJSSEStartTLSFactory;
 import com.novell.ldap.LDAPModification;
 import com.novell.ldap.LDAPSearchConstraints;
 
@@ -62,7 +63,7 @@ public class LdapPublisher extends BasePublisher {
 	/** Internal localization of logs and errors */
 	private static final InternalEjbcaResources intres = InternalEjbcaResources.getInstance();
 
-	public static final float LATEST_VERSION = 11;
+	public static final float LATEST_VERSION = 12;
 	
 	// Create some constraints used when connecting, disconnecting, reading and storing in LDAP servers
 	/** Use a time limit for generic (non overridden) LDAP operations */
@@ -83,6 +84,10 @@ public class LdapPublisher extends BasePublisher {
 	 */
 	protected boolean ADD_MODIFICATION_ATTRIBUTES = true;
 
+	public enum ConnectionSecurity {
+		PLAIN, STARTTLS, SSL
+	}
+
 	public static final String DEFAULT_USEROBJECTCLASS     = "top;person;organizationalPerson;inetOrgPerson";
 	public static final String DEFAULT_CAOBJECTCLASS       = "top;applicationProcess;certificationAuthority-V2";
 	public static final String DEFAULT_CACERTATTRIBUTE     = "cACertificate;binary";
@@ -100,6 +105,8 @@ public class LdapPublisher extends BasePublisher {
 	// Default Values
 
 	protected static final String HOSTNAMES                = "hostname";
+	protected static final String CONNECTIONSECURITY       = "connectionsecurity";
+	// USESSL was removed in v12, but is kept for backwards compatibility
 	protected static final String USESSL                   = "usessl";
 	protected static final String PORT                     = "port";
 	protected static final String BASEDN                   = "baswdn";
@@ -136,8 +143,8 @@ public class LdapPublisher extends BasePublisher {
 		data.put(TYPE, Integer.valueOf(PublisherConst.TYPE_LDAPPUBLISHER));
 
 		setHostnames("");
-		setUseSSL(true);
-		setPort(DEFAULT_SSLPORT);
+		setConnectionSecurity(ConnectionSecurity.STARTTLS);
+		setPort(DEFAULT_PORT);
 		setBaseDN("");
 		setLoginDN("");
 		setLoginPassword("");
@@ -222,7 +229,7 @@ public class LdapPublisher extends BasePublisher {
     				log.debug("Publishing end user certificate to first available server of " + getHostnames());
     			}
     			if (oldEntry != null) {
-    				modSet = getModificationSet(oldEntry, certdn, email, ADD_MODIFICATION_ATTRIBUTES, true, password);
+    				modSet = getModificationSet(oldEntry, certdn, email, ADD_MODIFICATION_ATTRIBUTES, true, password, incert);
     			} else {
     				objectclass = getUserObjectClass(); // just used for logging
     				attributeSet = getAttributeSet(incert, getUserObjectClass(), certdn, email, true, true, password, extendedinformation);
@@ -260,7 +267,7 @@ public class LdapPublisher extends BasePublisher {
     				log.debug("Publishing CA certificate to first available server of " + getHostnames());
     			}
     			if (oldEntry != null) {
-    				modSet = getModificationSet(oldEntry, certdn, null, false, false, password);
+    				modSet = getModificationSet(oldEntry, certdn, null, false, false, password, incert);
     			} else {
     				objectclass = getCAObjectClass(); // just used for logging
     				attributeSet = getAttributeSet(incert, getCAObjectClass(), certdn, null, true, false, password, extendedinformation);
@@ -303,6 +310,13 @@ public class LdapPublisher extends BasePublisher {
     			try {
     				TCPTool.probeConnectionLDAP(currentServer, Integer.parseInt(getPort()), getConnectionTimeOut());	// Avoid waiting for halfdead-servers
     				lc.connect(currentServer, Integer.parseInt(getPort()));
+    				// Execute a STARTTLS handshake if it was requested.
+    				if (getConnectionSecurity() == ConnectionSecurity.STARTTLS) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("STARTTLS to LDAP server "+currentServer);
+                        }
+    				    lc.startTLS();
+    				}
     				// authenticate to the server
     				lc.bind(ldapVersion, getLoginDN(), getLoginPassword().getBytes("UTF8"), ldapBindConstraints);            
     				// Add or modify the entry
@@ -345,7 +359,12 @@ public class LdapPublisher extends BasePublisher {
     				}
     			} catch (LDAPException e) {
     				connectionFailed = true;
-    				if (servers.hasNext()) {
+                    // If multiple certificates are allowed per entity, and the certificate is already published, 
+                    // an exception will be thrown. Catch this type of exception and just log an informational message.
+                    if (e.getResultCode() == LDAPException.ATTRIBUTE_OR_VALUE_EXISTS) {
+                        final String msg = intres.getLocalizedMessage("publisher.certalreadyexists", CertTools.getFingerprintAsString(incert), dn, e.getMessage());
+                        log.info(msg);
+                    } else if (servers.hasNext()) {
     					log.warn("Failed to publish to " + currentServer + ". Trying next in list.");
     				} else {
     					String msg = intres.getLocalizedMessage("publisher.errorldapstore", "certificate", attribute, objectclass, dn, e.getMessage());
@@ -458,7 +477,8 @@ public class LdapPublisher extends BasePublisher {
 			final X509CRL crl = CertTools.getCRLfromByteArray(incrl);
 			crldn = CertTools.stringToBCDNString(crl.getIssuerDN().toString());
 			// Is it a delta CRL?
-			if (crl.getExtensionValue(X509Extensions.DeltaCRLIndicator.getId()) != null) {
+			
+			if (crl.getExtensionValue(X509Extension.deltaCRLIndicator.getId()) != null) {
 				isDeltaCRL = true;
 			} else {
 				isDeltaCRL = false;
@@ -481,7 +501,7 @@ public class LdapPublisher extends BasePublisher {
 		LDAPAttributeSet attributeSet = null;
 
 		if (oldEntry != null) {
-			modSet = getModificationSet(oldEntry, crldn, null, false, false, null);
+			modSet = getModificationSet(oldEntry, crldn, null, false, false, null, null);
 		} else {
 			attributeSet = getAttributeSet(null, this.getCAObjectClass(), crldn, null, true, false, null,null);
 		}
@@ -519,6 +539,13 @@ public class LdapPublisher extends BasePublisher {
 				TCPTool.probeConnectionLDAP(currentServer, Integer.parseInt(getPort()), getConnectionTimeOut());	// Avoid waiting for halfdead-servers
 				// connect to the server
 				lc.connect(currentServer, Integer.parseInt(getPort()));
+				// Execute a STARTTLS handshake if it was requested.
+				if (getConnectionSecurity() == ConnectionSecurity.STARTTLS) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("STARTTLS to LDAP server "+currentServer);
+                    }
+					lc.startTLS();
+				}
 				// authenticate to the server
 				lc.bind(ldapVersion, getLoginDN(), getLoginPassword().getBytes("UTF8"), ldapBindConstraints);
 				// Add or modify the entry
@@ -627,7 +654,7 @@ public class LdapPublisher extends BasePublisher {
 					// Don't try to remove the cert if there does not exist any
 					LDAPAttribute oldAttr = oldEntry.getAttribute(getUserCertAttribute());
 					if (oldAttr != null) {
-						modSet = getModificationSet(oldEntry, certdn, null, false, true, null);
+						modSet = getModificationSet(oldEntry, certdn, null, false, true, null, cert);
 						LDAPAttribute attr = new LDAPAttribute(getUserCertAttribute());
 						modSet.add(new LDAPModification(LDAPModification.DELETE, attr));                    
 					} else {
@@ -662,6 +689,13 @@ public class LdapPublisher extends BasePublisher {
 			try {
 				TCPTool.probeConnectionLDAP(currentServer, Integer.parseInt(getPort()), getConnectionTimeOut());	// Avoid waiting for halfdead-servers
 				lc.connect(currentServer, Integer.parseInt(getPort()));
+				// Execute a STARTTLS handshake if it was requested.
+				if (getConnectionSecurity() == ConnectionSecurity.STARTTLS) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("STARTTLS to LDAP server "+currentServer);
+                    }
+					lc.startTLS();
+				}
 				// authenticate to the server
 				lc.bind(ldapVersion, getLoginDN(), getLoginPassword().getBytes("UTF8"), ldapBindConstraints);            
 				// Add or modify the entry
@@ -735,6 +769,13 @@ public class LdapPublisher extends BasePublisher {
 				TCPTool.probeConnectionLDAP(currentServer, Integer.parseInt(getPort()), getConnectionTimeOut());	// Avoid waiting for halfdead-servers
 				// connect to the server
 				lc.connect(currentServer, Integer.parseInt(getPort()));
+				// Execute a STARTTLS handshake if it was requested.
+				if (getConnectionSecurity() == ConnectionSecurity.STARTTLS) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("STARTTLS to LDAP server "+currentServer);
+                    }
+					lc.startTLS();
+				}
 				// authenticate to the server
 				lc.bind(ldapVersion, getLoginDN(), getLoginPassword().getBytes("UTF8"), ldapBindConstraints);
 				// try to read the old object
@@ -797,6 +838,13 @@ public class LdapPublisher extends BasePublisher {
 				TCPTool.probeConnectionLDAP(currentServer, Integer.parseInt(getPort()), getConnectionTimeOut());	// Avoid waiting for halfdead-servers
 				// connect to the server
 				lc.connect(currentServer, Integer.parseInt(getPort()));
+				// Execute a STARTTLS handshake if it was requested.
+				if (getConnectionSecurity() == ConnectionSecurity.STARTTLS) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("STARTTLS to LDAP server "+currentServer);
+                    }
+					lc.startTLS();
+				}
 				// authenticate to the server
 				lc.bind(ldapVersion, getLoginDN(), getLoginPassword().getBytes("UTF8"), ldapBindConstraints);
 				// try to read the base object
@@ -851,13 +899,21 @@ public class LdapPublisher extends BasePublisher {
 			log.debug("disconnecttimeout: "+ldapDisconnectConstraints.getTimeLimit());
 			log.debug("readtimeout: "+ldapSearchConstraints.getTimeLimit());
 			log.debug("storetimeout: "+ldapStoreConstraints.getTimeLimit());
+            log.debug("connectionsecurity: "+getConnectionSecurity());
 		}
 		LDAPConnection lc;
-		if (getUseSSL()) {
+
+		switch (getConnectionSecurity()) {
+		case STARTTLS:
+			lc = new LDAPConnection(new LDAPJSSEStartTLSFactory());
+			break;
+		case SSL:
 			lc = new LDAPConnection(new LDAPJSSESecureSocketFactory());
-		} else {
+			break;
+		default:
 			lc = new LDAPConnection();
 		}
+
 		lc.setConstraints(ldapConnectionConstraints);
 		return lc;
 	}
@@ -888,20 +944,36 @@ public class LdapPublisher extends BasePublisher {
 		data.put(HOSTNAMES, hostnames);	
 	}
 
+
 	/**
-	 *  Returns true if SSL connetion should be used.
-	 */    
-	public boolean getUseSSL (){
-		return ((Boolean) data.get(USESSL)).booleanValue();
+	 *  Sets the type of security to use for LDAP connection.
+	 */
+	public void setConnectionSecurity (ConnectionSecurity connectionsecurity){
+		data.put(CONNECTIONSECURITY, connectionsecurity);
 	}
 
 	/**
-	 *  Sets if SSL connetion should be used.
-	 */        
-	public void setUseSSL (boolean usessl){
-		data.put(USESSL, Boolean.valueOf(usessl));	
+	 *  Returns the type of security for the LDAP connection.
+	 */
+	public ConnectionSecurity getConnectionSecurity (){
+		Object o = data.get(CONNECTIONSECURITY);
+		ConnectionSecurity ret = ConnectionSecurity.PLAIN;
+		if (o == null) {
+			// If o is null this might be an older (pre v12) version that
+			// has not gotten upgraded correctly. In that case we see if there is a
+			// setting for USESSL, if there is and it is set we return to use SSL.
+			Object usessl = data.get(USESSL);
+			if (usessl != null) {
+                if (((Boolean)usessl).booleanValue()) {
+					ret = ConnectionSecurity.SSL;
+				}
+			}
+		} else {
+	        ret = (ConnectionSecurity)o;			
+		}
+		return ret;
 	}
-
+	
 	/**
 	 *  Returns the port of ldap server.
 	 */    
@@ -1355,7 +1427,7 @@ public class LdapPublisher extends BasePublisher {
 				String sn = CertTools.getPartFromDN(dn, "SURNAME");
 				if ( (sn == null) && (cn != null) ) {
 					// Only construct this if we are the standard object class
-					if (getUserObjectClass().endsWith("inetOrgPerson")) {
+					if (objectclass.contains("inetOrgPerson")) {
 						// Take surname to be the last part of the cn
 						int index = cn.lastIndexOf(' ');
 						if (index <=0) {
@@ -1375,7 +1447,7 @@ public class LdapPublisher extends BasePublisher {
 				String gn = CertTools.getPartFromDN(dn, "GIVENNAME");
 				if ( (gn == null) && (cn != null) ) {
 					// Only construct this if we are the standard object class
-					if (getUserObjectClass().endsWith("inetOrgPerson")) {
+					if (objectclass.contains("inetOrgPerson")) {
 						// Take givenname to be the first part of the cn
 						int index = cn.indexOf(' ');
 						if (index <=0) {
@@ -1409,7 +1481,15 @@ public class LdapPublisher extends BasePublisher {
 						attributeSet.add(new LDAPAttribute("serialNumber", serno));
 					}            		
 				}
-				
+				// If we are using the custom schema inetOrgPersonWithCertSerno, we will add the custom attribute certificateSerialNumber
+				// This is, as the name implies, the X509V3 certificate serial number, hex encoded into a printable string.
+                if (objectclass.contains("inetOrgPersonWithCertSerno") && (cert != null)) {
+                    final String certSerno = CertTools.getSerialNumberAsString(cert);
+                    if (certSerno != null) {
+                        attributeSet.add(new LDAPAttribute("certificateSerialNumber", certSerno));
+                    }
+                }
+                
 				// If this is an objectClass which is a SecurityObject, such as simpleSecurityObject, we will add the password as well, if not null.
 				if (getSetUserPassword() && (password != null)) {
 					if (log.isDebugEnabled()) {
@@ -1438,15 +1518,17 @@ public class LdapPublisher extends BasePublisher {
 	 * @param pserson true if this is a person-entry, false if it is a CA.
 	 * @param password, users password, to be added into SecurityObjects, and AD
 	 * @param overwrite if true then old attributes in LDAP will be overwritten, otherwise not.
+	 * @param cert the Certificate we are publishing, or null
 	 *
 	 * @return List of LDAPModification created...
 	 */
-	protected ArrayList<LDAPModification> getModificationSet(LDAPEntry oldEntry, String dn, String email, boolean extra, boolean person, String password) {
+	protected ArrayList<LDAPModification> getModificationSet(LDAPEntry oldEntry, String dn, String email, boolean extra, boolean person, String password, Certificate cert) {
 		if (log.isTraceEnabled()) {
 			log.trace(">getModificationSet(dn="+dn+", email="+email+")");			
 		}
 		boolean modifyExisting = getModifyExistingAttributes();
 		boolean addNonExisting = getAddNonExistingAttributes();
+		final String objectclass = getUserObjectClass();
 		ArrayList<LDAPModification> modSet = new ArrayList<LDAPModification>();
 		// We get this, because we can not modify attributes that are present in the original DN
 		// i.e. if the ldap entry have a DN, we are not allowed to modify that
@@ -1464,7 +1546,7 @@ public class LdapPublisher extends BasePublisher {
 				String sn = CertTools.getPartFromDN(dn, "SURNAME");
 				if ( (sn == null) && (cn != null) ) {
 					// Only construct this if we are the standard object class
-					if (getUserObjectClass().endsWith("inetOrgPerson")) {
+                    if (objectclass.contains("inetOrgPerson")) {
 						// Take surname to be the last part of the cn
 						int index = cn.lastIndexOf(' ');
 						if (index <=0) {
@@ -1487,7 +1569,7 @@ public class LdapPublisher extends BasePublisher {
 				LDAPAttribute oldgn = oldEntry.getAttribute("GIVENNAME");
 				if ( (gn == null) && (cn != null) ) {
 					// Only construct this if we are the standard object class
-					if (getUserObjectClass().endsWith("inetOrgPerson")) {
+					if (objectclass.contains("inetOrgPerson")) {
 						// Take givenname to be the first part of the cn
 						int index = cn.indexOf(' ');
 						if (index <=0) {
@@ -1529,6 +1611,15 @@ public class LdapPublisher extends BasePublisher {
 						modSet.add(new LDAPModification(LDAPModification.REPLACE, attr));
 					}            		
 				}
+                // If we are using the custom schema inetOrgPersonWithCertSerno, we will add the custom attribute certificateSerialNumber
+                // This is, as the name implies, the X509V3 certificate serial number, hex encoded into a printable string.
+                if (objectclass.contains("inetOrgPersonWithCertSerno") && (cert != null)) {
+                    final String certSerno = CertTools.getSerialNumberAsString(cert);
+                    if (certSerno != null) {
+                        LDAPAttribute attr = new LDAPAttribute("certificateSerialNumber", certSerno);
+                        modSet.add(new LDAPModification(LDAPModification.REPLACE, attr));
+                    }
+                }
 				
 				// If this is an objectClass which is a SecurityObject, such as simpleSecurityObject, we will add the password as well, if not null
 				if ( (getSetUserPassword() && (password != null)) && (addNonExisting || modifyExisting) ) {
@@ -1681,7 +1772,14 @@ public class LdapPublisher extends BasePublisher {
 				setStoreTimeOut(getStoreTimeOut());	// v11
 				setReadTimeOut(getReadTimeOut());
 			}
-
+			if (data.get(CONNECTIONSECURITY) == null) { // v12
+				if (((Boolean) data.get(USESSL)).booleanValue() == true) {
+					setConnectionSecurity(ConnectionSecurity.SSL);
+				} else {
+					setConnectionSecurity(ConnectionSecurity.PLAIN);
+				}
+			}
+				
 			data.put(VERSION, new Float(LATEST_VERSION));
 		}
 		log.trace("<upgrade");

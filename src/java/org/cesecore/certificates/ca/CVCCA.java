@@ -228,7 +228,8 @@ public class CVCCA extends CA implements Serializable {
 	 * 
 	 * @see CA#signRequest(byte[], boolean, boolean)
 	 */
-	public byte[] signRequest(byte[] request, boolean usepreviouskey, boolean createlinkcert) throws CryptoTokenOfflineException {
+        @Override
+        public byte[] signRequest(final byte[] request, final boolean usepreviouskey, final boolean createlinkcert, final CertificateProfile certProfile) throws CryptoTokenOfflineException {
 		if (log.isTraceEnabled()) {
 			log.trace(">signRequest: usepreviouskey="+usepreviouskey+", createlinkcert="+createlinkcert);
 		}

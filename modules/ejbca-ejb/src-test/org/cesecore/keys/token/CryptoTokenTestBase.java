@@ -424,13 +424,13 @@ public abstract class CryptoTokenTestBase {
                     priv = catoken.getPrivateKey("rsatest00001");
                     assertTrue("Should throw", false);
                 } catch (CryptoTokenOfflineException e) {
-                    assertEquals(getProvider(), e.getMessage());
+                    assertEquals("Can not instantiate "+getProvider()+". keyStore (111) == null.", e.getMessage());
                 }
                 try {
                     pub = catoken.getPublicKey("rsatest00001");
                     assertTrue("Should throw", false);
                 } catch (CryptoTokenOfflineException e) {
-                    assertEquals(getProvider(), e.getMessage());
+                    assertEquals("Can not instantiate "+getProvider()+". keyStore (111) == null.", e.getMessage());
                 }
                 // Activate with wrong PIN should not work
                 try {

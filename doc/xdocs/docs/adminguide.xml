@@ -63,25 +63,25 @@ To export a CA named "TestCA" to the PKCS#12-file "/path/TestCA.p12" with passwo
 from the $EJBCA_HOME directory:
 </p>
 <source>
-[user@host ejbca]$ bin/ejbca.sh ca exportca TestCA ./TestCA.p12
+$ bin/ejbca.sh ca exportca TestCA ./TestCA.p12
 Using JBoss JNDI provider...
 Enter keystore password: foo123
-[user@host ejbca]$ 
+$ 
 </source>
 <p>
 To import the backup keys for "TestCA" later, enter the following from the $EJBCA_HOME directory:
 </p>
 <source>
-[user@host ejbca]$ bin/ejbca.sh ca importca TestCA /path/TestCA.p12 SignatureKeyAlias EncryptionKeyAlias
+$ bin/ejbca.sh ca importca TestCA /path/TestCA.p12 SignatureKeyAlias EncryptionKeyAlias
 Using JBoss JNDI provider...
 Enter keystore password: foo123
-[user@host ejbca]$ 
+$ 
 </source>
 <p>
 Enter the command:
 </p>
 <source>
-[user@host ejbca]$ bin/ejbca.sh ca importca
+$ bin/ejbca.sh ca importca
 </source>
 <p>
 to get usage instructions how to import HSM CAs.
@@ -125,19 +125,19 @@ restore it later. See the section 'Export and import CAs'
 To remove the catoken keys for "TestCA", enter the following from the $EJBCA_HOME directory: 
 </p>
 <source>
-[user@host ejbca]$ bin/ejbca.sh ca removekeystore TestCA
+$ bin/ejbca.sh ca removekeystore TestCA
 Using JBoss JNDI provider...
-[user@host ejbca]$ 
+$ 
 </source>
 <p>
 To restore the catoken keys again for "TestCA" with the keystore exported as "TestCA-exported.p12", enter
 the following from the $EJBCA_HOME directory:
 </p>
 <source>
-[user@host ejbca]$ bin/ejbca.sh ca restorekeystore TestCA /path/TestCA-exported.p12 SignatureKeyAlias EncryptionKeyAlias
+$ bin/ejbca.sh ca restorekeystore TestCA /path/TestCA-exported.p12 SignatureKeyAlias EncryptionKeyAlias
 Using JBoss JNDI provider...
 Enter keystore password: foo123
-[user@host ejbca]$ 
+$ 
 </source>
 </subsection>
 
@@ -220,7 +220,7 @@ This command would create a new end entity (or use the existing one) in EJBCA ca
 In order to import certificates in bulk, use the commnad:
 </p>
 <source>
-bin/ejbca.sh ca importcertdir &lt;username-source&gt; &lt;caname&gt; &lt;status&gt; &lt;certificate dir&gt; &lt;endentityprofile&gt; &lt;certificateprofile&gt;
+bin/ejbca.sh ca importcertdir &lt;username-source&gt; &lt;caname&gt; &lt;status&gt; &lt;certificate dir&gt; &lt;endentityprofile&gt; &lt;certificateprofile&gt; [-resumeonerror]
 </source>
 <p>
 The parameters are as follows:
@@ -232,16 +232,25 @@ The parameters are as follows:
     <li><em>certificate dir</em> - Path to the directory containing the certificate files. Each file should contain a single certificate. The directory should not contain subdirectories, or non-certificates. The file extension does not matter - all the files will be processed.</li>
     <li><em>endentityprofile</em> - End entity profile used for the certificates. The certificates will be verified against the constraints set forth by the end entity profile. If the constraints are violated by the certificate, it will not be imported.</li>
     <li><em>certificateprofile</em> - Certificate profile used for the certificates. Once the certificate is imported, it will be marked as belonging to the specified certificate profile.</li>
+    <li><em>-resumeonerror</em> - This optional switch can be used in order to force the import to proceed even if more serious errors are encountered. By default this option is <em>not</em> enabled. The errors that are covered by this switch, amongst others, are end entity profile constraint violations, problems with reading/parsing of certificate files etc.</li>
 </ul>
 <p>
 Running the command without any parameters will display basic usage help, and a list of acceptable parameter values (for <em>username-source</em>, <em>status</em>, <em>endentityprofile</em>, and <em>certificateprofile</em>).
 </p>
 <p>
-Certificates that are already present in the database will be skipped during the import. Certificates that belong to a different CA than the one specified will be skipped as well. Any other discrepancy (like invalid file format, subdirectory, or violated end entity constraints) will stop the import operation. Certificates that have been imported up until the discrepancy will still remain in the database. For each certificate that has been skipped, the command will output its serial number and name of the file. The same information will be displayed for errors.
+Certificates that are already present in the database will be skipped during the import. Certificates that belong to a different CA than the one specified will be skipped as well. Any other discrepancy (like invalid file format, subdirectory, or violated end entity constraints) will stop the import operation, unless the <em>-resumeonerror</em> switch has been enabled. Certificates that have been imported up until the discrepancy will still remain in the database. For each certificate that has been skipped, the command will output its serial number and name of the file. The same information will be displayed for errors.
 </p>
 <p>
-Once the import has finished, a short summary is displayed about the number of imported certificates, number of redundant (already present) certificates, and number of rejected certificates (that were not signed by the requested CA). No summary will be displayed if abnormal errors are encountered (i.e. anything besides the already present certificate or mismatched CA).
+Once the import has finished, a short summary is displayed about the number of imported certificates, number of redundant (already present) certificates, and number of rejected certificates (that were not signed by the requested CA). No summary will be displayed if abnormal errors are encountered (i.e. anything besides the already present certificate or mismatched CA), unless the <em>-resumeonerror</em> switch has been enabled.
 </p>
+<p>
+If the <em>-resumeonerror</em> switch has been enabled, the import will continue until all of the entries from the directory are processed. Errors will still be printed-out, and the summary will contain the following additional information:
+</p>
+<ul>
+    <li>Number of certificates that could not be read (because of malformed format or because they're directories).</li>
+    <li>Number of certificates that have violated the end entity constraints (invalid number of subject/subject alternative name fields, wrong values for non-modifiable fields etc).</li>
+    <li>Number of certificates that could not be read because of other errors.</li>
+</ul>
 </subsection>
 
 </section>
@@ -421,6 +430,9 @@ You should only use CN in the users DN (same as for PIX below).
 <p>
 <a href="http://code.google.com/p/jscep/">jSCEP</a>.
 jSCEP uses EJBCA as one of the servers it is tested against.
+</p>
+<p>
+There is a <a href="https://github.com/asyd/jscep-cli-jdk6">CLI for jSCEP</a> by Bruno Bonfils.
 </p>
 </subsubsection>
 <subsubsection name="Juniper Networks NetScreen-25/NetScreen-50">
@@ -1034,14 +1046,14 @@ cmp.ra.authenticationsecret=password
 <p>
 You can then use cmpclient (as an RA):</p>
 <source>
-./cmpclient --server localhost --port 8080 --path ejbca/publicweb/cmp --cacert AdminCA1.der --ir --user mykeyid --password password --newclcert clcert.der --newkey key.pem --subject "CN=User Name;O=My Organization;C=SE"
+./openssl cmp -cmd ir -server localhost:8080 -path ejbca/publicweb/cmp -srvcert AdminCA1.cacert.pem -user NewUser -pass password -certout clcert1.pem -newkey key1.pem -keyfmt PEM -certfmt PEM -subject "/CN=NewUser/O=My Organization/C=SE"
 </source>
 <p>This requests a certificate, defining the subject DN that will be used. The CA used to sign the certificate is specified in the EJBCA cmp configuration, and can be taken from the keyid.
 EJBCA authenticated the request using the HMAC protection with the password, and accepts any request upon correct authentication. See the CMP documentation above for more advanced configuration.
 </p>
-<p><strong>Client mode</strong></p>
+<p><strong>Client mode, HMAC password authentication</strong></p>
 <p>
-Cmpforopenssl works with with EJBCA in client mode with the following EJBCA configuration (cmp.properties, unset properties = default):</p>
+Cmpforopenssl works with with EJBCA in client mode, with HMAC password authentication, using the following EJBCA configuration (cmp.properties, unset properties = default):</p>
 <source>
 cmp.authenticationmodule=HMAC
 cmp.extractusernamecomponent=CN
@@ -1050,14 +1062,61 @@ cmp.extractusernamecomponent=CN
 <source>
 bin/ejbca.sh ra adduser user1 password "CN=user1,O=My Organization,C=SE" null AdminCA1 null 1 USERGENERATED
 bin/ejbca.sh ra setclearpwd user1 password
+bin/ejbca.sh ra setuserstatus user1 10
 </source>
 <p>
 You can then use cmpclient (as a client):</p>
 <source>
-./cmpclient --server localhost --port 8080 --path ejbca/publicweb/cmp --cacert AdminCA1.der --ir --user mykeyid --password password --newclcert clcert.der --newkey key.pem --subject "CN=user1;O=My Organization;C=SE"
+./openssl cmp -cmd ir -server localhost:8080 -path ejbca/publicweb/cmp -srvcert AdminCA1.cacert.pem -user user1 -pass password -certout clcert1.pem -newkey key1.pem -keyfmt PEM -certfmt PEM -subject "/CN=user1/O=My Organization/C=SE"
 </source>
 <p>This requests a certificate, and the requested subject DN must match the registered subject DN.
 EJBCA authenticates the request using the HMAC protection with the password of the registered user. See the CMP documentation above for more advanced configuration.</p>
+
+<p><strong>Client mode, client certificate authentication</strong></p>
+<p>
+Cmpforopenssl works with with EJBCA in client mode, with certificate authentication, using the following EJBCA configuration (cmp.properties, unset properties = default):</p>
+<source>
+cmp.authenticationmodule=EndEntityCertificate
+cmp.authenticationparameters=AdminCA1 (use the CA that issues your client authentication certificate)
+cmp.extractusernamecomponent=CN
+</source>
+<p>You can now issue a certificate using certificate authentication in EJBCA (the end entity needs a certificate before so we re-use user1 from above):</p>
+<source>
+bin/ejbca.sh ra setclearpwd user1 password
+bin/ejbca.sh ra setuserstatus user1 10
+</source>
+<p>
+You can then use cmpclient (as a client):</p>
+<source>
+./openssl cmp -cmd ir -server localhost:8080 -path ejbca/publicweb/cmp -srvcert AdminCA1.cacert.pem -cert clcert.pem -key key.pem -certout clcert1.pem -newkey key1.pem -keyfmt PEM -certfmt PEM -subject "/CN=user1/O=My Organization/C=SE"
+</source>
+<p>This requests a certificate, and the requested subject DN must match the registered subject DN.
+EJBCA authenticates the request using the signature protection with the certificate of the registered user. See the CMP documentation above for more advanced configuration.</p>
+<p>You can also use a 'cr' instead of an 'ir';</p>
+<source>
+bin/ejbca.sh ra setuserstatus user1 10
+./openssl cmp -cmd cr -server localhost:8080 -path ejbca/publicweb/cmp -srvcert AdminCA1.cacert.pem -cert clcert.pem -key key.pem -certout clcert1.pem -newkey key1.pem -keyfmt PEM -certfmt PEM -subject "/CN=user1/O=My Organization/C=SE"
+</source>
+
+<p><strong>Client mode, Vendor certificate authentication</strong></p>
+<p>
+If the end entity has a Vendor certificate with which it should identify itself for initial enrollment, as specified in 3GPP for example, it can also do that. 
+In this case the CA issuing the end entity certificate is not the same as the Vendor CA. The vendor CA must be imported in EJBCA as an External CA ('Import CA certificate' in the admin GUI).
+To enable vendor certificate authentication add the following to the CMP configuration for client certificate authentication:
+</p>
+<source>
+cmp.vendorcertificatemode=true
+cmp.vendorca=3GPP-CA
+</source>
+<p>With this configuration you can now request an initial certificate with the following command:
+</p>
+<source>
+./openssl cmp -cmd ir -server localhost:8080 -path ejbca/publicweb/cmp -srvcert AdminCA1.cacert.pem -cert devicecert.pem -key devicekey.pem -certout clcert1.pem -newkey key1.pem -keyfmt PEM -certfmt PEM -subject "/CN=device/O=My Organization/C=SE"
+</source>
+<p>
+In this configuration 'devicecert.pem' and 'devicekey.pem' are the device's private key and the certificate issued by the Vendor CA (3GPP-CA). 
+AdminCA1.cacert.pem is the CA certificate of the CA in EJBCA issuing the new certificate for the device.
+</p>
 </subsubsection>
 </subsection>
 <subsection name="Custom handling of certificate request">
@@ -1080,8 +1139,31 @@ The proxy in turn connects to EJBCA gets the answer and forwards it back to the 
 </p><p> 
 The proxy is a stand alone module that runs on another mahing than the CA itself.
 </p><p>
-See EJBCA_HOME/modules/cmpProxy/resources/README for information how to build and use the proxy.
+See EJBCA_HOME/modules/cmpProxy/resources/README for information how to build and use the proxy. 
 </p>
+</subsection>
+
+<subsection name="CMP Response Message">
+<p>
+When a CMP request is successfull, EJBCA returns a protected CMP response message. The protection type of the response message can be configered in $EJBCA_HOME/conf/cmp.properties.
+EJBCA supports two types of response message protection: 'pbe' and 'signature'.
+</p>
+<subsubsection name="pbe">
+<p>
+This type of protection of the response message can be used only when the request was authenticaed using HMAC authentication module. The parameters used for the 'pbe' protection are based on the parameters used in the recieved HMAC authentication.
+</p>
+</subsubsection>
+<subsubsection name="signature">
+<p>
+The CA used to handle the CMP request signs the CMP response message using the same protection algorithm specified in the CMP request. If a conflict occures between the protection algorithm in the request and the CA's signature algorithm,
+the CA's key algorithm will be used in combination with a digest algorithm based on the protection algorithm in the CMP request. If a conflict occures even on the digest algorithm level, a default digest algorithm will be used.
+For example, if the CMP request uses the protection algorithm ECDSA with SHA1 and the CA's signature algorithm is RSA with SHA256, the CMP response will be signed using RSA with SHA1.
+</p>
+<p>
+The 'signature' type of response protection can be used regardless of what authentication module was used to authenticate the CMP request.
+</p>
+</subsubsection>
+<p>If a CMP request fails, EJBCA returns an unprotected, unencrypted CMP error message.</p>
 </subsection>
 
 </section>
@@ -2432,6 +2514,19 @@ Since EJBCA 3.6 the recommended HSM connector is to use the PKCS#11 interface. O
 <p>
 PrimeKey Solutions is selling a module called PrimeCardHSM that implements a flexible HSM using low cost smart cards. 
 </p>
+<subsection name="Testing PKCS#11 keys for use by EJBCA">
+<p>
+To test keys on the HSM for use by EJBCA you can use the <a href="userguide.html#EJBCA%20client%20toolbox">EJBCA Client Toolbox</a>. 
+</p>
+<source>
+ant clientToolBox
+cd dist/clientToolBox
+./ejbcaClientToolBox.sh PKCS11HSMKeyTool test
+</source>
+<p>
+The command will give further instructions about the parameters requires, PKCS#11 library and slot.
+</p>
+</subsection>
 <subsection name="Auto-activation of CA tokens">
 <p>
 The 'pin' property is used to be able to automatically activate a CA token. The activation code may be specified in the property field with the keyword 'pin'. 
@@ -2785,13 +2880,12 @@ Module #1:
  version serial       24
  rec. LongJobs queue  8
  SEE machine type     gen1AIF
-nfast@donny:/home/lars/work$
 </source>
 <p>
 Create the security world with the command :
 </p>
 <source>
-nfast@donny:/home/lars/work$ /opt/nfast/bin/new-world -i -Q 1/1
+$ /opt/nfast/bin/new-world -i -Q 1/1
 15:04:50 WARNING: Module #1: preemptively erasing module to see its slots!
 
 Create Security World:
@@ -2802,7 +2896,7 @@ Create Security World:
 Card writing complete.
 
 security world generated on module #0; hknso = 6807e0b031c4f797b739ec33ca7dba05279cf54f
-nfast@donny:/home/lars/work$
+$
 </source>
 <p>
 The '-Q K/N' option tells how many administration cards that are created N. K of these cards will be needed to restore a module with a backup of the security world.
@@ -2821,7 +2915,7 @@ Check with 'enquiry' that the mode have changed to 'Operational'
 Example on creation of operator cards:
 </p>
 <source>
-nfast@donny:/home/lars/work$ /opt/nfast/bin/createocs -m 1 -Q 2/3 -N ejbca -M -p -T 0
+$ /opt/nfast/bin/createocs -m 1 -Q 2/3 -N ejbca -M -p -T 0
 
 Creating Cardset:
  Module 1: 0 cards of 3 written
@@ -2843,7 +2937,7 @@ New passphrases do not match; please try again.
 Card writing complete.
 
 cardset created; hkltu = 8d30f2ab5bdccacd8a4333aefed2c0ea1ff0e6db
-nfast@donny:/home/lars/work$
+$
 </source>
 <p>
 This will generate 3 cards of the card set named 'ejbca'. Any 2 of these cards will be needed when generating keys and starting ejbca. Different card sets could be used for different CAs.
@@ -2858,7 +2952,7 @@ preload as another user, such as root or nfast.
 Load the card set so that keys protected by the card set could be generated:
 </p>
 <source>
-jboss@donny:~$ /opt/nfast/bin/preload -c ejbca pause
+$ /opt/nfast/bin/preload -c ejbca pause
 Loading cardsets:
 ejbca on modules 1
 
@@ -2897,28 +2991,29 @@ An ECC key could not be used with preload (at least not the curve secp160r1). Su
 Now 3 keys protected by the key set 'ejbca' are created like this:
 </p>
 <source>
-jboss@donny:~/work/test/keygen$ ~nfast/bin/preload -c ejbca $EJBCA_HOME/dist/clientToolBox/ejbcaClientToolBox.sh PKCS11HSMKeyTool generate /opt/nfast/toolkits/pkcs11/libcknfast.so 4096 defaultRoot i1
-Executing /home/lars/work/java/ejbca/dist/clientToolBox/ejbcaClientToolBox.sh PKCS11HSMKeyTool generate /opt/nfast/toolkits/pkcs11/libcknfast.so 4096 defaultRoot i1
+$ ~nfast/bin/preload -c ejbca $EJBCA_HOME/dist/clientToolBox/ejbcaClientToolBox.sh PKCS11HSMKeyTool generate /opt/nfast/toolkits/pkcs11/libcknfast.so 4096 defaultRoot i1
+Executing ejbcaClientToolBox.sh PKCS11HSMKeyTool generate /opt/nfast/toolkits/pkcs11/libcknfast.so 4096 defaultRoot i1
 PKCS11 Token [SunPKCS11-NFastJava] Password: 
 Creating certificate with entry default.
-jboss@donny:~/work/test/keygen$ ~nfast/bin/preload -c ejbca $EJBCA_HOME/dist/clientToolBox/ejbcaClientToolBox.sh PKCS11HSMKeyTool generate /opt/nfast/toolkits/pkcs11/libcknfast.so 2048 cryptRoot i1
+
+$ ~nfast/bin/preload -c ejbca $EJBCA_HOME/dist/clientToolBox/ejbcaClientToolBox.sh PKCS11HSMKeyTool generate /opt/nfast/toolkits/pkcs11/libcknfast.so 2048 cryptRoot i1
 Loaded pkcs11 uc17cfc7c330e613af5709789ff823a476177e233c-d165e440baa8dc9963780c682836ba17513e8cbf key (RSAPrivate) on modules 1
-Executing /home/lars/work/java/ejbca/dist/clientToolBox/ejbcaClientToolBox.sh PKCS11HSMKeyTool generate /opt/nfast/toolkits/pkcs11/libcknfast.so 2048 cryptRoot i1
+Executing ejbcaClientToolBox.sh PKCS11HSMKeyTool generate /opt/nfast/toolkits/pkcs11/libcknfast.so 2048 cryptRoot i1
 PKCS11 Token [SunPKCS11-NFastJava] Password: 
 Creating certificate with entry crypt.
-jboss@donny:~/work/test/keygen$ ~nfast/bin/preload -c ejbca $EJBCA_HOME/dist/clientToolBox/ejbcaClientToolBox.sh PKCS11HSMKeyTool generate /opt/nfast/toolkits/pkcs11/libcknfast.so 1024 test i1
+
+$ ~nfast/bin/preload -c ejbca $EJBCA_HOME/dist/clientToolBox/ejbcaClientToolBox.sh PKCS11HSMKeyTool generate /opt/nfast/toolkits/pkcs11/libcknfast.so 1024 test i1
 Loaded pkcs11 uc17cfc7c330e613af5709789ff823a476177e233c-27cfdae84bf4298f2dde83cd00980a81bcf095bf key (RSAPrivate) on modules 1
-Executing /home/lars/work/java/ejbca/dist/clientToolBox/ejbcaClientToolBox.sh PKCS11HSMKeyTool generate /opt/nfast/toolkits/pkcs11/libcknfast.so 1024 test i1
+Executing ejbcaClientToolBox.sh PKCS11HSMKeyTool generate /opt/nfast/toolkits/pkcs11/libcknfast.so 1024 test i1
 PKCS11 Token [SunPKCS11-NFastJava] Password: 
 Creating certificate with entry test.
-jboss@donny:~/work/test/keygen$ 
 </source>
 <strong>Step 4. Start EJBCA with nShield HSM</strong>
 <p>
 To start EJBCA, preload must be running with the required key stores loaded. In this example this was done in step 2. Preload is now used to start jboss:
 </p>
 <source>
-jboss@donny:~/work/test/ca$ ~nfast/bin/preload -c ejbca $APPSRV_HOME/bin/run.sh
+$ ~nfast/bin/preload -c ejbca $APPSRV_HOME/bin/run.sh
 </source>
 <strong>Step 5. Create a new CA in the web GUI of EJBCA</strong>
 <p>
@@ -2979,7 +3074,7 @@ The key to get this working is to set the environment variable <strong>CKNFAST_L
 To get a list of all available slots do:
 </p>
 <source>
-lars@milton:~/work/test/nCipher$ CKNFAST_LOADSHARING=1 ~nfast/bin/ckinfo
+$ CKNFAST_LOADSHARING=1 ~nfast/bin/ckinfo
 PKCS#11 library CK_INFO
        interface version 2.01
                    flags 0
@@ -3102,11 +3197,11 @@ To make the OCS persistent use the "-p" argument at "createocs" time, if this is
 </p><p>
 When using k/n OCS where k>1 you got to load all OCSs to be used with preload and then start the application server also with preload. Example:
 </p><source>
-lars@milton:~/work/test/nCipher$ ~nfast/bin/preload -c 2of3_0 pause
+$ ~nfast/bin/preload -c 2of3_0 pause
 -- follow instruction to insert cards and enter pins. --
 -- then press ctr-z --
-lars@milton:~/work/test/nCipher$ bg 
-lars@milton:~/work/test/nCipher$ ~nfast/bin/preload -c 2of3_1 exit
+$ bg 
+$ ~nfast/bin/preload -c 2of3_1 exit
 -- follow instruction to insert cards and enter pins. --
 </source><p>
 When the application server then is started with preload, CAs defined for slot list index 2 and 4 could be activated. When activating a CA when running preload no PIN has to be given. Also when the application server is started with preload then only CAs of preloaded slots could be activated (not preloaded 1/n slots could not be used).
@@ -3192,7 +3287,7 @@ dr-xr-xr-x 2 lars lars   4096 28 nov 14.28 include
 lars@maud:~/work/test/ca$ LD_LIBRARY_PATH=../../bullInstall/linux ../../java/jboss/bin/run.sh
 </source>
 <source>
-lars@maud:~/work/test/keygen$ LD_LIBRARY_PATH=~/work/bullInstall/linux ../../PWE/ejbca/dist/clientToolBox/ejbcaClientToolBox.sh PKCS11HSMKeyTool generate ../../bullInstall/linux/libgpkcs11cc2000.so 2048 defaultkey i0
+$ LD_LIBRARY_PATH=~/work/bullInstall/linux $EJBCA/dist/clientToolBox/ejbcaClientToolBox.sh PKCS11HSMKeyTool generate ../../bullInstall/linux/libgpkcs11cc2000.so 2048 defaultkey i0
 </source>
 </subsection>
 
@@ -3218,18 +3313,18 @@ lunash:>partition changePolicy -partition partition1 -policy 22 -value 1
 You don't have to be in the '/usr/LunaSA/bin' directory as the documentation says. We think it is preferable to be in a directory owned by yourself so you don't have to use sudo.
 Example of running in your own directory:
 </p><source>
-lars@milton:~/work/test/luna$ /usr/lunasa/bin/ctp admin@lunasa.int.primekey.se:server.pem .
+$ /usr/lunasa/bin/ctp admin@lunasa.int.primekey.se:server.pem .
 </source><p>
 Example of occasions when sudo must be used is registration of server and adding client certificates (root owned files and directories are used and updated):
 </p><source>
-lars@milton:~/work/test/luna$ sudo /usr/lunasa/bin/vtl addServer -n lunasa.int.primekey.se -c server.pem
-lars@milton:~/work/test/luna$ sudo /usr/lunasa/bin/vtl createCert -n milton
+$ sudo /usr/lunasa/bin/vtl addServer -n lunasa.int.primekey.se -c server.pem
+$ sudo /usr/lunasa/bin/vtl createCert -n milton
 </source><p>
 <strong>Step 7:</strong>
 Each partition assigned to a client will be represented by a PKCS#11 slot for this client. It seems that each new added partition will be put last in the slot list and the number of a slot will be slot list index plus 1 (list index starting with 0 and slot number starting with 1).
 To get the partition slot mapping on the client do:
 </p><source>
-lars@milton:~/work/test/luna$ /usr/lunasa/bin/vtl verify
+$ /usr/lunasa/bin/vtl verify
 
 The following Luna SA Slots/Partitions were found: 
 
@@ -3253,11 +3348,11 @@ The password is from the configuration step 4. See above.
 </subsubsection>
 <subsubsection name="Generate keys on a slot">
 <source>
-lars@milton:~/work/test/luna$ ~/work/PWE/ejbca/dist/clientToolBox/ejbcaClientToolBox.sh PKCS11HSMKeyTool generate /usr/lunasa/lib/libCryptoki2_64.so 2048 rsa2048_1 1
+$ ./ejbcaClientToolBox.sh PKCS11HSMKeyTool generate /usr/lunasa/lib/libCryptoki2_64.so 2048 rsa2048_1 1
 0    [main] INFO  org.ejbca.util.keystore.KeyTools  - Using SUN PKCS11 provider: sun.security.pkcs11.SunPKCS11
 PKCS11 Token [SunPKCS11-Luna] Password: 
 Created certificate with entry rsa2048_1.
-lars@milton:~/work/test/luna$ ~/work/PWE/ejbca/dist/clientToolBox/ejbcaClientToolBox.sh PKCS11HSMKeyTool generate /usr/lunasa/lib/libCryptoki2_64.so secp160r1 secp160r1_1 1
+$ ./ejbcaClientToolBox.sh PKCS11HSMKeyTool generate /usr/lunasa/lib/libCryptoki2_64.so secp160r1 secp160r1_1 1
 0    [main] INFO  org.ejbca.util.keystore.KeyTools  - Using SUN PKCS11 provider: sun.security.pkcs11.SunPKCS11
 PKCS11 Token [SunPKCS11-Luna] Password: 
 Created certificate with entry secp160r1_1.
@@ -3267,7 +3362,7 @@ The password btqx-EFGH-3456-7/K9 (see above) is used.
 </subsubsection>
 <subsubsection name="List and test all keys that could be used by EJBCA">
 <source>
-lars@milton:~/work/test/luna$ ~/work/PWE/ejbca/dist/clientToolBox/ejbcaClientToolBox.sh PKCS11HSMKeyTool test /usr/lunasa/lib/libCryptoki2_64.so 1
+$ ./ejbcaClientToolBox.sh PKCS11HSMKeyTool test /usr/lunasa/lib/libCryptoki2_64.so 1
 Test of keystore with ID 1.
 0    [main] INFO  org.ejbca.util.keystore.KeyTools  - Using SUN PKCS11 provider: sun.security.pkcs11.SunPKCS11
 PKCS11 Token [SunPKCS11-libCryptoki2_64.so-slot2] Password: 
@@ -3293,6 +3388,27 @@ certSignKey=myECCKey
 crlSignKey=myECCKey
 defaultKey=default
 </source>
+</subsubsection>
+<subsubsection name="Some useful Luna commands">
+<p>Here are some useful native Luna cmu commands.
+</p><p> 
+List objects and their handles:
+</p>
+<source>
+./cmu list -display=index,handle,class,keyType,label
+</source>
+<p>
+If you have created keys with natvie commands, or imported keys, there is probably no certificate object as required by Java PKCS#11 provider.
+Create a self signed certificate referencing the private handle:
+</p>
+<source>
+./cmu selfSign -privatehandle=87 -CN="caSign00001" -startDate=20020101
+-endDate=20451231 -serialNum=0133337f
+</source>
+<p>
+Notice that they will have to replace 87 with the handle of the private
+key they found when running the list command.
+</p>
 </subsubsection>
 </subsection>
 
@@ -3333,9 +3449,9 @@ LD_LIBRARY_PATH=/opt/PTK/lib /opt/PTK/bin/ctkmu t -s5 -lroot
 </subsubsection>
 <subsubsection name="Generate keys on slot 5">
 <source>
-$EJBCA_HOME/dist/clientToolBox/ejbcaClientToolBox.sh PKCS11HSMKeyTool generate /opt/PTK/lib/libcryptoki.so 2048 defaultSign 5
-$EJBCA_HOME/dist/clientToolBox/ejbcaClientToolBox.sh PKCS11HSMKeyTool generate /opt/PTK/lib/libcryptoki.so 2048 default 5
-$EJBCA_HOME/dist/clientToolBox/ejbcaClientToolBox.sh PKCS11HSMKeyTool generate /opt/PTK/lib/libcryptoki.so 512 test 5
+./ejbcaClientToolBox.sh PKCS11HSMKeyTool generate /opt/PTK/lib/libcryptoki.so 2048 defaultSign 5
+./ejbcaClientToolBox.sh PKCS11HSMKeyTool generate /opt/PTK/lib/libcryptoki.so 2048 default 5
+./ejbcaClientToolBox.sh PKCS11HSMKeyTool generate /opt/PTK/lib/libcryptoki.so 512 test 5
 </source>
 <p>If JBoss was started you have to restart JBoss before the keys becomes available in EJBCA.</p>
 </subsubsection>
@@ -3352,7 +3468,7 @@ slot=5
 </subsubsection>
 <subsubsection name="Test and list keys on slot 5">
 <source>
-$EJBCA_HOME/dist/clientToolBox/ejbcaClientToolBox.sh PKCS11HSMKeyTool test /opt/PTK/lib/libcryptoki.so 5
+./ejbcaClientToolBox.sh PKCS11HSMKeyTool test /opt/PTK/lib/libcryptoki.so 5
 ...
 Testing of key: test
 SunJCE version 1.7SunPKCS11-libcryptoki.so-slot3 version 1.7; modulus length: 2048; byte length 53. The docoded byte string is equal to the original!
@@ -3588,8 +3704,20 @@ In some cases you need to generate the request and certificate with explicit par
 </p>
 <ul>
 <li>When generating requests with <i>clientToolBox PKCS11HSMKeyTool certreq</i> you can specify a flag to use explicit parameters instead of named curves. Named curves is the default.</li>
+<li>When creating CAs with <i>ejbca.sh ca init</i> you can specify a flag to use explicit parameters instead of named curves. Named curves is the default.</li>
 <li>When EJBCA issues certificate with public keys from certificate requests (csr's) the key in the certificate will be the same as in the csr. If the csr uses explicit parameters, so will the issued certificate.</li>
 </ul>
+<p>
+If you generate a CA with explicit ECC parameters in the CA certifiate you will not be able to run commands like 'ejbca.sh ca listcas' because Java only supports named curves when serializing certificates.
+You can resolve this by adding the BC provider as the first provider:
+</p>
+<source>
+$ sudo vi /etc/java-7-openjdk/security/java.security
+
+security.provider.1=org.bouncycastle.jce.provider.BouncyCastleProvider
+(renumber the ones below)
+</source>
+<p>After editing this (make sure you edit the right file) you need to restart JBoss.</p>
 </subsection>
 <subsection name="Named curves">
 <p>
@@ -4081,7 +4209,13 @@ Generic parameters to LDAP Publisher:
 located. E.g. "ldap.company.com" or "ldap1.company.com;ldap2.company.com".
 Only the first available of the listed hosts will be used.</li>
 <li>'Port' is the port on which the LDAP server listens, default non-SSL is
-389.</li>
+389. There are three choices:
+  <ul>
+  <li>Plaintext Connection: unencrypted connection, the easiest to get started with, and the mosts robust if network is secure.</li>
+  <li>STARTTLS Extension: this gives the server and client a chance to negotiate a TLS (encrypted) connection, if the server supports encrypted connections. It starts with a plaintext connection, and upgrades to a TLS connection, using the same port as plaintext connection. Requires configuration both on the server (TLS server key and certificate) and on the client (CA certificate in truststore).</li>
+  <li>TLS Connection: this always uses an encrypted TLS connection and fails if it is not available. Requires TLS configuration both on the server (TLS server key and certificate) and on the client (CA certificate in truststore).</li>
+  </ul>
+</li>
 <li>'Login DN' is the DN of a user on the LDAP server with permissions to add
 and update entities.</li>
 <li>'Login Password' is the password for the user above.</li>
@@ -4325,7 +4459,24 @@ The attributes that EJBCA creates or replaces are:
 
 </subsection>
 
-<subsection name="Extra device schema">
+<subsection name="Custom schemas">
+<p>See doc/ldapschema for files with custom schemas and attribute types to add to your LDAP schema.</p>
+<subsubsection name="Certificate serial number">
+<p>This is an attribute and a schema extension to allow storage of certificate serial number in the inetOrgPerson LDAP object, for end user entries.
+This is done by adding an extension to inetOrgPerson called inetOrgPersonWithCertSerno with a new optional attribute called certificateSerialNumber.
+</p>
+<p>Once you have installed the new schema in the LDAP server you use it by configuring the LDAP publisher with:
+<ul>
+<li>User Object Class: top;person;organizationalPerson;inetOrgPerson;inetOrgPersonWithCertSerno</li>
+</ul>
+instead of the befault value:
+<ul>
+<li>User Object Class: top;person;organizationalPerson;inetOrgPerson</li>
+</ul>
+The certificateSerialNumber attribute will then automatically be added/modified when publishing to LDAP.
+</p>
+</subsubsection>
+<subsubsection name="Extra device schema">
 <p>
 To store certificates for devices (e.g. routers, toasters etc) in LDAP it
 is no really suitable standard object class. inetOrgPerson requires surnames
@@ -4335,6 +4486,7 @@ Mike Jackson has kindly contributed additional objects that extend the
 standard device class with a certificate attribute. 
 The ejbcaDevice uses object ids from PrimeKey Solutions AB.
 </p>
+</subsubsection>
 </subsection>
 
 <subsubsection name="Installation">
@@ -5051,7 +5203,7 @@ The upgrade EJBCA without downtime, you can use the 'app.version.effective' prop
 </p>
 </section>
 
-<section name="Monitoring and healtcheck">
+<section name="Monitoring and healthcheck">
 <p>In EJBCA there exists a health check service that can be used for health monitoring. 
 It is also useful for cluster, as it can be checked by load balancers to determine if a node should be active in the cluster (healthy) 
 or taken out of the cluster (unhealthy). 
@@ -5075,7 +5227,7 @@ This is very useful in a cluster when you can take cluster nodes in and out of r
 <li>healthcheck.maintenancefile, default: not set - location of file containing information about maintenance.</li>
 <li>healthcheck.maintenancepropertyname, default: DOWN_FOR_MAINTENANCE - the healthcheck.maintenancefile should contain a single line like this 'DOWN_FOR_MAINTENANCE=true'.</li>
 </ul>
-<p>The following parameters confiugure what message or HTTP error code the health service returns.
+<p>The following parameters configure what message or HTTP error code the health service returns.
 </p> 
 <ul>
 <li>healthcheck.okmessage, default: 'ALLOK' - Text string used to say that every thing is ok with this node.</li>
@@ -5330,9 +5482,10 @@ A collection of samples are available in the directory src/java/org/ejbca/sample
 <section name="Troubleshooting">
 <p>
 <ul>
-<li>Check the documentation. Double-check so everything really is configured the way it should and that you did not skip any step that didn't seem important.</li>
-<li>Enable DEBUG logging according to the Log4J configuration described above and check the log file.</li>
+<li>To find cause and description of errors look in the JBoss server log. For JBoss 5 this is located in server/default/log/server.log.</li>
+<li>If this does not display enough information, enable DEBUG logging according to the Log4J configuration described above and check the log file.</li>
 <li>Don't get intimidated by long stack-traces. Try to look for the message text and additional clues on lines starting with "Casued by:"</li>
+<li>Check the documentation. Double-check so everything really is configured the way it should and that you did not skip any step that didn't seem important.</li>
 <li>Try to reproduce this in a test environment with full DEBUG logging.</li>
 <li>Find out under what circumstances this occurs: seemingly spontanious or as a response to a certain set of actions or input</li>
 <li>Search for a solution. Perhaps someone else has had this problem and discussed it somewhere?</li>
@@ -5379,7 +5532,7 @@ the "jarsigner" command and the CA-certificate. This example will output any
 unsigned file or file with a bad signature: 
 </p>
 <source>
-jboss@server:~/ejbca$ jarsigner -verify -keystore p12/truststore.jks -verbose ../ejbca_x_y_z.zip | grep -v "^smk" | grep -v "^ *0"
+$ jarsigner -verify -keystore p12/truststore.jks -verbose ../ejbca_x_y_z.zip | grep -v "^smk" | grep -v "^ *0"
 
       246809 Tue Oct 21 13:28:48 CEST 2008 META-INF/MANIFEST.MF
       246930 Tue Oct 21 13:28:48 CEST 2008 META-INF/RELEASES.SF
@@ -5397,9 +5550,9 @@ OpenSSL can be used to sign and verify an entire archive, but requires the
 public key from the signing certificate:
 </p>
 <source>
-jboss@server:~/ejbca$ openssl dgst -sha1 -sign p12/pem/releasesigner-Key.pem -out ../ejbca_x_y_z.zip.SHA1withRSA ../ejbca_x_y_z.zip
-jboss@server:~/ejbca$ openssl x509 -inform pem -in p12/pem/releasesigner.pem -pubkey -noout > p12/pem/releasesigner-Pub.pem
-jboss@server:~/ejbca$ openssl dgst -sha1 -verify p12/pem/releasesigner-Pub.pem -signature ../ejbca_x_y_z.zip.SHA1withRSA ../ejbca_x_y_z.zip
+$ openssl dgst -sha1 -sign p12/pem/releasesigner-Key.pem -out ../ejbca_x_y_z.zip.SHA1withRSA ../ejbca_x_y_z.zip
+$ openssl x509 -inform pem -in p12/pem/releasesigner.pem -pubkey -noout > p12/pem/releasesigner-Pub.pem
+$ openssl dgst -sha1 -verify p12/pem/releasesigner-Pub.pem -signature ../ejbca_x_y_z.zip.SHA1withRSA ../ejbca_x_y_z.zip
 Verified OK
 </source>
 </section>

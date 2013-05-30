@@ -1,3 +1,53 @@
+EJBCA 5.0.10
+-----------
+This is a maintenance release with new features, improvements and bug fixes. In all 20 issues have been fixed.
+This release contains a minor security fix.
+
+* Noteworthy changes:
+- Added lots of CLI improvements to create subCA signed by external CAs, edit CAs and profiles, and add and edit services.
+- It is now possible to create CAs, using the CLI, with explicit ECC key encoding in CA certificate. Useful for ePassport installations.
+- When creating link certificates they are now issued using the same certificate profile as the CA is using.  
+- Improved support for Elliptic Curve Cryptography (ECC) using the CMP protocol. You can not use CMP in a Suite B compliant way.
+- The LDAP publisher now supports STARTTLS extension, in addition to pure TLS connections.
+- The batch enrollment GUI can now use JKS keystores, in addition to PKCS#12 keystores.
+- Healthcheck messages are now logged in debug log, for easier troubleshoting.
+
+Read the full Changelog for details.
+For upgrade instructions, please see UPGRADE.
+
+EJBCA 5.0.9
+-----------
+This is a maintenance release with improvements and bug fixes. In all 14 issues have been fixed.
+This release contains a minor security fix.
+
+* Noteworthy changes:
+- New ClientToolbox sub-command: 'batchgenerate'
+- CMP vendor certificate authorization
+- Cache for publishers
+- EJBCA compiles and runs on JDK7
+- Fixed upgrade failure
+- Fixed revocation not performing as expected in all circumstances 
+- Fixed renewal not always persisting the keys
+- Minor bugfixes and improvements
+
+Read the full Changelog for details.
+For upgrade instructions, please see UPGRADE.
+Please notice the upgrade of BC jars if you are using Oracle JDK.
+
+EJBCA 5.0.8
+-----------
+This is a maintenance release with improvements and bug fixes. In all 12 issues have been fixed.
+
+* Noteworthy changes:
+- Improved robustness of 'ejbca.sh ca importcertdir' command.
+- It is now possible to obfuscate log signer key password.
+- Fixed a but with CMP certificate authentication.
+- Minor bugfixes.
+
+Read the full Changelog for details.
+For upgrade instructions, please see UPGRADE.
+Please notice the upgrade of BC jars if you are using Oracle JDK.
+
 EJBCA 5.0.7
 -----------
 This is a maintenance release with only a security fix.
@@ -142,6 +192,47 @@ upgrade to 5.0, verify your roles and privileges.
 
 Read the full Changelog for details.
 For upgrade instructions, please see UPGRADE
+
+EJBCA 4.0.15
+------------
+This is a maintenance release containing a few new features and improvements. In all 5 issues have been resolved.
+
+* Noteworthy changes: 
+- Possibility to create link certificates using the same certificate profile as the CA.
+- LDAP publisher can publish certificate serialnumber to special object class inetOrgPersonWithCertSerno.
+- Add missing variables C and UID to end user notification emails, by David Carella.
+
+Note: There is a change in the LdapPublisher class API. Custom publishers overriding the LdapPublisher must be updated.
+ 
+Read the full Changelog for details.
+For upgrade instructions, please see UPGRADE.
+
+EJBCA 4.0.14
+------------
+This is a maintenance release containing a few new features and improvements. In all 5 issues have been resolved.
+
+* Noteworthy changes: 
+- Active certificates published to a VA publisher that only publishes revoked certificates are no longer stored in the queue.
+- Publishers are cached for improved performance.
+- New and fixed settings that makes EJBCA work better behind an Apache using ProxyPass, by David Carella.
+- Some passwords are not displayed in the console during build anymore, by David Carella.
+
+Read the full Changelog for details.
+For upgrade instructions, please see UPGRADE.
+
+EJBCA 4.0.13
+------------
+This is a maintenance release containing a few new features and improvements. In all 25 issues have been resolved.
+
+* Noteworthy changes: 
+- New self-registration work-flow available in the public web.
+- Added extended key usage for WiFi EAP authentication. 
+- Some build improvements to avoid issues on some platforms (no javascript, no jasper).
+- More minor GUI improvements by David Carella of Linagora.
+- Minor bug fixes.
+
+Read the full Changelog for details.
+For upgrade instructions, please see UPGRADE.
 
 EJBCA 4.0.12
 ------------

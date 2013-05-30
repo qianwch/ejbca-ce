@@ -13,6 +13,8 @@
  
 package org.ejbca.ui.web.admin.rainterface;
 
+import java.io.Serializable;
+
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authorization.AuthorizationDeniedException;
 import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileSession;
@@ -26,7 +28,7 @@ import org.ejbca.ui.web.admin.configuration.InformationMemory;
  *
  * @version $Id$
  */
-public class EndEntityProfileDataHandler implements java.io.Serializable {
+public class EndEntityProfileDataHandler implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

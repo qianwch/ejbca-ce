@@ -24,7 +24,13 @@ import java.security.SignatureException;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
+import org.apache.commons.beanutils.ConvertingWrapDynaBean;
+import org.apache.commons.beanutils.DynaBean;
+import org.apache.commons.beanutils.DynaProperty;
+import org.apache.commons.beanutils.WrapDynaBean;
+import org.apache.commons.lang.StringUtils;
 import org.bouncycastle.asn1.DEROutputStream;
 import org.bouncycastle.asn1.DERSet;
 import org.bouncycastle.jce.PKCS10CertificationRequest;
@@ -38,6 +44,7 @@ import org.cesecore.util.Base64;
 import org.cesecore.util.CertTools;
 import org.ejbca.core.model.SecConst;
 import org.ejbca.ui.cli.BaseCommand;
+import org.ejbca.ui.cli.ErrorAdminCommandException;
 
 /**
  * Base for CA commands, contains common functions for CA operations

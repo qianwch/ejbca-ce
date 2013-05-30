@@ -246,7 +246,7 @@ public class CertificateData extends ProtectedData implements Serializable {
     }
 
     /**
-     * status of certificate, ex CertificateData.CERT_ACTIVE
+     * status of certificate, ex CertificateConstants.CERT_ACTIVE
      * 
      * @return status
      */
@@ -256,7 +256,7 @@ public class CertificateData extends ProtectedData implements Serializable {
     }
 
     /**
-     * status of certificate, ex CertificateData.CERT_ACTIVE
+     * status of certificate, ex CertificateConstants.CERT_ACTIVE
      * 
      * @param status status
      */
@@ -265,7 +265,7 @@ public class CertificateData extends ProtectedData implements Serializable {
     }
 
     /**
-     * What type of user the certificate belongs to, ex SecConst.USER_ENDUSER
+     * What type of user the certificate belongs to, ex SecConst.CERTTYPE_ENDENTITY
      * 
      * @return user type
      */
@@ -275,7 +275,7 @@ public class CertificateData extends ProtectedData implements Serializable {
     }
 
     /**
-     * What type of user the certificate belongs to, ex SecConst.USER_ENDUSER
+     * What type of user the certificate belongs to, ex SecConst.CERTTYPE_ENDENTITY
      * 
      * @param type type
      */

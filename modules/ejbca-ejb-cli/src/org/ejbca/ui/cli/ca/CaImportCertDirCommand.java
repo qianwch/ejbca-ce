@@ -20,6 +20,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
+import java.util.List;
 
 import org.cesecore.certificates.ca.CAInfo;
 import org.cesecore.certificates.certificateprofile.CertificateProfileConstants;
@@ -28,11 +29,13 @@ import org.cesecore.certificates.endentity.EndEntityInformation;
 import org.cesecore.util.CertTools;
 import org.cesecore.util.CryptoProviderTools;
 import org.cesecore.util.FileTools;
+import org.cesecore.util.StringTools;
 import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.ra.UserDataConstants;
 import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
 import org.ejbca.ui.cli.CliUsernameException;
 import org.ejbca.ui.cli.ErrorAdminCommandException;
+import org.ejbca.util.CliTools;
 
 /**
  * Imports certificate files to the database for a given CA
@@ -52,6 +55,9 @@ public class CaImportCertDirCommand extends BaseCaAdminCommand {
 	private static final int STATUS_OK = 0;
 	private static final int STATUS_REDUNDANT = 1;
 	private static final int STATUS_CAMISMATCH = 2;
+	private static final int STATUS_READERROR = 3;
+	private static final int STATUS_CONSTRAINTVIOLATION = 4;
+	private static final int STATUS_GENERALIMPORTERROR = 5;
 
 	@Override
     public void execute(String[] args) throws ErrorAdminCommandException {
@@ -63,6 +69,15 @@ public class CaImportCertDirCommand extends BaseCaAdminCommand {
         }
 		
 		CryptoProviderTools.installBCProvider();
+
+		// Process the switches and remove them from the argument list.
+		List<String> argsList = CliTools.getAsModifyableList(args);
+
+		// Specifies whether the import should resume in case of errors, or stop
+		// on first one. Default is stop.
+		boolean resumeOnError = argsList.remove("-resumeonerror");
+		args = argsList.toArray(new String[0]);
+		
 		if (args.length != 7) {
 			usage(cliUserName, cliPassword);
 			return;
@@ -97,14 +112,14 @@ public class CaImportCertDirCommand extends BaseCaAdminCommand {
 			getLogger().debug("Searching for End Entity Profile " + eeProfile);
 			final int endEntityProfileId = ejb.getEndEntityProfileSession().getEndEntityProfileId(eeProfile);
 			if (endEntityProfileId == 0) {
-				getLogger().error("End Entity Profile " + eeProfile + " does not exist.");
+				getLogger().error("ERROR: End Entity Profile " + eeProfile + " does not exist.");
 				throw new Exception("End Entity Profile '" + eeProfile + "' does not exist.");
 			}
 			// Fetch Certificate Profile info
 			getLogger().debug("Searching for Certificate Profile " + certificateProfile);
 			int certificateProfileId = ejb.getCertificateProfileSession().getCertificateProfileId(certificateProfile);
 			if (certificateProfileId == CertificateProfileConstants.CERTPROFILE_NO_PROFILE) {
-				getLogger().error("Certificate Profile " + certificateProfile + " does not exist.");
+				getLogger().error("ERROR: Certificate Profile " + certificateProfile + " does not exist.");
 				throw new Exception("Certificate Profile '" + certificateProfile + "' does not exist.");
 			}
 			// Get all files in the directory to import from and try to read and import each as a certificate
@@ -118,17 +133,33 @@ public class CaImportCertDirCommand extends BaseCaAdminCommand {
 			}
 			int redundant = 0;
 			int caMismatch = 0;
-			int count = 0;
+			int readError = 0;
+			int constraintViolation = 0;
+			int generalImportError = 0;
+			int importOk = 0;
 			for (final File file : files) {
+
 				final String filename = file.getName();
 				final X509Certificate certificate;
 
+				// Read certificate from the file.
 				try {
 					certificate = (X509Certificate) loadcert(file.getCanonicalPath());
 				} catch (Exception e) {
-					getLogger().info("Read error, file: " + filename);
-					throw e;
+					getLogger().error("ERROR: A problem was encountered while reading the certificate, file: " + filename);
+					readError++;
+					if (!resumeOnError) {
+						throw e;
+					} else {
+						getLogger().error(e.getMessage());
+					}
+
+					// We have to continue here since the rest of the code depends
+					// on reading of certificate.
+					continue;
 				}
+
+				// Generate the end entity username.
 
 				// Use the filename as username by default since it's something that's always present.
 				String username = filename;
@@ -137,64 +168,80 @@ public class CaImportCertDirCommand extends BaseCaAdminCommand {
 				if (usernameFilter.equalsIgnoreCase("DN")) {
 					String dn = CertTools.getSubjectDN(certificate);
 					if (dn == null || dn.length() == 0) {
-						getLogger().info("Certificate with serial '" + CertTools.getSerialNumberAsString(certificate) + "' lacks DN, filename used instead, file: " + filename);
-					}
-					else {
+						getLogger().warn("WARN: Certificate with serial '" + CertTools.getSerialNumberAsString(certificate) + "' lacks DN, filename used instead, file: " + filename);
+					} else {
 						username = dn;
 					}
-				}
 				// Use CN if requested, but fallback to DN if it's empty, or if
 				// DN is empty as well, fall back to filename.
-				else if (usernameFilter.equalsIgnoreCase("CN")) {
+				} else if (usernameFilter.equalsIgnoreCase("CN")) {
 					String dn = CertTools.getSubjectDN(certificate);
 					String cn = CertTools.getPartFromDN(dn, "CN");
 
 					if (cn == null || cn.length() == 0) {
 						if (dn == null || dn.length() == 0) {
-							getLogger().info("Certificate with serial '" + CertTools.getSerialNumberAsString(certificate) + "' lacks both CN and DN, filename used instead, file: " +filename);
-						}
-						else {
+							getLogger().warn("WARN: Certificate with serial '" + CertTools.getSerialNumberAsString(certificate) + "' lacks both CN and DN, filename used instead, file: " +filename);
+						} else {
 							username = dn;
-							getLogger ().info("Certificate with serial '" + CertTools.getSerialNumberAsString(certificate) + "' lacks CN, DN used instead, file: " +filename);
+							getLogger ().warn("WARN: Certificate with serial '" + CertTools.getSerialNumberAsString(certificate) + "' lacks CN, DN used instead, file: " +filename);
 						}
-					}
-					else {
+					} else {
 						username = cn;
 					}
 				}
 
 				// Assume the worst-case scenario. We have to set this to
 				// something due to try/catch block.
-				int performImportStatus = STATUS_CAMISMATCH;
+				int performImportStatus = STATUS_GENERALIMPORTERROR;
 
 				try {
 					performImportStatus = performImport(cliUserName, cliPassword, certificate, status, endEntityProfileId, certificateProfileId, cacert, caInfo, filename, issuer, username);
-				}
-				catch (UserDoesntFullfillEndEntityProfile e) {
-					getLogger().info("Import error, end entity profile constraints violated, file: " + filename);
-					throw e;
-				}
-				catch (Exception e) {
-					getLogger().info("General import error, file: " + filename);
-					throw e;
+				} catch (UserDoesntFullfillEndEntityProfile e) {
+					getLogger().error("ERROR: End entity profile constraints were violated by the certificate, file: " + filename);
+					performImportStatus = STATUS_CONSTRAINTVIOLATION;
+					if (!resumeOnError) {
+						throw e;
+					} else {
+						getLogger().error(e.getMessage());
+					}
+				} catch (Exception e) {
+					getLogger().error("ERROR: Unclassified general import error has occurred, file: " + filename);
+					performImportStatus = STATUS_GENERALIMPORTERROR;
+					if (!resumeOnError) {
+						throw e;
+					} else {
+						getLogger().error(e.getMessage());
+					}
 				}
 
 				switch (performImportStatus) {
 				case STATUS_REDUNDANT: redundant++; break;
 				case STATUS_CAMISMATCH: caMismatch++; break;
-				default: count++;
+				case STATUS_CONSTRAINTVIOLATION: constraintViolation++; break;
+				case STATUS_OK: importOk++; break;
+				default: generalImportError++; break;
 				}
 			}
 			// Print resulting statistics
-			getLogger().info("\nSummary:\nImported " + count + " certificates");
+			getLogger().info("\nImport summary:");
+			getLogger().info(importOk + " certificates were imported with success (STATUS_OK)");
 			if (redundant > 0) {
-				getLogger().info(redundant + " certificates were already in the database");
+				getLogger().info(redundant + " certificates were already present in the database (STATUS_REDUNDANT)");
 			}
 			if (caMismatch > 0) {
-				getLogger().info(caMismatch + " certificates were rejected because they did not belong to the CA");
+				getLogger().info(caMismatch + " certificates were not issued by the specified CA (STATUS_CAMISMATCH)");
+			}
+			if (readError > 0) {
+				getLogger().info(readError + " certificates could not be read (STATUS_READERROR)");
+			}
+			if ( constraintViolation > 0) {
+				getLogger().info(constraintViolation + " certificates violated the end entity constraints (STATUS_CONSTRAINTVIOLATION)");
+			}
+			if ( generalImportError > 0) {
+				getLogger().info(generalImportError + " certificates were not imported due to other errors (STATUS_GENERALIMPORTERROR)");
 			}
 		} catch (Exception e) {
-			getLogger().info("Error: " + e.getMessage());
+			getLogger().error("ERROR: " + e.getMessage());
 		}
 		getLogger().trace("<execute()");
 	}
@@ -207,22 +254,26 @@ public class CaImportCertDirCommand extends BaseCaAdminCommand {
 			                   X509Certificate cacert, CAInfo caInfo, String filename, String issuer, String username) throws Exception {
 		final String fingerprint = CertTools.getFingerprintAsString(certificate);
 		if (ejb.getCertStoreSession().findCertificateByFingerprint(fingerprint) != null) {
-			getLogger ().info("Certificate with serial '" + CertTools.getSerialNumberAsString(certificate) + "' is already present, file: " +filename);
+			getLogger ().info("SKIP: Certificate with serial '" + CertTools.getSerialNumberAsString(certificate) + "' is already present, file: " +filename);
 			return STATUS_REDUNDANT;
 		}
+
+		// Strip the username of dangerous characters before using it.
+		username = StringTools.strip(username);
+
 		final Date now = new Date();
 		// Certificate has expired, but we are obviously keeping it for archival purposes
 		if (CertTools.getNotAfter(certificate).compareTo(now) < 0) {
 			status = SecConst.CERT_ARCHIVED;
 		}
-		if (!cacert.getSubjectX500Principal().getName().equals(certificate.getIssuerX500Principal().getName())){
-			getLogger().info("REJECTED, CA issuer mismatch, file: " + filename);
+		if (!cacert.getSubjectX500Principal().equals(certificate.getIssuerX500Principal())){
+			getLogger().error("ERROR: The certificates issuer subject DN does not match with the specified CA's subject, file: " + filename);
 			return STATUS_CAMISMATCH;
 		}
 		try {
 			certificate.verify(cacert.getPublicKey());
 		} catch (GeneralSecurityException gse) {
-			getLogger().info("REJECTED, CA signature mismatch,file: " + filename);
+			getLogger().error("ERROR: The certificate's signature does not validate against the specified CA, file: " + filename);
 			return STATUS_CAMISMATCH;
 		}
 		getLogger().debug("Loading/updating user " + username);
@@ -256,7 +307,8 @@ public class CaImportCertDirCommand extends BaseCaAdminCommand {
 	/** Print out usage. */
 	private void usage(String cliUserName, String cliPassword) {
 		getLogger().info("Description: " + getDescription());
-		getLogger().info("Usage: " + getCommand() + " <username-source> <caname> <status> <certificate dir> <endentityprofile> <certificateprofile>");
+		getLogger().info("Usage: " + getCommand() + " <username-source> <caname> <status> <certificate dir> <endentityprofile> <certificateprofile> [-resumeonerror]");
+		getLogger().info("The import will proceed as long as the only error encountered is a mismatch between the signer of end entity certificate and the specified certification authority. If the -resumeonerror options is provided, the import will resume even in case of more critical errors (such as violation of end entity constraints, malformed files etc). The offending files will be printed-out to the standard output, and a summary will contain exact numbers on imported and failed certificates.");
 		getLogger().info(" Username-source: \"DN\" means use certificate's SubjectDN as username, \"CN\" means use certificate subject's common name as username and \"FILE\" means user the file's name as username");
 		// List available CAs by name
 		getLogger().info(" Available CAs: " + getAvailableCasString(cliUserName, cliPassword));

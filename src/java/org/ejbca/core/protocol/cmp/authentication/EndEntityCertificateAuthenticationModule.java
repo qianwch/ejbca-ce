@@ -39,15 +39,20 @@ import org.cesecore.certificates.ca.CAInfo;
 import org.cesecore.certificates.ca.CaSession;
 import org.cesecore.certificates.certificate.CertificateInfo;
 import org.cesecore.certificates.certificate.CertificateStoreSession;
+import org.cesecore.certificates.endentity.EndEntityInformation;
 import org.cesecore.util.CertTools;
 import org.ejbca.config.CmpConfiguration;
+import org.ejbca.core.EjbcaException;
 import org.ejbca.core.ejb.authentication.web.WebAuthenticationProviderSessionLocal;
 import org.ejbca.core.ejb.ra.EndEntityAccessSession;
+import org.ejbca.core.ejb.ra.UserAdminSession;
 import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileSession;
 import org.ejbca.core.model.InternalEjbcaResources;
 import org.ejbca.core.model.SecConst;
+import org.ejbca.core.model.approval.WaitingForApprovalException;
 import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.core.model.ra.NotFoundException;
+import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
 import org.ejbca.core.protocol.cmp.CmpMessageHelper;
 import org.ejbca.core.protocol.cmp.CmpPKIBodyConstants;
 import org.ejbca.util.passgen.IPasswordGenerator;
@@ -78,6 +83,7 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
     private EndEntityProfileSession eeProfileSession;
     private EndEntityAccessSession eeAccessSession;
     private WebAuthenticationProviderSessionLocal authenticationProviderSession;
+    private UserAdminSession userAdminSession;
 
     public EndEntityCertificateAuthenticationModule(final String parameter) {
         this.authenticationParameterCAName = parameter;
@@ -92,6 +98,7 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
         eeProfileSession = null;
         eeAccessSession = null;
         authenticationProviderSession = null;
+        userAdminSession = null;
     }
     
     /**
@@ -105,7 +112,7 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
      */
     public void setSession(final AuthenticationToken adm, final CaSession caSession, final CertificateStoreSession certSession, 
             final AccessControlSession authSession, final EndEntityProfileSession eeprofSession, final EndEntityAccessSession eeaccessSession,
-            final WebAuthenticationProviderSessionLocal authProvSession) {
+            final WebAuthenticationProviderSessionLocal authProvSession, UserAdminSession userAdmSession) {
         this.admin = adm;
         this.caSession = caSession;
         this.certSession = certSession;
@@ -113,6 +120,7 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
         this.eeProfileSession = eeprofSession;
         this.eeAccessSession = eeaccessSession;
         this.authenticationProviderSession = authProvSession;
+        this.userAdminSession = userAdmSession;
     }
     
     
@@ -169,6 +177,13 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
      * @return true if the message signature was verified successfully and false otherwise.
      */
     public boolean verifyOrExtract(final PKIMessage msg, final String username, boolean authenticated) {
+        
+        //Check that msg is signed
+        if(msg.getProtection() == null) {
+            errorMessage = "PKI Message is not athenticated properly. No PKI protection is found.";
+            log.info(errorMessage);
+            return false;
+        }
         
         //Check that there is a certificate in the extraCert field in msg
         final X509CertificateStructure extraCertStruct = msg.getExtraCert(0);
@@ -230,29 +245,39 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
         CertificateInfo certinfo = null;
         if(!CmpConfiguration.getRAOperationMode() || isCASet) { // if client mode, or cmp.authenticationparameters in cmp.properties is set in RA mode
             
-            // Check that extraCert is in the Database
-            certinfo = certSession.getCertificateInfo(fp);
-            if(certinfo == null) {
-                errorMessage = "The certificate attached to the PKIMessage in the extraCert field could not be found in the database.";
-                if(log.isDebugEnabled()) {
-                    log.debug(errorMessage+". Fingerprint="+fp);
-                }
+            // Get the CAInfo of the CA that should have issued extraCert and check extraCert is actually issued by the right CA 
+            cainfo = getCAInfo(extraCert, isCASet, msg.getBody().getTagNo());
+            if ( cainfo == null ) {
                 return false;
             }
+
+            if(!isVendorCertificateMode(msg.getBody().getTagNo())) {
+                // Check that extraCert is in the Database
+                certinfo = certSession.getCertificateInfo(fp);
+                if(certinfo == null) {
+                    errorMessage = "The certificate attached to the PKIMessage in the extraCert field could not be found in the database.";
+                    if(log.isDebugEnabled()) {
+                        log.debug(errorMessage+". Fingerprint="+fp);
+                    }
+                    return false;
+                }
             
-            // Get the CAInfo of the CA that had issued extraCert
-            cainfo = getCAInfo(extraCert, isCASet);
-            if (cainfo == null) {
+                // Check that extraCert is valid and is not revoked
+                if(!isCertValid(fp) || !isCertActive(certinfo)) {
+                    return false;
+                }
+            } else {
+                if (log.isDebugEnabled()) {
+                    log.debug("CMP is in vendor certificate mode. Not checking that the certificate attached to the PKIMessage in the extraCert field is in the database.");
+                }
+            }
+            
+            if(!isIssuedByCA(cainfo)) {
                 return false;
             } else {
                 if(log.isDebugEnabled()) {
-                    log.debug("The certificate in extraCert field should be issued by '" + cainfo.getName() + "'");
+                    log.debug("The certificate in extraCert field is correctly issued by '" + cainfo.getName() + "'");
                 }
-            }
-
-            // Check that extraCert is issued by the right CA, that it is valid and is not revoked
-            if(!isIssuedByCA(cainfo) || !isCertValid(fp) || !isCertActive(certinfo)) {
-                return false;
             }
 
         }
@@ -287,11 +312,12 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
             
             // Check if this certificate belongs to the user
             if (username != null) {
-                if (!StringUtils.equals(username, certinfo.getUsername())) {
+                String extraCertUsername = getUsername(certinfo, msg.getBody().getTagNo());
+                if (!StringUtils.equals(username, extraCertUsername)) {
                     errorMessage = "The End Entity certificate attached to the PKIMessage in the extraCert field does not belong to user '"+username+"'.";
                     if(log.isDebugEnabled()) {
                         // Use a different debug message, as not to reveal too much information
-                        final String debugMessage = "The End Entity certificate attached to the PKIMessage in the extraCert field does not belong to user '"+username+"', but to user '"+certinfo.getUsername()+"'.";
+                        final String debugMessage = "The End Entity certificate attached to the PKIMessage in the extraCert field does not belong to user '"+username+"', but to user '"+extraCertUsername+"'.";
                         log.debug(debugMessage);
                     }
                     return false;                
@@ -299,11 +325,42 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
                 
                 //set the password of the request to this user's password so it can later be used when issuing the certificate
                 if (log.isDebugEnabled()) {
+                    log.debug("The End Entity certificate attached to the PKIMessage in the extraCert field belongs to user '"+username+"'.");
                     log.debug("Extracting and setting password for user '"+username+"'.");
                 }
                 try {
-                    password = eeAccessSession.findUser(admin, username).getPassword();
+                    EndEntityInformation user = eeAccessSession.findUser(admin, username);
+                    password = user.getPassword();
+                    if(password == null) { // happens when the end entity was NOT created with a clear text password
+                        password = genRandomPwd();
+                        user.setPassword(password);
+                        userAdminSession.changeUser(admin, user, false);
+                    }
                 } catch (AuthorizationDeniedException e) {
+                    errorMessage = e.getLocalizedMessage();
+                    if(log.isDebugEnabled()) {
+                        log.debug(errorMessage);
+                    }
+                    return false;
+                } catch (CADoesntExistsException e) {
+                    errorMessage = e.getLocalizedMessage();
+                    if(log.isDebugEnabled()) {
+                        log.debug(errorMessage);
+                    }
+                    return false;
+                } catch (UserDoesntFullfillEndEntityProfile e) {
+                    errorMessage = e.getLocalizedMessage();
+                    if(log.isDebugEnabled()) {
+                        log.debug(errorMessage);
+                    }
+                    return false;
+                } catch (WaitingForApprovalException e) {
+                    errorMessage = e.getLocalizedMessage();
+                    if(log.isDebugEnabled()) {
+                        log.debug(errorMessage);
+                    }
+                    return false;
+                } catch (EjbcaException e) {
                     errorMessage = e.getLocalizedMessage();
                     if(log.isDebugEnabled()) {
                         log.debug(errorMessage);
@@ -326,6 +383,8 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
                     password = genRandomPwd();
                 }
                 return true;
+            } else {
+                log.error("Failed to verify the signature in the PKIMessage.");
             }
         } catch (InvalidKeyException e) {
             if(log.isDebugEnabled()) {
@@ -544,7 +603,7 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
         try {
             extraCert.verify(cacert.getPublicKey(), "BC");
             if(log.isDebugEnabled()) {
-                log.debug("The certificate in extraCert is issued by the right CA");
+                log.debug("The certificate in extraCert is issued by the right CA: "+cainfo.getName());
             }
         } catch (Exception e) {
             errorMessage = "The End Entity certificate attached to the PKIMessage is not issued by the CA '" + cainfo.getName() + "'";
@@ -556,16 +615,24 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
         return true;
     }
     
-    private CAInfo getCAInfo(final Certificate extracert, boolean isCASet) {
+    private CAInfo getCAInfo(final Certificate extracert, boolean isCASet, int reqType) {
         CAInfo cainfo = null;
         try {
-            if (isCASet) {
-                cainfo = caSession.getCAInfo(this.admin, this.authenticationParameterCAName);
+            if(isVendorCertificateMode(reqType)) {
+                cainfo = caSession.getCAInfo(admin, CmpConfiguration.getVendorCA());
+                if (log.isDebugEnabled()) {
+                    log.debug("CMP is in vendor certificate mode and the Vendor CA is '"+CmpConfiguration.getVendorCA()+"'.");
+                }
             } else {
-                cainfo = caSession.getCAInfo(this.admin, CertTools.getIssuerDN(extracert).hashCode());
+                if (isCASet) {
+                    cainfo = caSession.getCAInfo(this.admin, this.authenticationParameterCAName);
+                } else {
+                    cainfo = caSession.getCAInfo(this.admin, CertTools.getIssuerDN(extracert).hashCode());
+                }
             }
         } catch (CADoesntExistsException e) {
-            errorMessage = "CA does not exist";
+            String canamelog = isCASet ? this.authenticationParameterCAName : String.valueOf(CertTools.getIssuerDN(extracert).hashCode());
+            errorMessage = "CA does not exist: " + canamelog;
             if(log.isDebugEnabled()) {
                 log.debug(errorMessage, e);
             }
@@ -577,6 +644,30 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
         }
         
         return cainfo;
+    }
+    
+    private String getUsername(CertificateInfo certinfo, int reqType) {
+        if(isVendorCertificateMode(reqType)) {
+            String subjectDN = CertTools.getSubjectDN(extraCert);
+            String username = CertTools.getPartFromDN(subjectDN, CmpConfiguration.getExtractUsernameComponent());
+            if(log.isDebugEnabled()) {
+                log.debug("Username ("+username+") was extracted from the '" + CmpConfiguration.getExtractUsernameComponent() + "' part of the subjectDN of the certificate in the 'extraCerts' field.");
+            }
+            return username;
+        } else {
+            return certinfo.getUsername();
+        }
+    }
+    
+    /**
+     * Checks whether authentication by vendor-issued-certificate should be used. If authentication by vendor-issued-certificate is 
+     * activated in the Cmp.properties file, it can be used only in client mode and with initialization/certification requests.
+     *  
+     * @param reqType
+     * @return 'True' if authentication by vendor-issued-certificate is used. 'False' otherwise
+     */
+    private boolean isVendorCertificateMode(int reqType) {
+        return !CmpConfiguration.getRAOperationMode() && CmpConfiguration.getVendorCertificateMode() && (reqType == 0 || reqType == 2);
     }
  
 }

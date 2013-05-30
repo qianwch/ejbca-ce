@@ -26,6 +26,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.x509.X509Extensions;
 import org.cesecore.authentication.tokens.AuthenticationToken;
+import org.cesecore.certificates.certificate.CertificateConstants;
 import org.cesecore.certificates.crl.RevokedCertInfo;
 import org.cesecore.certificates.endentity.ExtendedInformation;
 import org.cesecore.util.Base64;
@@ -38,7 +39,6 @@ import org.ejbca.util.JDBCUtil.Preparer;
 /**
  * Publisher writing certificates to an external Database, used by external OCSP responder.
  *
- * @author lars
  * @version $Id$
  *
  */
@@ -266,6 +266,28 @@ public class ValidationAuthorityPublisher extends BasePublisher implements ICust
 			throw e; // better throw insert exception if this fallback fails.
 		}
 	}
+	
+
+    @Override
+    public boolean willPublishCertificate(int status, int revocationReason) {
+        if (getOnlyPublishRevoked()) {
+            // If we should only publish revoked certificates and
+            // - status is not revoked
+            // - revocation reason is not REVOCATION_REASON_REMOVEFROMCRL even if status is active
+            // Then we will not publish the certificate, in all other cases we will
+            if ((status != CertificateConstants.CERT_REVOKED) && (revocationReason != RevokedCertInfo.REVOCATION_REASON_REMOVEFROMCRL)) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Will not publish certificate. Status: "+status+", revocationReason: "+revocationReason);
+                }
+                return false;
+            }
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("Will publish certificate. Status: "+status+", revocationReason: "+revocationReason);
+        }
+        return true;
+    }
+	
 	@Override
 	public boolean storeCertificate(AuthenticationToken admin, Certificate incert,
 	                                String username, String password,

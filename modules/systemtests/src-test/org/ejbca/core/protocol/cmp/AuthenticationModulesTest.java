@@ -24,20 +24,25 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.Principal;
+import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 
 import javax.ejb.CreateException;
@@ -48,6 +53,7 @@ import javax.security.auth.x500.X500Principal;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DERBitString;
 import org.bouncycastle.asn1.DEROctetString;
@@ -57,6 +63,9 @@ import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.ReasonFlags;
 import org.bouncycastle.asn1.x509.X509CertificateStructure;
 import org.bouncycastle.asn1.x509.X509Name;
+import org.bouncycastle.asn1.x9.X9ObjectIdentifiers;
+import org.bouncycastle.cms.CMSSignedGenerator;
+import org.bouncycastle.jce.X509KeyUsage;
 import org.cesecore.CesecoreException;
 import org.cesecore.authentication.tokens.AuthenticationSubject;
 import org.cesecore.authentication.tokens.AuthenticationToken;
@@ -67,15 +76,32 @@ import org.cesecore.authorization.user.AccessMatchType;
 import org.cesecore.authorization.user.AccessUserAspectData;
 import org.cesecore.authorization.user.matchvalues.X500PrincipalAccessMatchValue;
 import org.cesecore.certificates.CertificateCreationException;
+import org.cesecore.certificates.ca.CAConstants;
 import org.cesecore.certificates.ca.CADoesntExistsException;
 import org.cesecore.certificates.ca.CAInfo;
 import org.cesecore.certificates.ca.CaSessionRemote;
+import org.cesecore.certificates.ca.CaSessionTest;
+import org.cesecore.certificates.ca.X509CA;
+import org.cesecore.certificates.ca.X509CAInfo;
+import org.cesecore.certificates.ca.catoken.CAToken;
+import org.cesecore.certificates.ca.catoken.CATokenConstants;
+import org.cesecore.certificates.ca.catoken.CATokenInfo;
+import org.cesecore.certificates.ca.extendedservices.ExtendedCAServiceInfo;
 import org.cesecore.certificates.certificate.CertificateStoreSession;
 import org.cesecore.certificates.certificate.InternalCertificateStoreSessionRemote;
+import org.cesecore.certificates.certificateprofile.CertificateProfile;
+import org.cesecore.certificates.certificateprofile.CertificateProfileConstants;
+import org.cesecore.certificates.certificateprofile.CertificateProfileExistsException;
+import org.cesecore.certificates.certificateprofile.CertificateProfileSessionRemote;
 import org.cesecore.certificates.crl.RevokedCertInfo;
 import org.cesecore.certificates.endentity.EndEntityInformation;
 import org.cesecore.certificates.util.AlgorithmConstants;
+import org.cesecore.certificates.util.AlgorithmTools;
+import org.cesecore.certificates.util.DnComponents;
 import org.cesecore.jndi.JndiHelper;
+import org.cesecore.keys.token.CryptoToken;
+import org.cesecore.keys.token.CryptoTokenFactory;
+import org.cesecore.keys.token.SoftCryptoToken;
 import org.cesecore.keys.util.KeyTools;
 import org.cesecore.mock.authentication.tokens.TestAlwaysAllowLocalAuthenticationToken;
 import org.cesecore.mock.authentication.tokens.TestX509CertificateAuthenticationToken;
@@ -84,11 +110,14 @@ import org.cesecore.roles.RoleExistsException;
 import org.cesecore.roles.RoleNotFoundException;
 import org.cesecore.roles.access.RoleAccessSessionRemote;
 import org.cesecore.roles.management.RoleManagementSessionRemote;
+import org.cesecore.util.Base64;
 import org.cesecore.util.CertTools;
 import org.cesecore.util.CryptoProviderTools;
+import org.cesecore.util.StringTools;
 import org.ejbca.config.CmpConfiguration;
 import org.ejbca.config.EjbcaConfigurationHolder;
 import org.ejbca.core.EjbcaException;
+import org.ejbca.core.ejb.ca.caadmin.CAAdminSessionRemote;
 import org.ejbca.core.ejb.ca.sign.SignSessionRemote;
 import org.ejbca.core.ejb.config.ConfigurationSessionRemote;
 import org.ejbca.core.ejb.ra.EndEntityAccessSessionRemote;
@@ -99,14 +128,19 @@ import org.ejbca.core.model.approval.ApprovalException;
 import org.ejbca.core.model.approval.WaitingForApprovalException;
 import org.ejbca.core.model.ra.NotFoundException;
 import org.ejbca.core.model.ra.UserDataConstants;
+import org.ejbca.core.model.ra.raadmin.EndEntityProfile;
+import org.ejbca.core.model.ra.raadmin.EndEntityProfileExistsException;
 import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
 import org.ejbca.core.protocol.cmp.authentication.HMACAuthenticationModule;
 import org.ejbca.core.protocol.cmp.authentication.VerifyPKIMessage;
 import org.ejbca.util.InterfaceCache;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
+import com.novosec.pkix.asn1.cmp.CertRepMessage;
 import com.novosec.pkix.asn1.cmp.PKIBody;
 import com.novosec.pkix.asn1.cmp.PKIMessage;
 
@@ -116,6 +150,7 @@ import com.novosec.pkix.asn1.cmp.PKIMessage;
  * @version $Id$
  *
  */
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class AuthenticationModulesTest extends CmpTestCase {
 
     private static final Logger log = Logger.getLogger(AuthenticationModulesTest.class);
@@ -135,12 +170,17 @@ public class AuthenticationModulesTest extends CmpTestCase {
     private UserAdminSessionRemote userAdminSession = InterfaceCache.getUserAdminSession();
     private SignSessionRemote signSession = InterfaceCache.getSignSession();
     private EndEntityProfileSession eeProfileSession = InterfaceCache.getEndEntityProfileSession();
+    private CertificateProfileSessionRemote certProfileSession = InterfaceCache.getCertificateProfileSession();
     private ConfigurationSessionRemote confSession = JndiHelper.getRemoteSession(ConfigurationSessionRemote.class);
     private CertificateStoreSession certStoreSession = InterfaceCache.getCertificateStoreSession();
     private AccessControlSession authorizationSession = InterfaceCache.getAccessControlSession();
     private RoleManagementSessionRemote roleManagementSession = JndiHelper.getRemoteSession(RoleManagementSessionRemote.class);
     private RoleAccessSessionRemote roleAccessSessionRemote = JndiHelper.getRemoteSession(RoleAccessSessionRemote.class);
     private InternalCertificateStoreSessionRemote internalCertStoreSession = JndiHelper.getRemoteSession(InternalCertificateStoreSessionRemote.class);
+    private CAAdminSessionRemote caAdminSession = JndiHelper.getRemoteSession(CAAdminSessionRemote.class);
+    
+    private String USERNAME = "authModuleTestUser";
+    private String USER_DN = "CN=" + USERNAME + ",O=PrimeKey Solutions AB,C=SE,UID=foo123";
 
     @Before
     public void setUp() throws Exception {
@@ -229,7 +269,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
         // Send request and receive response
         final byte[] resp = sendCmpHttp(ba, 200);
         checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, req.getHeader().getSenderNonce().getOctets(), req.getHeader().getTransactionID()
-                .getOctets(), true, null);
+                .getOctets(), true, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
         Certificate cert1 = checkCmpCertRepMessage(userDN, cacert, resp, req.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId()
                 .getValue().intValue());
         assertNotNull("Crmf request did not return a certificate", cert1);
@@ -266,7 +306,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
                 }
             }
             if (cert == null) {
-                createUser(revUsername, revUserDN, "foo123");
+                createUser(revUsername, revUserDN, "foo123", true, caid, SecConst.EMPTY_ENDENTITYPROFILE, CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER);
                 KeyPair admkeys = KeyTools.genKeys("1024", "RSA");
                 cert = signSession.createCertificate(ADMIN, revUsername, "foo123", admkeys.getPublic());
             }
@@ -286,7 +326,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
             // Send request and receive response
             final byte[] resp = sendCmpHttp(ba, 200);
             checkCmpResponseGeneral(resp, issuerDN, revUserDN, cacert, req.getHeader().getSenderNonce().getOctets(), req.getHeader()
-                    .getTransactionID().getOctets(), true, null);
+                    .getTransactionID().getOctets(), true, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
             int revStatus = checkRevokeStatus(issuerDN, CertTools.getSerialNumber(cert));
             assertNotSame("Revocation request failed to revoke the certificate", RevokedCertInfo.NOT_REVOKED, revStatus);
         } finally {
@@ -324,13 +364,13 @@ public class AuthenticationModulesTest extends CmpTestCase {
             msg.getHeader().setProtectionAlg(pAlg);
             msg.getHeader().setSenderKID(new DEROctetString(nonce));
 
-            createUser(testUsername, testUserDN, "foo123");
+            createUser(testUsername, testUserDN, "foo123", true, caid, SecConst.EMPTY_ENDENTITYPROFILE, SecConst.CERTPROFILE_FIXED_ENDUSER);
             KeyPair admkeys = KeyTools.genKeys("512", "RSA");
-            admToken = createAdminToken(admkeys, testUsername, testUserDN);
+            admToken = createAdminToken(admkeys, testUsername, testUserDN, caid, SecConst.EMPTY_ENDENTITYPROFILE, SecConst.CERTPROFILE_FIXED_ENDUSER);
             admCert = getCertFromCredentials(admToken);
             fingerprint = CertTools.getFingerprintAsString(admCert);
             addExtraCert(msg, admCert);
-            signPKIMessage(msg, admkeys);
+            signPKIMessage(msg, admkeys.getPrivate(), pAlg.getAlgorithm());
             assertNotNull(msg);
             //******************************************''''''
             final Signature sig = Signature.getInstance(msg.getHeader().getProtectionAlg().getObjectId().getId(), "BC");
@@ -347,7 +387,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
             // Send request and receive response
             final byte[] resp = sendCmpHttp(ba, 200);
             checkCmpResponseGeneral(resp, issuerDN, testUserDN, cacert, msg.getHeader().getSenderNonce().getOctets(), msg.getHeader()
-                    .getTransactionID().getOctets(), true, null);
+                    .getTransactionID().getOctets(), true, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
             Certificate cert2 = checkCmpCertRepMessage(testUserDN, cacert, resp, msg.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId()
                     .getValue().intValue());
             assertNotNull("CrmfRequest did not return a certificate", cert2);
@@ -383,7 +423,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
             }
         }
         if (cert == null) {
-            createUser("cmprevuser1", "CN=cmprevuser1,C=SE", "foo123");
+            createUser("cmprevuser1", "CN=cmprevuser1,C=SE", "foo123", true, caid, SecConst.EMPTY_ENDENTITYPROFILE, CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER);
             KeyPair admkeys = KeyTools.genKeys("1024", "RSA");
             cert = signSession.createCertificate(ADMIN, "cmprevuser1", "foo123", admkeys.getPublic());
         }
@@ -398,10 +438,10 @@ public class AuthenticationModulesTest extends CmpTestCase {
         String adminName = "cmpTestAdmin";
         //createUser("cmpTestAdmin", "CN=cmpTestAdmin,C=SE", "foo123");
         KeyPair admkeys = KeyTools.genKeys("1024", "RSA");
-        AuthenticationToken adminToken = createAdminToken(admkeys, adminName, "CN=" + adminName + ",C=SE");
+        AuthenticationToken adminToken = createAdminToken(admkeys, adminName, "CN=" + adminName + ",C=SE", caid, SecConst.EMPTY_ENDENTITYPROFILE, SecConst.CERTPROFILE_FIXED_ENDUSER);
         Certificate admCert = getCertFromCredentials(adminToken);
         addExtraCert(msg, admCert);
-        signPKIMessage(msg, admkeys);
+        signPKIMessage(msg, admkeys.getPrivate(), pAlg.getAlgorithm());
         assertNotNull(msg);
 
         final ByteArrayOutputStream bao = new ByteArrayOutputStream();
@@ -411,7 +451,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
         // Send request and receive response
         final byte[] resp = sendCmpHttp(ba, 200);
         checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, msg.getHeader().getSenderNonce().getOctets(), msg.getHeader().getTransactionID()
-                .getOctets(), true, null);
+                .getOctets(), true, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
         int revStatus = checkRevokeStatus(issuerDN, CertTools.getSerialNumber(cert));
         assertNotSame("Revocation request failed to revoke the certificate", RevokedCertInfo.NOT_REVOKED, revStatus);
 
@@ -442,7 +482,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
             }
         }
         if (cert == null) {
-            createUser("cmprevuser1", "CN=cmprevuser1,C=SE", "foo123");
+            createUser("cmprevuser1", "CN=cmprevuser1,C=SE", "foo123", true, caid, SecConst.EMPTY_ENDENTITYPROFILE, CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER);
             KeyPair admkeys = KeyTools.genKeys("1024", "RSA");
             cert = signSession.createCertificate(ADMIN, "cmprevuser1", "foo123", admkeys.getPublic());
         }
@@ -457,10 +497,10 @@ public class AuthenticationModulesTest extends CmpTestCase {
         String adminName = "cmpTestAdmin";
         //createUser("cmpTestAdmin", "CN=cmpTestAdmin,C=SE", "foo123");
         KeyPair admkeys = KeyTools.genKeys("1024", "RSA");
-        AuthenticationToken adminToken = createAdminToken(admkeys, adminName, "CN=" + adminName + ",C=SE");
+        AuthenticationToken adminToken = createAdminToken(admkeys, adminName, "CN=" + adminName + ",C=SE", caid, SecConst.EMPTY_ENDENTITYPROFILE, SecConst.CERTPROFILE_FIXED_ENDUSER);
         Certificate admCert = getCertFromCredentials(adminToken);
         addExtraCert(msg, admCert);
-        signPKIMessage(msg, admkeys);
+        signPKIMessage(msg, admkeys.getPrivate(), pAlg.getAlgorithm());
         assertNotNull(msg);
 
         final ByteArrayOutputStream bao = new ByteArrayOutputStream();
@@ -470,7 +510,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
         // Send request and receive response
         final byte[] resp = sendCmpHttp(ba, 200);
         checkCmpResponseGeneral(resp, "C=SE,CN=cmprevuser1", userDN, cacert, msg.getHeader().getSenderNonce().getOctets(), msg.getHeader()
-                .getTransactionID().getOctets(), false, null);
+                .getTransactionID().getOctets(), false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
         //int revStatus = checkRevokeStatus(issuerDN, CertTools.getSerialNumber(cert));
         //assertNotSame("Revocation request failed to revoke the certificate", RevokedCertInfo.NOT_REVOKED, revStatus);
         PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
@@ -511,10 +551,10 @@ public class AuthenticationModulesTest extends CmpTestCase {
         String adminName = "cmpTestAdmin";
         //createUser("cmpTestAdmin", "CN=cmpTestAdmin,C=SE", "foo123");
         KeyPair admkeys = KeyTools.genKeys("1024", "RSA");
-        AuthenticationToken adminToken = createAdminToken(admkeys, adminName, "CN=" + adminName + ",C=SE");
+        AuthenticationToken adminToken = createAdminToken(admkeys, adminName, "CN=" + adminName + ",C=SE", caid, SecConst.EMPTY_ENDENTITYPROFILE, SecConst.CERTPROFILE_FIXED_ENDUSER);
         Certificate admCert = getCertFromCredentials(adminToken);
         addExtraCert(msg, admCert);
-        signPKIMessage(msg, admkeys);
+        signPKIMessage(msg, admkeys.getPrivate(), pAlg.getAlgorithm());
         assertNotNull(msg);
 
         //********************************************
@@ -532,7 +572,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
         // Send request and receive response
         final byte[] resp = sendCmpHttp(ba, 200);
         checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, msg.getHeader().getSenderNonce().getOctets(), msg.getHeader().getTransactionID()
-                .getOctets(), true, null);
+                .getOctets(), true, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
         Certificate cert2 = checkCmpCertRepMessage(userDN, cacert, resp, msg.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId()
                 .getValue().intValue());
         assertNotNull("CrmfRequest did not return a certificate", cert2);
@@ -581,13 +621,13 @@ public class AuthenticationModulesTest extends CmpTestCase {
         final byte[] resp = sendCmpHttp(ba, 200);
         // We configured PBE response protection above, so make sure it's correct
         checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, req.getHeader().getSenderNonce().getOctets(), req.getHeader().getTransactionID()
-                .getOctets(), false, pbeSecret);
+                .getOctets(), false, pbeSecret, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
         Certificate cert1 = checkCmpCertRepMessage(userDN, cacert, resp, req.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId()
                 .getValue().intValue());
         assertNotNull("Crmf request did not return a certificate", cert1);
 
         VerifyPKIMessage verifier = new VerifyPKIMessage(caSession.getCAInfo(ADMIN, caid), ADMIN, caSession, eeAccessSession, certStoreSession,
-                authorizationSession, eeProfileSession, null);
+                authorizationSession, eeProfileSession, null, userAdminSession);
         boolean verify = verifier.verify(req, null, false);
         assertTrue("Verifying PKIMessage failed", verify);
         assertEquals(CmpConfiguration.AUTHMODULE_HMAC, verifier.getUsedAuthenticationModule().getName());
@@ -621,7 +661,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
         // Send request and receive response
         final byte[] resp = sendCmpHttp(ba, 200);
         checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, req.getHeader().getSenderNonce().getOctets(), req.getHeader().getTransactionID()
-                .getOctets(), false, null);
+                .getOctets(), false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
 
         PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
         assertNotNull(respObject);
@@ -629,7 +669,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
         final PKIBody body = respObject.getBody();
         assertEquals(23, body.getTagNo());
         final String errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
-        final String expectedErrMsg = "Unrecognized authentication module '" + CmpConfiguration.AUTHMODULE_DN_PART_PWD + "'";
+        final String expectedErrMsg = "The authentication module 'DnPartPwd' cannot be used in RA mode";
         assertEquals(expectedErrMsg, errMsg);
     }
 
@@ -654,11 +694,11 @@ public class AuthenticationModulesTest extends CmpTestCase {
         msg.getHeader().setProtectionAlg(pAlg);
 
         String adminName = "cmpTestUnauthorizedAdmin";
-        createUser(adminName, "CN=" + adminName + ",C=SE", "foo123");
+        createUser(adminName, "CN=" + adminName + ",C=SE", "foo123", true, caid, SecConst.EMPTY_ENDENTITYPROFILE, SecConst.CERTPROFILE_FIXED_ENDUSER);
         KeyPair admkeys = KeyTools.genKeys("512", "RSA");
         Certificate admCert = signSession.createCertificate(ADMIN, adminName, "foo123", admkeys.getPublic());
         addExtraCert(msg, admCert);
-        signPKIMessage(msg, admkeys);
+        signPKIMessage(msg, admkeys.getPrivate(), pAlg.getAlgorithm());
         assertNotNull(msg);
 
         final ByteArrayOutputStream bao = new ByteArrayOutputStream();
@@ -668,7 +708,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
         // Send request and receive response
         final byte[] resp = sendCmpHttp(ba, 200);
         checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, msg.getHeader().getSenderNonce().getOctets(), msg.getHeader().getTransactionID()
-                .getOctets(), false, null);
+                .getOctets(), false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
 
         PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
         assertNotNull(respObject);
@@ -706,10 +746,10 @@ public class AuthenticationModulesTest extends CmpTestCase {
         String adminName = "cmpTestAdmin";
         //createUser("cmpTestAdmin", "CN=cmpTestAdmin,C=SE", "foo123");
         KeyPair admkeys = KeyTools.genKeys("1024", "RSA");
-        AuthenticationToken adminToken = createAdminToken(admkeys, adminName, "CN=" + adminName + ",C=SE");
+        AuthenticationToken adminToken = createAdminToken(admkeys, adminName, "CN=" + adminName + ",C=SE", caid, SecConst.EMPTY_ENDENTITYPROFILE, SecConst.CERTPROFILE_FIXED_ENDUSER);
         Certificate admCert = getCertFromCredentials(adminToken);
         addExtraCert(msg, admCert);
-        signPKIMessage(msg, admkeys);
+        signPKIMessage(msg, admkeys.getPrivate(), pAlg.getAlgorithm());
         assertNotNull(msg);
 
         //********************************************
@@ -727,7 +767,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
         // Send request and receive response
         final byte[] resp = sendCmpHttp(ba, 200);
         checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, msg.getHeader().getSenderNonce().getOctets(), msg.getHeader().getTransactionID()
-                .getOctets(), false, null);
+                .getOctets(), false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
         PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
         assertNotNull(respObject);
 
@@ -762,7 +802,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
 
         String clientUsername = "clientTestUser";
         String clientDN = "CN=" + clientUsername + ",C=SE";
-        createUser(clientUsername, clientDN, clientPassword);
+        createUser(clientUsername, clientDN, clientPassword, true, caid, SecConst.EMPTY_ENDENTITYPROFILE, CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER);
 
         KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
 
@@ -781,14 +821,14 @@ public class AuthenticationModulesTest extends CmpTestCase {
         // Send request and receive response
         final byte[] resp = sendCmpHttp(ba, 200);
         checkCmpResponseGeneral(resp, issuerDN, clientDN, cacert, req.getHeader().getSenderNonce().getOctets(), req.getHeader().getTransactionID()
-                .getOctets(), true, null);
+                .getOctets(), true, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
         Certificate cert1 = checkCmpCertRepMessage(clientDN, cacert, resp, req.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId()
                 .getValue().intValue());
         assertNotNull("Crmf request did not return a certificate", cert1);
 
         // 
         // Try a request with no issuerDN in the certTemplate
-        createUser(clientUsername, clientDN, clientPassword);
+        createUser(clientUsername, clientDN, clientPassword, true, caid, SecConst.EMPTY_ENDENTITYPROFILE, SecConst.CERTPROFILE_FIXED_ENDUSER);
         PKIMessage msgNoIssuer = genCertReq(null, clientDN, keys, cacert, nonce, transid, true, null, null, null, null);
         assertNotNull("Generating CrmfRequest with no issuer failed.", msgNoIssuer);
         PKIMessage reqNoIssuer = protectPKIMessage(msgNoIssuer, false, clientPassword, "mykeyid", 567);
@@ -800,7 +840,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
         // Send request and receive response
         byte[] respNoIssuer = sendCmpHttp(ba2, 200);
         checkCmpResponseGeneral(respNoIssuer, issuerDN, clientDN, cacert, reqNoIssuer.getHeader().getSenderNonce().getOctets(), reqNoIssuer
-                .getHeader().getTransactionID().getOctets(), true, null);
+                .getHeader().getTransactionID().getOctets(), true, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
         Certificate cert2 = checkCmpCertRepMessage(clientDN, cacert, respNoIssuer, reqNoIssuer.getBody().getIr().getCertReqMsg(0).getCertReq()
                 .getCertReqId().getValue().intValue());
         assertNotNull("Crmf request did not return a certificate", cert2);
@@ -816,7 +856,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
         byte[] ba3 = bao3.toByteArray();
         // Send request and receive response
         byte[] resp3 = sendCmpHttp(ba3, 200);
-        checkCmpResponseGeneral(resp3, issuerDN, userDN, cacert, nonce, transid, true, null);
+        checkCmpResponseGeneral(resp3, issuerDN, userDN, cacert, nonce, transid, true, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
         checkCmpPKIConfirmMessage(userDN, cacert, resp3);
     }
 
@@ -834,11 +874,8 @@ public class AuthenticationModulesTest extends CmpTestCase {
         String clientUsername = "clientTestUser";
         String clientDN = "CN=" + clientUsername + ",C=SE";
         String clientPassword = "foo123client";
-        try {
-            userAdminSession.revokeAndDeleteUser(ADMIN, clientUsername, ReasonFlags.unused);
-        } catch (Exception e) {
-        }
-        createUser(clientUsername, clientDN, clientPassword);
+
+        createUser(clientUsername, clientDN, clientPassword, true, caid, SecConst.EMPTY_ENDENTITYPROFILE, CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER);
 
         KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
 
@@ -883,11 +920,8 @@ public class AuthenticationModulesTest extends CmpTestCase {
         String clientUsername = "clientTestUser";
         String clientDN = "CN=" + clientUsername + ",C=SE";
         String clientPassword = "foo123client";
-        try {
-            userAdminSession.revokeAndDeleteUser(ADMIN, clientUsername, ReasonFlags.unused);
-        } catch (Exception e) {
-        }
-        createUser(clientUsername, clientDN, "foo123");
+
+        createUser(clientUsername, clientDN, "foo123", true, caid, SecConst.EMPTY_ENDENTITYPROFILE, SecConst.CERTPROFILE_FIXED_ENDUSER);
 
         KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
 
@@ -903,7 +937,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
         // Send request and receive response
         final byte[] resp = sendCmpHttp(ba, 200);
         checkCmpResponseGeneral(resp, issuerDN, clientDN, cacert, req.getHeader().getSenderNonce().getOctets(), req.getHeader().getTransactionID()
-                .getOctets(), true, null);
+                .getOctets(), true, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
         Certificate cert1 = checkCmpCertRepMessage(clientDN, cacert, resp, req.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId()
                 .getValue().intValue());
         assertNotNull("Crmf request did not return a certificate", cert1);
@@ -931,11 +965,8 @@ public class AuthenticationModulesTest extends CmpTestCase {
         String clientUsername = "clientTestUser";
         String clientDN = "CN=" + clientUsername + ",C=SE";
         //String clientPassword = "foo123client";
-        try {
-            userAdminSession.revokeAndDeleteUser(ADMIN, clientUsername, ReasonFlags.unused);
-        } catch (Exception e) {
-        }
-        createUser(clientUsername, clientDN, "foo123");
+
+        createUser(clientUsername, clientDN, "foo123", true, caid, SecConst.EMPTY_ENDENTITYPROFILE, SecConst.CERTPROFILE_FIXED_ENDUSER);
 
         KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
 
@@ -949,13 +980,13 @@ public class AuthenticationModulesTest extends CmpTestCase {
         // Send request and receive response
         final byte[] resp = sendCmpHttp(ba, 200);
         checkCmpResponseGeneral(resp, issuerDN, clientDN, cacert, msg.getHeader().getSenderNonce().getOctets(), msg.getHeader().getTransactionID()
-                .getOctets(), true, null);
+                .getOctets(), true, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
         Certificate cert1 = checkCmpCertRepMessage(clientDN, cacert, resp, msg.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId()
                 .getValue().intValue());
         assertNotNull("Crmf request did not return a certificate", cert1);
 
         VerifyPKIMessage verifier = new VerifyPKIMessage(caSession.getCAInfo(ADMIN, caid), ADMIN, caSession, eeAccessSession, certStoreSession,
-                authorizationSession, eeProfileSession, null);
+                authorizationSession, eeProfileSession, null, userAdminSession);
         boolean verify = verifier.verify(msg, null, false);
         assertTrue(verify);
         assertEquals(CmpConfiguration.AUTHMODULE_REG_TOKEN_PWD, verifier.getUsedAuthenticationModule().getName());
@@ -978,11 +1009,8 @@ public class AuthenticationModulesTest extends CmpTestCase {
         String clientUsername = "clientTestUser";
         String clientDN = "CN=" + clientUsername + ",C=SE";
         String clientPassword = "foo123client";
-        try {
-            userAdminSession.revokeAndDeleteUser(ADMIN, clientUsername, ReasonFlags.unused);
-        } catch (Exception e) {
-        }
-        createUser(clientUsername, clientDN, "foo123ee");
+
+        createUser(clientUsername, clientDN, "foo123ee", true, caid, SecConst.EMPTY_ENDENTITYPROFILE, SecConst.CERTPROFILE_FIXED_ENDUSER);
 
         KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
 
@@ -998,7 +1026,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
         // Send request and receive response
         final byte[] resp = sendCmpHttp(ba, 200);
         checkCmpResponseGeneral(resp, issuerDN, clientDN, cacert, req.getHeader().getSenderNonce().getOctets(), req.getHeader().getTransactionID()
-                .getOctets(), false, null);
+                .getOctets(), false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
 
         PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
         assertNotNull(respObject);
@@ -1045,7 +1073,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
         try {
             KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
             KeyPair fakeKeys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
-            createUser(testUsername, testUserDN, "foo123");
+            createUser(testUsername, testUserDN, "foo123", true, caid, SecConst.EMPTY_ENDENTITYPROFILE, CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER);
             // A real certificate that can be used to sign the message
             Certificate cert = signSession.createCertificate(ADMIN, testUsername, "foo123", keys.getPublic());
             fingerprint = CertTools.getFingerprintAsString(cert);
@@ -1060,7 +1088,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
                 AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
                 msg.getHeader().setProtectionAlg(pAlg);
                 addExtraCert(msg, fakeCert);
-                signPKIMessage(msg, fakeKeys);
+                signPKIMessage(msg, fakeKeys.getPrivate(), pAlg.getAlgorithm());
                 assertNotNull(msg);
                 //******************************************''''''
                 final Signature sig = Signature.getInstance(msg.getHeader().getProtectionAlg().getObjectId().getId(), "BC");
@@ -1078,19 +1106,19 @@ public class AuthenticationModulesTest extends CmpTestCase {
                 final byte[] resp = sendCmpHttp(ba, 200);
                 // This should have failed
                 checkCmpResponseGeneral(resp, issuerDN, testUserDN, cacert, msg.getHeader().getSenderNonce().getOctets(), msg.getHeader()
-                        .getTransactionID().getOctets(), false, null);
+                        .getTransactionID().getOctets(), false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
                 PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
                 assertNotNull(respObject);
                 PKIBody body = respObject.getBody();
                 assertEquals(23, body.getTagNo());
                 String errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
-                String expectedErrMsg = "The certificate attached to the PKIMessage in the extraCert field could not be found in the database.";
+                String expectedErrMsg = "CA does not exist: " + testUserDN.hashCode();
                 assertEquals(expectedErrMsg, errMsg);
             }
             // Step 2, sign the request with a certificate that does not belong to the user
             {
                 KeyPair otherKeys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
-                createUser(otherUsername, otherUserDN, "foo123");
+                createUser(otherUsername, otherUserDN, "foo123", true, caid, SecConst.EMPTY_ENDENTITYPROFILE, CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER);
                 // A real certificate that can be used to sign the message
                 Certificate othercert = signSession.createCertificate(ADMIN, otherUsername, "foo123", otherKeys.getPublic());
                 fingerprint2 = CertTools.getFingerprintAsString(cert);
@@ -1099,7 +1127,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
                 AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
                 msg.getHeader().setProtectionAlg(pAlg);
                 addExtraCert(msg, othercert);
-                signPKIMessage(msg, otherKeys);
+                signPKIMessage(msg, otherKeys.getPrivate(), pAlg.getAlgorithm());
                 assertNotNull(msg);
                 //******************************************''''''
                 final Signature sig = Signature.getInstance(msg.getHeader().getProtectionAlg().getObjectId().getId(), "BC");
@@ -1117,7 +1145,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
                 final byte[] resp = sendCmpHttp(ba, 200);
                 // This should have failed
                 checkCmpResponseGeneral(resp, issuerDN, testUserDN, cacert, msg.getHeader().getSenderNonce().getOctets(), msg.getHeader()
-                        .getTransactionID().getOctets(), false, null);
+                        .getTransactionID().getOctets(), false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
                 PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
                 assertNotNull(respObject);
                 PKIBody body = respObject.getBody();
@@ -1134,7 +1162,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
             AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
             msg.getHeader().setProtectionAlg(pAlg);
             addExtraCert(msg, cert);
-            signPKIMessage(msg, keys);
+            signPKIMessage(msg, keys.getPrivate(), pAlg.getAlgorithm());
             assertNotNull(msg);
             //******************************************''''''
             final Signature sig = Signature.getInstance(msg.getHeader().getProtectionAlg().getObjectId().getId(), "BC");
@@ -1151,7 +1179,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
             // Send request and receive response
             final byte[] resp = sendCmpHttp(ba, 200);
             checkCmpResponseGeneral(resp, issuerDN, testUserDN, cacert, msg.getHeader().getSenderNonce().getOctets(), msg.getHeader()
-                    .getTransactionID().getOctets(), false, null);
+                    .getTransactionID().getOctets(), false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
             // This should have failed
             PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
             assertNotNull(respObject);
@@ -1162,7 +1190,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
             assertEquals(expectedErrMsg, errMsg);
 
             // Step 4 now set status to NEW, and a clear text password, then it should finally work
-            createUser(testUsername, testUserDN, "randompasswordhere");
+            createUser(testUsername, testUserDN, "randompasswordhere", true, caid, SecConst.EMPTY_ENDENTITYPROFILE, SecConst.CERTPROFILE_FIXED_ENDUSER);
             // Send request and receive response
             final byte[] resp2 = sendCmpHttp(ba, 200);
             Certificate cert2 = checkCmpCertRepMessage(testUserDN, cacert, resp2, msg.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId()
@@ -1176,7 +1204,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
                 final byte[] resp3 = sendCmpHttp(ba, 200);
                 // This should have failed
                 checkCmpResponseGeneral(resp, issuerDN, testUserDN, cacert, msg.getHeader().getSenderNonce().getOctets(), msg.getHeader()
-                        .getTransactionID().getOctets(), false, null);
+                        .getTransactionID().getOctets(), false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
                 PKIMessage respObject3 = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp3)).readObject());
                 assertNotNull(respObject);
                 PKIBody body3 = respObject3.getBody();
@@ -1202,15 +1230,691 @@ public class AuthenticationModulesTest extends CmpTestCase {
             internalCertStoreSession.removeCertificate(fingerprint3);
         }
     }
-
+    
+    /**
+     * Test the error message returned when CMP request missing a PBE protection in RA mode (operationmode=ra) and HMAC authentication is configured.
+     *
+     * @throws Exception on some errors
+     */
     @Test
-    public void test99RestoreConf() {
-        try {
-            userAdminSession.revokeAndDeleteUser(ADMIN, username, ReasonFlags.unused);
-            userAdminSession.revokeAndDeleteUser(ADMIN, "cmpTestUnauthorizedAdmin", ReasonFlags.keyCompromise);
-        } catch (Exception e) {
-        }
+    public void test19NoHMACAuthentication() throws Exception {
 
+        confSession.updateProperty(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_HMAC);
+        assertTrue("The CMP Authentication module was not configured correctly.",
+                confSession.verifyProperty(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_HMAC));
+        confSession.updateProperty(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "foo123");
+        assertTrue("The CMP Authentication module was not configured correctly.",
+                confSession.verifyProperty(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "foo123"));
+        confSession.updateProperty(CmpConfiguration.CONFIG_OPERATIONMODE, "ra");
+        assertTrue("The CMP Authentication module was not configured correctly.",
+                confSession.verifyProperty(CmpConfiguration.CONFIG_OPERATIONMODE, "ra"));
+        EjbcaConfigurationHolder.updateConfiguration(CmpConfiguration.CONFIG_OPERATIONMODE, "ra");
+        assertTrue("The CMP Authentication module was not configured correctly.", CmpConfiguration.getRAOperationMode());
+        
+        KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
+        
+        PKIMessage msg = genCertReq(issuerDN, USER_DN, keys, cacert, nonce, transid, false, null, null, null, null);
+        assertNotNull("Generating CrmfRequest failed.", msg);
+        
+        final ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        final DEROutputStream out = new DEROutputStream(bao);
+        out.writeObject(msg);
+        final byte[] ba = bao.toByteArray();
+        // Send request and receive response
+        final byte[] resp = sendCmpHttp(ba, 200);
+        checkCmpResponseGeneral(resp, issuerDN, USER_DN, cacert, msg.getHeader().getSenderNonce().getOctets(), msg.getHeader().getTransactionID()
+                .getOctets(), false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
+        
+        PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
+        assertNotNull(respObject);
+        
+        final PKIBody body = respObject.getBody();
+        assertEquals(23, body.getTagNo());
+        final String errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
+        final String expectedErrMsg = "PKI Message is not athenticated properly. No HMAC protection was found.";
+        assertEquals(expectedErrMsg, errMsg);
+    }
+    
+    /**
+     * Test the error message returned when CMP request missing a signature in RA mode (operationmode=ra) and EndEntityCertificate authentication is configured.
+     *
+     * @throws Exception on some errors
+     */
+    @Test
+    public void test20NoEECAuthentication() throws Exception {
+        confSession.updateProperty(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE);
+        assertTrue("The CMP Authentication module was not configured correctly.",
+                confSession.verifyProperty(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE));
+        confSession.updateProperty(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "AdminCA1");  
+        assertTrue("The CMP Authentication module was not configured correctly.",
+                confSession.verifyProperty(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "AdminCA1"));
+        confSession.updateProperty(CmpConfiguration.CONFIG_OPERATIONMODE, "normal");
+        assertTrue("The CMP Authentication module was not configured correctly.",
+                confSession.verifyProperty(CmpConfiguration.CONFIG_OPERATIONMODE, "normal"));
+        
+        KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
+        
+        AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
+        PKIMessage msg = genCertReq(issuerDN, USER_DN, keys, cacert, nonce, transid, false, null, null, null, null);
+        msg.getHeader().setProtectionAlg(pAlg);
+        assertNotNull("Generating CrmfRequest failed.", msg);
+        
+        final ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        final DEROutputStream out = new DEROutputStream(bao);
+        out.writeObject(msg);
+        final byte[] ba = bao.toByteArray();
+        // Send request and receive response
+        final byte[] resp = sendCmpHttp(ba, 200);
+        checkCmpResponseGeneral(resp, issuerDN, USER_DN, cacert, msg.getHeader().getSenderNonce().getOctets(), msg.getHeader()
+                .getTransactionID().getOctets(), false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
+        
+        PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
+        assertNotNull(respObject);
+        
+        PKIBody body = respObject.getBody();
+        assertEquals(23, body.getTagNo());
+        String errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
+        String expectedErrMsg = "PKI Message is not athenticated properly. No PKI protection is found.";
+        assertEquals(expectedErrMsg, errMsg);
+        
+    }
+    
+    /**
+     * Tests that EndEntityAuthentication module can be successfully used in client mode when the end entity's password is not stored in clear text.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void test21CrmfRequestClientModeEECNotClearPassword() throws Exception {
+        confSession.updateProperty(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE);
+        assertTrue("The CMP Authentication module was not configured correctly.",
+                confSession.verifyProperty(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE));
+        confSession.updateProperty(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "-");
+        assertTrue("The CMP Authentication module was not configured correctly.",
+                confSession.verifyProperty(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "-"));
+        confSession.updateProperty(CmpConfiguration.CONFIG_OPERATIONMODE, "normal");
+        assertTrue("The CMP Authentication module was not configured correctly.",
+                confSession.verifyProperty(CmpConfiguration.CONFIG_OPERATIONMODE, "normal"));
+        
+        final String testUserDN = "CN=cmptestuser21,C=SE";
+        final String testUsername = "cmptestuser21";
+        String fingerprint = null;
+        String fingerprint2 = null;
+        try {
+            KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
+            AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
+            
+            createUser(testUsername, testUserDN, "foo123", false, caid, SecConst.EMPTY_ENDENTITYPROFILE, SecConst.CERTPROFILE_FIXED_ENDUSER);
+            Certificate cert = signSession.createCertificate(ADMIN, testUsername, "foo123", keys.getPublic());
+            fingerprint = CertTools.getFingerprintAsString(cert);
+            
+            //Edit the status of the user to NEW
+            createUser(testUsername, testUserDN, "foo123", false, caid, SecConst.EMPTY_ENDENTITYPROFILE, SecConst.CERTPROFILE_FIXED_ENDUSER);
+            PKIMessage msg = genCertReq(issuerDN, testUserDN, keys, cacert, nonce, transid, false, null, null, null, null);
+            msg.getHeader().setProtectionAlg(pAlg);
+            assertNotNull("Generating CrmfRequest failed.", msg);
+            addExtraCert(msg, cert);
+            signPKIMessage(msg, keys.getPrivate(), pAlg.getAlgorithm());
+            assertNotNull(msg);
+            //******************************************''''''
+            final Signature sig = Signature.getInstance(msg.getHeader().getProtectionAlg().getAlgorithm().getId(), "BC");
+            sig.initVerify(cert.getPublicKey());
+            sig.update(msg.getProtectedBytes());
+            boolean verified = sig.verify(msg.getProtection().getBytes());
+            assertTrue("Signing the message failed.", verified);
+            //***************************************************
+            
+            final ByteArrayOutputStream bao = new ByteArrayOutputStream();
+            final DEROutputStream out = new DEROutputStream(bao);
+            out.writeObject(msg);
+            final byte[] ba = bao.toByteArray();
+            
+            // Send request and receive response
+            final byte[] resp = sendCmpHttp(ba, 200);
+            Certificate cert2 = checkCmpCertRepMessage(testUserDN, cacert, resp, msg.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId()
+                    .getValue().intValue());
+            assertNotNull("CrmfRequest did not return a certificate", cert2);
+            fingerprint2 = CertTools.getFingerprintAsString(cert2);
+        } finally {
+            try {
+                userAdminSession.revokeAndDeleteUser(ADMIN, testUsername, ReasonFlags.unused);
+            } catch (Exception e) {
+            }
+            
+            internalCertStoreSession.removeCertificate(fingerprint);
+            internalCertStoreSession.removeCertificate(fingerprint2);
+        }
+    }
+    
+    /**
+     * Tests that EndEntityAuthentication module in client mode when 3GPP option is activated:
+     * 
+     * 1- An initialization request, signed by the vendor-issued certificate (not in the database), is sent in RA mode. The request should fail.
+     * 2- An initialization request, signed by the vendor-issued certificate (not in the database), is sent in client mode. The request should pass.
+     * 3- An initialization request, signed by Ejbca issued certificate, is sent in client mode. The request should fail.
+     * 4- A KeyUpdate request (aka. renewal request), signed by the vendor-issued certificate (still not in the database), is sent. The request should fail.
+     * 5- A KeyUpdate request (aka. renewal request), signed by Ejbca issued certificate, is sent. The request should pass.
+     * 6- A revocation request, signed by Ejbca issued certificate, is sent. The request should pass.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void test223GPPMode() throws Exception {
+        confSession.updateProperty(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE);
+        assertTrue("The CMP Authentication module was not configured correctly.",
+                confSession.verifyProperty(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE));
+        confSession.updateProperty(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "AdminCA1");
+        assertTrue("The CMP Authentication module was not configured correctly.",
+                confSession.verifyProperty(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "AdminCA1"));
+        confSession.updateProperty(CmpConfiguration.CONFIG_VENDORCERTIFICATEMODE, "true");
+        assertTrue("The CMP Authentication module was not configured correctly.",
+                confSession.verifyProperty(CmpConfiguration.CONFIG_VENDORCERTIFICATEMODE, "true"));
+        confSession.updateProperty(CmpConfiguration.CONFIG_VENDORCA, "3GPPCA");
+        assertTrue("The CMP Authentication module was not configured correctly.",
+                confSession.verifyProperty(CmpConfiguration.CONFIG_VENDORCA, "3GPPCA"));
+        confSession.updateProperty(CmpConfiguration.CONFIG_EXTRACTUSERNAMECOMPONENT, "UID");
+        assertTrue("The CMP Authentication module was not configured correctly.",
+                confSession.verifyProperty(CmpConfiguration.CONFIG_EXTRACTUSERNAMECOMPONENT, "UID"));
+        confSession.updateProperty(CmpConfiguration.CONFIG_ALLOWAUTOMATICKEYUPDATE, "true");
+        assertTrue("The CMP Authentication module was not configured correctly.",
+                confSession.verifyProperty(CmpConfiguration.CONFIG_ALLOWAUTOMATICKEYUPDATE, "true"));
+        confSession.updateProperty(CmpConfiguration.CONFIG_ALLOWUPDATEWITHSAMEKEY, "true");
+        assertTrue("The CMP Authentication module was not configured correctly.",
+                confSession.verifyProperty(CmpConfiguration.CONFIG_ALLOWUPDATEWITHSAMEKEY, "true"));
+        confSession.updateProperty(CmpConfiguration.CONFIG_RESPONSEPROTECTION, "signature");
+        assertTrue("The response protection was not configured correctly.",
+                confSession.verifyProperty(CmpConfiguration.CONFIG_RESPONSEPROTECTION, "signature"));
+        
+        String testUIDUsername = "uidusername";
+        String testUserDN = "CN=3gpptestuse,UID=" + testUIDUsername + ",C=se";
+        
+        X509Certificate gppcacert = (X509Certificate) CertTools.getCertfromByteArray(gppCA);
+        X509Certificate gppusercert = (X509Certificate) CertTools.getCertfromByteArray(gppuser);
+        
+        KeyFactory kf = KeyFactory.getInstance("RSA");
+        PKCS8EncodedKeySpec ks = new PKCS8EncodedKeySpec(gppuserkey);
+        PrivateKey privkey = kf.generatePrivate(ks);
+        
+        //importing gppcacert as an external CA
+        Collection<Certificate> cacerts = new ArrayList<Certificate>();
+        cacerts.add(gppcacert);
+        caAdminSession.importCACertificate(ADMIN, "3GPPCA", cacerts);
+        createUser(testUIDUsername, testUserDN, "foo123", true, caid, SecConst.EMPTY_ENDENTITYPROFILE, SecConst.CERTPROFILE_FIXED_ENDUSER);
+        
+        KeyPair keys = KeyTools.genKeys("1024", AlgorithmConstants.KEYALGORITHM_RSA);
+        AlgorithmIdentifier pAlg = new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption);
+        
+        String fingerprint = null;
+        String fingerprint2 = null;
+        try {
+            
+            // Creating an initialization Request in RA mode signed by the vendor-issued certificate, not in the database, for an endentity that already exists.
+            confSession.updateProperty(CmpConfiguration.CONFIG_OPERATIONMODE, "ra");
+            assertTrue("The CMP Authentication module was not configured correctly.",
+                    confSession.verifyProperty(CmpConfiguration.CONFIG_OPERATIONMODE, "ra"));
+            
+            PKIMessage msg = genCertReq(issuerDN, testUserDN, keys, gppcacert, nonce, transid, false, null, null, null, null);
+            msg.getHeader().setProtectionAlg(pAlg);
+            assertNotNull("Generating CrmfRequest failed.", msg);
+            addExtraCert(msg, gppusercert);
+            signPKIMessage(msg, privkey, pAlg.getAlgorithm());
+            assertNotNull(msg);
+            
+            ByteArrayOutputStream bao = new ByteArrayOutputStream();
+            DEROutputStream out = new DEROutputStream(bao);
+            out.writeObject(msg);
+            byte[] ba = bao.toByteArray();
+            byte[] resp = sendCmpHttp(ba, 200);
+            // Unprotected error message
+            checkCmpResponseGeneral(resp, CertTools.getIssuerDN(gppcacert), testUserDN, cacert, msg.getHeader().getSenderNonce().getOctets(), msg.getHeader()
+                    .getTransactionID().getOctets(), false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
+            
+            PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
+            assertNotNull(respObject);
+
+            PKIBody body = respObject.getBody();
+            assertEquals(23, body.getTagNo());
+            String errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
+            String expectedErrMsg = "The certificate attached to the PKIMessage in the extraCert field could not be found in the database.";
+            assertEquals(expectedErrMsg, errMsg);
+            
+            confSession.updateProperty(CmpConfiguration.CONFIG_OPERATIONMODE, "normal");
+            assertTrue("The CMP Authentication module was not configured correctly.",
+                    confSession.verifyProperty(CmpConfiguration.CONFIG_OPERATIONMODE, "normal"));
+            
+            // Creating an initialization Request in client mode signed by the vendor-issued certificate, not in the database, for an endentity that already exists.
+            msg = genCertReq(issuerDN, testUserDN, keys, gppcacert, nonce, transid, false, null, null, null, null);
+            msg.getHeader().setProtectionAlg(pAlg);
+            assertNotNull("Generating CrmfRequest failed.", msg);
+            addExtraCert(msg, gppusercert);
+            signPKIMessage(msg, privkey, pAlg.getAlgorithm());
+            assertNotNull(msg);
+
+            bao = new ByteArrayOutputStream();
+            out = new DEROutputStream(bao);
+            out.writeObject(msg);
+            ba = bao.toByteArray();
+            resp = sendCmpHttp(ba, 200);
+            checkCmpResponseGeneral(resp, issuerDN, testUserDN, cacert, msg.getHeader().getSenderNonce().getOctets(), msg.getHeader()
+                    .getTransactionID().getOctets(), true, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
+            Certificate cert = checkCmpCertRepMessage(testUserDN, cacert, resp, msg.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId()
+                    .getValue().intValue());
+            assertNotNull("CrmfRequest did not return a certificate", cert);
+            fingerprint = CertTools.getFingerprintAsString(cert);
+            
+            
+            // Sending another initialization Request in client mode signed by the endentity's certificate issued by Ejbca
+            msg = genCertReq(issuerDN, testUserDN, keys, cacert, nonce, transid, false, null, null, null, null);
+            msg.getHeader().setProtectionAlg(pAlg);
+            assertNotNull("Generating CrmfRequest failed.", msg);
+            addExtraCert(msg, cert);
+            signPKIMessage(msg, keys.getPrivate(), pAlg.getAlgorithm());
+            assertNotNull(msg);
+
+            bao = new ByteArrayOutputStream();
+            out = new DEROutputStream(bao);
+            out.writeObject(msg);
+            ba = bao.toByteArray();
+            resp = sendCmpHttp(ba, 200);
+            checkCmpResponseGeneral(resp, issuerDN, testUserDN, cacert, msg.getHeader().getSenderNonce().getOctets(), msg.getHeader()
+                    .getTransactionID().getOctets(), false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
+            
+            respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
+            assertNotNull(respObject);
+
+            body = respObject.getBody();
+            assertEquals(23, body.getTagNo());
+            errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
+            expectedErrMsg = "The End Entity certificate attached to the PKIMessage is not issued by the CA '3GPPCA'";
+            assertEquals(expectedErrMsg, errMsg);
+            
+            
+            // Sending a KeyUpdateRequest signed by the vendor-issued certificate
+            msg = genRenewalReq(testUserDN, gppcacert, nonce, transid, keys, false, null, null);
+            msg.getHeader().setProtectionAlg(pAlg);
+            assertNotNull("Generating CrmfRequest failed.", msg);
+            addExtraCert(msg, gppusercert);
+            signPKIMessage(msg, privkey, pAlg.getAlgorithm());
+            assertNotNull(msg);
+
+            bao = new ByteArrayOutputStream();
+            out = new DEROutputStream(bao);
+            out.writeObject(msg);
+            ba = bao.toByteArray();
+            resp = sendCmpHttp(ba, 200);
+            checkCmpResponseGeneral(resp, CertTools.getSubjectDN(gppcacert), testUserDN, cacert, msg.getHeader().getSenderNonce().getOctets(), msg.getHeader()
+                    .getTransactionID().getOctets(), false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
+            
+            respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
+            assertNotNull(respObject);
+
+            body = respObject.getBody();
+            assertEquals(23, body.getTagNo());
+            errMsg = body.getError().getPKIStatus().getStatusString().getString(0).getString();
+            expectedErrMsg = "The certificate attached to the PKIMessage in the extraCert field could not be found in the database.";
+            assertEquals(expectedErrMsg, errMsg);
+
+            
+            // Sending a KeyUpdateRequest signed by the endtity's certificate issued by Ejbca
+            msg = genRenewalReq(testUserDN, cacert, nonce, transid, keys, false, null, null);
+            msg.getHeader().setProtectionAlg(pAlg);
+            assertNotNull("Generating CrmfRequest failed.", msg);
+            addExtraCert(msg, cert);
+            signPKIMessage(msg, keys.getPrivate(), pAlg.getAlgorithm());
+            assertNotNull(msg);
+
+            bao = new ByteArrayOutputStream();
+            out = new DEROutputStream(bao);
+            out.writeObject(msg);
+            ba = bao.toByteArray();
+            resp = sendCmpHttp(ba, 200);
+            respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
+            assertNotNull(respObject);
+            
+            body = respObject.getBody();
+            int tag = body.getTagNo();
+            assertEquals(8, tag);
+            CertRepMessage c = (CertRepMessage) body.getKup();
+            assertNotNull(c);            
+            X509CertificateStructure cmpcert = c.getResponse(0).getCertifiedKeyPair().getCertOrEncCert().getCertificate();
+            assertNotNull(cmpcert);
+            X509Certificate cert2 = (X509Certificate) CertTools.getCertfromByteArray(cmpcert.getEncoded());
+            assertNotNull("Failed to renew the certificate", cert2);
+            
+            assertEquals(CertTools.stringToBCDNString(testUserDN), CertTools.stringToBCDNString(cert2.getSubjectDN().getName()) );// CertTools.getSubjectDN(cert2) );
+            assertEquals(issuerDN, CertTools.getIssuerDN(cert2));
+            fingerprint2 = CertTools.getFingerprintAsString(cert2);
+            
+            //Send a revocation request
+            msg = genRevReq(issuerDN, testUserDN, CertTools.getSerialNumber(cert2), cacert, nonce, transid, false);
+            msg.getHeader().setProtectionAlg(pAlg);
+            assertNotNull("Generating CrmfRequest failed.", msg);
+            addExtraCert(msg, cert2);
+            signPKIMessage(msg, keys.getPrivate(), pAlg.getAlgorithm());
+            assertNotNull(msg);
+
+            bao = new ByteArrayOutputStream();
+            out = new DEROutputStream(bao);
+            out.writeObject(msg);
+            ba = bao.toByteArray();
+            resp = sendCmpHttp(ba, 200);
+            checkCmpResponseGeneral(resp, issuerDN, testUserDN, cacert, msg.getHeader().getSenderNonce().getOctets(), msg.getHeader().getTransactionID()
+                    .getOctets(), true, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
+            int revStatus = checkRevokeStatus(issuerDN, CertTools.getSerialNumber(cert2));
+            assertNotSame("Revocation request failed to revoke the certificate", RevokedCertInfo.NOT_REVOKED, revStatus);
+            
+            
+        } finally {
+            try {
+                userAdminSession.revokeAndDeleteUser(ADMIN, testUIDUsername, ReasonFlags.unused);
+                caSession.removeCA(ADMIN, CertTools.getIssuerDN(gppcacert).hashCode());
+            } catch (Exception e) {
+            }
+
+            internalCertStoreSession.removeCertificate(fingerprint);
+            internalCertStoreSession.removeCertificate(fingerprint2);
+        }
+    }
+
+    
+    
+    
+    /**
+     * Tests the possibility to use different signature algorithms in CMP requests and responses if protection algorithm 
+     * is specified.
+     * 
+     * A CMP request is sent to a CA that uses ECDSA with SHA256 as signature and encryption algorithms:
+     * 
+     * 1. Send a CRMF request signed using ECDSA with SHA256 algorithm and expects a response signed by the same algorithm
+     * 2. Send a CMP Confirm message without protection. The response is expected to be signed using ECDSA (because that's the CA's key algorithm)
+     *    and SHA1 (because that's the default digest algorithm) 
+     * 3. Sends a CMP Revocation request signed using ECDSA with SHA256 and expects a response signed by the same algorithm.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void test24EECAuthWithSHA256AndECDSA() throws Exception {
+        log.trace(">test24EECAuthWithSHA256AndECDSA()");
+        
+        //-------------- Set the necessary configurations
+        updatePropertyOnServer(CmpConfiguration.CONFIG_RA_ENDENTITYPROFILE, "ECDSAEEP");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_RA_CERTIFICATEPROFILE, "ECDSACP");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_DEFAULTCA, "CmpECDSATestCA");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_RACANAME, "CmpECDSATestCA");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_OPERATIONMODE, "ra");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_RA_NAMEGENERATIONSCHEME, "DN");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_RA_NAMEGENERATIONPARAMS, "CN");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE);
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "CmpECDSATestCA");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_RESPONSEPROTECTION, "signature");
+        
+       
+        removeTestCA("CmpECDSATestCA");
+      
+        String ecdsaCADN = "CN=CmpECDSATestCA";
+        String keyspec = "prime256v1";        
+        
+        //---------------------- Create the test CA
+        Properties prop = new Properties();
+        prop.setProperty(CATokenConstants.CAKEYPURPOSE_CERTSIGN_STRING, CAToken.SOFTPRIVATESIGNKEYALIAS);
+        prop.setProperty(CATokenConstants.CAKEYPURPOSE_CRLSIGN_STRING, CAToken.SOFTPRIVATESIGNKEYALIAS);
+        prop.setProperty(CATokenConstants.CAKEYPURPOSE_DEFAULT_STRING, CAToken.SOFTPRIVATEDECKEYALIAS);
+        // Set key generation property, since we have no old keys to generate the same sort
+        prop.setProperty(CryptoToken.KEYSPEC_PROPERTY, keyspec);
+        prop.setProperty(SoftCryptoToken.NODEFAULTPWD, "true");
+        prop.setProperty(CryptoToken.AUTOACTIVATE_PIN_PROPERTY, "foo123");
+        
+        CryptoToken cryptoToken = CryptoTokenFactory.createCryptoToken(SoftCryptoToken.class.getName(), prop, null, 666);
+        cryptoToken.activate("foo123".toCharArray());
+           
+        cryptoToken.generateKeyPair(keyspec, CAToken.SOFTPRIVATESIGNKEYALIAS);
+        cryptoToken.generateKeyPair(keyspec, CAToken.SOFTPRIVATEDECKEYALIAS);
+
+        CAToken catoken = new CAToken(cryptoToken);
+        catoken.setSignatureAlgorithm(AlgorithmConstants.SIGALG_SHA256_WITH_ECDSA);
+        catoken.setEncryptionAlgorithm(AlgorithmConstants.SIGALG_SHA256_WITH_ECDSA);
+        // Set key sequence so that next sequence will be 00001 (this is the default though so not really needed here)
+        catoken.setKeySequence(CAToken.DEFAULT_KEYSEQUENCE);
+        catoken.setKeySequenceFormat(StringTools.KEY_SEQUENCE_FORMAT_NUMERIC);
+
+        CATokenInfo catokeninfo = catoken.getTokenInfo();
+        // No extended services
+        ArrayList<ExtendedCAServiceInfo> extendedcaservices = new ArrayList<ExtendedCAServiceInfo>();
+
+        X509CAInfo ecdsaCaInfo = new X509CAInfo(ecdsaCADN, "CmpECDSATestCA", CAConstants.CA_ACTIVE, new Date(), "", CertificateProfileConstants.CERTPROFILE_FIXED_ROOTCA,
+                3650, null, // Expiretime
+                CAInfo.CATYPE_X509, CAInfo.SELFSIGNED, (Collection<Certificate>) null, catokeninfo, "JUnit RSA CA", -1, null, null, // PolicyId
+                24, // CRLPeriod
+                0, // CRLIssueInterval
+                10, // CRLOverlapTime
+                10, // Delta CRL period
+                new ArrayList<Integer>(), true, // Authority Key Identifier
+                false, // Authority Key Identifier Critical
+                true, // CRL Number
+                false, // CRL Number Critical
+                null, // defaultcrldistpoint
+                null, // defaultcrlissuer
+                null, // defaultocsplocator
+                null, // Authority Information Access
+                null, // defaultfreshestcrl
+                true, // Finish User
+                extendedcaservices, false, // use default utf8 settings
+                new ArrayList<Integer>(), // Approvals Settings
+                1, // Number of Req approvals
+                false, // Use UTF8 subject DN by default
+                true, // Use LDAP DN order by default
+                false, // Use CRL Distribution Point on CRL
+                false, // CRL Distribution Point on CRL critical
+                true, true, // isDoEnforceUniquePublicKeys
+                true, // isDoEnforceUniqueDistinguishedName
+                false, // isDoEnforceUniqueSubjectDNSerialnumber
+                true, // useCertReqHistory
+                true, // useUserStorage
+                true, // useCertificateStorage
+                null // cmpRaAuthSecret
+        );
+
+        X509CA ecdsaCA = new X509CA(ecdsaCaInfo);
+        ecdsaCA.setCAToken(catoken);
+        // A CA certificate
+        Collection<Certificate> cachain = new ArrayList<Certificate>();
+        String sigalg = AlgorithmConstants.SIGALG_SHA256_WITH_ECDSA;
+        int keyusage = X509KeyUsage.digitalSignature + X509KeyUsage.keyCertSign + X509KeyUsage.cRLSign;
+        X509Certificate ecdsaCaCert = CertTools.genSelfCertForPurpose(ecdsaCADN, 10L, "1.1.1.1", catoken.getPrivateKey(CATokenConstants.CAKEYPURPOSE_CERTSIGN), 
+                catoken.getPublicKey(CATokenConstants.CAKEYPURPOSE_CERTSIGN), sigalg, true, keyusage);
+        catoken.getCryptoToken().activate("foo123".toCharArray());
+        catoken.saveData();
+        assertNotNull(ecdsaCaCert);
+        cachain.add(ecdsaCaCert);
+        ecdsaCA.setCertificateChain(cachain);      
+        caSession.addCA(ADMIN, ecdsaCA);
+        assertTrue(ecdsaCA.getStatus() == CAConstants.CA_ACTIVE);
+        assertTrue(ecdsaCA.getCAToken().getTokenStatus() != CryptoToken.STATUS_OFFLINE); 
+
+        //-------------- Create the EndEntityProfile and the CertificateProfile
+        List availableCAs = new ArrayList<Integer>();
+        availableCAs.add(ecdsaCA.getCAId());
+        CertificateProfile cp = new CertificateProfile(CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER);
+        cp.setSignatureAlgorithm(AlgorithmConstants.SIGALG_SHA256_WITH_ECDSA);
+        cp.setAvailableCAs(availableCAs);
+        try {
+            certProfileSession.addCertificateProfile(ADMIN, "ECDSACP", cp);
+            log.debug("Added Certificate Profile 'ECDSACP'");
+        } catch (CertificateProfileExistsException e) {
+            certProfileSession.changeCertificateProfile(ADMIN, "ECDSACP", cp);
+            log.debug("Certificate Profile 'ECDSACP' already exists. It has now been updated.");
+        }
+        int cpId = certProfileSession.getCertificateProfileId("ECDSACP");
+
+        // Configure an EndEntity profile (CmpRA) with allow CN, O, C in DN
+        // and rfc822Name (uncheck 'Use entity e-mail field' and check
+        // 'Modifyable'), MS UPN in altNames in the end entity profile.
+        EndEntityProfile eep = new EndEntityProfile(true);
+        eep.setValue(EndEntityProfile.DEFAULTCERTPROFILE, 0, "" + cpId);
+        eep.setValue(EndEntityProfile.AVAILCERTPROFILES, 0, "" + cpId);
+        eep.setValue(EndEntityProfile.DEFAULTCA, 0, "" + ecdsaCA.getCAId());
+        eep.setValue(EndEntityProfile.AVAILCAS, 0, "" + ecdsaCA.getCAId());
+        eep.setModifyable(DnComponents.RFC822NAME, 0, true);
+        eep.setUse(DnComponents.RFC822NAME, 0, false); // Don't use field
+        // from "email" data
+        try {
+            eeProfileSession.addEndEntityProfile(ADMIN, "ECDSAEEP", eep);
+            log.debug("Added End Entity Profile 'ECDSAEEP'");
+        } catch (EndEntityProfileExistsException e) {
+            eeProfileSession.changeEndEntityProfile(ADMIN, "ECDSAEEP", eep);
+            log.debug("End Entity Profile 'ECDSAEEP' already exists. It has now been updated.");
+        }
+        int eepId = eeProfileSession.getEndEntityProfileId("ECDSAEEP");
+        
+        
+        //---------------- Send a CMP initialization request
+        AuthenticationToken admToken = null;
+        final String testAdminDN = "CN=cmptestadmin,C=SE";
+        final String testAdminName = "cmptestadmin";
+        X509Certificate admCert = null;
+        String fp=null, fp2=null;
+        try {
+            KeyPair keys = KeyTools.genKeys(keyspec, AlgorithmConstants.KEYALGORITHM_ECDSA);
+        
+            String userDN = "CN=cmpecdsauser";
+            byte[] nonce = CmpMessageHelper.createSenderNonce();
+            byte[] transid = CmpMessageHelper.createSenderNonce();
+            AlgorithmIdentifier pAlg = new AlgorithmIdentifier( X9ObjectIdentifiers.ecdsa_with_SHA256 );
+            PKIMessage req = genCertReq(ecdsaCaInfo.getSubjectDN(), userDN, keys, ecdsaCaCert, nonce, transid, false, null, null, null, null);
+            req.getHeader().setProtectionAlg(pAlg);
+
+            
+            createUser(testAdminName, testAdminDN, "foo123", true, ecdsaCaInfo.getCAId(), eepId, cpId);
+            KeyPair admkeys = KeyTools.genKeys(keyspec, AlgorithmConstants.KEYALGORITHM_ECDSA);
+            admToken = createAdminToken(admkeys, testAdminName, testAdminDN, ecdsaCA.getCAId(), eepId, cpId);
+            admCert = getCertFromCredentials(admToken);
+            addExtraCert(req, admCert);
+            signPKIMessage(req, admkeys.getPrivate(), pAlg.getAlgorithm());
+            assertNotNull(req);
+            fp = CertTools.getFingerprintAsString(admCert);
+            assertNotNull(fp);
+        
+            int reqId = req.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue();
+            ByteArrayOutputStream bao = new ByteArrayOutputStream();
+            DEROutputStream out = new DEROutputStream(bao);
+            out.writeObject(req);
+            byte[] ba = bao.toByteArray();
+            // Send request and receive response
+            byte[] resp = sendCmpHttp(ba, 200);
+            checkCmpResponseGeneral(resp, ecdsaCaInfo.getSubjectDN(), userDN, ecdsaCaCert, nonce, transid, true, null, X9ObjectIdentifiers.ecdsa_with_SHA256.getId());
+            X509Certificate cert = checkCmpCertRepMessage(userDN, ecdsaCaCert, resp, reqId);
+            fp2 = CertTools.getFingerprintAsString(cert);
+        
+            
+            // ------------------- Send a CMP confirm message
+            String hash = "foo123";
+            PKIMessage confirm = genCertConfirm(userDN, ecdsaCaCert, nonce, transid, hash, reqId);
+            assertNotNull(confirm);
+            bao = new ByteArrayOutputStream();
+            out = new DEROutputStream(bao);
+            out.writeObject(confirm);
+            ba = bao.toByteArray();
+            // Send request and receive response
+            resp = sendCmpHttp(ba, 200);
+            
+            //Since pAlg was not set in the ConfirmationRequest, the default DigestAlgorithm (SHA1) will be used
+            checkCmpResponseGeneral(resp, ecdsaCaInfo.getSubjectDN(), userDN, ecdsaCaCert, nonce, transid, true, null, X9ObjectIdentifiers.ecdsa_with_SHA1.getId());
+            checkCmpPKIConfirmMessage(userDN, ecdsaCaCert, resp);
+
+            //-------------------------  Send a CMP revocation request
+            PKIMessage rev = genRevReq(ecdsaCaInfo.getSubjectDN(), userDN, cert.getSerialNumber(), ecdsaCaCert, nonce, transid, true);
+            assertNotNull(rev);
+            rev.getHeader().setProtectionAlg(pAlg);
+            addExtraCert(rev, admCert);
+            signPKIMessage(rev, admkeys.getPrivate(), pAlg.getAlgorithm());
+            assertNotNull(rev);
+
+            ByteArrayOutputStream baorev = new ByteArrayOutputStream();
+            DEROutputStream outrev = new DEROutputStream(baorev);
+            outrev.writeObject(rev);
+            byte[] barev = baorev.toByteArray();
+            // Send request and receive response
+            resp = sendCmpHttp(barev, 200);
+            checkCmpResponseGeneral(resp, ecdsaCaInfo.getSubjectDN(), userDN, ecdsaCaCert, nonce, transid, true, null, X9ObjectIdentifiers.ecdsa_with_SHA256.getId());
+            int revStatus = checkRevokeStatus(ecdsaCaInfo.getSubjectDN(), CertTools.getSerialNumber(cert));
+            assertNotSame("Revocation request failed to revoke the certificate", RevokedCertInfo.NOT_REVOKED, revStatus);
+            
+        } finally {
+            removeAuthenticationToken(admToken, admCert, testAdminName);
+            userAdminSession.revokeAndDeleteUser(ADMIN, "cmpecdsauser", ReasonFlags.unused);
+            internalCertStoreSession.removeCertificate(fp);
+            internalCertStoreSession.removeCertificate(fp2);
+            eeProfileSession.removeEndEntityProfile(ADMIN, "ECDSAEEP");
+            certProfileSession.removeCertificateProfile(ADMIN, "ECDSATCP");
+        }
+        log.trace("<test24EECAuthWithSHA256AndECDSA()");
+
+    }
+
+    /**
+     * Tests the possibility to use different signature algorithms in CMP requests and responses.
+     * 
+     * A CRMF request, signed using ECDSA with SHA256, is sent to a CA that uses RSA with SHA1 as signature algorithm.
+     * The expected response is signed by RSA with SHA256.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void test25EECAuthWithRSAandECDSA() throws Exception {
+        log.trace(">test25EECAuthWithRSAandECDSA()");
+        
+        //-------------- Set the necessary configurations
+
+        updatePropertyOnServer(CmpConfiguration.CONFIG_OPERATIONMODE, "ra");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_RA_NAMEGENERATIONSCHEME, "DN");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_RA_NAMEGENERATIONPARAMS, "CN");
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONMODULE, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE);
+        updatePropertyOnServer(CmpConfiguration.CONFIG_AUTHENTICATIONPARAMETERS, "AdminCA1" );
+        
+        //---------------- Send a CMP initialization request
+        AuthenticationToken admToken = null;
+        final String testAdminDN = "CN=cmptestadmin,C=SE";
+        final String testAdminName = "cmptestadmin";
+        X509Certificate admCert = null;
+        String fp=null, fp2=null;
+        try {
+            KeyPair keys = KeyTools.genKeys("prime192v1", AlgorithmConstants.KEYALGORITHM_ECDSA);
+        
+            String userDN = "CN=cmpmixuser";
+            byte[] nonce = CmpMessageHelper.createSenderNonce();
+            byte[] transid = CmpMessageHelper.createSenderNonce();
+            AlgorithmIdentifier pAlg = new AlgorithmIdentifier(X9ObjectIdentifiers.ecdsa_with_SHA256);
+            PKIMessage req = genCertReq(issuerDN, userDN, keys, cacert, nonce, transid, false, null, null, null, null);
+            assertNotNull(req);
+            req.getHeader().setProtectionAlg(pAlg);
+            createUser(testAdminName, testAdminDN, "foo123", true, caid, SecConst.EMPTY_ENDENTITYPROFILE, CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER);
+            KeyPair admkeys = KeyTools.genKeys("prime192v1", AlgorithmConstants.KEYALGORITHM_ECDSA);
+            admToken = createAdminToken(admkeys, testAdminName, testAdminDN, caid, SecConst.EMPTY_ENDENTITYPROFILE, CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER);
+            admCert = getCertFromCredentials(admToken);
+            fp = CertTools.getFingerprintAsString(admCert);
+        
+            addExtraCert(req, admCert);
+            signPKIMessage(req, admkeys.getPrivate(), pAlg.getAlgorithm());
+            assertNotNull(req);
+        
+            int reqId = req.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue();
+            ByteArrayOutputStream bao = new ByteArrayOutputStream();
+            DEROutputStream out = new DEROutputStream(bao);
+            out.writeObject(req);
+            byte[] ba = bao.toByteArray();
+            // Send request and receive response
+            byte[] resp = sendCmpHttp(ba, 200);
+            checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, true, null, PKCSObjectIdentifiers.sha256WithRSAEncryption.getId());
+            X509Certificate cert = checkCmpCertRepMessage(userDN, cacert, resp, reqId);
+            fp2 = CertTools.getFingerprintAsString(cert);
+        
+        } finally {
+            removeAuthenticationToken(admToken, admCert, testAdminName);
+            userAdminSession.revokeAndDeleteUser(ADMIN, "cmpmixuser", ReasonFlags.unused);
+            internalCertStoreSession.removeCertificate(fp);
+            internalCertStoreSession.removeCertificate(fp2);
+        }
+        log.trace("<test25EECAuthWithRSAandECDSA()");
     }
 
     @After
@@ -1283,30 +1987,30 @@ public class AuthenticationModulesTest extends CmpTestCase {
         msg.addExtraCert(extraCert);
     }
 
-    private void signPKIMessage(PKIMessage msg, KeyPair keys) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException,
+    private void signPKIMessage(PKIMessage msg, PrivateKey key, ASN1ObjectIdentifier sigalg) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException,
             SignatureException {
-        final Signature sig = Signature.getInstance(PKCSObjectIdentifiers.sha1WithRSAEncryption.getId(), "BC");
-        sig.initSign(keys.getPrivate());
+        final Signature sig = Signature.getInstance(sigalg.getId(), "BC");
+        sig.initSign(key);
         sig.update(msg.getProtectedBytes());
         byte[] eeSignature = sig.sign();
         msg.setProtection(new DERBitString(eeSignature));
     }
 
-    private EndEntityInformation createUser(String username, String subjectDN, String password) throws AuthorizationDeniedException,
+    private EndEntityInformation createUser(String username, String subjectDN, String password, boolean clearpassword, int caid, int eepid, int cpid) throws AuthorizationDeniedException,
             UserDoesntFullfillEndEntityProfile, WaitingForApprovalException, EjbcaException, Exception {
 
         EndEntityInformation user = new EndEntityInformation(username, subjectDN, caid, null, username + "@primekey.se", SecConst.USER_ENDUSER,
-                SecConst.EMPTY_ENDENTITYPROFILE, SecConst.CERTPROFILE_FIXED_ENDUSER, SecConst.TOKEN_SOFT_PEM, 0, null);
+                eepid, cpid, SecConst.TOKEN_SOFT_PEM, 0, null);
         user.setPassword(password);
         try {
             //userAdminSession. addUser(ADMIN, user, true);
             userAdminSession.addUser(ADMIN, username, password, subjectDN, "rfc822name=" + username + "@primekey.se", username + "@primekey.se",
-                    true, SecConst.EMPTY_ENDENTITYPROFILE, SecConst.CERTPROFILE_FIXED_ENDUSER, SecConst.USER_ENDUSER, SecConst.TOKEN_SOFT_PEM, 0,
+                    clearpassword, eepid, cpid, SecConst.USER_ENDUSER, SecConst.TOKEN_SOFT_PEM, 0,
                     caid);
             log.debug("created user: " + username);
         } catch (Exception e) {
             log.debug("User " + username + " already exists. Setting the user status to NEW");
-            userAdminSession.changeUser(ADMIN, user, true);
+            userAdminSession.changeUser(ADMIN, user, clearpassword);
             userAdminSession.setUserStatus(ADMIN, username, UserDataConstants.STATUS_NEW);
             log.debug("Reset status to NEW");
         }
@@ -1328,13 +2032,13 @@ public class AuthenticationModulesTest extends CmpTestCase {
         return certificate;
     }
 
-    private AuthenticationToken createAdminToken(KeyPair keys, String name, String dn) throws RoleExistsException, RoleNotFoundException,
+    private AuthenticationToken createAdminToken(KeyPair keys, String name, String dn, int caid, int eepid, int cpid) throws RoleExistsException, RoleNotFoundException,
             CreateException, AuthorizationDeniedException {
         Set<Principal> principals = new HashSet<Principal>();
         X500Principal p = new X500Principal(dn);
         principals.add(p);
         AuthenticationSubject subject = new AuthenticationSubject(principals, null);
-        AuthenticationToken token = createTokenWithCert(name, subject, keys);
+        AuthenticationToken token = createTokenWithCert(name, subject, keys, caid, eepid, cpid);
         X509Certificate cert = (X509Certificate) token.getCredentials().iterator().next();
 
         // Initialize the role mgmt system with this role that is allowed to edit roles
@@ -1350,7 +2054,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
         return token;
     }
 
-    private AuthenticationToken createTokenWithCert(String adminName, AuthenticationSubject subject, KeyPair keys) {
+    private AuthenticationToken createTokenWithCert(String adminName, AuthenticationSubject subject, KeyPair keys, int caid, int eepid, int cpid) {
 
         // A small check if we have added a "fail" credential to the subject.
         // If we have we will return null, so we can test authentication failure.
@@ -1367,8 +2071,8 @@ public class AuthenticationModulesTest extends CmpTestCase {
 
         X509Certificate certificate = null;
         // If we have a certificate as input, use that, otherwise generate a self signed certificate
-        Set<X509Certificate> credentials = new HashSet<X509Certificate>();
 
+        // If we have created a subject with an X500Principal we will use this DN to create the dummy certificate.
         // If there was no certificate input, create a self signed
         String dn = "C=SE,O=Test,CN=Test"; // default
         // If we have created a subject with an X500Principal we will use this DN to create the dummy certificate.
@@ -1384,7 +2088,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
         }
 
         try {
-            createUser(adminName, dn, "foo123");
+            createUser(adminName, dn, "foo123", true, caid, eepid, cpid);
         } catch (AuthorizationDeniedException e1) {
             throw new CertificateCreationException("Error encountered when creating admin user", e1);
         } catch (UserDoesntFullfillEndEntityProfile e1) {
@@ -1412,6 +2116,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
         }
 
         // Add the credentials and new principal
+        Set<X509Certificate> credentials = new HashSet<X509Certificate>();
         credentials.add(certificate);
         Set<X500Principal> principals = new HashSet<X500Principal>();
         principals.add(certificate.getSubjectX500Principal());
@@ -1428,9 +2133,6 @@ public class AuthenticationModulesTest extends CmpTestCase {
         RoleData roledata = roleAccessSessionRemote.findRole("Super Administrator Role");
         if (roledata != null) {
 
-            //Set<X509Certificate> credentials = (Set<X509Certificate>) authToken.getCredentials();
-            //Certificate cert = credentials.iterator().next();
-
             List<AccessUserAspectData> accessUsers = new ArrayList<AccessUserAspectData>();
             accessUsers.add(new AccessUserAspectData(rolename, CertTools.getIssuerDN(cert).hashCode(), X500PrincipalAccessMatchValue.WITH_COMMONNAME,
                     AccessMatchType.TYPE_EQUALCASEINS, CertTools.getPartFromDN(CertTools.getSubjectDN(cert), "CN")));
@@ -1445,4 +2147,49 @@ public class AuthenticationModulesTest extends CmpTestCase {
     public String getRoleName() {
         return this.getClass().getSimpleName();
     }
+    
+    
+    
+    static byte[] gppCA = Base64.decode( ("MIICHDCCAYWgAwIBAgIId2qio28kX2EwDQYJKoZIhvcNAQEFBQAwHjEPMA0GA1UE" +
+                                            "AwwGM0dQUENBMQswCQYDVQQGEwJTRTAeFw0xMzAxMTYxMTM4MjRaFw0xNDAxMTYx" +
+                                            "MTM4MjRaMB4xDzANBgNVBAMMBjNHUFBDQTELMAkGA1UEBhMCU0UwgZ8wDQYJKoZI" +
+                                            "hvcNAQEBBQADgY0AMIGJAoGBAIK2gGWwWJgcwvB8f83/VAcT3UOiQ1ThZXWetf33" +
+                                            "rcldeMD/7Rydz6SIle0MrDgc9rda4ZdVN+0FJPvL8Q3hcGHUvJeyKGwyf7mJMc8D" +
+                                            "P11qCajZElbmV5Axv8/+i8EZk71XrRLbz8uxSLp84hFe+RQkkJV8hrlV5S8sKGGl" +
+                                            "ebfRAgMBAAGjYzBhMB0GA1UdDgQWBBSZ3XmLRWJOBIt8YUHCETSEdyk4+zAPBgNV" +
+                                            "HRMBAf8EBTADAQH/MB8GA1UdIwQYMBaAFJndeYtFYk4Ei3xhQcIRNIR3KTj7MA4G" +
+                                            "A1UdDwEB/wQEAwIBhjANBgkqhkiG9w0BAQUFAAOBgQAsnWEJVneEGwD33JQuSwAH" +
+                                            "c9IT4S7ZM+jrN9ybrJQEV9+dlbfXG8ISdo0aC7RH94vEiVWN2vPcXv1kHcYDmCus" +
+                                            "TB1QaZ/ERhO8SI9x6OHMZ9E4tsgytBsndFadfKKVpODgvXkB6x3/PV96AKz/gpjd" +
+                                            "LYGWSWywpLuutYiiFb6a8w==").getBytes() );
+    
+    static byte[] gppuser = Base64.decode( ("MIICWzCCAcSgAwIBAgIIAxXKnyDArMYwDQYJKoZIhvcNAQEFBQAwHjEPMA0GA1UE" +
+                                            "AwwGM0dQUENBMQswCQYDVQQGEwJTRTAeFw0xMzAxMTYxMTM0MzhaFw0xNDAxMTYx" +
+                                            "MTM4MjRaMEExGzAZBgoJkiaJk/IsZAEBDAt1aWR1c2VybmFtZTEVMBMGA1UEAwwM" +
+                                            "M2dwcHRlc3R1c2VyMQswCQYDVQQGEwJTRTCBnzANBgkqhkiG9w0BAQEFAAOBjQAw" +
+                                            "gYkCgYEA3mEpApioQ1liwNTvrABdwiieJ9AeImQr5VFoZFDv7NXyoRitMgSZJYNT" +
+                                            "hv1ANPnOTSVpB49n/rVVaniAP+kvdYyZyY3jJUZunQeC6QsdQ+oAE2eTFTyvuJJS" +
+                                            "6bXEertb+Smv9dF+c9NMwLC3KDU4KpO+P9sXim0pCHn2iOWtaWcCAwEAAaN/MH0w" +
+                                            "HQYDVR0OBBYEFJw2zz8wmLbzSP1RHyu5X6/u2X30MAwGA1UdEwEB/wQCMAAwHwYD" +
+                                            "VR0jBBgwFoAUmd15i0ViTgSLfGFBwhE0hHcpOPswDgYDVR0PAQH/BAQDAgXgMB0G" +
+                                            "A1UdJQQWMBQGCCsGAQUFBwMCBggrBgEFBQcDBDANBgkqhkiG9w0BAQUFAAOBgQAG" +
+                                            "VYKkWoysnf999Hxh9jcOC34chJYX0LMqRLpioPEB2uSqDoZgUdpAOJlI/CxLmTJh" +
+                                            "Z/vCqCjWM2CX1T/NmokD3Ea4A0m99y73VEZ4dWtzBi/tFu93XSQzwWXMSRKyYp0/" +
+                                            "SQuEunEJEw76otrAzhCVs3tcKr/+h5F7nMQuOFh1EA==").getBytes() );
+    
+    static byte[] gppuserkey = Base64.decode( ("MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAN5hKQKYqENZYsDU" +
+                                            "76wAXcIonifQHiJkK+VRaGRQ7+zV8qEYrTIEmSWDU4b9QDT5zk0laQePZ/61VWp4" +
+                                            "gD/pL3WMmcmN4yVGbp0HgukLHUPqABNnkxU8r7iSUum1xHq7W/kpr/XRfnPTTMCw" +
+                                            "tyg1OCqTvj/bF4ptKQh59ojlrWlnAgMBAAECgYEA2LBsOa9vJlFPPP9Am6WvtqXF" +
+                                            "lp3g/zoE2+s7gaSsZWcEiZ12BqscX8Vb+smDaxuPvvSZJ1jByRwBI0JQFfau2lcg" +
+                                            "7wqRgjr6Y1rQV6/PsVJLr8xa1iKUgxI9JCktvKu+DT4cHEFMtLlOpIA6niSZP0el" +
+                                            "qiRBzvpsb06Ai4Ng8qECQQDx/CFXxXoIndClM1T6w7snioMapfFgaiq8Ch8c1qoM" +
+                                            "H/fyAfISVqlpmTd6ELHHabjl9hOUDn+0BX2jX5zNYy2LAkEA60JYOv0EruR6560B" +
+                                            "NsnOqiFGYO1zZ583MEGdNXStxSzthplWAEEFkwKdHhaJzW0QQxzhDJqMF+BdTYnQ" +
+                                            "Qh+nFQJANk+FWEK9KfPpoTpNJ18IwU4oMLHv49jQMJYA96MCVWhTaOCg6RbEPSwj" +
+                                            "NGVM0VncItjA+ijq5oeY9DMAaWSKEwJAE3s7+S6Im7752oN+DT5q6bW1sUMYgmUx" +
+                                            "2cIlNY8C8MgGp1W9RGod/w2BW0N8h9FXPmd+z19g6H1A3LHj2AXs/QJAPCWj2EPX" +
+                                            "ZSPn88/rmy8Rrs7owCGvl+v2jeRyDARHF5SVS/7v3pcc8qOxTdWgChS2wv1juvQR" +
+                                            "IgUnBaZUk5bbtw==").getBytes() ); 
+
 }

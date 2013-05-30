@@ -24,11 +24,11 @@ import java.util.Date;
 
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.DEROutputStream;
+import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authentication.tokens.UsernamePrincipal;
 import org.cesecore.certificates.ca.CAInfo;
 import org.cesecore.certificates.ca.X509CAInfo;
-import org.cesecore.certificates.certificateprofile.CertificateProfile;
 import org.cesecore.certificates.crl.RevokedCertInfo;
 import org.cesecore.certificates.util.AlgorithmConstants;
 import org.cesecore.certificates.util.DnComponents;
@@ -235,7 +235,7 @@ public class CmpRAAuthenticationTest extends CmpTestCase {
             new DEROutputStream(bao).writeObject(req);
             byte[] ba = bao.toByteArray();
             byte[] resp = sendCmpHttp(ba, 200);
-            checkCmpResponseGeneral(resp, CertTools.getSubjectDN(caCertificate), subjectDN, caCertificate, nonce, transid, false, pbeSecret);
+            checkCmpResponseGeneral(resp, CertTools.getSubjectDN(caCertificate), subjectDN, caCertificate, nonce, transid, false, pbeSecret, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
             X509Certificate cert = checkCmpCertRepMessage(subjectDN, caCertificate, resp, reqId);
 
             assertTrue("Failed to create user " + USERNAME, userAdminSession.existsUser(USERNAME));
@@ -249,7 +249,7 @@ public class CmpRAAuthenticationTest extends CmpTestCase {
             new DEROutputStream(bao).writeObject(req1);
             ba = bao.toByteArray();
             resp = sendCmpHttp(ba, 200);
-            checkCmpResponseGeneral(resp, caCertificate.getSubjectX500Principal().getName(), subjectDN, caCertificate, nonce, transid, false, pbeSecret);
+            checkCmpResponseGeneral(resp, caCertificate.getSubjectX500Principal().getName(), subjectDN, caCertificate, nonce, transid, false, pbeSecret, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
             checkCmpPKIConfirmMessage(subjectDN, caCertificate, resp);
 
             // Now revoke the bastard using the CMPv1 reason code!
@@ -260,7 +260,8 @@ public class CmpRAAuthenticationTest extends CmpTestCase {
             new DEROutputStream(bao).writeObject(revReq);
             ba = bao.toByteArray();
             resp = sendCmpHttp(ba, 200);
-            checkCmpResponseGeneral(resp, caCertificate.getSubjectX500Principal().getName(), subjectDN, caCertificate, nonce, transid, false, pbeSecret);
+            checkCmpResponseGeneral(resp, caCertificate.getSubjectX500Principal().getName(), subjectDN, caCertificate, nonce, 
+                                    transid, false, pbeSecret, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
             checkCmpRevokeConfirmMessage(caCertificate.getSubjectX500Principal().getName(), subjectDN, cert.getSerialNumber(), caCertificate, resp, true);
             int reason = InterfaceCache.getCertificateStoreSession().getStatus(CertTools.getSubjectDN(caCertificate), cert.getSerialNumber()).revocationReason;
             assertEquals("Certificate was not revoked with the right reason.", RevokedCertInfo.REVOCATION_REASON_KEYCOMPROMISE, reason);
