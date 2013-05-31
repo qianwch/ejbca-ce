@@ -287,19 +287,7 @@ public class RevocationMessageHandler extends BaseCmpMessageHandler implements I
         resp = rresp;
         try {
             resp.create();
-        } catch (InvalidKeyException e) {
-            String errMsg = INTRES.getLocalizedMessage("cmp.errorgeneral");
-            LOG.error(errMsg, e);			
-        } catch (NoSuchAlgorithmException e) {
-            String errMsg = INTRES.getLocalizedMessage("cmp.errorgeneral");
-            LOG.error(errMsg, e);			
-        } catch (NoSuchProviderException e) {
-            String errMsg = INTRES.getLocalizedMessage("cmp.errorgeneral");
-            LOG.error(errMsg, e);			
-        } catch (SignRequestException e) {
-            String errMsg = INTRES.getLocalizedMessage("cmp.errorgeneral");
-            LOG.error(errMsg, e);			
-        } catch (IOException e) {
+        } catch (Exception e) {
             String errMsg = INTRES.getLocalizedMessage("cmp.errorgeneral");
             LOG.error(errMsg, e);			
         }							

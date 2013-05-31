@@ -21,6 +21,7 @@ import java.security.NoSuchProviderException;
 import java.security.PublicKey;
 import java.security.cert.CRLException;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.Date;
@@ -302,6 +303,8 @@ public class RSASignSessionBean implements SignSessionLocal, SignSessionRemote {
             log.error("No such algorithm: ", e);
         } catch (IOException e) {
             log.error("Cannot create response message: ", e);
+        } catch (CertificateEncodingException e) {
+            log.error("Bad CMP sender certificate: ", e);
         }
         if (log.isTraceEnabled()) {
             log.trace("<createCertificate(IRequestMessage)");
@@ -393,6 +396,8 @@ public class RSASignSessionBean implements SignSessionLocal, SignSessionRemote {
             String msg = intres.getLocalizedMessage("error.catokenoffline", ca.getSubjectDN());
             log.warn(msg, ctoe);
             throw ctoe;
+        } catch (CertificateEncodingException e) {
+            log.error("Bad CMP sender certificate: ", e);
         }
         if (log.isTraceEnabled()) {
             log.trace("<createRequestFailedResponse(IRequestMessage)");
@@ -513,6 +518,8 @@ public class RSASignSessionBean implements SignSessionLocal, SignSessionRemote {
             String msg = intres.getLocalizedMessage("error.catokenoffline", ca.getSubjectDN());
             log.error(msg, ctoe);
             throw ctoe;
+        } catch (CertificateEncodingException e) {
+            log.error("Bad CMP sender certificate: ", e);
         }
         if (log.isTraceEnabled()) {
             log.trace("<getCRL(IRequestMessage)");

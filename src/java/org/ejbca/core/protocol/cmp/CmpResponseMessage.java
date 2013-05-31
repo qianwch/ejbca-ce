@@ -31,6 +31,8 @@ import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.DERInteger;
 import org.bouncycastle.asn1.DERUTF8String;
+import org.bouncycastle.asn1.cmp.PKIHeaderBuilder;
+import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.X509CertificateStructure;
 import org.bouncycastle.asn1.x509.X509Name;
@@ -51,6 +53,7 @@ import com.novosec.pkix.asn1.cmp.PKIFreeText;
 import com.novosec.pkix.asn1.cmp.PKIHeader;
 import com.novosec.pkix.asn1.cmp.PKIMessage;
 import com.novosec.pkix.asn1.cmp.PKIStatusInfo;
+import org.bouncycastle.cert.X509CertificateHolder;
 
 /**
  * CMP certificate response message
@@ -181,26 +184,24 @@ public class CmpResponseMessage implements CertificateResponseMessage {
     }
 
     @Override
-    public boolean create() throws IOException, InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException {
+    public boolean create() throws IOException, InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException, CertificateEncodingException {
         boolean ret = false;
         // Some general stuff, common for all types of messages
-        String issuer = null;
-        String subject = null;
-        if (cert != null) {
-            X509Certificate x509cert = (X509Certificate) cert;
-            issuer = x509cert.getIssuerDN().getName();
-            subject = x509cert.getSubjectDN().getName();
-        } else if (signCert != null) {
-            issuer = ((X509Certificate) signCert).getSubjectDN().getName();
-            subject = "CN=fooSubject";
+        final X500Name issuer;
+        final X500Name subject;
+        if (this.cert != null) {
+            final X509CertificateHolder certHolder = new X509CertificateHolder(cert.getEncoded());
+            issuer = certHolder.getIssuer();
+            subject = certHolder.getSubject();
+        } else if (this.signCert != null) {
+            issuer = new X509CertificateHolder(this.signCert.getEncoded()).getSubject();
+            subject = new X500Name("CN=fooSubject");
         } else {
-            issuer = "CN=fooIssuer";
-            subject = "CN=fooSubject";
+            issuer = new X500Name("CN=fooIssuer");
+            subject = new X500Name("CN=fooSubject");
         }
 
-		final GeneralName issuerName = new GeneralName(new X509Name(issuer));
-		final GeneralName subjectName = new GeneralName(new X509Name(subject));
-		final PKIHeader myPKIHeader = CmpMessageHelper.createPKIHeader(issuerName, subjectName, senderNonce, recipientNonce, transactionId);
+		final PKIHeader myPKIHeader = CmpMessageHelper.createPKIHeader(new GeneralName(issuer), new GeneralName(subject), senderNonce, recipientNonce, transactionId);
 
         try {
             if (status.equals(ResponseStatus.SUCCESS)) {

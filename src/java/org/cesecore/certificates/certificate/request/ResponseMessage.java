@@ -128,11 +128,12 @@ public interface ResponseMessage extends Serializable {
      * @throws NoSuchProviderException if there is an error with the Provider.
      * @throws NoSuchAlgorithmException if the signature on the request is done with an unhandled
      *         algorithm.
+     * @throws CertificateEncodingException when the sender certificate can not be decoded.
      *
      * @see #setSignKeyInfo
      */
     public boolean create()
-            throws IOException, InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException, SignRequestException;
+            throws IOException, InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException, SignRequestException, CertificateEncodingException;
 
     /**
      * indicates if this message needs recipients public and private key to sign. If this returns

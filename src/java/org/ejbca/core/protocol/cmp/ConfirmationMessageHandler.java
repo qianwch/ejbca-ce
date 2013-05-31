@@ -110,15 +110,7 @@ public class ConfirmationMessageHandler extends BaseCmpMessageHandler implements
 			resp = cresp;
 			try {
 				resp.create();
-			} catch (InvalidKeyException e) {
-				LOG.error("Exception during CMP processing: ", e);			
-			} catch (NoSuchAlgorithmException e) {
-				LOG.error("Exception during CMP processing: ", e);			
-			} catch (NoSuchProviderException e) {
-				LOG.error("Exception during CMP processing: ", e);			
-			} catch (SignRequestException e) {
-				LOG.error("Exception during CMP processing: ", e);			
-			} catch (IOException e) {
+			} catch (Exception e) {
 				LOG.error("Exception during CMP processing: ", e);			
 			}							
 		} else {

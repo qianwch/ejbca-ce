@@ -223,11 +223,7 @@ public class CertificateCreateSessionBean implements CertificateCreateSessionLoc
             ret.create();
         } catch (IOException e) {
             throw new CertificateCreateException(e);
-        } catch (InvalidKeyException e) {
-            throw new IllegalCryptoTokenException(e);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalCryptoTokenException(e);
-        } catch (NoSuchProviderException e) {
+        } catch (Exception e) {
             throw new IllegalCryptoTokenException(e);
         }
 
