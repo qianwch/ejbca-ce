@@ -49,6 +49,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.x500.X500Principal;
 
+import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1Integer;
@@ -92,6 +93,7 @@ import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
+import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.cesecore.internal.InternalResources;
 import org.cesecore.util.CertTools;
@@ -533,7 +535,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 			return cert;
 		}
 
-		private boolean checkCmpPKIConfirmMessage(final byte retMsg[]) throws IOException {
+		private boolean checkCmpPKIConfirmMessage(final byte retMsg[]) throws IOException, CertificateEncodingException {
 			// Parse response message
 			final ASN1InputStream ais = new ASN1InputStream(new ByteArrayInputStream(retMsg));
 			final PKIMessage respObject = PKIMessage.getInstance(ais.readObject());
@@ -549,10 +551,18 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 				return false;
 			}
 			{
-				final X500Principal senderDN = new X500Principal( header.getSender().getName().toASN1Primitive().getEncoded() );
-				final X500Principal cacertDN = this.cacert.getSubjectX500Principal();
-				if ( !senderDN.equals(cacertDN) ) {
-					this.performanceTest.getLog().error("Wrong CA DN. Is '" + senderDN + "' should be '" + cacertDN + "'.");
+				final X500Name senderName;
+				{
+					final ASN1Encodable encodeAble = header.getSender().getName();
+					if ( ! (encodeAble instanceof X500Name) ) {
+						this.performanceTest.getLog().error("Sender in header is not a "+X500Name.class.getName()+" it is a " + encodeAble.getClass().getName());
+						return false;
+					}
+					senderName = (X500Name)encodeAble;
+				}
+				final X500Name certName = new X509CertificateHolder(this.cacert.getEncoded()).getSubject();
+				if ( certName.equals(senderName) ) {
+					this.performanceTest.getLog().error("Wrong CA DN. Is  '" + senderName + "' should be '" + certName + "'.");
 					return false;
 				}
 			}
