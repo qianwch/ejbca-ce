@@ -172,9 +172,15 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 			return new CertRequest(4, myCertTemplate.build(), null);
 		}
 
+		final PKIHeaderBuilder getPKIHeaderBuilder() throws CertificateEncodingException, IOException{
+			final X509CertificateHolder extraCH = new X509CertificateHolder(this.extraCert.getEncoded());
+			final X509CertificateHolder cacertCH = new X509CertificateHolder(this.cacert.getEncoded());
+			return new PKIHeaderBuilder(2, new GeneralName(extraCH.getSubject()), new GeneralName(cacertCH.getSubject()));
+		}
+
 		private PKIMessage genPKIMessage(final boolean raVerifiedPopo, 
 				final CertRequest keyUpdateRequest, final AlgorithmIdentifier pAlg, final DEROctetString senderKID)
-				throws NoSuchAlgorithmException, IOException, InvalidKeyException, SignatureException {
+				throws NoSuchAlgorithmException, IOException, InvalidKeyException, SignatureException, CertificateEncodingException {
 
 			final ProofOfPossession myProofOfPossession;
 			if (raVerifiedPopo) {
@@ -204,8 +210,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 
 			final CertReqMessages myCertReqMessages = new CertReqMessages(myCertReqMsg);
 
-			final PKIHeaderBuilder myPKIHeader = new PKIHeaderBuilder(2, new GeneralName(new X500Name(CertTools.getSubjectDN(this.extraCert))),
-					new GeneralName(new X500Name(this.cacert.getSubjectDN().getName())));
+			final PKIHeaderBuilder myPKIHeader = getPKIHeaderBuilder();
 			myPKIHeader.setMessageTime(new DERGeneralizedTime(new Date()));
 			myPKIHeader.setSenderNonce(new DEROctetString(getNonce()));
 			myPKIHeader.setSenderKID(new DEROctetString(getNonce()));
@@ -600,9 +605,8 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 			return true;
 		}
 
-		private PKIMessage genCertConfirm(final String hash) {
-			PKIHeaderBuilder myPKIHeader = new PKIHeaderBuilder(2, new GeneralName(new X500Name(CertTools.getSubjectDN(this.extraCert))),
-					new GeneralName(new X500Name(this.cacert.getSubjectDN().getName())));
+		private PKIMessage genCertConfirm(final String hash) throws CertificateEncodingException, IOException {
+			final PKIHeaderBuilder myPKIHeader = getPKIHeaderBuilder();
 			myPKIHeader.setMessageTime(new DERGeneralizedTime(new Date()));
 			// senderNonce
 			myPKIHeader.setSenderNonce(new DEROctetString(getNonce()));
