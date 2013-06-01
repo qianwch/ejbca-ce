@@ -159,7 +159,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 			final int day = 1000 * 60 * 60 * 24;
 			optionalValidityV.add(new DERTaggedObject(true, 0, new org.bouncycastle.asn1.x509.Time(new Date(new Date().getTime() - day))));
 			optionalValidityV.add(new DERTaggedObject(true, 1, new org.bouncycastle.asn1.x509.Time(new Date(new Date().getTime() + 10 * day))));
-			OptionalValidity myOptionalValidity = OptionalValidity.getInstance(new DERSequence(optionalValidityV));
+			final OptionalValidity myOptionalValidity = OptionalValidity.getInstance(new DERSequence(optionalValidityV));
 
 			final CertTemplateBuilder myCertTemplate = new CertTemplateBuilder();
 			myCertTemplate.setValidity(myOptionalValidity);
