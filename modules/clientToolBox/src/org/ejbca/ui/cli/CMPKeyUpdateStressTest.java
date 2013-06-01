@@ -172,15 +172,17 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 			return new CertRequest(4, myCertTemplate.build(), null);
 		}
 
-		final PKIHeaderBuilder getPKIHeaderBuilder() throws CertificateEncodingException, IOException{
-			final X509CertificateHolder extraCH = new X509CertificateHolder(this.extraCert.getEncoded());
-			final X509CertificateHolder cacertCH = new X509CertificateHolder(this.cacert.getEncoded());
-			return new PKIHeaderBuilder(2, new GeneralName(extraCH.getSubject()), new GeneralName(cacertCH.getSubject()));
+		final PKIHeaderBuilder getPKIHeaderBuilder() throws IOException{
+			return new PKIHeaderBuilder(
+					2,
+					new GeneralName(GeneralName.directoryName, ASN1Primitive.fromByteArray(this.extraCert.getSubjectX500Principal().getEncoded())),
+					new GeneralName(GeneralName.directoryName, ASN1Primitive.fromByteArray(this.cacert.getSubjectX500Principal().getEncoded()))
+					);
 		}
 
 		private PKIMessage genPKIMessage(final boolean raVerifiedPopo, 
 				final CertRequest keyUpdateRequest, final AlgorithmIdentifier pAlg, final DEROctetString senderKID)
-				throws NoSuchAlgorithmException, IOException, InvalidKeyException, SignatureException, CertificateEncodingException {
+				throws NoSuchAlgorithmException, IOException, InvalidKeyException, SignatureException {
 
 			final ProofOfPossession myProofOfPossession;
 			if (raVerifiedPopo) {
@@ -200,7 +202,6 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 
 				final POPOSigningKey myPOPOSigningKey = new POPOSigningKey(null, new AlgorithmIdentifier(PKCSObjectIdentifiers.sha1WithRSAEncryption), bs);
 				myProofOfPossession = new ProofOfPossession(myPOPOSigningKey);
-
 			}
 
 			final AttributeTypeAndValue av = new AttributeTypeAndValue(CRMFObjectIdentifiers.id_regCtrl_regToken, new DERUTF8String("foo123"));
@@ -292,6 +293,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 			return new PKIMessage(header, msg.getBody(), bs, msg.getExtraCerts());
 		}
 
+		@SuppressWarnings("synthetic-access")
 		private byte[] sendCmpHttp(final byte[] message) throws Exception {
 			final CMPSendHTTP send = CMPSendHTTP.doIt(message, this.cliArgs.hostName, this.cliArgs.port, this.cliArgs.urlPath, false);
 			if (send.responseCode != HttpURLConnection.HTTP_OK) {
@@ -613,7 +615,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 			return true;
 		}
 
-		private PKIMessage genCertConfirm(final String hash) throws CertificateEncodingException, IOException {
+		private PKIMessage genCertConfirm(final String hash) throws IOException {
 			final PKIHeaderBuilder myPKIHeader = getPKIHeaderBuilder();
 			myPKIHeader.setMessageTime(new DERGeneralizedTime(new Date()));
 			// senderNonce
