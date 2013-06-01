@@ -228,8 +228,8 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 			final ASN1Primitive pcert = ins.readObject();
 			ins.close();
 			org.bouncycastle.asn1.x509.Certificate c = org.bouncycastle.asn1.x509.Certificate.getInstance(pcert.toASN1Primitive());
-			CMPCertificate cmpcert = new CMPCertificate(c);
-			CMPCertificate[] extraCerts = {cmpcert};
+			final CMPCertificate cmpcert = new CMPCertificate(c);
+			final CMPCertificate[] extraCerts = {cmpcert};
 			return new PKIMessage(msg.getHeader(), msg.getBody(), msg.getProtection(), extraCerts);
 		}
 
