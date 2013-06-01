@@ -53,6 +53,7 @@ import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DERBitString;
+import org.bouncycastle.asn1.DEREncodable;
 import org.bouncycastle.asn1.DERGeneralizedTime;
 import org.bouncycastle.asn1.DERInteger;
 import org.bouncycastle.asn1.DERNull;
@@ -61,10 +62,13 @@ import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DEROutputStream;
 import org.bouncycastle.asn1.DERUTF8String;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
+import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.asn1.x509.X509CertificateStructure;
+import org.bouncycastle.asn1.x509.X509Name;
+import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.cesecore.internal.InternalResources;
 import org.cesecore.util.CertTools;
@@ -162,6 +166,14 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 			return new CertRequest(new DERInteger(4), myCertTemplate);
 		}
 
+		final PKIHeader getPKIHeader() throws IOException {
+			return new PKIHeader(
+					new DERInteger(2),
+					new GeneralName(GeneralName.directoryName, ASN1Object.fromByteArray(this.extraCert.getSubjectX500Principal().getEncoded())),
+					new GeneralName(GeneralName.directoryName, ASN1Object.fromByteArray(this.cacert.getSubjectX500Principal().getEncoded()))
+					);
+		}
+
 		private PKIMessage genPKIMessage(final boolean raVerifiedPopo, final CertRequest keyUpdateRequest)
 				throws NoSuchAlgorithmException, IOException, InvalidKeyException, SignatureException {
 
@@ -195,9 +207,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 
 			final CertReqMessages myCertReqMessages = new CertReqMessages(myCertReqMsg);
 
-			final PKIHeader myPKIHeader = new PKIHeader(new DERInteger(2),
-					new GeneralName(GeneralName.directoryName, ASN1Object.fromByteArray(this.extraCert.getSubjectX500Principal().getEncoded())),
-					new GeneralName(GeneralName.directoryName, ASN1Object.fromByteArray(this.cacert.getSubjectX500Principal().getEncoded())));
+			final PKIHeader myPKIHeader = getPKIHeader();
 			myPKIHeader.setMessageTime(new DERGeneralizedTime(new Date()));
 			myPKIHeader.setSenderNonce(new DEROctetString(getNonce()));
 			myPKIHeader.setSenderKID(new DEROctetString(getNonce()));
@@ -287,6 +297,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 			return ret;
 		}
 
+		@SuppressWarnings("synthetic-access")
 		private byte[] sendCmpHttp(final byte[] message) throws Exception {
 			final CMPSendHTTP send = CMPSendHTTP.doIt(message, this.cliArgs.hostName, this.cliArgs.port, this.cliArgs.urlPath, false);
 			if (send.responseCode != HttpURLConnection.HTTP_OK) {
@@ -539,7 +550,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 			return cert;
 		}
 
-		private boolean checkCmpPKIConfirmMessage(final byte retMsg[]) throws IOException {
+		private boolean checkCmpPKIConfirmMessage(final byte retMsg[]) throws IOException, CertificateEncodingException {
 			// Parse response message
 			final ASN1InputStream ais = new ASN1InputStream(new ByteArrayInputStream(retMsg));
 			final PKIMessage respObject = PKIMessage.getInstance(ais.readObject());
@@ -555,18 +566,34 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 				return false;
 			}
 			{
-				final X500Principal senderDN = new X500Principal( header.getSender().getName().getDERObject().getDEREncoded() );
-				final X500Principal cacertDN = this.cacert.getSubjectX500Principal();
-				if ( !senderDN.equals(cacertDN) ) {
-					this.performanceTest.getLog().error("Wrong CA DN. Is '" + senderDN + "' should be '" + cacertDN + "'.");
+				final X509Name senderName;
+				{
+					final DEREncodable encodeAble = header.getSender().getName();
+					if ( ! (encodeAble instanceof X509Name) ) {
+						this.performanceTest.getLog().error("Sender in header is not a "+X509Name.class.getName()+" it is a " + encodeAble.getClass().getName());
+						return false;
+					}
+					senderName = (X509Name)encodeAble;
+				}
+				final X500Name cacertName = new X509CertificateHolder(this.cacert.getEncoded()).getSubject();
+				if ( !Arrays.equals(senderName.getEncoded(), cacertName.getEncoded()) ) {
+					this.performanceTest.getLog().error("Wrong sender DN. Is  '" + senderName + "' should be '" + cacertName + "' (CA certificate).");
 					return false;
 				}
 			}
 			{
-				final X500Principal recipientDN = new X500Principal( header.getRecipient().getName().getDERObject().getDEREncoded() );
-				final X500Principal extraCertDN = this.extraCert.getSubjectX500Principal();
-				if ( !recipientDN.equals(extraCertDN) ) {
-					this.performanceTest.getLog().error("Wrong recipient DN. Is '" + recipientDN + "' should be '" + extraCertDN + "'.");
+				final X509Name recipientName;
+				{
+					final DEREncodable encodeAble = header.getRecipient().getName();
+					if ( ! (encodeAble instanceof X509Name) ) {
+						this.performanceTest.getLog().error("Recipient in header is not a "+X509Name.class.getName()+" it is a " + encodeAble.getClass().getName());
+						return false;
+					}
+					recipientName = (X509Name)encodeAble;
+				}
+				final X500Name extraCertName = new X509CertificateHolder(this.extraCert.getEncoded()).getSubject();
+				if ( !Arrays.equals(recipientName.getEncoded(), extraCertName.getEncoded()) ) {
+					this.performanceTest.getLog().error("Wrong recipient DN. Is '" + recipientName + "' should be '" + extraCertName + "'.");
 					return false;
 				}
 			}
@@ -591,9 +618,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 		}
 
 		private PKIMessage genCertConfirm(final String hash) throws IOException {
-			PKIHeader myPKIHeader = new PKIHeader(new DERInteger(2),
-					new GeneralName( GeneralName.directoryName, ASN1Object.fromByteArray(this.extraCert.getSubjectX500Principal().getEncoded())),
-					new GeneralName( GeneralName.directoryName, ASN1Object.fromByteArray(this.cacert.getSubjectX500Principal().getEncoded())) );
+			final PKIHeader myPKIHeader = getPKIHeader();
 			myPKIHeader.setMessageTime(new DERGeneralizedTime(new Date()));
 			// senderNonce
 			myPKIHeader.setSenderNonce(new DEROctetString(getNonce()));
@@ -646,6 +671,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 		private GetCertificate(final SessionData sd) {
 			this.sessionData = sd;
 		}
+		@SuppressWarnings("synthetic-access")
 		@Override
 		public boolean doIt() throws Exception {
 			this.sessionData.newSession();
@@ -711,6 +737,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 			this.sessionData = sd;
 		}
 
+		@SuppressWarnings("synthetic-access")
 		@Override
 		public boolean doIt() throws Exception {
 			final String hash = this.sessionData.getFP(); //"foo123";
@@ -793,6 +820,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 			this.cliArgs = clia;
 			this.keyStores = _keyStores;
 		}
+		@SuppressWarnings("synthetic-access")
 		@Override
 		public Command[] getCommands() throws Exception {
 			
