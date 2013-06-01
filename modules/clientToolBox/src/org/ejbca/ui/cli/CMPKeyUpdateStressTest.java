@@ -597,7 +597,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 			if (body.getType() != 19) {
 				this.performanceTest.getLog().error("Cert body tag not 19. It was " + body.getType());
 
-				PKIStatusInfo err = (PKIStatusInfo) body.getContent();
+				final PKIStatusInfo err = (PKIStatusInfo) body.getContent();
 				this.performanceTest.getLog().error(err.getStatusString().getStringAt(0).getString());
 
 				return false;
