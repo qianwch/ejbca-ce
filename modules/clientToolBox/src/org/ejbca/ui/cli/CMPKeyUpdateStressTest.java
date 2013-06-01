@@ -565,17 +565,25 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 					}
 					senderName = (X500Name)encodeAble;
 				}
-				final X500Name certName = new X509CertificateHolder(this.cacert.getEncoded()).getSubject();
-				if ( certName.equals(senderName) ) {
-					this.performanceTest.getLog().error("Wrong CA DN. Is  '" + senderName + "' should be '" + certName + "'.");
+				final X500Name cacertName = new X509CertificateHolder(this.cacert.getEncoded()).getSubject();
+				if ( !Arrays.equals(senderName.getEncoded(), cacertName.getEncoded()) ) {
+					this.performanceTest.getLog().error("Wrong sender DN. Is  '" + senderName + "' should be '" + cacertName + "' (CA certificate).");
 					return false;
 				}
 			}
 			{
-				final X500Principal recipientDN = new X500Principal( header.getRecipient().getName().toASN1Primitive().getEncoded() );
-				final X500Principal extraCertDN = this.extraCert.getSubjectX500Principal();
-				if ( !recipientDN.equals(extraCertDN) ) {
-					this.performanceTest.getLog().error("Wrong recipient DN. Is '" + recipientDN + "' should be '" + extraCertDN + "'.");
+				final X500Name recipientName;
+				{
+					final ASN1Encodable encodeAble = header.getRecipient().getName();
+					if ( ! (encodeAble instanceof X500Name) ) {
+						this.performanceTest.getLog().error("Recipient in header is not a "+X500Name.class.getName()+" it is a " + encodeAble.getClass().getName());
+						return false;
+					}
+					recipientName = (X500Name)encodeAble;
+				}
+				final X500Name extraCertName = new X509CertificateHolder(this.extraCert.getEncoded()).getSubject();
+				if ( !Arrays.equals(recipientName.getEncoded(), extraCertName.getEncoded()) ) {
+					this.performanceTest.getLog().error("Wrong recipient DN. Is '" + recipientName + "' should be '" + extraCertName + "'.");
 					return false;
 				}
 			}
