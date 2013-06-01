@@ -266,7 +266,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 			final PBMParameter pp = new PBMParameter(derSalt, owfAlg, iteration, macAlg);
 			final AlgorithmIdentifier pAlg = new AlgorithmIdentifier(new ASN1ObjectIdentifier(objectId), pp);
 			headBuilder.setProtectionAlg(pAlg);
-			PKIHeader header = headBuilder.build();
+			final PKIHeader header = headBuilder.build();
 
 			// Calculate the protection bits
 			final byte[] raSecret = this.cliArgs.keystorePassword.getBytes();
