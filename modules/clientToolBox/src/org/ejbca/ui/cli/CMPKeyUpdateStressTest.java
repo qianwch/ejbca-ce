@@ -205,7 +205,7 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 			}
 
 			final AttributeTypeAndValue av = new AttributeTypeAndValue(CRMFObjectIdentifiers.id_regCtrl_regToken, new DERUTF8String("foo123"));
-			AttributeTypeAndValue[] avs = {av};
+			final AttributeTypeAndValue[] avs = {av};
 
 			final CertReqMsg myCertReqMsg = new CertReqMsg(keyUpdateRequest, myProofOfPossession, avs);
 
@@ -224,8 +224,8 @@ public class CMPKeyUpdateStressTest extends ClientToolBox {
 		}
 
 		private PKIMessage addExtraCert(PKIMessage msg) throws CertificateEncodingException, IOException {
-			ASN1InputStream ins = new ASN1InputStream(this.extraCert.getEncoded());
-			ASN1Primitive pcert = ins.readObject();
+			final ASN1InputStream ins = new ASN1InputStream(this.extraCert.getEncoded());
+			final ASN1Primitive pcert = ins.readObject();
 			ins.close();
 			org.bouncycastle.asn1.x509.Certificate c = org.bouncycastle.asn1.x509.Certificate.getInstance(pcert.toASN1Primitive());
 			CMPCertificate cmpcert = new CMPCertificate(c);
