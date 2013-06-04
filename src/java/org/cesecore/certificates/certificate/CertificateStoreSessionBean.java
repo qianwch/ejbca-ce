@@ -905,7 +905,7 @@ public class CertificateStoreSessionBean implements CertificateStoreSessionRemot
         query.setMaxResults(1);
         final List<CertificateData> resultList = query.getResultList();
         if (resultList.size() == 1) {
-            return resultList.get(0).getCertificate();
+            return resultList.get(0).getCertificate(this.entityManager);
         }
         return null;
     }

@@ -161,7 +161,7 @@ public class InternalCertificateStoreSessionBean implements InternalCertificateS
             authorizedToCA(admin, caid);
 
             data.setStatus(status);
-            final String serialNo = CertTools.getSerialNumberAsString(data.getCertificate());
+            final String serialNo = CertTools.getSerialNumberAsString(data.getCertificate(this.entityManager));
             final String msg = INTRES.getLocalizedMessage("store.setstatus", data.getUsername(), fingerprint, status, data.getSubjectDN(), data.getIssuerDN(), serialNo);
             Map<String, Object> details = new LinkedHashMap<String, Object>();
             details.put("msg", msg);
