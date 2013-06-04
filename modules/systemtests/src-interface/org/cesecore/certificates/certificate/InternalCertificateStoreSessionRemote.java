@@ -76,4 +76,11 @@ public interface InternalCertificateStoreSessionRemote {
      */
     boolean setStatus(AuthenticationToken admin, String fingerprint, int status) throws AuthorizationDeniedException;
 
+	/**
+	 * Do this as a native query because we do not want to be depending on rowProtection validating
+	 * correctly, since some systemtests may insert directly in the database with null rowProtection (publisher tests)
+	 * @param certificate
+	 */
+	void removePublishedCertificate(Certificate certificate);
+
 }
