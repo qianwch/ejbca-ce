@@ -52,6 +52,7 @@
         <attributes>
             <id name="fingerprint"><column name="fingerprint" column-definition="VARCHAR(250) BINARY"/></id>
             <basic fetch="EAGER" name="base64Cert"><column name="base64Cert" column-definition="LONGTEXT"/><lob/></basic>
+            <basic fetch="EAGER" name="rowProtection"><column name="rowProtection" column-definition="LONGTEXT"/><lob/></basic>
         </attributes>
     </entity>
     <entity class="org.cesecore.certificates.crl.CRLData" access="PROPERTY" metadata-complete="false">
