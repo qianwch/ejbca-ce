@@ -58,8 +58,9 @@
 # Default: (blank works with hsqldb)
 #database.password=ejbca
 
-# The all encoded certificates may be stored in the table Base64CertData instead
-# of a row in CertificateData table. Having a separate table for the certificates
-# may speed up searching for Certificates if there is a lot of certificates.
+# The encoded certificate may be stored in the table Base64CertData instead of
+# in a column in the CertificateData table. Using a separate table for the
+# certificate data may speed up searching for certificates if there are lots of
+# them (>100Million).
 # Default: false
 #database.useSeparateCertificateTable=true

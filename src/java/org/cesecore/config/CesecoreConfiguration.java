@@ -246,6 +246,6 @@ public final class CesecoreConfiguration {
      */
     public static boolean useBase64CertTable() {
         final String value = ConfigurationHolder.getString("database.useSeparateCertificateTable");
-        return value!=null && value.toLowerCase().indexOf(TRUE)>=0;
+        return value!=null && Boolean.parseBoolean(value.trim());
     }
 }

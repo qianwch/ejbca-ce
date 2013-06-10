@@ -18,24 +18,30 @@ import java.security.cert.CertificateEncodingException;
 
 import javax.persistence.Entity;
 import javax.persistence.EntityManager;
+import javax.persistence.PostLoad;
+import javax.persistence.PrePersist;
+import javax.persistence.PreUpdate;
 import javax.persistence.Query;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import org.apache.log4j.Logger;
 import org.cesecore.dbprotection.ProtectedData;
+import org.cesecore.dbprotection.ProtectionStringBuilder;
 import org.cesecore.util.Base64;
 import org.cesecore.util.CertTools;
 
 /**
- * Base64 encoded certificate. Use {@link CertificateData#getFingerprint()} to get the encoded data.
- * The class is not extending {@link ProtectedData} this since each row is a Certificate.
- * A certificate is all ready integrity  protected since it is signed by the CA.
+ * Base64 encoded certificates.<br>
+ * If the property "database.useSeparateCertificateTable" is true then it will
+ * be one new row in this table for each certificate added to {@link CertificateData}.<br>
+ * If the property is false then this table will not be used.
  * 
  * @version $Id$
  */
 @Entity
 @Table(name = "Base64CertData")
-public class Base64CertData implements Serializable {
+public class Base64CertData extends ProtectedData implements Serializable {
 
     private static final long serialVersionUID = 4132839902195978822L;
 
@@ -44,9 +50,12 @@ public class Base64CertData implements Serializable {
     private String fingerprint = "";
     private String base64Cert;
 
+    private String rowProtection;
+
     /**
-     * Entity holding info about a certificate. Create by sending in the certificate, which extracts (from the cert) fingerprint (primary key),
-     * 
+     * Storing an encoded certificate. Called only when
+     * {@link CertificateData#CertificateData(Certificate, java.security.PublicKey, String, String, int, int, int, String, long, boolean)}
+     * is called with useBase64CertTable set to true.
      * @param incert the (X509)Certificate to be stored in the database.
      */
     public Base64CertData(Certificate incert) {
@@ -84,7 +93,9 @@ public class Base64CertData implements Serializable {
     }
 
     /**
-     * The certificate itself
+     * The encoded certificate.
+     * Called from {@link CertificateData#getCertificate(EntityManager)} when
+     * there is no encoded certificate in {@link CertificateData}.
      * 
      * @return base64 encoded certificate
      */
@@ -102,6 +113,17 @@ public class Base64CertData implements Serializable {
         this.base64Cert = base64Cert;
     }
 
+    // @Column @Lob
+    @Override
+    public String getRowProtection() {
+        return this.rowProtection;
+    }
+
+    @Override
+    public void setRowProtection(String rowProtection) {
+        this.rowProtection = rowProtection;
+    }
+
     //
     // Search functions.
     //
@@ -116,4 +138,54 @@ public class Base64CertData implements Serializable {
         final Query countQuery = entityManager.createQuery("SELECT COUNT(a) FROM Base64CertData a");
         return ((Long) countQuery.getSingleResult()).longValue(); // Always returns a result
     }
+
+    //
+    // Start Database integrity protection methods
+    //
+
+    @Transient
+    @Override
+    protected String getProtectString(final int version) {
+        final ProtectionStringBuilder build = new ProtectionStringBuilder(3000);
+        // What is important to protect here is the data that we define, id, name and certificate profile data
+        // rowVersion is automatically updated by JPA, so it's not important, it is only used for optimistic locking
+        build.append(getFingerprint()).append(getBase64Cert());
+        if (log.isDebugEnabled()) {
+            // Some profiling
+            if (build.length() > 3000) {
+                log.debug("Base64CertData.getProtectString gives size: " + build.length());
+            }
+        }
+        return build.toString();
+    }
+
+    @Transient
+    @Override
+    protected int getProtectVersion() {
+        return 1;
+    }
+
+    @PrePersist
+    @PreUpdate
+    @Transient
+    @Override
+    protected void protectData() {
+        super.protectData();
+    }
+
+    @PostLoad
+    @Transient
+    @Override
+    protected void verifyData() {
+        super.verifyData();
+    }
+
+    @Override
+    @Transient
+    protected String getRowId() {
+        return getFingerprint();
+    }
+    //
+    // End Database integrity protection methods
+    //
 }

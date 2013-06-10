@@ -69,8 +69,10 @@ public interface InternalCertificateStoreSessionRemote {
 	void removeCRL(final AuthenticationToken admin, final String fingerprint) throws AuthorizationDeniedException;
 
 	/**
-	 * Do this as a native query because we do not want to be depending on rowProtection validating
-	 * correctly, since some systemtests may insert directly in the database with null rowProtection (publisher tests)
+	 * Removes a certificate from CertificateData that was created in the {@link InternalCertificateStoreSessionRemote} test.
+	 * The publisher test is not accessing the Base64CertData table so this table is not handled.
+	 * This is done as a native query because we do not want to be depending on rowProtection validating
+	 * correctly, since publisher tests inserts directly in the database with null rowProtection.
 	 * @param certificate
 	 */
 	void removePublishedCertificate(Certificate certificate);

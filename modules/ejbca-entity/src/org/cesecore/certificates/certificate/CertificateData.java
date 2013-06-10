@@ -18,7 +18,6 @@ import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -103,7 +102,7 @@ public class CertificateData extends ProtectedData implements Serializable {
      * subjectDN, issuerDN, serial number, expiration date. Status, Type, CAFingerprint, revocationDate and revocationReason are set to default values
      * (CERT_UNASSIGNED, USER_INVALID, null, null and REVOCATION_REASON_UNSPECIFIED) and should be set using the respective set-methods.
      * 
-     * @param incert the (X509)Certificate to be stored in the database.
+     * @param incert the (X509)Certificate to be stored in the database. If the property "database.useSeparateCertificateTable" is true then it should be null.
      * @param enrichedpubkey possibly an EC public key enriched with the full set of parameters, if the public key in the certificate does not have
      *            parameters. Can be null if RSA or certificate public key contains all parameters.
      * @param username the username in UserData to map the certificate to
@@ -113,12 +112,13 @@ public class CertificateData extends ProtectedData implements Serializable {
      * @param certprofileid certificate profile id, can be 0
      * @param tag a custom tag to map the certificate to any custom defined tag
      * @param updatetime the time the certificate was updated in the database, i.e. System.currentTimeMillis().
+     * @param useBase64CertTable true if a special table is used for the encoded certificates.
      */
     public CertificateData(Certificate incert, PublicKey enrichedpubkey, String username, String cafp, int status, int type, int certprofileid,
-            String tag, long updatetime, boolean storeBase64Cert) {
+            String tag, long updatetime, boolean useBase64CertTable) {
         // Extract all fields to store with the certificate.
         try {
-            if ( storeBase64Cert ) {
+            if ( !useBase64CertTable ) {
                 setBase64Cert(new String(Base64.encode(incert.getEncoded())));
             }
 
@@ -502,7 +502,7 @@ public class CertificateData extends ProtectedData implements Serializable {
         // try the other table.
         final Base64CertData res = Base64CertData.findByFingerprint(entityManager, this.fingerprint);
         if ( res==null ) {
-            log.error("No certificate found.");
+            log.info("No certificate found with finger print "+this.fingerprint+" for '"+this.subjectDN+"' issued by '"+this.issuerDN+"'.");
             return null;
         }
         // it was in the other table.
@@ -520,26 +520,6 @@ public class CertificateData extends ProtectedData implements Serializable {
         } catch (CertificateException ce) {
             log.error("Can't decode certificate.", ce);
             return null;
-        }
-    }
-
-    /**
-     * certificate itself
-     * 
-     * @param incert certificate
-     */
-    public void setCertificate(Certificate incert) {
-        try {
-            String b64Cert = new String(Base64.encode(incert.getEncoded()));
-            setBase64Cert(b64Cert);
-            X509Certificate tmpcert = (X509Certificate) incert;
-            String fp = CertTools.getFingerprintAsString(tmpcert);
-            setFingerprint(fp);
-            setSubjectDN(CertTools.getSubjectDN(tmpcert));
-            setIssuerDN(CertTools.getIssuerDN(tmpcert));
-            setSerialNumber(tmpcert.getSerialNumber().toString());
-        } catch (CertificateEncodingException cee) {
-            log.error("Can't extract DER encoded certificate information.", cee);
         }
     }
 
@@ -588,13 +568,6 @@ public class CertificateData extends ProtectedData implements Serializable {
     }
 
     // Comparators
-
-    public boolean equals(Object obj, EntityManager entityManager) {
-        if (!(obj instanceof CertificateData)) {
-            return false;
-        }
-        return equals((CertificateData) obj, true, entityManager);
-    }
 
     public boolean equals(CertificateData certificateData, boolean mode, boolean strictStatus, EntityManager entityManager) {
         if (mode) {
