@@ -21,7 +21,6 @@ import javax.ejb.Remote;
 
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authorization.AuthorizationDeniedException;
-import org.ejbca.core.model.ca.publisher.PublisherTest;
 
 /**
  * This session bean should under no circumstances be included in the release version of CESeCore.
