@@ -147,18 +147,14 @@ public class CertificateStoreSessionBean implements CertificateStoreSessionRemot
         // *one* single
         // insert statement. If we do a home.create and the some setXX, it will create one insert and one update statement to the database.
         // Probably not important in EJB3 anymore
-        final boolean useBase64CertTable = CesecoreConfiguration.useBase64CertTable();
         final CertificateData data1;
         try {
-            final Certificate tmpCert;
+            final boolean useBase64CertTable = CesecoreConfiguration.useBase64CertTable();
             if ( useBase64CertTable ) {
                 // use special table for encoded data if told so.
                 this.entityManager.persist(new Base64CertData(incert));
-                tmpCert = null;
-            } else {
-                tmpCert = incert;
             }
-            data1 = new CertificateData(tmpCert, pubk, username, cafp, status, type, certificateProfileId, tag, updateTime, useBase64CertTable);
+            data1 = new CertificateData(incert, pubk, username, cafp, status, type, certificateProfileId, tag, updateTime, useBase64CertTable);
             this.entityManager.persist(data1);
         } catch (Exception e) {
             // For backward compatibility. We should drop the throw entirely and rely on the return value.
