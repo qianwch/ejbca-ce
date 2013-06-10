@@ -49,6 +49,7 @@ public class Base64CertData extends ProtectedData implements Serializable {
 
     private String fingerprint = "";
     private String base64Cert;
+    private int rowVersion = 0;
 
     private String rowProtection;
 
@@ -113,6 +114,15 @@ public class Base64CertData extends ProtectedData implements Serializable {
         this.base64Cert = base64Cert;
     }
 
+    // @Version @Column
+    public int getRowVersion() {
+        return this.rowVersion;
+    }
+
+    public void setRowVersion(int rowVersion) {
+        this.rowVersion = rowVersion;
+    }
+
     // @Column @Lob
     @Override
     public String getRowProtection() {
@@ -167,14 +177,12 @@ public class Base64CertData extends ProtectedData implements Serializable {
 
     @PrePersist
     @PreUpdate
-    @Transient
     @Override
     protected void protectData() {
         super.protectData();
     }
 
     @PostLoad
-    @Transient
     @Override
     protected void verifyData() {
         super.verifyData();

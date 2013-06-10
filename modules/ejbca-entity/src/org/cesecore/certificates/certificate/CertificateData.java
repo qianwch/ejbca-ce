@@ -502,7 +502,7 @@ public class CertificateData extends ProtectedData implements Serializable {
         // try the other table.
         final Base64CertData res = Base64CertData.findByFingerprint(entityManager, this.fingerprint);
         if ( res==null ) {
-            log.info("No certificate found with finger print "+this.fingerprint+" for '"+this.subjectDN+"' issued by '"+this.issuerDN+"'.");
+            log.info("No certificate found with fingerprint "+this.fingerprint+" for '"+this.subjectDN+"' issued by '"+this.issuerDN+"'.");
             return null;
         }
         // it was in the other table.
@@ -569,21 +569,38 @@ public class CertificateData extends ProtectedData implements Serializable {
 
     // Comparators
 
-    public boolean equals(CertificateData certificateData, boolean mode, boolean strictStatus, EntityManager entityManager) {
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof CertificateData)) {
+            return false;
+        }
+        return equals((CertificateData) obj, true);
+    }
+
+    public boolean equals(CertificateData certificateData, boolean mode, boolean strictStatus) {
         if (mode) {
             return equalsNonSensitive(certificateData, strictStatus);
         }
-        return equals(certificateData, strictStatus, entityManager);
+        return equals(certificateData, strictStatus);
     }
 
-    public boolean equals(CertificateData certificateData, boolean strictStatus, EntityManager entityManager) {
+    private boolean equals(CertificateData certificateData, boolean strictStatus) {
         if (!equalsNonSensitive(certificateData, strictStatus)) {
             return false;
         }
-        return getBase64Cert(entityManager).equals(certificateData.getBase64Cert(entityManager));
+        if ( this.base64Cert==null && certificateData.base64Cert==null ) {
+            return true; // test before shows that fingerprint is equal and then both objects must refer to same row in Base64CertData
+        }
+        if ( this.base64Cert==null || certificateData.base64Cert==null ) {
+            return false; // one is null and the other not null
+        }
+        if (!this.base64Cert.equals(certificateData.base64Cert)) {
+            return false;
+        }
+        return true;
     }
 
-    public boolean equalsNonSensitive(CertificateData certificateData, boolean strictStatus) {
+    private boolean equalsNonSensitive(CertificateData certificateData, boolean strictStatus) {
         if (!issuerDN.equals(certificateData.issuerDN)) {
             return false;
         }
@@ -1163,14 +1180,12 @@ public class CertificateData extends ProtectedData implements Serializable {
 
     @PrePersist
     @PreUpdate
-    @Transient
     @Override
     protected void protectData() {
         super.protectData();
     }
 
     @PostLoad
-    @Transient
     @Override
     protected void verifyData() {
         super.verifyData();

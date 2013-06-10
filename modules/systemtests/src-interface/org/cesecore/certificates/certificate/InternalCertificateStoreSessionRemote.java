@@ -21,6 +21,7 @@ import javax.ejb.Remote;
 
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authorization.AuthorizationDeniedException;
+import org.ejbca.core.model.ca.publisher.PublisherTest;
 
 /**
  * This session bean should under no circumstances be included in the release version of CESeCore.
@@ -69,10 +70,10 @@ public interface InternalCertificateStoreSessionRemote {
 	void removeCRL(final AuthenticationToken admin, final String fingerprint) throws AuthorizationDeniedException;
 
 	/**
-	 * Removes a certificate from CertificateData that was created in the {@link InternalCertificateStoreSessionRemote} test.
-	 * The publisher test is not accessing the Base64CertData table so this table is not handled.
-	 * This is done as a native query because we do not want to be depending on rowProtection validating
-	 * correctly, since publisher tests inserts directly in the database with null rowProtection.
+	 * Removes a certificate from CertificateData that was created in the {@link PublisherTest} test.
+	 * The test is not accessing the Base64CertData table so this table is not handled.
+	 * No row protection validation is used when inserting the certificate and therefore this will
+	 * remove without row protection.
 	 * @param certificate
 	 */
 	void removePublishedCertificate(Certificate certificate);
