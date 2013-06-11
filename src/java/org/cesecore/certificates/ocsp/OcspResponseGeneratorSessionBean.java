@@ -165,9 +165,6 @@ public class OcspResponseGeneratorSessionBean implements OcspResponseGeneratorSe
     private static final int MAX_REQUEST_SIZE = 100000;
 
     private static final String hardTokenClassName = OcspConfiguration.getHardTokenClassName();
-  //  private static final String p11SharedLibrary = OcspConfiguration.getP11SharedLibrary();
-  //  private static final String P12_SUFFIX = ".p12";
-  //  private static final String CERT_SUFFIX = ".cert";
 
     private static final Logger log = Logger.getLogger(OcspResponseGeneratorSessionBean.class);
 
@@ -402,9 +399,15 @@ public class OcspResponseGeneratorSessionBean implements OcspResponseGeneratorSe
         if(!isOCSPCert(signerCert)) {
             log.warn("Signing with non OCSP certificate. This is not an error state if it is the default responder.");
         }
-        final String sigAlgs = OcspConfiguration.getSignatureAlgorithm();
-        final PublicKey pk = signerCert.getPublicKey();
-        final String sigAlg = getSigningAlgFromAlgSelection(sigAlgs, pk);
+        final String sigAlg;
+        if (ocspSigningCacheEntry.isUsingSeparateOcspSigningCertificate()) {
+            // If we have an OcspKeyBinding we use this configuration to override the default
+            sigAlg = ocspSigningCacheEntry.getOcspKeyBinding().getSignatureAlgorithm();
+        } else {
+            final String sigAlgs = OcspConfiguration.getSignatureAlgorithm();
+            final PublicKey pk = signerCert.getPublicKey();
+            sigAlg = getSigningAlgFromAlgSelection(sigAlgs, pk);
+        }
         if (log.isDebugEnabled()) {
             log.debug("Signing algorithm: " + sigAlg);
         }
@@ -433,11 +436,12 @@ public class OcspResponseGeneratorSessionBean implements OcspResponseGeneratorSe
                     respIdType = OcspConfiguration.RESPONDERIDTYPE_KEYHASH;
                 }
             }
+            
+            // Now we can use the returned OCSPServiceResponse to get private key and certificate chain to sign the ocsp response
             final BasicOCSPResp ocspresp = generateBasicOcspResp(req, exts, responseList, sigAlg, signerCert, ocspSigningCacheEntry.getPrivateKey(),
                     ocspSigningCacheEntry.getSignatureProviderName(), chain,
                     respIdType);
 
-            // Now we can use the returned OCSPServiceResponse to get private key and certificate chain to sign the ocsp response
             if (log.isDebugEnabled()) {
                 Collection<X509Certificate> coll = Arrays.asList(chain);
                 log.debug("Cert chain for OCSP signing is of size " + coll.size());
@@ -464,12 +468,11 @@ public class OcspResponseGeneratorSessionBean implements OcspResponseGeneratorSe
     /**
      * This method takes byte array and translates it onto a OCSPReq class.
      * 
-     * @param authenticationToken An authentication token needed to perform validation.
      * @param request the byte array in question.
      * @param remoteAddress The remote address of the HttpRequest associated with this array.
      * @param transactionLogger A transaction logger.
      * @return
-     * @throws InvalidKeyException
+     * @throws MalformedRequestException
      * @throws SignRequestException thrown if an unsigned request was processed when system configuration requires that all requests be signed.
      * @throws CertificateException
      * @throws NoSuchAlgorithmException
@@ -765,27 +768,30 @@ public class OcspResponseGeneratorSessionBean implements OcspResponseGeneratorSe
         }
         if (req.hasExtensions()) {
             Extension ext = req.getExtension(OCSPObjectIdentifiers.id_pkix_ocsp_response);
-            //X509Extension ext = reqexts.getExtension(OCSPObjectIdentifiers.id_pkix_ocsp_response);
             if (null != ext) {
                 // log.debug("Found extension AcceptableResponses");
                 ASN1OctetString oct = ext.getExtnValue();
                 try {
-                    ASN1Sequence seq = ASN1Sequence.getInstance(new ASN1InputStream(new ByteArrayInputStream(oct.getOctets())).readObject());
-                    @SuppressWarnings("unchecked")
-                    Enumeration<ASN1ObjectIdentifier> en = seq.getObjects();
-                    boolean supportsResponseType = false;
-                    while (en.hasMoreElements()) {
-                        ASN1ObjectIdentifier oid = en.nextElement();
-                        // log.debug("Found oid: "+oid.getId());
-                        if (oid.equals(OCSPObjectIdentifiers.id_pkix_ocsp_basic)) {
-                            // This is the response type we support, so we are happy! Break the loop.
-                            supportsResponseType = true;
-                            log.debug("Response type supported: " + oid.getId());
-                            continue;
+                    ASN1InputStream asn1InputStream = new ASN1InputStream(new ByteArrayInputStream(oct.getOctets()));
+                    try {
+                        ASN1Sequence seq = ASN1Sequence.getInstance(asn1InputStream.readObject());
+                        @SuppressWarnings("unchecked")
+                        Enumeration<ASN1ObjectIdentifier> en = seq.getObjects();
+                        boolean supportsResponseType = false;
+                        while (en.hasMoreElements()) {
+                            ASN1ObjectIdentifier oid = en.nextElement();
+                            if (oid.equals(OCSPObjectIdentifiers.id_pkix_ocsp_basic)) {
+                                // This is the response type we support, so we are happy! Break the loop.
+                                supportsResponseType = true;
+                                log.debug("Response type supported: " + oid.getId());
+                                break;
+                            }
                         }
-                    }
-                    if (!supportsResponseType) {
-                        throw new NotSupportedException("Required response type not supported, this responder only supports id-pkix-ocsp-basic.");
+                        if (!supportsResponseType) {
+                            throw new NotSupportedException("Required response type not supported, this responder only supports id-pkix-ocsp-basic.");
+                        }
+                    } finally {
+                        asn1InputStream.close();
                     }
                 } catch (IOException e) {
                 }
@@ -828,7 +834,6 @@ public class OcspResponseGeneratorSessionBean implements OcspResponseGeneratorSe
         if (log.isTraceEnabled()) {
             log.trace(">cancelTimers");
         }
-        @SuppressWarnings("unchecked")
         Collection<Timer> timers = timerService.getTimers();
         for (Timer timer : timers) {
             timer.cancel();
@@ -1211,27 +1216,31 @@ public class OcspResponseGeneratorSessionBean implements OcspResponseGeneratorSe
         }
         if (log.isDebugEnabled()) {
             log.debug("Signing OCSP response with OCSP signer cert: " + signerCert.getSubjectDN().getName());
-            RespID respId = null;
-            if (respIdType == OcspConfiguration.RESPONDERIDTYPE_NAME) {
-                respId = new JcaRespID(signerCert.getSubjectX500Principal());
-            } else {
-                respId = new JcaRespID(signerCert.getPublicKey(), SHA1DigestCalculator.buildSha1Instance());
-            }
-            if (!returnval.getResponderId().equals(respId)) {
-                log.error("Response responderId does not match signer certificate responderId!");
-            }
-            boolean verify;
-            try {
-                verify = returnval.isSignatureValid(new JcaContentVerifierProviderBuilder().build(signerCert.getPublicKey()));
-            } catch (OperatorCreationException e) {
-                // Very fatal error
-                throw new EJBException("Can not create Jca content signer: ", e);
-            }
-            if (verify) {
+        }
+        RespID respId = null;
+        if (respIdType == OcspConfiguration.RESPONDERIDTYPE_NAME) {
+            respId = new JcaRespID(signerCert.getSubjectX500Principal());
+        } else {
+            respId = new JcaRespID(signerCert.getPublicKey(), SHA1DigestCalculator.buildSha1Instance());
+        }
+        if (!returnval.getResponderId().equals(respId)) {
+            log.error("Response responderId does not match signer certificate responderId!");
+            throw new OcspFailureException("Response responderId does not match signer certificate responderId!");
+        }
+        boolean verify;
+        try {
+            verify = returnval.isSignatureValid(new JcaContentVerifierProviderBuilder().build(signerCert.getPublicKey()));
+        } catch (OperatorCreationException e) {
+            // Very fatal error
+            throw new EJBException("Can not create Jca content signer: ", e);
+        }
+        if (verify) {
+            if (log.isDebugEnabled()) {
                 log.debug("The OCSP response is verifying.");
-            } else {
-                log.error("The response is NOT verifying!");
             }
+        } else {
+            log.error("The response is NOT verifying! Attempted to sign using " + CertTools.getSubjectDN(signerCert) + " but signature was not valid.");
+            throw new OcspFailureException("Attempted to sign using " + CertTools.getSubjectDN(signerCert) + " but signature was not valid.");
         }
         return returnval;
     }
@@ -1318,11 +1327,10 @@ public class OcspResponseGeneratorSessionBean implements OcspResponseGeneratorSe
         } catch (CertificateNotYetValidException e) {
             throw new Error("This should never happen.", e);
         }
-        if (!log.isDebugEnabled()) {
-            return true;
-        }
-        log.debug("Time for \"certificate will soon expire\" not yet reached. You will be warned after: "
-                + new Date(signerCert.getNotAfter().getTime() - warnBeforeExpirationTime));
+        if (log.isDebugEnabled()) {
+            log.debug("Time for \"certificate will soon expire\" not yet reached. You will be warned after: "
+                    + new Date(signerCert.getNotAfter().getTime() - warnBeforeExpirationTime));
+        }   
         return true;
     }
     
@@ -1540,11 +1548,14 @@ public class OcspResponseGeneratorSessionBean implements OcspResponseGeneratorSe
                 log.info("Alias " + keyPairAlias + " does not contain any certificate and will be ignored.");
                 continue;   // Ignore entry
             }
+            // Extract the default signature algorithm
+            final String signatureAlgorithm = getSigningAlgFromAlgSelection(OcspConfiguration.getSignatureAlgorithm(), chain[0].getPublicKey());
             if (OcspKeyBinding.isOcspSigningCertificate(chain[0])) {
-                log.info("Alias " + keyPairAlias + " contains an OCSP certificate and will be converted.");
                 // Create the actual OcspKeyBinding
+                log.info("Alias " + keyPairAlias + " contains an OCSP certificate and will be converted.");
                 int internalKeyBindingId = internalKeyBindingMgmtSession.createInternalKeyBinding(authenticationToken, OcspKeyBinding.IMPLEMENTATION_ALIAS,
-                        "OcspKeyBinding for " + keyPairAlias, InternalKeyBindingStatus.DISABLED, null, cryptoTokenId, keyPairAlias, getOcspKeyBindingDefaultProperties());
+                        "OcspKeyBinding for " + keyPairAlias, InternalKeyBindingStatus.DISABLED, null, cryptoTokenId, keyPairAlias, signatureAlgorithm,
+                        getOcspKeyBindingDefaultProperties());
                 InternalKeyBinding internalKeyBinding = internalKeyBindingMgmtSession.getInternalKeyBinding(authenticationToken, internalKeyBindingId);
                 internalKeyBinding.setTrustedCertificateReferences(trustDefaults);
                 internalKeyBindingMgmtSession.persistInternalKeyBinding(authenticationToken, internalKeyBinding);
@@ -1554,7 +1565,8 @@ public class OcspResponseGeneratorSessionBean implements OcspResponseGeneratorSe
                 log.info("Alias " + keyPairAlias + " contains an SSL client certificate and will be converted.");
                 // We are looking for an SSL cert, use this to create an AuthenticationKeyBinding
                 int internalKeyBindingId = internalKeyBindingMgmtSession.createInternalKeyBinding(authenticationToken, AuthenticationKeyBinding.IMPLEMENTATION_ALIAS,
-                        "AuthenticationKeyBinding for " + keyPairAlias, InternalKeyBindingStatus.DISABLED, null, cryptoTokenId, keyPairAlias, null);
+                        "AuthenticationKeyBinding for " + keyPairAlias, InternalKeyBindingStatus.DISABLED, null, cryptoTokenId, keyPairAlias,
+                        signatureAlgorithm, null);
                 internalKeyBindingMgmtSession.importCertificateForInternalKeyBinding(authenticationToken, internalKeyBindingId, chain[0].getEncoded());
                 internalKeyBindingMgmtSession.setStatus(authenticationToken, internalKeyBindingId, InternalKeyBindingStatus.ACTIVE);
             } else {

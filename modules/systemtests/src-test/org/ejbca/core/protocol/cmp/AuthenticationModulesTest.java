@@ -119,7 +119,6 @@ import org.cesecore.util.EjbRemoteHelper;
 import org.ejbca.config.CmpConfiguration;
 import org.ejbca.config.EjbcaConfigurationHolder;
 import org.ejbca.core.EjbcaException;
-import org.ejbca.core.ejb.ca.caadmin.CAAdminSessionRemote;
 import org.ejbca.core.ejb.ca.sign.SignSessionRemote;
 import org.ejbca.core.ejb.config.ConfigurationSessionRemote;
 import org.ejbca.core.ejb.ra.EndEntityAccessSessionRemote;
@@ -178,7 +177,6 @@ public class AuthenticationModulesTest extends CmpTestCase {
     private RoleManagementSessionRemote roleManagementSession = EjbRemoteHelper.INSTANCE.getRemoteSession(RoleManagementSessionRemote.class);
     private RoleAccessSessionRemote roleAccessSessionRemote = EjbRemoteHelper.INSTANCE.getRemoteSession(RoleAccessSessionRemote.class);
     private InternalCertificateStoreSessionRemote internalCertStoreSession = EjbRemoteHelper.INSTANCE.getRemoteSession(InternalCertificateStoreSessionRemote.class, EjbRemoteHelper.MODULE_TEST);
-    private CAAdminSessionRemote caAdminSession = EjbRemoteHelper.INSTANCE.getRemoteSession(CAAdminSessionRemote.class);
     private CertificateProfileSessionRemote certProfileSession = EjbRemoteHelper.INSTANCE.getRemoteSession(CertificateProfileSessionRemote.class);
     
     @BeforeClass
@@ -517,16 +515,21 @@ public class AuthenticationModulesTest extends CmpTestCase {
                 .getTransactionID().getOctets(), false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
         int revStatus = checkRevokeStatus(issuerDN, CertTools.getSerialNumber(cert));
         assertEquals("Revocation request succeeded", RevokedCertInfo.NOT_REVOKED, revStatus);
-        PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
-        assertNotNull(respObject);
+        ASN1InputStream asn1InputStream = new ASN1InputStream(new ByteArrayInputStream(resp));
+        try {
+            PKIMessage respObject = PKIMessage.getInstance(asn1InputStream.readObject());
+            assertNotNull(respObject);
 
-        PKIBody body = respObject.getBody();
-        assertEquals(23, body.getType());
-        ErrorMsgContent err = (ErrorMsgContent) body.getContent();
-        String errMsg = err.getPKIStatusInfo().getStatusString().getStringAt(0).getString();
-        String expectedErrMsg = "CA with DN 'C=SE,CN=cmprevuser1' is unknown";
-        assertEquals(expectedErrMsg, errMsg);
-        removeAuthenticationToken(adminToken, admCert, adminName);
+            PKIBody body = respObject.getBody();
+            assertEquals(23, body.getType());
+            ErrorMsgContent err = (ErrorMsgContent) body.getContent();
+            String errMsg = err.getPKIStatusInfo().getStatusString().getStringAt(0).getString();
+            String expectedErrMsg = "CA with DN 'C=SE,CN=cmprevuser1' is unknown";
+            assertEquals(expectedErrMsg, errMsg);
+            removeAuthenticationToken(adminToken, admCert, adminName);
+        } finally {
+            asn1InputStream.close();
+        }
     }
 
     @Test
@@ -667,15 +670,20 @@ public class AuthenticationModulesTest extends CmpTestCase {
         checkCmpResponseGeneral(resp, issuerDN, USER_DN, cacert, req.getHeader().getSenderNonce().getOctets(), req.getHeader().getTransactionID()
                 .getOctets(), false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
 
-        PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
-        assertNotNull(respObject);
+        ASN1InputStream inputStream = new ASN1InputStream(new ByteArrayInputStream(resp));
+        try {
+            PKIMessage respObject = PKIMessage.getInstance(inputStream.readObject());
+            assertNotNull(respObject);
 
-        final PKIBody body = respObject.getBody();
-        assertEquals(23, body.getType());
-        ErrorMsgContent err = (ErrorMsgContent) body.getContent();
-        final String errMsg = err.getPKIStatusInfo().getStatusString().getStringAt(0).getString();
-        final String expectedErrMsg = "The authentication module 'DnPartPwd' cannot be used in RA mode";
-        assertEquals(expectedErrMsg, errMsg);
+            final PKIBody body = respObject.getBody();
+            assertEquals(23, body.getType());
+            ErrorMsgContent err = (ErrorMsgContent) body.getContent();
+            final String errMsg = err.getPKIStatusInfo().getStatusString().getStringAt(0).getString();
+            final String expectedErrMsg = "The authentication module 'DnPartPwd' cannot be used in RA mode";
+            assertEquals(expectedErrMsg, errMsg);
+        } finally {
+            inputStream.close();
+        }
     }
 
     @Test
@@ -713,14 +721,19 @@ public class AuthenticationModulesTest extends CmpTestCase {
         checkCmpResponseGeneral(resp, issuerDN, USER_DN, cacert, msg.getHeader().getSenderNonce().getOctets(), msg.getHeader().getTransactionID()
                 .getOctets(), false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
 
-        PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
-        assertNotNull(respObject);
+        ASN1InputStream inputStream = new ASN1InputStream(new ByteArrayInputStream(resp));
+        try {
+            PKIMessage respObject = PKIMessage.getInstance(inputStream.readObject());
+            assertNotNull(respObject);
 
-        PKIBody body = respObject.getBody();
-        assertEquals(23, body.getType());
-        ErrorMsgContent err = (ErrorMsgContent) body.getContent();
-        String errMsg = err.getPKIStatusInfo().getStatusString().getStringAt(0).getString();
-        assertEquals("'CN=cmpTestUnauthorizedAdmin,C=SE' is not an authorized administrator.", errMsg);
+            PKIBody body = respObject.getBody();
+            assertEquals(23, body.getType());
+            ErrorMsgContent err = (ErrorMsgContent) body.getContent();
+            String errMsg = err.getPKIStatusInfo().getStatusString().getStringAt(0).getString();
+            assertEquals("'CN=cmpTestUnauthorizedAdmin,C=SE' is not an authorized administrator.", errMsg);
+        } finally {
+            inputStream.close();
+        }
 
     }
 
@@ -768,16 +781,23 @@ public class AuthenticationModulesTest extends CmpTestCase {
         final byte[] resp = sendCmpHttp(ba, 200);
         checkCmpResponseGeneral(resp, issuerDN, USER_DN, cacert, msg.getHeader().getSenderNonce().getOctets(), msg.getHeader().getTransactionID()
                 .getOctets(), false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
-        PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
-        assertNotNull(respObject);
+        ASN1InputStream inputStream = new ASN1InputStream(new ByteArrayInputStream(resp));
+        try {
+            PKIMessage respObject = PKIMessage.getInstance(inputStream.readObject());
+            assertNotNull(respObject);
 
-        PKIBody body = respObject.getBody();
-        assertEquals(23, body.getType());
-        ErrorMsgContent err = (ErrorMsgContent) body.getContent();
-        String errMsg = err.getPKIStatusInfo().getStatusString().getStringAt(0).getString();
-        assertEquals("The CMP message could not be authenticated in RA mode. No CA has been set in the configuration file and the message has not been authenticated previously", errMsg);
-
+            PKIBody body = respObject.getBody();
+            assertEquals(23, body.getType());
+            ErrorMsgContent err = (ErrorMsgContent) body.getContent();
+            String errMsg = err.getPKIStatusInfo().getStatusString().getStringAt(0).getString();
+            assertEquals(
+                    "The CMP message could not be authenticated in RA mode. No CA has been set in the configuration file and the message has not been authenticated previously",
+                    errMsg);
+        } finally {
+            inputStream.close();
+        }
         removeAuthenticationToken(adminToken, admCert, adminName);
+        
     }
 
     @Test
@@ -1040,15 +1060,20 @@ public class AuthenticationModulesTest extends CmpTestCase {
         checkCmpResponseGeneral(resp, issuerDN, clientDN, cacert, req.getHeader().getSenderNonce().getOctets(), req.getHeader().getTransactionID()
                 .getOctets(), false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
 
-        PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
-        assertNotNull(respObject);
+        ASN1InputStream inputStream = new ASN1InputStream(new ByteArrayInputStream(resp));
+        try {
+            PKIMessage respObject = PKIMessage.getInstance(inputStream.readObject());
+            assertNotNull(respObject);
 
-        PKIBody body = respObject.getBody();
-        assertEquals(23, body.getType());
-        ErrorMsgContent err = (ErrorMsgContent) body.getContent();
-        String errMsg = err.getPKIStatusInfo().getStatusString().getStringAt(0).getString();
-        String expectedErrMsg = "Authentication failed for message. clientTestUser.";
-        assertEquals(expectedErrMsg, errMsg);
+            PKIBody body = respObject.getBody();
+            assertEquals(23, body.getType());
+            ErrorMsgContent err = (ErrorMsgContent) body.getContent();
+            String errMsg = err.getPKIStatusInfo().getStatusString().getStringAt(0).getString();
+            String expectedErrMsg = "Authentication failed for message. clientTestUser.";
+            assertEquals(expectedErrMsg, errMsg);
+        } finally {
+            inputStream.close();
+        }
     }
 
     /** Test CMP initial request against EJBCA CMP in client mode (operationmode=normal) using End Entity certificate signature authentication, 
@@ -1117,14 +1142,19 @@ public class AuthenticationModulesTest extends CmpTestCase {
                 // This should have failed
                 checkCmpResponseGeneral(resp, issuerDN, testUserDN, cacert, msg.getHeader().getSenderNonce().getOctets(), msg.getHeader()
                         .getTransactionID().getOctets(), false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
-                PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
-                assertNotNull(respObject);
-                PKIBody body = respObject.getBody();
-                assertEquals(23, body.getType());
-                ErrorMsgContent err = (ErrorMsgContent) body.getContent();
-                String errMsg = err.getPKIStatusInfo().getStatusString().getStringAt(0).getString();
-                String expectedErrMsg = "CA does not exist: " + testUserDN.hashCode();
-                assertEquals(expectedErrMsg, errMsg);
+                ASN1InputStream inputStream = new ASN1InputStream(new ByteArrayInputStream(resp));
+                PKIMessage respObject = PKIMessage.getInstance(inputStream.readObject());
+                try {
+                    assertNotNull(respObject);
+                    PKIBody body = respObject.getBody();
+                    assertEquals(23, body.getType());
+                    ErrorMsgContent err = (ErrorMsgContent) body.getContent();
+                    String errMsg = err.getPKIStatusInfo().getStatusString().getStringAt(0).getString();
+                    String expectedErrMsg = "CA does not exist: " + testUserDN.hashCode();
+                    assertEquals(expectedErrMsg, errMsg);
+                } finally {
+                    inputStream.close();
+                }
             }
             // Step 2, sign the request with a certificate that does not belong to the user
             {
@@ -1156,15 +1186,20 @@ public class AuthenticationModulesTest extends CmpTestCase {
                 // This should have failed
                 checkCmpResponseGeneral(resp, issuerDN, testUserDN, cacert, msg.getHeader().getSenderNonce().getOctets(), msg.getHeader()
                         .getTransactionID().getOctets(), false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
-                PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
-                assertNotNull(respObject);
-                PKIBody body = respObject.getBody();
-                assertEquals(23, body.getType());
-                ErrorMsgContent err = (ErrorMsgContent) body.getContent();
-                String errMsg = err.getPKIStatusInfo().getStatusString().getStringAt(0).getString();
-                String expectedErrMsg = "The End Entity certificate attached to the PKIMessage in the extraCert field does not belong to user '"
-                        + testUsername + "'.";
-                assertEquals(expectedErrMsg, errMsg);
+                ASN1InputStream inputStream = new ASN1InputStream(new ByteArrayInputStream(resp));
+                try {
+                    PKIMessage respObject = PKIMessage.getInstance(inputStream.readObject());
+                    assertNotNull(respObject);
+                    PKIBody body = respObject.getBody();
+                    assertEquals(23, body.getType());
+                    ErrorMsgContent err = (ErrorMsgContent) body.getContent();
+                    String errMsg = err.getPKIStatusInfo().getStatusString().getStringAt(0).getString();
+                    String expectedErrMsg = "The End Entity certificate attached to the PKIMessage in the extraCert field does not belong to user '"
+                            + testUsername + "'.";
+                    assertEquals(expectedErrMsg, errMsg);
+                } finally {
+                    inputStream.close();
+                }
             }
 
             // Step 3 sign with the real certificate, but user status is not NEW
@@ -1191,40 +1226,51 @@ public class AuthenticationModulesTest extends CmpTestCase {
             checkCmpResponseGeneral(resp, issuerDN, testUserDN, cacert, msg.getHeader().getSenderNonce().getOctets(), msg.getHeader()
                     .getTransactionID().getOctets(), false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
             // This should have failed
-            PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
-            assertNotNull(respObject);
-            PKIBody body = respObject.getBody();
-            assertEquals(23, body.getType());
-            ErrorMsgContent err = (ErrorMsgContent) body.getContent();
-            String errMsg = err.getPKIStatusInfo().getStatusString().getStringAt(0).getString();
-            String expectedErrMsg = "Got request with status GENERATED (40), NEW, FAILED or INPROCESS required: cmptestuser16.";
-            assertEquals(expectedErrMsg, errMsg);
-
-            // Step 4 now set status to NEW, and a clear text password, then it should finally work
-            createUser(testUsername, testUserDN, "randompasswordhere", true, caid, SecConst.EMPTY_ENDENTITYPROFILE, CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER);
-            // Send request and receive response
-            final byte[] resp2 = sendCmpHttp(ba, 200);
-            CertReqMessages ir = (CertReqMessages) msg.getBody().getContent();
-            Certificate cert2 = checkCmpCertRepMessage(testUserDN, cacert, resp2, ir.toCertReqMsgArray()[0].getCertReq().getCertReqId()
-                    .getValue().intValue());
-            assertNotNull("CrmfRequest did not return a certificate", cert2);
-            fingerprint3 = CertTools.getFingerprintAsString(cert2);
-
-            // Step 5, revoke the certificate and try again
-            {
-                certStoreSession.setRevokeStatus(ADMIN, cert, RevokedCertInfo.REVOCATION_REASON_CESSATIONOFOPERATION, null);
-                final byte[] resp3 = sendCmpHttp(ba, 200);
-                // This should have failed
-                checkCmpResponseGeneral(resp, issuerDN, testUserDN, cacert, msg.getHeader().getSenderNonce().getOctets(), msg.getHeader()
-                        .getTransactionID().getOctets(), false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
-                PKIMessage respObject3 = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp3)).readObject());
+            ASN1InputStream inputStream = new ASN1InputStream(new ByteArrayInputStream(resp));
+            try {
+                PKIMessage respObject = PKIMessage.getInstance(inputStream.readObject());
                 assertNotNull(respObject);
-                PKIBody body3 = respObject3.getBody();
-                assertEquals(23, body3.getType());
-                err = (ErrorMsgContent) body3.getContent();
-                String errMsg3 = err.getPKIStatusInfo().getStatusString().getStringAt(0).getString();
-                String expectedErrMsg3 = "The certificate attached to the PKIMessage in the extraCert field is revoked.";
-                assertEquals(expectedErrMsg3, errMsg3);
+                PKIBody body = respObject.getBody();
+                assertEquals(23, body.getType());
+                ErrorMsgContent err = (ErrorMsgContent) body.getContent();
+                String errMsg = err.getPKIStatusInfo().getStatusString().getStringAt(0).getString();
+                String expectedErrMsg = "Got request with status GENERATED (40), NEW, FAILED or INPROCESS required: cmptestuser16.";
+                assertEquals(expectedErrMsg, errMsg);
+
+                // Step 4 now set status to NEW, and a clear text password, then it should finally work
+                createUser(testUsername, testUserDN, "randompasswordhere", true, caid, SecConst.EMPTY_ENDENTITYPROFILE,
+                        CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER);
+                // Send request and receive response
+                final byte[] resp2 = sendCmpHttp(ba, 200);
+                CertReqMessages ir = (CertReqMessages) msg.getBody().getContent();
+                Certificate cert2 = checkCmpCertRepMessage(testUserDN, cacert, resp2, ir.toCertReqMsgArray()[0].getCertReq().getCertReqId()
+                        .getValue().intValue());
+                assertNotNull("CrmfRequest did not return a certificate", cert2);
+                fingerprint3 = CertTools.getFingerprintAsString(cert2);
+
+                // Step 5, revoke the certificate and try again
+                {
+                    certStoreSession.setRevokeStatus(ADMIN, cert, RevokedCertInfo.REVOCATION_REASON_CESSATIONOFOPERATION, null);
+                    final byte[] resp3 = sendCmpHttp(ba, 200);
+                    // This should have failed
+                    checkCmpResponseGeneral(resp, issuerDN, testUserDN, cacert, msg.getHeader().getSenderNonce().getOctets(), msg.getHeader()
+                            .getTransactionID().getOctets(), false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
+                    ASN1InputStream inputStream3 = new ASN1InputStream(new ByteArrayInputStream(resp3));
+                    try {
+                        PKIMessage respObject3 = PKIMessage.getInstance(inputStream3.readObject());
+                        assertNotNull(respObject);
+                        PKIBody body3 = respObject3.getBody();
+                        assertEquals(23, body3.getType());
+                        err = (ErrorMsgContent) body3.getContent();
+                        String errMsg3 = err.getPKIStatusInfo().getStatusString().getStringAt(0).getString();
+                        String expectedErrMsg3 = "The certificate attached to the PKIMessage in the extraCert field is revoked.";
+                        assertEquals(expectedErrMsg3, errMsg3);
+                    } finally {
+                        inputStream3.close();
+                    }
+                }
+            } finally {
+                inputStream.close();
             }
 
         } finally {
@@ -1277,16 +1323,20 @@ public class AuthenticationModulesTest extends CmpTestCase {
         final byte[] resp = sendCmpHttp(ba, 200);
         checkCmpResponseGeneral(resp, issuerDN, USER_DN, cacert, msg.getHeader().getSenderNonce().getOctets(), msg.getHeader().getTransactionID()
                 .getOctets(), false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
-        
-        PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
-        assertNotNull(respObject);
+        ASN1InputStream inputStream = new ASN1InputStream(new ByteArrayInputStream(resp));
+        try {
+            PKIMessage respObject = PKIMessage.getInstance(inputStream.readObject());
+            assertNotNull(respObject);
 
-        final PKIBody body = respObject.getBody();
-        assertEquals(23, body.getType());
-        ErrorMsgContent err = (ErrorMsgContent) body.getContent();
-        final String errMsg = err.getPKIStatusInfo().getStatusString().getStringAt(0).getString();
-        final String expectedErrMsg = "PKI Message is not athenticated properly. No HMAC protection was found.";
-        assertEquals(expectedErrMsg, errMsg);
+            final PKIBody body = respObject.getBody();
+            assertEquals(23, body.getType());
+            ErrorMsgContent err = (ErrorMsgContent) body.getContent();
+            final String errMsg = err.getPKIStatusInfo().getStatusString().getStringAt(0).getString();
+            final String expectedErrMsg = "PKI Message is not athenticated properly. No HMAC protection was found.";
+            assertEquals(expectedErrMsg, errMsg);
+        } finally {
+            inputStream.close();
+        }
     }
 
     /**
@@ -1320,8 +1370,9 @@ public class AuthenticationModulesTest extends CmpTestCase {
         final byte[] resp = sendCmpHttp(ba, 200);
         checkCmpResponseGeneral(resp, issuerDN, USER_DN, cacert, msg.getHeader().getSenderNonce().getOctets(), msg.getHeader()
                 .getTransactionID().getOctets(), false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
-        
-        PKIMessage respObject = PKIMessage.getInstance(new ASN1InputStream(new ByteArrayInputStream(resp)).readObject());
+        ASN1InputStream inputStream = new ASN1InputStream(new ByteArrayInputStream(resp));
+        try {
+        PKIMessage respObject = PKIMessage.getInstance(inputStream.readObject());
         assertNotNull(respObject);
 
         PKIBody body = respObject.getBody();
@@ -1330,7 +1381,9 @@ public class AuthenticationModulesTest extends CmpTestCase {
         String errMsg = err.getPKIStatusInfo().getStatusString().getStringAt(0).getString();
         String expectedErrMsg = "PKI Message is not athenticated properly. No PKI protection is found.";
         assertEquals(expectedErrMsg, errMsg);
-        
+        } finally { 
+            inputStream.close();
+        }
     }
 
     /**

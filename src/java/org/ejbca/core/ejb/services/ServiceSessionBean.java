@@ -328,9 +328,7 @@ public class ServiceSessionBean implements ServiceSessionLocal, ServiceSessionRe
         // If superadmin return all visible services
         if (authorizationSession.isAuthorizedNoLogging(admin, StandardRules.ROLE_ROOT.resource())) {
             Collection<Integer> allServiceIds = getServiceIdToNameMap().keySet();
-            Iterator<Integer> i = allServiceIds.iterator();
-            while (i.hasNext()) {
-                int id = i.next().intValue();
+            for (int id : allServiceIds) {
                 // Remove hidden services here..
                 if (!getServiceConfiguration(admin, id).isHidden()) {
                     allVisibleServiceIds.add(Integer.valueOf(id));
@@ -677,7 +675,6 @@ public class ServiceSessionBean implements ServiceSessionLocal, ServiceSessionRe
     @Override
     public void load() {
         // Get all services
-        @SuppressWarnings("unchecked")
         Collection<Timer> currentTimers = timerService.getTimers();
         Iterator<Timer> iter = currentTimers.iterator();
         HashSet<Serializable> existingTimers = new HashSet<Serializable>();
@@ -731,7 +728,6 @@ public class ServiceSessionBean implements ServiceSessionLocal, ServiceSessionRe
     }
 
     // We don't want the appserver to persist/update the timer in the same transaction if they are stored in different non XA DataSources
-    @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     @Override
     public void unload() {
@@ -770,7 +766,6 @@ public class ServiceSessionBean implements ServiceSessionLocal, ServiceSessionRe
      * 
      * @param id the id of the timer
      */
-    @SuppressWarnings("unchecked")
     // We don't want the appserver to persist/update the timer in the same transaction if they are stored in different non XA DataSources. This method
     // should not be run from within a transaction.
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
@@ -885,9 +880,7 @@ public class ServiceSessionBean implements ServiceSessionLocal, ServiceSessionRe
     public HashMap<Integer, String> getServiceIdToNameMap() {
         HashMap<Integer, String> returnval = new HashMap<Integer, String>();
         Collection<ServiceData> result = serviceDataSession.findAll();
-        Iterator<ServiceData> i = result.iterator();
-        while (i.hasNext()) {
-            ServiceData next = i.next();
+        for(ServiceData next : result) {
             returnval.put(next.getId(), next.getName());
         }
         return returnval;

@@ -125,7 +125,7 @@ public class CertificateStoreSessionBean implements CertificateStoreSessionRemot
                             nextcafp = cacert.getCaFingerprint();
                         }
                         // We found a root CA certificate, hopefully ?
-                        PublicKey pkwithparams = cacert.getCertificate(this.entityManager).getPublicKey();
+                        PublicKey pkwithparams = cacert.getCertificate().getPublicKey();
                         pubk = KeyTools.getECPublicKeyWithParams(pubk, pkwithparams);
                     }
                 } catch (FinderException e) {
@@ -144,15 +144,9 @@ public class CertificateStoreSessionBean implements CertificateStoreSessionRemot
         // *one* single
         // insert statement. If we do a home.create and the some setXX, it will create one insert and one update statement to the database.
         // Probably not important in EJB3 anymore
-        final boolean useBase64CertTable = CesecoreConfiguration.useBase64CertTable();
-        final CertificateData data1 = new CertificateData(incert, pubk, username, cafp, status, type, certificateProfileId, tag, updateTime, !useBase64CertTable);
-        // use special table for encoded data if told so.
-        final Base64CertData base64Cert = useBase64CertTable ? new Base64CertData(incert) : null;
+        CertificateData data1 = new CertificateData(incert, pubk, username, cafp, status, type, certificateProfileId, tag, updateTime);
         try {
-            if ( base64Cert!=null ) {
-                this.entityManager.persist(base64Cert);
-            }
-            this.entityManager.persist(data1);
+            entityManager.persist(data1);
         } catch (Exception e) {
             // For backward compatibility. We should drop the throw entirely and rely on the return value.
             CreateException ce = new CreateException();
@@ -203,7 +197,7 @@ public class CertificateStoreSessionBean implements CertificateStoreSessionRemot
         Collection<CertificateData> coll = CertificateData.findBySubjectDNAndIssuerDN(entityManager, dn, issuerdn);
         Iterator<CertificateData> iter = coll.iterator();
         while (iter.hasNext()) {
-            ret.add(iter.next().getCertificate(this.entityManager));
+            ret.add(iter.next().getCertificate());
         }
         if (log.isTraceEnabled()) {
             log.trace("<findCertificatesBySubjectAndIssuer(), dn='" + subjectDN + "' and issuer='" + issuerDN + "'");
@@ -308,7 +302,7 @@ public class CertificateStoreSessionBean implements CertificateStoreSessionRemot
         }
         Collection<Certificate> ret = new ArrayList<Certificate>();
         for (CertificateData certificate : CertificateData.findBySubjectDN(entityManager, dn)) {
-            ret.add(certificate.getCertificate(this.entityManager));
+            ret.add(certificate.getCertificate());
         }
         if (log.isTraceEnabled()) {
             log.trace("<findCertificatesBySubject(), dn='" + subjectDN + "'");
@@ -351,7 +345,7 @@ public class CertificateStoreSessionBean implements CertificateStoreSessionRemot
         }
         Iterator<CertificateData> iter = coll.iterator();
         while (iter.hasNext()) {
-            ret.add(iter.next().getCertificate(this.entityManager));
+            ret.add(iter.next().getCertificate());
         }
         if (log.isTraceEnabled()) {
             log.trace("<findCertificatesByExpireTimeWithLimit(), time=" + expireTime);
@@ -387,7 +381,7 @@ public class CertificateStoreSessionBean implements CertificateStoreSessionRemot
         Certificate cert = null;
         // There are several certs, we will try to find the latest issued one
         while (iter.hasNext()) {
-            cert = iter.next().getCertificate(this.entityManager);
+            cert = iter.next().getCertificate();
             if (ret != null) {
                 if (CertTools.getNotBefore(cert).after(CertTools.getNotBefore(ret))) {
                     // cert is never than ret
@@ -438,7 +432,7 @@ public class CertificateStoreSessionBean implements CertificateStoreSessionRemot
         Collection<CertificateData> coll = CertificateData.findBySerialNumber(entityManager, serno.toString());
         Iterator<CertificateData> iter = coll.iterator();
         while (iter.hasNext()) {
-            ret.add(iter.next().getCertificate(this.entityManager));
+            ret.add(iter.next().getCertificate());
         }
         if (log.isTraceEnabled()) {
             log.trace("<findCertificatesBySerno(), serno=" + serno);
@@ -468,7 +462,7 @@ public class CertificateStoreSessionBean implements CertificateStoreSessionRemot
         ArrayList<Certificate> ret = new ArrayList<Certificate>();
         Iterator<CertificateData> iter = coll.iterator();
         while (iter.hasNext()) {
-            ret.add(iter.next().getCertificate(this.entityManager));
+            ret.add(iter.next().getCertificate());
         }
         if (log.isTraceEnabled()) {
             log.trace("<findCertificatesByUsername(), username=" + username);
@@ -486,7 +480,7 @@ public class CertificateStoreSessionBean implements CertificateStoreSessionRemot
         Collection<CertificateData> coll = CertificateData.findByUsernameAndStatus(entityManager, username, status);
         Iterator<CertificateData> iter = coll.iterator();
         while (iter.hasNext()) {
-            ret.add(iter.next().getCertificate(this.entityManager));
+            ret.add(iter.next().getCertificate());
         }
         if (log.isTraceEnabled()) {
             log.trace("<findCertificatesByUsernameAndStatus(), username=" + username);
@@ -511,7 +505,7 @@ public class CertificateStoreSessionBean implements CertificateStoreSessionRemot
         try {
             CertificateData res = CertificateData.findByFingerprint(entityManager, fingerprint);
             if (res != null) {
-                ret = res.getCertificate(this.entityManager);
+                ret = res.getCertificate();
             }
         } catch (Exception e) {
             log.error("Error finding certificate with fp: " + fingerprint);
@@ -531,7 +525,7 @@ public class CertificateStoreSessionBean implements CertificateStoreSessionRemot
         
         Collection<Certificate> result = new ArrayList<Certificate>();
         for(CertificateData certificateData : (Collection<CertificateData>) query.getResultList()) {
-            result.add(certificateData.getCertificate(this.entityManager));
+            result.add(certificateData.getCertificate());
         }
         return result;
     }
@@ -610,11 +604,39 @@ public class CertificateStoreSessionBean implements CertificateStoreSessionRemot
         return setRevokeStatusNoAuth(admin, certificate, revokedDate, reason, userDataDN);
     }
     
+    @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public void setRevocationDate(AuthenticationToken authenticationToken, String certificateFingerprint, Date revocationDate)
+            throws AuthorizationDeniedException {
+        // Must be authorized to CA in order to change status is certificates issued by the CA
+        CertificateData certdata = CertificateData.findByFingerprint(entityManager, certificateFingerprint);
+        if(certdata.getStatus() != CertificateConstants.CERT_REVOKED) {
+            throw new UnsupportedOperationException("Attempted to set revocation date on an unrevoked certificate.");
+        }
+        if(certdata.getRevocationDate() != 0) {
+            throw new UnsupportedOperationException("Attempted to overwrite revocation date");
+        }
+        Certificate certificate = certdata.getCertificate();
+        int caid = CertTools.getIssuerDN(certificate).hashCode();
+        authorizedToCA(authenticationToken, caid);
+        certdata.setRevocationDate(revocationDate);
+        final String username = certdata.getUsername();
+        final String serialNo = CertTools.getSerialNumberAsString(certificate); // for logging
+        final String msg = INTRES.getLocalizedMessage("store.revocationdateset", username, certificateFingerprint, certdata.getSubjectDN(),
+                certdata.getIssuerDN(), serialNo, revocationDate);
+        Map<String, Object> details = new LinkedHashMap<String, Object>();
+        details.put("msg", msg);
+        //Log this as CERT_REVOKED since this data should have been added then. 
+        logSession.log(EventTypes.CERT_REVOKED, EventStatus.SUCCESS, ModuleTypes.CERTIFICATE, ServiceTypes.CORE, authenticationToken.toString(),
+                String.valueOf(caid), serialNo, username, details);
+    }
+    
+    
     /** Local interface only */
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public boolean setRevokeStatusNoAuth(AuthenticationToken admin, Certificate certificate, Date revokeDate, int reason, String userDataDN)
-            throws CertificateRevokeException, AuthorizationDeniedException {
+            throws CertificateRevokeException {
         if (certificate == null) {
             return false;
         }
@@ -873,7 +895,7 @@ public class CertificateStoreSessionBean implements CertificateStoreSessionRemot
             authorizedToCA(admin, caid);
 
         	data.setStatus(status);
-        	final String serialNo = CertTools.getSerialNumberAsString(data.getCertificate(this.entityManager));
+        	final String serialNo = CertTools.getSerialNumberAsString(data.getCertificate());
             final String msg = INTRES.getLocalizedMessage("store.setstatus", data.getUsername(), fingerprint, status, data.getSubjectDN(), data.getIssuerDN(), serialNo);
     		Map<String, Object> details = new LinkedHashMap<String, Object>();
     		details.put("msg", msg);
@@ -903,9 +925,10 @@ public class CertificateStoreSessionBean implements CertificateStoreSessionRemot
         query.setParameter("subjectKeyId", subjectKeyIdString);
         query.setParameter("status", CertificateConstants.CERT_ACTIVE);
         query.setMaxResults(1);
+        @SuppressWarnings("unchecked")
         final List<CertificateData> resultList = query.getResultList();
         if (resultList.size() == 1) {
-            return resultList.get(0).getCertificate(this.entityManager);
+            return resultList.get(0).getCertificate();
         }
         return null;
     }

@@ -50,6 +50,7 @@ import org.bouncycastle.cert.ocsp.OCSPReqBuilder;
 import org.bouncycastle.cert.ocsp.OCSPResp;
 import org.bouncycastle.cert.ocsp.SingleResp;
 import org.bouncycastle.cert.ocsp.jcajce.JcaCertificateID;
+import org.bouncycastle.operator.BufferingContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder;
@@ -144,15 +145,19 @@ public class ProtocolOcspHttpPerfTest {
     	tomastest = CertTools.getCertfromByteArray(tomastestbytes);
     	
     	// Read sernos.txt into a nice map
-    	BufferedReader in = new BufferedReader(new FileReader(sernofile));
-    	String instr = null;
-    	while (in.ready()) {
-			instr = in.readLine();
-			if (instr != null) {
-				BigInteger bi = new BigInteger(instr);
-				sernos.add(bi);
-			}
-    	}
+        BufferedReader in = new BufferedReader(new FileReader(sernofile));
+        try {
+            String instr = null;
+            while (in.ready()) {
+                instr = in.readLine();
+                if (instr != null) {
+                    BigInteger bi = new BigInteger(instr);
+                    sernos.add(bi);
+                }
+            }
+        } finally {
+            in.close();
+        }
     	sernosize = sernos.size();
     	KeyStore ks = KeyStore.getInstance("PKCS12");
     	FileInputStream fis = new java.io.FileInputStream(signerp12);
@@ -194,7 +199,7 @@ public class ProtocolOcspHttpPerfTest {
         OCSPReq req = null;
         if (dosigning) {
             gen.setRequestorName(certChain[0].getSubject());
-            req = gen.build(new JcaContentSignerBuilder(signingAlg).build(privKey), certChain);        	
+            req = gen.build(new BufferingContentSigner(new JcaContentSignerBuilder(signingAlg).build(privKey), 20480), certChain);        	
         } else {
         	req = gen.build();
         }
@@ -274,7 +279,7 @@ public class ProtocolOcspHttpPerfTest {
 			        OCSPReq req = null;
 			        if (dosigning) {
 			            gen.setRequestorName(certChain[0].getSubject());
-			            req = gen.build(new JcaContentSignerBuilder(signingAlg).build(privKey), certChain);        	
+			            req = gen.build(new BufferingContentSigner(new JcaContentSignerBuilder(signingAlg).build(privKey), 20480), certChain);        	
 			        } else {
 			        	req = gen.build();
 			        }
@@ -294,7 +299,7 @@ public class ProtocolOcspHttpPerfTest {
 				}
 				long after = System.currentTimeMillis();
 				long diff = after - before;
-				log.info("Tidsåtgång ("+Thread.currentThread().getName()+"): "+diff);
+				log.info("Tids��tg��ng ("+Thread.currentThread().getName()+"): "+diff);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}    		

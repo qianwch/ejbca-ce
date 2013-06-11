@@ -19,7 +19,6 @@ import java.util.Properties;
 /**
  * Class used to populate the fields in the noaction subpage. 
  * 
- * @author Philip Vendil 2006 sep 30
  *
  * @version $Id$
  */

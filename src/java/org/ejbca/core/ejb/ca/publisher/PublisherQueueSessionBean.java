@@ -279,7 +279,7 @@ public class PublisherQueueSessionBean implements PublisherQueueSessionRemote, P
                         if (cd == null) {
                             throw new FinderException();
                         }
-                        final Certificate cert = cd.getCertificate(this.entityManager);
+                        final Certificate cert = cd.getCertificate();
                        
                         try {
                         	published = publisherQueueSession.storeCertificateNonTransactional(publisher, admin, cert, username, password, userDataDN,

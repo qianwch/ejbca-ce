@@ -34,21 +34,6 @@ org.ejbca.core.ejb.keybind.InternalKeyBindingRules
   <base href="<%= ejbcawebbean.getBaseUrl() %>" />
   <link rel="stylesheet" type="text/css" href="<%= ejbcawebbean.getCssFile() %>" />
   <script src="<%= globalconfiguration.getAdminWebPath() %>ejbcajslib.js"></script>
-  <style type="text/css">
-		/* TODO: Move re-usable styles to included .css */
-		.infoMessage {
-			font-style: italic;
-			padding: 0.5em;
-			border-radius: 0.3em;
-			background: #fcfcfc;
-			margin-bottom: 1em;
-		}
-		.propertyTable {
-			border: 0px;
-			right: auto;
-			left: auto;
-		}
-   </style>
 </head>
 <body>
 	<h1>
@@ -93,13 +78,13 @@ org.ejbca.core.ejb.keybind.InternalKeyBindingRules
 					onchange="document.getElementById('internalkeybinding:reloadCryptoToken').click();">
 					<f:selectItems value="#{internalKeyBindingMBean.availableCryptoTokens}"/>
 				</h:selectOneMenu>
-				<h:commandButton id="reloadCryptoToken" value="#{web.text.INTERNALKEYBINDING_CRYPTOTOKEN_UPDATE}" action="#{internalKeyBindingMBean.reloadCryptoToken}"/>
+				<h:commandButton id="reloadCryptoToken" value="#{web.text.INTERNALKEYBINDING_CRYPTOTOKEN_UPDATENEXT}" action="#{internalKeyBindingMBean.reloadCryptoToken}"/>
 				<script>document.getElementById('internalkeybinding:reloadCryptoToken').style.display = 'none';</script>
 			</h:panelGroup>
+			<h:outputText rendered="#{internalKeyBindingMBean.inEditMode and !internalKeyBindingMBean.cryptoTokenActive}"
+				value=" #{web.text.INTERNALKEYBINDING_CRYPTOTOKEN_NOTACTIVE}"/>
 			<h:outputText rendered="#{!internalKeyBindingMBean.inEditMode or !internalKeyBindingMBean.cryptoTokenActive}"
 				value="#{internalKeyBindingMBean.currentCryptoTokenName}" title="#{internalKeyBindingMBean.currentCryptoToken}"/>
-			<h:outputText rendered="#{internalKeyBindingMBean.inEditMode or !internalKeyBindingMBean.cryptoTokenActive}"
-				value=" #{web.text.INTERNALKEYBINDING_CRYPTOTOKEN_NOTACTIVE}"/>
 		</h:panelGroup>
 		<h:message for="cryptoToken"/>
 		<h:outputLabel for="keyPairAlias" value="#{web.text.INTERNALKEYBINDING_FIELD_KEYPAIRALIAS}"/>
@@ -123,10 +108,10 @@ org.ejbca.core.ejb.keybind.InternalKeyBindingRules
 				<f:selectItems value="#{internalKeyBindingMBean.availableSignatureAlgorithms}"/>
 			</h:selectOneMenu>
 			<h:panelGroup rendered="#{!internalKeyBindingMBean.inEditMode or !internalKeyBindingMBean.cryptoTokenActive}">
-				<h:outputText rendered="#{internalKeyBindingMBean.currentNextKeyPairAlias != null}"
+				<h:outputText rendered="#{internalKeyBindingMBean.currentSignatureAlgorithm != null}"
 					value="#{internalKeyBindingMBean.currentSignatureAlgorithm}"/>
-				<h:outputText rendered="#{internalKeyBindingMBean.currentNextKeyPairAlias == null}"
-					value="Not specified (error?)"/>
+				<h:outputText rendered="#{internalKeyBindingMBean.currentSignatureAlgorithm == null}"
+					value="Not specified (error)"/>
 			</h:panelGroup>
 		</h:panelGroup>
 		<h:message for="signatureAlgorithm"/>

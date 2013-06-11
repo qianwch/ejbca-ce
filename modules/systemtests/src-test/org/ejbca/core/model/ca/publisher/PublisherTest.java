@@ -388,7 +388,7 @@ public class PublisherTest {
 					RevokedCertInfo.REVOCATION_REASON_CACOMPROMISE,
 					new Date().getTime(), "foo", CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER, new Date().getTime());
 		} finally {
-			this.internalCertStoreSession.removePublishedCertificate(cert);
+			this.internalCertStoreSession.removeCertificate(cert);
 		}
 		log.trace("<test14ExternalOCSPPublisherCustom()");
 	}

@@ -29,8 +29,9 @@ public enum CryptoTokenCache implements CommonCache<CryptoToken> {
     final private CommonCache<CryptoToken> cryptoTokenCache = new CommonCacheBase<CryptoToken>() {
         @Override
         protected long getCacheTime() {
-            // We never disable storage of CryptoTokens in the cache completely, since we want to keep any activation
-            return Math.max(CesecoreConfiguration.getCacheTimeCryptoToken(), 0);
+            // We should never disable storage of CryptoTokens in the cache completely, since we want to keep any activation
+            // So never use cache value "-1" in the setting, use the value 0 instead.
+            return CesecoreConfiguration.getCacheTimeCryptoToken();
         }
         @Override
         protected long getMaxCacheLifeTime() {

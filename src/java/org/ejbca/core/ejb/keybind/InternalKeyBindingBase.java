@@ -137,8 +137,8 @@ public abstract class InternalKeyBindingBase extends UpgradeableDataHashMap impl
         setNextKeyPairAlias(null);
     }
 
-    private static SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyyMMddHHmmss");
-    private static Pattern DATE_FORMAT_PATTERN = Pattern.compile("_\\d{8}\\d{6}$");
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyyMMddHHmmss");
+    private static final Pattern DATE_FORMAT_PATTERN = Pattern.compile("_\\d{8}\\d{6}$");
     
     private String getNewAlias(String oldAlias) {
         final Matcher matcher = DATE_FORMAT_PATTERN.matcher(oldAlias);
@@ -164,6 +164,9 @@ public abstract class InternalKeyBindingBase extends UpgradeableDataHashMap impl
         if (trustedCertificateReferences == null) {
             trustedCertificateReferences = getDataInternal(PROP_TRUSTED_CERTIFICATE_REFERENCES, new ArrayList<InternalKeyBindingTrustEntry>());
         }
+        // Return a shallow copy of the list
+        final ArrayList<InternalKeyBindingTrustEntry> trustedCertificateReferences = new ArrayList<InternalKeyBindingTrustEntry>();
+        trustedCertificateReferences.addAll(this.trustedCertificateReferences);
         return trustedCertificateReferences;
     }
 

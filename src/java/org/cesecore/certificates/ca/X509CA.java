@@ -86,6 +86,7 @@ import org.bouncycastle.cms.CMSSignedGenerator;
 import org.bouncycastle.cms.RecipientInformation;
 import org.bouncycastle.cms.RecipientInformationStore;
 import org.bouncycastle.cms.jcajce.JceKeyTransEnvelopedRecipient;
+import org.bouncycastle.operator.BufferingContentSigner;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.ContentVerifierProvider;
 import org.bouncycastle.operator.OperatorCreationException;
@@ -103,6 +104,7 @@ import org.cesecore.certificates.certificate.CertificateConstants;
 import org.cesecore.certificates.certificate.CertificateCreateException;
 import org.cesecore.certificates.certificate.certextensions.CertificateExtension;
 import org.cesecore.certificates.certificate.certextensions.CertificateExtensionFactory;
+import org.cesecore.certificates.certificate.request.RequestMessage;
 import org.cesecore.certificates.certificateprofile.CertificatePolicy;
 import org.cesecore.certificates.certificateprofile.CertificateProfile;
 import org.cesecore.certificates.crl.RevokedCertInfo;
@@ -543,7 +545,7 @@ public class X509CA extends CA implements Serializable {
     }
 
     @Override
-    public Certificate generateCertificate(CryptoToken cryptoToken, final EndEntityInformation subject, final X500Name requestX500Name, final PublicKey publicKey, final int keyusage, final Date notBefore,
+    public Certificate generateCertificate(CryptoToken cryptoToken, final EndEntityInformation subject, final RequestMessage request, final PublicKey publicKey, final int keyusage, final Date notBefore,
             final Date notAfter, final CertificateProfile certProfile, final Extensions extensions, final String sequence) throws Exception {
         // Before we start, check if the CA is off-line, we don't have to waste time
         // one the stuff below of we are off-line. The line below will throw CryptoTokenOfflineException of CA is offline
@@ -551,14 +553,14 @@ public class X509CA extends CA implements Serializable {
         final PublicKey caPublicKey = cryptoToken.getPublicKey(catoken.getAliasFromPurpose(CATokenConstants.CAKEYPURPOSE_CERTSIGN));
         final PrivateKey caPrivateKey = cryptoToken.getPrivateKey(catoken.getAliasFromPurpose(CATokenConstants.CAKEYPURPOSE_CERTSIGN));
         final String provider = cryptoToken.getSignProviderName();
-        return generateCertificate(subject, requestX500Name, publicKey, keyusage, notBefore, notAfter, certProfile, extensions, sequence,
+        return generateCertificate(subject, request, publicKey, keyusage, notBefore, notAfter, certProfile, extensions, sequence,
                 caPublicKey, caPrivateKey, provider);
     }
 
     /**
      * sequence is ignored by X509CA
      */
-    private Certificate generateCertificate(final EndEntityInformation subject, final X500Name requestX500Name, final PublicKey publicKey, final int keyusage, final Date notBefore,
+    private Certificate generateCertificate(final EndEntityInformation subject, final RequestMessage request, final PublicKey publicKey, final int keyusage, final Date notBefore,
             final Date notAfter, final CertificateProfile certProfile, final Extensions extensions, final String sequence, final PublicKey caPublicKey,
             final PrivateKey caPrivateKey, final String provider) throws Exception {
 
@@ -632,8 +634,8 @@ public class X509CA extends CA implements Serializable {
             ldapdnorder = true;
         }
         final X500Name subjectDNName;
-        if (certProfile.getAllowDNOverride() && (requestX500Name != null)) {
-            subjectDNName = requestX500Name;
+        if (certProfile.getAllowDNOverride() && (request != null) && (request.getRequestX500Name() != null)) {
+            subjectDNName = request.getRequestX500Name();
             if (log.isDebugEnabled()) {
                 log.debug("Using X509Name from request instead of user's registered.");
             }
@@ -781,7 +783,7 @@ public class X509CA extends CA implements Serializable {
         if (log.isTraceEnabled()) {
             log.trace(">certgen.generate");
         }
-        final ContentSigner signer = new JcaContentSignerBuilder(sigAlg).setProvider(provider).build(caPrivateKey);
+        final ContentSigner signer = new BufferingContentSigner(new JcaContentSignerBuilder(sigAlg).setProvider(provider).build(caPrivateKey), 20480);
         final X509CertificateHolder certHolder = certbuilder.build(signer);
         final X509Certificate cert = (X509Certificate)CertTools.getCertfromByteArray(certHolder.getEncoded());
         if (log.isTraceEnabled()) {
@@ -825,6 +827,10 @@ public class X509CA extends CA implements Serializable {
                     throw new CertificateCreateException(msg);
                 }
             }
+        }
+        // Before returning from this method, we will set the private key and provider in the request message, in case the response  message needs to be signed
+        if (request != null) {
+            request.setResponseKeyInfo(caPrivateKey, provider);
         }
         if (log.isDebugEnabled()) {
             log.debug("X509CA: generated certificate, CA " + this.getCAId() + " for DN: " + subject.getCertificateDN());
@@ -987,7 +993,7 @@ public class X509CA extends CA implements Serializable {
         }
         final String alias = getCAToken().getAliasFromPurpose(CATokenConstants.CAKEYPURPOSE_CRLSIGN);
         try {
-            final ContentSigner signer = new JcaContentSignerBuilder(sigAlg).setProvider(cryptoToken.getSignProviderName()).build(cryptoToken.getPrivateKey(alias));
+            final ContentSigner signer = new BufferingContentSigner(new JcaContentSignerBuilder(sigAlg).setProvider(cryptoToken.getSignProviderName()).build(cryptoToken.getPrivateKey(alias)), 20480);
             crl = crlgen.build(signer);
         } catch (OperatorCreationException e) {
             // Very fatal error

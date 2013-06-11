@@ -14,8 +14,10 @@ package org.cesecore.certificates.certificate;
 
 import java.math.BigInteger;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +44,7 @@ import org.cesecore.certificates.crl.CRLData;
 import org.cesecore.config.CesecoreConfiguration;
 import org.cesecore.internal.InternalResources;
 import org.cesecore.jndi.JndiConstants;
+import org.cesecore.util.Base64;
 import org.cesecore.util.CertTools;
 
 /**
@@ -61,54 +64,37 @@ public class InternalCertificateStoreSessionBean implements InternalCertificateS
     @EJB
     private AccessControlSessionLocal accessSession;
     @EJB
-    CertificateStoreSessionLocal certStore;
+    private CertificateStoreSessionLocal certStore;
     @EJB
     private SecurityEventsLoggerSessionLocal logSession;
 
     @Override
     public void removeCertificate(BigInteger serno) {
-        if ( serno==null ) {
-            return;
-        }
-        final Collection<CertificateData> coll = CertificateData.findBySerialNumber(this.entityManager, serno.toString());
-        for (CertificateData certificateData : coll) {
-            this.entityManager.remove(certificateData);
-            final Base64CertData b64cert = Base64CertData.findByFingerprint(this.entityManager, certificateData.getFingerprint());
-            if ( b64cert!=null ) {
-                this.entityManager.remove(b64cert);
+        if (serno != null) {
+            Collection<CertificateData> coll = CertificateData.findBySerialNumber(entityManager, serno.toString());
+            for (CertificateData certificateData : coll) {
+                entityManager.remove(certificateData);
             }
         }
     }
 
     @Override
     public void removeCertificate(String fingerprint) {
-        if ( fingerprint==null ) {
-            return;
-        }
-        final CertificateData cert = CertificateData.findByFingerprint(this.entityManager, fingerprint);
-        if ( cert!=null ) {
-            this.entityManager.remove(cert);
-        }
-        final Base64CertData b64cert = Base64CertData.findByFingerprint(this.entityManager, fingerprint);
-        if ( b64cert!=null ) {
-            this.entityManager.remove(b64cert);
+        if (fingerprint != null) {
+            CertificateData cert = CertificateData.findByFingerprint(entityManager, fingerprint);
+            if (cert != null) {
+                entityManager.remove(cert);
+            }
         }
     }
 
     @Override
     public void removeCertificate(Certificate certificate) {
-        if ( certificate==null ) {
-            return;
-        }
-        final String fingerprint = CertTools.getFingerprintAsString(certificate);
-        removeCertificate(fingerprint);
-    }
-
-    @Override
-    public void removePublishedCertificate(Certificate certificate) {
         if (certificate != null) {
+            // Do this as a native query because we do not want to be depending on rowProtection validating
+            // correctly, since some systemtests may insert directly in the database with null rowProtection (publisher tests)
             String fingerprint = CertTools.getFingerprintAsString(certificate);
-            final Query query = this.entityManager.createNativeQuery("DELETE from CertificateData where fingerprint=:fingerprint");
+            final Query query = entityManager.createNativeQuery("DELETE from CertificateData where fingerprint=:fingerprint");
             query.setParameter("fingerprint", fingerprint);
             query.executeUpdate();
         }
@@ -121,18 +107,28 @@ public class InternalCertificateStoreSessionBean implements InternalCertificateS
                 activeExpireDateMin);
     }
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public Collection<Certificate> findCertificatesByIssuer(String issuerDN) {
-		if (null == issuerDN || issuerDN.length() <= 0) {
-			return new ArrayList<Certificate>();
-		}
-		final Query query = this.entityManager.createQuery("SELECT a FROM CertificateData a WHERE a.issuerDN=:issuerDN");
-		query.setParameter("issuerDN", issuerDN);
-		return CertificateData.getCertificateList( query.getResultList(), this.entityManager );
-	}
+    public Collection<Certificate> findCertificatesByIssuer(String issuerDN) {
+        final List<Certificate> certificateList = new ArrayList<Certificate>();
+        if (null == issuerDN || issuerDN.length() <= 0) {
+            return certificateList;
+        } else {
+            final Query query = entityManager.createQuery("SELECT a.base64Cert FROM CertificateData a WHERE a.issuerDN=:issuerDN");
+            query.setParameter("issuerDN", issuerDN);
+            @SuppressWarnings("unchecked")
+            final List<String> base64CertificateList = query.getResultList();
+            for (String base64Certificate : base64CertificateList) {
+                try {
+                    certificateList.add(CertTools.getCertfromByteArray(Base64.decode(base64Certificate.getBytes())));
+                } catch (CertificateException ce) {
 
-	@Override
+                }
+            }
+            return certificateList;
+        }
+    }
+    
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void removeCRL(final AuthenticationToken admin, final String fingerprint) throws AuthorizationDeniedException {
         final CRLData crld = CRLData.findByFingerprint(entityManager, fingerprint);
@@ -161,7 +157,7 @@ public class InternalCertificateStoreSessionBean implements InternalCertificateS
             authorizedToCA(admin, caid);
 
             data.setStatus(status);
-            final String serialNo = CertTools.getSerialNumberAsString(data.getCertificate(this.entityManager));
+            final String serialNo = CertTools.getSerialNumberAsString(data.getCertificate());
             final String msg = INTRES.getLocalizedMessage("store.setstatus", data.getUsername(), fingerprint, status, data.getSubjectDN(), data.getIssuerDN(), serialNo);
             Map<String, Object> details = new LinkedHashMap<String, Object>();
             details.put("msg", msg);
@@ -180,5 +176,11 @@ public class InternalCertificateStoreSessionBean implements InternalCertificateS
             final String msg = INTRES.getLocalizedMessage("caadmin.notauthorizedtoca", admin.toString(), caid);
             throw new AuthorizationDeniedException(msg);
         }
+    }
+
+    @Override
+    public void setRevocationDate(AuthenticationToken authenticationToken, String certificateFingerprint, Date revocationDate)
+            throws AuthorizationDeniedException {
+        certStore.setRevocationDate(authenticationToken, certificateFingerprint, revocationDate);     
     }
 }

@@ -17,6 +17,7 @@
 <%@ taglib uri="http://java.sun.com/jsf/html" prefix="h" %>
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://myfaces.apache.org/tomahawk" prefix="t" %>
 <%@ page pageEncoding="UTF-8"%>
 <% response.setContentType("text/html; charset="+org.ejbca.config.WebConfiguration.getWebContentEncoding()); %>
 <%@ page errorPage="/errorpage.jsp" import="
@@ -34,66 +35,6 @@ org.ejbca.core.ejb.keybind.InternalKeyBindingRules
   <base href="<%= ejbcawebbean.getBaseUrl() %>" />
   <link rel="stylesheet" type="text/css" href="<%= ejbcawebbean.getCssFile() %>" />
   <script src="<%= globalconfiguration.getAdminWebPath() %>ejbcajslib.js"></script>
-  <style type="text/css">
-		/* TODO: Move re-usable styles to included .css */
-		div.tabLinks {
-			width: inherit;
-			margin-top: 5px;
-			padding-left: 2px;
-			border-bottom: 1px solid #aaa;
-		}
-		a.tabLinkfalse {
-			/*
-			font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
-			font-variant: small-caps;
-		    text-decoration: none;
-			*/
-			font-size: 16px;
-			font-weight: bold;
-		    text-align: left;
-		    padding: 2px 7px 2px 7px;
-		    margin-bottom: 2px;
-			color: #669;
-			background: #fbfbfb;
-			border-left: 1px solid #aaa;
-			border-top: 1px solid #aaa;
-			border-right: 1px solid #aaa;
-			border-bottom: 1px solid #aaa;
-			border-top-left-radius: 5px;
-			border-top-right-radius: 5px;
-		}
-		a.tabLinktrue {
-			/*
-			font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
-			font-variant: small-caps;
-		    text-decoration: none;
-			*/
-			font-size: 16px;
-			font-weight: bold;
-		    text-align: left;
-		    padding: 2px 7px 2px 7px;
-		    margin-bottom: 2px;
-			color: #009;
-			background: #fff;
-			border-left: 1px solid #aaa;
-			border-top: 1px solid #aaa;
-			border-right: 1px solid #aaa;
-			border-bottom: 1px solid #fff;
-			border-top-left-radius: 3px;
-			border-top-right-radius: 3px;
-		}
-		a.tabLinkfalse:hover, a.tabLinktrue:hover{
-			color: #009;
-			background: #eee;
-		}
-		.infoMessage {
-			font-style: italic;
-			padding: 0.5em;
-			border-radius: 0.3em;
-			background: #fcfcfc;
-			margin-bottom: 1em;
-		}
-   </style>
 </head>
 <body>
 	<h1>
@@ -184,8 +125,17 @@ org.ejbca.core.ejb.keybind.InternalKeyBindingRules
 		<h:outputText value="#{web.text.INTERNALKEYBINDING_CREATENEW}"/>
 	</h:outputLink>
 	</h:form>
-	<h:form id="uploadCertificate">
-		TODO: Upload new certificate for a selected IntenalKeyBinding
+	<h:form id="uploadCertificate" enctype="multipart/form-data" rendered="#{not empty internalKeyBindingMBean.uploadTargets}">
+		<h3><h:outputText value="#{web.text.INTERNALKEYBINDING_UPLOADHEADER}"/></h3>
+		<h:panelGrid columns="5">
+			<h:outputLabel for="certificateUploadTarget" value="Target #{internalKeyBindingMBean.selectedInternalKeyBindingType}:"/>
+			<h:selectOneMenu id="certificateUploadTarget" value="#{internalKeyBindingMBean.uploadTarget}">
+				<f:selectItems value="#{internalKeyBindingMBean.uploadTargets}"/>
+			</h:selectOneMenu>
+			<h:outputLabel for="certificateUploadInput" value="Certificate:"/>
+				<t:inputFileUpload id="certificateUploadInput" value="#{internalKeyBindingMBean.uploadToTargetFile}" size="20"/>
+			<h:commandButton action="#{internalKeyBindingMBean.uploadToTarget}" value="#{web.text.INTERNALKEYBINDING_UPLOAD}"/>
+		</h:panelGrid>
 	</h:form>
 	<%	// Include Footer 
 	String footurl = globalconfiguration.getFootBanner(); %>
