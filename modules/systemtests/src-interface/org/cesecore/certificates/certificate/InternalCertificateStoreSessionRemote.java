@@ -41,6 +41,11 @@ public interface InternalCertificateStoreSessionRemote {
     /**
      * This method removes the given certificate(s) by fingerprint (primary key).
      * @see org.cesecore.util.CertTools#getFingerprintAsString(java.lang.String)
+     * If the the encoded certificate is stored in Base64CertData it is removed
+     * from there as well.
+     * Note that if row protection is used then removing a certificate without a valid row
+     * protection will throw an exception. Therefore use {@link #removePublishedCertificate(Certificate)}
+     * for certificates created by the {@link PublisherTest} test.
      * 
      * @param fingerprint fingerprint of the certificate(s) to remove.
      */
@@ -72,7 +77,7 @@ public interface InternalCertificateStoreSessionRemote {
 	 * Removes a certificate from CertificateData that was created in the {@link PublisherTest} test.
 	 * The test is not accessing the Base64CertData table so this table is not handled.
 	 * No row protection validation is used when inserting the certificate and therefore this will
-	 * remove without row protection.
+	 * remove without doing row protection validation.
 	 * @param certificate
 	 */
 	void removePublishedCertificate(Certificate certificate);
