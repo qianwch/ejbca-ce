@@ -494,7 +494,7 @@ public class PublisherQueueTest {
 
         // If the dummy cert was put in the database, remove it
         Certificate cert = CertTools.getCertfromByteArray(testcert);
-        this.internalCertStoreSession.removePublishedCertificate(cert);
+        internalCertStoreSession.removeCertificate(cert);
 
     }
 }

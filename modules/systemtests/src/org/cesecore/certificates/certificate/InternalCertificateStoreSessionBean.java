@@ -64,19 +64,18 @@ public class InternalCertificateStoreSessionBean implements InternalCertificateS
         }
     }
 
+    private int deleteRow(final String tableName, final String fingerPrint) {
+        // This is done as a native query because we do not want to be depending on rowProtection validating
+        // correctly, since publisher tests inserts directly in the database with null rowProtection.
+        final Query query = this.entityManager.createNativeQuery("DELETE from "+tableName+" where fingerprint=:fingerprint");
+        query.setParameter("fingerprint", fingerPrint);
+        return query.executeUpdate();
+    }
+
     @Override
-    public void removeCertificate(String fingerprint) {
-        if ( fingerprint==null ) {
-            return;
-        }
-        final CertificateData cert = CertificateData.findByFingerprint(this.entityManager, fingerprint);
-        if ( cert!=null ) {
-            this.entityManager.remove(cert);
-        }
-        final Base64CertData b64cert = Base64CertData.findByFingerprint(this.entityManager, fingerprint);
-        if ( b64cert!=null ) {
-            this.entityManager.remove(b64cert);
-        }
+    public int removeCertificate(String fingerPrint) {
+        deleteRow("CertificateData", fingerPrint);
+        return deleteRow("Base64CertData", fingerPrint);
     }
 
     @Override
@@ -86,18 +85,6 @@ public class InternalCertificateStoreSessionBean implements InternalCertificateS
         }
         final String fingerprint = CertTools.getFingerprintAsString(certificate);
         removeCertificate(fingerprint);
-    }
-
-    @Override
-    public void removePublishedCertificate(Certificate certificate) {
-        if (certificate != null) {
-            final String fingerprint = CertTools.getFingerprintAsString(certificate);
-            // This is done as a native query because we do not want to be depending on rowProtection validating
-            // correctly, since publisher tests inserts directly in the database with null rowProtection.
-            final Query query = this.entityManager.createNativeQuery("DELETE from CertificateData where fingerprint=:fingerprint");
-            query.setParameter("fingerprint", fingerprint);
-            query.executeUpdate();
-        }
     }
 
     @Override
