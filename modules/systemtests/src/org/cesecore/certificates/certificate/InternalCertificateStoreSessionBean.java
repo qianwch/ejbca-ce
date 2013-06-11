@@ -79,12 +79,12 @@ public class InternalCertificateStoreSessionBean implements InternalCertificateS
     }
 
     @Override
-    public void removeCertificate(Certificate certificate) {
+    public int removeCertificate(Certificate certificate) {
         if ( certificate==null ) {
-            return;
+            return 0;
         }
         final String fingerprint = CertTools.getFingerprintAsString(certificate);
-        removeCertificate(fingerprint);
+        return removeCertificate(fingerprint);
     }
 
     @Override

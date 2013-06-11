@@ -43,7 +43,7 @@ public interface InternalCertificateStoreSessionRemote {
      * @see org.cesecore.util.CertTools#getFingerprintAsString(java.lang.String)
      * 
      * @param fingerprint fingerprint of the certificate(s) to remove.
-     * @return 
+     * @return number of rows (certificates) removed from the Base64CertTable
      */
     int removeCertificate(String fingerprint);
 
@@ -51,8 +51,9 @@ public interface InternalCertificateStoreSessionRemote {
      * Removes the given {@link Certificate} by its fingerprint.
      * 
      * @param certificate The Certificate whose corresponding CertificateData is to be removed.
+     * @return number of rows (certificates) removed from the Base64CertTable.
      */
-    void removeCertificate(Certificate certificate);
+    int removeCertificate(Certificate certificate);
     
     /** To allow testing of Local-only method */
     List<Object[]> findExpirationInfo(Collection<String> cas, long activeNotifiedExpireDateMin, long activeNotifiedExpireDateMax, long activeExpireDateMin);
