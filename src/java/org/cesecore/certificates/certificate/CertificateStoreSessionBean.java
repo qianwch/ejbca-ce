@@ -615,14 +615,14 @@ public class CertificateStoreSessionBean implements CertificateStoreSessionRemot
     public void setRevocationDate(AuthenticationToken authenticationToken, String certificateFingerprint, Date revocationDate)
             throws AuthorizationDeniedException {
         // Must be authorized to CA in order to change status is certificates issued by the CA
-        CertificateData certdata = CertificateData.findByFingerprint(entityManager, certificateFingerprint);
+        final CertificateData certdata = CertificateData.findByFingerprint(this.entityManager, certificateFingerprint);
         if(certdata.getStatus() != CertificateConstants.CERT_REVOKED) {
             throw new UnsupportedOperationException("Attempted to set revocation date on an unrevoked certificate.");
         }
         if(certdata.getRevocationDate() != 0) {
             throw new UnsupportedOperationException("Attempted to overwrite revocation date");
         }
-        Certificate certificate = certdata.getCertificate();
+        final Certificate certificate = certdata.getCertificate(this.entityManager);
         int caid = CertTools.getIssuerDN(certificate).hashCode();
         authorizedToCA(authenticationToken, caid);
         certdata.setRevocationDate(revocationDate);
@@ -633,7 +633,7 @@ public class CertificateStoreSessionBean implements CertificateStoreSessionRemot
         Map<String, Object> details = new LinkedHashMap<String, Object>();
         details.put("msg", msg);
         //Log this as CERT_REVOKED since this data should have been added then. 
-        logSession.log(EventTypes.CERT_REVOKED, EventStatus.SUCCESS, ModuleTypes.CERTIFICATE, ServiceTypes.CORE, authenticationToken.toString(),
+        this.logSession.log(EventTypes.CERT_REVOKED, EventStatus.SUCCESS, ModuleTypes.CERTIFICATE, ServiceTypes.CORE, authenticationToken.toString(),
                 String.valueOf(caid), serialNo, username, details);
     }
     
