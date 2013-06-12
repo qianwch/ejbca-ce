@@ -51,7 +51,7 @@ import org.cesecore.certificates.certificateprofile.CertificateProfileConstants;
 import org.cesecore.certificates.crl.RevokedCertInfo;
 import org.cesecore.certificates.endentity.EndEntityConstants;
 import org.cesecore.certificates.util.AlgorithmConstants;
-import org.cesecore.config.CesecoreConfiguration;
+import org.cesecore.configuration.CesecoreConfigurationProxySessionRemote;
 import org.cesecore.jndi.JndiHelper;
 import org.cesecore.keys.util.KeyTools;
 import org.cesecore.mock.authentication.tokens.TestAlwaysAllowLocalAuthenticationToken;
@@ -83,6 +83,7 @@ public class CertificateStoreSessionTest extends RoleUsingTestCase {
     private RoleManagementSessionRemote roleManagementSession = JndiHelper.getRemoteSession(RoleManagementSessionRemote.class);
     private CertificateStoreSessionRemote certificateStoreSession = JndiHelper.getRemoteSession(CertificateStoreSessionRemote.class);
     private InternalCertificateStoreSessionRemote internalCertStoreSession = JndiHelper.getRemoteSession(InternalCertificateStoreSessionRemote.class);
+    private final CesecoreConfigurationProxySessionRemote cesecoreConfigurationProxySession = JndiHelper.getRemoteSession(CesecoreConfigurationProxySessionRemote.class);
 
     private final AuthenticationToken alwaysAllowToken = new TestAlwaysAllowLocalAuthenticationToken(new UsernamePrincipal("CertificateStoreSessionTest"));
     
@@ -113,13 +114,31 @@ public class CertificateStoreSessionTest extends RoleUsingTestCase {
 
     @Test
     public void test01CreateNewCertRSASha1() throws Exception {
-        final Certificate cert = generateCert(this.roleMgmgToken, CertificateConstants.CERT_ACTIVE);
-        assertNotNull(cert);
-        final int b64tableCerts = this.internalCertStoreSession.removeCertificate(cert);
-        if ( CesecoreConfiguration.useBase64CertTable() ) {
-            assertEquals("The Base64CertTable should be used and therefore one certificate should be removed from this table.",  1, b64tableCerts);
-        } else {
-            assertEquals("The Base64CertTable should NOT be used and therefore no certificate should be removed from this table.",  0, b64tableCerts);
+        final String orgValue = cesecoreConfigurationProxySession.getConfigurationValue("database.useSeparateCertificateTable");
+        try {
+            {
+                // Not using database.useSeparateCertificateTable we should create a certificate and  only 1 row should be deleted when we delete it
+                cesecoreConfigurationProxySession.setConfigurationValue("database.useSeparateCertificateTable", "false");
+                assertEquals("false", cesecoreConfigurationProxySession.getConfigurationValue("database.useSeparateCertificateTable"));
+                final Certificate cert = generateCert(roleMgmgToken, CertificateConstants.CERT_ACTIVE);
+                assertNotNull(cert);
+                final int b64tableCerts = this.internalCertStoreSession.removeCertificate(cert);
+                log.info("Not using Base64CertTable");
+                assertEquals("The Base64CertTable should NOT be used and therefore no certificate should be removed from this table.",  0, b64tableCerts);
+            }
+            {
+                // Using database.useSeparateCertificateTable we should create a certificate and  2 rows should be deleted when we delete it
+                cesecoreConfigurationProxySession.setConfigurationValue("database.useSeparateCertificateTable", "true");
+                assertEquals("true", cesecoreConfigurationProxySession.getConfigurationValue("database.useSeparateCertificateTable"));
+                final Certificate cert = generateCert(roleMgmgToken, CertificateConstants.CERT_ACTIVE);
+                assertNotNull(cert);
+                final int b64tableCerts = this.internalCertStoreSession.removeCertificate(cert);
+                log.info("Using Base64CertTable");
+                assertEquals("The Base64CertTable should be used and therefore one certificate should be removed from this table.",  1, b64tableCerts);
+            }
+        } finally {
+            // restore configuration
+            cesecoreConfigurationProxySession.setConfigurationValue("database.useSeparateCertificateTable", orgValue);
         }
     }
 
