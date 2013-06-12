@@ -240,4 +240,12 @@ public final class CesecoreConfiguration {
         }
         return value;
     }
+
+    /**
+     * @return true if the Base64CertData table should be used for storing the certificates.
+     */
+    public static boolean useBase64CertTable() {
+        final String value = ConfigurationHolder.getString("database.useSeparateCertificateTable");
+        return value!=null && Boolean.parseBoolean(value.trim());
+    }
 }

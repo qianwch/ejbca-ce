@@ -37,6 +37,7 @@
         <class>org.cesecore.audit.impl.integrityprotected.AuditRecordData</class>
         <class>org.cesecore.certificates.ca.CAData</class>
         <class>org.cesecore.certificates.certificate.CertificateData</class>
+        <class>org.cesecore.certificates.certificate.Base64CertData</class>
         <class>org.cesecore.certificates.certificateprofile.CertificateProfileData</class>
         <class>org.cesecore.certificates.crl.CRLData</class>
         <class>org.ejbca.core.ejb.approval.ApprovalData</class>
@@ -71,6 +72,7 @@
     <persistence-unit name="va-read" transaction-type="RESOURCE_LOCAL">
         <mapping-file>META-INF/orm-common-${database.name}.xml</mapping-file>
         <class>org.cesecore.certificates.certificate.CertificateData</class>
+        <class>org.cesecore.certificates.certificate.Base64CertData</class>
         <class>org.cesecore.certificates.crl.CRLData</class>
         <properties>
             <property name="hibernate.dialect" value="${hibernate.dialect}"/>
@@ -95,6 +97,7 @@
         <class>org.cesecore.audit.impl.integrityprotected.AuditRecordData</class>
         <class>org.cesecore.certificates.ca.CAData</class>
         <class>org.cesecore.certificates.certificate.CertificateData</class>
+        <class>org.cesecore.certificates.certificate.Base64CertData</class>
         <class>org.cesecore.certificates.certificateprofile.CertificateProfileData</class>
         <class>org.cesecore.certificates.crl.CRLData</class>
         <class>org.ejbca.core.ejb.approval.ApprovalData</class>
@@ -129,6 +132,7 @@
     <persistence-unit name="va-write" transaction-type="RESOURCE_LOCAL">
         <mapping-file>META-INF/orm-common-${database.name}.xml</mapping-file>
         <class>org.cesecore.certificates.certificate.CertificateData</class>
+        <class>org.cesecore.certificates.certificate.Base64CertData</class>
         <class>org.cesecore.certificates.crl.CRLData</class>
         <properties>
             <property name="hibernate.dialect" value="${hibernate.dialect}"/>
