@@ -21,10 +21,10 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
-import org.ejbca.core.model.InternalEjbcaResources;
 import org.ejbca.core.model.SecConst;
 import org.cesecore.certificates.endentity.ExtendedInformation;
 import org.cesecore.util.CertTools;
+import org.ejbca.core.model.InternalEjbcaResources;
 import org.ejbca.util.TCPTool;
 
 import com.novell.ldap.LDAPAttribute;
@@ -47,6 +47,7 @@ import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.ejbca.core.model.ca.publisher.ICustomPublisher;
 import org.ejbca.core.model.ca.publisher.PublisherConnectionException;
 import org.ejbca.core.model.ca.publisher.PublisherException;
+import javax.security.auth.x500.X500Principal;
 
 /**
  * This publisher publishes end entity certificates and CRLs according to the
@@ -125,6 +126,8 @@ import org.ejbca.core.model.ca.publisher.PublisherException;
  * 
  * Note the escaping of commas in the DN, this is needed since the "CN" of the LDAP DN contains commas (CN=C=SE\,O=foo\,CN=cscav1).
  * OpenLDAP implement very old escaping rules and will replace = with \3D and things like that. Better to use OpenDJ, easy to install and run, and works correctly.
+ * 
+ * Version: 0.8
  *
  * @version $Id$
  */
@@ -184,8 +187,6 @@ public class CustomerLdapPublisher1 implements ICustomPublisher {
     private boolean logConnectionTests;
     
     private int timeout;
-    private int readTimeout;
-    private int storeTimeout;
 
     private LDAPConstraints ldapConnectionConstraints = new LDAPConstraints();
     private LDAPConstraints ldapBindConstraints = new LDAPConstraints();
@@ -209,8 +210,8 @@ public class CustomerLdapPublisher1 implements ICustomPublisher {
         this.loginPassword = properties.getProperty(PROPERTY_LOGINPASSWORD, "");
         this.logConnectionTests = Boolean.parseBoolean(properties.getProperty(PROPERTY_LOGCONNECTIONTESTS, Boolean.FALSE.toString()));
         this.timeout = Integer.parseInt(properties.getProperty(PROPERTY_CONNECTIONTIMEOUT, String.valueOf(DEFAULT_TIMEOUT)));
-        this.readTimeout = Integer.parseInt(properties.getProperty(PROPERTY_READTIMEOUT, String.valueOf(DEFAULT_TIMEOUT)));
-        this.storeTimeout = Integer.parseInt(properties.getProperty(PROPERTY_STORETIMEOUT, String.valueOf(DEFAULT_TIMEOUT)));
+        int readTimeout = Integer.parseInt(properties.getProperty(PROPERTY_READTIMEOUT, String.valueOf(DEFAULT_TIMEOUT)));
+        int storeTimeout = Integer.parseInt(properties.getProperty(PROPERTY_STORETIMEOUT, String.valueOf(DEFAULT_TIMEOUT)));
         
         ldapBindConstraints.setTimeLimit(timeout);
         ldapConnectionConstraints.setTimeLimit(timeout);
@@ -327,12 +328,10 @@ public class CustomerLdapPublisher1 implements ICustomPublisher {
                 try {
                     storeLog(LogInfo.LEVEL_DEBUG, true, "Successfully tested connection to LDAP", null);
                 } catch (PublisherException ex) {
-                    // Catching the log failure as we don't want the entry to be republished just because we could not log the success
                     log.error("Failed to log the successful connection test", ex);
-                    throw new PublisherException("Connection to LDAP tested successfully but failed to log to LDAP");
                 }
             }
-        } catch (PublisherException pex) {
+        } catch (PublisherConnectionException pex) {
             PublisherConnectionException pex2 = new PublisherConnectionException(pex.getMessage());
             pex2.initCause(pex);
 
@@ -343,12 +342,12 @@ public class CustomerLdapPublisher1 implements ICustomPublisher {
                 } catch (PublisherException ex) {
                     log.error("Failed to log the failed connection test ", ex);
                 }
-                throw pex2;
             }
+            throw pex2;
         }
     }
 
-    private boolean doStoreCertificate(final Certificate incert, String username, String password, String userDN, ExtendedInformation extendedinformation) throws PublisherException {
+    protected boolean doStoreCertificate(final Certificate incert, String username, String password, String userDN, ExtendedInformation extendedinformation) throws PublisherException {
         if (log.isTraceEnabled()) {
             log.trace(">doStoreCertificate(username=" + username + ")");
         }
@@ -356,9 +355,9 @@ public class CustomerLdapPublisher1 implements ICustomPublisher {
 
         final String ldapDN;
         try {
-            // Extract the CAs DN from the cert, we think the below method returns the correct order as seen in the cert...
+            // Extract the CAs DN from the cert, the DN should be in reversed order (RFC2253)
             // In ICAO PKD certs are stored with issuerDN+serialNo in the LDAP
-            final String dn = ((X509Certificate) incert).getIssuerDN().getName();
+            final String dn = ((X509Certificate) incert).getIssuerX500Principal().getName(X500Principal.RFC2253);
             if (log.isDebugEnabled()) {
                 log.debug("DN in certificate '" + dn + "'.");
             }
@@ -416,7 +415,7 @@ public class CustomerLdapPublisher1 implements ICustomPublisher {
         return true;
     }
 
-    private void doStoreCRL(final byte[] incrl) throws PublisherException {
+    protected void doStoreCRL(final byte[] incrl) throws PublisherException {
         if (log.isTraceEnabled()) {
             log.trace(">doStoreCRL");
         }
@@ -425,9 +424,9 @@ public class CustomerLdapPublisher1 implements ICustomPublisher {
         
         final String ldapDN;
         try {
-            // Extract the users DN from the crl. Keep the ordering, X500 or LDAP
+            // Extract the users DN from the crl. The DN should be in reversed order (RFC2253)
             final X509CRL crl = CertTools.getCRLfromByteArray(incrl);
-            final String crlDN = crl.getIssuerDN().toString();
+            final String crlDN = crl.getIssuerX500Principal().getName(X500Principal.RFC2253);
             ldapDN = new StringBuilder()
                     .append("CN=").append(LDAPDN.escapeRDN(crlDN))
                     .append(",").append(PUBLISH_GROUP)
@@ -460,7 +459,7 @@ public class CustomerLdapPublisher1 implements ICustomPublisher {
         }
     }
 
-    private void doTestConnection() throws PublisherConnectionException {
+    protected void doTestConnection() throws PublisherConnectionException {
         final LDAPConnection lc = createLdapConnection();
         final LDAPEntry entry = executeLDAPAction(lc, new LDAPConnectionAction<LDAPEntry, PublisherConnectionException>() {
             @Override
@@ -489,7 +488,7 @@ public class CustomerLdapPublisher1 implements ICustomPublisher {
         }
     }
 
-    private void storeLog(final String level, final boolean success, final String message, PublisherException exception) throws PublisherException {
+    protected void storeLog(final String level, final boolean success, final String message, Exception exception) throws PublisherException {
         if (log.isTraceEnabled()) {
             log.trace(">storeLog");
         }
@@ -514,7 +513,7 @@ public class CustomerLdapPublisher1 implements ICustomPublisher {
         attributeSet.add(new LDAPAttribute("objectclass", LOG_OBJECTCLASSES));
         attributeSet.add(new LDAPAttribute("objectCreator", "EJBCA"));
         attributeSet.add(new LDAPAttribute("logTime", generalizedTime));
-        attributeSet.add(new LDAPAttribute("logInfo", logEntries.toArray(new String[0])));
+        attributeSet.add(new LDAPAttribute("logInfo", logEntries.toArray(new String[logEntries.size()])));
         final String dn = "logTime=" + generalizedTime + "," + LOG_GROUP + "," + baseDN;
 
         // Finally write the object
@@ -575,7 +574,7 @@ public class CustomerLdapPublisher1 implements ICustomPublisher {
         return result;
     }
 
-    private LDAPEntry searchOldEntity(final LDAPConnection lc, final String ldapDN) throws PublisherException {
+    protected LDAPEntry searchOldEntity(final LDAPConnection lc, final String ldapDN) throws PublisherException {
         return executeLDAPAction(lc, new LDAPConnectionAction<LDAPEntry,PublisherException>() {
             @Override
             public LDAPEntry performAction(final LDAPConnection lc) throws LDAPException {
@@ -624,7 +623,7 @@ public class CustomerLdapPublisher1 implements ICustomPublisher {
         return result;
     }
 
-    private void writeCertEntryToLDAP(final LDAPConnection lc, final LDAPEntry oldEntry, final LDAPEntry newEntry, final String certFingerprint) throws PublisherException {
+    protected void writeCertEntryToLDAP(final LDAPConnection lc, final LDAPEntry oldEntry, final LDAPEntry newEntry, final String certFingerprint) throws PublisherException {
         executeLDAPAction(lc, new LDAPConnectionAction<Void,PublisherException>() {
             @Override
             public Void performAction(final LDAPConnection lc) throws LDAPException {
@@ -707,6 +706,62 @@ public class CustomerLdapPublisher1 implements ICustomPublisher {
         });
     }
 
+    protected boolean isInited() {
+        return inited;
+    }
+
+    protected List<String> getHostnames() {
+        return hostnames;
+    }
+
+    protected boolean isUseSSL() {
+        return useSSL;
+    }
+
+    protected String getPort() {
+        return port;
+    }
+
+    protected String getBaseDN() {
+        return baseDN;
+    }
+
+    protected String getLoginDN() {
+        return loginDN;
+    }
+
+    protected String getLoginPassword() {
+        return loginPassword;
+    }
+
+    protected boolean isLogConnectionTests() {
+        return logConnectionTests;
+    }
+
+    protected int getTimeout() {
+        return timeout;
+    }
+
+    protected LDAPConstraints getLdapConnectionConstraints() {
+        return ldapConnectionConstraints;
+    }
+
+    protected LDAPConstraints getLdapBindConstraints() {
+        return ldapBindConstraints;
+    }
+
+    protected LDAPConstraints getLdapStoreConstraints() {
+        return ldapStoreConstraints;
+    }
+
+    protected LDAPConstraints getLdapDisconnectConstraints() {
+        return ldapDisconnectConstraints;
+    }
+
+    protected LDAPSearchConstraints getLdapSearchConstraints() {
+        return ldapSearchConstraints;
+    }
+    
     static class LogInfo {
 
         public static final String LEVEL_INFO = "info";
