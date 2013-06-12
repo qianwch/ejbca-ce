@@ -110,7 +110,7 @@ public class CertificateData extends ProtectedData implements Serializable {
      * @param certprofileid certificate profile id, can be 0
      * @param tag a custom tag to map the certificate to any custom defined tag
      * @param updatetime the time the certificate was updated in the database, i.e. System.currentTimeMillis().
-     * @param useBase64CertTable true if a special table is used for the encoded certificates.
+     * @param useBase64CertTable true if a special table is used for the encoded certificates. NOTE: If true then the caller must store the certificate in Base64CertData as well. 
      */
     public CertificateData(Certificate incert, PublicKey enrichedpubkey, String username, String cafp, int status, int type, int certprofileid,
             String tag, long updatetime, boolean useBase64CertTable) {
