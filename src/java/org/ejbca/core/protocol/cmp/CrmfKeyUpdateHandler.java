@@ -246,6 +246,13 @@ public class CrmfKeyUpdateHandler extends BaseCmpMessageHandler implements ICmpM
                 if(!CmpConfiguration.getAllowUpdateWithSameKey()) {
                     PublicKey certPublicKey = oldCert.getPublicKey();
                     PublicKey requestPublicKey = crmfreq.getRequestPublicKey();
+                    if(LOG.isDebugEnabled()) {
+                        LOG.debug("Not allowing update with same key, comparing keys.");
+                        if (LOG.isTraceEnabled()) {
+                            LOG.trace("OldKey: "+certPublicKey.toString());
+                            LOG.trace("NewKey: "+requestPublicKey.toString());
+                        }
+                    }
                     if(certPublicKey.equals(requestPublicKey)) {
                         final String errMsg = "Invalid key. The public key in the KeyUpdateRequest is the same as the public key in the existing end entity certificate";
                         LOG.error(errMsg);
