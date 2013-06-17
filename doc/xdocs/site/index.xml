@@ -13,34 +13,9 @@
 <tr>
 <td valign="top"><!--TWITTER WIDGET-->
 <div class="frame note" id="twitter" style="border:0;">
-<script charset="utf-8" src="https://widgets.twimg.com/j/2/widget.js">
-</script>
+<a class="twitter-timeline" width="260" height="275" data-dnt="true" href="https://twitter.com/primekeyPKI" data-widget-id="344774465936306176">Tweets by @primekeyPKI</a>
 <script>
-new TWTR.Widget({
-  version: 2,
-  type: 'profile',
-  rpp: 7,
-  interval: 30000,
-  width: 0,
-  height: 0,
-  theme: {
-    shell: {
-      background: '#8ca8d0',
-      color: '#ffffff',
-    },
-    tweets: {
-      background: '#eee',
-      color: '#333',
-      links: '#5e87bb'
-    }
-  },
-  features: {
-    scrollbar: true,
-    loop: true,
-    live: false,
-    behavior: 'all'
-  }
-}).render().setUser('primekeyPKI').start();
+!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");
 </script>
 </div>
 </td>
@@ -57,12 +32,6 @@ new TWTR.Widget({
   <br />
   <span class="date"> Date: 2013-05-31</span>  
   </p>  
-  <p><strong>Full EU EAC ePassport support in Cert-cvc 1.3.0!</strong><br />
-  The <a href="download.html">cert-cvc library</a> handles CVC certificates for <a href="cvccas.html">EU EAC ePassport PKI</a> and the current release has full support for EU EAC ePassports using all algorithms. Release Date: 2012-05-03!
-Visit the download section. There is also a LiveCD!
-<br />
-  <span class="date"> Date: 2012-05-03</span> 
-  </p>
   <p>
   <strong>Extended CMP User Guide!</strong><br/>The EJBCA CMP 3GPP user guide has been updated with fully interoperability tested 3GPP feature support. Order it at the <a href="http://www.primekey.se/PKI+shop/">Prime PKI Shop!</a>
   <br />
