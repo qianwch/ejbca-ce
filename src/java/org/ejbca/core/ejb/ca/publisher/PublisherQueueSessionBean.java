@@ -284,7 +284,7 @@ public class PublisherQueueSessionBean implements PublisherQueueSessionRemote, P
                             throw new FinderException();
                         }
                         try {
-                        	published = publisherQueueSession.storeCertificateNonTransactional(publisher, admin, cd.getCertificate(), username, password, userDataDN,
+                        	published = publisherQueueSession.storeCertificateNonTransactional(publisher, admin, cd.getCertificate(this.entityManager), username, password, userDataDN,
                         			cd.getCaFingerprint(), cd.getStatus(), cd.getType(), cd.getRevocationDate(), cd.getRevocationReason(), cd.getTag(), cd
                         			.getCertificateProfileId(), cd.getUpdateTime(), ei);
                         } catch (EJBException e) {

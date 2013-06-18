@@ -131,7 +131,7 @@ public class CertificateStoreSessionBean extends CertificateDataUtil implements 
     						nextcafp = cacert.getCaFingerprint();
     					}
 						// We found a root CA certificate, hopefully ?
-						PublicKey pkwithparams = cacert.getCertificate().getPublicKey();
+						PublicKey pkwithparams = cacert.getCertificate(this.entityManager).getPublicKey();
 						pubk = KeyTools.getECPublicKeyWithParams(pubk, pkwithparams);
     				}
 				} catch (FinderException e) {
@@ -149,16 +149,22 @@ public class CertificateStoreSessionBean extends CertificateDataUtil implements 
     	// Create the certificate in one go with all parameters at once. This used to be important in EJB2.1 so the persistence layer only creates *one* single
     	// insert statement. If we do a home.create and the some setXX, it will create one insert and one update statement to the database.
     	// Probably not important in EJB3 anymore
-    	final CertificateData data1 = new CertificateData(incert, pubk, username, cafp, status, type, certificateProfileId, tag, updateTime);
-    	final String issuerDN = data1.getIssuerDN();
+        final CertificateData data1;
         try {
-        	entityManager.persist(data1);
+            final boolean useBase64CertTable = EjbcaConfiguration.useBase64CertTable();
+            if ( useBase64CertTable ) {
+                // use special table for encoded data if told so.
+                this.entityManager.persist(new Base64CertData(incert));
+            }
+            data1 = new CertificateData(incert, pubk, username, cafp, status, type, certificateProfileId, tag, updateTime, useBase64CertTable);
+        	this.entityManager.persist(data1);
         } catch (Exception e) {
         	// For backward compatibility. We should drop the throw entirely and rely on the return value.
         	CreateException ce = new CreateException();
         	ce.setStackTrace(e.getStackTrace());
         	throw ce;
         }
+    	final String issuerDN = data1.getIssuerDN();
         final String msg = intres.getLocalizedMessage("store.storecert");            	
         logSession.log(admin, issuerDN.hashCode(), LogConstants.MODULE_CA, new Date(), username, incert, LogConstants.EVENT_INFO_STORECERTIFICATE, msg);
         log.trace("<storeCertificate()");
@@ -193,7 +199,7 @@ public class CertificateStoreSessionBean extends CertificateDataUtil implements 
         Collection<CertificateData> coll = CertificateData.findBySubjectDNAndIssuerDN(entityManager, dn, issuerdn);
         Iterator<CertificateData> iter = coll.iterator();
         while (iter.hasNext()) {
-        	ret.add(iter.next().getCertificate());
+        	ret.add(iter.next().getCertificate(this.entityManager));
         }
         if (log.isTraceEnabled()) {
         	log.trace("<findCertificatesBySubjectAndIssuer(), dn='" + subjectDN + "' and issuer='" + issuerDN + "'");
@@ -254,7 +260,7 @@ public class CertificateStoreSessionBean extends CertificateDataUtil implements 
         Collection<CertificateData> coll = CertificateData.findBySubjectDN(entityManager, dn);
         Iterator<CertificateData> iter = coll.iterator();
         while (iter.hasNext()) {
-        	ret.add(iter.next().getCertificate());
+        	ret.add(iter.next().getCertificate(this.entityManager));
         }
         if (log.isTraceEnabled()) {
         	log.trace("<findCertificatesBySubject(), dn='" + subjectDN + "'");
@@ -276,7 +282,7 @@ public class CertificateStoreSessionBean extends CertificateDataUtil implements 
         }
         Iterator<CertificateData> iter = coll.iterator();
         while (iter.hasNext()) {
-        	ret.add(iter.next().getCertificate());
+        	ret.add(iter.next().getCertificate(this.entityManager));
         }
         if (log.isTraceEnabled()) {
         	log.trace("<findCertificatesByExpireTimeWithLimit(), time=" + expireTime);
@@ -331,7 +337,7 @@ public class CertificateStoreSessionBean extends CertificateDataUtil implements 
     	Collection<CertificateData> coll = CertificateData.findBySerialNumber(entityManager, serno.toString());
     	Iterator<CertificateData> iter = coll.iterator();
     	while (iter.hasNext()) {
-    		ret.add(iter.next().getCertificate());
+    		ret.add(iter.next().getCertificate(this.entityManager));
     	}
     	if (log.isTraceEnabled()) {
     		log.trace("<findCertificatesBySerno(), serno=" + serno);
@@ -368,7 +374,7 @@ public class CertificateStoreSessionBean extends CertificateDataUtil implements 
         Collection<CertificateData> coll = CertificateData.findByUsernameAndStatus(entityManager, username, status);
         Iterator<CertificateData> iter = coll.iterator();
         while (iter.hasNext()) {
-        	ret.add(iter.next().getCertificate());
+        	ret.add(iter.next().getCertificate(this.entityManager));
         }
     	if (log.isTraceEnabled()) {
             log.trace("<findCertificatesByUsernameAndStatus(), username=" + username);

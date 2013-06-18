@@ -271,6 +271,7 @@
 					<!-- Unwanted dependecies.. -->
 					<include name="org/ejbca/core/ejb/ca/store/CRLData.java"/>
 					<include name="org/ejbca/core/ejb/ca/store/CertificateData.java"/>
+					<include name="org/ejbca/core/ejb/ca/store/Base64CertData.java"/>
 				</fileset>
 				<fileset dir="${src.dir}">
 					<include name="org/ejbca/core/ejb/ca/publisher/*QueueSessionBean.java"/>

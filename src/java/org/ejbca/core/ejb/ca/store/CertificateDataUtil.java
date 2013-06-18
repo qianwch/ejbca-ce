@@ -49,7 +49,7 @@ public abstract class CertificateDataUtil {
         try {
         	CertificateData res = CertificateData.findByFingerprint(entityManager, fingerprint);
         	if (res != null) {
-                ret = res.getCertificate();
+                ret = res.getCertificate(entityManager);
         	}
         } catch (Exception e) {
         	LOG.error("Error finding certificate with fp: " + fingerprint);
@@ -81,7 +81,7 @@ public abstract class CertificateDataUtil {
         Certificate cert = null;
         // There are several certs, we will try to find the latest issued one
         if (iter.hasNext()) {
-        	cert = iter.next().getCertificate();
+        	cert = iter.next().getCertificate(entityManager);
         	if (ret != null) {
         		if (CertTools.getNotBefore(cert).after(CertTools.getNotBefore(ret))) {
         			// cert is never than ret
@@ -145,7 +145,7 @@ public abstract class CertificateDataUtil {
     	ArrayList<Certificate> ret = new ArrayList<Certificate>();
     	Iterator<CertificateData> iter = coll.iterator();
     	while (iter.hasNext()) {
-    		ret.add(iter.next().getCertificate());
+    		ret.add(iter.next().getCertificate(entityManager));
     	}
     	if (LOG.isTraceEnabled()) {
     		LOG.trace("<findCertificatesByUsername(), username=" + username);
