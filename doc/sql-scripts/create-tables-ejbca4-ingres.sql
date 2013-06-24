@@ -128,8 +128,8 @@ CREATE TABLE CertificateData (
 
 CREATE TABLE Base64CertData (
     fingerprint VARCHAR(256) NOT NULL,
-    base64Cert LONG VARCHAR with null,
-    rowProtection LONG VARCHAR with null,
+    base64Cert CLOB with null,
+    rowProtection CLOB with null,
     rowVersion INT4 NOT NULL,
     PRIMARY KEY (fingerprint)
 );
