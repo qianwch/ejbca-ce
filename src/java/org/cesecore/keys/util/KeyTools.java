@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
@@ -93,8 +94,6 @@ import org.cesecore.util.CertTools;
 import org.cesecore.util.CryptoProviderTools;
 import org.cesecore.util.FileTools;
 import org.ejbca.cvc.PublicKeyEC;
-
-import sun.security.pkcs11.wrapper.CK_TOKEN_INFO;
 
 /**
  * Tools to handle common key and keystore operations.
@@ -920,13 +919,23 @@ public final class KeyTools {
         final Method getTokenInfoMethod = p11Class.getDeclaredMethod("C_GetTokenInfo", new Class[]{long.class});
         for ( final long slotID : slots) {
             //final CK_TOKEN_INFO tokenInfo = p11.C_GetTokenInfo(slotID);
-            final CK_TOKEN_INFO tokenInfo = (CK_TOKEN_INFO)getTokenInfoMethod.invoke(p11, new Object[] {slotID});
-            if ( tokenInfo==null || tokenInfo.label==null ) {
+            final Object tokenInfo = getTokenInfoMethod.invoke(p11, new Object[] {slotID});
+            if ( tokenInfo==null ) {
                 continue;
             }
-            final String candidateTokenLabel = removeWhitePadding(new String( tokenInfo.label ));
+            final Field labelField = Class.forName("sun.security.pkcs11.wrapper.CK_TOKEN_INFO").getField("label");
+            final char label[] = (char[])labelField.get(tokenInfo);
+            /*
+            if ( tokenInfo.label==null ) {
+                continue;
+            }*/
+            if ( label==null ) {
+                continue;
+            }
+            //final String candidateTokenLabel = new String(tokenInfo.label);
+            final String candidateTokenLabel = new String(label);
             log.debug("Candidate token label:\t"+candidateTokenLabel);
-            if ( !removeWhitePadding(tokenLabel).equals(candidateTokenLabel) ) {
+            if ( !removeWhitePadding(tokenLabel).equals(removeWhitePadding(candidateTokenLabel)) ) {
                 continue;
             }
             return slotID;
