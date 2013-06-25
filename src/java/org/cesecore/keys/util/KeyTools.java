@@ -93,6 +93,9 @@ import org.cesecore.util.CryptoProviderTools;
 import org.cesecore.util.FileTools;
 import org.ejbca.cvc.PublicKeyEC;
 
+import sun.security.pkcs11.wrapper.CK_TOKEN_INFO;
+import sun.security.pkcs11.wrapper.PKCS11;
+
 /**
  * Tools to handle common key and keystore operations.
  * 
@@ -833,7 +836,7 @@ public final class KeyTools {
      * Calls {@link #getP11Provider(String, String, boolean, String, String)} with privateKeyLabel set to null
      */
     public static Provider getP11Provider(final String slot, final String fileName, final boolean isIndex, final String attributesFile)
-            throws IOException {
+            throws Exception {
         return getP11Provider(slot, fileName, isIndex, attributesFile, null);
     }
 
@@ -841,7 +844,7 @@ public final class KeyTools {
      * Creates a SUN or IAIK PKCS#11 provider using the passed in pkcs11 library. First we try to see if the IAIK provider is available, because it
      * supports more algorithms. If the IAIK provider is not available in the classpath, we try the SUN provider.
      * 
-     * @param slot
+     * @param sSlot
      *            pkcs11 slot number or null if a config file name is provided as fileName
      * @param fileName
      *            the manufacturers provided pkcs11 library (.dll or .so) or config file name if slot is null
@@ -863,8 +866,8 @@ public final class KeyTools {
      * @throws IOException
      *             if the pkcs11 library can not be found, or the PKCS11 provider can not be created.
      */
-    public static Provider getP11Provider(final String slot, final String fileName, final boolean isIndex, final String attributesFile, final String privateKeyLabel)
-            throws IOException {
+    public static Provider getP11Provider(final String sSlot, final String fileName, final boolean isIndex, final String attributesFile, final String privateKeyLabel)
+            throws Exception {
         if (StringUtils.isEmpty(fileName)) {
             throw new IOException("A file name must be supplied.");
         }
@@ -875,14 +878,10 @@ public final class KeyTools {
         // We will construct the PKCS11 provider (sun.security..., or iaik...) using reflection, because
         // the sun class does not exist on all platforms in jdk5, and we want to be able to compile everything.
 
-        if ( slot==null || slot.length()<1 ) {// no slot. It must be Sun with all config in the file named 'fileName'
+        if ( sSlot==null || sSlot.length()<1 ) {// no slot. It must be Sun with all config in the file named 'fileName'
             return getSunP11Provider(new FileInputStream(libFile));
         }
-        try {
-            Integer.parseInt(slot);
-        } catch (NumberFormatException e) {
-            throw new IOException("Slot nr " + slot + " not an integer.");
-        }
+        final long slot = getSlotID(sSlot, isIndex, fileName);
         {// We will first try to construct the more competent IAIK provider, if it exists in the classpath
             final Provider prov = getIAIKP11Provider(slot, libFile, isIndex);
             if ( prov!=null ) {
@@ -898,12 +897,38 @@ public final class KeyTools {
         log.error("No provider available.");
         return null;
     }
-    private static Provider getIAIKP11Provider(final String slot, final File libFile, final boolean isIndex) throws IOException {
+    private static long getSlotID(final String tokenLabel, final boolean isIndex, final String fileName) throws Exception {
+        if ( tokenLabel==null || tokenLabel.length()<1) {
+            throw new Exception("Slot must be specified, either with a decimal number (for OD or ix) or with a string for ");
+        }
+        try {
+            return Long.parseLong(tokenLabel);
+        } catch (NumberFormatException e) {
+            // do nothing
+        }
+        final PKCS11 p11 = PKCS11.getInstance(fileName, "C_GetFunctionList", null, false); 
+        final long[] slots = p11.C_GetSlotList(true);
+        for ( int ix=0; ix<slots.length; ix++) {
+            final long slotID = slots[ix];
+            final CK_TOKEN_INFO tokenInfo = p11.C_GetTokenInfo(slotID);
+            if ( tokenInfo==null || tokenInfo.label==null ) {
+                continue;
+            }
+            final String candidateTokenLabel = new String( tokenInfo.label ).replaceAll("\\ *$", "");
+            log.error("Candidate token label:\t"+candidateTokenLabel);
+            if ( !tokenLabel.equals(candidateTokenLabel) ) {
+                continue;
+            }
+            return isIndex ? ix : slotID;
+        }
+        throw new Exception("Slot nr " + tokenLabel + " not an integer.");
+    }
+    private static Provider getIAIKP11Provider(final long slot, final File libFile, final boolean isIndex) throws IOException {
         // Properties for the IAIK PKCS#11 provider
         final Properties prop = new Properties();
         prop.setProperty("PKCS11_NATIVE_MODULE", libFile.getCanonicalPath());
         // If using Slot Index it is denoted by brackets in iaik
-        prop.setProperty("SLOT_ID", isIndex ? ("[" + slot + "]") : slot);
+        prop.setProperty("SLOT_ID", isIndex ? ("[" + slot + "]") : Long.toString(slot));
         if (log.isDebugEnabled()) {
             log.debug(prop.toString());
         }
@@ -928,15 +953,16 @@ public final class KeyTools {
         }
         return ret;
     }
-    private static Provider getSunP11Provider(final String slot, final File libFile, final boolean isIndex, final String attributesFile, String privateKeyLabel) throws IOException {
+    private static Provider getSunP11Provider(final long slot, final File libFile, final boolean isIndex, final String attributesFile, String privateKeyLabel) throws IOException {
 
         // Properties for the SUN PKCS#11 provider
+        final String sSlot = Long.toString(slot);
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final PrintWriter pw = new PrintWriter(baos);
-        pw.println("name = " + libFile.getName() + "-slot" + slot);
+        pw.println("name = " + libFile.getName() + "-slot" + sSlot);
         pw.println("library = " + libFile.getCanonicalPath());
-        if ( slot!=null ) {
-            pw.println("slot" + (isIndex ? "ListIndex" : "") + " = " + slot);
+        if ( sSlot!=null ) {
+            pw.println("slot" + (isIndex ? "ListIndex" : "") + " = " + sSlot);
         }
         if (attributesFile != null) {
             byte[] attrs = FileTools.readFiletoBuffer(attributesFile);
