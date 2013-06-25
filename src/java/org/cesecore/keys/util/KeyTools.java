@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -94,7 +95,6 @@ import org.cesecore.util.FileTools;
 import org.ejbca.cvc.PublicKeyEC;
 
 import sun.security.pkcs11.wrapper.CK_TOKEN_INFO;
-import sun.security.pkcs11.wrapper.PKCS11;
 
 /**
  * Tools to handle common key and keystore operations.
@@ -910,15 +910,22 @@ public final class KeyTools {
         return padded.replaceAll("\\ *$", "");
     }
     private static long getSlotID(final String tokenLabel, final String fileName) throws Exception {
-        final PKCS11 p11 = PKCS11.getInstance(fileName, "C_GetFunctionList", null, false); 
-        final long[] slots = p11.C_GetSlotList(true);
+        final Class<? extends Object> p11Class = Class.forName("sun.security.pkcs11.wrapper.PKCS11");
+        final Method getInstanceMethod = p11Class.getDeclaredMethod("getInstance", new Class[] { String.class, String.class, Class.forName("sun.security.pkcs11.wrapper.CK_C_INITIALIZE_ARGS"), boolean.class });
+        //final PKCS11 p11 = PKCS11.getInstance(fileName, "C_GetFunctionList", null, false);
+        final Object p11 = getInstanceMethod.invoke(null, new Object[]{fileName, "C_GetFunctionList", null, false});
+        final Method getSlotListMethod = p11Class.getDeclaredMethod("C_GetSlotList", new Class[] {boolean.class});
+        //final long[] slots = p11.C_GetSlotList(true);
+        final long slots[] = (long[])getSlotListMethod.invoke(p11, new Object[]{true});
+        final Method getTokenInfoMethod = p11Class.getDeclaredMethod("C_GetTokenInfo", new Class[]{long.class});
         for ( final long slotID : slots) {
-            final CK_TOKEN_INFO tokenInfo = p11.C_GetTokenInfo(slotID);
+            //final CK_TOKEN_INFO tokenInfo = p11.C_GetTokenInfo(slotID);
+            final CK_TOKEN_INFO tokenInfo = (CK_TOKEN_INFO)getTokenInfoMethod.invoke(p11, new Object[] {slotID});
             if ( tokenInfo==null || tokenInfo.label==null ) {
                 continue;
             }
             final String candidateTokenLabel = removeWhitePadding(new String( tokenInfo.label ));
-            log.error("Candidate token label:\t"+candidateTokenLabel);
+            log.debug("Candidate token label:\t"+candidateTokenLabel);
             if ( !removeWhitePadding(tokenLabel).equals(candidateTokenLabel) ) {
                 continue;
             }
