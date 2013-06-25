@@ -866,7 +866,7 @@ public final class KeyTools {
      * @throws IOException
      *             if the pkcs11 library can not be found, or the PKCS11 provider can not be created.
      */
-    public static Provider getP11Provider(final String sSlot, final String fileName, final boolean isIndex, final String attributesFile, final String privateKeyLabel)
+    public static Provider getP11Provider(final String sSlot, final String fileName, final boolean _isIndex, final String attributesFile, final String privateKeyLabel)
             throws Exception {
         if (StringUtils.isEmpty(fileName)) {
             throw new IOException("A file name must be supplied.");
@@ -881,7 +881,16 @@ public final class KeyTools {
         if ( sSlot==null || sSlot.length()<1 ) {// no slot. It must be Sun with all config in the file named 'fileName'
             return getSunP11Provider(new FileInputStream(libFile));
         }
-        final long slot = getSlotID(sSlot, isIndex, fileName);
+        boolean isIndex;
+        long slot;
+        try {
+            slot = Long.parseLong(sSlot);
+            isIndex = _isIndex;
+        } catch (NumberFormatException e) {
+            slot = getSlotID(sSlot, fileName);
+            isIndex = false;
+        }
+
         {// We will first try to construct the more competent IAIK provider, if it exists in the classpath
             final Provider prov = getIAIKP11Provider(slot, libFile, isIndex);
             if ( prov!=null ) {
@@ -897,31 +906,25 @@ public final class KeyTools {
         log.error("No provider available.");
         return null;
     }
-    private static long getSlotID(final String tokenLabel, final boolean isIndex, final String fileName) throws Exception {
-        if ( tokenLabel==null || tokenLabel.length()<1) {
-            throw new Exception("Slot must be specified, either with a decimal number (for OD or ix) or with a string for ");
-        }
-        try {
-            return Long.parseLong(tokenLabel);
-        } catch (NumberFormatException e) {
-            // do nothing
-        }
+    private static String removeWhitePadding(final String padded ) {
+        return padded.replaceAll("\\ *$", "");
+    }
+    private static long getSlotID(final String tokenLabel, final String fileName) throws Exception {
         final PKCS11 p11 = PKCS11.getInstance(fileName, "C_GetFunctionList", null, false); 
         final long[] slots = p11.C_GetSlotList(true);
-        for ( int ix=0; ix<slots.length; ix++) {
-            final long slotID = slots[ix];
+        for ( final long slotID : slots) {
             final CK_TOKEN_INFO tokenInfo = p11.C_GetTokenInfo(slotID);
             if ( tokenInfo==null || tokenInfo.label==null ) {
                 continue;
             }
-            final String candidateTokenLabel = new String( tokenInfo.label ).replaceAll("\\ *$", "");
+            final String candidateTokenLabel = removeWhitePadding(new String( tokenInfo.label ));
             log.error("Candidate token label:\t"+candidateTokenLabel);
-            if ( !tokenLabel.equals(candidateTokenLabel) ) {
+            if ( !removeWhitePadding(tokenLabel).equals(candidateTokenLabel) ) {
                 continue;
             }
-            return isIndex ? ix : slotID;
+            return slotID;
         }
-        throw new Exception("Slot nr " + tokenLabel + " not an integer.");
+        throw new Exception("Token label '" + tokenLabel + "' not existing.");
     }
     private static Provider getIAIKP11Provider(final long slot, final File libFile, final boolean isIndex) throws IOException {
         // Properties for the IAIK PKCS#11 provider
