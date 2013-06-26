@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
@@ -64,7 +65,9 @@ import java.security.spec.RSAKeyGenParameterSpec;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.crypto.interfaces.DHPrivateKey;
@@ -835,7 +838,7 @@ public final class KeyTools {
      * Calls {@link #getP11Provider(String, String, boolean, String, String)} with privateKeyLabel set to null
      */
     public static Provider getP11Provider(final String slot, final String fileName, final boolean isIndex, final String attributesFile)
-            throws Exception {
+            throws IOException {
         return getP11Provider(slot, fileName, isIndex, attributesFile, null);
     }
 
@@ -866,7 +869,7 @@ public final class KeyTools {
      *             if the pkcs11 library can not be found, or the PKCS11 provider can not be created.
      */
     public static Provider getP11Provider(final String sSlot, final String fileName, final boolean _isIndex, final String attributesFile, final String privateKeyLabel)
-            throws Exception {
+            throws IOException {
         if (StringUtils.isEmpty(fileName)) {
             throw new IOException("A file name must be supplied.");
         }
@@ -886,7 +889,16 @@ public final class KeyTools {
             slot = Long.parseLong(sSlot);
             isIndex = _isIndex;
         } catch (NumberFormatException e) {
-            slot = getSlotID(sSlot, fileName);
+            try {
+                slot = getSlotID(sSlot, fileName);
+                if ( slot<0 ) {
+                    throw new IOException("Not possible to find a token with the label '"+sSlot+"'.");
+                }
+            } catch (RuntimeException e1) {
+                throw e1;// don't bother about exceptions that has nothing to do with reflection
+            } catch (Exception e1) {
+            	throw new IOException("Slot nr " + sSlot + " not an integer and sun classes to find slot for token label not available.", e1);
+            }
             isIndex = false;
         }
 
@@ -908,25 +920,52 @@ public final class KeyTools {
     private static String removeWhitePadding(final String padded ) {
         return padded.replaceAll("\\ *$", "");
     }
-    private static long getSlotID(final String tokenLabel, final String fileName) throws Exception {
-        final Class<? extends Object> p11Class = Class.forName("sun.security.pkcs11.wrapper.PKCS11");
-        final Method getInstanceMethod = p11Class.getDeclaredMethod("getInstance", new Class[] { String.class, String.class, Class.forName("sun.security.pkcs11.wrapper.CK_C_INITIALIZE_ARGS"), boolean.class });
+    static class PKCS11 {
+        static final private Map<String, PKCS11> instances = new HashMap<String, PKCS11>();
+        final private Method getSlotListMethod;
+        final private Method getTokenInfoMethod;
+        final private Field labelField;
+        final private Object p11;
+        private PKCS11(final String fileName) throws ClassNotFoundException, NoSuchMethodException, NoSuchFieldException, IllegalAccessException, InvocationTargetException {
+            final Class<? extends Object> p11Class = Class.forName("sun.security.pkcs11.wrapper.PKCS11");
+
+            this.getSlotListMethod = p11Class.getDeclaredMethod("C_GetSlotList", new Class[] {boolean.class});
+            this.getTokenInfoMethod = p11Class.getDeclaredMethod("C_GetTokenInfo", new Class[]{long.class});
+            this.labelField = Class.forName("sun.security.pkcs11.wrapper.CK_TOKEN_INFO").getField("label");
+
+            final Method getInstanceMethod = p11Class.getDeclaredMethod("getInstance", new Class[] { String.class, String.class, Class.forName("sun.security.pkcs11.wrapper.CK_C_INITIALIZE_ARGS"), boolean.class });
+            this.p11 = getInstanceMethod.invoke(null, new Object[]{fileName, "C_GetFunctionList", null, false});
+        }
+        static PKCS11 getInstance(final String fileName) throws ClassNotFoundException, NoSuchMethodException, NoSuchFieldException, IllegalAccessException, InvocationTargetException {
+            final PKCS11 storedP11 = instances.get(fileName);
+            if ( storedP11!=null ) {
+                return storedP11;
+            }
+            final PKCS11 newP11 = new PKCS11(fileName);
+            instances.put(fileName, newP11);
+            return newP11;
+        }
+        long[] C_GetSlotList() throws IllegalAccessException, InvocationTargetException {
+            return (long[])this.getSlotListMethod.invoke(this.p11, new Object[]{true});
+        }
+        char[] getTokenLabel(long slotID) throws IllegalAccessException, InvocationTargetException {
+            final Object tokenInfo = this.getTokenInfoMethod.invoke(this.p11, new Object[] {slotID});
+            if ( tokenInfo==null ) {
+                return null;
+            }
+            return (char[])this.labelField.get(tokenInfo);
+        }
+    }
+    private static long getSlotID(final String tokenLabel, final String fileName)//  all thrown exceptions indicate that the required sun p11 classes is not available.
+            throws ClassNotFoundException, NoSuchMethodException, NoSuchFieldException, IllegalAccessException, InvocationTargetException {
         //final PKCS11 p11 = PKCS11.getInstance(fileName, "C_GetFunctionList", null, false);
-        final Object p11 = getInstanceMethod.invoke(null, new Object[]{fileName, "C_GetFunctionList", null, false});
-        final Method getSlotListMethod = p11Class.getDeclaredMethod("C_GetSlotList", new Class[] {boolean.class});
+        final PKCS11 p11= PKCS11.getInstance(fileName);
         //final long[] slots = p11.C_GetSlotList(true);
-        final long slots[] = (long[])getSlotListMethod.invoke(p11, new Object[]{true});
-        final Method getTokenInfoMethod = p11Class.getDeclaredMethod("C_GetTokenInfo", new Class[]{long.class});
+        final long slots[] = p11.C_GetSlotList();
         for ( final long slotID : slots) {
             //final CK_TOKEN_INFO tokenInfo = p11.C_GetTokenInfo(slotID);
-            final Object tokenInfo = getTokenInfoMethod.invoke(p11, new Object[] {slotID});
-            if ( tokenInfo==null ) {
-                continue;
-            }
-            final Field labelField = Class.forName("sun.security.pkcs11.wrapper.CK_TOKEN_INFO").getField("label");
-            final char label[] = (char[])labelField.get(tokenInfo);
-            /*
-            if ( tokenInfo.label==null ) {
+            final char label[] = p11.getTokenLabel(slotID);
+            /*if ( tokenInfo==null || tokenInfo.label==null ) {
                 continue;
             }*/
             if ( label==null ) {
@@ -940,7 +979,7 @@ public final class KeyTools {
             }
             return slotID;
         }
-        throw new Exception("Token label '" + tokenLabel + "' not existing.");
+        return -1; // indicate that it was not possible to find the token label.
     }
     private static Provider getIAIKP11Provider(final long slot, final File libFile, final boolean isIndex) throws IOException {
         // Properties for the IAIK PKCS#11 provider
