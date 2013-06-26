@@ -962,6 +962,9 @@ public final class KeyTools {
         final PKCS11 p11= PKCS11.getInstance(fileName);
         //final long[] slots = p11.C_GetSlotList(true);
         final long slots[] = p11.C_GetSlotList();
+        if ( log.isDebugEnabled() ) {
+            log.debug("Searching for token label:\t"+tokenLabel);
+        }
         for ( final long slotID : slots) {
             //final CK_TOKEN_INFO tokenInfo = p11.C_GetTokenInfo(slotID);
             final char label[] = p11.getTokenLabel(slotID);
@@ -973,7 +976,9 @@ public final class KeyTools {
             }
             //final String candidateTokenLabel = new String(tokenInfo.label);
             final String candidateTokenLabel = new String(label);
-            log.debug("Candidate token label:\t"+candidateTokenLabel);
+            if ( log.isDebugEnabled() ) {
+                log.debug("Candidate token label:\t"+candidateTokenLabel);
+            }
             if ( !removeWhitePadding(tokenLabel).equals(removeWhitePadding(candidateTokenLabel)) ) {
                 continue;
             }
