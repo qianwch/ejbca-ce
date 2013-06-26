@@ -201,11 +201,20 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
                 // If it should be published directly
                 if (!publ.getOnlyUseQueue()) {
                     try {
-                    	if (publisherQueueSession.storeCRLNonTransactional(publ, admin, incrl, cafp, number, userDN)) {
-                            publishStatus = PublisherConst.STATUS_SUCCESS;
+                        try {
+                            if (publisherQueueSession.storeCRLNonTransactional(publ, admin, incrl, cafp, number, userDN)) {
+                                publishStatus = PublisherConst.STATUS_SUCCESS;
+                            }
+                            String msg = intres.getLocalizedMessage("publisher.store", "CRL", name);
+                            logSession.log(admin, admin.getCaId(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_INFO_STORECRL, msg);
+                        } catch (EJBException e) {
+                            final Throwable t = e.getCause();
+                            if (t instanceof PublisherException) {
+                                throw (PublisherException) t;
+                            } else {
+                                throw e;
+                            }
                         }
-                        String msg = intres.getLocalizedMessage("publisher.store", "CRL", name);
-                        logSession.log(admin, admin.getCaId(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_INFO_STORECRL, msg);
                     } catch (PublisherException pe) {
                         String msg = intres.getLocalizedMessage("publisher.errorstore", name, "CRL");
                         logSession.log(admin, admin.getCaId(), LogConstants.MODULE_CA, new java.util.Date(), null, null, LogConstants.EVENT_ERROR_STORECRL,
