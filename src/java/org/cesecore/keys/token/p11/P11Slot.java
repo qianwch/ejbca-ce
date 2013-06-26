@@ -14,6 +14,7 @@ package org.cesecore.keys.token.p11;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.security.AuthProvider;
 import java.security.Provider;
 import java.security.Security;
@@ -313,7 +314,7 @@ public class P11Slot {
             } else {
                 throw new Error("Should never happen.");
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             final CryptoTokenOfflineException e2 = new CryptoTokenOfflineException("Not possible to create provider. See cause.");
             e2.initCause(e);
             throw e2;
