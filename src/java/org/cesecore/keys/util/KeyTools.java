@@ -892,12 +892,12 @@ public final class KeyTools {
             try {
                 slot = getSlotID(sSlot, fileName);
                 if ( slot<0 ) {
-                    throw new IOException("Not possible to find a token with the label '"+sSlot+"'.");
+                    throw new IOException("The slot identifier '"+sSlot+"' is neither an integer nor the label of an available token.");
                 }
             } catch (RuntimeException e1) {
                 throw e1;// don't bother about exceptions that has nothing to do with reflection
             } catch (Exception e1) {
-            	throw new IOException("Slot nr " + sSlot + " not an integer and sun classes to find slot for token label not available.", e1);
+            	throw new IOException("Slot nr " + sSlot + " not an integer and sun classes to find slot for token label are not available.", e1);
             }
             isIndex = false;
         }
