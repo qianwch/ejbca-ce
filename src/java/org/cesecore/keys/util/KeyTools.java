@@ -920,7 +920,7 @@ public final class KeyTools {
     private static String removeWhitePadding(final String padded ) {
         return padded.replaceAll("\\ *$", "");
     }
-    static class PKCS11 {
+    private static class PKCS11 {
         static final private Map<String, PKCS11> instances = new HashMap<String, PKCS11>();
         final private Method getSlotListMethod;
         final private Method getTokenInfoMethod;
