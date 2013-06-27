@@ -1011,9 +1011,6 @@ public final class KeyTools {
             return (char[])this.labelField.get(tokenInfo);
         }
     }
-    private static String removeWhitePadding(final String padded ) {
-        return padded.replaceAll("\\ *$", "");
-    }
     private static long getSlotID(final String tokenLabel, final String fileName)//  all thrown exceptions indicate that the required sun p11 classes is not available.
             throws ClassNotFoundException, NoSuchMethodException, NoSuchFieldException, IllegalAccessException, InvocationTargetException {
         //final PKCS11 p11 = PKCS11.getInstance(fileName, "C_GetFunctionList", null, false);
@@ -1037,7 +1034,7 @@ public final class KeyTools {
             if ( log.isDebugEnabled() ) {
                 log.debug("Candidate token label:\t"+candidateTokenLabel);
             }
-            if ( !removeWhitePadding(tokenLabel).equals(removeWhitePadding(candidateTokenLabel)) ) {
+            if ( !tokenLabel.trim().equals(candidateTokenLabel.trim()) ) {
                 continue;
             }
             return slotID;
