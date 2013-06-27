@@ -868,7 +868,22 @@ public final class KeyTools {
      * @throws IOException
      *             if the pkcs11 library can not be found, or the PKCS11 provider can not be created.
      */
-    public static Provider getP11Provider(final String sSlot, final String fileName, final boolean _isIndex, final String attributesFile, final String privateKeyLabel)
+    public static Provider getP11Provider(final String sSlot, final String fileName, final boolean isIndex, final String attributesFile, final String privateKeyLabel)
+            throws IOException {
+        P11SlotSpecifier slotSpec;
+        if ( sSlot!=null && sSlot.length()>0 ) {
+            try {
+                Long.parseLong(sSlot);
+                slotSpec = new P11SlotSpecifier( isIndex ? P11SlotSpecifier.Type.SLOT_LIST_IX : P11SlotSpecifier.Type.SLOT_ID, sSlot );
+            } catch (NumberFormatException e) {
+                slotSpec = new P11SlotSpecifier(sSlot);
+            }
+        } else {
+            slotSpec = null;
+        }
+        return getP11Provider(slotSpec, fileName, attributesFile, privateKeyLabel);
+    }
+    public static Provider getP11Provider(final P11SlotSpecifier slotSpec, final String fileName, final String attributesFile, final String privateKeyLabel)
             throws IOException {
         if (StringUtils.isEmpty(fileName)) {
             throw new IOException("A file name must be supplied.");
@@ -880,28 +895,34 @@ public final class KeyTools {
         // We will construct the PKCS11 provider (sun.security..., or iaik...) using reflection, because
         // the sun class does not exist on all platforms in jdk5, and we want to be able to compile everything.
 
-        if ( sSlot==null || sSlot.length()<1 ) {// no slot. It must be Sun with all config in the file named 'fileName'
+        if ( slotSpec==null ) {// no slot. It must be Sun with all config in the file named 'fileName'
             return getSunP11Provider(new FileInputStream(libFile));
         }
-        boolean isIndex;
-        long slot;
-        try {
-            slot = Long.parseLong(sSlot);
-            isIndex = _isIndex;
-        } catch (NumberFormatException e) {
+        final long slot;
+        final boolean isIndex;
+        log.debug("slot spec: "+slotSpec);
+        switch ( slotSpec.type ) {
+        case TOKEN_LABEL:
             try {
-                slot = getSlotID(sSlot, fileName);
-                if ( slot<0 ) {
-                    throw new IOException("The slot identifier '"+sSlot+"' is neither an integer nor the label of an available token.");
-                }
+                slot = getSlotID(slotSpec.value, fileName);
+                isIndex = false;
             } catch (RuntimeException e1) {
                 throw e1;// don't bother about exceptions that has nothing to do with reflection
             } catch (Exception e1) {
-            	throw new IOException("Slot nr " + sSlot + " not an integer and sun classes to find slot for token label are not available.", e1);
+                throw new IOException("Slot nr " + slotSpec.value + " not an integer and sun classes to find slot for token label are not available.", e1);
             }
+            break;
+        case SLOT_ID:
+            slot = Long.parseLong( slotSpec.value );
             isIndex = false;
+            break;
+        case SLOT_LIST_IX:
+            slot = Long.parseLong( slotSpec.value );
+            isIndex = true;
+            break;
+        default:
+            throw new Error("This should not ever happen if all type of slots are tested.");
         }
-
         {// We will first try to construct the more competent IAIK provider, if it exists in the classpath
             final Provider prov = getIAIKP11Provider(slot, libFile, isIndex);
             if ( prov!=null ) {
@@ -917,8 +938,42 @@ public final class KeyTools {
         log.error("No provider available.");
         return null;
     }
-    private static String removeWhitePadding(final String padded ) {
-        return padded.replaceAll("\\ *$", "");
+    public static class P11SlotSpecifier {
+        public enum Type {
+            TOKEN_LABEL("Token Label"),
+            SLOT_LIST_IX("Slot list index"),
+            SLOT_ID("slot ID");
+            private final String description;
+            private Type( String _description ) {
+                this.description = _description;
+            }
+            @Override
+            public String toString() {
+                return this.description;
+            }
+        }
+        final private static String DELIMETER = ":";
+        final public Type type;
+        final public String value;
+        public P11SlotSpecifier( String taggedString ) throws IOException {
+            final String[] split = taggedString.split(DELIMETER, 2);
+            try {
+                this.type = Type.valueOf(split[0]);
+            } catch( IllegalArgumentException e ) {
+                throw new IOException("P11 Slot specifier '"+taggedString+"' has a tag that is not existing: '"+split[0]+"'");
+            }
+            this.value = split.length>1 ? split[1] : null;
+        }
+        public P11SlotSpecifier(Type _type, String _value) {
+            this.type = _type;
+            this.value = _value;
+        }
+        public String getTaggedString() {
+            return this.type.name() + DELIMETER + this.value;
+        }
+        public String toString() {
+            return "Slot type: '"+this.type+"'. Slot value: '"+this.value+"'.";
+        }
     }
     private static class PKCS11 {
         static final private Map<String, PKCS11> instances = new HashMap<String, PKCS11>();
@@ -956,6 +1011,9 @@ public final class KeyTools {
             return (char[])this.labelField.get(tokenInfo);
         }
     }
+    private static String removeWhitePadding(final String padded ) {
+        return padded.replaceAll("\\ *$", "");
+    }
     private static long getSlotID(final String tokenLabel, final String fileName)//  all thrown exceptions indicate that the required sun p11 classes is not available.
             throws ClassNotFoundException, NoSuchMethodException, NoSuchFieldException, IllegalAccessException, InvocationTargetException {
         //final PKCS11 p11 = PKCS11.getInstance(fileName, "C_GetFunctionList", null, false);
@@ -986,6 +1044,7 @@ public final class KeyTools {
         }
         return -1; // indicate that it was not possible to find the token label.
     }
+
     private static Provider getIAIKP11Provider(final long slot, final File libFile, final boolean isIndex) throws IOException {
         // Properties for the IAIK PKCS#11 provider
         final Properties prop = new Properties();
