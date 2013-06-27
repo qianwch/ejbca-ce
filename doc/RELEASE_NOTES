@@ -192,6 +192,17 @@ upgrade to 5.0, verify your roles and privileges.
 Read the full Changelog for details.
 For upgrade instructions, please see UPGRADE
 
+EJBCA 4.0.16
+------------
+This is a maintenance release containing a new feature and two ug fixes. In all 3 issues have been resolved.
+
+* Noteworthy changes: 
+- Possibility to store the Base64 certificate data in a separate table.
+- Fixed possible database rollback when CRL publishing failed.
+
+Read the full Changelog for details.
+For upgrade instructions, please see UPGRADE.
+
 EJBCA 4.0.15
 ------------
 This is a maintenance release containing a few new features and improvements. In all 5 issues have been resolved.
