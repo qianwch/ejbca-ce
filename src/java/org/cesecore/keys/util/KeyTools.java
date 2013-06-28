@@ -1164,7 +1164,7 @@ public final class KeyTools {
             return ret;
         }
         /**
-         * Get the IAIK provider.
+         * Get the Sun provider.
          * @param slot Slot list index or slot ID.
          * @param libFile P11 module so file.
          * @param isIndex true if first parameter is a slot list index, false if slot ID.
