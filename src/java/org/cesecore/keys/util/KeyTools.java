@@ -889,14 +889,13 @@ public final class KeyTools {
     }
 
     /**
-     * 
-     *
+     * TODO: put this class in its own file.
+     * Object to handle a p11 SLOT.
+     * You can get a provider for the slot with {@link PKCS11Slot#getP11Provider(String, String, String)}
      */
     public static class PKCS11Slot {
         /**
-         * Object to handle a p11 SLOT.
-         * You can get a provider for the slot with {@link PKCS11Slot#getP11Provider(String, String, String)}
-         *
+         * Defines how the slot is specified.
          */
         public enum Type {
             TOKEN_LABEL("Token Label"),
@@ -924,11 +923,11 @@ public final class KeyTools {
         public PKCS11Slot( final String taggedString ) throws IOException {
             final String[] split = taggedString.split(DELIMETER, 2);
             try {
-                this.type = Type.valueOf(split[0]);
+                this.type = Type.valueOf(split[0].trim());
             } catch( IllegalArgumentException e ) {
                 throw new IOException("P11 Slot specifier '"+taggedString+"' has a tag that is not existing: '"+split[0]+"'");
             }
-            this.value = split.length>1 ? split[1] : null;
+            this.value = split.length>1 ? split[1].trim() : null;
         }
         /**
          * Use implicit values.
@@ -937,7 +936,7 @@ public final class KeyTools {
          */
         public PKCS11Slot( final Type _type, final String _value) {
             this.type = _type;
-            this.value = _value;
+            this.value = _value.trim();
         }
         /**
          * Get a string that later could be used to create a new object with {@link PKCS11Slot#PKCS11Slot(String)}.
@@ -1116,7 +1115,7 @@ public final class KeyTools {
                 if ( log.isDebugEnabled() ) {
                     log.debug("Candidate token label:\t"+candidateTokenLabel);
                 }
-                if ( !tokenLabel.trim().equals(candidateTokenLabel.trim()) ) {
+                if ( !tokenLabel.equals(candidateTokenLabel.trim()) ) {
                     continue;
                 }
                 return slotID;
@@ -1249,7 +1248,7 @@ public final class KeyTools {
                 throw ioe;
             }
         }
-    }
+    }// end of the class PKCS11Slot
 
     /**
      * Detect if "Unlimited Strength" Policy files has bean properly installed.
