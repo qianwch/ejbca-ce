@@ -849,7 +849,7 @@ public final class KeyTools {
      * supports more algorithms. If the IAIK provider is not available in the classpath, we try the SUN provider.
      * 
      * @param sSlot
-     *            pkcs11 slot number or null if a config file name is provided as fileName
+     *            pkcs11 slot number (ID or IX) or null if a config file name is provided as fileName. Could also be any of: TOKEN_LABEL:<string> SLOT_LIST_IX:<int> SLOT_ID:<long> SUN_FILE:<string>
      * @param fileName
      *            the manufacturers provided pkcs11 library (.dll or .so) or config file name if slot is null
      * @param isIndex
@@ -930,7 +930,7 @@ public final class KeyTools {
             this.value = split.length>1 ? split[1].trim() : null;
         }
         /**
-         * Use implicit values.
+         * Use explicit values.
          * @param _type
          * @param _value
          */
@@ -1117,6 +1117,9 @@ public final class KeyTools {
                 }
                 if ( !tokenLabel.equals(candidateTokenLabel.trim()) ) {
                     continue;
+                }
+                if ( log.isDebugEnabled() ) {
+                    log.debug("Label '"+tokenLabel+"' found. The slot ID is:\t"+slotID);
                 }
                 return slotID;
             }
