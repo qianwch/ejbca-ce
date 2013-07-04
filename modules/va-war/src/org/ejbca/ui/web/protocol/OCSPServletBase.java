@@ -364,8 +364,8 @@ public abstract class OCSPServletBase extends HttpServlet implements SaferAppend
 		canlog = pCanlog;
 	}
 
-	/** Method that checks with ProbeableErrorHandler if an error has happended since a certain time.
-	 * Uses reflection to call ProbeableErrorHandler because it is dependent on JBoss log4j logging, 
+	/** Method that checks with ProbableErrorHandler if an error has happened since a certain time.
+	 * Uses reflection to call ProbableErrorHandler because it is dependent on JBoss log4j logging, 
 	 * which is not available on other application servers.
 	 * 
 	 * @param startTime
