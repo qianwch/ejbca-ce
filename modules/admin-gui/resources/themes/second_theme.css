@@ -549,6 +549,20 @@ table#logconfigbuttons td input[type="submit"] {
 	margin-right: 1em;
 }
 
+/* Page: SUP > View Log */
+#search2 input.noBorder {
+	border: 0px;
+}
+#search2 input.numberInputBig {
+	width: 6em; text-align: right;
+}
+#search2 input.numberInputSmall {
+	width: 4em; text-align: right;
+}
+#search2 td {
+	white-space: nowrap;
+}
+
 /* Page: SYS > Services */
 form#edit div {
 	margin: .5em auto;
@@ -690,6 +704,7 @@ tr#LogTextRow1 { color: black; font-size: 7pt; background-color: #e5ecff; }
 .jsfrow2 { color: black; font-size: 9pt; background-color: #e5ecff; }
 
 .listHeader { color: black; font-size: 1.2em; font-weight: bold; text-align: left; }
+.listCaption { text-align: left; background-color: #5B8CCD; color: #FFF; }
 .listRow1 { color: black; font-size: .85em; text-align: left; background-color: white; }
 .listRow2 { color: black; font-size: .85em; text-align: left; background-color: #e5ecff; }
 
@@ -710,6 +725,12 @@ tr#LogTextRow1 { color: black; font-size: 7pt; background-color: #e5ecff; }
 select option.lightgreen { background-color: #80FF80; }
 select option.lightyellow { background-color: #FFFFB3; }
 select option.lightred { background-color: #FFB8B8; }
+
+/* CSS2 compatible expandable text */
+.expandOnClick { width: 25em;  height: 1em;  display: block; overflow: hidden; white-space: nowrap; }
+.expandOnClick:after { content: "..."; }
+.expandOnClick:focus { width: 100%; display: inline; overflow: auto; color:#000000; white-space: pre-wrap; cursor: pointer; }
+.expandOnClick:focus:after { content: ""; }
 
 /*--------------------------------------------------------------------------*/
 /* EOF */
