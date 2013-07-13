@@ -60,6 +60,8 @@ import org.cesecore.keys.util.KeyTools;
 import org.cesecore.util.Base64;
 import org.cesecore.util.CertTools;
 import org.cesecore.util.CryptoProviderTools;
+import org.ejbca.core.model.ra.UsernameGenerator;
+import org.ejbca.core.model.ra.UsernameGeneratorParams;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -91,48 +93,7 @@ public class CrmfRequestMessageTest {
 	@Test
     public void testCrmfRequestMessageSerialization() throws IOException, ClassNotFoundException, NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException {
     	// Create a bogus PKIMessage
-		KeyPair keys = KeyTools.genKeys("1024", "RSA");
-		OptionalValidity myOptionalValidity = new OptionalValidity();
-		org.bouncycastle.asn1.x509.Time nb = new org.bouncycastle.asn1.x509.Time(new DERGeneralizedTime("20030211002120Z"));
-		org.bouncycastle.asn1.x509.Time na = new org.bouncycastle.asn1.x509.Time(new Date()); 
-		myOptionalValidity.setNotBefore(nb);
-		myOptionalValidity.setNotAfter(na);
-		CertTemplate myCertTemplate = new CertTemplate();
-		myCertTemplate.setValidity( myOptionalValidity );
-		myCertTemplate.setIssuer(new X509Name("CN=bogusIssuer"));
-		myCertTemplate.setSubject(new X509Name("CN=bogusSubject"));
-		byte[]                  bytes = keys.getPublic().getEncoded();
-        ByteArrayInputStream    bIn = new ByteArrayInputStream(bytes);
-        ASN1InputStream         dIn = new ASN1InputStream(bIn);
-        SubjectPublicKeyInfo keyInfo = new SubjectPublicKeyInfo((ASN1Sequence)dIn.readObject());
-		myCertTemplate.setPublicKey(keyInfo);
-		ByteArrayOutputStream   bOut = new ByteArrayOutputStream();
-		DEROutputStream         dOut = new DEROutputStream(bOut);
-		Vector<X509Extension> values = new Vector<X509Extension>();
-		Vector<DERObjectIdentifier> oids = new Vector<DERObjectIdentifier>();
-		int bcku = X509KeyUsage.digitalSignature | X509KeyUsage.keyEncipherment | X509KeyUsage.nonRepudiation;
-		X509KeyUsage ku = new X509KeyUsage(bcku);
-		bOut = new ByteArrayOutputStream();
-		dOut = new DEROutputStream(bOut);
-		dOut.writeObject(ku);
-		byte[] value = bOut.toByteArray();
-		X509Extension kuext = new X509Extension(false, new DEROctetString(value));
-		values.add(kuext);
-		oids.add(X509Extensions.KeyUsage);
-        myCertTemplate.setExtensions(new X509Extensions(oids, values));
-        CertRequest myCertRequest = new CertRequest(new DERInteger(4), myCertTemplate);
-        CertReqMsg myCertReqMsg = new CertReqMsg(myCertRequest);
-        ProofOfPossession myProofOfPossession = new ProofOfPossession(new DERNull(), 0);
-        myCertReqMsg.setPop(myProofOfPossession);
-        AttributeTypeAndValue av = new AttributeTypeAndValue(CRMFObjectIdentifiers.regCtrl_regToken, new DERUTF8String("foo123"));
-        myCertReqMsg.addRegInfo(av);
-        CertReqMessages myCertReqMessages = new CertReqMessages(myCertReqMsg);
-        PKIHeader myPKIHeader = new PKIHeader(new DERInteger(2), new GeneralName(new X509Name("CN=bogusSubject")), new GeneralName(new X509Name("CN=bogusIssuer")));
-        myPKIHeader.setMessageTime(new DERGeneralizedTime(new Date()));
-        myPKIHeader.setSenderNonce(new DEROctetString(CmpMessageHelper.createSenderNonce()));
-        myPKIHeader.setTransactionID(new DEROctetString(CmpMessageHelper.createSenderNonce()));
-        PKIBody myPKIBody = new PKIBody(myCertReqMessages, 0);
-        PKIMessage myPKIMessage = new PKIMessage(myPKIHeader, myPKIBody);
+        PKIMessage myPKIMessage = createPKIMessage("CN=bogusIssuer", "CN=bogusSubject");
     	// Create a bogus CrmfRequestMessage
     	CrmfRequestMessage crmf = new CrmfRequestMessage(myPKIMessage, "CN=SomeCA", true, null);
     	crmf.setPbeParameters("keyId", "key", "digestAlg", "macAlg", 100);
@@ -147,6 +108,94 @@ public class CrmfRequestMessageTest {
     	CrmfRequestMessage crmf2 = (CrmfRequestMessage) o;
     	assertEquals("Inherited object was not properly deserilized: ", "macAlg", crmf2.getPbeMacAlg());
     }
+
+	@Test
+	public void testCrmfRequestUsernameGeneratorFromDN() throws IOException, ClassNotFoundException, NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException {
+	    CryptoProviderTools.installBCProviderIfNotAvailable();
+	    {
+	        final PKIMessage myPKIMessage = createPKIMessage("CN=bogusIssuer", "CN=subject,SN=000106716,O=Org,C=SE");
+	        final CrmfRequestMessage crmf = new CrmfRequestMessage(myPKIMessage, "CN=SomeCA", true, null);
+	        final X509Name dnname = crmf.getRequestX509Name();
+	        System.out.println(dnname);
+	        System.out.println(dnname.toString());
+	        final UsernameGeneratorParams params = new UsernameGeneratorParams();
+	        params.setMode(UsernameGeneratorParams.DN);
+	        UsernameGenerator gen = UsernameGenerator.getInstance(params);
+	        String username = gen.generateUsername(dnname.toString());
+	        System.out.println(username);
+	        assertEquals("Username was not constructed properly from DN (CN)", "subject", username);
+	        params.setDNGeneratorComponent("");
+	        gen = UsernameGenerator.getInstance(params);
+	        username = gen.generateUsername(dnname.toString());
+	        System.out.println(username);
+	        assertEquals("Username was not constructed properly from DN", "CN=subject,SN=000106716,O=Org,C=SE", username);
+	    }
+	    {
+	        // DN order the other way around, should give username the other way around as well
+	        final PKIMessage myPKIMessage = createPKIMessage("CN=bogusIssuer", "C=SE,O=Org,SERIALNUMBER=000106716,CN=subject");
+	        final CrmfRequestMessage crmf = new CrmfRequestMessage(myPKIMessage, "CN=SomeCA", true, null);
+	        final X509Name dnname = crmf.getRequestX509Name();
+	        System.out.println(dnname);
+	        System.out.println(dnname.toString());
+	        final UsernameGeneratorParams params = new UsernameGeneratorParams();
+	        params.setMode(UsernameGeneratorParams.DN);
+	        UsernameGenerator gen = UsernameGenerator.getInstance(params);
+	        String username = gen.generateUsername(dnname.toString());
+	        System.out.println(username);
+	        assertEquals("Username was not constructed properly from DN (CN)", "subject", username);
+	        params.setDNGeneratorComponent("");
+	        gen = UsernameGenerator.getInstance(params);
+	        username = gen.generateUsername(dnname.toString());
+	        System.out.println(username);
+	        assertEquals("Username was not constructed properly from DN", "C=SE,O=Org,SN=000106716,CN=subject", username);
+	    }
+	}
+
+	private PKIMessage createPKIMessage(final String issuerDN, final String subjectDN) throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, IOException {
+	    KeyPair keys = KeyTools.genKeys("1024", "RSA");
+	    OptionalValidity myOptionalValidity = new OptionalValidity();
+	    org.bouncycastle.asn1.x509.Time nb = new org.bouncycastle.asn1.x509.Time(new DERGeneralizedTime("20030211002120Z"));
+	    org.bouncycastle.asn1.x509.Time na = new org.bouncycastle.asn1.x509.Time(new Date()); 
+	    myOptionalValidity.setNotBefore(nb);
+	    myOptionalValidity.setNotAfter(na);
+	    CertTemplate myCertTemplate = new CertTemplate();
+	    myCertTemplate.setValidity( myOptionalValidity );
+	    myCertTemplate.setIssuer(new X509Name(issuerDN));
+	    myCertTemplate.setSubject(new X509Name(subjectDN));
+	    byte[]                  bytes = keys.getPublic().getEncoded();
+	    ByteArrayInputStream    bIn = new ByteArrayInputStream(bytes);
+	    ASN1InputStream         dIn = new ASN1InputStream(bIn);
+	    SubjectPublicKeyInfo keyInfo = new SubjectPublicKeyInfo((ASN1Sequence)dIn.readObject());
+	    myCertTemplate.setPublicKey(keyInfo);
+	    ByteArrayOutputStream   bOut = new ByteArrayOutputStream();
+	    DEROutputStream         dOut = new DEROutputStream(bOut);
+	    Vector<X509Extension> values = new Vector<X509Extension>();
+	    Vector<DERObjectIdentifier> oids = new Vector<DERObjectIdentifier>();
+	    int bcku = X509KeyUsage.digitalSignature | X509KeyUsage.keyEncipherment | X509KeyUsage.nonRepudiation;
+	    X509KeyUsage ku = new X509KeyUsage(bcku);
+	    bOut = new ByteArrayOutputStream();
+	    dOut = new DEROutputStream(bOut);
+	    dOut.writeObject(ku);
+	    byte[] value = bOut.toByteArray();
+	    X509Extension kuext = new X509Extension(false, new DEROctetString(value));
+	    values.add(kuext);
+	    oids.add(X509Extensions.KeyUsage);
+	    myCertTemplate.setExtensions(new X509Extensions(oids, values));
+	    CertRequest myCertRequest = new CertRequest(new DERInteger(4), myCertTemplate);
+	    CertReqMsg myCertReqMsg = new CertReqMsg(myCertRequest);
+	    ProofOfPossession myProofOfPossession = new ProofOfPossession(new DERNull(), 0);
+	    myCertReqMsg.setPop(myProofOfPossession);
+	    AttributeTypeAndValue av = new AttributeTypeAndValue(CRMFObjectIdentifiers.regCtrl_regToken, new DERUTF8String("foo123"));
+	    myCertReqMsg.addRegInfo(av);
+	    CertReqMessages myCertReqMessages = new CertReqMessages(myCertReqMsg);
+	    PKIHeader myPKIHeader = new PKIHeader(new DERInteger(2), new GeneralName(new X509Name("CN=bogusSubject")), new GeneralName(new X509Name("CN=bogusIssuer")));
+	    myPKIHeader.setMessageTime(new DERGeneralizedTime(new Date()));
+	    myPKIHeader.setSenderNonce(new DEROctetString(CmpMessageHelper.createSenderNonce()));
+	    myPKIHeader.setTransactionID(new DEROctetString(CmpMessageHelper.createSenderNonce()));
+	    PKIBody myPKIBody = new PKIBody(myCertReqMessages, 0);
+	    PKIMessage myPKIMessage = new PKIMessage(myPKIHeader, myPKIBody);
+	    return myPKIMessage;
+	}
 
 	@Test
 	public void testNovosecRARequest() throws IOException, InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException, CertificateEncodingException, SignatureException, IllegalStateException {
