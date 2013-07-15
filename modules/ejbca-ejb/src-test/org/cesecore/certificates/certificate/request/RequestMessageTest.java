@@ -44,6 +44,8 @@ import org.bouncycastle.jce.PKCS10CertificationRequest;
 import org.cesecore.keys.util.KeyTools;
 import org.cesecore.util.CertTools;
 import org.cesecore.util.CryptoProviderTools;
+import org.ejbca.core.model.ra.UsernameGenerator;
+import org.ejbca.core.model.ra.UsernameGeneratorParams;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -67,49 +69,7 @@ public class RequestMessageTest {
 	 @Test
 	 public void test01Pkcs10RequestMessage() throws InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException, SignatureException {
 		 
-		 // Create a P10 with extensions, in this case altNames with a DNS name
-		 ASN1EncodableVector altnameattr = new ASN1EncodableVector();
-		 altnameattr.add(PKCSObjectIdentifiers.pkcs_9_at_extensionRequest);
-		 // AltNames
-		 // String[] namearray = altnames.split(",");
-		 GeneralNames san = CertTools.getGeneralNamesFromAltName("dNSName=foo1.bar.com");
-		 ByteArrayOutputStream extOut = new ByteArrayOutputStream();
-		 DEROutputStream derOut = new DEROutputStream(extOut);
-		 try {
-			 derOut.writeObject(san);
-		 } catch (IOException e) {
-			 throw new IllegalArgumentException("error encoding value: " + e);
-		 }
-		 // Extension request attribute is a set of X509Extensions
-		 // ASN1EncodableVector x509extensions = new ASN1EncodableVector();
-		 // An X509Extensions is a sequence of Extension which is a sequence of
-		 // {oid, X509Extension}
-		 // ASN1EncodableVector extvalue = new ASN1EncodableVector();
-		 Vector<DERObjectIdentifier> oidvec = new Vector<DERObjectIdentifier>();
-		 oidvec.add(X509Extensions.SubjectAlternativeName);
-		 Vector<X509Extension> valuevec = new Vector<X509Extension>();
-		 valuevec.add(new X509Extension(false, new DEROctetString(extOut.toByteArray())));
-		 X509Extensions exts = new X509Extensions(oidvec, valuevec);
-		 altnameattr.add(new DERSet(exts));
-		 
-		 // Add a challenge password as well
-		 ASN1EncodableVector pwdattr = new ASN1EncodableVector();
-		 pwdattr.add(PKCSObjectIdentifiers.pkcs_9_at_challengePassword); 
-		 ASN1EncodableVector pwdvalues = new ASN1EncodableVector();
-		 pwdvalues.add(new DERUTF8String("foo123"));
-		 pwdattr.add(new DERSet(pwdvalues));
-		 
-		 // Complete the Attribute section of the request, the set (Attributes)
-		 // contains one sequence (Attribute)
-		 ASN1EncodableVector v = new ASN1EncodableVector();
-		 v.add(new DERSequence(altnameattr));
-		 v.add(new DERSequence(pwdattr));
-		 DERSet attributes = new DERSet(v);
-
-		 // Create the PKCS10
-		 X509Name dn = new X509Name("CN=Test,OU=foo");
-		 PKCS10CertificationRequest basicpkcs10 = new PKCS10CertificationRequest("SHA1WithRSA", dn, 
-				 keyPair.getPublic(), attributes, keyPair.getPrivate());
+	     PKCS10CertificationRequest basicpkcs10 = createP10("CN=Test,OU=foo");
 
 		 PKCS10RequestMessage msg = new PKCS10RequestMessage(basicpkcs10);
 		 String username = msg.getUsername();
@@ -141,7 +101,7 @@ public class RequestMessageTest {
 		}
 		 
 		 // Try different DNs and DN oids
-		 dn = new X509Name("C=SE, O=Foo, CN=Test Testsson");
+		 X509Name dn = new X509Name("C=SE, O=Foo, CN=Test Testsson");
 		 basicpkcs10 = new PKCS10CertificationRequest("SHA1WithRSA", dn, 
 				 keyPair.getPublic(), new DERSet(), keyPair.getPrivate());
 
@@ -250,4 +210,86 @@ public class RequestMessageTest {
 		 username = msg.getUsername();
 		 assertEquals("Test", username);
 	 }
+
+    private PKCS10CertificationRequest createP10(final String subjectDN) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException, SignatureException {
+        // Create a P10 with extensions, in this case altNames with a DNS name
+		 ASN1EncodableVector altnameattr = new ASN1EncodableVector();
+		 altnameattr.add(PKCSObjectIdentifiers.pkcs_9_at_extensionRequest);
+		 // AltNames
+		 // String[] namearray = altnames.split(",");
+		 GeneralNames san = CertTools.getGeneralNamesFromAltName("dNSName=foo1.bar.com");
+		 ByteArrayOutputStream extOut = new ByteArrayOutputStream();
+		 DEROutputStream derOut = new DEROutputStream(extOut);
+		 try {
+			 derOut.writeObject(san);
+		 } catch (IOException e) {
+			 throw new IllegalArgumentException("error encoding value: " + e);
+		 }
+		 // Extension request attribute is a set of X509Extensions
+		 // ASN1EncodableVector x509extensions = new ASN1EncodableVector();
+		 // An X509Extensions is a sequence of Extension which is a sequence of
+		 // {oid, X509Extension}
+		 // ASN1EncodableVector extvalue = new ASN1EncodableVector();
+		 Vector<DERObjectIdentifier> oidvec = new Vector<DERObjectIdentifier>();
+		 oidvec.add(X509Extensions.SubjectAlternativeName);
+		 Vector<X509Extension> valuevec = new Vector<X509Extension>();
+		 valuevec.add(new X509Extension(false, new DEROctetString(extOut.toByteArray())));
+		 X509Extensions exts = new X509Extensions(oidvec, valuevec);
+		 altnameattr.add(new DERSet(exts));
+		 
+		 // Add a challenge password as well
+		 ASN1EncodableVector pwdattr = new ASN1EncodableVector();
+		 pwdattr.add(PKCSObjectIdentifiers.pkcs_9_at_challengePassword); 
+		 ASN1EncodableVector pwdvalues = new ASN1EncodableVector();
+		 pwdvalues.add(new DERUTF8String("foo123"));
+		 pwdattr.add(new DERSet(pwdvalues));
+		 
+		 // Complete the Attribute section of the request, the set (Attributes)
+		 // contains one sequence (Attribute)
+		 ASN1EncodableVector v = new ASN1EncodableVector();
+		 v.add(new DERSequence(altnameattr));
+		 v.add(new DERSequence(pwdattr));
+		 DERSet attributes = new DERSet(v);
+
+		 // Create the PKCS10
+		 X509Name dn = new X509Name(subjectDN);
+		 PKCS10CertificationRequest basicpkcs10 = new PKCS10CertificationRequest("SHA1WithRSA", dn, 
+				 keyPair.getPublic(), attributes, keyPair.getPrivate());
+        return basicpkcs10;
+    }
+
+	 @Test
+	 public void testCrmfRequestUsernameGeneratorFromDN() throws InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException, SignatureException {
+	     CryptoProviderTools.installBCProviderIfNotAvailable();
+	     {
+	         PKCS10CertificationRequest basicpkcs10 = createP10("CN=subject,SN=000106716,O=Org,C=SE");
+	         PKCS10RequestMessage msg = new PKCS10RequestMessage(basicpkcs10);
+	         final X509Name dnname = msg.getRequestX509Name();
+	         final UsernameGeneratorParams params = new UsernameGeneratorParams();
+	         params.setMode(UsernameGeneratorParams.DN);
+	         UsernameGenerator gen = UsernameGenerator.getInstance(params);
+	         String username = gen.generateUsername(dnname.toString());
+	         assertEquals("Username was not constructed properly from DN (CN)", "subject", username);
+	         params.setDNGeneratorComponent("");
+	         gen = UsernameGenerator.getInstance(params);
+	         username = gen.generateUsername(dnname.toString());
+	         assertEquals("Username was not constructed properly from DN", "CN=subject,SN=000106716,O=Org,C=SE", username);
+	     }
+	     {
+	         // DN order the other way around, should give username the other way around as well
+	         PKCS10CertificationRequest basicpkcs10 = createP10("C=SE,O=Org,SERIALNUMBER=000106716,CN=subject");
+	         PKCS10RequestMessage msg = new PKCS10RequestMessage(basicpkcs10);
+	         final X509Name dnname = msg.getRequestX509Name();
+	         final UsernameGeneratorParams params = new UsernameGeneratorParams();
+	         params.setMode(UsernameGeneratorParams.DN);
+	         UsernameGenerator gen = UsernameGenerator.getInstance(params);
+	         String username = gen.generateUsername(dnname.toString());
+	         assertEquals("Username was not constructed properly from DN (CN)", "subject", username);
+	         params.setDNGeneratorComponent("");
+	         gen = UsernameGenerator.getInstance(params);
+	         username = gen.generateUsername(dnname.toString());
+	         assertEquals("Username was not constructed properly from DN", "C=SE,O=Org,SN=000106716,CN=subject", username);
+	     }
+	 }
+
  }
