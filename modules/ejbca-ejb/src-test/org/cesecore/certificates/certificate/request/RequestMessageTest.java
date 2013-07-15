@@ -259,7 +259,7 @@ public class RequestMessageTest {
     }
 
 	 @Test
-	 public void testCrmfRequestUsernameGeneratorFromDN() throws InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException, SignatureException {
+	 public void testRequestUsernameGeneratorFromDN() throws InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException, SignatureException {
 	     CryptoProviderTools.installBCProviderIfNotAvailable();
 	     {
 	         PKCS10CertificationRequest basicpkcs10 = createP10("CN=subject,SN=000106716,O=Org,C=SE");
