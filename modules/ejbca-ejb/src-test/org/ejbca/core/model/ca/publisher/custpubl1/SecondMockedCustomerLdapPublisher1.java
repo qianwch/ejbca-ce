@@ -16,10 +16,11 @@ import com.novell.ldap.LDAPConnection;
 import com.novell.ldap.LDAPEntry;
 import java.security.cert.Certificate;
 import org.cesecore.certificates.endentity.ExtendedInformation;
-import org.ejbca.core.model.ca.publisher.PublisherConnectionException;
 import org.ejbca.core.model.ca.publisher.PublisherException;
 
 /**
+ * An additional mocked version of the CustomerLdapPublisher1 used by the unit
+ * tests.
  *
  * @version @Id$
  */
