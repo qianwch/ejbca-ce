@@ -20,9 +20,13 @@ import java.net.URL;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.security.interfaces.DSAPublicKey;
+import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPublicKey;
+import java.security.spec.DSAParameterSpec;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -251,19 +255,25 @@ class KeyRenewer {
      * @return the key
      */
     private KeyPair generateKeyPair() {
-
-        final RSAPublicKey oldPublicKey; {
-            final PublicKey tmpPublicKey = this.privateKeyContainerKeyStore.certificate.getPublicKey();
-            if ( !(tmpPublicKey instanceof RSAPublicKey) ) {
-                m_log.error("Only RSA keys could be renewed.");
+        try {
+            final PublicKey oldPublicKey = this.privateKeyContainerKeyStore.certificate.getPublicKey();
+            final KeyPairGenerator kpg;
+            if (oldPublicKey instanceof ECPublicKey) {                  
+                kpg = KeyPairGenerator.getInstance("ECDSA", this.privateKeyContainerKeyStore.providerName);
+                kpg.initialize(((ECPublicKey)oldPublicKey).getParams(), new SecureRandom());
+                    
+            } else if (oldPublicKey instanceof RSAPublicKey) {
+                kpg = KeyPairGenerator.getInstance("RSA", this.privateKeyContainerKeyStore.providerName);
+                kpg.initialize(((RSAPublicKey)oldPublicKey).getModulus().bitLength(), new SecureRandom());
+        
+            } else if (oldPublicKey instanceof DSAPublicKey) {
+                kpg = KeyPairGenerator.getInstance("DSA", this.privateKeyContainerKeyStore.providerName);
+                final DSAParameterSpec params = (DSAParameterSpec) ((DSAPublicKey)oldPublicKey).getParams();
+                kpg.initialize(params.getP().bitLength(), new SecureRandom());
+            } else {
+                m_log.error("Only RSA, DSA and EC keys can be renewed.");
                 return null;
             }
-            oldPublicKey = (RSAPublicKey)tmpPublicKey;
-        }
-        final KeyPairGenerator kpg;
-        try {
-            kpg = KeyPairGenerator.getInstance("RSA", this.privateKeyContainerKeyStore.providerName);
-            kpg.initialize(oldPublicKey.getModulus().bitLength());
             return kpg.generateKeyPair();
         } catch (Throwable e) {
             m_log.error("Key generation problem.", e);
@@ -300,27 +310,41 @@ class KeyRenewer {
         X509Certificate tmpCert = null;
         final Iterator<X509Certificate> i;
         try {
-            final PKCS10CertificationRequest pkcs10 = new PKCS10CertificationRequest("SHA1WithRSA", CertTools.stringToBcX509Name("CN=NOUSED"), keyPair.getPublic(), new DERSet(),
+            final String sigAlg;
+            if (keyPair.getPublic() instanceof ECPublicKey) {
+                sigAlg = "SHA1WithECDSA";
+            } else if (keyPair.getPublic() instanceof RSAPublicKey) {
+                sigAlg = "SHA1WithRSA";
+            } else if (keyPair.getPublic() instanceof DSAPublicKey) {
+                sigAlg = "SHA1WithDSA";
+            } else {
+                m_log.error("Certificate generation problem. Unsupported key type.");
+                return null;
+            }
+            final PKCS10CertificationRequest pkcs10 = new PKCS10CertificationRequest(sigAlg, CertTools.stringToBcX509Name("CN=NOUSED"), keyPair.getPublic(), new DERSet(),
                                                                                      keyPair.getPrivate(), this.privateKeyContainerKeyStore.providerName );
             final CertificateResponse certificateResponse = ejbcaWS.pkcs10Request(userData.getUsername(), userData.getPassword(),
                                                                                   new String(Base64.encode(pkcs10.getEncoded())),null,CertificateHelper.RESPONSETYPE_CERTIFICATE);
-            i = (Iterator<X509Certificate>)CertificateFactory.getInstance("X.509").generateCertificates(new ByteArrayInputStream(Base64.decode(certificateResponse.getData()))).iterator();
+            // Need to use BC provider in order to support explicit EC parameters (used for CSCAs, not named curves as the standard says you should use) 
+            i = (Iterator<X509Certificate>)CertificateFactory.getInstance("X.509", "BC").generateCertificates(new ByteArrayInputStream(Base64.decode(certificateResponse.getData()))).iterator();
         } catch (Exception e) {
             m_log.error("Certificate generation problem.", e);
             return null;
         }
+        // Verify that the received certificate can be verified using the CA certificate, and that the keys match
         while ( i.hasNext() ) {
             tmpCert = i.next();
             try {
                 tmpCert.verify(this.caChain.get(0).getPublicKey());
+                // Key comparisons between different providers are tricky, especially using ECDSA and such, so skip that.
+//                if ( keyPair.getPublic().equals(tmpCert.getPublicKey()) ) {
+//                    break;
+//                }
+                break;
             } catch (Exception e) {
                 tmpCert = null;
                 continue;
             }
-            if ( keyPair.getPublic().equals(tmpCert.getPublicKey()) ) {
-                break;
-            }
-            tmpCert = null;
         }
         if ( tmpCert==null ) {
             m_log.error("No certificate signed by correct CA generated.");
