@@ -28,20 +28,20 @@
 <li>Browser enrollment with Firefox, IE, etc.</li>
 <li>Enrollment for other applications through open APIs and tools.</li>
 <li>Enrollment generating complete OpenVPN installers for VPN users.</li>
-<li>Mobile enrollment, i.e. iOS using <a href="adminguide.html#Tested devices">SCEP</a>.</li>
-<li><a href="http://www.3gpp.org/">3GPP</a>, i.e. LTE/4G, compatible PKI.</li>
+<li>Mobile enrollment, i.e. iOS using <a href="docs/adminguide.html#Tested devices">SCEP</a>.</li>
+<li><a href="http://www.3gpp.org/">3GPP</a>, i.e. LTE/4G, compatible PKI, using <a href="docs/adminguide.html#CMP">CMP</a>.</li>
 <li>Revocation and Certificate Revocation Lists (CRLs).</li>
 <li>CRL creation and URL-based CRLDistribution Points according to RFC5280.</li> 
 <li>Smart card logon certificates for Windows, Linux and Mac OS X.</li>
 <li>Configurable certificate profiles for different types and contents of certificates.</li>
 <li>Standard and custom certificate extensions supported.</li>
-<li>Supports the Simple Certificate Enrollment Protocol (<a href="adminguide.html#Scep">SCEP</a>).</li>
+<li>Supports the Simple Certificate Enrollment Protocol (<a href="docs/adminguide.html#Scep">SCEP</a>).</li>
 <li>Qualified Certificate Statement (RFC3739) for issuing EU/ETSI qualified certificates.</li>
-<li>Supports the Online Certificate Status Protocol (<a href="architecture-ocsp.html">OCSP</a> - RFC2560 and RFC5019), including AIA-extension.</li>
+<li>Supports the Online Certificate Status Protocol (<a href="docs/architecture-ocsp.html">OCSP</a> - RFC2560 and RFC5019), including AIA-extension.</li>
 <li>Supports RFC4387 for distribution of CA certificates and CRLs over HTTP.</li>
 <li>Validation Authority service serving OCSP responses (RFC2560/5019), CA certificates and CRLS (RFC4387).</li> 
 <li>Supports the German <a href="http://www.common-pki.org/">Common PKI</a> SigG CertHash OCSP extension.</li> 
-<li>Supports <a href="adminguide.html#CMP">CMP</a> (RFC4210 and RFC4211).</li>
+<li>Supports <a href="docs/adminguide.html#CMP">CMP</a> (RFC4210 and RFC4211).</li>
 <li>Supports synchronous XKMS version 2 requests.</li>
 <li>Key recovery to store private keys for recovery for selected users and certificates.</li>
 </ul>    
@@ -63,7 +63,7 @@
 <li>External Validation Authority and OCSP responder also works with any other CA than EJBCA and support large scale OCSP deployments.</li>
 <li>Validation Authority and OCSP responder can run integrated with EJBCA or stand alone (clustered) for security, high-performance and high-availability.</li>
 <li>Simple OCSP client in pure java.</li>
-<li><a href="adminguide.html#EJBCA%20Plugins">Plug-in functionality</a> allowing you to enhance with your own functionality and work flows.</li>
+<li><a href="docs/adminguide.html#EJBCA%20plugin%20build%20system">Plug-in functionality</a> allowing you to enhance with your own functionality and work flows.</li>
 <li>Web service (WS) interface for remote administration and integration.</li>
 <li>Command line interface for scripts etc.</li>
 <li>Administration GUI localizable and available in several languages - Japaneese, English, French, German, Italian, Portuguese, Spanish, Chinese, ...</li>
@@ -88,7 +88,7 @@
 <li>Supports authentication and publishing of certificates to Microsoft Active Directory.</li>
 <li>Optional approval mechanism so several admins are required to perform an action, a.k.a. dual-authentication.</li>
 <li>Component based architecture for various authorization methods of entities when issuing certificates.</li>
-<li>Simple stand-alone <a href="userguide.html#EJBCA%20Batch%20Enrollment%20GUI">batch enrollment GUI</a> for CSRs (webservice RA).</li>
+<li>Simple stand-alone <a href="docs/userguide.html#EJBCA%20Batch%20Enrollment%20GUI">batch enrollment GUI</a> for CSRs (webservice RA).</li>
 <li>Possibility for autoenrollment (albeit not using windows standard autoenroll).</li>
 <li>Easy upgrade paths when new versions are released.</li>
 </ul>
@@ -97,7 +97,7 @@
 <ul>
 <li>Written in pure Java, running in a JEE application server. Interfaces with Hardware Security Modules using standard PKCS#11 interface.</li>
 <li>High performance and capacity, issue hundreds of certificates per second, store hundreds of millions of certificates.</li>
-<li>Stress test and performance measuring tools in <a href="userguide.html#EJBCA%20client%20toolbox">client toolbox</a>.</li>
+<li>Stress test and performance measuring tools in <a href="docs/userguide.html#EJBCA%20client%20toolbox">client toolbox</a>.</li>
 <li>Using standard, high performance RDBMS for storage. Easy to understand and manage.</li>
 <li>Supports different architectures; all-in-one, clustered, external RA, external OCSP, etc.</li>
 <li>Possible to integrate into large java applications for optimal integration into business process.</li>
@@ -105,13 +105,13 @@
 <li>Health check monitoring service to support efficient clustering and monitoring.</li>
 <li>Supports multiple application servers: JBoss, Glassfish and to some extent WebLogic</li>
 <li>Supports multiple databases: Hypersoniq, MySQL, PostgreSQL, Oracle, DB2, MS SQL Server, Derby, Sybase, Informix.</li>
-<li>Unique possibility to configure either as fully audited CA or as high speed <a href="adminguide.html#Throw%20away%20CA">certificate factory</a>, with the same level of management features.</li>
+<li>Unique possibility to configure either as fully audited CA or as high speed <a href="docs/adminguide.html#Throw%20away%20CA">certificate factory</a>, with the same level of management features.</li>
 </ul>
   </subsection>
   <subsection name="Enterprise Edition features">
 <ul>
 <li>Common Criteria EAL4+ and CWA 14167 certified.</li>
-<li>Integrity protected <a href="adminguide.html#Logging">audit log</a> (log signing), with digital signature or HMAC protection.</li>
+<li>Integrity protected <a href="docs/adminguide.html#Logging">audit log</a> (log signing), with digital signature or HMAC protection.</li>
 <li>Full database integrity protection of all tables, to detect database manipulation.</li>
 <li>Certified access control and authorization module, for assurance and high trust role separation.</li>
 <li>Authentication of local CLI users enabling role separation also for local CLI.</li>
