@@ -32,8 +32,8 @@ import org.cesecore.certificates.certificate.request.ResponseMessage;
 import org.cesecore.certificates.endentity.EndEntityInformation;
 import org.cesecore.keys.token.CryptoTokenOfflineException;
 import org.ejbca.core.EjbcaException;
-import org.ejbca.core.model.ca.AuthLoginException;
-import org.ejbca.core.model.ca.AuthStatusException;
+import org.cesecore.certificates.ca.AuthLoginException;
+import org.cesecore.certificates.ca.AuthStatusException;
 
 /**
  * @version $Id$

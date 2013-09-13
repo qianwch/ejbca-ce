@@ -80,8 +80,8 @@ import org.ejbca.core.ejb.ca.store.CertReqHistorySessionLocal;
 import org.ejbca.core.ejb.ra.EndEntityManagementSessionLocal;
 import org.ejbca.core.model.InternalEjbcaResources;
 import org.ejbca.core.model.SecConst;
-import org.ejbca.core.model.ca.AuthLoginException;
-import org.ejbca.core.model.ca.AuthStatusException;
+import org.cesecore.certificates.ca.AuthLoginException;
+import org.cesecore.certificates.ca.AuthStatusException;
 
 /**
  * Creates and signs certificates.

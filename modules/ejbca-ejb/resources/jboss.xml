@@ -21,6 +21,7 @@
       </method-attributes>
     </session>
 
+    <!-- TODO: Moved to cesecore-ejb.jar 
     <session>
       <ejb-name>CrlCreateSessionBean</ejb-name>
       <jndi-name>ejbca/CrlCreateSessionRemote</jndi-name>
@@ -31,7 +32,7 @@
           <transaction-timeout>3600</transaction-timeout>
         </method>
       </method-attributes>
-    </session>
+    </session>-->
 
     <session>
       <ejb-name>UpgradeSessionBean</ejb-name>
