@@ -83,8 +83,12 @@ public final class StringTools {
      * @param str the string whose contents will be stripped.
      * @return the stripped version of the input string.
      */
-    public static String strip(final String str) {
-    	return strip(str, stripChars);
+    public static String stripInternal(final String str) {
+        return strip(str, stripChars);
+    }
+
+    public static String stripCertificate(final String str) {
+        return strip(str, stripChars);
     }
 
     /**
@@ -96,7 +100,7 @@ public final class StringTools {
     	return strip(str, stripCharsIncludingXSS);
     }
 
-    public static String strip(final String str, final char[] stripThis) {
+    private static String strip(final String str, final char[] stripThis) {
         if (str == null) {
             return null;
         }

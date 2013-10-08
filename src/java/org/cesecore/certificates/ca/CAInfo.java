@@ -118,7 +118,7 @@ public class CAInfo implements Serializable {
     public CAInfo(){}
     
     public String getSubjectDN() {return subjectdn;}
-    public void setSubjectDN(final String subjectdn) {this.subjectdn = CertTools.stringToBCDNString(StringTools.strip(subjectdn));}
+    public void setSubjectDN(final String subjectdn) {this.subjectdn = CertTools.stringToBCDNString(StringTools.stripCertificate(subjectdn));}
     public int getCAId(){return this.caid;}
     public String getName() {return this.name;}
     public void setName(final String name) {this.name = name;}

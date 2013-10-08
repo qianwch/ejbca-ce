@@ -41,7 +41,7 @@ public class HardTokenView implements java.io.Serializable, Cloneable {
     }
 
     public void setUsername(String user) {
-        tokendata.setUsername(StringTools.strip(user));
+        tokendata.setUsername(StringTools.stripInternal(user));
     }
 
     public String getUsername() {

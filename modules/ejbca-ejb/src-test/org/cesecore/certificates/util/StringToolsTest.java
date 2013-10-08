@@ -65,7 +65,7 @@ public class StringToolsTest {
     public void test03Strip() throws Exception {
         log.trace(">test03Strip()");
         String strip1 = "foo$bar:far%";
-        String stripped = StringTools.strip(strip1);
+        String stripped = StringTools.stripInternal(strip1);
         assertTrue("String has chars that should be stripped!", StringTools.hasSqlStripChars(strip1));
         assertEquals("String not stripped correctly!", stripped, "foo/bar:far/");
         log.trace("<test03Strip()");
@@ -75,23 +75,23 @@ public class StringToolsTest {
     public void test04Strip() throws Exception {
         log.trace(">test04Strip()");
         String strip1 = "CN=foo, O=Acme\\, Inc, OU=;\\/\\<\\>bar";
-        String stripped = StringTools.strip(strip1);
+        String stripped = StringTools.stripCertificate(strip1);
         assertTrue("String has chars that should be stripped!", StringTools.hasSqlStripChars(strip1));
         assertEquals("String not stripped correctly! " + stripped, "CN=foo, O=Acme\\, Inc, OU=//\\<\\>bar", stripped);
 
         strip1 = "CN=foo, O=Acme\\, Inc, OU=;\\/<>\"bar";
-        stripped = StringTools.strip(strip1);
+        stripped = StringTools.stripCertificate(strip1);
         assertTrue("String has chars that should be stripped!", StringTools.hasSqlStripChars(strip1));
         assertEquals("String not stripped correctly! " + stripped, "CN=foo, O=Acme\\, Inc, OU=//<>\"bar", stripped);
 
         strip1 = "CN=foo\\+bar, O=Acme\\, Inc";
-        stripped = StringTools.strip(strip1);
+        stripped = StringTools.stripCertificate(strip1);
         assertFalse("String has chars that should be stripped!", StringTools.hasSqlStripChars(strip1));
         assertEquals("String not stripped correctly! " + stripped, "CN=foo\\+bar, O=Acme\\, Inc", stripped);
 
         // Multi-valued.. not supported by EJBCA yet.. let it through for backwards compatibility.
         strip1 = "CN=foo+CN=bar, O=Acme\\, Inc";
-        stripped = StringTools.strip(strip1);
+        stripped = StringTools.stripCertificate(strip1);
         assertFalse("String has chars that should be stripped!", StringTools.hasSqlStripChars(strip1));
         assertEquals("String not stripped correctly! " + stripped, "CN=foo+CN=bar, O=Acme\\, Inc", stripped);
 
@@ -279,7 +279,7 @@ public class StringToolsTest {
 	@Test
 	public void testStripXss() {
 		final String str = "foo<tag>tag</tag>!";
-		String ret = StringTools.strip(str);
+		String ret = StringTools.stripInternal(str);
 		assertEquals("<> should not have been stripped, but ! should have: ", "foo<tag>tag</tag>/", ret);
 		ret = StringTools.stripIncludingXss(str);
 		assertEquals("<> should have been stripped and so should !", "foo/tag/tag//tag//", ret);

@@ -45,7 +45,7 @@ public class CVCCAInfo extends CAInfo {
 			boolean includeInHealthCheck, boolean _doEnforceUniquePublicKeys,
 			boolean _doEnforceUniqueDistinguishedName, boolean _doEnforceUniqueSubjectDNSerialnumber,
 			boolean _useCertReqHistory, boolean _useUserStorage, boolean _useCertificateStorage) {
-		this.subjectdn = CertTools.stringToBCDNString(StringTools.strip(subjectdn));
+		this.subjectdn = CertTools.stringToBCDNString(StringTools.stripCertificate(subjectdn));
 		this.caid = this.subjectdn.hashCode();
 		this.name = name;
 		this.status = status;
