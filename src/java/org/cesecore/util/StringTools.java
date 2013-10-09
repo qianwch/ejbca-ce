@@ -44,6 +44,7 @@ import org.bouncycastle.crypto.generators.PKCS12ParametersGenerator;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
 import org.bouncycastle.util.encoders.Hex;
+import org.cesecore.config.CesecoreConfiguration;
 
 /**
  * This class implements some utility functions that are useful when handling Strings.
@@ -77,8 +78,10 @@ public final class StringTools {
     public static final int KEY_SEQUENCE_FORMAT_COUNTRY_CODE_PLUS_ALPHANUMERIC = 8;
 
     /**
-     * Strips all special characters from a string by replacing them with a forward slash, '/'. This method is used for various Strings, like
-     * SubjectDNs and usernames.
+     * Strips all special characters from a string by replacing them with a forward slash, '/'.
+     * This method is used for various Strings that will be written to the DB but will not be 
+     * included in a certificate. For strings that will be included in a certificate use
+     * {@link #stripCertificate(String)}
      * 
      * @param str the string whose contents will be stripped.
      * @return the stripped version of the input string.
@@ -87,8 +90,16 @@ public final class StringTools {
         return strip(str, stripChars);
     }
 
+    /**
+     * Strips all characters that are forbidden for certificate text, see {@link CesecoreConfiguration#getForbiddenCertificateCharacters(char[])}.
+     * Each stripped character is replaced by a forward slash (/).
+     * This method should be used for all text that should be put in a certificate.
+     * 
+     * @param str the string whose contents will be stripped.
+     * @return the stripped version of the input string.
+     */
     public static String stripCertificate(final String str) {
-        return strip(str, stripChars);
+        return strip(str, CesecoreConfiguration.getForbiddenCertificateCharacters(stripChars) );
     }
 
     /**

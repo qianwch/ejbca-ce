@@ -248,4 +248,17 @@ public final class CesecoreConfiguration {
         final String value = ConfigurationHolder.getString("database.useSeparateCertificateTable");
         return value!=null && Boolean.parseBoolean(value.trim());
     }
+
+    /**
+     * Characters forbidden in certificate fields.
+     * @param _default The chars if the property is not defined.
+     * @return all forbidden characters.
+     */
+    public static char[] getForbiddenCertificateCharacters(final char _default[] ) {
+        final String s = ConfigurationHolder.getString("ca.certificate.forbiddenShars");
+        if (s==null) {
+            return _default;
+        }
+        return s.toCharArray();
+    }
 }
