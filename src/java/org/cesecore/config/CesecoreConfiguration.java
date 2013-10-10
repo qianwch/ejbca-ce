@@ -255,7 +255,7 @@ public final class CesecoreConfiguration {
      * @return all forbidden characters.
      */
     public static char[] getForbiddenCertificateCharacters(final char _default[] ) {
-        final String s = ConfigurationHolder.getString("ca.certificate.forbiddenShars");
+        final String s = ConfigurationHolder.getString("ca.certificate.forbiddenChars");
         if (s==null) {
             return _default;
         }

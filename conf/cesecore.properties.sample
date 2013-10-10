@@ -55,9 +55,9 @@
 # The default are these characters: '\n', '\r', ';', '!', '\0', '%', '`', '?', '$', '~'.
 # The property value is a string with all forbidden characters concatenated (without any space). Note that '\' is an escape character.
 # So the default will be:
-#ca.chars.forbidden = \n\r;!\0%`?$~
+#ca.certificate.forbiddenChars = \n\r;!\0%`?$~
 # And nothing forbidden will be:
-#ca.certificate.forbidden =
+#ca.certificate.forbiddenChars =
 
 # ------------- Core language configuration -------------
 # The language that should be used internally for logging, exceptions and approval notifications.
