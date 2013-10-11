@@ -725,8 +725,20 @@ public class EjbcaWSTest extends CommonEjbcaWS {
         long rnd = secureRandom.nextLong();
         cesecoreConfigurationProxySession.setConfigurationValue(forbiddenCharsKey, "");
         testCertificateRequestWithSpecialChars(
-                "CN=test" + rnd + ",O=|\n|\r|;|A|!|`|?|$|~|, C=SE",
-                "CN=test" + rnd + ",O=|\n|\r|;|A|!|`|?|$|~|,C=SE");
+                "CN=test" + rnd +   ",O=|\n|\r|;|A|!|`|?|$|~|, C=SE",
+                "CN=test" + rnd + ",O=|\n|\r|\\;|A|!|`|?|$|~|,C=SE");
+    }
+
+    /**
+     * Test to define some forbidden chars.
+     */
+    @Test
+    public void test52CertificateRequestWithDefinedForbiddenChars() throws Exception {
+        long rnd = secureRandom.nextLong();
+        cesecoreConfigurationProxySession.setConfigurationValue(forbiddenCharsKey, "tset");
+        testCertificateRequestWithSpecialChars(
+                "CN=test" + rnd +   ",O=|\n|\r|;|A|!|`|?|$|~|, C=SE",
+                "CN=////" + rnd + ",O=|\n|\r|\\;|A|!|`|?|$|~|,C=SE");
     }
 
 
