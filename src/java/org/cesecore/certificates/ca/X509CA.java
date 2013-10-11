@@ -670,7 +670,7 @@ public class X509CA extends CA implements Serializable {
             subjectDNName = CertTools.stringToBcX509Name(dn, converter, ldapdnorder);
         }
         // Make sure the DN does not contain dangerous characters
-        if (StringTools.hasStripChars(subjectDNName.toString())) {
+        if (StringTools.hasCertificateStripChars(subjectDNName.toString())) {
             if (log.isTraceEnabled()) {
             	log.trace("DN with illegal name: "+subjectDNName);
             }

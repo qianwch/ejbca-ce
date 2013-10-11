@@ -148,24 +148,24 @@ public final class StringTools {
      * 
      * @param str the string whose contents would be stripped.
      * @return true if some chars in the string would be stripped, false if not.
-     * @see #strip
+     * @see #stripInternal(String)
      */
     public static boolean hasSqlStripChars(final String str) {
-    	return hasStripCharsInternal(str, stripSqlChars);
+    	return hasStripChars(str, stripSqlChars);
     }
     
     /**
-     * Checks if a string contains characters that would be potentially dangerous to use as DN, username etc.
+     * Checks if a string to be used in a certificate has characters that should be stripped.
      * 
      * @param str the string whose contents would be stripped.
      * @return true if some chars in the string would be stripped, false if not.
-     * @see #strip
+     * @see #stripCertificate(String)
      */
-    public static boolean hasStripChars(final String str) {
-    	return hasStripCharsInternal(str, stripChars);
+    public static boolean hasCertificateStripChars(final String str) {
+    	return hasStripChars(str, CesecoreConfiguration.getForbiddenCertificateCharacters(stripChars));
     }
     
-    private static boolean hasStripCharsInternal(final String str, char[] checkThese) {
+    private static boolean hasStripChars(final String str, char[] checkThese) {
         if (str == null) {
             return false;
         }
