@@ -718,10 +718,23 @@ public class EjbcaWSTest extends CommonEjbcaWS {
     }
 
     /**
+     * Same as {@link #test48CertificateRequestWithForbiddenCharsDefault()} but setting
+     * default values in config.
+     */
+    @Test
+    public void test49CertificateRequestWithForbiddenCharsDefinedAsDefault() throws Exception {
+        long rnd = secureRandom.nextLong();
+        cesecoreConfigurationProxySession.setConfigurationValue(forbiddenCharsKey, "\n\r;!\u0000%`?$~");
+        testCertificateRequestWithSpecialChars(
+                "CN=test" + rnd + ",O=|\n|\r|;|A|!|`|?|$|~|, C=SE",
+                "CN=test" + rnd +   ",O=|/|/|/|A|/|/|/|/|/|,C=SE");
+    }
+
+    /**
      * Test to define some forbidden chars.
      */
     @Test
-    public void test49CertificateRequestWithDefinedForbiddenChars() throws Exception {
+    public void test50CertificateRequestWithForbiddenCharsDefinedBogus() throws Exception {
         long rnd = secureRandom.nextLong();
         cesecoreConfigurationProxySession.setConfigurationValue(forbiddenCharsKey, "tset");
         try {
@@ -738,7 +751,7 @@ public class EjbcaWSTest extends CommonEjbcaWS {
      * Test that no forbidden chars work
      */
     @Test
-    public void test50CertificateRequestWithNoForbiddenChars() throws Exception {
+    public void test51CertificateRequestWithNoForbiddenChars() throws Exception {
         long rnd = secureRandom.nextLong();
         cesecoreConfigurationProxySession.setConfigurationValue(forbiddenCharsKey, "");
         testCertificateRequestWithSpecialChars(
@@ -754,7 +767,7 @@ public class EjbcaWSTest extends CommonEjbcaWS {
      * @throws Exception in case of error
      */
     @Test
-    public void test51CertificateRequestWithCardNumber() throws Exception {
+    public void test52CertificateRequestWithCardNumber() throws Exception {
     	String userName = "wsRequestCardNumber" + secureRandom.nextLong();
     	
     	// Generate a CSR
