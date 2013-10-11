@@ -143,6 +143,11 @@ public class EjbcaWSTest extends CommonEjbcaWS {
     	adminBeforeClass();
     }
 
+    @AfterClass
+    public static void restoreProperties() {
+        cesecoreConfigurationProxySession.setConfigurationValue(forbiddenCharsKey, originalForbiddenChars);
+    }
+
     @Before
     public void setUpAdmin() throws Exception {
     	adminSetUpAdmin();
@@ -156,11 +161,6 @@ public class EjbcaWSTest extends CommonEjbcaWS {
     @After
     public void tearDown() throws Exception {
         super.tearDown();
-    }
-
-    @AfterClass
-    public void restoreProperties() {
-        cesecoreConfigurationProxySession.setConfigurationValue(forbiddenCharsKey, originalForbiddenChars);
     }
 
 
