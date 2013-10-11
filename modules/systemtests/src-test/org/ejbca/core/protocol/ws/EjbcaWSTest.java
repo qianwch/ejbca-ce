@@ -724,9 +724,14 @@ public class EjbcaWSTest extends CommonEjbcaWS {
     public void test49CertificateRequestWithDefinedForbiddenChars() throws Exception {
         long rnd = secureRandom.nextLong();
         cesecoreConfigurationProxySession.setConfigurationValue(forbiddenCharsKey, "tset");
-        testCertificateRequestWithSpecialChars(
-                "CN=test" + rnd +   ",O=|\n|\r|;|A|!|`|?|$|~|, C=SE",
-                "CN=////" + rnd + ",O=|\n|\r|\\;|A|!|`|?|$|~|,C=SE");
+        try {
+            testCertificateRequestWithSpecialChars(
+                    "CN=test" + rnd +   ",O=|\n|\r|;|A|!|`|?|$|~|, C=SE",
+                    "CN=////" + rnd + ",O=|\n|\r|\\;|A|!|`|?|$|~|,C=SE");
+        } finally {
+            // we must remove this bogus settings otherwise next setupAdmin() will fail
+            cesecoreConfigurationProxySession.setConfigurationValue(forbiddenCharsKey, "");
+        }
     }
 
     /**
