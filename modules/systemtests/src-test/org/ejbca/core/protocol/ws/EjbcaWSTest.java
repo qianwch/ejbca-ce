@@ -674,7 +674,7 @@ public class EjbcaWSTest extends CommonEjbcaWS {
     public void test45CertificateRequestWithSpecialChars05() throws Exception {
         long rnd = secureRandom.nextLong();
         testCertificateRequestWithSpecialChars(
-                "CN=test" + rnd + ", O=\"foo=bar,C=SE\"",
+                "CN=test" + rnd + ", O=\"foo=bar, C=SE\"",
                 "CN=test" + rnd + ",O=foo\\=bar\\, C\\=SE");
     }
 
@@ -703,16 +703,18 @@ public class EjbcaWSTest extends CommonEjbcaWS {
     }
 
     /**
-     * Test that all default certificate forbidden characters are substituted
+     * Test that all but one default certificate forbidden characters are substituted
      * with '/'.
+     * The one not tested is the null character ('\0'). It is not tested since
+     * it is not a valid xml character so the WS protocol can not handle it.
      */
     @Test
     public void test50CertificateRequestWithSpecialChars10() throws Exception {
         long rnd = secureRandom.nextLong();
         cesecoreConfigurationProxySession.setConfigurationValue(forbiddenCharsKey, null);
         testCertificateRequestWithSpecialChars(
-                "CN=test" + rnd + ",O=|\n|\r|;|!|\u0000%|`|?|$|~|, C=SE",
-                "CN=test" + rnd + ",O=|/|/|/|/|/|/|/|/|/|,C=SE");
+                "CN=test" + rnd + ",O=|\n|\r|;|A|!|`|?|$|~|, C=SE",
+                "CN=test" + rnd +   ",O=|/|/|/|A|/|/|/|/|/|,C=SE");
     }
 
 
