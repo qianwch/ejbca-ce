@@ -709,12 +709,24 @@ public class EjbcaWSTest extends CommonEjbcaWS {
      * it is not a valid xml character so the WS protocol can not handle it.
      */
     @Test
-    public void test50CertificateRequestWithSpecialChars10() throws Exception {
+    public void test50CertificateRequestWithForbiddenCharsDefault() throws Exception {
         long rnd = secureRandom.nextLong();
         cesecoreConfigurationProxySession.setConfigurationValue(forbiddenCharsKey, null);
         testCertificateRequestWithSpecialChars(
                 "CN=test" + rnd + ",O=|\n|\r|;|A|!|`|?|$|~|, C=SE",
                 "CN=test" + rnd +   ",O=|/|/|/|A|/|/|/|/|/|,C=SE");
+    }
+
+    /**
+     * Test that no forbidden chars work
+     */
+    @Test
+    public void test51CertificateRequestWithNoForbiddenChars() throws Exception {
+        long rnd = secureRandom.nextLong();
+        cesecoreConfigurationProxySession.setConfigurationValue(forbiddenCharsKey, "");
+        testCertificateRequestWithSpecialChars(
+                "CN=test" + rnd + ",O=|\n|\r|;|A|!|`|?|$|~|, C=SE",
+                "CN=test" + rnd + ",O=|\n|\r|;|A|!|`|?|$|~|,C=SE");
     }
 
 
