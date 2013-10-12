@@ -116,29 +116,27 @@ public final class StringTools {
             return null;
         }
         final StringBuilder buf = new StringBuilder(str);
-        for (int i = 0; i < stripThis.length; i++) {
-            int index = 0;
-            int end = buf.length();
-            while (index < end) {
-                if (buf.charAt(index) == stripThis[i]) {
-                    // Found an illegal character. Replace it with a '/'.
+        int index = 0;
+        int end = buf.length();
+        while (index < end) {
+            if (buf.charAt(index) == '\\') {
+                // Found an escape character.
+                if (index + 1 == end) {
+                    // If this is the last character we should remove it.
                     buf.setCharAt(index, '/');
-                } else if (buf.charAt(index) == '\\') {
-                    // Found an escape character.
-                    if (index + 1 == end) {
-                        // If this is the last character we should remove it.
-                        buf.setCharAt(index, '/');
-                    } else if (!isAllowed(buf.charAt(index + 1))) {
-                        // We did not allow this character to be escaped. Replace both the \ and the character with a single '/'.
-                        buf.setCharAt(index, '/');
-                        buf.deleteCharAt(index + 1);
-                        end--;
-                    } else {
-                        index++;
-                    }
+                } else if (!isAllowedEscape(buf.charAt(index + 1))) {
+                    // We did not allow this character to be escaped. Replace both the \ and the character with a single '/'.
+                    buf.setCharAt(index, '/');
+                    buf.deleteCharAt(index + 1);
+                    end--;
+                } else {
+                    index++;
                 }
-                index++;
+            } else if ( isForbidden(buf.charAt(index), stripThis) ) {
+                // Illegal character. Replace it with a '/'.
+                buf.setCharAt(index, '/');
             }
+            index++;
         }
         return buf.toString();
     }
@@ -169,26 +167,25 @@ public final class StringTools {
         if (str == null) {
             return false;
         }
-        for (int i = 0; i < checkThese.length; i++) {
-            int index = 0;
-            final int end = str.length();
-            while (index < end) {
-                if (str.charAt(index) == checkThese[i] && checkThese[i] != '\\') {
-                    // Found an illegal character.
+        int index = 0;
+        final int end = str.length();
+        while (index < end) {
+            if (str.charAt(index) == '\\') {
+                // Found an escape character.
+                if (index + 1 == end) {
+                    // If this is the last character.
                     return true;
-                } else if (str.charAt(index) == '\\') {
-                    // Found an escape character.
-                    if (index + 1 == end) {
-                        // If this is the last character.
-                        return true;
-                    } else if (!isAllowed(str.charAt(index + 1))) {
-                        // We did not allow this character to be escaped.
-                        return true;
-                    }
-                    index++; // Skip one extra..
                 }
-                index++;
+                if (!isAllowedEscape(str.charAt(index + 1))) {
+                    // We did not allow this character to be escaped.
+                    return true;
+                }
+                index++; // Skip one extra..
+            } else if ( str.charAt(index)!='\\' && isForbidden(str.charAt(index), checkThese) ) {
+                // Found an illegal character.
+                return true;
             }
+            index++;
         }
         return false;
     }
@@ -199,15 +196,23 @@ public final class StringTools {
      * @param ch the char to check
      * @return true if char is an allowed escape character, false if now
      */
-    private static boolean isAllowed(final char ch) {
-        boolean allowed = false;
+    private static boolean isAllowedEscape(final char ch) {
         for (int j = 0; j < allowedEscapeChars.length; j++) {
             if (ch == allowedEscapeChars[j]) {
-                allowed = true;
-                break;
+                return true;
             }
         }
-        return allowed;
+        return false;
+    }
+
+    private static boolean isForbidden(final char ch, final char stripThis[]) {
+        for (int i = 0; i < stripThis.length; i++) {
+            if (ch == stripThis[i]) {
+                // Found an illegal character.
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -245,7 +250,7 @@ public final class StringTools {
                 // same as the byte, and bits 8 through 31 will be set to 1. So the bitwise
                 // AND with 0x000000FF clears out all of those bits.
                 // Note that this could have been written more compactly as; 0xFF & buf[index]
-                final int intByte = (0x000000FF & ((int) octets[i]));
+                final int intByte = (0x000000FF & (octets[i]));
                 final short t = (short) intByte; // NOPMD, we need short
                 if (StringUtils.isNotEmpty(ip)) {
                     ip += ".";
