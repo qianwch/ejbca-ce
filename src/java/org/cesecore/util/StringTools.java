@@ -132,7 +132,7 @@ public final class StringTools {
                 } else {
                     index++;
                 }
-            } else if ( isForbidden(buf.charAt(index), stripThis) ) {
+            } else if ( isCharInArray(buf.charAt(index), stripThis) ) {
                 // Illegal character. Replace it with a '/'.
                 buf.setCharAt(index, '/');
             }
@@ -181,7 +181,7 @@ public final class StringTools {
                     return true;
                 }
                 index++; // Skip one extra..
-            } else if ( str.charAt(index)!='\\' && isForbidden(str.charAt(index), checkThese) ) {
+            } else if ( isCharInArray(str.charAt(index), checkThese) ) {
                 // Found an illegal character.
                 return true;
             }
@@ -197,22 +197,11 @@ public final class StringTools {
      * @return true if char is an allowed escape character, false if now
      */
     private static boolean isAllowedEscape(final char ch) {
-        for (int j = 0; j < allowedEscapeChars.length; j++) {
-            if (ch == allowedEscapeChars[j]) {
-                return true;
-            }
-        }
-        return false;
+        return isCharInArray(ch, allowedEscapeChars);
     }
 
-    private static boolean isForbidden(final char ch, final char stripThis[]) {
-        for (int i = 0; i < stripThis.length; i++) {
-            if (ch == stripThis[i]) {
-                // Found an illegal character.
-                return true;
-            }
-        }
-        return false;
+    private static boolean isCharInArray(final char ch, final char stripThis[]) {
+        return new String(stripThis).indexOf(ch) > -1;
     }
 
     /**
