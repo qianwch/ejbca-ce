@@ -131,6 +131,7 @@ public class EjbcaWSTest extends CommonEjbcaWS {
     
     private final SimpleAuthenticationProviderSessionRemote simpleAuthenticationProvider = EjbRemoteHelper.INSTANCE.getRemoteSession(SimpleAuthenticationProviderSessionRemote.class, EjbRemoteHelper.MODULE_TEST);
 
+    private static String originalForbiddenChars;
     private final static SecureRandom secureRandom;
     private final static String forbiddenCharsKey = "ca.certificate.forbiddenChars";
     static {
@@ -144,6 +145,7 @@ public class EjbcaWSTest extends CommonEjbcaWS {
     @BeforeClass
     public static void beforeClass() throws Exception {
     	adminBeforeClass();
+    	originalForbiddenChars = cesecoreConfigurationProxySession.getConfigurationValue(forbiddenCharsKey);
     	setupAccessRights(WS_ADMIN_ROLENAME);
     }
 
@@ -156,7 +158,6 @@ public class EjbcaWSTest extends CommonEjbcaWS {
     public static void afterClass() throws Exception {
         cleanUpAdmins(WS_ADMIN_ROLENAME);
         cleanUpAdmins(WS_TEST_ROLENAME);
-        final String originalForbiddenChars = cesecoreConfigurationProxySession.getConfigurationValue(forbiddenCharsKey);
         cesecoreConfigurationProxySession.setConfigurationValue(forbiddenCharsKey, originalForbiddenChars);
     }
 
