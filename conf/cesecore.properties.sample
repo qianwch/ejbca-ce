@@ -49,6 +49,16 @@
 # Default: false
 #ca.doPermitExtractablePrivateKeys=true
 
+# Forbidden characters in certificate fields.
+# This property defines characters that are forbidden in text fields of generated certificates.
+# When one of these characters is found in any text that should be a part of a certificate it will be replaced by a forward slash (/).
+# The default are these characters: '\n', '\r', ';', '!', '\0', '%', '`', '?', '$', '~'.
+# The property value is a string with all forbidden characters concatenated (without any space). Note that '\' is an escape character.
+# So the default will be:
+#ca.certificate.forbiddenChars = \n\r;!\u0000%`?$~
+# And nothing forbidden will be:
+#ca.certificate.forbiddenChars =
+
 # ------------- Core language configuration -------------
 # The language that should be used internally for logging, exceptions and approval notifications.
 # The languagefile is stored in 'src/intresources/ejbcaresources.xx.properties/intresources.xx.properties'.

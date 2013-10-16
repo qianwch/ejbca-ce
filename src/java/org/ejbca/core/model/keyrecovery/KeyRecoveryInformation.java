@@ -36,7 +36,7 @@ public class KeyRecoveryInformation implements Serializable {
                            boolean markedasrecoverable, KeyPair keypair, Certificate certificate) {
         this.certificatesn = certificatesn;
         this.issuerdn = issuerdn;
-        this.username = StringTools.strip(username);
+        this.username = StringTools.stripInternal(username);
         this.markedasrecoverable = markedasrecoverable;
         this.keypair = keypair;
         this.certificate = certificate;
@@ -95,7 +95,7 @@ public class KeyRecoveryInformation implements Serializable {
      * @param username DOCUMENT ME!
      */
     public void setUsername(String username) {
-        this.username = StringTools.strip(username);
+        this.username = StringTools.stripInternal(username);
     }
 
     /**

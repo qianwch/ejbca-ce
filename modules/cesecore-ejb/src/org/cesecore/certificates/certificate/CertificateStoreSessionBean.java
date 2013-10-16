@@ -201,7 +201,7 @@ public class CertificateStoreSessionBean implements CertificateStoreSessionRemot
             log.trace(">listAllCertificates()");
         }
         // This method was only used from CertificateDataTest and it didn't care about the expireDate, so it will only select fingerprints now.
-        return CertificateData.findFingerprintsByIssuerDN(entityManager, CertTools.stringToBCDNString(StringTools.strip(issuerdn)));
+        return CertificateData.findFingerprintsByIssuerDN(entityManager, CertTools.stringToBCDNString(StringTools.stripCertificate(issuerdn)));
     }
 
     @Override
@@ -209,7 +209,7 @@ public class CertificateStoreSessionBean implements CertificateStoreSessionRemot
         if (log.isTraceEnabled()) {
             log.trace(">listRevokedCertInfo()");
         }
-        return CertificateData.getRevokedCertInfos(entityManager, CertTools.stringToBCDNString(StringTools.strip(issuerdn)), lastbasecrldate);
+        return CertificateData.getRevokedCertInfos(entityManager, CertTools.stringToBCDNString(StringTools.stripCertificate(issuerdn)), lastbasecrldate);
     }
 
     @Override
@@ -218,10 +218,8 @@ public class CertificateStoreSessionBean implements CertificateStoreSessionRemot
             log.trace(">findCertificatesBySubjectAndIssuer(), dn='" + subjectDN + "' and issuer='" + issuerDN + "'");
         }
         // First make a DN in our well-known format
-        String dn = StringTools.strip(subjectDN);
-        dn = CertTools.stringToBCDNString(dn);
-        String issuerdn = StringTools.strip(issuerDN);
-        issuerdn = CertTools.stringToBCDNString(issuerdn);
+        final String dn = CertTools.stringToBCDNString(StringTools.stripCertificate(subjectDN));
+        final String issuerdn = CertTools.stringToBCDNString(StringTools.stripCertificate(issuerDN));
         log.debug("Looking for cert with (transformed)DN: " + dn);
         Collection<Certificate> ret = new ArrayList<Certificate>();
         Collection<CertificateData> coll = CertificateData.findBySubjectDNAndIssuerDN(entityManager, dn, issuerdn);
@@ -241,8 +239,8 @@ public class CertificateStoreSessionBean implements CertificateStoreSessionRemot
             log.trace(">findUsernamesByIssuerDNAndSubjectDN(), issuer='" + issuerDN + "'");
         }
         // First make a DN in our well-known format
-        final String transformedIssuerDN = CertTools.stringToBCDNString(StringTools.strip(issuerDN));
-        final String transformedSubjectDN = CertTools.stringToBCDNString(StringTools.strip(subjectDN));
+        final String transformedIssuerDN = CertTools.stringToBCDNString(StringTools.stripCertificate(issuerDN));
+        final String transformedSubjectDN = CertTools.stringToBCDNString(StringTools.stripCertificate(subjectDN));
         if (log.isDebugEnabled()) {
             log.debug("Looking for user with a certificate with issuer DN(transformed) '" + transformedIssuerDN + "' and subject DN(transformed) '"
                     + transformedSubjectDN + "'.");
@@ -262,7 +260,7 @@ public class CertificateStoreSessionBean implements CertificateStoreSessionRemot
             log.trace(">findUsernamesByIssuerDNAndSubjectKeyId(), issuer='" + issuerDN + "'");
         }
         // First make a DN in our well-known format
-        final String transformedIssuerDN = CertTools.stringToBCDNString(StringTools.strip(issuerDN));
+        final String transformedIssuerDN = CertTools.stringToBCDNString(StringTools.stripCertificate(issuerDN));
         final String sSubjectKeyId = new String(Base64.encode(subjectKeyId, false));
         if (log.isDebugEnabled()) {
             log.debug("Looking for user with a certificate with issuer DN(transformed) '" + transformedIssuerDN + "' and SubjectKeyId '"
@@ -302,9 +300,9 @@ public class CertificateStoreSessionBean implements CertificateStoreSessionRemot
             log.trace(">isOnlyUsernameForSubjectKeyIdOrDnAndIssuerDN(), issuer='" + issuerDN + "'");
         }
         // First make a DN in our well-known format
-        final String transformedIssuerDN = CertTools.stringToBCDNString(StringTools.strip(issuerDN));
+        final String transformedIssuerDN = CertTools.stringToBCDNString(StringTools.stripCertificate(issuerDN));
         final String sSubjectKeyId = new String(Base64.encode(subjectKeyId, false));
-        final String transformedSubjectDN = CertTools.stringToBCDNString(StringTools.strip(subjectDN));
+        final String transformedSubjectDN = CertTools.stringToBCDNString(StringTools.stripCertificate(subjectDN));
         if (log.isDebugEnabled()) {
             log.debug("Looking for user with a certificate with issuer DN(transformed) '" + transformedIssuerDN + "' and SubjectKeyId '"
                     + sSubjectKeyId + "' OR subject DN(transformed) '."+ transformedSubjectDN + "'.");
@@ -325,8 +323,7 @@ public class CertificateStoreSessionBean implements CertificateStoreSessionRemot
             log.trace(">findCertificatesBySubject(), dn='" + subjectDN + "'");
         }
         // First make a DN in our well-known format
-        String dn = StringTools.strip(subjectDN);
-        dn = CertTools.stringToBCDNString(dn);
+        final String dn = CertTools.stringToBCDNString( StringTools.stripCertificate(subjectDN) );
         if (log.isDebugEnabled()) {
             log.debug("Looking for cert with (transformed)DN: " + dn);
         }
@@ -397,7 +394,7 @@ public class CertificateStoreSessionBean implements CertificateStoreSessionRemot
             log.trace(">findCertificateByIssuerAndSerno(), dn:" + issuerDN + ", serno=" + serno.toString(16));
         }
         // First make a DN in our well-known format
-        String dn = CertTools.stringToBCDNString(StringTools.strip(issuerDN));
+        final String dn = CertTools.stringToBCDNString(StringTools.stripCertificate(issuerDN));
         if (log.isDebugEnabled()) {
             log.debug("Looking for cert with (transformed)DN: " + dn);
         }

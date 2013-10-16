@@ -79,7 +79,7 @@ public class EndEntityAccessSessionBean implements EndEntityAccessSessionLocal, 
             log.trace(">findUserBySubjectDN(" + subjectdn + ")");
         }
         // String used in SQL so strip it
-        final String dn = CertTools.stringToBCDNString(StringTools.strip(subjectdn));
+        final String dn = CertTools.stringToBCDNString(StringTools.stripCertificate(subjectdn));
         if (log.isDebugEnabled()) {
             log.debug("Looking for users with subjectdn: " + dn);
         }
@@ -107,8 +107,8 @@ public class EndEntityAccessSessionBean implements EndEntityAccessSessionLocal, 
             log.trace(">findUserBySubjectAndIssuerDN(" + subjectdn + ", " + issuerdn + ")");
         }
         // String used in SQL so strip it
-        final String dn = CertTools.stringToBCDNString(StringTools.strip(subjectdn));
-        final String issuerDN = CertTools.stringToBCDNString(StringTools.strip(issuerdn));
+        final String dn = CertTools.stringToBCDNString(StringTools.stripCertificate(subjectdn));
+        final String issuerDN = CertTools.stringToBCDNString(StringTools.stripCertificate(issuerdn));
         if (log.isDebugEnabled()) {
             log.debug("Looking for users with subjectdn: " + dn + ", issuerdn : " + issuerDN);
         }

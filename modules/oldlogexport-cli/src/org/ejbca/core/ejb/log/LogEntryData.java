@@ -107,7 +107,7 @@ public class LogEntryData implements Serializable {
 
 	//@Column
 	public String getUsername() { return username; }
-	public void setUsername(String username) { this.username = StringTools.strip(username); }
+	public void setUsername(String username) { this.username = StringTools.stripInternal(username); }
 
 	//@Column
 	public String getCertificateSNR() { return certificateSNR; }

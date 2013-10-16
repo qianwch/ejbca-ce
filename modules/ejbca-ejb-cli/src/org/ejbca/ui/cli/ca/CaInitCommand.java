@@ -235,7 +235,7 @@ public class CaInitCommand extends BaseCaAdminCommand {
             args = argsList.toArray(new String[argsList.size()]); // new args array without the optional switches
 
             final String caname = args[1];
-            final String dn = CertTools.stringToBCDNString(StringTools.strip(args[2]));
+            final String dn = CertTools.stringToBCDNString(StringTools.stripCertificate(args[2]));
             final String catokentype = args[3];
             String catokenpassword = StringTools.passwordDecryption(args[4], "ca.tokenpassword");
             if (StringUtils.equals(catokenpassword, "prompt")) {
