@@ -138,7 +138,11 @@ public final class StringTools {
             }
             index++;
         }
-        return buf.toString();
+        final String result = buf.toString();
+        if ( log.isDebugEnabled() && !result.equals(str)) {
+            log.debug("Some chars stripped. Was '"+str+"' is now '"+result+"'.");
+        }
+        return result;
     }
 
     /**

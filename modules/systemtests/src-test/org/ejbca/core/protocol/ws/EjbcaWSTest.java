@@ -129,7 +129,6 @@ public class EjbcaWSTest extends CommonEjbcaWS {
     
     private final static SecureRandom secureRandom;
     private final static String forbiddenCharsKey = "ca.certificate.forbiddenChars";
-    private final static String originalForbiddenChars = cesecoreConfigurationProxySession.getConfigurationValue(forbiddenCharsKey);
     static {
         try {
             secureRandom = SecureRandom.getInstance("SHA1PRNG");
@@ -145,6 +144,7 @@ public class EjbcaWSTest extends CommonEjbcaWS {
 
     @AfterClass
     public static void restoreProperties() {
+        final String originalForbiddenChars = cesecoreConfigurationProxySession.getConfigurationValue(forbiddenCharsKey);
         cesecoreConfigurationProxySession.setConfigurationValue(forbiddenCharsKey, originalForbiddenChars);
     }
 
