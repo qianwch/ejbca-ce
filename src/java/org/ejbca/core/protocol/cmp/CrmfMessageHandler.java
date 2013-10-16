@@ -41,6 +41,7 @@ import org.cesecore.certificates.endentity.EndEntityInformation;
 import org.cesecore.certificates.endentity.ExtendedInformation;
 import org.cesecore.certificates.util.AlgorithmTools;
 import org.cesecore.util.CertTools;
+import org.cesecore.util.StringTools;
 import org.ejbca.config.CmpConfiguration;
 import org.ejbca.core.EjbcaException;
 import org.ejbca.core.ejb.authentication.web.WebAuthenticationProviderSessionLocal;
@@ -211,13 +212,13 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 					if (LOG.isDebugEnabled()) {
 						LOG.debug("extractUsernameComponent: "+usernameComp);
 					}
-					if (StringUtils.isEmpty(usernameComp)) {
+					if (StringUtils.isEmpty(usernameComp) || StringUtils.equalsIgnoreCase(usernameComp, "DN")) {
 						if (LOG.isDebugEnabled()) {
 							LOG.debug("looking for user with dn: "+dn);
 						}
 						data = endEntityAccessSession.findUserBySubjectDN(admin, dn);
 					} else {
-						final String username = CertTools.getPartFromDN(dn,usernameComp);
+						final String username = StringTools.getBase64String(StringTools.strip(CertTools.getPartFromDN(dn,usernameComp)));
 						if (LOG.isDebugEnabled()) {
 							LOG.debug("looking for user with username: "+username);
 						}						
@@ -346,7 +347,7 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 			if (LOG.isDebugEnabled()) {
 				LOG.debug("Creating username from base dn: "+dnname.toString());
 			}
-			final String username = gen.generateUsername(dnname.toString());
+			final String username = StringTools.getBase64String(StringTools.strip(gen.generateUsername(dnname.toString())));
 			final String pwd;
             if(StringUtils.equals(authenticationModule.getName(), CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE)) {
                 pwd = authenticationModule.getAuthenticationString();
