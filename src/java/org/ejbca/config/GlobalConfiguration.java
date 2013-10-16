@@ -15,9 +15,11 @@
 package org.ejbca.config;
 
 import java.io.Serializable;
-import java.util.HashSet;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
 import org.cesecore.internal.UpgradeableDataHashMap;
 import org.ejbca.core.model.InternalEjbcaResources;
 
@@ -30,6 +32,8 @@ import org.ejbca.core.model.InternalEjbcaResources;
 public class GlobalConfiguration extends UpgradeableDataHashMap implements Serializable {
 
     private static final long serialVersionUID = -2051789798029184421L;
+
+    private static final Logger LOG = Logger.getLogger(GlobalConfiguration.class);
 
     // Default Values
     public static final float LATEST_VERSION = 3f;
@@ -63,7 +67,7 @@ public class GlobalConfiguration extends UpgradeableDataHashMap implements Seria
     private static final  String   DEFAULTFOOTBANNER             = "foot_banner.jsp";
     
     // Default list of nodes in cluster
-    private static final Set<String> NODESINCLUSTER_DEFAULT      = new HashSet<String>();
+    private static final Set<String> NODESINCLUSTER_DEFAULT      = new LinkedHashSet<String>();
 
     // Title of ra admin web interface.
     private static final  String   DEFAULTEJBCATITLE             = InternalConfiguration.getAppNameCapital() + " Administration";
@@ -432,11 +436,22 @@ public class GlobalConfiguration extends UpgradeableDataHashMap implements Seria
        }
        
        public void setNodesInCluster(final Set<String> nodes) { data.put(NODESINCLUSTER, nodes); }
+       @SuppressWarnings("unchecked")
        public Set<String> getNodesInCluster() {
-	       @SuppressWarnings("unchecked")
-    	   Set<String> ret = (Set<String>) data.get(NODESINCLUSTER);
-    	   return (ret == null ? NODESINCLUSTER_DEFAULT : ret);
-    	   }
+           // In an earlier version (<5.0.11) this was a HashSet, not a LinkedHashSet. Using a HashSet causes order to be non-deterministic, that makes it possible
+           // to get verification failures if using Database Protection. This was then changed to a LinkedHashSet that guarantees order. 
+           // Therefore we try to ensure that a LinkedHashSet is returned, seamlessly upgrading any old HashSet. 
+           // If an old object is in the database, after a getNodesInCluster(),  setNodesInCluster() and saveGlobalConfiguration() it should be a LinkedHashSet in the database. 
+           Set<String> ret = null;
+           Object o = data.get(NODESINCLUSTER);
+           if (o != null && !(o instanceof LinkedHashSet<?>)) {
+               LOG.debug("Converting GlobalConfiguration NodesInCluster from "+o.getClass().getName()+" to LinkedHashSet.");
+               ret = new LinkedHashSet<String>((Collection<String>)o);
+           } else {
+               ret = (Set<String>)o;
+           }
+           return (ret == null ? NODESINCLUSTER_DEFAULT : ret);
+       }
 
        public void setEnableCommandLineInterface(final boolean enable) { data.put(ENABLECOMMANDLINEINTERFACE, Boolean.valueOf(enable)); }
        public boolean getEnableCommandLineInterface() {
