@@ -127,6 +127,7 @@ public class EjbcaWSTest extends CommonEjbcaWS {
     
     private final String wsadminRoleName = "WsTEstRole";
     
+    private static String originalForbiddenChars;
     private final static SecureRandom secureRandom;
     private final static String forbiddenCharsKey = "ca.certificate.forbiddenChars";
     static {
@@ -140,11 +141,11 @@ public class EjbcaWSTest extends CommonEjbcaWS {
     @BeforeClass
     public static void beforeClass() {
     	adminBeforeClass();
+    	originalForbiddenChars = cesecoreConfigurationProxySession.getConfigurationValue(forbiddenCharsKey);
     }
 
     @AfterClass
     public static void restoreProperties() {
-        final String originalForbiddenChars = cesecoreConfigurationProxySession.getConfigurationValue(forbiddenCharsKey);
         cesecoreConfigurationProxySession.setConfigurationValue(forbiddenCharsKey, originalForbiddenChars);
     }
 
