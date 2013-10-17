@@ -44,6 +44,7 @@ import org.bouncycastle.crypto.generators.PKCS12ParametersGenerator;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
 import org.bouncycastle.util.encoders.Hex;
+import org.cesecore.config.CesecoreConfiguration;
 
 /**
  * This class implements some utility functions that are useful when handling Strings.
@@ -84,7 +85,7 @@ public final class StringTools {
      * @return the stripped version of the input string.
      */
     public static String strip(final String str) {
-    	return strip(str, stripChars);
+    	return strip(str, CesecoreConfiguration.getForbiddenCertificateCharacters(stripChars) );
     }
 
     /**
@@ -96,36 +97,38 @@ public final class StringTools {
     	return strip(str, stripCharsIncludingXSS);
     }
 
-    public static String strip(final String str, final char[] stripThis) {
+    private static String strip(final String str, final char[] stripThis) {
         if (str == null) {
             return null;
         }
         final StringBuilder buf = new StringBuilder(str);
-        for (int i = 0; i < stripThis.length; i++) {
-            int index = 0;
-            int end = buf.length();
-            while (index < end) {
-                if (buf.charAt(index) == stripThis[i]) {
-                    // Found an illegal character. Replace it with a '/'.
+        int index = 0;
+        int end = buf.length();
+        while (index < end) {
+            if (buf.charAt(index) == '\\') {
+                // Found an escape character.
+                if (index + 1 == end) {
+                    // If this is the last character we should remove it.
                     buf.setCharAt(index, '/');
-                } else if (buf.charAt(index) == '\\') {
-                    // Found an escape character.
-                    if (index + 1 == end) {
-                        // If this is the last character we should remove it.
-                        buf.setCharAt(index, '/');
-                    } else if (!isAllowed(buf.charAt(index + 1))) {
-                        // We did not allow this character to be escaped. Replace both the \ and the character with a single '/'.
-                        buf.setCharAt(index, '/');
-                        buf.deleteCharAt(index + 1);
-                        end--;
-                    } else {
-                        index++;
-                    }
+                } else if (!isAllowedEscape(buf.charAt(index + 1))) {
+                    // We did not allow this character to be escaped. Replace both the \ and the character with a single '/'.
+                    buf.setCharAt(index, '/');
+                    buf.deleteCharAt(index + 1);
+                    end--;
+                } else {
+                    index++;
                 }
-                index++;
+            } else if ( isCharInArray(buf.charAt(index), stripThis) ) {
+                // Illegal character. Replace it with a '/'.
+                buf.setCharAt(index, '/');
             }
+            index++;
         }
-        return buf.toString();
+        final String result = buf.toString();
+        if ( log.isDebugEnabled() && !result.equals(str)) {
+            log.debug("Some chars stripped. Was '"+str+"' is now '"+result+"'.");
+        }
+        return result;
     }
 
     /**
@@ -136,7 +139,7 @@ public final class StringTools {
      * @see #strip
      */
     public static boolean hasSqlStripChars(final String str) {
-    	return hasStripCharsInternal(str, stripSqlChars);
+    	return hasStripChars(str, stripSqlChars);
     }
     
     /**
@@ -147,33 +150,32 @@ public final class StringTools {
      * @see #strip
      */
     public static boolean hasStripChars(final String str) {
-    	return hasStripCharsInternal(str, stripChars);
+    	return hasStripChars(str, CesecoreConfiguration.getForbiddenCertificateCharacters(stripChars));
     }
     
-    private static boolean hasStripCharsInternal(final String str, char[] checkThese) {
+    private static boolean hasStripChars(final String str, char[] checkThese) {
         if (str == null) {
             return false;
         }
-        for (int i = 0; i < checkThese.length; i++) {
-            int index = 0;
-            final int end = str.length();
-            while (index < end) {
-                if (str.charAt(index) == checkThese[i] && checkThese[i] != '\\') {
-                    // Found an illegal character.
+        int index = 0;
+        final int end = str.length();
+        while (index < end) {
+            if (str.charAt(index) == '\\') {
+                // Found an escape character.
+                if (index + 1 == end) {
+                    // If this is the last character.
                     return true;
-                } else if (str.charAt(index) == '\\') {
-                    // Found an escape character.
-                    if (index + 1 == end) {
-                        // If this is the last character.
-                        return true;
-                    } else if (!isAllowed(str.charAt(index + 1))) {
-                        // We did not allow this character to be escaped.
-                        return true;
-                    }
-                    index++; // Skip one extra..
                 }
-                index++;
+                if (!isAllowedEscape(str.charAt(index + 1))) {
+                    // We did not allow this character to be escaped.
+                    return true;
+                }
+                index++; // Skip one extra..
+            } else if ( isCharInArray(str.charAt(index), checkThese) ) {
+                // Found an illegal character.
+                return true;
             }
+            index++;
         }
         return false;
     }
@@ -184,15 +186,12 @@ public final class StringTools {
      * @param ch the char to check
      * @return true if char is an allowed escape character, false if now
      */
-    private static boolean isAllowed(final char ch) {
-        boolean allowed = false;
-        for (int j = 0; j < allowedEscapeChars.length; j++) {
-            if (ch == allowedEscapeChars[j]) {
-                allowed = true;
-                break;
-            }
-        }
-        return allowed;
+    private static boolean isAllowedEscape(final char ch) {
+        return isCharInArray(ch, allowedEscapeChars);
+    }
+
+    private static boolean isCharInArray(final char ch, final char stripThis[]) {
+        return new String(stripThis).indexOf(ch) > -1;
     }
 
     /**
@@ -230,7 +229,7 @@ public final class StringTools {
                 // same as the byte, and bits 8 through 31 will be set to 1. So the bitwise
                 // AND with 0x000000FF clears out all of those bits.
                 // Note that this could have been written more compactly as; 0xFF & buf[index]
-                final int intByte = (0x000000FF & ((int) octets[i]));
+                final int intByte = (0x000000FF & (octets[i]));
                 final short t = (short) intByte; // NOPMD, we need short
                 if (StringUtils.isNotEmpty(ip)) {
                     ip += ".";
