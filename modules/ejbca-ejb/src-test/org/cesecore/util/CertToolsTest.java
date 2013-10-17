@@ -629,17 +629,17 @@ public class CertToolsTest {
         String bcdn21 = CertTools.stringToBCDNString(dn21);
         assertEquals(bcdn21, "CN=Foo\',OU=Foo\\, Dep,O=Foo\\, Inc,C=SE");
         // it is allowed to escape ,
-        assertEquals(StringTools.stripCertificate(bcdn21), "CN=Foo',OU=Foo\\, Dep,O=Foo\\, Inc,C=SE");
+        assertEquals(StringTools.strip(bcdn21), "CN=Foo',OU=Foo\\, Dep,O=Foo\\, Inc,C=SE");
 
         String dn22 = "C=SE,O=Foo\\, Inc, OU=Foo, Dep, CN=Foo'";
         String bcdn22 = CertTools.stringToBCDNString(dn22);
         assertEquals(bcdn22, "CN=Foo',OU=Foo,O=Foo\\, Inc,C=SE");
-        assertEquals(StringTools.stripCertificate(bcdn22), "CN=Foo',OU=Foo,O=Foo\\, Inc,C=SE");
+        assertEquals(StringTools.strip(bcdn22), "CN=Foo',OU=Foo,O=Foo\\, Inc,C=SE");
 
         String dn23 = "C=SE,O=Foo, OU=FooOU, CN=Foo, DN=qualf";
         String bcdn23 = CertTools.stringToBCDNString(dn23);
         assertEquals(bcdn23, "DN=qualf,CN=Foo,OU=FooOU,O=Foo,C=SE");
-        assertEquals(StringTools.stripCertificate(bcdn23), "DN=qualf,CN=Foo,OU=FooOU,O=Foo,C=SE");
+        assertEquals(StringTools.strip(bcdn23), "DN=qualf,CN=Foo,OU=FooOU,O=Foo,C=SE");
 
         String dn24 = "telephonenumber=08555-666,businesscategory=Surf boards,postaladdress=Stockholm,postalcode=11122,CN=foo,CN=bar, O=CN, O=C, C=CN";
         assertEquals(CertTools.stringToBCDNString(dn24),
@@ -977,7 +977,7 @@ public class CertToolsTest {
         String dn21 = "C=SE,O=Foo\\, Inc, OU=Foo\\, Dep, CN=Foo\\'";
         String bcdn21 = CertTools.stringToBCDNString(dn21);
         assertEquals("CN=Foo\',OU=Foo\\, Dep,O=Foo\\, Inc,C=SE", bcdn21);
-        assertEquals("CN=Foo',OU=Foo\\, Dep,O=Foo\\, Inc,C=SE", StringTools.stripCertificate(bcdn21));
+        assertEquals("CN=Foo',OU=Foo\\, Dep,O=Foo\\, Inc,C=SE", StringTools.strip(bcdn21));
         log.trace("<test10TestMultipleReversed()");
     }
 

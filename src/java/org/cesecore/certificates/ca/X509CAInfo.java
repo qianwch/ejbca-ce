@@ -71,7 +71,7 @@ public class X509CAInfo extends CAInfo{
     		final boolean useLdapDnOrder, final boolean useCrlDistributionPointOnCrl, final boolean crlDistributionPointOnCrlCritical, final boolean includeInHealthCheck,
     		final boolean _doEnforceUniquePublicKeys, final boolean _doEnforceUniqueDistinguishedName, final boolean _doEnforceUniqueSubjectDNSerialnumber,
     		final boolean _useCertReqHistory, final boolean _useUserStorage, final boolean _useCertificateStorage, final String _cmpRaAuthSecret) {
-        this.subjectdn = CertTools.stringToBCDNString(StringTools.stripCertificate(subjectdn));
+        this.subjectdn = CertTools.stringToBCDNString(StringTools.strip(subjectdn));
         this.caid = this.subjectdn.hashCode();
         this.name = name;
         this.status = status;

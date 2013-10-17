@@ -51,7 +51,7 @@ public class HardTokenData implements Serializable, Comparable<HardTokenData> {
                          int tokentype, String significantIssuerDN, HardToken hardtoken, String copyof,
                          Collection<String> copies){
       this.tokensn=tokensn;
-      this.username=StringTools.stripInternal(username);
+      this.username=StringTools.strip(username);
       this.createtime=createtime;
       this.modifytime=modifytime;
       this.tokentype=tokentype;
@@ -70,7 +70,7 @@ public class HardTokenData implements Serializable, Comparable<HardTokenData> {
     public void setTokenSN(String tokensn){ this.tokensn=tokensn; }
 
     public String getUsername(){ return this.username; }
-    public void setUsername(String username){ this.username=StringTools.stripInternal(username); }
+    public void setUsername(String username){ this.username=StringTools.strip(username); }
 
     public Date getCreateTime(){ return this.createtime; }
     public void setCreateTime(Date createtime){ this.createtime=createtime; }

@@ -1790,7 +1790,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
             throws CryptoTokenAuthenticationFailedException, CryptoTokenOfflineException, IllegalCryptoTokenException, CADoesntExistsException,
             AuthorizationDeniedException, CAExistsException {
         // Transform into token
-        final int tokenId = StringTools.stripCertificate(CertTools.getSubjectDN(signatureCertChain[0])).hashCode(); // caid
+        int tokenId = StringTools.strip(CertTools.getSubjectDN(signatureCertChain[0])).hashCode(); // caid
         CAToken catoken = importKeysToCAToken(keystorepass, null, p12PrivateSignatureKey, p12PublicSignatureKey, p12PrivateEncryptionKey,
                 p12PublicEncryptionKey, signatureCertChain, tokenId);
         log.debug("CA-Info: " + catoken.getTokenInfo().getSignatureAlgorithm() + " " + catoken.getTokenInfo().getEncryptionAlgorithm());
@@ -1931,7 +1931,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
             String catokenclasspath, String catokenproperties) throws CryptoTokenOfflineException, CryptoTokenAuthenticationFailedException,
             IllegalCryptoTokenException, CADoesntExistsException, AuthorizationDeniedException, CAExistsException {
         Certificate cacert = signatureCertChain[0];
-        final int caId = StringTools.stripCertificate(CertTools.getSubjectDN(cacert)).hashCode();
+        int caId = StringTools.strip(CertTools.getSubjectDN(cacert)).hashCode();
         // Just convert string properties in a standard way...
         CATokenInfo info = new CATokenInfo();
         info.setProperties(catokenproperties);
