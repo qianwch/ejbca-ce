@@ -254,6 +254,14 @@ public final class CesecoreConfiguration {
      * @return all forbidden characters.
      */
     public static char[] getForbiddenCertificateCharacters() {
-        return ConfigurationHolder.getString("forbidden.characters").trim().toCharArray();
+        final String key = "forbidden.characters";
+        // Using 'instance().getString' instead of 'getString' since an empty
+        // String (size 0) must be returned when the property is defined without
+        // any value.
+        final String s = ConfigurationHolder.instance().getString(key);
+        if (s==null) {
+            return ConfigurationHolder.getDefaultValue(key).toCharArray();
+        }
+        return s.toCharArray();
     }
 }
