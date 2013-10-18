@@ -129,7 +129,7 @@ public class EjbcaWSTest extends CommonEjbcaWS {
     
     private static String originalForbiddenChars;
     private final static SecureRandom secureRandom;
-    private final static String forbiddenCharsKey = "ca.certificate.forbiddenChars";
+    private final static String forbiddenCharsKey = "forbidden.characters";
     static {
         try {
             secureRandom = SecureRandom.getInstance("SHA1PRNG");

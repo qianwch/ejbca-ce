@@ -226,8 +226,7 @@ public final class StringTools {
                 // to be negative. When it gets promoted to int, bits 0 through 7 will be the
                 // same as the byte, and bits 8 through 31 will be set to 1. So the bitwise
                 // AND with 0x000000FF clears out all of those bits.
-                // Note that this could have been written more compactly as; 0xFF & buf[index]
-                final int intByte = (0x000000FF & (octets[i]));
+                final int intByte = 0x000000FF & octets[i];
                 final short t = (short) intByte; // NOPMD, we need short
                 if (StringUtils.isNotEmpty(ip)) {
                     ip += ".";
