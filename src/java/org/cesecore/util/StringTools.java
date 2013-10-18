@@ -59,8 +59,6 @@ public final class StringTools {
     private StringTools() {
     } // Not for instantiation
 
-    // Characters that are not allowed in strings that may be stored in the db.
-    private static final char[] stripChars = { '\n', '\r', ';', '!', '\0', '%', '`', '?', '$', '~' };
     // Characters that are not allowed in strings that may be stored in the db, including Xss chars (< and >)
     private static final char[] stripCharsIncludingXSS = { '\n', '\r', ';', '!', '\0', '%', '`', '?', '$', '~', '<', '>' };
     // Characters that are not allowed in strings that may be used in db queries
@@ -85,7 +83,7 @@ public final class StringTools {
      * @return the stripped version of the input string.
      */
     public static String strip(final String str) {
-    	return strip(str, CesecoreConfiguration.getForbiddenCertificateCharacters(stripChars) );
+    	return strip(str, CesecoreConfiguration.getForbiddenCertificateCharacters());
     }
 
     /**
@@ -150,7 +148,7 @@ public final class StringTools {
      * @see #strip
      */
     public static boolean hasStripChars(final String str) {
-    	return hasStripChars(str, CesecoreConfiguration.getForbiddenCertificateCharacters(stripChars));
+    	return hasStripChars(str, CesecoreConfiguration.getForbiddenCertificateCharacters());
     }
     
     private static boolean hasStripChars(final String str, char[] checkThese) {

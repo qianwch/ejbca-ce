@@ -51,11 +51,13 @@
 
 # Forbidden characters in DB. None of these characters will be stored in the DB.
 # Example of strings affected by this:
-# * usernames
+# * user names
 # * issuer and subject DN of certificates.
 # * profile names
 # When one of these characters is found in any string that should be stored in
 # the DB it will be replaced by a forward slash (/).
+# It will also be impossible to use any of these characters in any field of a
+# certificate (like issuer or subject DN).
 # It is strongly discouraged to change this property. Instead set it to the
 # desired value before you install EJBCA.
 # If you change these characters later it might be that some search for a string
@@ -69,9 +71,9 @@
 # The property value is a string with all forbidden characters concatenated
 # (without any space). Note that '\' is an escape character.
 # So the default will be:
-#ca.certificate.forbiddenChars = \n\r;!\u0000%`?$~
+#forbidden.characters = \n\r;!\u0000%`?$~
 # And nothing forbidden will be:
-#ca.certificate.forbiddenChars =
+#forbidden.characters  =
 
 # ------------- Core language configuration -------------
 # The language that should be used internally for logging, exceptions and approval notifications.
