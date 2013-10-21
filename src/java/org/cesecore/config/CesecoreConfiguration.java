@@ -253,7 +253,7 @@ public final class CesecoreConfiguration {
      * Characters forbidden in fields to be stored in the DB.
      * @return all forbidden characters.
      */
-    public static char[] getForbiddenCertificateCharacters() {
+    public static char[] getForbiddenCharacters() {
         final String key = "forbidden.characters";
         // Using 'instance().getString' instead of 'getString' since an empty
         // String (size 0) must be returned when the property is defined without

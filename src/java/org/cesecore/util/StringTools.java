@@ -83,7 +83,7 @@ public final class StringTools {
      * @return the stripped version of the input string.
      */
     public static String strip(final String str) {
-    	return strip(str, CesecoreConfiguration.getForbiddenCertificateCharacters());
+    	return strip(str, CesecoreConfiguration.getForbiddenCharacters());
     }
 
     /**
@@ -148,7 +148,7 @@ public final class StringTools {
      * @see #strip
      */
     public static boolean hasStripChars(final String str) {
-    	return hasStripChars(str, CesecoreConfiguration.getForbiddenCertificateCharacters());
+    	return hasStripChars(str, CesecoreConfiguration.getForbiddenCharacters());
     }
     
     private static boolean hasStripChars(final String str, char[] checkThese) {
