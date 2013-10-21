@@ -309,5 +309,21 @@ public final class CesecoreConfiguration {
     public static boolean getCaKeepOcspExtendedService() {
         return Boolean.valueOf(ConfigurationHolder.getString("ca.keepocspextendedservice").toLowerCase());
     }
+
+    /**
+     * Characters forbidden in fields to be stored in the DB.
+     * @return all forbidden characters.
+     */
+    public static char[] getForbiddenCharacters() {
+        final String key = "forbidden.characters";
+        // Using 'instance().getString' instead of 'getString' since an empty
+        // String (size 0) must be returned when the property is defined without
+        // any value.
+        final String s = ConfigurationHolder.instance().getString(key);
+        if (s==null) {
+            return ConfigurationHolder.getDefaultValue(key).toCharArray();
+        }
+        return s.toCharArray();
+    }
 }
 
