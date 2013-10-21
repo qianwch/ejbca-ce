@@ -68,6 +68,7 @@ import org.cesecore.mock.authentication.tokens.TestAlwaysAllowLocalAuthenticatio
 import org.cesecore.util.CertTools;
 import org.cesecore.util.CryptoProviderTools;
 import org.cesecore.util.EjbRemoteHelper;
+import org.cesecore.util.StringTools;
 import org.ejbca.config.CmpConfiguration;
 import org.ejbca.config.Configuration;
 import org.ejbca.config.GlobalConfiguration;
@@ -164,6 +165,8 @@ public class CrmfRARequestTest extends CmpTestCase {
         globalConfSession.saveConfiguration(admin, cmpConfiguration, Configuration.CMPConfigID);
 
         CryptoProviderTools.installBCProvider();
+        
+        caSession.removeCA(admin, issuerDN.hashCode());
         
         int keyusage = X509KeyUsage.digitalSignature + X509KeyUsage.keyCertSign + X509KeyUsage.cRLSign;
         testx509ca = CaSessionTest.createTestX509CA(issuerDN, null, false, keyusage);
@@ -669,6 +672,43 @@ public class CrmfRARequestTest extends CmpTestCase {
             removeTestCA("TESTECDSA");
         }
     }
+
+    @Test
+    public void test07EscapedCharsInDN() throws Exception {
+
+        final String username = "another\0nullguy%00";
+        final String userDN = "CN=" + username + ", C=SE";
+        
+        final byte[] nonce = CmpMessageHelper.createSenderNonce();
+        final byte[] transid = CmpMessageHelper.createSenderNonce();
+        final KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
+
+        final int reqId;
+        try {
+        final PKIMessage one = genCertReq(issuerDN, userDN, keys, cacert, nonce, transid, true, null, null, null, null, null, null);
+        final PKIMessage req = protectPKIMessage(one, false, PBEPASSWORD, 567);
+        
+        CertReqMessages ir = (CertReqMessages) req.getBody().getContent();
+        reqId = ir.toCertReqMsgArray()[0].getCertReq().getCertReqId().getValue().intValue();
+        Assert.assertNotNull(req);
+        final ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        final DEROutputStream out = new DEROutputStream(bao);
+        out.writeObject(req);
+        final byte[] ba = bao.toByteArray();
+        // Send request and receive response
+        final byte[] resp = sendCmpHttp(ba, 200, cmpAlias);
+        // do not check signing if we expect a failure (sFailMessage==null)
+        checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, true, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
+        checkCmpCertRepMessage(StringTools.strip(userDN), cacert, resp, reqId);
+        } finally {
+            String escapedName = StringTools.strip(username);
+            try {
+                endEntityManagementSession.revokeAndDeleteUser(admin, escapedName, RevokedCertInfo.REVOCATION_REASON_UNSPECIFIED);
+            } catch (NotFoundException e) {
+                log.debug("Failed to delete user: " + escapedName);
+            }
+        }
+    } 
 
     @After
     public void tearDown() throws Exception {

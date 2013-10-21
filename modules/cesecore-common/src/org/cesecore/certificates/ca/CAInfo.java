@@ -113,7 +113,7 @@ public abstract class CAInfo implements Serializable {
 	protected boolean useCertificateStorage;
     
     public String getSubjectDN() {return subjectdn;}
-    public void setSubjectDN(final String subjectdn) {this.subjectdn = CertTools.stringToBCDNString(StringTools.stripCertificate(subjectdn));}
+    public void setSubjectDN(final String subjectdn) {this.subjectdn = CertTools.stringToBCDNString(StringTools.strip(subjectdn));}
     public int getCAId(){return this.caid;}
     public void setCAId(final int caid){this.caid = caid;}
     public String getName() {return this.name;}

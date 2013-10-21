@@ -44,6 +44,7 @@ import org.cesecore.certificates.endentity.EndEntityTypes;
 import org.cesecore.certificates.endentity.ExtendedInformation;
 import org.cesecore.certificates.util.AlgorithmTools;
 import org.cesecore.util.CertTools;
+import org.cesecore.util.StringTools;
 import org.ejbca.config.CmpConfiguration;
 import org.ejbca.config.Configuration;
 import org.ejbca.core.EjbcaException;
@@ -63,7 +64,6 @@ import org.ejbca.core.model.ra.UsernameGeneratorParams;
 import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
 import org.ejbca.core.protocol.ExtendedUserDataHandler;
 import org.ejbca.core.protocol.ExtendedUserDataHandler.HandlerException;
-import org.ejbca.core.protocol.cmp.authentication.CMPAuthenticationException;
 import org.ejbca.core.protocol.cmp.authentication.HMACAuthenticationModule;
 import org.ejbca.core.protocol.cmp.authentication.ICMPAuthenticationModule;
 import org.ejbca.core.protocol.cmp.authentication.VerifyPKIMessage;
@@ -232,15 +232,18 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 						}
 						crmfreq.setUsername(data.getUsername());
                         
-						try {
-						    ICMPAuthenticationModule authenticationModule = verifyAndGetAuthModule(msg, crmfreq, data.getUsername(), 0, authenticated);
-						    crmfreq.setPassword(authenticationModule.getAuthenticationString());
-						} catch(CMPAuthenticationException e) {
-						    LOG.info(e.getLocalizedMessage(), e);
-						    return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_MESSAGE_CHECK, e.getLocalizedMessage());
+						
+						final VerifyPKIMessage messageVerifyer = new VerifyPKIMessage(null, this.confAlias, admin, caSession, 
+						                endEntityAccessSession, certStoreSession, authorizationSession, endEntityProfileSession, 
+						                authenticationProviderSession, eeManagementSession, this.cmpConfiguration);
+						ICMPAuthenticationModule authenticationModule = messageVerifyer.getUsedAuthenticationModule(crmfreq.getPKIMessage(),  username,  authenticated);
+						if(authenticationModule == null) {
+						    String errmsg = messageVerifyer.getErrorMessage();
+						    LOG.info(errmsg);
+						    return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_MESSAGE_CHECK, errmsg);
 						}
 						
-			              // Get the certificate
+						crmfreq.setPassword(authenticationModule.getAuthenticationString());
 		                if(crmfreq.getHeader().getProtectionAlg() != null) {
 		                    crmfreq.setPreferredDigestAlg(AlgorithmTools.getDigestFromSigAlg(crmfreq.getHeader().getProtectionAlg().getAlgorithm().getId()));
 		                }
@@ -340,13 +343,17 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 
         ResponseMessage resp = null; // The CMP response message to be sent back to the client
         //Check the request's authenticity
-        ICMPAuthenticationModule authenticationModule = null;
-        try {
-            authenticationModule = verifyAndGetAuthModule(msg, crmfreq, null, caId, authenticated);
-        } catch(CMPAuthenticationException e) {
-            LOG.info(e.getLocalizedMessage(), e);
-            return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_MESSAGE_CHECK, e.getLocalizedMessage());
+        CAInfo cainfo = this.caSession.getCAInfoInternal(caId, null, true);
+        final VerifyPKIMessage messageVerifyer = new VerifyPKIMessage(cainfo, this.confAlias, admin, caSession, 
+                endEntityAccessSession, certStoreSession, authorizationSession, endEntityProfileSession, 
+                authenticationProviderSession, eeManagementSession, this.cmpConfiguration);
+        ICMPAuthenticationModule authenticationModule = messageVerifyer.getUsedAuthenticationModule(crmfreq.getPKIMessage(),  null,  authenticated);
+        if(authenticationModule == null) {
+            String errmsg = messageVerifyer.getErrorMessage();
+            LOG.info(errmsg);
+            return CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_MESSAGE_CHECK, errmsg);
         }
+        
         
         // TODO this is a very NOT neat way to do this but it is temporary because the use of KeyId is deprecated
         // Using EMPTY and/or ENDUSER as 'KeyId' is not permissible in HMAC authentication module for security reason. But since multiple authentication modules can be 
@@ -372,7 +379,7 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 			if (LOG.isDebugEnabled()) {
 				LOG.debug("Creating username from base dn: "+dnname.toString());
 			}
-			final String username = gen.generateUsername(dnname.toString());
+			final String username = StringTools.strip(gen.generateUsername(dnname.toString()));
 			final String pwd;
             if(StringUtils.equals(authenticationModule.getName(), CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE)) {
                 pwd = authenticationModule.getAuthenticationString();
@@ -478,35 +485,6 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 			resp = CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_MESSAGE_CHECK, e.getMessage());
 		}
 		return resp;
-	}
-	
-	/**
-	 * 
-	 * @param msg
-	 * @param crmfreq
-	 * @param username
-	 * @param caId
-	 * @param authenticated if the CMP message has already been authenticated in another way or not
-	 * @return
-	 * @throws CADoesntExistsException
-	 * @throws AuthorizationDeniedException
-	 * @throws CMPAuthenticationException 
-	 */
-	private ICMPAuthenticationModule verifyAndGetAuthModule(final BaseCmpMessage msg, final CrmfRequestMessage crmfreq, final String username, 
-	                            final int caId, boolean authenticated) throws CADoesntExistsException, AuthorizationDeniedException, CMPAuthenticationException {
-        final CAInfo caInfo;
-        if (caId == 0) {
-            caInfo = null;
-        } else {
-            // No need for access control here for internal verification of message, access control is done when we want to use
-            // the CA to issue a cert
-            caInfo = this.caSession.getCAInfoInternal(caId, null, true);   
-        }
-		final VerifyPKIMessage messageVerifyer = new VerifyPKIMessage(caInfo, this.confAlias, admin, caSession, endEntityAccessSession, certStoreSession, authorizationSession, 
-		                endEntityProfileSession, authenticationProviderSession, eeManagementSession, this.cmpConfiguration);
-		
-		messageVerifyer.verify(crmfreq.getPKIMessage(),  username,  authenticated);
-		return messageVerifyer.getUsedAuthenticationModule();
 	}
 	
 	private EndEntityInformation getUserDataByDN(String dn) throws AuthorizationDeniedException {

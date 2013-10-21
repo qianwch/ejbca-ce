@@ -261,10 +261,10 @@ public class EndEntityManagementSessionBean implements EndEntityManagementSessio
             throw new EjbcaException(ErrorCode.FIELD_VALUE_NOT_VALID, e1.getMessage(), e1);
         }
         
-        final String dn = CertTools.stringToBCDNString(StringTools.stripCertificate(endEntity.getDN()));
+        final String dn = CertTools.stringToBCDNString(StringTools.strip(endEntity.getDN()));
         endEntity.setDN(dn);
-        endEntity.setSubjectAltName(StringTools.stripCertificate(endEntity.getSubjectAltName()));
-        endEntity.setEmail(StringTools.stripCertificate(endEntity.getEmail()));
+        endEntity.setSubjectAltName(StringTools.strip(endEntity.getSubjectAltName()));
+        endEntity.setEmail(StringTools.strip(endEntity.getEmail()));
     }
 
     // TODO: Try to throw an application exception instead if the PersistenceException, since this becomes
@@ -495,7 +495,7 @@ public class EndEntityManagementSessionBean implements EndEntityManagementSessio
         } catch (CustomFieldException e) {
             throw new EjbcaException(ErrorCode.FIELD_VALUE_NOT_VALID, e.getMessage(), e);
         }
-        String dn = CertTools.stringToBCDNString(StringTools.stripCertificate(endEntityInformation.getDN()));
+        String dn = CertTools.stringToBCDNString(StringTools.strip(endEntityInformation.getDN()));
         String altName = endEntityInformation.getSubjectAltName();
         if (log.isTraceEnabled()) {
             log.trace(">changeUser(" + username + ", " + dn + ", " + endEntityInformation.getEmail() + ")");
@@ -1567,8 +1567,8 @@ public class EndEntityManagementSessionBean implements EndEntityManagementSessio
             log.trace(">query(): withlimit=" + withlimit);
         }
         boolean authorizedtoanyprofile = true;
-        final String caauthorizationstring = StringTools.stripInternal(caauthorizationstr);
-        final String endentityprofilestring = StringTools.stripInternal(endentityprofilestr);
+        final String caauthorizationstring = StringTools.strip(caauthorizationstr);
+        final String endentityprofilestring = StringTools.strip(endentityprofilestr);
         final ArrayList<EndEntityInformation> returnval = new ArrayList<EndEntityInformation>();
         int fetchsize = EndEntityManagementConstants.MAXIMUM_QUERY_ROWCOUNT;
 

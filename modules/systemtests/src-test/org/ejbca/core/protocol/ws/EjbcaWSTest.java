@@ -19,7 +19,6 @@ import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
@@ -53,7 +52,6 @@ import org.cesecore.certificates.certificateprofile.CertificateProfile;
 import org.cesecore.certificates.certificateprofile.CertificateProfileConstants;
 import org.cesecore.certificates.crl.RevokedCertInfo;
 import org.cesecore.certificates.endentity.EndEntityInformation;
-import org.cesecore.configuration.CesecoreConfigurationProxySessionRemote;
 import org.cesecore.certificates.endentity.EndEntityType;
 import org.cesecore.certificates.endentity.EndEntityTypes;
 import org.cesecore.certificates.endentity.ExtendedInformation;
@@ -127,25 +125,13 @@ public class EjbcaWSTest extends CommonEjbcaWS {
     private final EndEntityAccessSessionRemote endEntityAccessSession = EjbRemoteHelper.INSTANCE.getRemoteSession(EndEntityAccessSessionRemote.class);
     private final HardTokenSessionRemote hardTokenSessionRemote = EjbRemoteHelper.INSTANCE.getRemoteSession(HardTokenSessionRemote.class);
     private final GlobalConfigurationSessionRemote raAdminSession = EjbRemoteHelper.INSTANCE.getRemoteSession(GlobalConfigurationSessionRemote.class);
-    private static final CesecoreConfigurationProxySessionRemote cesecoreConfigurationProxySession = EjbRemoteHelper.INSTANCE.getRemoteSession(CesecoreConfigurationProxySessionRemote.class);
     
     private final SimpleAuthenticationProviderSessionRemote simpleAuthenticationProvider = EjbRemoteHelper.INSTANCE.getRemoteSession(SimpleAuthenticationProviderSessionRemote.class, EjbRemoteHelper.MODULE_TEST);
-
-    private static String originalForbiddenChars;
-    private final static SecureRandom secureRandom;
-    private final static String forbiddenCharsKey = "ca.certificate.forbiddenChars";
-    static {
-        try {
-            secureRandom = SecureRandom.getInstance("SHA1PRNG");
-        } catch (NoSuchAlgorithmException e) {
-            throw new Error(e);
-        }
-    }
+    
 
     @BeforeClass
     public static void beforeClass() throws Exception {
     	adminBeforeClass();
-    	originalForbiddenChars = cesecoreConfigurationProxySession.getConfigurationValue(forbiddenCharsKey);
     	setupAccessRights(WS_ADMIN_ROLENAME);
     }
 
@@ -158,7 +144,6 @@ public class EjbcaWSTest extends CommonEjbcaWS {
     public static void afterClass() throws Exception {
         cleanUpAdmins(WS_ADMIN_ROLENAME);
         cleanUpAdmins(WS_TEST_ROLENAME);
-        cesecoreConfigurationProxySession.setConfigurationValue(forbiddenCharsKey, originalForbiddenChars);
     }
 
     @Override
@@ -307,7 +292,7 @@ public class EjbcaWSTest extends CommonEjbcaWS {
         final String ERRORNOTSUPPORTEDSUCCEEDED = "Reactivation of users is not supported, but succeeded anyway.";
 
         // Generate random username and CA name
-        String randomPostfix = Integer.toString(secureRandom.nextInt(999999));
+        String randomPostfix = Integer.toString(SecureRandom.getInstance("SHA1PRNG").nextInt(999999));
         String caname = "wsRevocationCA" + randomPostfix;
         String username = "wsRevocationUser" + randomPostfix;
         int cryptoTokenId = 0;
@@ -629,10 +614,8 @@ public class EjbcaWSTest extends CommonEjbcaWS {
      */
     @Test
     public void test41CertificateRequestWithSpecialChars01() throws Exception {
-        long rnd = secureRandom.nextLong();
-        testCertificateRequestWithSpecialChars(
-                "CN=test" + rnd + ", O=foo\\+bar\\\"\\,, C=SE",
-                "CN=test" + rnd + ",O=foo\\+bar\\\"\\,,C=SE");
+        long rnd = new SecureRandom().nextLong();
+        testCertificateRequestWithSpecialChars("CN=test" + rnd + ", O=foo\\+bar\\\"\\,, C=SE", "CN=test" + rnd + ",O=foo\\+bar\\\"\\,,C=SE");
     }
 
     /**
@@ -641,10 +624,8 @@ public class EjbcaWSTest extends CommonEjbcaWS {
      */
     @Test
     public void test42CertificateRequestWithSpecialChars02() throws Exception {
-        long rnd = secureRandom.nextLong();
-        testCertificateRequestWithSpecialChars(
-                "CN=test" + rnd + ",O=foo/bar\\;123, C=SE",
-                "CN=test" + rnd + ",O=foo/bar\\;123,C=SE");
+        long rnd = new SecureRandom().nextLong();
+        testCertificateRequestWithSpecialChars("CN=test" + rnd + ", O=foo;bar\\;123, C=SE", "CN=test" + rnd + ",O=foo/bar\\;123,C=SE");
     }
 
     /**
@@ -653,10 +634,8 @@ public class EjbcaWSTest extends CommonEjbcaWS {
      */
     @Test
     public void test43CertificateRequestWithSpecialChars03() throws Exception {
-        long rnd = secureRandom.nextLong();
-        testCertificateRequestWithSpecialChars(
-                "CN=test" + rnd + ", O=foo+bar\\+123, C=SE",
-                "CN=test" + rnd + ",O=foo\\+bar\\+123,C=SE");
+        long rnd = new SecureRandom().nextLong();
+        testCertificateRequestWithSpecialChars("CN=test" + rnd + ", O=foo+bar\\+123, C=SE", "CN=test" + rnd + ",O=foo\\+bar\\+123,C=SE");
     }
 
     /**
@@ -665,10 +644,8 @@ public class EjbcaWSTest extends CommonEjbcaWS {
      */
     @Test
     public void test44CertificateRequestWithSpecialChars04() throws Exception {
-        long rnd = secureRandom.nextLong();
-        testCertificateRequestWithSpecialChars(
-                "CN=test" + rnd + ", O=foo\\=bar, C=SE",
-                "CN=test" + rnd + ",O=foo\\=bar,C=SE");
+        long rnd = new SecureRandom().nextLong();
+        testCertificateRequestWithSpecialChars("CN=test" + rnd + ", O=foo\\=bar, C=SE", "CN=test" + rnd + ",O=foo\\=bar,C=SE");
     }
 
     /**
@@ -677,10 +654,8 @@ public class EjbcaWSTest extends CommonEjbcaWS {
      */
     @Test
     public void test45CertificateRequestWithSpecialChars05() throws Exception {
-        long rnd = secureRandom.nextLong();
-        testCertificateRequestWithSpecialChars(
-                "CN=test" + rnd + ", O=\"foo=bar, C=SE\"",
-                "CN=test" + rnd + ",O=foo\\=bar\\, C\\=SE");
+        long rnd = new SecureRandom().nextLong();
+        testCertificateRequestWithSpecialChars("CN=test" + rnd + ", O=\"foo=bar, C=SE\"", "CN=test" + rnd + ",O=foo\\=bar\\, C\\=SE");
     }
 
     /**
@@ -689,7 +664,7 @@ public class EjbcaWSTest extends CommonEjbcaWS {
      */
     @Test
     public void test46CertificateRequestWithSpecialChars06() throws Exception {
-        long rnd = secureRandom.nextLong();
+        long rnd = new SecureRandom().nextLong();
         testCertificateRequestWithSpecialChars(
                 "CN=test" + rnd + ", O=\"foo+b\\+ar, C=SE\"",
                 "CN=test" + rnd + ",O=foo\\+b\\+ar\\, C\\=SE");
@@ -701,69 +676,11 @@ public class EjbcaWSTest extends CommonEjbcaWS {
      */
     @Test
     public void test47CertificateRequestWithSpecialChars07() throws Exception {
-        long rnd = secureRandom.nextLong();
+        long rnd = new SecureRandom().nextLong();
         testCertificateRequestWithSpecialChars(
                 "CN=test" + rnd + ", O=\\\"foo+b\\+ar\\, C=SE\\\"",
                 "CN=test" + rnd + ",O=\\\"foo\\+b\\+ar\\, C\\=SE\\\"");
     }
-
-    /**
-     * Test that all but one default certificate forbidden characters are substituted
-     * with '/'.
-     * The one not tested is the null character ('\0'). It is not tested since
-     * it is not a valid xml character so the WS protocol can not handle it.
-     */
-    @Test
-    public void test48CertificateRequestWithForbiddenCharsDefault() throws Exception {
-        long rnd = secureRandom.nextLong();
-        cesecoreConfigurationProxySession.setConfigurationValue(forbiddenCharsKey, null);
-        testCertificateRequestWithSpecialChars(
-                "CN=test" + rnd + ",O=|\n|\r|;|A|!|`|?|$|~|, C=SE",
-                "CN=test" + rnd +   ",O=|/|/|/|A|/|/|/|/|/|,C=SE");
-    }
-
-    /**
-     * Same as {@link #test48CertificateRequestWithForbiddenCharsDefault()} but setting
-     * default values in config.
-     */
-    @Test
-    public void test49CertificateRequestWithForbiddenCharsDefinedAsDefault() throws Exception {
-        long rnd = secureRandom.nextLong();
-        cesecoreConfigurationProxySession.setConfigurationValue(forbiddenCharsKey, "\n\r;!\u0000%`?$~");
-        testCertificateRequestWithSpecialChars(
-                "CN=test" + rnd + ",O=|\n|\r|;|A|!|`|?|$|~|, C=SE",
-                "CN=test" + rnd +   ",O=|/|/|/|A|/|/|/|/|/|,C=SE");
-    }
-
-    /**
-     * Test to define some forbidden chars.
-     */
-    @Test
-    public void test50CertificateRequestWithForbiddenCharsDefinedBogus() throws Exception {
-        long rnd = secureRandom.nextLong();
-        cesecoreConfigurationProxySession.setConfigurationValue(forbiddenCharsKey, "tset");
-        try {
-            testCertificateRequestWithSpecialChars(
-                    "CN=test" + rnd +   ",O=|\n|\r|;|A|!|`|?|$|~|, C=SE",
-                    "CN=////" + rnd + ",O=|\n|\r|\\;|A|!|`|?|$|~|,C=SE");
-        } finally {
-            // we must remove this bogus settings otherwise next setupAdmin() will fail
-            cesecoreConfigurationProxySession.setConfigurationValue(forbiddenCharsKey, "");
-        }
-    }
-
-    /**
-     * Test that no forbidden chars work
-     */
-    @Test
-    public void test51CertificateRequestWithNoForbiddenChars() throws Exception {
-        long rnd = secureRandom.nextLong();
-        cesecoreConfigurationProxySession.setConfigurationValue(forbiddenCharsKey, "");
-        testCertificateRequestWithSpecialChars(
-                "CN=test" + rnd +   ",O=|\n|\r|;|A|!|`|?|$|~|, C=SE",
-                "CN=test" + rnd + ",O=|\n|\r|\\;|A|!|`|?|$|~|,C=SE");
-    }
-
 
     /**
      * Tests that the provided cardnumber is stored in the EndEntityInformation 
@@ -772,8 +689,8 @@ public class EjbcaWSTest extends CommonEjbcaWS {
      * @throws Exception in case of error
      */
     @Test
-    public void test52CertificateRequestWithCardNumber() throws Exception {
-    	String userName = "wsRequestCardNumber" + secureRandom.nextLong();
+    public void test48CertificateRequestWithCardNumber() throws Exception {
+    	String userName = "wsRequestCardNumber" + new SecureRandom().nextLong();
     	
     	// Generate a CSR
     	KeyPair keys = KeyTools.genKeys("1024", AlgorithmConstants.KEYALGORITHM_RSA);
@@ -786,7 +703,7 @@ public class EjbcaWSTest extends CommonEjbcaWS {
         userData.setUsername(userName);
         userData.setPassword(PASSWORD);
         userData.setClearPwd(true);
-        userData.setSubjectDN("CN=test" + secureRandom.nextLong() + ", UID=" + userName + ", O=Test, C=SE");
+        userData.setSubjectDN("CN=test" + new SecureRandom().nextLong() + ", UID=" + userName + ", O=Test, C=SE");
         userData.setCaName(getAdminCAName());
         userData.setEmail(null);
         userData.setSubjectAltName(null);
@@ -816,7 +733,7 @@ public class EjbcaWSTest extends CommonEjbcaWS {
     }
 
     private void testCertificateRequestWithSpecialChars(String requestedSubjectDN, String expectedSubjectDN) throws Exception {
-        String userName = "wsSpecialChars" + secureRandom.nextLong();
+        String userName = "wsSpecialChars" + new SecureRandom().nextLong();
         final UserDataVOWS userData = new UserDataVOWS();
         userData.setUsername(userName);
         userData.setPassword(PASSWORD);

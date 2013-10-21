@@ -21,6 +21,8 @@ import java.security.Signature;
 import java.security.SignatureException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateExpiredException;
+import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 import java.util.HashSet;
 import java.util.Set;
@@ -52,7 +54,6 @@ import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileSession;
 import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.approval.WaitingForApprovalException;
 import org.ejbca.core.model.authorization.AccessRulesConstants;
-import org.ejbca.core.model.ra.NotFoundException;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfileNotFoundException;
 import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
 import org.ejbca.core.protocol.cmp.CmpMessageHelper;
@@ -72,9 +73,11 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
     
     private String authenticationparameter;
     private String password;
+    private String errorMessage;
     private Certificate extraCert;
     private String confAlias;
     private CmpConfiguration cmpConfiguration;
+    private boolean authenticated;
 
     private AuthenticationToken admin;
     private CaSession caSession;
@@ -85,15 +88,18 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
     private WebAuthenticationProviderSessionLocal authenticationProviderSession;
     private EndEntityManagementSession eeManagementSession;
 
-    public EndEntityCertificateAuthenticationModule( final AuthenticationToken admin, String authparam, String confAlias, CmpConfiguration cmpConfig, 
+    public EndEntityCertificateAuthenticationModule( final AuthenticationToken admin, String authparam, String confAlias, 
+            CmpConfiguration cmpConfig, boolean authenticated, 
             final CaSession caSession, final CertificateStoreSession certSession, final AccessControlSession authSession, 
             final EndEntityProfileSession eeprofSession, final EndEntityAccessSession eeaccessSession, 
             final WebAuthenticationProviderSessionLocal authProvSession, final EndEntityManagementSession endEntityManagementSession) {
         authenticationparameter = authparam;
         password = null;
+        errorMessage = null;
         extraCert = null;
         this.confAlias = confAlias;
         this.cmpConfiguration = cmpConfig;
+        this.authenticated = authenticated;
         
         this.admin = admin;
         this.caSession = caSession;
@@ -117,12 +123,21 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
     /**
      * Returns the password resulted from the verification process.
      * 
-     * This password is set if verify() returns true.
+     * This password is set if verifyOrExtract() returns true.
      * 
      * @return The password as String. Null if the verification had failed.
      */
     public String getAuthenticationString() {
         return this.password;
+    }
+    
+    /**
+     * Return the error message if the verification (verifyOrExtract()) had failed
+     * 
+     * @return The error message if the message verification failed. Null otherwise
+     */
+    public String getErrorMessage() {
+        return this.errorMessage;
     }
     
     /**
@@ -168,29 +183,27 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
     }
     
     /**
-     * Verifies the signature of 'msg'. msg should be signed by an authorized administrator in EJBCA and 
-     * the administrator's cerfificate should be attached in msg in the extraCert field.  
+     * Verifies the signature of 'msg'. msg should be signed and the signer's certificate should be  
+     * attached in msg in the extraCert field.  
      * 
-     * When successful, the password is set to the randomly generated 16-digit String.
-     * When failed, the error message is set.
+     * When successful, the authentication string is set.
      * 
      * @param msg PKIMessage
      * @param username
-     * @param authenticated
-     * @return true if the message signature was verified successfully and false otherwise.
-     * @throws CMPAuthenticationException 
      */
-    public boolean verifyOrExtract(final PKIMessage msg, final String username, boolean authenticated) throws CMPAuthenticationException {
+    public boolean verifyOrExtract(final PKIMessage msg, final String username) {
         
         //Check that msg is signed
         if(msg.getProtection() == null) {
-            throw new CMPAuthenticationException("PKI Message is not athenticated properly. No PKI protection is found.");
+            this.errorMessage = "PKI Message is not athenticated properly. No PKI protection is found.";
+            return false;
         }
         
         // Read the extraCert and store it in a local variable
         extraCert = getExtraCert(msg);
         if(extraCert == null) {
-            throw new CMPAuthenticationException("Error while reading the certificate in the extraCert field");
+            this.errorMessage = "Error while reading the certificate in the extraCert field";
+            return false;
         }
         
         boolean vendormode = isVendorCertificateMode(msg.getBody().getType());
@@ -209,11 +222,13 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
 
         // Unaccepted combinations. Throw an exception
         if(ramode && vendormode) {
-            throw new CMPAuthenticationException("Vendor mode and RA mode cannot be combined");
+            this.errorMessage = "Vendor mode and RA mode cannot be combined";
+            return false;
         }
         if(omitVerifications && (!ramode || !authenticated)) {
-            throw new CMPAuthenticationException("Omitting some verifications can only be accepted in RA mode and when the " +
-            		                              "CMP request has already been authenticated, for example, through the use of NestedMessageContent");
+            this.errorMessage = "Omitting some verifications can only be accepted in RA mode and when the " +
+            		             "CMP request has already been authenticated, for example, through the use of NestedMessageContent";
+            return false;
         }
         
         // Accepted combinations
@@ -225,22 +240,25 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
         } else if(ramode) {
             
             // Get the CA to use for the authentication
-            CAInfo cainfo = getCAInfo(authenticationparameter, false);
+            CAInfo cainfo = getCAInfoByName(authenticationparameter);
+            if(cainfo == null)  return false;
             
             // Check that extraCert is in the Database
             CertificateInfo certinfo = certSession.getCertificateInfo(CertTools.getFingerprintAsString(extraCert));
             if(certinfo == null) {
-                throw new CMPAuthenticationException("The certificate attached to the PKIMessage in the extraCert field could not be found in the database.");
+                this.errorMessage = "The certificate attached to the PKIMessage in the extraCert field could not be found in the database.";
+                return false;
             }
             
             // More extraCert verifications
-            checkExtraCertIssuedByCA(cainfo);
-            checkExtraCertIsValid();
-            checkExtraCertIsActive(certinfo);
+            if(!isExtraCertIssuedByCA(cainfo) || !isExtraCertValid() || !isExtraCertActive(certinfo)) {
+                return false;
+            }
 
             // Check that extraCert belong to an admin with sufficient access rights
             if(!isAuthorizedAdmin(certinfo, msg, cainfo.getCAId())){
-                throw new CMPAuthenticationException("'" + CertTools.getSubjectDN(extraCert) + "' is not an authorized administrator.");
+                this.errorMessage = "'" + CertTools.getSubjectDN(extraCert) + "' is not an authorized administrator.";
+                return false;
             }
 
         } else if(!ramode) { // client mode
@@ -249,8 +267,9 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
             if(vendormode) {
 
                 // Check that extraCert is issued  by a configured VendorCA
-                if(!checkExtraCertIssuedByVendorCA()) {
-                    throw new CMPAuthenticationException("The certificate in extraCert field is not issued by any of the configured Vendor CAs: " + cmpConfiguration.getVendorCA(confAlias));
+                if(!isExtraCertIssuedByVendorCA()) {
+                    this.errorMessage = "The certificate in extraCert field is not issued by any of the configured Vendor CAs: " + cmpConfiguration.getVendorCA(confAlias);
+                    return false;
                 }
                 
                 // Extract the username from extraCert to use for  further authentication
@@ -263,18 +282,19 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
             } else {
                 
                 // Get the CA to use for the authentication
-                CAInfo cainfo = getCAInfo(CertTools.getIssuerDN(extraCert), true);
+                CAInfo cainfo = getCAInfoByIssuer(CertTools.getIssuerDN(extraCert));
 
                 // Check that extraCert is in the Database
                 CertificateInfo certinfo = certSession.getCertificateInfo(CertTools.getFingerprintAsString(extraCert));
                 if(certinfo == null) {
-                    throw new CMPAuthenticationException("The certificate attached to the PKIMessage in the extraCert field could not be found in the database.");
+                    this.errorMessage = "The certificate attached to the PKIMessage in the extraCert field could not be found in the database.";
+                    return false;
                 }
                 
                 // More extraCert verifications
-                checkExtraCertIssuedByCA(cainfo);
-                checkExtraCertIsValid();
-                checkExtraCertIsActive(certinfo);
+                if(!isExtraCertIssuedByCA(cainfo) || !isExtraCertValid() || !isExtraCertActive(certinfo)) {
+                    return false;
+                }
                 
                 // Extract the username from extraCert to use for  further authentication
                 extraCertUsername = certinfo.getUsername();
@@ -283,12 +303,12 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
             // Check if this certificate belongs to the user
             if ( (username != null) && (extraCertUsername != null) ) {
                 if (!StringUtils.equals(username, extraCertUsername)) {
-                    String errmsg = "The End Entity certificate attached to the PKIMessage in the extraCert field does not belong to user '"+username+"'";
+                    this.errorMessage = "The End Entity certificate attached to the PKIMessage in the extraCert field does not belong to user '"+username+"'";
                     if(log.isDebugEnabled()) {
                         // Use a different debug message, as not to reveal too much information
-                        log.debug(errmsg + ", but to user '"+extraCertUsername+"'");
+                        log.debug(this.errorMessage + ", but to user '"+extraCertUsername+"'");
                     }
-                    throw new CMPAuthenticationException(errmsg);
+                    return false;
                 }
                 
                 //set the password of the request to this user's password so it can later be used when issuing the certificate
@@ -308,27 +328,32 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
                     if(log.isDebugEnabled()) {
                         log.debug(e.getLocalizedMessage());
                     }
-                    throw new CMPAuthenticationException(e.getLocalizedMessage());
+                    this.errorMessage = e.getLocalizedMessage();
+                    return false;
                 } catch (CADoesntExistsException e) {
                     if(log.isDebugEnabled()) {
                         log.debug(e.getLocalizedMessage());
                     }
-                    throw new CMPAuthenticationException(e.getLocalizedMessage());
+                    this.errorMessage = e.getLocalizedMessage();
+                    return false;
                 } catch (UserDoesntFullfillEndEntityProfile e) {
                     if(log.isDebugEnabled()) {
                         log.debug(e.getLocalizedMessage());
                     }
-                    throw new CMPAuthenticationException(e.getLocalizedMessage());
+                    this.errorMessage = e.getLocalizedMessage();
+                    return false;
                 } catch (WaitingForApprovalException e) {
                     if(log.isDebugEnabled()) {
                         log.debug(e.getLocalizedMessage());
                     }
-                    throw new CMPAuthenticationException(e.getLocalizedMessage());
+                    this.errorMessage = e.getLocalizedMessage();
+                    return false;
                 } catch (EjbcaException e) {
                     if(log.isDebugEnabled()) {
                         log.debug(e.getLocalizedMessage());
                     }
-                    throw new CMPAuthenticationException(e.getLocalizedMessage());
+                    this.errorMessage = e.getLocalizedMessage();
+                    return false;
                 }
             }
         }
@@ -347,30 +372,36 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
                     password = genRandomPwd();
                 }
             } else {
-                throw new CMPAuthenticationException("Failed to verify the signature in the PKIMessage");
+                this.errorMessage = "Failed to verify the signature in the PKIMessage";
+                return false;
             }
         } catch (InvalidKeyException e) {
             if(log.isDebugEnabled()) {
                 log.debug(e.getLocalizedMessage());
             }
-            throw new CMPAuthenticationException(e.getLocalizedMessage());
+            this.errorMessage = e.getLocalizedMessage();
+            return false;
         } catch (NoSuchAlgorithmException e) {
             if(log.isDebugEnabled()) {
                 log.debug(e.getLocalizedMessage());
             }
-            throw new CMPAuthenticationException(e.getLocalizedMessage());
+            this.errorMessage = e.getLocalizedMessage();
+            return false;
         } catch (NoSuchProviderException e) {
             if(log.isDebugEnabled()) {
                 log.debug(e.getLocalizedMessage());
             }
-            throw new CMPAuthenticationException(e.getLocalizedMessage());
+            this.errorMessage = e.getLocalizedMessage();
+            return false;
         } catch (SignatureException e) {
             if(log.isDebugEnabled()) {
                 log.debug(e.getLocalizedMessage());
             }
-            throw new CMPAuthenticationException(e.getLocalizedMessage());
+            this.errorMessage = e.getLocalizedMessage();
+            return false;
         }
-        return true;
+        
+        return this.password != null;
     }
 
     /**
@@ -386,23 +417,14 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
     /**
      * Checks if cert belongs to an administrator who is authorized to process the request.
      * 
-     * @param cert
+     * @param certInfo
      * @param msg
      * @param caid
      * @return true if the administrator is authorized to process the request and false otherwise.
-     * @throws NotFoundException
-     * @throws CMPAuthenticationException 
      */
-    private boolean isAuthorizedAdmin(final CertificateInfo certInfo, final PKIMessage msg, final int caid) throws CMPAuthenticationException {
+    private boolean isAuthorizedAdmin(final CertificateInfo certInfo, final PKIMessage msg, final int caid) {
         final String username = certInfo.getUsername();
-        if(authenticationProviderSession == null) {
-            String errMsg = "WebAuthenticationProviderSession is null";
-            if(log.isDebugEnabled()) {
-                log.debug(errMsg);
-            }
-            return false;
-        }
-        
+    
         X509Certificate x509cert = (X509Certificate) extraCert;
         Set<X509Certificate> credentials = new HashSet<X509Certificate>();
         credentials.add(x509cert);
@@ -417,7 +439,14 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
             return false;
         }
         
-        final int eeprofid = getUsedEndEntityProfileId((DEROctetString) msg.getHeader().getSenderKID());
+        final int eeprofid;
+        try {
+            eeprofid = getUsedEndEntityProfileId((DEROctetString) msg.getHeader().getSenderKID());
+        } catch (EndEntityProfileNotFoundException e) {
+            log.error(e.getLocalizedMessage(), e);
+            return false;
+        }
+        
         final int tagnr = msg.getBody().getType();
         if( (tagnr == CmpPKIBodyConstants.CERTIFICATAIONREQUEST) || (tagnr == CmpPKIBodyConstants.INITIALIZATIONREQUEST) || (tagnr == CmpPKIBodyConstants.KEYUPDATEREQUEST) ) {
         
@@ -483,11 +512,10 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
     /**
      * Return the ID of EndEntityProfile that is used for CMP purposes. 
      * @param keyId
-     * @return the ID of EndEntityProfile used for CMP purposes. 0 if no such EndEntityProfile exists. 
-     * @throws NotFoundException
-     * @throws CMPAuthenticationException 
+     * @return the ID of EndEntityProfile used for CMP purposes. 
+     * @throws EndEntityProfileNotFoundException 
      */
-    private int getUsedEndEntityProfileId(final DEROctetString keyId) throws CMPAuthenticationException {
+    private int getUsedEndEntityProfileId(final DEROctetString keyId) throws EndEntityProfileNotFoundException {
         String endEntityProfile = this.cmpConfiguration.getRAEEProfile(this.confAlias);
         if (StringUtils.equals(endEntityProfile, "KeyId") && (keyId != null)) {
             endEntityProfile = CmpMessageHelper.getStringFromOctets(keyId);
@@ -495,47 +523,47 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
                 log.debug("Using End Entity Profile with same name as KeyId in request: "+endEntityProfile);
             }
         } 
-        try {
-            return eeProfileSession.getEndEntityProfileId(endEntityProfile);
-        } catch (EndEntityProfileNotFoundException e) {
-            String errmsg = "No end entity profile found with name: "+endEntityProfile;
-            if(log.isDebugEnabled()) {
-                log.debug(errmsg + " - " + e.getLocalizedMessage());
-            }
-            throw new CMPAuthenticationException(errmsg);
-        }
+        return eeProfileSession.getEndEntityProfileId(endEntityProfile);
     }
     
-    private void checkExtraCertIsValid() throws CMPAuthenticationException {
+    private boolean isExtraCertValid() {
         X509Certificate cert = (X509Certificate) extraCert;
         try {
             cert.checkValidity();
             if(log.isDebugEnabled()) {
                 log.debug("The certificate in extraCert is valid");
             }
-        } catch(Exception e) {
-            String errmsg = "The certificate attached to the PKIMessage in the extraCert field in not valid.";
+        } catch (CertificateExpiredException e) {
+            this.errorMessage = "The certificate attached to the PKIMessage in the extraCert field in not valid.";
             if(log.isDebugEnabled()) {
-                log.debug(errmsg + " SubjectDN=" + CertTools.getSubjectDN(cert) + " - " + e.getLocalizedMessage());
+                log.debug(this.errorMessage + " SubjectDN=" + CertTools.getSubjectDN(cert) + " - " + e.getLocalizedMessage());
             }
-            throw new CMPAuthenticationException(errmsg);
+            return false;
+        } catch (CertificateNotYetValidException e) {
+            this.errorMessage = "The certificate attached to the PKIMessage in the extraCert field in not valid.";
+            if(log.isDebugEnabled()) {
+                log.debug(this.errorMessage + " SubjectDN=" + CertTools.getSubjectDN(cert) + " - " + e.getLocalizedMessage());
+            }
+            return false;
         }
+        return true;
     }
 
-    private void checkExtraCertIsActive(final CertificateInfo certinfo) throws CMPAuthenticationException {
+    private boolean isExtraCertActive(final CertificateInfo certinfo) {
         if (certinfo.getStatus() != CertificateConstants.CERT_ACTIVE) {
-            String errmsg = "The certificate attached to the PKIMessage in the extraCert field is not active.";
+            this.errorMessage = "The certificate attached to the PKIMessage in the extraCert field is not active.";
             if(log.isDebugEnabled()) {
-                log.debug(errmsg + " Username="+certinfo.getUsername());
+                log.debug(this.errorMessage + " Username="+certinfo.getUsername());
             }
-            throw new CMPAuthenticationException(errmsg);
+            return false;
         }
         if(log.isDebugEnabled()) {
             log.debug("The certificate in extraCert is active");
         }
+        return true;
     }
     
-    private void checkExtraCertIssuedByCA(CAInfo cainfo) throws CMPAuthenticationException {
+    private boolean isExtraCertIssuedByCA(CAInfo cainfo) {
         //Check that the extraCert is given by the right CA
         // Verify the signature of the client certificate as well, that it is really issued by this CA
         Certificate cacert = cainfo.getCertificateChain().iterator().next();
@@ -546,32 +574,13 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
                 String errmsg = "The End Entity certificate attached to the PKIMessage is not issued by the CA '" + cainfo.getName() + "'";
                 log.debug(errmsg + " - " + e.getLocalizedMessage());
             }
-            throw new CMPAuthenticationException("The End Entity certificate attached to the PKIMessage is issued by the wrong CA");
+            this.errorMessage = "The End Entity certificate attached to the PKIMessage is issued by the wrong CA";
+            return false;
         }
+        return true;
     }
     
-    private CAInfo getCAInfo(String caString, boolean issuer) throws CMPAuthenticationException {
-        try {
-            if(issuer)
-                return caSession.getCAInfo(admin, caString.hashCode());
-            else
-                return caSession.getCAInfo(admin, caString);
-        } catch (CADoesntExistsException e) {
-            String errmsg = "CA '" + caString + "' does not exist";
-            if(log.isDebugEnabled()) {
-                log.debug(errmsg + " - " + e.getLocalizedMessage());
-            }
-            throw new CMPAuthenticationException(errmsg);
-        } catch (AuthorizationDeniedException e) {
-            String errmsg = "Authorization denied for CA: " + caString;
-            if(log.isDebugEnabled()) {
-                log.debug(errmsg + " - " + e.getLocalizedMessage());
-            }
-            throw new CMPAuthenticationException(errmsg);
-        }
-    }
-    
-    private boolean checkExtraCertIssuedByVendorCA() {
+    private boolean isExtraCertIssuedByVendorCA() {
         String vendorCAsStr = this.cmpConfiguration.getVendorCA(this.confAlias);
         String[] vendorcas = vendorCAsStr.split(";");
         CAInfo cainfo = null;
@@ -582,11 +591,8 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
             
             try {
                 cainfo = caSession.getCAInfo(admin, vendorca.trim());
-                checkExtraCertIssuedByCA(cainfo);
-                return true;
-            } catch (CMPAuthenticationException e) {
-                if(log.isDebugEnabled()) {
-                    log.debug(e.getLocalizedMessage());
+                if(isExtraCertIssuedByCA(cainfo)) {
+                    return true;
                 }
             } catch (CADoesntExistsException e) {
                 if(log.isDebugEnabled()) {
@@ -599,6 +605,40 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
             }
         }
         return false;
+    }
+    
+    private CAInfo getCAInfoByName(String caname) {
+        try {
+            return caSession.getCAInfo(admin, caname);
+        } catch (CADoesntExistsException e) {
+            this.errorMessage = "CA '" + caname + "' does not exist";
+            if(log.isDebugEnabled()) {
+                log.debug(this.errorMessage + " - " + e.getLocalizedMessage());
+            }
+        } catch (AuthorizationDeniedException e) {
+            this.errorMessage = "Authorization denied for CA: " + caname;
+            if(log.isDebugEnabled()) {
+                log.debug(this.errorMessage + " - " + e.getLocalizedMessage());
+            }
+        }
+        return null;
+    }
+    
+    private CAInfo getCAInfoByIssuer(String issuerDN) {
+        try {
+            return caSession.getCAInfo(admin, issuerDN.hashCode());
+        } catch (CADoesntExistsException e) {
+            this.errorMessage = "CA '" + issuerDN + "' does not exist";
+            if(log.isDebugEnabled()) {
+                log.debug(this.errorMessage + " - " + e.getLocalizedMessage());
+            }
+        } catch (AuthorizationDeniedException e) {
+            this.errorMessage = "Authorization denied for CA: " + issuerDN;
+            if(log.isDebugEnabled()) {
+                log.debug(this.errorMessage + " - " + e.getLocalizedMessage());
+            }
+        }
+        return null;
     }
     
     /**

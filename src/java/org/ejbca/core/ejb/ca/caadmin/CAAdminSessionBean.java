@@ -1711,7 +1711,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
             throws CryptoTokenAuthenticationFailedException, CryptoTokenOfflineException, IllegalCryptoTokenException, CADoesntExistsException,
             AuthorizationDeniedException, CAExistsException, CAOfflineException {
         // Transform into token
-        int caId = StringTools.stripCertificate(CertTools.getSubjectDN(signatureCertChain[0])).hashCode(); // caid
+        int caId = StringTools.strip(CertTools.getSubjectDN(signatureCertChain[0])).hashCode(); // caid
         CAToken catoken = null;
         try {
             catoken = importKeysToCAToken(authenticationToken, keystorepass, null, p12PrivateSignatureKey, p12PublicSignatureKey,
@@ -1860,7 +1860,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
             IllegalCryptoTokenException, CADoesntExistsException, AuthorizationDeniedException, CAExistsException, CAOfflineException,
             NoSuchSlotException {
         Certificate cacert = signatureCertChain[0];
-        final int caId = StringTools.stripCertificate(CertTools.getSubjectDN(cacert)).hashCode();
+        int caId = StringTools.strip(CertTools.getSubjectDN(cacert)).hashCode();
         Properties caTokenProperties = CAToken.getPropertiesFromString(catokenproperties);
         // Create the CryptoToken
         int cryptoTokenId = createCryptoTokenWithUniqueName(authenticationToken, "ImportedCryptoToken" + caId, PKCS11CryptoToken.class.getName(),
