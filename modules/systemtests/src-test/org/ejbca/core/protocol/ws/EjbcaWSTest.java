@@ -692,7 +692,7 @@ public class EjbcaWSTest extends CommonEjbcaWS {
         long rnd = secureRandom.nextLong();
         testCertificateRequestWithSpecialChars(
                 "CN=test" + rnd + ", O=\"foo+b\\+ar, C=SE\"",
-                "CN=test" + rnd + ",O=foo\\+b\\\\\\+ar\\, C\\=SE");
+                "CN=test" + rnd + ",O=foo\\+b\\+ar\\, C\\=SE");
     }
 
     /**
