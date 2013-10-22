@@ -103,26 +103,6 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
     private final AccessControlSession authorizationSession;
     private final WebAuthenticationProviderSessionLocal authenticationProviderSession;
     private final EndEntityManagementSession eeManagementSession;
-
-	/**
-	 * Used only by unit test.
-	 */
-	public CrmfMessageHandler() {
-		super();
-		this.usernameGenParams = null;
-		this.userPwdParams = "random";
-		this.responseProt = null;
-		this.allowCustomCertSerno = false;
-		
-		this.signSession =null;
-		this.certificateRequestSession = null;
-		this.extendedUserDataHandler = null;
-		this.endEntityAccessSession = null;
-		this.certStoreSession = null;
-		this.authorizationSession = null;
-		this.authenticationProviderSession = null;
-		this.eeManagementSession = null;
-	}
 	
 	/**
 	 * Construct the message handler.
@@ -193,12 +173,7 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 		}
 	}
 
-	/**
-	 * @param msg
-     * @param authenticated if the CMP message has already been authenticated in another way or not
-     * 
-     * @return
-	 */
+	@Override
 	public ResponseMessage handleMessage(final BaseCmpMessage msg, boolean authenticated) {
 		if (LOG.isTraceEnabled()) {
 			LOG.trace(">handleMessage");
@@ -267,6 +242,7 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 			if (resp == null) {
                 final String errMsg = INTRES.getLocalizedMessage("cmp.errornullresp");
                 LOG.error(errMsg);
+                throw new RuntimeException(errMsg);
 			}
 		} catch (AuthorizationDeniedException e) {
 			final String errMsg = INTRES.getLocalizedMessage(CMP_ERRORGENERAL, e.getMessage());
@@ -294,10 +270,7 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
         } catch (EjbcaException e) {
             final String errMsg = INTRES.getLocalizedMessage(CMP_ERRORGENERAL, e.getMessage());
             LOG.info(errMsg, e);           
-            resp = CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_REQUEST, e.getMessage());
-		} catch (ClassNotFoundException e) {
-			final String errMsg = INTRES.getLocalizedMessage(CMP_ERRORGENERAL, e.getMessage());
-			LOG.error(errMsg, e);			
+            resp = CmpMessageHelper.createUnprotectedErrorMessage(msg, ResponseStatus.FAILURE, FailInfo.BAD_REQUEST, e.getMessage());			
 		} catch (EJBException e) {
 			// Fatal error
 			final String errMsg = INTRES.getLocalizedMessage(CMP_ERRORADDUSER);
@@ -322,7 +295,7 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 	 * @throws ClassNotFoundException
 	 * @throws CesecoreException 
 	 */
-	private ResponseMessage handleRaMessage(final BaseCmpMessage msg, final CrmfRequestMessage crmfreq, boolean authenticated) throws AuthorizationDeniedException, EjbcaException, ClassNotFoundException, CesecoreException {
+	private ResponseMessage handleRaMessage(final BaseCmpMessage msg, final CrmfRequestMessage crmfreq, boolean authenticated) throws AuthorizationDeniedException, EjbcaException, CesecoreException {
         final int eeProfileId;        // The endEntityProfile to be used when adding users in RA mode.
         final String certProfileName;  // The certificate profile to use when adding users in RA mode.
         final int certProfileId;

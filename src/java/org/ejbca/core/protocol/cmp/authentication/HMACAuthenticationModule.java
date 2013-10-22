@@ -82,26 +82,17 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
         this.errorMessage = null;
     }
     
-    /**
-     * Returns the name of this authentication module as String
-     * 
-     * @return the name of this authentication module as String
-     */
+    @Override
     public String getName() {
         return CmpConfiguration.AUTHMODULE_HMAC;
     }
     
-    /**
-     * Returns the password resulted from the verification process.
-     * 
-     * This password is set if verify() returns true.
-     * 
-     * @return The password as String. Null if the verification had failed.
-     */
+    @Override
     public String getAuthenticationString() {
         return this.password;
     }
     
+    @Override
     public String getErrorMessage() {
         return this.errorMessage;
     }
@@ -110,7 +101,8 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
         return this.verifyer;
     }
     
-    /**
+    @Override
+    /*
      * Verifies that 'msg' is sent by a trusted source. 
      * 
      * In RA mode:
@@ -120,9 +112,6 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
      *  authenticate the message. 
      * 
      * When successful, the authentication string will be set to the password that was successfully used in authenticating the message.
-     * 
-     * @param msg
-     * @param username
      */
     public boolean verifyOrExtract(final PKIMessage msg, final String username) {
         
@@ -287,7 +276,7 @@ public class HMACAuthenticationModule implements ICMPAuthenticationModule {
                     }                    
                 }
             } catch (AuthorizationDeniedException e) {
-                LOG.info("No EndEntity with subjectDN '" + subjectDN + "' could be found, which is expected if the request had been send in Client mode.");
+                LOG.info("No EndEntity with subjectDN '" + subjectDN + "' could be found. " + e.getLocalizedMessage() );
             }
             
             if(userdata != null) {

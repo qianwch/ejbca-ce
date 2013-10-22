@@ -279,9 +279,11 @@ org.cesecore.keybind.InternalKeyBindingRules
      // If authorized to edit the hard token profiles then display related links.
      try{
        if(ejbcawebbean.isAuthorizedNoLog(HTEDITHARDTOKENPROFILES_RESOURCE)){ 
-           htheaderprinted=true;%> 
+           if(!htheaderprinted){
+               htheaderprinted=true;%> 
 		<li id="cat3" class="section"><strong><%=ejbcawebbean.getText("NAV_HARDTOKENFUNCTIONS") %></strong>
 			<ul>
+           <% } %>
 				<li><a href="<%= HT_EDITHARDTOKENPROFILES_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("NAV_HARDTOKENPROFILES") %></a></li>
 <%     }
       }catch(AuthorizationDeniedException e){}
@@ -346,6 +348,20 @@ org.cesecore.keybind.InternalKeyBindingRules
 <%   }
   }catch(AuthorizationDeniedException e){}
 %>
+
+<%
+    // If authorized to configure Ejbca then display related links.
+    try{
+      if(ejbcawebbean.isAuthorizedNoLog(EDITCMPCONFIG_RESOURCE)){ 
+          if(!systemheaderprinted){      
+        out.write("<li id=\"cat7\" class=\"section\"><strong>" + ejbcawebbean.getText("NAV_SYSTEMFUNCTIONS")+"</strong><ul>");
+        systemheaderprinted = true;
+          } %>
+				<li><a href="<%= CMPCONFIGURATION_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("NAV_CMPCONFIGURATION") %></a></li>
+<%   }
+   }catch(AuthorizationDeniedException e){}
+%>
+
 <%   
    // If authorized to edit authorizations then display related links.
    try{
@@ -387,19 +403,6 @@ org.cesecore.keybind.InternalKeyBindingRules
         systemheaderprinted = true;
           } %>
 				<li><a href="<%= CONFIGURATION_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("NAV_SYSTEMCONFIGURATION") %></a></li>
-<%   }
-   }catch(AuthorizationDeniedException e){}
-%>
-
-<%
-    // If authorized to configure Ejbca then display related links.
-    try{
-      if(ejbcawebbean.isAuthorizedNoLog(EDITCMPCONFIG_RESOURCE)){ 
-          if(!systemheaderprinted){      
-        out.write("<li id=\"cat7\" class=\"section\"><strong>" + ejbcawebbean.getText("NAV_SYSTEMFUNCTIONS")+"</strong><ul>");
-        systemheaderprinted = true;
-          } %>
-				<li><a href="<%= CMPCONFIGURATION_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("NAV_CMPCONFIGURATION") %></a></li>
 <%   }
    }catch(AuthorizationDeniedException e){}
 %>

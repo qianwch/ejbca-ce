@@ -111,31 +111,17 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
         eeManagementSession = endEntityManagementSession;
     }
     
-    /**
-     * Returns the name of this authentication module as String
-     * 
-     * @return the name of this authentication module as String
-     */
+    @Override
     public String getName() {
         return CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE;
     }
     
-    /**
-     * Returns the password resulted from the verification process.
-     * 
-     * This password is set if verifyOrExtract() returns true.
-     * 
-     * @return The password as String. Null if the verification had failed.
-     */
+    @Override
     public String getAuthenticationString() {
         return this.password;
     }
     
-    /**
-     * Return the error message if the verification (verifyOrExtract()) had failed
-     * 
-     * @return The error message if the message verification failed. Null otherwise
-     */
+    @Override
     public String getErrorMessage() {
         return this.errorMessage;
     }
@@ -149,7 +135,7 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
         return extraCert;
     }
 
-    public Certificate getExtraCert(final PKIMessage msg) {
+    private Certificate getExtraCert(final PKIMessage msg) {
         final CMPCertificate[] extraCerts = msg.getExtraCerts();
         if ((extraCerts == null) || (extraCerts.length == 0)) {
             if(log.isDebugEnabled()) {
@@ -182,14 +168,12 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
         return excert;
     }
     
-    /**
+    @Override
+    /*
      * Verifies the signature of 'msg'. msg should be signed and the signer's certificate should be  
      * attached in msg in the extraCert field.  
      * 
      * When successful, the authentication string is set.
-     * 
-     * @param msg PKIMessage
-     * @param username
      */
     public boolean verifyOrExtract(final PKIMessage msg, final String username) {
         

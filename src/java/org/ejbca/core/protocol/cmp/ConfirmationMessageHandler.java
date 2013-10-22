@@ -29,6 +29,7 @@ import org.cesecore.certificates.ca.CADoesntExistsException;
 import org.cesecore.certificates.ca.CAInfo;
 import org.cesecore.certificates.ca.CaSessionLocal;
 import org.cesecore.certificates.ca.SignRequestException;
+import org.cesecore.certificates.ca.X509CAInfo;
 import org.cesecore.certificates.ca.catoken.CAToken;
 import org.cesecore.certificates.ca.catoken.CATokenConstants;
 import org.cesecore.certificates.certificate.request.ResponseMessage;
@@ -134,6 +135,16 @@ public class ConfirmationMessageHandler extends BaseCmpMessageHandler implements
         String macAlg = null;
         int iterationCount = 1024;
         String sharedSecret = cmpConfiguration.getAuthenticationParameter(CmpConfiguration.AUTHMODULE_HMAC, confAlias);
+        if(StringUtils.equals(sharedSecret, "-")) {
+            X509CAInfo cainfo;
+            try {
+                cainfo = (X509CAInfo) getCAInfo(msg.getRecipient().getName().toString());
+                sharedSecret = cainfo.getCmpRaAuthSecret();
+            } catch (CADoesntExistsException e) {
+                LOG.error("Exception during CMP response protection: ", e);
+            }
+        }
+        // We don't need to check the shared secret in client mode (= the EndEntiy password) because PBE protection is only supported in RA mode
         
         CmpPbeVerifyer verifyer = new CmpPbeVerifyer(msg.getMessage());
         owfAlg = verifyer.getOwfOid();

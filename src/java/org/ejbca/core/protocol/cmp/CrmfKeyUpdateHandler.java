@@ -75,20 +75,6 @@ public class CrmfKeyUpdateHandler extends BaseCmpMessageHandler implements ICmpM
     private final EndEntityManagementSession endEntityManagementSession;
     private final SignSession signSession;
     private final WebAuthenticationProviderSessionLocal authenticationProviderSession;
-   
-
-    /**
-     * Used only by unit test.
-     */
-    public CrmfKeyUpdateHandler() {
-        super();
-        this.signSession =null;
-        this.endEntityAccessSession = null;
-        this.certStoreSession = null;
-        this.authorizationSession = null;
-        this.authenticationProviderSession = null;
-        this.endEntityManagementSession = null;
-    }
     
     /**
      * Construct the message handler.
@@ -115,7 +101,8 @@ public class CrmfKeyUpdateHandler extends BaseCmpMessageHandler implements ICmpM
 
     }
 
-    /**
+    @Override
+    /*
      * Handles the CMP message
      * 
      * Expects the CMP message to be a CrmfRequestMessage. The message is authenticated using 
@@ -129,18 +116,6 @@ public class CrmfKeyUpdateHandler extends BaseCmpMessageHandler implements ICmpM
      * certificate.
      * 
      * The KeyUpdateRequet is processed only in client mode.
-     * 
-     * @param msg
-     * @throws AuthorizationDeniedException when the concerned end entity is not found
-     * @throws CADoesntExistsException when updating the end entity fails
-     * @throws UserDoesntFullfillEndEntityProfile when updating the end entity fails
-     * @throws WaitingForApprovalException when updating the end entity fails
-     * @throws EjbcaException when updating the end entity fails
-     * @throws FinderException when end entity status fails to update
-     * @throws CesecoreException
-     * @throws InvalidKeyException when failing to read the key from the crmf request
-     * @throws NoSuchAlgorithmException when failing to read the key from the crmf request
-     * @throws NoSuchProviderException when failing to read the key from the crmf request
      */
     public ResponseMessage handleMessage(final BaseCmpMessage msg, boolean authenticated) {
         if (LOG.isTraceEnabled()) {

@@ -19,6 +19,7 @@ import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.cesecore.certificates.ocsp.exception.OcspFailureException;
@@ -56,7 +57,7 @@ public enum DirectoryCache {
     private long trustDirValidTo;
 
     private DirectoryCache()  {
-        loadTrustDir();
+
     }
 
     public void loadTrustDir() throws OcspFailureException {
@@ -95,6 +96,11 @@ public enum DirectoryCache {
         }
     }
 
+    /** 
+     * @param certificateDir the directory to read certificates from
+     * @return Map with "cert.getIssuerDN() + ";" + cert.getSerialNumber().toString(16)" and certificate
+     * @throws IOException if directory does not exist or can not be read
+     */
     private Map<String, X509Certificate> getCertificatesFromDirectory(String certificateDir) throws IOException {
         // read all files from trustDir, expect that they are PEM formatted certificates
         CryptoProviderTools.installBCProvider();
@@ -126,6 +132,13 @@ public enum DirectoryCache {
                 log.error(errMsg, e);
             }
         }
+        if (log.isDebugEnabled()) {
+            log.debug("Loaded certificates from directory: "+certificateDir);
+            final Set<String> keys = trustedCerts.keySet();
+            for (String string : keys) {
+                log.debug("Key: '"+string+"'.");
+            }
+        }
         return trustedCerts;
     }
 
@@ -133,6 +146,13 @@ public enum DirectoryCache {
      * @return the trustedReqSigIssuers
      */
     public Map<String, X509Certificate> getTrustedReqSigIssuers() {
+       if(requestRestrictMethod != OcspConfiguration.RESTRICTONISSUER) {
+           throw new IllegalStateException("trustedReqSigIssuers requested, but unavailable due to configuration");
+       }     
+        //Lazy initialization
+        if(trustedReqSigIssuers == null) {
+            loadTrustDir();
+        }
         return trustedReqSigIssuers;
     }
 
@@ -140,6 +160,13 @@ public enum DirectoryCache {
      * @return the trustedReqSigSigners
      */
     public Map<String, X509Certificate> getTrustedReqSigSigners() {
+        if (requestRestrictMethod == OcspConfiguration.RESTRICTONSIGNER) {
+            throw new IllegalStateException("trustedReqSigSigners requested, but unavailable due to configuration");
+        }
+        //Lazy initialization
+        if (trustedReqSigSigners == null) {
+            loadTrustDir();
+        }
         return trustedReqSigSigners;
     }
 

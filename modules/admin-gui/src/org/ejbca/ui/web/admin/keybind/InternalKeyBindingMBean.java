@@ -546,8 +546,14 @@ public class InternalKeyBindingMBean extends BaseManagedBean implements Serializ
 
     /** @return true if loaded InternalKeyBinding's referenced CryptoToken exists and is active */
     public boolean isCryptoTokenActive() {
-        final CryptoTokenInfo cryptoTokenInfo = cryptoTokenManagementSession.getCryptoTokenInfo(currentCryptoToken);
-        return cryptoTokenInfo!=null && cryptoTokenInfo.isActive();
+        final boolean ret;
+        if (currentCryptoToken != null) {
+            final CryptoTokenInfo cryptoTokenInfo = cryptoTokenManagementSession.getCryptoTokenInfo(currentCryptoToken);
+            ret = (cryptoTokenInfo!=null && cryptoTokenInfo.isActive());
+        } else {
+            ret = false;
+        }
+        return ret;
     }
     
     public boolean isBoundToCertificate() {
@@ -660,7 +666,8 @@ public class InternalKeyBindingMBean extends BaseManagedBean implements Serializ
                 currentCryptoToken = (Integer) availableCryptoTokens.get(0).getValue();
             }
         }
-        return cryptoTokenManagementSession.getCryptoTokenInfo(currentCryptoToken.intValue()).getName();
+        CryptoTokenInfo info = cryptoTokenManagementSession.getCryptoTokenInfo(currentCryptoToken.intValue());
+        return info != null ? info.getName() : null;
     }
 
     public String getCurrentName() { return currentName; }
@@ -851,26 +858,31 @@ public class InternalKeyBindingMBean extends BaseManagedBean implements Serializ
     /** Invoked when the user is done configuring a new InternalKeyBinding and wants to persist it */
     @SuppressWarnings("unchecked")
     public void createNew() {
-        try {
-            final Map<Object, Object> dataMap = new HashMap<Object, Object>();
-            final List<InternalKeyBindingProperty<? extends Serializable>> internalKeyBindingProperties = 
-                    (List<InternalKeyBindingProperty<? extends Serializable>>) internalKeyBindingPropertyList.getWrappedData();
-            for (final InternalKeyBindingProperty<? extends Serializable> property : internalKeyBindingProperties) {
-                dataMap.put(property.getName(), property.getValue());
+        if (currentCryptoToken == null) {
+            // Should not happen
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "No Crypto Token exists when trying to create a new Key Binding with name "+getCurrentName(), null));
+        } else {
+            try {
+                final Map<Object, Object> dataMap = new HashMap<Object, Object>();
+                final List<InternalKeyBindingProperty<? extends Serializable>> internalKeyBindingProperties = 
+                        (List<InternalKeyBindingProperty<? extends Serializable>>) internalKeyBindingPropertyList.getWrappedData();
+                for (final InternalKeyBindingProperty<? extends Serializable> property : internalKeyBindingProperties) {
+                    dataMap.put(property.getName(), property.getValue());
+                }
+                currentInternalKeyBindingId = String.valueOf(internalKeyBindingSession.createInternalKeyBinding(authenticationToken, 
+                        selectedInternalKeyBindingType, getCurrentName(), InternalKeyBindingStatus.DISABLED, null, currentCryptoToken.intValue(),
+                        currentKeyPairAlias, currentSignatureAlgorithm, dataMap));
+                FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(getCurrentName() + " created with id " + currentInternalKeyBindingId));
+                inEditMode = false;
+            } catch (AuthorizationDeniedException e) {
+                FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, e.getMessage(), null));
+            } catch (InternalKeyBindingNameInUseException e) {
+                FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, e.getMessage(), null));
+            } catch (CryptoTokenOfflineException e) {
+                FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, e.getMessage(), null));
+            } catch (InvalidAlgorithmException e) {
+                FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, e.getMessage(), null));
             }
-            currentInternalKeyBindingId = String.valueOf(internalKeyBindingSession.createInternalKeyBinding(authenticationToken, 
-                    selectedInternalKeyBindingType, getCurrentName(), InternalKeyBindingStatus.DISABLED, null, currentCryptoToken.intValue(),
-                    currentKeyPairAlias, currentSignatureAlgorithm, dataMap));
-            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(getCurrentName() + " created with id " + currentInternalKeyBindingId));
-            inEditMode = false;
-        } catch (AuthorizationDeniedException e) {
-            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, e.getMessage(), null));
-        } catch (InternalKeyBindingNameInUseException e) {
-            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, e.getMessage(), null));
-        } catch (CryptoTokenOfflineException e) {
-            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, e.getMessage(), null));
-        } catch (InvalidAlgorithmException e) {
-            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, e.getMessage(), null));
         }
     }
 
