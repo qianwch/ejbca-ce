@@ -71,7 +71,7 @@
 # The default are these characters: '\n', '\r', ';', '!', '\0', '%', '`', '?', '$', '~'.
 # The property value is a string with all forbidden characters concatenated
 # (without any space). Note that '\' is an escape character.
-# So the default will be:
+# This will be the same as not defining the property:
 #forbidden.characters = \n\r;!\u0000%`?$~
 # And nothing forbidden will be:
 #forbidden.characters  =
