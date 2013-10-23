@@ -66,6 +66,7 @@ import org.bouncycastle.asn1.x509.ReasonFlags;
 import org.bouncycastle.asn1.x9.X9ObjectIdentifiers;
 import org.bouncycastle.cms.CMSSignedGenerator;
 import org.bouncycastle.jce.X509KeyUsage;
+import org.cesecore.CaTestUtils;
 import org.cesecore.CesecoreException;
 import org.cesecore.authentication.tokens.AuthenticationSubject;
 import org.cesecore.authentication.tokens.AuthenticationToken;
@@ -81,7 +82,6 @@ import org.cesecore.certificates.ca.CAConstants;
 import org.cesecore.certificates.ca.CADoesntExistsException;
 import org.cesecore.certificates.ca.CAInfo;
 import org.cesecore.certificates.ca.CaSessionRemote;
-import org.cesecore.certificates.ca.CaSessionTest;
 import org.cesecore.certificates.ca.X509CA;
 import org.cesecore.certificates.ca.X509CAInfo;
 import org.cesecore.certificates.ca.catoken.CAToken;
@@ -196,7 +196,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
         transid = CmpMessageHelper.createSenderNonce();
      
         int keyusage = X509KeyUsage.digitalSignature + X509KeyUsage.keyCertSign + X509KeyUsage.cRLSign;
-        testx509ca = CaSessionTest.createTestX509CA(issuerDN, null, false, keyusage);
+        testx509ca = CaTestUtils.createTestX509CA(issuerDN, null, false, keyusage);
         caid = testx509ca.getCAId();
         cacert = testx509ca.getCACertificate();
         caSession.addCA(ADMIN, testx509ca);
@@ -1371,7 +1371,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
         String keyspec = "prime256v1";
         
         int cryptoTokenId = CryptoTokenManagementSessionTest.createCryptoTokenForCA(null, "foo123".toCharArray(), true, false, ecdsaCADN, keyspec);
-        final CAToken catoken = CaSessionTest.createCaToken(cryptoTokenId, AlgorithmConstants.SIGALG_SHA256_WITH_ECDSA, AlgorithmConstants.SIGALG_SHA256_WITH_ECDSA);
+        final CAToken catoken = CaTestUtils.createCaToken(cryptoTokenId, AlgorithmConstants.SIGALG_SHA256_WITH_ECDSA, AlgorithmConstants.SIGALG_SHA256_WITH_ECDSA);
         final List<ExtendedCAServiceInfo> extendedCaServices = new ArrayList<ExtendedCAServiceInfo>(2);
         extendedCaServices.add(new KeyRecoveryCAServiceInfo(ExtendedCAServiceInfo.STATUS_ACTIVE));
         String caname = CertTools.getPartFromDN(ecdsaCADN, "CN");
@@ -1603,7 +1603,15 @@ public class AuthenticationModulesTest extends CmpTestCase {
         log.trace("<test23EECAuthWithRSAandECDSA()");
     }
 
-    
+    /**
+     * Sending a Crmf Request in RA mode. The request is authenticated using HMAC and is expected to contain the EndEntityProfile 'EMPTY' in the KeyId field.
+     * The request should fail because specifying 'EMPTY' or 'ENDUSER' as the KeyId is not allowed in combination with RA mode and HMAC authentication module 
+     * 
+     * The test is only done for HMAC and not EndEntityCertificate because in the later, the use of profiles can be restricted through Administrator privileges.
+     * Other authentication modules are not used in RA mode
+     * 
+     * @throws Exception
+     */
     @Test
     public void test24HMACUnacceptedKeyId() throws Exception {
         
@@ -1640,7 +1648,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
             assertEquals(23, body.getType());
             ErrorMsgContent err = (ErrorMsgContent) body.getContent();
             final String errMsg = err.getPKIStatusInfo().getStatusString().getStringAt(0).getString();
-            final String expectedErrMsg = "Not allowed to use KeyId 'EMPTY' in CMP request";
+            final String expectedErrMsg = "Unaccepted KeyId 'EMPTY' in CMP request";
             assertEquals(expectedErrMsg, errMsg);
         } finally {
             inputStream.close();

@@ -84,9 +84,7 @@ org.cesecore.keybind.InternalKeyBindingRules
 			<h:outputText rendered="#{internalKeyBindingMBean.inEditMode and !internalKeyBindingMBean.cryptoTokenActive and internalKeyBindingMBean.currentCryptoTokenName != null}"
 				value=" #{web.text.INTERNALKEYBINDING_CRYPTOTOKEN_NOTACTIVE}"/>
 			<h:outputText rendered="#{!internalKeyBindingMBean.inEditMode or !internalKeyBindingMBean.cryptoTokenActive}"
-				value="#{internalKeyBindingMBean.currentCryptoTokenName}" title="#{internalKeyBindingMBean.currentCryptoToken}"/>
-			<h:outputText rendered="#{(!internalKeyBindingMBean.inEditMode or !internalKeyBindingMBean.cryptoTokenActive) and internalKeyBindingMBean.currentCryptoTokenName == null}"
-                value="#{web.text.INTERNALKEYBINDING_CRYPTOTOKEN_MISSING}"/>
+				value="#{internalKeyBindingMBean.currentCryptoTokenName != null ? internalKeyBindingMBean.currentCryptoTokenName : web.text.INTERNALKEYBINDING_CRYPTOTOKEN_MISSING}" title="#{internalKeyBindingMBean.currentCryptoToken}"/>
 		</h:panelGroup>
 		<h:message for="cryptoToken"/>
 		<h:outputLabel for="keyPairAlias" value="#{web.text.INTERNALKEYBINDING_FIELD_KEYPAIRALIAS}"/>
@@ -170,7 +168,7 @@ org.cesecore.keybind.InternalKeyBindingRules
 				<h:inputText id="certificateSerialNumber" rendered="#{internalKeyBindingMBean.inEditMode}" required="false"
 					value="#{internalKeyBindingMBean.currentCertificateSerialNumber}"
 					title="#{web.text.INTERNALKEYBINDING_EMPTYFORANY}">
-					<f:validator validatorId="hexSerialNumberValidator"/>
+					<f:validator validatorId="optionalHexSerialNumberValidator"/>
    				</h:inputText>
 				<h:message for="certificateSerialNumber" rendered="#{internalKeyBindingMBean.inEditMode}"/>
 			</f:facet>

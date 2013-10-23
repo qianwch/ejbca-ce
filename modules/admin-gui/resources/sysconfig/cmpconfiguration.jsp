@@ -105,6 +105,7 @@
   GlobalConfiguration gc = ejbcawebbean.initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, AccessRulesConstants.REGULAR_EDITCERTIFICATEPROFILES); 
                                             cabean.initialize(ejbcawebbean); 
   
+  ejbcawebbean.clearCMPCache();
   CmpConfiguration cmpconfig = ejbcawebbean.getCMPConfiguration();
 
   String THIS_FILENAME            = gc.getAdminWebPath() +  "/sysconfig/cmpconfiguration.jsp";
@@ -140,7 +141,6 @@
         	   								if(!cmpconfig.aliasExists(alias)) {
         	   										cmpconfig.addAlias(alias);
         	   								}
-        	   								ejbcawebbean.setTempCmpConfig(null);
                								includefile="cmpaliaspage.jspf"; 
            							}
          					}
@@ -217,11 +217,7 @@
     		       	if(alias != null) {
     		       		if(!alias.trim().equals("")) {
     		       	
-    		       			cmpconfig = ejbcawebbean.getTempCmpConfig();
-    		       			if(cmpconfig == null) {
-    		       					cmpconfig = ejbcawebbean.getCMPConfiguration();
-    		       			}
-    		
+    		       			cmpconfig = ejbcawebbean.getCMPConfiguration();
     		       						
     		       			//Save changes
     		       						
@@ -473,11 +469,9 @@
 	    			        }
     			        	
     				        includefile="cmpaliaspage.jspf";
-    				        ejbcawebbean.setTempCmpConfig(cmpconfig);
     			        
     				        if(request.getParameter(BUTTON_SAVE) != null) {
     				           		ejbcawebbean.saveCMPConfiguration();
-    			    	           	ejbcawebbean.setTempCmpConfig(null);
     			        	   		includefile="cmpaliasespage.jspf";
     			        	}
     				        
@@ -485,8 +479,7 @@
     		       			
                			if(request.getParameter(BUTTON_CANCEL) != null){
               				// Don't save changes.
-              				ejbcawebbean.setTempCmpConfig(null);
-              				ejbcawebbean.clearClusterCache();
+              				ejbcawebbean.clearCMPCache();
              				includefile="cmpaliasespage.jspf";
            				}
     		       		
