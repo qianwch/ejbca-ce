@@ -332,40 +332,48 @@ public class CrmfRARequestTest extends CmpTestCase {
         // Create a new good user
 
         String userDN = "CN=keyIDTestUser,C=SE";
-        final KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
-        final byte[] nonce = CmpMessageHelper.createSenderNonce();
-        final byte[] transid = CmpMessageHelper.createSenderNonce();
-        final int reqId;
-        
-        final PKIMessage one = genCertReq(issuerDN, userDN, keys, cacert, nonce, transid, true, null, null, null, null);
-        final PKIMessage req = protectPKIMessage(one, false, PBEPASSWORD, null, 567);
-        Assert.assertNotNull(req);
-        reqId = req.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue();
-        
-        final ByteArrayOutputStream bao = new ByteArrayOutputStream();
-        final DEROutputStream out = new DEROutputStream(bao);
-        out.writeObject(req);
-        final byte[] ba = bao.toByteArray();
-        // Send request and receive response
-        final byte[] resp = sendCmpHttp(ba, 200);
-        // do not check signing if we expect a failure (sFailMessage==null)
-        checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, true, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
-        X509Certificate cert = checkCmpCertRepMessage(userDN, cacert, resp, reqId);
-        BigInteger serialnumber = cert.getSerialNumber();
-        
-        // Revoke the created certificate
-        final PKIMessage con = genRevReq(issuerDN, userDN, serialnumber, cacert, nonce, transid, false);
-        Assert.assertNotNull(con);
-        PKIMessage revmsg = protectPKIMessage(con, false, PBEPASSWORD, null, 567);
-        final ByteArrayOutputStream baorev = new ByteArrayOutputStream();
-        final DEROutputStream outrev = new DEROutputStream(baorev);
-        outrev.writeObject(revmsg);
-        final byte[] barev = baorev.toByteArray();
-        // Send request and receive response
-        final byte[] resprev = sendCmpHttp(barev, 200);
-        checkCmpResponseGeneral(resprev, issuerDN, userDN, cacert, nonce, transid, false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
-        int revstatus = checkRevokeStatus(issuerDN, serialnumber);
-        Assert.assertEquals("Certificate revocation failed.", RevokedCertInfo.REVOCATION_REASON_KEYCOMPROMISE, revstatus);
+        try {
+            final KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
+            final byte[] nonce = CmpMessageHelper.createSenderNonce();
+            final byte[] transid = CmpMessageHelper.createSenderNonce();
+            final int reqId;
+
+            final PKIMessage one = genCertReq(issuerDN, userDN, keys, cacert, nonce, transid, true, null, null, null, null);
+            final PKIMessage req = protectPKIMessage(one, false, PBEPASSWORD, null, 567);
+            Assert.assertNotNull(req);
+            reqId = req.getBody().getIr().getCertReqMsg(0).getCertReq().getCertReqId().getValue().intValue();
+
+            final ByteArrayOutputStream bao = new ByteArrayOutputStream();
+            final DEROutputStream out = new DEROutputStream(bao);
+            out.writeObject(req);
+            final byte[] ba = bao.toByteArray();
+            // Send request and receive response
+            final byte[] resp = sendCmpHttp(ba, 200);
+            // do not check signing if we expect a failure (sFailMessage==null)
+            checkCmpResponseGeneral(resp, issuerDN, userDN, cacert, nonce, transid, true, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
+            X509Certificate cert = checkCmpCertRepMessage(userDN, cacert, resp, reqId);
+            BigInteger serialnumber = cert.getSerialNumber();
+
+            // Revoke the created certificate
+            final PKIMessage con = genRevReq(issuerDN, userDN, serialnumber, cacert, nonce, transid, false);
+            Assert.assertNotNull(con);
+            PKIMessage revmsg = protectPKIMessage(con, false, PBEPASSWORD, null, 567);
+            final ByteArrayOutputStream baorev = new ByteArrayOutputStream();
+            final DEROutputStream outrev = new DEROutputStream(baorev);
+            outrev.writeObject(revmsg);
+            final byte[] barev = baorev.toByteArray();
+            // Send request and receive response
+            final byte[] resprev = sendCmpHttp(barev, 200);
+            checkCmpResponseGeneral(resprev, issuerDN, userDN, cacert, nonce, transid, false, null, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
+            int revstatus = checkRevokeStatus(issuerDN, serialnumber);
+            Assert.assertEquals("Certificate revocation failed.", RevokedCertInfo.REVOCATION_REASON_KEYCOMPROMISE, revstatus);
+        } finally {
+            try {
+                userAdminSession.deleteUser(admin, "keyIDTestUser");
+            } catch (NotFoundException e) {
+                // NOPMD
+            }
+        }
         
     }
 
