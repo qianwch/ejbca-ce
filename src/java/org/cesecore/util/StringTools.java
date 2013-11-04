@@ -60,7 +60,7 @@ public final class StringTools {
     } // Not for instantiation
 
     // Characters that are not allowed in strings that may be stored in the db, including Xss chars (< and >)
-    private static final char[] stripCharsIncludingXSS = { '\n', '\r', ';', '!', '\0', '%', '`', '?', '$', '~', '<', '>' };
+    //private static final char[] stripCharsIncludingXSS = { '\n', '\r', ';', '!', '\0', '%', '`', '?', '$', '~', '<', '>' };
     // Characters that are not allowed in strings that may be used in db queries
     private static final char[] stripSqlChars = { '\'', '\"', '\n', '\r', '\\', ';', '&', '|', '!', '\0', '%', '`', '<', '>', '?', '$', '~' };
     // Characters that are allowed to escape in strings.
@@ -91,8 +91,13 @@ public final class StringTools {
      * @param str the string whose contents will be stripped.
      * @return the stripped version of the input string.
      */
-    public static String stripIncludingXss(final String str) {
-    	return strip(str, stripCharsIncludingXSS);
+    public static String stripUsername(final String str) {
+        char[] forbiddenCharsNormal = CesecoreConfiguration.getForbiddenCharacters();
+        char[] forbiddenCharsXSS = new char[forbiddenCharsNormal.length+2];
+        forbiddenCharsXSS[0] = '<';
+        forbiddenCharsXSS[1] = '>';
+        System.arraycopy(forbiddenCharsNormal, 0, forbiddenCharsXSS, 2, forbiddenCharsNormal.length);
+        return strip(str, forbiddenCharsXSS);
     }
 
     private static String strip(final String str, final char[] stripThis) {

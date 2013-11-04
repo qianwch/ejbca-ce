@@ -218,7 +218,7 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 						}
 						data = endEntityAccessSession.findUserBySubjectDN(admin, dn);
 					} else {
-					    final String username = StringTools.strip(CertTools.getPartFromDN(dn,usernameComp));
+					    final String username = StringTools.stripUsername(CertTools.getPartFromDN(dn,usernameComp));
 						if (LOG.isDebugEnabled()) {
 							LOG.debug("looking for user with username: "+username);
 						}						
@@ -347,7 +347,7 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
 			if (LOG.isDebugEnabled()) {
 				LOG.debug("Creating username from base dn: "+dnname.toString());
 			}
-			final String username = StringTools.strip(gen.generateUsername(dnname.toString()));
+			final String username = StringTools.stripUsername(gen.generateUsername(dnname.toString()));
 			final String pwd;
             if(StringUtils.equals(authenticationModule.getName(), CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE)) {
                 pwd = authenticationModule.getAuthenticationString();
