@@ -59,8 +59,6 @@ public final class StringTools {
     private StringTools() {
     } // Not for instantiation
 
-    // Characters that are not allowed in strings that may be stored in the db, including Xss chars (< and >)
-    //private static final char[] stripCharsIncludingXSS = { '\n', '\r', ';', '!', '\0', '%', '`', '?', '$', '~', '<', '>' };
     // Characters that are not allowed in strings that may be used in db queries
     private static final char[] stripSqlChars = { '\'', '\"', '\n', '\r', '\\', ';', '&', '|', '!', '\0', '%', '`', '<', '>', '?', '$', '~' };
     // Characters that are allowed to escape in strings.
