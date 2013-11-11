@@ -689,7 +689,7 @@ function isKeyRecoveryPossible(){
     %>
     
     availablecas[<%=i%>] = new Array(2);
-    availablecas[<%=i%>][CANAME] = "<%= caidtonamemap.get(nextca) %>";      
+    availablecas[<%=i%>][CANAME] = "<c:out value="<%= caidtonamemap.get(nextca) %>"/>";
     availablecas[<%=i%>][CAID] = <%= nextca.intValue() %>;
     
    <%   i++; 

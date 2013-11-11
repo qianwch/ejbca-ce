@@ -490,7 +490,7 @@ function checkallfields(){
   <% } else { %>
   <%   if(editca){ %>  
     <input type="hidden" name='<%= ACTION %>' value='<%=ACTION_EDIT_CA %>'>
-    <input type="hidden" name='<%= HIDDEN_CAID %>' value='<%=caid %>'>
+    <input type="hidden" name='<%= HIDDEN_CAID %>' value='<c:out value="<%= caid %>"/>'>
     <input type="hidden" name='<%= HIDDEN_CANAME %>' value='<c:out value="<%= cainfo.getName() %>"/>'>
   <%   } else { %>
     <input type="hidden" name='<%= ACTION %>' value='<%=ACTION_CREATE_CA %>'>
