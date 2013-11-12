@@ -1,3 +1,8 @@
+EJBCA 5.0.12, 2013-11-12
+---
+Bug
+	Security fixes
+
 EJBCA 5.0.11, 2013-11-07
 ---
 Bug
