@@ -26,7 +26,9 @@ org.cesecore.authorization.control.AuditLogRules
 "%>
 
 <jsp:useBean id="ejbcawebbean" scope="session" class="org.ejbca.ui.web.admin.configuration.EjbcaWebBean" />
-<% GlobalConfiguration globalconfiguration = ejbcawebbean.initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, AuditLogRules.VIEW.resource()); %>
+<% GlobalConfiguration globalconfiguration = ejbcawebbean.initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, AuditLogRules.VIEW.resource()); 
+// dfsdfsdfds TEST!!!
+%>
 <html>
 <f:view>
 <head>
