@@ -1,6 +1,8 @@
 EJBCA 6.0.0, 2013-11-08
 ---
 
+foo anothe rchange
+
 ** Bug
     * [ECA-1015] - A ' is valid in an email address - but gets stripped by EJBCA.
     * [ECA-1640] - Sample code for advanced custom extension missing some arguments
