@@ -15,6 +15,7 @@ org.ejbca.core.model.authorization.AccessRulesConstants
  EjbcaJSFHelper helpbean = EjbcaJSFHelper.getBean();
  helpbean.setEjbcaWebBean(ejbcawebbean);
  helpbean.authorizedToApprovalPages();
+ // sdfsdfsdfsdf TEST!
 %>
 <html>
 <head>
