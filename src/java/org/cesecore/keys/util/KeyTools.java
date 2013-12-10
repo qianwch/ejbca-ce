@@ -936,7 +936,7 @@ public final class KeyTools {
          */
         public PKCS11Slot( final Type _type, final String _value) {
             this.type = _type;
-            this.value = _value.trim();
+            this.value = _value == null ? null : _value.trim();
         }
         /**
          * Get a string that later could be used to create a new object with {@link PKCS11Slot#PKCS11Slot(String)}.
