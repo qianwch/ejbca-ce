@@ -437,7 +437,7 @@ public class ServiceSessionBean implements ServiceSessionLocal, ServiceSessionRe
         if (log.isTraceEnabled()) {
             log.trace(">ejbTimeout");
         }
-        final long startOfTimeOut = new Date().getTime();
+        final long startOfTimeOut = System.currentTimeMillis();
         long serviceInterval = IInterval.DONT_EXECUTE;
         Integer timerInfo = (Integer) timer.getInfo();
         if (timerInfo.equals(SERVICELOADER_ID)) {
@@ -450,9 +450,7 @@ public class ServiceSessionBean implements ServiceSessionLocal, ServiceSessionRe
             try {
                 serviceName = serviceDataSession.findNameById(timerInfo);
             } catch (Throwable t) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Exception: ", t); // Don't spam log with stacktraces in normal production cases
-                }
+                log.warn("Exception finding service name: ", t); // if this throws, there is a failed database or similar
                 // Unexpected error (probably database related). We need to reschedule the service w a default interval..
                 addTimer(30 * 1000, timerInfo);
             }
@@ -464,9 +462,7 @@ public class ServiceSessionBean implements ServiceSessionLocal, ServiceSessionRe
                 try {
                     serviceInterval = serviceSession.getServiceInterval(timerInfo);
                 } catch (Throwable t) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Exception: ", t); // Don't spam log with stacktraces in normal production cases
-                    }
+                    log.warn("Exception getting service interval: ", t); // if this throws, there is a failed database or similar
                     // Unexpected error (probably database related). We need to reschedule the service w a default interval..
                     addTimer(30 * 1000, timerInfo);
                 }
@@ -506,8 +502,8 @@ public class ServiceSessionBean implements ServiceSessionLocal, ServiceSessionRe
                             log.debug(msg);
                         }
                     }
-                    if (new Date().getTime() - startOfTimeOut > serviceInterval * 1000) {
-                        log.warn("Service '" + serviceName + "' took longer than it's configured service interval."
+                    if (System.currentTimeMillis() - startOfTimeOut > serviceInterval * 1000) {
+                        log.warn("Service '" + serviceName + "' took longer than it's configured service interval ("+serviceInterval+")."
                                 + " This can trigger simultanious service execution on several nodes in a cluster."
                                 + " Increase interval or lower each invocations work load.");
                     }
