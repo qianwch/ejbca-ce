@@ -1,3 +1,16 @@
+EJBCA 5.0.13
+-----------
+This is a maintenance release with only minor bug fixes, where one is a security fix. In all 4 issues have been fixed.
+
+The security issue is rated as low, and can lead only to excessive CPU usage, if exposed to untrusted networks.
+
+* Noteworthy changes:
+- Some versions of MySQL picks bad index mixing OR and AND, so we make two generically safe queries instead.
+- Fixed a regression where using a sun config file for PKCS11 (not the normal case) did not work.
+
+Read the full Changelog for details.
+For upgrade instructions, please see UPGRADE.
+
 EJBCA 5.0.12
 -----------
 This is a maintenance release with only security fixes.
