@@ -14,11 +14,29 @@ package org.cesecore.authorization.user;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.security.Principal;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.security.auth.x500.X500Principal;
+
+import org.cesecore.authentication.tokens.AuthenticationSubject;
+import org.cesecore.authentication.tokens.AuthenticationToken;
+import org.cesecore.authentication.tokens.UsernamePrincipal;
+import org.cesecore.authentication.tokens.X509CertificateAuthenticationToken;
+import org.cesecore.authorization.control.AccessControlSessionRemote;
+import org.cesecore.authorization.rules.AccessRuleData;
+import org.cesecore.authorization.rules.AccessRuleState;
 import org.cesecore.authorization.user.matchvalues.X500PrincipalAccessMatchValue;
 import org.cesecore.jndi.JndiHelper;
+import org.cesecore.mock.authentication.SimpleAuthenticationProviderRemote;
+import org.cesecore.mock.authentication.tokens.TestAlwaysAllowLocalAuthenticationToken;
 import org.cesecore.roles.RoleData;
+import org.cesecore.roles.management.RoleManagementSessionRemote;
 import org.junit.Test;
 
 /**
@@ -32,8 +50,14 @@ import org.junit.Test;
  */
 public class AccessUserAspectManagerSessionBeanTest {
 
-    AccessUserAspectManagerTestSessionRemote accessUserAspectManagerSession = JndiHelper.getRemoteSession(AccessUserAspectManagerTestSessionRemote.class);
+    private AccessControlSessionRemote accessControlSession = JndiHelper.getRemoteSession(AccessControlSessionRemote.class);
+    private AccessUserAspectManagerTestSessionRemote accessUserAspectManagerSession = JndiHelper
+            .getRemoteSession(AccessUserAspectManagerTestSessionRemote.class);
+    private RoleManagementSessionRemote roleManagementSession = JndiHelper.getRemoteSession(RoleManagementSessionRemote.class);
 
+    private AuthenticationToken alwaysAllowAuthenticationToken = new TestAlwaysAllowLocalAuthenticationToken(new UsernamePrincipal(
+            "UpgradeSessionBeanTest"));
+    
     /**
      * Simple sanity test, meant to involve other session beans as little as possible.
      */
@@ -63,6 +87,90 @@ public class AccessUserAspectManagerSessionBeanTest {
             assertNull("AccessUserAspectManagerSessionRemote did not properly remove an object.",
                     accessUserAspectManagerSession.find(primaryKey));
         }
+    }
+    
+    /**
+     * Verify that keys created with the old and new system can work in parallel
+     */
+    @Test
+    public void testContainOldAndNewKeysInParallel() throws Exception {
+        String roleName = "testContainOldAndNewKeysInParallel";
+        String rule = "/" + roleName;
+        String issuerDn1 = "CN=" + roleName + "1";
+        String issuerDn2 = "CN=" + roleName + "2";
+        int caId1 = issuerDn1.hashCode();
+        int caId2 = issuerDn2.hashCode();
+        @SuppressWarnings("deprecation")
+        int oldStylePrimaryKey = AccessUserAspectData.generatePrimaryKeyOld(roleName, caId1,
+                X500PrincipalAccessMatchValue.WITH_COMMONNAME.getNumericValue(), AccessMatchType.TYPE_EQUALCASE, roleName);
+        AccessUserAspectData oldAspect = new AccessUserAspectData(roleName, caId1, X500PrincipalAccessMatchValue.WITH_COMMONNAME,
+                AccessMatchType.TYPE_EQUALCASE, roleName + "1");
+        oldAspect.setPrimaryKey(oldStylePrimaryKey);
+        AccessUserAspectData newAspect = new AccessUserAspectData(roleName, caId2, X500PrincipalAccessMatchValue.WITH_COMMONNAME,
+                AccessMatchType.TYPE_EQUALCASE, roleName + "2");
+        try {
+            RoleData role = roleManagementSession.create(alwaysAllowAuthenticationToken, roleName);
+            role = roleManagementSession.addSubjectsToRole(alwaysAllowAuthenticationToken, role, Arrays.asList(oldAspect, newAspect));
+            AccessRuleData accessRule = new AccessRuleData(roleName, rule, AccessRuleState.RULE_ACCEPT, false);
+            role = roleManagementSession.addAccessRulesToRole(alwaysAllowAuthenticationToken, role, Arrays.asList(accessRule));
+            X509CertificateAuthenticationToken authenticationTokenOld = (X509CertificateAuthenticationToken) createAuthenticationToken(issuerDn1);
+            X509CertificateAuthenticationToken authenticationTokenNew = (X509CertificateAuthenticationToken) createAuthenticationToken(issuerDn2);
+            assertTrue("Aspect created with the old style key wasn't authorized to rule.",
+                    accessControlSession.isAuthorized(authenticationTokenOld, rule));
+            assertTrue("Aspect created with the new style key wasn't authorized to rule.",
+                    accessControlSession.isAuthorized(authenticationTokenNew, rule));
+        } finally {
+            roleManagementSession.remove(alwaysAllowAuthenticationToken, roleName);
+        }
+    }
+
+    /**
+     * Verify that it shouldn't be possible to create an aspect with the same values as one created with the old primary key
+     */
+    @Test
+    public void testCreateIdenticalAspects() throws Exception {
+        String roleName = "testCreateIdenticalAspects";
+        String rule = "/" + roleName;
+        String issuerDn = "CN=" + roleName;
+        int caId = issuerDn.hashCode();
+        @SuppressWarnings("deprecation")
+        int oldStylePrimaryKey = AccessUserAspectData.generatePrimaryKeyOld(roleName, caId,
+                X500PrincipalAccessMatchValue.WITH_COMMONNAME.getNumericValue(), AccessMatchType.TYPE_EQUALCASE, roleName);
+        AccessUserAspectData oldAspect = new AccessUserAspectData(roleName, caId, X500PrincipalAccessMatchValue.WITH_COMMONNAME,
+                AccessMatchType.TYPE_EQUALCASE, roleName);
+        oldAspect.setPrimaryKey(oldStylePrimaryKey);
+        AccessUserAspectData newAspect = new AccessUserAspectData(roleName, caId, X500PrincipalAccessMatchValue.WITH_COMMONNAME,
+                AccessMatchType.TYPE_EQUALCASE, roleName);
+        try {
+            RoleData role = roleManagementSession.create(alwaysAllowAuthenticationToken, roleName);
+            role = roleManagementSession.addSubjectsToRole(alwaysAllowAuthenticationToken, role, Arrays.asList(oldAspect));
+            AccessRuleData accessRule = new AccessRuleData(roleName, rule, AccessRuleState.RULE_ACCEPT, false);
+            role = roleManagementSession.addAccessRulesToRole(alwaysAllowAuthenticationToken, role, Arrays.asList(accessRule));
+            //So far so good, now check that the new rule can be added in parallel           
+            role = roleManagementSession.addSubjectsToRole(alwaysAllowAuthenticationToken, role, Arrays.asList(newAspect));
+            //It should fail silently, so simply verify that the new value doesn't exist in the dababase.
+            assertNotNull("New entry was not created.", accessUserAspectManagerSession.find(newAspect.getPrimaryKey()));
+            assertNull("Old entry was not removed.", accessUserAspectManagerSession.find(newAspect.getLegacyPrimaryKey()));
+        } finally {
+            roleManagementSession.remove(alwaysAllowAuthenticationToken, roleName);
+            if (accessUserAspectManagerSession.find(newAspect.getPrimaryKey()) != null) {
+                accessUserAspectManagerSession.remove(newAspect);
+            }
+            if (accessUserAspectManagerSession.find(oldAspect.getPrimaryKey()) != null) {
+                accessUserAspectManagerSession.remove(oldAspect);
+            }
+        }
+
+    }
+
+    private static AuthenticationToken createAuthenticationToken(String issuerDn) {
+        Set<Principal> principals = new HashSet<Principal>();
+        X500Principal p = new X500Principal(issuerDn);
+        AuthenticationSubject subject = new AuthenticationSubject(principals, null);
+        principals.add(p);
+        final SimpleAuthenticationProviderRemote authenticationProvider = JndiHelper.getRemoteSession(
+                SimpleAuthenticationProviderRemote.class);
+        return authenticationProvider.authenticate(subject);
     }
 
 }
