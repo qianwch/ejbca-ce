@@ -56,7 +56,7 @@ public class AccessUserAspectManagerSessionBeanTest {
     private RoleManagementSessionRemote roleManagementSession = JndiHelper.getRemoteSession(RoleManagementSessionRemote.class);
 
     private AuthenticationToken alwaysAllowAuthenticationToken = new TestAlwaysAllowLocalAuthenticationToken(new UsernamePrincipal(
-            "UpgradeSessionBeanTest"));
+            "AccessUserAspectManagerSessionBeanTest"));
     
     /**
      * Simple sanity test, meant to involve other session beans as little as possible.
