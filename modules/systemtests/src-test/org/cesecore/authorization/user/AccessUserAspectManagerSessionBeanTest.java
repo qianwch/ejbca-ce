@@ -27,7 +27,6 @@ import javax.security.auth.x500.X500Principal;
 import org.cesecore.authentication.tokens.AuthenticationSubject;
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authentication.tokens.UsernamePrincipal;
-import org.cesecore.authentication.tokens.X509CertificateAuthenticationToken;
 import org.cesecore.authorization.control.AccessControlSessionRemote;
 import org.cesecore.authorization.rules.AccessRuleData;
 import org.cesecore.authorization.rules.AccessRuleState;
@@ -35,6 +34,7 @@ import org.cesecore.authorization.user.matchvalues.X500PrincipalAccessMatchValue
 import org.cesecore.jndi.JndiHelper;
 import org.cesecore.mock.authentication.SimpleAuthenticationProviderRemote;
 import org.cesecore.mock.authentication.tokens.TestAlwaysAllowLocalAuthenticationToken;
+import org.cesecore.mock.authentication.tokens.TestX509CertificateAuthenticationToken;
 import org.cesecore.roles.RoleData;
 import org.cesecore.roles.management.RoleManagementSessionRemote;
 import org.junit.Test;
@@ -113,8 +113,8 @@ public class AccessUserAspectManagerSessionBeanTest {
             role = roleManagementSession.addSubjectsToRole(alwaysAllowAuthenticationToken, role, Arrays.asList(oldAspect, newAspect));
             AccessRuleData accessRule = new AccessRuleData(roleName, rule, AccessRuleState.RULE_ACCEPT, false);
             role = roleManagementSession.addAccessRulesToRole(alwaysAllowAuthenticationToken, role, Arrays.asList(accessRule));
-            X509CertificateAuthenticationToken authenticationTokenOld = (X509CertificateAuthenticationToken) createAuthenticationToken(issuerDn1);
-            X509CertificateAuthenticationToken authenticationTokenNew = (X509CertificateAuthenticationToken) createAuthenticationToken(issuerDn2);
+            TestX509CertificateAuthenticationToken authenticationTokenOld = (TestX509CertificateAuthenticationToken) createAuthenticationToken(issuerDn1);
+            TestX509CertificateAuthenticationToken authenticationTokenNew = (TestX509CertificateAuthenticationToken) createAuthenticationToken(issuerDn2);
             assertTrue("Aspect created with the old style key wasn't authorized to rule.",
                     accessControlSession.isAuthorized(authenticationTokenOld, rule));
             assertTrue("Aspect created with the new style key wasn't authorized to rule.",
