@@ -10,10 +10,10 @@
     For example, <tt>cn=foo</tt> is considered equal to <tt>CN=foo</tt> but different from <tt>cn=FOO</tt>.
 </p>
 
-<form action="../publicweb/webdist/certdist" enctype="x-www-form-encoded" method="get">
+<form action="../publicweb/webdist/certdist" enctype="x-www-form-encoded" method="post">
   <fieldset>
     <legend>Name</legend>
-    <input type="hidden" name="hidemenu" value="${hidemenu}" />
+    <input type="hidden" name="hidemenu" value="<c:out value="${hidemenu}" />" />
     <input type="hidden" name="cmd" value="lastcert" />
     <label for="subject">Subject DN</label>
     <input name="subject" id="subject" type="text" size="60" accesskey="s" />
