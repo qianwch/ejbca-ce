@@ -1,4 +1,54 @@
-EJBCA 6.2.0, 2014-06-
+EJBCA 6.2.1, 2014-08-06
+---
+Bug
+	[ECA-3589] - First CRL not created when initialising root CA after statedump import
+	[ECA-3613] - Regression: The CLI doesn't parse the value ca.name from install.properties if it contains spaces.
+	[ECA-3615] - SECURITY: Security issue
+	[ECA-3617] - Allow Enterprise Edition to run system tests sans Statedump
+	[ECA-3620] - Import/export profiles rendered during unrelated operations
+	[ECA-3621] - Can't save or initialize uninitialized (= statedump imported) externally-signed CA
+	[ECA-3635] - Regression: Missing user notice and CPS in certificate policy extensions
+	[ECA-3643] - Autoactivate switch in CryptoTokenCreateCommand is obfuscated
+	[ECA-3645] - CLI complaining about unknown CA with id 0 (Improve output for unbound admins)
+	[ECA-3648] - Importing certificate - no email specified error
+	[ECA-3650] - Changing the Subject DN on an uninitialized (=statedump-imported) CA causes all extended services to be lost
+	[ECA-3661] - Statedump can't import PKCS#11 cryptotokens with slots referenced by label
+	[ECA-3664] - Invalid key specification for uninitialised key after importing a statedump
+	[ECA-3670] - Fix exceptions when excluding system/cmp/admin config in statedump
+	[ECA-3675] - Not all defined external RA datasources added in persitence.xml
+	[ECA-3679] - Regression: CA soft keystore pwd is always default when creating CA using CLI
+	[ECA-3685] - Int to Long cast exception upgrading OCSP
+
+
+Improvement
+	[ECA-3501] - Create CryptoToken key aliases (needed for InternalKeyBindings) during statedump import
+	[ECA-3592] - Update CA IDs for uninitialised CAs when saving
+	[ECA-3606] - Make HSM system tests configurable
+	[ECA-3618] - Configurable environment for testAdminWebSecurityHeaders
+	[ECA-3622] - Fix cosmetic issues with statedump
+	[ECA-3624] - Hide Name Constraint textboxes for external CAs without keys
+	[ECA-3625] - Handle external CAs (=without keys) in Statedump
+	[ECA-3626] - Proper setup of environment for testAuthenticationWithMissingCertificate
+	[ECA-3630] - Allow importing Key Bindings in statedump even when key aliases are missing
+	[ECA-3638] - Don't include external CAs in statedump export by default
+	[ECA-3640] - Modifying uninitialised CAs (from statedump) even if keys are missing/crypto token is offline
+	[ECA-3662] - Don't export end-entity passwords from statedump
+	[ECA-3663] - Don't export crypto token auto-activation passwords in statedump
+	[ECA-3665] - Import all crypto tokens in inactive state during statedump import
+	[ECA-3666] - Better error message during statedump export if crypto token is offline
+	[ECA-3667] - Show warnings during statedump export for exclude patterns that did not match anything
+	[ECA-3668] - Improve options format of statedump tool
+	[ECA-3669] - Better warning/error output in statedump utility
+	[ECA-3677] - Do not allow export of CA keystores not protected by password
+
+
+New Feature
+	[ECA-3636] - Statedump CLI command to initialize statedump-imported CA
+	[ECA-3637] - Ability to limit what is exported in statedump
+	[ECA-3639] - Placeholders for keys in crypto tokens imported via statedump
+	[ECA-3642] - Include end entity information in statedump
+
+EJBCA 6.2.0, 2014-06-18
 ---
 Bug
 	[ECA-3216] - Return unsigned response "unauthorized" when no default responder configured, or wrongly configured
