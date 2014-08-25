@@ -174,6 +174,7 @@ import org.ejbca.core.model.approval.ApprovalOveradableClassName;
 import org.ejbca.core.model.approval.WaitingForApprovalException;
 import org.ejbca.core.model.approval.approvalrequests.ActivateCATokenApprovalRequest;
 import org.ejbca.core.model.authorization.AccessRulesConstants;
+import org.ejbca.core.model.ca.caadmin.extendedcaservices.BaseSigningCAServiceInfo;
 import org.ejbca.core.model.ca.caadmin.extendedcaservices.CmsCAServiceInfo;
 import org.ejbca.core.model.ca.caadmin.extendedcaservices.XKMSCAServiceInfo;
 import org.ejbca.core.model.ra.ExtendedInformationFields;
@@ -606,7 +607,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
         while (iter.hasNext()) {
             ExtendedCAServiceInfo next = (ExtendedCAServiceInfo) iter.next(); 
             if (next instanceof XKMSCAServiceInfo) {
-                List<Certificate> xkmscerts = ((XKMSCAServiceInfo) next).getXKMSSignerCertificatePath();
+                List<Certificate> xkmscerts = ((XKMSCAServiceInfo) next).getCertificatePath();
                 if (xkmscerts != null) {
                     X509Certificate xkmscert = (X509Certificate)xkmscerts.get(0);
                     revocationSession.revokeCertificate(admin, xkmscert, cainfo.getCRLPublishers(), RevokedCertInfo.REVOCATION_REASON_UNSPECIFIED, cainfo.getSubjectDN());        
@@ -1024,11 +1025,14 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
         final Collection<ExtendedCAServiceInfo> extendedCAServiceInfos = cainfo.getExtendedCAServiceInfos();
         if (extendedCAServiceInfos != null) {
             for (final ExtendedCAServiceInfo extendedCAServiceInfo : extendedCAServiceInfos) {
-                // No OCSP Certificate exists that can be renewed.
                 if (extendedCAServiceInfo instanceof XKMSCAServiceInfo) {
-                    xkmsrenewcert = ((XKMSCAServiceInfo) extendedCAServiceInfo).getRenewFlag();
+                    final BaseSigningCAServiceInfo signingInfo = (BaseSigningCAServiceInfo) extendedCAServiceInfo;
+                    xkmsrenewcert = signingInfo.getRenewFlag() ||
+                        (signingInfo.getCertificatePath() == null && signingInfo.getStatus() == ExtendedCAServiceInfo.STATUS_ACTIVE);
                 } else if (extendedCAServiceInfo instanceof CmsCAServiceInfo) {
-                    cmsrenewcert = ((CmsCAServiceInfo) extendedCAServiceInfo).getRenewFlag();
+                    final BaseSigningCAServiceInfo signingInfo = (BaseSigningCAServiceInfo) extendedCAServiceInfo;
+                    cmsrenewcert = signingInfo.getRenewFlag() ||
+                        (signingInfo.getCertificatePath() == null && signingInfo.getStatus() == ExtendedCAServiceInfo.STATUS_ACTIVE);
                 }
             }
         }
@@ -1040,11 +1044,11 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
             // No OCSP Certificate exists that can be renewed.
             if (xkmsrenewcert) {
                 XKMSCAServiceInfo info = (XKMSCAServiceInfo) ca.getExtendedCAServiceInfo(ExtendedCAServiceTypes.TYPE_XKMSEXTENDEDSERVICE);
-                Certificate xkmscert = (Certificate) info.getXKMSSignerCertificatePath().get(0);
+                Certificate xkmscert = (Certificate) info.getCertificatePath().get(0);
                 ArrayList<Certificate> xkmscertificate = new ArrayList<Certificate>();
                 xkmscertificate.add(xkmscert);
                 // Publish the extended service certificate, but only for active services
-                if ((info.getStatus() == ExtendedCAServiceInfo.STATUS_ACTIVE) && (!xkmscertificate.isEmpty())) {
+                if (info.getStatus() == ExtendedCAServiceInfo.STATUS_ACTIVE) {
                     publishCACertificate(admin, xkmscertificate, ca.getCRLPublishers(), ca.getSubjectDN());
                 }
             }
@@ -1054,7 +1058,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
                 ArrayList<Certificate> cmscertificate = new ArrayList<Certificate>();
                 cmscertificate.add(cmscert);
                 // Publish the extended service certificate, but only for active services
-                if ((info.getStatus() == ExtendedCAServiceInfo.STATUS_ACTIVE) && (!cmscertificate.isEmpty())) {
+                if (info.getStatus() == ExtendedCAServiceInfo.STATUS_ACTIVE) {
                     publishCACertificate(admin, cmscertificate, ca.getCRLPublishers(), ca.getSubjectDN());
                 }
             }
@@ -1394,17 +1398,15 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
             for (int type : ca.getExternalCAServiceTypes()) {
                 try {
                     ca.initExtendedService(cryptoToken, type, ca);
-                    final List<Certificate> extcacertificate = new ArrayList<Certificate>();
                     final ExtendedCAServiceInfo info = ca.getExtendedCAServiceInfo(type);
-                    if (type == ExtendedCAServiceTypes.TYPE_XKMSEXTENDEDSERVICE) {
-                        extcacertificate.add(((XKMSCAServiceInfo) info).getXKMSSignerCertificatePath().get(0));
-                    }
-                    if (type == ExtendedCAServiceTypes.TYPE_CMSEXTENDEDSERVICE) {
-                        extcacertificate.add(((CmsCAServiceInfo) info).getCertificatePath().get(0));
-                    }
-                    // Publish the extended service certificate, but only for active services
-                    if ((info != null) && (info.getStatus() == ExtendedCAServiceInfo.STATUS_ACTIVE) && (!extcacertificate.isEmpty())) {
-                        publishCACertificate(authenticationToken, extcacertificate, ca.getCRLPublishers(), ca.getSubjectDN());
+                    if (info instanceof BaseSigningCAServiceInfo) {
+                        final List<Certificate> certPath = ((BaseSigningCAServiceInfo) info).getCertificatePath();
+                        // Publish the extended service certificate, but only for active services
+                        if (certPath != null && info.getStatus() == ExtendedCAServiceInfo.STATUS_ACTIVE) {
+                            final List<Certificate> extcacertificate = new ArrayList<Certificate>();
+                            extcacertificate.add(certPath.get(0));
+                            publishCACertificate(authenticationToken, extcacertificate, ca.getCRLPublishers(), ca.getSubjectDN());
+                        }
                     }
                 } catch (Exception fe) {
                     final String detailsMsg = intres.getLocalizedMessage("caadmin.errorcreatecaservice", Integer.valueOf(caid));
@@ -2976,8 +2978,10 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
                 try {
                     final CryptoToken cryptoToken = cryptoTokenSession.getCryptoToken(ca.getCAToken().getCryptoTokenId());
                     ca.initExtendedService(cryptoToken, ExtendedCAServiceTypes.TYPE_XKMSEXTENDEDSERVICE, ca);
-                    certificates.add(((XKMSCAServiceInfo) ca.getExtendedCAServiceInfo(ExtendedCAServiceTypes.TYPE_XKMSEXTENDEDSERVICE))
-                            .getXKMSSignerCertificatePath().get(0));
+                    final List<Certificate> certPath = ((XKMSCAServiceInfo) ca.getExtendedCAServiceInfo(ExtendedCAServiceTypes.TYPE_XKMSEXTENDEDSERVICE)).getCertificatePath();
+                    if (certPath != null) {
+                        certificates.add(certPath.get(0));
+                    }
                 } catch (Exception fe) {
                     String msg = intres.getLocalizedMessage("caadmin.errorcreatecaservice", "XKMSCAService");
                     log.error(msg, fe);
@@ -2988,8 +2992,10 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
                 try {
                     final CryptoToken cryptoToken = cryptoTokenSession.getCryptoToken(ca.getCAToken().getCryptoTokenId());
                     ca.initExtendedService(cryptoToken, ExtendedCAServiceTypes.TYPE_CMSEXTENDEDSERVICE, ca);
-                    certificates.add(((CmsCAServiceInfo) ca.getExtendedCAServiceInfo(ExtendedCAServiceTypes.TYPE_CMSEXTENDEDSERVICE))
-                            .getCertificatePath().get(0));
+                    final List<Certificate> certPath = ((CmsCAServiceInfo) ca.getExtendedCAServiceInfo(ExtendedCAServiceTypes.TYPE_CMSEXTENDEDSERVICE)).getCertificatePath();
+                    if (certPath != null) {
+                        certificates.add(certPath.get(0));
+                    }
                 } catch (Exception fe) {
                     String msg = intres.getLocalizedMessage("caadmin.errorcreatecaservice", "CMSCAService");
                     log.error(msg, fe);
