@@ -285,7 +285,7 @@ public class HttpMethodsTest {
     private int getUrl(String url) throws IOException {
         final HttpURLConnection con = getHttpURLConnection(url);
         int ret = con.getResponseCode();
-        log.debug("HTTP response code: "+ret);
+        log.debug("HTTP response code: "+ret+". Response message: "+con.getResponseMessage());
         if ( ret == 200 ) {
             log.debug(Streams.asString(con.getInputStream())); 
         }
