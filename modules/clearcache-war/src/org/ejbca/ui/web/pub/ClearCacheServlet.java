@@ -16,7 +16,9 @@ package org.ejbca.ui.web.pub;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import javax.ejb.EJB;
@@ -33,6 +35,7 @@ import org.cesecore.certificates.certificate.CertificateStoreSessionLocal;
 import org.cesecore.certificates.certificateprofile.CertificateProfileSessionLocal;
 import org.cesecore.certificates.ocsp.OcspResponseGeneratorSessionLocal;
 import org.cesecore.keybind.InternalKeyBindingDataSessionLocal;
+import org.cesecore.keys.token.CryptoToken;
 import org.cesecore.keys.token.CryptoTokenSessionLocal;
 import org.ejbca.config.Configuration;
 import org.ejbca.config.GlobalConfiguration;
@@ -88,7 +91,7 @@ public class ClearCacheServlet extends HttpServlet {
         
         if (StringUtils.equals(req.getParameter("command"), "clearcaches")) {
             
-            boolean excludeCryptotokenCache = StringUtils.equalsIgnoreCase("true", req.getParameter("excludectcache"));
+            boolean excludeActiveCryptoTokens = StringUtils.equalsIgnoreCase("true", req.getParameter("excludeactivects"));
             
             if(!acceptedHost(req.getRemoteHost())) {
         		if (log.isDebugEnabled()) {
@@ -129,16 +132,7 @@ public class ClearCacheServlet extends HttpServlet {
         			log.debug("CA cache cleared");
         		}
         		
-        		if(!excludeCryptotokenCache) {
-        		    cryptoTokenSession.flushCache();
-        		    if(log.isDebugEnabled()) {
-        		        log.debug("CryptoToken cache cleared");
-        		    }
-        		} else {
-        		    if(log.isDebugEnabled()) {
-        		        log.debug("Excluding CryptoToken cache");
-        		    }
-        		}
+        		flushCryptoTokenCache(excludeActiveCryptoTokens);
         		
                 publisherSession.flushPublisherCache();
                 if(log.isDebugEnabled()) {
@@ -170,6 +164,30 @@ public class ClearCacheServlet extends HttpServlet {
 		}
     }
 
+	private void flushCryptoTokenCache(boolean withExclusion) {
+	    if(withExclusion) {
+	        List<Integer> excludeIDs = new ArrayList<Integer>();
+	        List<Integer> ctIDs = cryptoTokenSession.getCryptoTokenIds();
+	        Iterator<Integer> itr = ctIDs.iterator();
+	        while(itr.hasNext()) {
+	            Integer ctid = itr.next();
+	            CryptoToken ct = cryptoTokenSession.getCryptoToken(ctid);
+	            if(ct.getTokenStatus()==CryptoToken.STATUS_ACTIVE && !ct.isAutoActivationPinPresent()) {
+	                excludeIDs.add(ctid);
+	            }
+	        }
+	        cryptoTokenSession.flushExcludingIDs(excludeIDs);
+	        if(log.isDebugEnabled()) {
+	            log.debug("CryptoToken cache cleared except for " + excludeIDs.size() + " specific entries.");
+	        }
+	    } else {
+	        cryptoTokenSession.flushCache();
+	        if(log.isDebugEnabled()) {
+	            log.debug("CryptoToken cache cleared");
+	        }
+	    }
+	}
+	    
 	private boolean acceptedHost(String remotehost) {
 		if (log.isTraceEnabled()) {
 			log.trace(">acceptedHost: "+remotehost);
