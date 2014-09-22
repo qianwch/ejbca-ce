@@ -5017,7 +5017,7 @@ entry will also be inserted for every health check run.
 </p>
 </subsubsection>
 
-<subsubsection name="Cert Safe publisher for a HTTPS server">
+<subsubsection name="Cert Safe publisher for a HTTPS server (Enterprise only)">
 <p>
 The CertSafePublisher publishes certificate issuance and life cycle events
 (revoke and unrevoke) to a HTTPS server. The HTTPS request body is a JSON
