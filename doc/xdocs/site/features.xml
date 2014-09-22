@@ -121,6 +121,7 @@
 <li>Penetration tested with improved security.</li>
 <li><a href="http://www.3gpp.org/">3GPP</a>, i.e. LTE/4G, compatible PKI, using <a href="docs/adminguide.html#CMP">CMP</a> with multiple Vendor CAs.</li>
 <li>Certificate Transparency, RFC6962.</li>
+<li>CertSafe publisher to send, and revoke, certificates from a CertSafe server.</li>
 <li>Support for GOST and DSTU algorithms (Russian and Ukrainian algorithms).</li>
 </ul>
   </subsection>
