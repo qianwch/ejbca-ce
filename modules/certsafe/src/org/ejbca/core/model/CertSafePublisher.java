@@ -1,16 +1,10 @@
 /*************************************************************************
  *                                                                       *
- *  EJBCA: The OpenSource Certificate Authority                          *
+ *  EJBCA: Enterprise Certificate Authority                              *
  *                                                                       *
- *  This software is free software; you can redistribute it and/or       *
- *  modify it under the terms of the GNU Lesser General Public           *
- *  License as published by the Free Software Foundation; either         *
- *  version 2.1 of the License, or any later version.                    *
+ *  Copyright (c), PrimeKey Solutions AB. All rights reserved.           *
  *                                                                       *
- *  See terms of license at gnu.org.                                     *
- *                                                                       *
- *************************************************************************/
- 
+ *************************************************************************/ 
 package org.ejbca.core.model;
 
 import java.io.IOException;
@@ -70,7 +64,7 @@ import org.json.simple.parser.ParseException;
  * to a HTTPS server. The HTTPS request content (aka. the certificate and other related 
  * data) is sent inside a JSON object.
  * 
- * @version $Id: CertSafePublisher.java 19536 2014-08-20 07:47:21Z aveen4711 $
+ * @version $Id$
  */
 public class CertSafePublisher implements ICustomPublisher {
 
