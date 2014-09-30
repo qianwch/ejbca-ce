@@ -909,9 +909,13 @@ public class X509CA extends CA implements Serializable {
                 final boolean isCritical = ext.isCritical();
                 final ASN1Encodable parsedValue = ext.getParsedValue();
 
-                certbuilder.addExtension(oid, isCritical, parsedValue);
-                if (precertbuilder != null) {
-                    precertbuilder.addExtension(oid, isCritical, parsedValue);
+                if(oid.equals(Extension.subjectAlternativeName)) {
+                    ct.handleSubjectAltNameExtension(certbuilder, precertbuilder, ext);
+                } else {
+                    certbuilder.addExtension(oid, isCritical, parsedValue);
+                    if (precertbuilder != null) {
+                        precertbuilder.addExtension(oid, isCritical, parsedValue);
+                    }
                 }
             }
 
