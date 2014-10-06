@@ -271,7 +271,7 @@ public class CryptoTokenMBean extends BaseManagedBean implements Serializable {
     /** @return a List of all CryptoToken Identifiers referenced by CAs. */
     private List<Integer> getReferencedCryptoTokenIds() {
         final List<Integer> ret = new ArrayList<Integer>();
-        for (int caId : caSession.getAvailableCAs()) {
+        for (int caId : caSession.getAllCaIds()) {
             try {
                 ret.add(Integer.valueOf(caSession.getCAInfoInternal(caId).getCAToken().getCryptoTokenId()));
             } catch (CADoesntExistsException e) {
