@@ -78,17 +78,18 @@ public class CertSafePublisher implements ICustomPublisher {
     
     private final int DEFAULT_CONNECTIONTIMEOUT = 10000; // 10 000 milliseconds = 10 seconds
     
+    /** The URL to the HTTPS server. Should be in the format https://HOST:PORT/RELATIVEURL */
     public static final String certSafeUrlPropertyName = "certsafe.url";
+    /** The name of the Authentication Key Binding that will be used for authentication with the HTTPS server */
     public static final String certSafeAuthKeyBindingPropertyName = "certsafe.authkeybindingname";
+    /** Timeout on connection to the HTTPS server  */
     public static final String certSafeConnectionTimeOutPropertyName = "certsafe.connectiontimeout";
 
-    /** The URL to the HTTPS server. Should be in the format https://HOST:PORT/RELATIVEURL */
+    
     private String urlstr = "";
-    /** The name of the Authentication Key Binding that will be used for authentication with the HTTPS server */
     private String authKeyBindingName = "";
-    /** Timeout on connection to the HTTPS server  */
     private int timeout = DEFAULT_CONNECTIONTIMEOUT;
-
+    private URL url = null;
 
     private HashMap<String, String> revocationReasons = new HashMap<String, String>();
 
@@ -137,8 +138,13 @@ public class CertSafePublisher implements ICustomPublisher {
         
     } // init  
     
-
-
+    private URL getURL() throws MalformedURLException {
+        if(url==null) {
+            url = new URL(urlstr);
+        }
+        return url;
+    }
+ 
     // Public Methods
 
 
@@ -185,8 +191,7 @@ public class CertSafePublisher implements ICustomPublisher {
                 log.debug("CertSafe https URL: " + urlstr);
             }
 
-            final URL url = new URL(urlstr);
-            con = (HttpsURLConnection)url.openConnection();
+            con = (HttpsURLConnection) getURL().openConnection();
             con.setSSLSocketFactory(sslSocketFactory);
             
             con.setRequestProperty("Content-Type", "application/json");
@@ -264,8 +269,7 @@ public class CertSafePublisher implements ICustomPublisher {
             if (log.isDebugEnabled()) {
                 log.debug("CertSafe https URL: " + urlstr);
             }
-            URL url = new URL(urlstr);
-            HttpsURLConnection con = (HttpsURLConnection)url.openConnection();
+            HttpsURLConnection con = (HttpsURLConnection) getURL().openConnection();
             con.setSSLSocketFactory(sslSocketFactory);
             
             con.setDoOutput(true);
@@ -295,10 +299,24 @@ public class CertSafePublisher implements ICustomPublisher {
     }
 
     private void checkProperties() throws PublisherConnectionException {
-        if (urlstr==null || authKeyBindingName==null) {
+        if (isEmptyString(urlstr) || isEmptyString(authKeyBindingName)) {
             String msg = "Either the property '" + certSafeUrlPropertyName + "' or the property '" + 
                             certSafeAuthKeyBindingPropertyName + "' is not set.";
             log.info(msg);
+            throw new PublisherConnectionException(msg);
+        }
+        
+        try {
+            String protocol = getURL().getProtocol();
+            if(!protocol.equalsIgnoreCase("https")) {
+                String msg = "The URL must be a HTTPS address";
+                log.info(msg);
+                throw new PublisherConnectionException(msg);
+            }
+        } catch (MalformedURLException e1) {
+            String msg = "Could not create a URL object from the value of " + certSafeUrlPropertyName + " property: " + urlstr;
+            log.info(msg);
+            log.info(e1.getLocalizedMessage(), e1);
             throw new PublisherConnectionException(msg);
         }
     }
@@ -354,7 +372,7 @@ public class CertSafePublisher implements ICustomPublisher {
             log.error(msg, e);
             throw new PublisherConnectionException(msg);
         } catch (CryptoTokenOfflineException e) {
-            String msg = e.getLocalizedMessage();
+            String msg = "The CryptoToken is offline";
             log.error(msg, e);
             throw new PublisherConnectionException(msg);
         } catch (CADoesntExistsException e) {
@@ -483,5 +501,9 @@ public class CertSafePublisher implements ICustomPublisher {
         }
         return (String) json.get("error");
     }
-    
+
+    private boolean isEmptyString(String str) {
+        return str==null || str.length()==0;
+    }
+
 }
