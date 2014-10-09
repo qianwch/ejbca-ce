@@ -57,6 +57,13 @@
 		<pathelement location="${mod.ejbca-ws-cli.lib}"/>
 		<pathelement location="${mod.ejbca-ws.lib}"/>
 	</path>
+	
+	<path id="servicemanifest-util.classpath">
+		<path refid="compile-util.classpath"/>
+		<!-- Service manifest builder triggers static references to InternalResources -->
+		<path location="${ejbca.home}/src"/>
+		<path location="${ejbca.home}/src/java"/>
+	</path>
 
 	<path id="compile-test.classpath">
 		<path refid="compile-util.classpath"/>
