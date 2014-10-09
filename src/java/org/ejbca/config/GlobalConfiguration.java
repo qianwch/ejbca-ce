@@ -600,4 +600,9 @@ public class GlobalConfiguration extends ConfigurationBase implements Serializab
     private static final   String ERRORPAGE             =  "errorpage";
     private static final   String IECSSFILENAMEPOSTFIX  =  "iecssfilenamepostfix";
 
+    @Override
+    public String getConfigurationId() {
+        return GLOBAL_CONFIGURATION_ID;
+    }
+
 }

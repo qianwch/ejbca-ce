@@ -270,7 +270,7 @@ public class StartServicesServlet extends HttpServlet {
                     log.debug("Adding this node ("+hostname+") to the list of nodes");
                     nodes.add(hostname);
                     config.setNodesInCluster(nodes);
-                    globalConfigurationSession.saveConfiguration(admin, config, GlobalConfiguration.GLOBAL_CONFIGURATION_ID);
+                    globalConfigurationSession.saveConfiguration(admin, config);
                 }
             } finally {
                 tx.commit();
