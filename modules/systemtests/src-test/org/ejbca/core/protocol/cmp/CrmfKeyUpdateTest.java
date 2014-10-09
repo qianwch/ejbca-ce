@@ -82,6 +82,7 @@ import org.cesecore.certificates.endentity.EndEntityInformation;
 import org.cesecore.certificates.endentity.EndEntityType;
 import org.cesecore.certificates.endentity.EndEntityTypes;
 import org.cesecore.certificates.util.AlgorithmConstants;
+import org.cesecore.configuration.GlobalConfigurationSessionRemote;
 import org.cesecore.keys.token.CryptoTokenTestUtils;
 import org.cesecore.keys.util.KeyTools;
 import org.cesecore.mock.authentication.tokens.TestX509CertificateAuthenticationToken;
@@ -94,10 +95,8 @@ import org.cesecore.util.CertTools;
 import org.cesecore.util.CryptoProviderTools;
 import org.cesecore.util.EjbRemoteHelper;
 import org.ejbca.config.CmpConfiguration;
-import org.ejbca.config.Configuration;
 import org.ejbca.config.EjbcaConfigurationHolder;
 import org.ejbca.core.EjbcaException;
-import org.ejbca.core.ejb.config.GlobalConfigurationSessionRemote;
 import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.approval.ApprovalException;
 import org.ejbca.core.model.approval.WaitingForApprovalException;
@@ -144,7 +143,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
     }
 
     public CrmfKeyUpdateTest() throws Exception {
-        this.cmpConfiguration = (CmpConfiguration) this.globalConfigurationSession.getCachedConfiguration(Configuration.CMPConfigID);
+        this.cmpConfiguration = (CmpConfiguration) this.globalConfigurationSession.getCachedConfiguration(CmpConfiguration.CMP_CONFIGURATION_ID);
         
         final int keyusage = X509KeyUsage.digitalSignature + X509KeyUsage.keyCertSign + X509KeyUsage.cRLSign;
         this.testx509ca = CaTestUtils.createTestX509CA(this.issuerDN, null, false, keyusage);
@@ -173,7 +172,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         this.cmpConfiguration.setRAMode(this.cmpAlias, false);
         this.cmpConfiguration.setAuthenticationModule(this.cmpAlias, "RegTokenPwd;HMAC");
         this.cmpConfiguration.setAuthenticationParameters(this.cmpAlias, "-;-");
-        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, Configuration.CMPConfigID);
+        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, CmpConfiguration.CMP_CONFIGURATION_ID);
     }
 
     @Override
@@ -192,7 +191,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         } catch(Exception e){/* do nothing */}
         
         this.cmpConfiguration.removeAlias(this.cmpAlias);
-        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, Configuration.CMPConfigID);
+        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, CmpConfiguration.CMP_CONFIGURATION_ID);
     }
 
     
@@ -227,7 +226,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         
         this.cmpConfiguration.setKurAllowAutomaticUpdate(this.cmpAlias, true);
         this.cmpConfiguration.setKurAllowSameKey(this.cmpAlias, true);
-        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, Configuration.CMPConfigID);
+        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, CmpConfiguration.CMP_CONFIGURATION_ID);
         
         //--------------- create the user and issue his first certificate -----------------
         createUser(this.username, this.userDN.toString(), "foo123");
@@ -307,7 +306,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         
         this.cmpConfiguration.setKurAllowAutomaticUpdate(this.cmpAlias, false);
         this.cmpConfiguration.setKurAllowSameKey(this.cmpAlias, true);
-        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, Configuration.CMPConfigID);
+        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, CmpConfiguration.CMP_CONFIGURATION_ID);
 
         //--------------- create the user and issue his first certificate -----------------
         createUser(this.username, this.userDN.toString(), "foo123");
@@ -398,7 +397,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         }
         
         this.cmpConfiguration.setKurAllowAutomaticUpdate(this.cmpAlias, true);
-        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, Configuration.CMPConfigID);
+        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, CmpConfiguration.CMP_CONFIGURATION_ID);
         
         //--------------- create the user and issue his first certificate -----------------
         createUser(this.username, this.userDN.toString(), "foo123");
@@ -491,7 +490,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         }
         
         this.cmpConfiguration.setKurAllowAutomaticUpdate(this.cmpAlias, true);
-        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, Configuration.CMPConfigID);
+        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, CmpConfiguration.CMP_CONFIGURATION_ID);
         
         //--------------- create the user and issue his first certificate -----------------
         final String fakeUsername = "fakeuser";
@@ -625,7 +624,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         this.cmpConfiguration.setRAMode(this.cmpAlias, false);
         this.cmpConfiguration.setKurAllowAutomaticUpdate(this.cmpAlias, true);
         this.cmpConfiguration.setKurAllowSameKey(this.cmpAlias, false);
-        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, Configuration.CMPConfigID);
+        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, CmpConfiguration.CMP_CONFIGURATION_ID);
 
         //--------------- create the user and issue his first certificate -----------------
         createUser(this.username, this.userDN.toString(), "foo123");
@@ -704,7 +703,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         this.cmpConfiguration.setRAMode(this.cmpAlias, false);
         this.cmpConfiguration.setKurAllowAutomaticUpdate(this.cmpAlias, true);
         this.cmpConfiguration.setKurAllowSameKey(this.cmpAlias, false);
-        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, Configuration.CMPConfigID);
+        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, CmpConfiguration.CMP_CONFIGURATION_ID);
         
         //--------------- create the user and issue his first certificate -----------------
         createUser(this.username, this.userDN.toString(), "foo123");
@@ -784,7 +783,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         this.cmpConfiguration.setAuthenticationModule(this.cmpAlias, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE);
         this.cmpConfiguration.setAuthenticationParameters(this.cmpAlias, "TestCA");
         this.cmpConfiguration.setKurAllowAutomaticUpdate(this.cmpAlias, true);
-        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, Configuration.CMPConfigID);
+        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, CmpConfiguration.CMP_CONFIGURATION_ID);
 
         //------------------ create the user and issue his first certificate -------------
         createUser(this.username, this.userDN.toString(), "foo123");
@@ -861,7 +860,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         this.cmpConfiguration.setRAMode(this.cmpAlias, true);
         this.cmpConfiguration.setAuthenticationModule(this.cmpAlias, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE);
         this.cmpConfiguration.setAuthenticationParameters(this.cmpAlias, "TestCA");
-        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, Configuration.CMPConfigID);
+        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, CmpConfiguration.CMP_CONFIGURATION_ID);
 
         //------------------ create the user and issue his first certificate -------------
         createUser(this.username, this.userDN.toString(), "foo123");
@@ -943,7 +942,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         this.cmpConfiguration.setAuthenticationModule(this.cmpAlias, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE);
         this.cmpConfiguration.setAuthenticationParameters(this.cmpAlias, "TestCA");
         this.cmpConfiguration.setKurAllowAutomaticUpdate(this.cmpAlias, true);
-        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, Configuration.CMPConfigID);
+        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, CmpConfiguration.CMP_CONFIGURATION_ID);
         
         //------------------ create the user and issue his first certificate -------------
         createUser(this.username, this.userDN.toString(), "foo123");
@@ -1019,7 +1018,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         this.cmpConfiguration.setRAMode(this.cmpAlias, true);
         this.cmpConfiguration.setAuthenticationModule(this.cmpAlias, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE);
         this.cmpConfiguration.setAuthenticationParameters(this.cmpAlias, "TestCA");
-        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, Configuration.CMPConfigID);
+        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, CmpConfiguration.CMP_CONFIGURATION_ID);
 
         //------------------ create the user and issue his first certificate -------------
         createUser(this.username, this.userDN.toString(), "foo123");
@@ -1108,7 +1107,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         this.cmpConfiguration.setAuthenticationModule(this.cmpAlias, authmodules);
         this.cmpConfiguration.setAuthenticationParameters(this.cmpAlias, "-;OU;TestCA");
         this.cmpConfiguration.setKurAllowAutomaticUpdate(this.cmpAlias, true);
-        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, Configuration.CMPConfigID);
+        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, CmpConfiguration.CMP_CONFIGURATION_ID);
 
         //------------------ create the user and issue his first certificate -------------
         createUser(this.username, this.userDN.toString(), "foo123");
@@ -1185,7 +1184,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         this.cmpConfiguration.setKurAllowAutomaticUpdate(this.cmpAlias, true);
         this.cmpConfiguration.setKurAllowSameKey(this.cmpAlias, true);
         this.cmpConfiguration.setCMPDefaultCA(this.cmpAlias, "");
-        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, Configuration.CMPConfigID);
+        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, CmpConfiguration.CMP_CONFIGURATION_ID);
 
         //------------------ create the user and issue his first certificate -------------
         createUser(this.username, this.userDN.toString(), "foo123");
@@ -1275,7 +1274,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         this.cmpConfiguration.setAuthenticationModule(this.cmpAlias, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE);
         this.cmpConfiguration.setAuthenticationParameters(this.cmpAlias, "TestCA");
         this.cmpConfiguration.setKurAllowAutomaticUpdate(this.cmpAlias, true);
-        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, Configuration.CMPConfigID);
+        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, CmpConfiguration.CMP_CONFIGURATION_ID);
         
         //------------------ create the user and issue his first certificate -------------
         createUser(this.username, this.userDN.toString(), "foo123");
@@ -1358,7 +1357,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         this.cmpConfiguration.setAuthenticationParameters(this.cmpAlias, "TestCA");
         this.cmpConfiguration.setKurAllowAutomaticUpdate(this.cmpAlias, true);
         this.cmpConfiguration.setKurAllowSameKey(this.cmpAlias, true);
-        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, Configuration.CMPConfigID);
+        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, CmpConfiguration.CMP_CONFIGURATION_ID);
         
         //--------------- create the user and issue his first certificate -----------------
         createUser(this.username, this.userDN.toString(), "foo123");
@@ -1435,7 +1434,7 @@ public class CrmfKeyUpdateTest extends CmpTestCase {
         
         this.cmpConfiguration.setKurAllowAutomaticUpdate(this.cmpAlias, true);
         this.cmpConfiguration.setKurAllowSameKey(this.cmpAlias, true);
-        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, Configuration.CMPConfigID);
+        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration, CmpConfiguration.CMP_CONFIGURATION_ID);
         
         //--------------- create the user and issue his first certificate -----------------
         createUser(this.username, this.userDN.toString(), "foo123");

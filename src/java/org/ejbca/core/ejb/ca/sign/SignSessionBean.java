@@ -70,6 +70,7 @@ import org.cesecore.certificates.crl.CrlStoreSessionLocal;
 import org.cesecore.certificates.crl.RevokedCertInfo;
 import org.cesecore.certificates.endentity.EndEntityInformation;
 import org.cesecore.certificates.endentity.ExtendedInformation;
+import org.cesecore.configuration.GlobalConfigurationSessionLocal;
 import org.cesecore.jndi.JndiConstants;
 import org.cesecore.keys.token.CryptoToken;
 import org.cesecore.keys.token.CryptoTokenManagementSessionLocal;
@@ -81,7 +82,6 @@ import org.ejbca.core.EjbcaException;
 import org.ejbca.core.ejb.ca.auth.EndEntityAuthenticationSessionLocal;
 import org.ejbca.core.ejb.ca.publisher.PublisherSessionLocal;
 import org.ejbca.core.ejb.ca.store.CertReqHistorySessionLocal;
-import org.ejbca.core.ejb.config.GlobalConfigurationSessionLocal;
 import org.ejbca.core.ejb.ra.EndEntityManagementSessionLocal;
 import org.ejbca.core.ejb.ra.NoSuchEndEntityException;
 import org.ejbca.core.ejb.ra.UserData;
@@ -656,7 +656,7 @@ public class SignSessionBean implements SignSessionLocal, SignSessionRemote {
     public CertificateGenerationParams fetchCertGenParams() {
         // Supply extra info to X509CA for Certificate Transparency
         final GlobalConfiguration globalConfiguration = (GlobalConfiguration) globalConfigurationSession
-                .getCachedConfiguration(GlobalConfiguration.GlobalConfigID);
+                .getCachedConfiguration(GlobalConfiguration.GLOBAL_CONFIGURATION_ID);
         final Map<Integer, CTLogInfo> configuredCTLogs = globalConfiguration.getCTLogs();
         
         final CertificateGenerationParams certGenParams = new CertificateGenerationParams();
