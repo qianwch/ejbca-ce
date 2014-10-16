@@ -65,7 +65,7 @@ public class GlobalConfiguration extends ConfigurationBase implements Serializab
 
 
     // Path added to baseurl used as default vaule in OCSP Service Locator URI field in Certificate Profile definitions.
-	private static final  String   DEFAULTOCSPSERVICELOCATORURIPATH = "publicweb/status/ocsp";
+    private static final  String   DEFAULTOCSPSERVICELOCATORURIPATH = "publicweb/status/ocsp";
 
     // Default name of headbanner in web interface.
     private static final  String   DEFAULTHEADBANNER             = "head_banner.jsp";
@@ -120,6 +120,73 @@ public class GlobalConfiguration extends ConfigurationBase implements Serializab
     public static final  String MAINFRAME           = "mainFrame"; // Name of main browser frame
     public static final  String DOCWINDOW           = "_ejbcaDocWindow"; // Name of browser window used to display help
 
+    // Private constants
+    private static final   String ADMINPATH             = "raadminpath";
+    private static final   String AVAILABLELANGUAGES    = "availablelanguages";
+    private static final   String AVAILABLETHEMES       = "availablethemes";
+    private static final   String PUBLICPORT            = "publicport";
+    private static final   String PRIVATEPORT           = "privateport";
+    private static final   String PUBLICPROTOCOL        = "publicprotocol";
+    private static final   String PRIVATEPROTOCOL       = "privateprotocol";
+
+
+      // Title
+    private static final   String TITLE              = "title";
+      // Banner files.
+    private static final   String HEADBANNER         = "headbanner";
+    private static final   String FOOTBANNER         = "footbanner";
+      // Other configuration.
+    private static final   String ENABLEEEPROFILELIMITATIONS   = "endentityprofilelimitations";
+    private static final   String ENABLEAUTHENTICATEDUSERSONLY = "authenticatedusersonly";
+    private static final   String ENABLEKEYRECOVERY            = "enablekeyrecovery";
+    private static final   String ISSUEHARDWARETOKENS          = "issuehardwaretokens";
+    
+    private static final   String NUMBEROFAPPROVALSTOVIEWPUK   = "numberofapprovalstoviewpuk";
+    private static final   String HARDTOKENENCRYPTCA           = "hardtokenencryptca";
+    private static final   String USEAPPROVALNOTIFICATIONS     = "useapprovalnotifications";
+    private static final   String APPROVALADMINEMAILADDRESS    = "approvaladminemailaddress";
+    private static final   String APPROVALNOTIFICATIONFROMADDR = "approvalnotificationfromaddr";
+    
+    private static final   String NODESINCLUSTER               = "nodesincluster";
+    
+    private static final   String ENABLECOMMANDLINEINTERFACE   = "enablecommandlineinterface";
+    private static final   String ENABLECOMMANDLINEINTERFACEDEFAULTUSER = "enablecommandlineinterfacedefaultuser";
+
+    // Configuration for Auto Enrollment
+    private static final   String AUTOENROLL_USE = "autoenroll.use";
+    private static final   String AUTOENROLL_ADSERVER = "autoenroll.adserver";
+    private static final   String AUTOENROLL_ADPORT = "autoenroll.adport";
+    private static final   String AUTOENROLL_SSLCONNECTION = "autoenroll.sslconnection";
+    private static final   String AUTOENROLL_CONNECTIONDN = "autoenroll.connectiondn";
+    private static final   String AUTOENROLL_CONNECTIONPWD = "autoenroll.connectionpwd";
+    private static final   String AUTOENROLL_BASEDN_USER = "autoenroll.basedn.user";
+    private static final   String AUTOENROLL_CA = "autoenroll.caid";
+    
+      // Paths
+    private static final   String AUTHORIZATION_PATH  = "authorization_path";
+    private static final   String BANNERS_PATH        = "banners_path";
+    private static final   String CA_PATH             = "ca_path";
+    private static final   String CONFIG_PATH         = "data_path";
+    private static final   String HELP_PATH           = "help_path";
+    private static final   String IMAGES_PATH         = "images_path";
+    private static final   String LANGUAGE_PATH       = "language_path";
+    private static final   String LOG_PATH            = "log_path";
+    private static final   String REPORTS_PATH        = "reports_path";
+    private static final   String RA_PATH             = "ra_path";
+    private static final   String THEME_PATH          = "theme_path";
+    private static final   String HARDTOKEN_PATH      = "hardtoken_path";
+    
+    private static final   String CTLOGS              = "ctlogs";
+    private static final   String PEERCONNECTORIN     = "peerconnectorin";
+    private static final   String PEERCONNECTOROUT    = "peerconnectorout";
+
+    private static final   String LANGUAGEFILENAME      =  "languagefilename";
+    private static final   String MAINFILENAME          =  "mainfilename";
+    private static final   String INDEXFILENAME         =  "indexfilename";
+    private static final   String MENUFILENAME          =  "menufilename";
+    private static final   String ERRORPAGE             =  "errorpage";
+    private static final   String IECSSFILENAMEPOSTFIX  =  "iecssfilenamepostfix";
+        
     /** Creates a new instance of GlobalConfiguration */
     public GlobalConfiguration()  {
        super();
@@ -193,16 +260,16 @@ public class GlobalConfiguration extends ConfigurationBase implements Serializab
 
     /** Method used by the Admin GUI. */
     public   String getBaseUrl(String requestServerName) {    
-    	return (String) data.get(GlobalConfiguration.PRIVATEPROTOCOL) + "://" + 
-    	            requestServerName  + "/" +
-    	            InternalConfiguration.getAppNameLower() + "/";
+        return (String) data.get(GlobalConfiguration.PRIVATEPROTOCOL) + "://" + 
+                    requestServerName  + "/" +
+                    InternalConfiguration.getAppNameLower() + "/";
    }
     
     public String getBaseUrl() {    
-    	return (String) data.get(GlobalConfiguration.PRIVATEPROTOCOL) + "://" + 
-    	           WebConfiguration.getHostName() + ":" +
-    	           (String) data.get(GlobalConfiguration.PRIVATEPORT) + "/" +
-    	           InternalConfiguration.getAppNameLower() + "/";
+        return (String) data.get(GlobalConfiguration.PRIVATEPROTOCOL) + "://" + 
+                   WebConfiguration.getHostName() + ":" +
+                   (String) data.get(GlobalConfiguration.PRIVATEPORT) + "/" +
+                   InternalConfiguration.getAppNameLower() + "/";
    }
         
     public String getAdminWebPath(){return (String) data.get(ADMINPATH);}
@@ -220,11 +287,11 @@ public class GlobalConfiguration extends ConfigurationBase implements Serializab
     }
     
     public String getStandardCRLIssuer() {
-    	return DEFAULTCRLDISTURIPATHDN;
+        return DEFAULTCRLDISTURIPATHDN;
     }
 
     public String getStandardDeltaCRLDistributionPointURI(){
-    	return getStandardDeltaCRLDistributionPointURINoDN() + DEFAULTCRLDISTURIPATHDN;
+        return getStandardDeltaCRLDistributionPointURINoDN() + DEFAULTCRLDISTURIPATHDN;
     }
         
     public String getStandardDeltaCRLDistributionPointURINoDN(){
@@ -235,13 +302,13 @@ public class GlobalConfiguration extends ConfigurationBase implements Serializab
         return retval;
     }
         
-	public String getStandardOCSPServiceLocatorURI(){
-		String retval = getBaseUrl();
-		retval =retval.replaceFirst((String) data.get(PRIVATEPROTOCOL), (String) data.get(PUBLICPROTOCOL));
-		retval =retval.replaceFirst((String) data.get(PRIVATEPORT), (String) data.get(PUBLICPORT));
-		retval+= DEFAULTOCSPSERVICELOCATORURIPATH;
-		return retval;
-	}        
+    public String getStandardOCSPServiceLocatorURI(){
+        String retval = getBaseUrl();
+        retval =retval.replaceFirst((String) data.get(PRIVATEPROTOCOL), (String) data.get(PUBLICPROTOCOL));
+        retval =retval.replaceFirst((String) data.get(PRIVATEPORT), (String) data.get(PUBLICPORT));
+        retval+= DEFAULTOCSPSERVICELOCATORURIPATH;
+        return retval;
+    }        
 
      /** Checks the themes path for css files and returns an array of filenames
      *  without the ".css" ending. */
@@ -334,51 +401,51 @@ public class GlobalConfiguration extends ConfigurationBase implements Serializab
     * @return the number of required approvals to access sensitive hard token data (default 0)
     */
     public   int getNumberOfApprovalsToViewPUK(){
-    	Object num = data.get(NUMBEROFAPPROVALSTOVIEWPUK);
+        Object num = data.get(NUMBEROFAPPROVALSTOVIEWPUK);
         if(num == null){
-        	return 0;
+            return 0;
         }
-    	
-    	return ((Integer) num).intValue();
+        
+        return ((Integer) num).intValue();
     }
     
     public void setNumberOfApprovalsToViewPUK(int numberOfHardTokenApprovals){ 
-    	data.put(NUMBEROFAPPROVALSTOVIEWPUK, Integer.valueOf(numberOfHardTokenApprovals));
+        data.put(NUMBEROFAPPROVALSTOVIEWPUK, Integer.valueOf(numberOfHardTokenApprovals));
     }
     
     /**
      * @return the caid of the CA that should encrypt hardtoken data in the database. if CAid is 0 is the data stored unencrypted.
      */
      public   int getHardTokenEncryptCA(){
-     	Object num = data.get(HARDTOKENENCRYPTCA);
+        Object num = data.get(HARDTOKENENCRYPTCA);
          if(num == null){
-         	return 0;
+            return 0;
          }
-     	
-     	return ((Integer) num).intValue();
+        
+        return ((Integer) num).intValue();
      }
      
      /**
       * @param hardTokenEncryptCA the caid of the CA that should encrypt hardtoken data in the database. if CAid is 0 is the data stored unencrypted.
       */
      public void setHardTokenEncryptCA(int hardTokenEncryptCA){ 
-     	data.put(HARDTOKENENCRYPTCA, Integer.valueOf(hardTokenEncryptCA));
+        data.put(HARDTOKENENCRYPTCA, Integer.valueOf(hardTokenEncryptCA));
      }
     
     /**
      * @return true of email notification of requested approvals should be sent (default false)
      */
      public boolean getUseApprovalNotifications(){
-     	Object value = data.get(USEAPPROVALNOTIFICATIONS);
+        Object value = data.get(USEAPPROVALNOTIFICATIONS);
          if(value == null){
-         	return false;
+            return false;
          }
-     	
-     	return ((Boolean) value).booleanValue();
+        
+        return ((Boolean) value).booleanValue();
      }
      
      public   void    setUseApprovalNotifications(boolean useApprovalNotifications){ 
-     	data.put(USEAPPROVALNOTIFICATIONS, Boolean.valueOf(useApprovalNotifications));
+        data.put(USEAPPROVALNOTIFICATIONS, Boolean.valueOf(useApprovalNotifications));
      }   
     
      /**
@@ -386,75 +453,75 @@ public class GlobalConfiguration extends ConfigurationBase implements Serializab
       * should be an alias to all approval administrators default "" never null
       */
       public String getApprovalAdminEmailAddress(){
-      	Object value = data.get(APPROVALADMINEMAILADDRESS);
+        Object value = data.get(APPROVALADMINEMAILADDRESS);
           if(value == null){
-          	return "";
+            return "";
           }
-      	
-      	return (String) value;
+        
+        return (String) value;
       }      
 
       public   void    setApprovalAdminEmailAddress(String approvalAdminEmailAddress){ 
-      	data.put(APPROVALADMINEMAILADDRESS, approvalAdminEmailAddress);
+        data.put(APPROVALADMINEMAILADDRESS, approvalAdminEmailAddress);
       }  
       
       /**
        * Returns the email address used in the from field of approval notification emails
        */
        public String getApprovalNotificationFromAddress(){
-       	Object value = data.get(APPROVALNOTIFICATIONFROMADDR);
+        Object value = data.get(APPROVALNOTIFICATIONFROMADDR);
            if(value == null){
-           	return "";
+            return "";
            }
-       	
-       	return (String) value;
+        
+        return (String) value;
        }      
  
        public   void    setApprovalNotificationFromAddress(String approvalNotificationFromAddress){ 
-       	data.put(APPROVALNOTIFICATIONFROMADDR, approvalNotificationFromAddress);
+        data.put(APPROVALNOTIFICATIONFROMADDR, approvalNotificationFromAddress);
        }
    
        public void setAutoEnrollADServer(String server) { data.put(AUTOENROLL_ADSERVER, server); }
        public String getAutoEnrollADServer() {
-    	   String ret = (String) data.get(AUTOENROLL_ADSERVER);
-   		   return (ret == null ? AUTOENROLL_DEFAULT_ADSERVER : ret);
+           String ret = (String) data.get(AUTOENROLL_ADSERVER);
+           return (ret == null ? AUTOENROLL_DEFAULT_ADSERVER : ret);
        }
        public void setAutoEnrollADPort(int caid) { data.put(AUTOENROLL_ADPORT, Integer.valueOf(caid)); }
        public int getAutoEnrollADPort() {
-    	   Integer ret = (Integer) data.get(AUTOENROLL_ADPORT);
-   		   return (ret == null ? AUTOENROLL_DEFAULT_ADPORT : ret);
+           Integer ret = (Integer) data.get(AUTOENROLL_ADPORT);
+           return (ret == null ? AUTOENROLL_DEFAULT_ADPORT : ret);
        }
        public void setAutoEnrollBaseDNUser(String baseDN) { data.put(AUTOENROLL_BASEDN_USER, baseDN); }
        public String getAutoEnrollBaseDNUser() {
-    	   String ret = (String) data.get(AUTOENROLL_BASEDN_USER);
-   		   return (ret == null ? AUTOENROLL_DEFAULT_BASEDN_USER : ret);
-   	   }
+           String ret = (String) data.get(AUTOENROLL_BASEDN_USER);
+           return (ret == null ? AUTOENROLL_DEFAULT_BASEDN_USER : ret);
+       }
        public void setAutoEnrollCA(int caid) { data.put(AUTOENROLL_CA, Integer.valueOf(caid)); }
        public int getAutoEnrollCA() {
-    	   Integer ret = (Integer) data.get(AUTOENROLL_CA);
-    	   return (ret == null ? AUTOENROLL_DEFAULT_CA : ret);
+           Integer ret = (Integer) data.get(AUTOENROLL_CA);
+           return (ret == null ? AUTOENROLL_DEFAULT_CA : ret);
        }
        public void setAutoEnrollConnectionDN(String connectionDN) { data.put(AUTOENROLL_CONNECTIONDN, connectionDN); }
        public String getAutoEnrollConnectionDN() {
-    	   String ret = (String) data.get(AUTOENROLL_CONNECTIONDN);
-   		   return (ret == null ? AUTOENROLL_DEFAULT_CONNECTIONDN : ret);
+           String ret = (String) data.get(AUTOENROLL_CONNECTIONDN);
+           return (ret == null ? AUTOENROLL_DEFAULT_CONNECTIONDN : ret);
        }
        public void setAutoEnrollConnectionPwd(String connectionPwd) { 
            data.put(AUTOENROLL_CONNECTIONPWD, StringTools.obfuscateIfNot(connectionPwd));
        }
        public String getAutoEnrollConnectionPwd() {
-    	   String ret = (String) data.get(AUTOENROLL_CONNECTIONPWD);
-   		   return (ret == null ? AUTOENROLL_DEFAULT_CONNECTIONPWD : StringTools.deobfuscateIf(ret));
+           String ret = (String) data.get(AUTOENROLL_CONNECTIONPWD);
+           return (ret == null ? AUTOENROLL_DEFAULT_CONNECTIONPWD : StringTools.deobfuscateIf(ret));
        }
        public void setAutoEnrollSSLConnection(boolean use) { data.put(AUTOENROLL_SSLCONNECTION, Boolean.valueOf(use)); }
        public boolean getAutoEnrollSSLConnection() {
-    	   Boolean ret = (Boolean) data.get(AUTOENROLL_SSLCONNECTION);
-   		   return (ret == null ? AUTOENROLL_DEFAULT_SSLCONNECTION : ret);
+           Boolean ret = (Boolean) data.get(AUTOENROLL_SSLCONNECTION);
+           return (ret == null ? AUTOENROLL_DEFAULT_SSLCONNECTION : ret);
        }
        public void setAutoEnrollUse(boolean use) { data.put(AUTOENROLL_USE, Boolean.valueOf(use)); }
        public boolean getAutoEnrollUse() {
-    	   Boolean ret = (Boolean) data.get(AUTOENROLL_USE);
-   		   return (ret == null ? AUTOENROLL_DEFAULT_USE : ret);
+           Boolean ret = (Boolean) data.get(AUTOENROLL_USE);
+           return (ret == null ? AUTOENROLL_DEFAULT_USE : ret);
        }
        
        public void setNodesInCluster(final Set<String> nodes) { data.put(NODESINCLUSTER, nodes); }
@@ -477,8 +544,8 @@ public class GlobalConfiguration extends ConfigurationBase implements Serializab
 
        public void setEnableCommandLineInterface(final boolean enable) { data.put(ENABLECOMMANDLINEINTERFACE, Boolean.valueOf(enable)); }
        public boolean getEnableCommandLineInterface() {
-    	   final Boolean ret = (Boolean) data.get(ENABLECOMMANDLINEINTERFACE);
-    	   return (ret == null ? DEFAULTENABLECOMMANDLINEINTERFACE : ret);
+           final Boolean ret = (Boolean) data.get(ENABLECOMMANDLINEINTERFACE);
+           return (ret == null ? DEFAULTENABLECOMMANDLINEINTERFACE : ret);
        }
        
        public void setEnableCommandLineInterfaceDefaultUser(final boolean enable) { data.put(ENABLECOMMANDLINEINTERFACEDEFAULTUSER, Boolean.valueOf(enable)); }
@@ -509,96 +576,45 @@ public class GlobalConfiguration extends ConfigurationBase implements Serializab
         setCTLogs(logs);
     }
 
-    /** Implementation of UpgradableDataHashMap function getLatestVersion */
+    public boolean isPeerConnectorIncomingEnabled() { return getBoolean(PEERCONNECTORIN, false); }
+    public void setPeerConnectorIncomingEnabled(final boolean enabledIncoming) { putBoolean(PEERCONNECTORIN, enabledIncoming); }
+    public boolean isPeerConnectorOutgoingEnabled() { return getBoolean(PEERCONNECTOROUT, true); }
+    public void setPeerConnectorOutgoingEnabled(boolean enabledOutgoing) { putBoolean(PEERCONNECTOROUT, enabledOutgoing); }
+   
+    
+    private boolean getBoolean(final String key, final boolean defaultValue) {
+        final Boolean ret = (Boolean) data.get(key);
+        return (ret==null ? defaultValue : ret);
+    }
+    private void putBoolean(final String key, final boolean value) {
+        data.put(key, Boolean.valueOf(value));
+    }
+
+    @Override
     public float getLatestVersion(){
        return LATEST_VERSION;
     }
 
-    /** Implemtation of UpgradableDataHashMap function upgrade. */
-
+    @Override
     public void upgrade(){
-    	if(Float.compare(LATEST_VERSION, getVersion()) != 0) {
-    		// New version of the class, upgrade
-    		if(data.get(HARDTOKEN_PATH) == null){
-    			data.put(HARDTOKEN_PATH, ((String) data.get(ADMINPATH) + "hardtoken"));
-    		}
-    		if(data.get(REPORTS_PATH) == null){
-    			data.put(REPORTS_PATH, ((String) data.get(ADMINPATH) + "reports"));
-    		}
-    		if(data.get(ENABLECOMMANDLINEINTERFACEDEFAULTUSER) == null) {
-    		        data.put(ENABLECOMMANDLINEINTERFACEDEFAULTUSER, Boolean.TRUE);
-    		}
-    		
-    		data.put(VERSION,  Float.valueOf(LATEST_VERSION));    		
-    	}
+        if(Float.compare(LATEST_VERSION, getVersion()) != 0) {
+            // New version of the class, upgrade
+            if(data.get(HARDTOKEN_PATH) == null){
+                data.put(HARDTOKEN_PATH, ((String) data.get(ADMINPATH) + "hardtoken"));
+            }
+            if(data.get(REPORTS_PATH) == null){
+                data.put(REPORTS_PATH, ((String) data.get(ADMINPATH) + "reports"));
+            }
+            if(data.get(ENABLECOMMANDLINEINTERFACEDEFAULTUSER) == null) {
+                    data.put(ENABLECOMMANDLINEINTERFACEDEFAULTUSER, Boolean.TRUE);
+            }
+            
+            data.put(VERSION,  Float.valueOf(LATEST_VERSION));          
+        }
     }
 
-    // Private fields.
 
-    // Private constants
-    private static final   String ADMINPATH             = "raadminpath";
-    private static final   String AVAILABLELANGUAGES    = "availablelanguages";
-    private static final   String AVAILABLETHEMES       = "availablethemes";
-    private static final   String PUBLICPORT            = "publicport";
-    private static final   String PRIVATEPORT           = "privateport";
-    private static final   String PUBLICPROTOCOL        = "publicprotocol";
-    private static final   String PRIVATEPROTOCOL       = "privateprotocol";
-
-
-      // Title
-    private static final   String TITLE              = "title";
-      // Banner files.
-    private static final   String HEADBANNER         = "headbanner";
-    private static final   String FOOTBANNER         = "footbanner";
-      // Other configuration.
-    private static final   String ENABLEEEPROFILELIMITATIONS   = "endentityprofilelimitations";
-    private static final   String ENABLEAUTHENTICATEDUSERSONLY = "authenticatedusersonly";
-    private static final   String ENABLEKEYRECOVERY            = "enablekeyrecovery";
-    private static final   String ISSUEHARDWARETOKENS          = "issuehardwaretokens";
-    
-    private static final   String NUMBEROFAPPROVALSTOVIEWPUK   = "numberofapprovalstoviewpuk";
-    private static final   String HARDTOKENENCRYPTCA           = "hardtokenencryptca";
-    private static final   String USEAPPROVALNOTIFICATIONS     = "useapprovalnotifications";
-    private static final   String APPROVALADMINEMAILADDRESS    = "approvaladminemailaddress";
-    private static final   String APPROVALNOTIFICATIONFROMADDR = "approvalnotificationfromaddr";
-    
-    private static final   String NODESINCLUSTER               = "nodesincluster";
-    
-    private static final   String ENABLECOMMANDLINEINTERFACE   = "enablecommandlineinterface";
-    private static final   String ENABLECOMMANDLINEINTERFACEDEFAULTUSER = "enablecommandlineinterfacedefaultuser";
-
-    // Configuration for Auto Enrollment
-    private static final   String AUTOENROLL_USE = "autoenroll.use";
-    private static final   String AUTOENROLL_ADSERVER = "autoenroll.adserver";
-    private static final   String AUTOENROLL_ADPORT = "autoenroll.adport";
-    private static final   String AUTOENROLL_SSLCONNECTION = "autoenroll.sslconnection";
-    private static final   String AUTOENROLL_CONNECTIONDN = "autoenroll.connectiondn";
-    private static final   String AUTOENROLL_CONNECTIONPWD = "autoenroll.connectionpwd";
-    private static final   String AUTOENROLL_BASEDN_USER = "autoenroll.basedn.user";
-    private static final   String AUTOENROLL_CA = "autoenroll.caid";
-    
-      // Paths
-    private static final   String AUTHORIZATION_PATH  = "authorization_path";
-    private static final   String BANNERS_PATH        = "banners_path";
-    private static final   String CA_PATH             = "ca_path";
-    private static final   String CONFIG_PATH         = "data_path";
-    private static final   String HELP_PATH           = "help_path";
-    private static final   String IMAGES_PATH         = "images_path";
-    private static final   String LANGUAGE_PATH       = "language_path";
-    private static final   String LOG_PATH            = "log_path";
-    private static final   String REPORTS_PATH        = "reports_path";
-    private static final   String RA_PATH             = "ra_path";
-    private static final   String THEME_PATH          = "theme_path";
-    private static final   String HARDTOKEN_PATH      = "hardtoken_path";
-    
-    private static final   String CTLOGS              = "ctlogs";
-
-    private static final   String LANGUAGEFILENAME      =  "languagefilename";
-    private static final   String MAINFILENAME          =  "mainfilename";
-    private static final   String INDEXFILENAME         =  "indexfilename";
-    private static final   String MENUFILENAME          =  "menufilename";
-    private static final   String ERRORPAGE             =  "errorpage";
-    private static final   String IECSSFILENAMEPOSTFIX  =  "iecssfilenamepostfix";
+  
 
     @Override
     public String getConfigurationId() {

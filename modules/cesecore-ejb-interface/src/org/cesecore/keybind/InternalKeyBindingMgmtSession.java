@@ -39,6 +39,14 @@ public interface InternalKeyBindingMgmtSession {
     Map<String, Map<String, InternalKeyBindingProperty<? extends Serializable>>> getAvailableTypesAndProperties();
 
     /**
+     * Get a list of all InternalKeyBindings of the requested type, regardless of authorization.
+     * 
+     * @param internalKeyBindingType is the identifier of the type of InternalKeyBinding
+     * @return a list of IDs for the specific type and that the caller is authorized to view
+     */
+    List<Integer> getInternalKeyBindingIds(String internalKeyBindingType);
+    
+    /**
      * Get a list of all InternalKeyBindings the caller is authorized to view of the requested type.
      * 
      * @param authenticationToken is the authentication token
@@ -46,7 +54,7 @@ public interface InternalKeyBindingMgmtSession {
      * @return a list of IDs for the specific type and that the caller is authorized to view
      */
     List<Integer> getInternalKeyBindingIds(AuthenticationToken authenticationToken, String internalKeyBindingType);
-
+   
     /**
      * Get a (cloned) InternalKeyBinding object. Use this method if you might change the object,
      * if the object is handled by an untrusted piece of code or if you are using Remote invocation.

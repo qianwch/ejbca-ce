@@ -133,6 +133,12 @@ public class InternalKeyBindingMgmtSessionBean implements InternalKeyBindingMgmt
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     @Override
+    public List<Integer> getInternalKeyBindingIds(String internalKeyBindingType) {
+        return internalKeyBindingDataSession.getIds(internalKeyBindingType);
+    }
+    
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    @Override
     public List<Integer> getInternalKeyBindingIds(AuthenticationToken authenticationToken, String internalKeyBindingType) {
         final List<Integer> allIds = internalKeyBindingDataSession.getIds(internalKeyBindingType);
         final List<Integer> authorizedIds = new ArrayList<Integer>();
@@ -199,7 +205,11 @@ public class InternalKeyBindingMgmtSessionBean implements InternalKeyBindingMgmt
                     authenticationToken.toString());
             throw new AuthorizationDeniedException(msg);
         }
-        return new InternalKeyBindingInfo(internalKeyBindingDataSession.getInternalKeyBinding(id));
+        final InternalKeyBinding b = internalKeyBindingDataSession.getInternalKeyBinding(id);
+        if (b == null) {
+            return null;
+        }
+        return new InternalKeyBindingInfo(b);
     }
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
@@ -210,7 +220,11 @@ public class InternalKeyBindingMgmtSessionBean implements InternalKeyBindingMgmt
                     authenticationToken.toString());
             throw new AuthorizationDeniedException(msg);
         }
-        return new InternalKeyBindingInfo(internalKeyBindingDataSession.getInternalKeyBinding(id));
+        final InternalKeyBinding internalKeyBinding = internalKeyBindingDataSession.getInternalKeyBinding(id);
+        if (internalKeyBinding==null) {
+            return null;
+        }
+        return new InternalKeyBindingInfo(internalKeyBinding);
     }
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
@@ -239,8 +253,8 @@ public class InternalKeyBindingMgmtSessionBean implements InternalKeyBindingMgmt
     }
     
     @Override
-    public Collection< Collection<Certificate> > getListOfTrustedCertificates(AuthenticationToken authenticationToken,
-            InternalKeyBinding internalKeyBinding) throws CADoesntExistsException, AuthorizationDeniedException {
+    public Collection< Collection<Certificate> > getListOfTrustedCertificates(AuthenticationToken authenticationToken, 
+                    InternalKeyBinding internalKeyBinding) throws CADoesntExistsException, AuthorizationDeniedException {
         
         List<InternalKeyBindingTrustEntry> trustedReferences = internalKeyBinding.getTrustedCertificateReferences();
         if(trustedReferences == null) {
@@ -261,14 +275,14 @@ public class InternalKeyBindingMgmtSessionBean implements InternalKeyBindingMgmt
                 log.debug("Trusted Certificates list is empty. Trust ANY certificates issued by ANY CA known to this EJBCA instance");
             }
         } else {
-            for (final InternalKeyBindingTrustEntry trustedReference : internalKeyBinding.getTrustedCertificateReferences()) {
+            for (final InternalKeyBindingTrustEntry trustedReference : trustedReferences) {
                 final CAInfo caInfo = caSession.getCAInfo(authenticationToken, trustedReference.getCaId());
                 if (trustedReference.getCertificateSerialNumberDecimal()==null) {
-                    // If no cert serialnumber is specified, then we trust all certificates issued by this CA. We add the entire
+                    // If no cert serialnumber is specified, then we trust all certificates issued by this CA. We add the entire 
                     // CA certificate chain to be used for issuer verification
                     trustedCerts.add(caInfo.getCertificateChain());
                 } else {
-                    // If a cert serialnumber is specified, then we trust only this certificate. We create a certificate collection
+                    // If a cert serialnumber is specified, then we trust only this certificate. We create a certificate collection 
                     // containing this certificate and it's issuer's certificate chain to be used for issuer verification
                     X509Certificate cert = (X509Certificate) certificateStoreSession.findCertificateByIssuerAndSerno(
                                 caInfo.getSubjectDN(), trustedReference.fetchCertificateSerialNumber());
@@ -278,7 +292,7 @@ public class InternalKeyBindingMgmtSessionBean implements InternalKeyBindingMgmt
                         String issuer = CertTools.getIssuerDN(cert);
                         CAInfo issuerInfo = caSession.getCAInfo(authenticationToken, issuer.hashCode());
                         leafCertChain.addAll((ArrayList<Certificate>) issuerInfo.getCertificateChain());
-                        trustedCerts.add(leafCertChain);               
+                        trustedCerts.add(leafCertChain);                
                     } else {
                         log.info("No (trusted) certificate with issuer '"+caInfo.getSubjectDN()+"' and serialNo "+trustedReference.fetchCertificateSerialNumber().toString(16)+" could be found for authentication key binding "+internalKeyBinding.getName()+"."); 
                     }
@@ -293,6 +307,7 @@ public class InternalKeyBindingMgmtSessionBean implements InternalKeyBindingMgmt
         }
         return trustedCerts;
     }
+
     
     @Override
     public int createInternalKeyBinding(AuthenticationToken authenticationToken, String type, int id, String name, InternalKeyBindingStatus status,
@@ -393,6 +408,12 @@ public class InternalKeyBindingMgmtSessionBean implements InternalKeyBindingMgmt
             final String msg = intres.getLocalizedMessage("authorization.notuathorizedtoresource", InternalKeyBindingRules.MODIFY.resource(),
                     authenticationToken.toString());
             throw new AuthorizationDeniedException(msg);
+        }
+        // Never allow activation of an InternalKeyBinding that has no certificate reference yet
+        if (internalKeyBinding.getStatus().equals(InternalKeyBindingStatus.ACTIVE) && (internalKeyBinding.getCertificateId()==null
+                || internalKeyBinding.getCertificateId().length()==0)) {
+            internalKeyBinding.setStatus(InternalKeyBindingStatus.DISABLED);
+            log.info("Preventing activation of Internal Key Binding " + internalKeyBinding.getId() + " since there is no certificate referenced.");
         }
         // Audit log the result before persistence
         final InternalKeyBinding originalInternalKeyBinding = internalKeyBindingDataSession.getInternalKeyBinding(internalKeyBinding.getId());
@@ -861,7 +882,7 @@ public class InternalKeyBindingMgmtSessionBean implements InternalKeyBindingMgmt
         final int certificateProfileId = 0;
         final String username = "IMPORTED_InternalKeyBinding_" + internalKeyBinding.getId();
         // Find caFingerprint through ca(Admin?)Session
-        final List<Integer> availableCaIds = caSession.getAllCaIds();
+        final List<Integer> availableCaIds = caSession.getAuthorizedCaIds(authenticationToken);
         final String issuerDn = CertTools.getIssuerDN(certificate);
         String caFingerprint = null;
         for (final Integer caId : availableCaIds) {
