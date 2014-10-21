@@ -311,8 +311,7 @@ public class CertSafePublisher implements ICustomPublisher {
             uurl = getURL();
         } catch (MalformedURLException e) {
             String msg = "Could not create a URL object from the value of " + certSafeUrlPropertyName + " property: " + urlstr;
-            log.info(msg);
-            log.info(e);
+            log.info(msg + ". " + e.getMessage());
             throw new PublisherConnectionException(msg);
         }
        
