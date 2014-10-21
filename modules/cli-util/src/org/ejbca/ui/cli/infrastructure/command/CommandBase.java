@@ -204,7 +204,7 @@ public abstract class CommandBase implements CliCommandPlugin {
         getLogger().info(sb.toString());
     }
 
-    private static String bold(String text) {
+    protected static String bold(String text) {
         return (char) 27 + "[1m" + text + (char) 27 + "[0m";
     }
 
@@ -280,7 +280,7 @@ public abstract class CommandBase implements CliCommandPlugin {
 
     protected abstract Logger getLogger();
     
-    public static String formatTable(int tabs, String[] titles, List<String[]> contents) {
+    protected static String formatTable(int tabs, String[] titles, List<String[]> contents) {
         int[] offset = new int[titles.length];
         //Validate contents and figure out tab size per column
         for (int i = 0; i < titles.length; i++) {
