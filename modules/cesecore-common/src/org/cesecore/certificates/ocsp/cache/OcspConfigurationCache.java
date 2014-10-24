@@ -21,7 +21,6 @@ import org.cesecore.keybind.impl.OcspKeyBinding;
  * This cache contains non persistent configuration elements that need to be cached in order to be shared between all 
  * beans and servlets.
  * 
- * 
  * @version $Id$
  *
  */
