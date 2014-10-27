@@ -408,48 +408,7 @@ public class StandaloneOcspResponseGeneratorSessionTest {
             cesecoreConfigurationProxySession.setConfigurationValue("ocsp.nonexistingisgood", "false");
         }
     }
-    
-    /** Tests asking about an unknown CA, and making sure that the response is correctly signed. Same test as above, but with default responder 
-     * responding for external CAs.
-     */
-    @Test
-    public void testStandAloneOcspResponseDefaultResponderWithDefaultResponderForExternalActive() throws Exception {
-        // Make sure that a default responder is set
-        GlobalOcspConfiguration ocspConfiguration = (GlobalOcspConfiguration) globalConfigurationSession
-                .getCachedConfiguration(GlobalOcspConfiguration.OCSP_CONFIGURATION_ID);
-        ocspConfiguration.setOcspDefaultResponderReference(CertTools.getIssuerDN(ocspSigningCertificate));
-        globalConfigurationSession.saveConfiguration(authenticationToken, ocspConfiguration);
-        String originalNonExistingIsGood = cesecoreConfigurationProxySession.getConfigurationValue(OcspConfiguration.NONE_EXISTING_IS_GOOD);
-        cesecoreConfigurationProxySession.setConfigurationValue(OcspConfiguration.NONE_EXISTING_IS_GOOD, "true");   
-        try {
-            //Now delete the original CA, making this test completely standalone.
-            OcspTestUtils.deleteCa(authenticationToken, x509ca);
-            activateKeyBinding(internalKeyBindingId);
-            ocspResponseGeneratorSession.reloadOcspSigningCache();
-            // Do the OCSP request
-            final KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
-            final X509Certificate fakeIssuerCertificate = CertTools.genSelfCert("CN=fakeCA", 365, null, keys.getPrivate(), keys.getPublic(),
-                    AlgorithmConstants.SIGALG_SHA1_WITH_RSA, true);
-            final BigInteger fakeSerialNumber = new BigInteger("4711");
-            final OCSPReq ocspRequest = buildOcspRequest(null, null, fakeIssuerCertificate, fakeSerialNumber);
-            final OCSPResp response = sendRequest(ocspRequest);
-            assertEquals("Response status not zero.", OCSPResp.SUCCESSFUL, response.getStatus());
-            BasicOCSPResp basicOcspResponse = (BasicOCSPResp) response.getResponseObject();
-            //Response will be signed with the OCSP signing certificate, because that certificate's issuing CA was given as a default responder.
-            assertTrue("OCSP response was not signed correctly.",
-                    basicOcspResponse.isSignatureValid(new JcaContentVerifierProviderBuilder().build(ocspSigningCertificate.getPublicKey())));
-            SingleResp[] singleResponses = basicOcspResponse.getResponses();
-            assertEquals("Delivered some thing else than one and exactly one response.", 1, singleResponses.length);
-            assertEquals("Response cert did not match up with request cert", fakeSerialNumber, singleResponses[0].getCertID().getSerialNumber());
-            assertTrue(singleResponses[0].getCertStatus() instanceof UnknownStatus);
-        } finally {
-            cesecoreConfigurationProxySession.setConfigurationValue(OcspConfiguration.NONE_EXISTING_IS_GOOD, originalNonExistingIsGood);
-        }
         
-    }
-    
-    
-    
     /** Tests the case where there exists both a CA and a key binding for that CA on the same machine. The Key Binding should have priority. */
     @Test
     public void testStandAloneOcspResponseWithBothCaAndInternalKeyBinding() throws Exception {
