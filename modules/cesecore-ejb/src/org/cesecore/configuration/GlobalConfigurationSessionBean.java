@@ -14,10 +14,12 @@
 package org.cesecore.configuration;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.ServiceLoader;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.PostConstruct;
@@ -94,6 +96,12 @@ public class GlobalConfigurationSessionBean implements GlobalConfigurationSessio
         } 
         
         return GlobalConfigurationCacheHolder.INSTANCE.getAllProperties(configID);
+    }
+
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    @Override
+    public Set<String> getIds() {
+        return GlobalConfigurationCacheHolder.INSTANCE.getIds();
     }
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
@@ -236,6 +244,11 @@ public class GlobalConfigurationSessionBean implements GlobalConfigurationSessio
             }
         }
         
+        /** @return all registered configuration IDs. */
+        public Set<String> getIds() {
+            return new HashSet<String>(caches.keySet());
+        }
+
         public void updateConfiguration(final ConfigurationBase conf, final String configId) {
             caches.get(configId).updateConfiguration(conf);
         }
