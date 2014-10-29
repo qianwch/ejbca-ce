@@ -362,7 +362,7 @@ public class CertSafePublisher implements ICustomPublisher {
         final String alias = authenticationKeyBinding.getKeyPairAlias();
         
         try {
-            final Collection< Collection<Certificate> > trustedCertificates = internalKeyBindingMgmtSession.getListOfTrustedCertificates(authenticationToken, authenticationKeyBinding);
+            final Collection< Collection<Certificate> > trustedCertificates = internalKeyBindingMgmtSession.getListOfTrustedCertificates(authenticationKeyBinding);
             final TrustManager trustManagers[] = new X509TrustManager[] { new ClientX509TrustManager(trustedCertificates) };
             final KeyManager keyManagers[] = new X509KeyManager[] { new ClientX509KeyManager(alias, cryptoToken.getPrivateKey(alias), chain) };
             // Now construct a SSLContext using these (possibly wrapped) KeyManagers, and the TrustManagers.
@@ -384,10 +384,6 @@ public class CertSafePublisher implements ICustomPublisher {
             log.error(msg, e);
             throw new PublisherConnectionException(msg);
         } catch (CADoesntExistsException e) {
-            String msg = e.getLocalizedMessage();
-            log.error(msg, e);
-            throw new PublisherConnectionException(msg);
-        } catch (AuthorizationDeniedException e) {
             String msg = e.getLocalizedMessage();
             log.error(msg, e);
             throw new PublisherConnectionException(msg);
