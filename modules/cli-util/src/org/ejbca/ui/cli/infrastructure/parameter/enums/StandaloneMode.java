@@ -13,7 +13,10 @@
 package org.ejbca.ui.cli.infrastructure.parameter.enums;
 
 /**
- * @version $Id$
+ * This enum connotes whether a CLI argument (of the form --caname foo) is allowed to stand without its associated switch and 
+ * be read implicitly. Standalone arguments will be read in the order they're declared, so care must be taken to avoid ambiguity.  
+ * 
+ * @version $Id: StandaloneMode.java 19902 2014-09-30 14:32:24Z anatom $
  *
  */
 public enum StandaloneMode {
