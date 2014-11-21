@@ -55,6 +55,13 @@ public class ServiceManifestBuilder {
      * @param args
      */
     public static void main(String[] args) {
+        final int errorCode = mainInternal(args);
+        if (errorCode!=0) {
+            System.exit(errorCode);
+        }
+    }
+
+    static int mainInternal(String[] args) {
         if (args.length < 2 || args.length > 3) {
             final String TAB = "     ";
             StringBuffer out = new StringBuffer();
@@ -72,15 +79,15 @@ public class ServiceManifestBuilder {
             out.append("\n");
             out.append("WARNING: Adding a service manifest to a JAR with a file manifest is unstable at the moment.");
             System.err.println(out.toString());
-            System.exit(1);
+            return 1;
         }
         File archive = new File(args[0]);
         if (!archive.exists()) {
             System.err.println(archive + " does not exist on the system.");
-            System.exit(1);
+            return 1;
         } else if (archive.isFile() && !archive.getName().endsWith(".jar")) {
             System.err.println(archive + " does not appear to be a .jar file.");
-            System.exit(1);
+            return 1;
         }
         //Make sure that the directory to be modified is on the classpath
         URLClassLoader sysloader = (URLClassLoader) ClassLoader.getSystemClassLoader();
@@ -99,7 +106,7 @@ public class ServiceManifestBuilder {
                 classes[i] = Class.forName(classNames[i]);
             } catch (ClassNotFoundException e) {
                 System.err.println("Class " + classNames[i] + " not found on classpath, cannot continue.");
-                System.exit(1);
+                return 1;
             }
         }
         try {
@@ -114,7 +121,7 @@ public class ServiceManifestBuilder {
                 File workingDirectory = new File(args[2]);
                 if (!workingDirectory.isDirectory()) {
                     System.err.println(workingDirectory + " is not a directory");
-                    System.exit(1);
+                    return 1;
                 } else if (!workingDirectory.canRead() || !workingDirectory.canWrite()) {
                     System.err.println("Could not read/write to " + workingDirectory);
                 } else {
@@ -124,9 +131,9 @@ public class ServiceManifestBuilder {
         } catch (IOException e) {
             System.err.println("Disk related error occured while building manifest, see following stacktrace");
             e.printStackTrace();
-            System.exit(1);
+            return 1;
         }
-
+        return 0;
     }
 
     /**
