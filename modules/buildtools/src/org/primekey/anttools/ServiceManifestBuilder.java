@@ -12,24 +12,15 @@
  *************************************************************************/
 package org.primekey.anttools;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintWriter;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.List;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.util.jar.JarOutputStream;
-import java.util.jar.Manifest;
 
 /**
  * This class is a tool for adding a manifest file for a given interface to the META-INF/services directory of a JAR. It
@@ -66,15 +57,14 @@ public class ServiceManifestBuilder {
             final String TAB = "     ";
             StringBuffer out = new StringBuffer();
             out.append("DESCRIPTION:\n");
-            out.append(TAB + "This command line tool inserts service manifest files into a given JAR archive or directory.\n");
+            out.append(TAB + "This command line tool inserts service manifest files into a given directory.\n");
             out.append(TAB + "It uses the following two arguments (without flags):\n");
-            out.append(TAB + "(1) Path to an archive/directory\n");
+            out.append(TAB + "(1) Path to a directory\n");
             out.append(TAB + "(2) A semicolon separated list of interfaces\n");
             out.append(TAB + "(3) (OPTIONAL) Temporary working directory, only applicable (but not required) when writing to jar. "
                     + "Will use system default if left blank.\n");
             out.append("\n");
             out.append("EXAMPLES:\n");
-            out.append(TAB + "/usr/ejbca/foo.jar com.foo.bar.InterfaceAlpha\n");
             out.append(TAB + "/usr/ejbca/modules/ejbca-ejb-cli/build/ com.foo.bar.InterfaceAlpha;com.bar.foo.InterfaceBeta /var/tmp/ \n");
             out.append("\n");
             out.append("WARNING: Adding a service manifest to a JAR with a file manifest is unstable at the moment.");
@@ -110,53 +100,13 @@ public class ServiceManifestBuilder {
             }
         }
         try {
-            if (args.length == 2) {
-                if (archive.isDirectory()) {
-                    buildServiceManifestToLocation(archive, classes);
-                } else {
-                    buildServiceManifestInJar(archive, classes);
-                }
-
-            } else {
-                File workingDirectory = new File(args[2]);
-                if (!workingDirectory.isDirectory()) {
-                    System.err.println(workingDirectory + " is not a directory");
-                    return 1;
-                } else if (!workingDirectory.canRead() || !workingDirectory.canWrite()) {
-                    System.err.println("Could not read/write to " + workingDirectory);
-                } else {
-                    buildServiceManifestInJar(archive, workingDirectory, classes);
-                }
-            }
+            buildServiceManifestToLocation(archive, classes);
         } catch (IOException e) {
             System.err.println("Disk related error occured while building manifest, see following stacktrace");
             e.printStackTrace();
             return 1;
         }
         return 0;
-    }
-
-    /**
-     * This method will write an entire directory to the given jar file.
-     * 
-     * @param source file or directory to write to the jar file. 
-     * @param jarFile file to be written to
-     * @param manifest JAR manifest of the old file. null if none existed.
-     * @throws IOException 
-     */
-    public static void writeFileStructuretoJar(final File source, final File jarFile, Manifest manifest) throws IOException {
-        JarOutputStream jarOutputStream;
-        if (manifest != null) {
-            jarOutputStream = new JarOutputStream(new FileOutputStream(jarFile), manifest);
-        } else {
-            jarOutputStream = new JarOutputStream(new FileOutputStream(jarFile));
-        }
-        try {
-            addToJar(source, source, jarOutputStream);
-        } finally {
-            jarOutputStream.close();
-        }
-
     }
 
     /**
@@ -191,122 +141,7 @@ public class ServiceManifestBuilder {
         }
         return temp;
     }
-
-    private static void addToJar(final File baseDir, final File source, final JarOutputStream jarOutputStream) throws IOException {
-        String name = source.getPath().substring(baseDir.getPath().length()).replace("\\", "/");
-        if (source.isDirectory()) {
-            //Zip specification allows only slashes
-            if (!name.isEmpty()) {
-                //Zip specification also demands that all paths end with '/'
-                if (!name.endsWith("/"))
-                    name += "/";
-                JarEntry entry = new JarEntry(name);
-                entry.setTime(source.lastModified());
-                jarOutputStream.putNextEntry(entry);
-                jarOutputStream.closeEntry();
-            }
-            for (File subSource : source.listFiles()) {
-                addToJar(baseDir, subSource, jarOutputStream);
-            }
-        } else {
-            JarEntry entry = new JarEntry(name);
-            entry.setTime(source.lastModified());
-            jarOutputStream.putNextEntry(entry);
-            BufferedInputStream in = new BufferedInputStream(new FileInputStream(source));
-            try {
-                byte[] buffer = new byte[1024];
-                while (true) {
-                    int count = in.read(buffer);
-                    if (count == -1)
-                        break;
-                    jarOutputStream.write(buffer, 0, count);
-                }
-                jarOutputStream.closeEntry();
-            } finally {
-                in.close();
-            }
-        }
-    }
-
-    /**
-     * This method inserts a manifest file into the given jar file for the specified interface class. Will use the system default
-     * tmp directory
-     * 
-     * FIXME: Does not work properly with JAR files with manifests
-     * 
-     * @param jar the jar while in which to create the manifest
-     * @param interfaceClass the interface for which to create the manifest
-     * @throws IOException if any error occurred while writing to disk
-     */
-    public static void buildServiceManifestInJar(final File jarFile, final Class<?>... interfaceClass) throws IOException {
-        System.err.println("WARNING: Seems to corrupt manifest files. Do not use on jar files containing manifests.");
-        //First attempt to unzip jar file completely. 
-        File temporaryFileDirectory = null;
-        try {
-            temporaryFileDirectory = createTempDirectory();
-        } catch (IOException e) {
-            throw new IllegalStateException("Can't write to default temp file directory.", e);
-        }
-        try {
-            buildServiceManifestInJar(jarFile, temporaryFileDirectory, interfaceClass);
-        } finally {
-            delete(temporaryFileDirectory);
-        }
-    }
-
-    /**
-     * This method inserts a manifest file into the given jar file for the specified interface class.
-     * 
-     * @param target the jar while in which to create the manifest
-     * @param workingDirectory a working directory
-     * @param interfaceClass the interface for which to create the manifest
-     * @throws IOException if any error occurred while writing to disk
-     */
-    public static void buildServiceManifestInJar(final File target, File workingDirectory, final Class<?>... interfaceClass) throws IOException {
-        /* Unpack all files to a directory. They need to physically exist in order to be instantiated, since the jar to med 
-         * modified can't exist on the classpath (where it would be write protected). 
-         */
-        File unpackingDirectory = createTempDirectory(workingDirectory);
-        final JarFile jarFile = new JarFile(target);
-        Manifest manifest = jarFile.getManifest();
-        try {
-            for (Enumeration<JarEntry> jarEntries = jarFile.entries(); jarEntries.hasMoreElements();) {
-                JarEntry entry = jarEntries.nextElement();
-                if (entry.getName().endsWith(".MF")) {
-                    continue;
-                }
-                File unpackedfile = new File(unpackingDirectory, entry.getName());
-                if (entry.isDirectory()) {
-                    unpackedfile.mkdir();
-                    continue;
-                }
-                InputStream is = jarFile.getInputStream(entry);
-                FileOutputStream fos = new FileOutputStream(unpackedfile);
-                try {
-                    while (is.available() > 0) {
-                        fos.write(is.read());
-                    }
-                } finally {
-                    fos.close();
-                    is.close();
-                }
-            }
-        } finally {
-            jarFile.close();
-        }
-        //Next, let's add the manifest
-        buildServiceManifestToLocation(unpackingDirectory, interfaceClass);
-        //Now, lets pack all this into a new jar file 
-        File temporaryJarFile = File.createTempFile("temporaryJar", ".jar", workingDirectory);
-        writeFileStructuretoJar(unpackingDirectory, temporaryJarFile, manifest);
-        //Everything good and dandy? Great! Kill the old file and replace it with the new one.
-        String targetPath = target.getAbsolutePath();
-        if (!target.delete()) {
-            throw new IOException("Could not delete old jar file " + targetPath + " Cannot continue.");
-        }
-        //Possible race condition here (delete + rename is not atomic, but not much we can do about that)
-        temporaryJarFile.renameTo(new File(targetPath));
-    }
+   
 
     /**
      * Method that constructs a file to any location. Can be a jarfile, directly to the classpath, you name it. 
