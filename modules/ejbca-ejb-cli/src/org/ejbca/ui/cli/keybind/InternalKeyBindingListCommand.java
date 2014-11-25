@@ -113,7 +113,7 @@ public class InternalKeyBindingListCommand extends EjbcaCliUserCommandBase {
                         .values();
                 for (final InternalKeyBindingProperty<? extends Serializable> property : properties) {
                     sb.append("\n\t").append(property.getName()).append('=').append(property.getValue());
-                    sb.append(" [").append(property.getType().getSimpleName()).append(", ").append(property.getDefaultValue()).append("],");
+                    sb.append(" [").append(property.getType().getSimpleName()).append(", default=").append(property.getDefaultValue()).append("],");
                 }
                 if (properties.size() > 0) {
                     sb.deleteCharAt(sb.length() - 1);
