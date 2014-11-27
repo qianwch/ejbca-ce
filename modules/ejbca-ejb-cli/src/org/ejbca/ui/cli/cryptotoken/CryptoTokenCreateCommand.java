@@ -69,7 +69,7 @@ public class CryptoTokenCreateCommand extends EjbcaCliUserCommandBase {
                 "(" + SoftCryptoToken.class.getSimpleName() + ") Set to true|false to allow|disallow private key export."));
         //PKCS#11
         registerParameter(new Parameter(PKCS11_LIB_KEY, "Library Name", MandatoryMode.OPTIONAL, StandaloneMode.ALLOW, ParameterMode.ARGUMENT, "("
-                + PKCS11CryptoToken.class.getSimpleName() + ") PKCS#11 library file."));
+                + PKCS11CryptoToken.class.getSimpleName() + ") PKCS#11 library file. Required if type is " + PKCS11CryptoToken.class.getSimpleName()));
         registerParameter(new Parameter(SLOT_REFERENCE_TYPE_KEY, "Slot Reference Type", MandatoryMode.OPTIONAL, StandaloneMode.ALLOW,
                 ParameterMode.ARGUMENT, "(" + PKCS11CryptoToken.class.getSimpleName() + ") Slot Reference Type."));
         registerParameter(new Parameter(SLOT_REFERENCE_KEY, "Slot Reference", MandatoryMode.OPTIONAL, StandaloneMode.ALLOW, ParameterMode.ARGUMENT,
@@ -109,12 +109,25 @@ public class CryptoTokenCreateCommand extends EjbcaCliUserCommandBase {
                 return CommandResult.CLI_FAILURE;
             }
             if (!new File(pkcs11LibFilename).exists()) {
-                getLogger().info("PKCS#11 library file " + parameters.get(PKCS11_LIB_KEY) + " does not exist!");
+                getLogger().info("PKCS#11 library file " + pkcs11LibFilename + " does not exist!");
                 return CommandResult.CLI_FAILURE;
             }
-            cryptoTokenPropertes.setProperty(PKCS11CryptoToken.SHLIB_LABEL_KEY, parameters.get(PKCS11_LIB_KEY));
-            Pkcs11SlotLabelType labelType = Pkcs11SlotLabelType.getFromKey(parameters.get(SLOT_REFERENCE_TYPE_KEY));
+            cryptoTokenPropertes.setProperty(PKCS11CryptoToken.SHLIB_LABEL_KEY, pkcs11LibFilename);         
             String slotPropertyValue = parameters.get(SLOT_REFERENCE_KEY);
+            if(slotPropertyValue == null) {
+                getLogger().info("Slot reference key (" + SLOT_REFERENCE_KEY + ") needs to be defined for PKCS#11 tokens.");
+                return CommandResult.CLI_FAILURE;
+            }
+            
+            if (!parameters.containsKey(SLOT_REFERENCE_TYPE_KEY)) {
+                getLogger().info("Slot reference type (" + SLOT_REFERENCE_TYPE_KEY + ") needs to be defined for PKCS#11 tokens.");
+                return CommandResult.CLI_FAILURE;
+            }
+            Pkcs11SlotLabelType labelType = Pkcs11SlotLabelType.getFromKey(parameters.get(SLOT_REFERENCE_TYPE_KEY));
+            if(labelType == null) {
+                getLogger().info(parameters.get(SLOT_REFERENCE_TYPE_KEY) + " was not a valid slot reference type.");
+                return CommandResult.CLI_FAILURE;
+            }
             cryptoTokenPropertes.setProperty(PKCS11CryptoToken.SLOT_LABEL_VALUE, slotPropertyValue);
             //If an index was given, accept just numbers as well
             if (labelType.isEqual(Pkcs11SlotLabelType.SLOT_INDEX)) {
@@ -124,7 +137,7 @@ public class CryptoTokenCreateCommand extends EjbcaCliUserCommandBase {
             }
             if (!labelType.validate(slotPropertyValue)) {
                 getLogger().info("Invalid value " + slotPropertyValue + " given for slot type " + labelType.getDescription());
-                return CommandResult.FUNCTIONAL_FAILURE;
+                return CommandResult.CLI_FAILURE;
             } else {
                 cryptoTokenPropertes.setProperty(PKCS11CryptoToken.SLOT_LABEL_TYPE, labelType.getKey());
             }
@@ -133,13 +146,13 @@ public class CryptoTokenCreateCommand extends EjbcaCliUserCommandBase {
             if ( (attributeFileName != null) && (!"null".equalsIgnoreCase(attributeFileName)) ) {
                 if (!new File(attributeFileName).exists()) {
                     getLogger().info("PKCS#11 attribute file " + attributeFileName + " does not exist!");
-                    return CommandResult.FUNCTIONAL_FAILURE;
+                    return CommandResult.CLI_FAILURE;
                 }
                 cryptoTokenPropertes.setProperty(PKCS11CryptoToken.ATTRIB_LABEL_KEY, attributeFileName);
             }
         } else {
             getLogger().info("Invalid CryptoToken type: " + type);
-            return CommandResult.FUNCTIONAL_FAILURE;
+            return CommandResult.CLI_FAILURE;
         }
         final char[] authenticationCode = getAuthenticationCode(parameters.get(PIN_KEY));
         if (autoActivate) {
