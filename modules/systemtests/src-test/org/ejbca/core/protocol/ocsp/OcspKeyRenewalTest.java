@@ -25,6 +25,7 @@ import java.security.SignatureException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -81,7 +82,7 @@ public class OcspKeyRenewalTest {
     private static final String CA_DN = "CN=OcspDefaultTestCA,O=Foo,C=SE";
     private static final String CA_ECC_DN = "CN=OcspDefaultECCTestCA";
     private static final String OCSP_ECC_END_USER_NAME = OcspTestUtils.OCSP_END_USER_NAME+"Ecc";
-
+    private static final String SIGNER_DN = "CN=ocspTestSigner";
     
     private static final String TESTCLASSNAME = OcspKeyRenewalTest.class.getSimpleName();
     private static final AuthenticationToken authenticationToken = new TestAlwaysAllowLocalAuthenticationToken(TESTCLASSNAME);
@@ -144,9 +145,8 @@ public class OcspKeyRenewalTest {
         ocspKeyBindingId = OcspTestUtils.createInternalKeyBinding(authenticationToken, cryptoTokenId, OcspKeyBinding.IMPLEMENTATION_ALIAS, TESTCLASSNAME + "-ocsp", "RSA2048", AlgorithmConstants.SIGALG_SHA1_WITH_RSA);
         ocspKeyBindingIdEcc = OcspTestUtils.createInternalKeyBinding(authenticationToken, cryptoTokenIdEcc, OcspKeyBinding.IMPLEMENTATION_ALIAS, TESTCLASSNAME + "-ocspecc", "secp256r1", AlgorithmConstants.SIGALG_SHA1_WITH_ECDSA);
         assertNotEquals("key binding Ids should not be the same", ocspKeyBindingId, ocspKeyBindingIdEcc);
-        String signerDN = "CN=ocspTestSigner";
         // We need an actual user for this OCSP signing certificate, so we can "renew" the certificate of this user
-        EndEntityInformation user = new EndEntityInformation(OcspTestUtils.OCSP_END_USER_NAME, signerDN, x509ca.getCAId(), null, null,
+        EndEntityInformation user = new EndEntityInformation(OcspTestUtils.OCSP_END_USER_NAME, SIGNER_DN, x509ca.getCAId(), null, null,
                 EndEntityTypes.ENDUSER.toEndEntityType(), SecConst.EMPTY_ENDENTITYPROFILE, CertificateProfileConstants.CERTPROFILE_FIXED_OCSPSIGNER,
                 EndEntityConstants.TOKEN_USERGEN, 0, null);
         user.setPassword("foo123");
@@ -155,11 +155,11 @@ public class OcspKeyRenewalTest {
         }
         endEntityManagementSession.addUser(authenticationToken, user, true);
         // Now issue the cert for the user as well
-        ocspSigningCertificate = OcspTestUtils.createOcspSigningCertificate(authenticationToken, OcspTestUtils.OCSP_END_USER_NAME, signerDN, ocspKeyBindingId, x509ca.getCAId());
+        ocspSigningCertificate = OcspTestUtils.createOcspSigningCertificate(authenticationToken, OcspTestUtils.OCSP_END_USER_NAME, SIGNER_DN, ocspKeyBindingId, x509ca.getCAId());
         // RSA key right?
         assertEquals("Signing key algo should be RSA", AlgorithmConstants.KEYALGORITHM_RSA, AlgorithmTools.getKeyAlgorithm(ocspSigningCertificate.getPublicKey()));
         // We need an actual user for this OCSP signing certificate, so we can "renew" the certificate of this user
-        user = new EndEntityInformation(OCSP_ECC_END_USER_NAME, signerDN+"Ecc", x509eccca.getCAId(), null, null,
+        user = new EndEntityInformation(OCSP_ECC_END_USER_NAME, SIGNER_DN+"Ecc", x509eccca.getCAId(), null, null,
                 EndEntityTypes.ENDUSER.toEndEntityType(), SecConst.EMPTY_ENDENTITYPROFILE, CertificateProfileConstants.CERTPROFILE_FIXED_OCSPSIGNER,
                 EndEntityConstants.TOKEN_USERGEN, 0, null);
         user.setPassword("foo123");
@@ -168,7 +168,7 @@ public class OcspKeyRenewalTest {
         }
         endEntityManagementSession.addUser(authenticationToken, user, true);
         // Now issue the cert for the user as well
-        ocspEccSigningCertificate = OcspTestUtils.createOcspSigningCertificate(authenticationToken, OCSP_ECC_END_USER_NAME, signerDN+"Ecc", ocspKeyBindingIdEcc, x509eccca.getCAId());
+        ocspEccSigningCertificate = OcspTestUtils.createOcspSigningCertificate(authenticationToken, OCSP_ECC_END_USER_NAME, SIGNER_DN+"Ecc", ocspKeyBindingIdEcc, x509eccca.getCAId());
         // ECC key right?
         assertEquals("Signing key algo should be EC", AlgorithmConstants.KEYALGORITHM_ECDSA, AlgorithmTools.getKeyAlgorithm(ocspEccSigningCertificate.getPublicKey()));
         OcspTestUtils.updateInternalKeyBindingCertificate(authenticationToken, ocspKeyBindingId);
@@ -228,6 +228,16 @@ public class OcspKeyRenewalTest {
             //Ignore any failures.
         }
         try {
+            // find all certificates for Ocsp signing user and remove them
+            Collection<Certificate> certs = certificateStoreSession.findCertificatesBySubject(SIGNER_DN);
+            for (Certificate certificate : certs) {
+                internalCertificateStoreSession.removeCertificate(certificate);                
+            }
+        } catch (Exception e) {
+            //Ignore any failures.
+            log.debug(e.getMessage());
+        }
+        try {
             // find all certificates for Ocsp ECC signing user and remove them
             List<Certificate> certs = certificateStoreSession.findCertificatesByUsername(OCSP_ECC_END_USER_NAME);
             for (Certificate certificate : certs) {
@@ -235,6 +245,16 @@ public class OcspKeyRenewalTest {
             }
         } catch (Exception e) {
             //Ignore any failures.
+        }
+        try {
+            // find all certificates for Ocsp ECC signing user and remove them
+            Collection<Certificate> certs = certificateStoreSession.findCertificatesBySubject(SIGNER_DN+"Ecc");
+            for (Certificate certificate : certs) {
+                internalCertificateStoreSession.removeCertificate(certificate);                
+            }
+        } catch (Exception e) {
+            //Ignore any failures.
+            log.debug(e.getMessage());
         }
         try {
             internalCertificateStoreSession.removeCertificate(caCertificate);
@@ -283,15 +303,30 @@ public class OcspKeyRenewalTest {
         }
         cleanupCryptoToken(caEccName);
         
-        // Ensure that the removed signing certificate is removed from the cache
-        ocspResponseGeneratorTestSession.reloadOcspSigningCache();
-        
         if (endEntityAccessSession.findUser(authenticationToken, OCSP_ECC_END_USER_NAME) != null) {
             endEntityManagementSession.revokeAndDeleteUser(authenticationToken, OCSP_ECC_END_USER_NAME, RevokedCertInfo.REVOCATION_REASON_UNSPECIFIED);
+            log.debug("Cleaned up end-entity "+OCSP_ECC_END_USER_NAME);
         }
         if (endEntityAccessSession.findUser(authenticationToken, OcspTestUtils.OCSP_END_USER_NAME) != null) {
             endEntityManagementSession.revokeAndDeleteUser(authenticationToken, OcspTestUtils.OCSP_END_USER_NAME, RevokedCertInfo.REVOCATION_REASON_UNSPECIFIED);
+            log.debug("Cleaned up end-entity "+OcspTestUtils.OCSP_END_USER_NAME);
         }
+        
+        for (final EndEntityInformation info : endEntityAccessSession.findUserBySubjectDN(authenticationToken, SIGNER_DN)) {
+            endEntityManagementSession.revokeAndDeleteUser(authenticationToken, info.getUsername(), RevokedCertInfo.REVOCATION_REASON_UNSPECIFIED);
+            log.debug("Cleaned up end-entity "+info.getUsername()+" with DN "+info.getDN());
+        }
+        for (final EndEntityInformation info : endEntityAccessSession.findUserBySubjectDN(authenticationToken, SIGNER_DN+"Ecc")) {
+            endEntityManagementSession.revokeAndDeleteUser(authenticationToken, info.getUsername(), RevokedCertInfo.REVOCATION_REASON_UNSPECIFIED);
+            log.debug("Cleaned up end-entity "+info.getUsername()+" with DN "+info.getDN());
+        }
+        
+        
+        
+        // Ensure that the removed signing certificate is removed from the cache
+        ocspResponseGeneratorTestSession.reloadOcspSigningCache();
+        
+        log.debug("Successfully cleaned up test data");
     }
     
     private static void cleanupKeyBinding(String keybindingName) {
@@ -300,7 +335,11 @@ public class OcspKeyRenewalTest {
             while (true) {
                 Integer keybindingId = internalKeyBindingMgmtSession.getIdFromName(keybindingName);
                 if (keybindingId == null) break;
-                internalKeyBindingMgmtSession.deleteInternalKeyBinding(authenticationToken, keybindingId);
+                if (internalKeyBindingMgmtSession.deleteInternalKeyBinding(authenticationToken, keybindingId)) {
+                    log.debug("Cleaned up key binding after test: "+keybindingName+" ("+keybindingId+")");
+                } else {
+                    log.info("Key binding could not be deleted: "+keybindingName+" ("+keybindingId+")");
+                }
             }
         } catch (Exception e) {
             //Ignore any failures.
@@ -394,7 +433,7 @@ public class OcspKeyRenewalTest {
         }
         ocspKeyRenewalProxySession.setTimerToFireInOneSecond();
         //Race condition, the WS object takes about two years to materialize
-        Thread.sleep(3000);
+        Thread.sleep(10000);
         //Timer should have fired, and we should see some new stuff.
 
         // Check that back-end InternalKeyBinding has been updated
