@@ -1,3 +1,33 @@
+EJBCA 6.2.6, 2014-12-03
+---
+Bug
+	[ECA-3608] - EJB CLI cryptotoken create command issues
+	[ECA-3828] - Regression: HttpMethodsTest and WebdistHttpTest test failures
+	[ECA-3862] - Security Issue
+	[ECA-3931] - Key recovery fails when user data has changed CA
+	[ECA-3933] - Symmetric keys in crypto token's HSM slot prevent listing of slot keys
+	[ECA-3935] - Regression: Wrong key length used when creating keystore from public web
+	[ECA-3936] - Extra space at end of line in transaction log.
+	[ECA-3937] - Result of stand-alone JUnit tests are discarded during ant test:run
+	[ECA-3943] - Fix ServiceManifestBuilderTest
+	[ECA-3944] - superadmin.cn value lacks quotes in cli.xml
+	[ECA-3948] - OCSP log values ISSUER_NAME_DN and SIGN_ISSUER_NAME_DN contain SERIALNUMBER= instead of SN=
+	[ECA-3958] - Cannot create new CertSafe publisher
+	[ECA-3969] - Default OCSP responder is not used for external CAs without OCSP key binding
+	[ECA-3972] - PKCS#11 keys aren't extractable when they should be
+
+Improvement
+	[ECA-3916] - WS: Return the EndEntity/Certificate profile of a specific profile ID
+	[ECA-3927] - Make systemtests.properties available to peer module and PKCS#11 system tests
+	[ECA-3938] - Add a regression test for ocsp.nonexistingisrevoked
+	[ECA-3942] - Improve logging of ServiceManifestBuilderTest failures
+	[ECA-3954] - Improve the properties output of InternalKeyBindingListCommand to show default property values
+	[ECA-3956] - OCSP response if the requested certificate is revoked is identical in logs to case where issuer of signing cert is revoked.
+	[ECA-3967] - Update httpclient and httpcore to latest version
+
+New Feature
+	[ECA-3939] - Add EV Certificate specific DN components
+
 EJBCA 6.2.5, 2014-11-14
 ---
 Bug
