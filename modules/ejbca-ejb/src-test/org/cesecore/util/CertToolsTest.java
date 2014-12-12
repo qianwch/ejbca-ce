@@ -1841,6 +1841,5 @@ public class CertToolsTest {
             CertTools.checkNameConstraints(cacert, subjectDNName, new GeneralNames(subjectAltName));
             fail(message);
         } catch (IllegalNameException e) { /* NOPMD expected */ }
-    }
-
+    }    
 }

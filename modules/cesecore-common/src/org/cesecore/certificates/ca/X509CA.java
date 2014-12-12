@@ -28,10 +28,8 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SignatureException;
 import java.security.cert.CRLException;
-import java.security.cert.CertStore;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
-import java.security.cert.CollectionCertStoreParameters;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -74,7 +72,6 @@ import org.bouncycastle.asn1.x509.IssuingDistributionPoint;
 import org.bouncycastle.asn1.x509.KeyUsage;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.cert.CertException;
-import org.bouncycastle.cert.CertIOException;
 import org.bouncycastle.cert.X509CRLHolder;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.X509v2CRLBuilder;
@@ -90,6 +87,7 @@ import org.bouncycastle.cms.CMSSignedGenerator;
 import org.bouncycastle.cms.RecipientInformation;
 import org.bouncycastle.cms.RecipientInformationStore;
 import org.bouncycastle.cms.jcajce.JceKeyTransEnvelopedRecipient;
+import org.bouncycastle.cms.jcajce.JceKeyTransRecipientInfoGenerator;
 import org.bouncycastle.operator.BufferingContentSigner;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.ContentVerifierProvider;
@@ -97,6 +95,7 @@ import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
+import org.bouncycastle.util.CollectionStore;
 import org.bouncycastle.util.encoders.Hex;
 import org.cesecore.certificates.ca.catoken.CAToken;
 import org.cesecore.certificates.ca.catoken.CATokenConstants;
@@ -497,7 +496,6 @@ public class X509CA extends CA implements Serializable {
         }
         try {
             CMSProcessable msg = new CMSProcessableByteArray("EJBCA".getBytes());
-            CertStore certs = CertStore.getInstance("Collection", new CollectionCertStoreParameters(certList), "BC");
             CMSSignedDataGenerator gen = new CMSSignedDataGenerator();
             final PrivateKey privateKey = cryptoToken.getPrivateKey(getCAToken().getAliasFromPurpose(CATokenConstants.CAKEYPURPOSE_CERTSIGN));
             if (privateKey == null) {
@@ -506,7 +504,7 @@ public class X509CA extends CA implements Serializable {
                 throw new SignRequestSignatureException(msg1);
             }
             gen.addSigner(privateKey, (X509Certificate) getCACertificate(), CMSSignedGenerator.DIGEST_SHA1);
-            gen.addCertificatesAndCRLs(certs);
+            gen.addCertificates(new CollectionStore(certList));
             CMSSignedData s = null;
             CAToken catoken = getCAToken();
             if (catoken != null && !(cryptoToken instanceof NullCryptoToken)) {
@@ -522,6 +520,7 @@ public class X509CA extends CA implements Serializable {
         } catch (CryptoTokenOfflineException e) {
             throw new RuntimeException(e);
         } catch (Exception e) {
+            //FIXME: This right here is just nasty
             throw new RuntimeException(e);
         }
     }
@@ -1515,7 +1514,7 @@ public class X509CA extends CA implements Serializable {
         // Creating the KeyId may just throw an exception, we will log this but store the cert and ignore the error
         final PublicKey pk = cryptoToken.getPublicKey(alias);
         byte[] keyId = KeyTools.createSubjectKeyId(pk).getKeyIdentifier();
-        edGen.addKeyTransRecipient(pk, keyId);
+        edGen.addRecipientInfoGenerator(new JceKeyTransRecipientInfoGenerator(keyId, pk));
         ed = edGen.generate(new CMSProcessableByteArray(baos.toByteArray()), CMSEnvelopedDataGenerator.AES256_CBC, "BC");
         log.info("Encrypted keys using key alias '"+alias+"' from Crypto Token "+cryptoToken.getId());
         return ed.getEncoded();
@@ -1557,7 +1556,7 @@ public class X509CA extends CA implements Serializable {
         final String keyAlias = getCAToken().getAliasFromPurpose(keyPurpose);
         final PublicKey pk = cryptoToken.getPublicKey(keyAlias);
         byte[] keyId = KeyTools.createSubjectKeyId(pk).getKeyIdentifier();
-        edGen.addKeyTransRecipient(pk, keyId);
+        edGen.addRecipientInfoGenerator(new JceKeyTransRecipientInfoGenerator(keyId, pk));
         ed = edGen.generate(new CMSProcessableByteArray(data), CMSEnvelopedDataGenerator.AES256_CBC, "BC");
         log.info("Encrypted data using key alias '"+keyAlias+"' from Crypto Token "+cryptoToken.getId());
         return ed.getEncoded();

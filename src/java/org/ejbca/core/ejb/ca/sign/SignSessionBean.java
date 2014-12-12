@@ -20,6 +20,7 @@ import java.security.NoSuchProviderException;
 import java.security.PublicKey;
 import java.security.cert.CRLException;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.Date;
@@ -314,6 +315,11 @@ public class SignSessionBean implements SignSessionLocal, SignSessionRemote {
             log.error("Invalid key in request: ", e);
         } catch (NoSuchAlgorithmException e) {
             log.error("No such algorithm: ", e);
+        } catch (CertificateEncodingException e) {
+           log.error("There was a problem extracting the certificate information.", e);
+        } catch (CRLException e) {
+            log.error("There was a problem extracting the CRL information.", e);
+
         }
         if (log.isTraceEnabled()) {
             log.trace("<createCertificate(IRequestMessage)");
@@ -407,6 +413,10 @@ public class SignSessionBean implements SignSessionLocal, SignSessionRemote {
             String msg = intres.getLocalizedMessage("error.catokenoffline", ca.getSubjectDN());
             log.warn(msg, ctoe);
             throw ctoe;
+        } catch (CertificateEncodingException e) {
+            log.error("There was a problem extracting the certificate information.", e);
+        } catch (CRLException e) {
+            log.error("There was a problem extracting the CRL information.", e);
         }
         if (log.isTraceEnabled()) {
             log.trace("<createRequestFailedResponse(IRequestMessage)");
@@ -512,6 +522,8 @@ public class SignSessionBean implements SignSessionLocal, SignSessionRemote {
             String msg = intres.getLocalizedMessage("error.catokenoffline", ca.getSubjectDN());
             log.error(msg, ctoe);
             throw ctoe;
+        } catch (CertificateEncodingException e) {
+            log.error("There was a problem extracting the certificate information.", e);
         }
         if (log.isTraceEnabled()) {
             log.trace("<getCRL(IRequestMessage)");
