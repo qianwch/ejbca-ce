@@ -29,6 +29,7 @@ import java.security.PublicKey;
 import java.security.SignatureException;
 import java.security.cert.CRLException;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -76,6 +77,7 @@ import org.bouncycastle.cert.X509CRLHolder;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.X509v2CRLBuilder;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 import org.bouncycastle.cms.CMSEnvelopedData;
 import org.bouncycastle.cms.CMSEnvelopedDataGenerator;
 import org.bouncycastle.cms.CMSException;
@@ -487,13 +489,19 @@ public class X509CA extends CA implements Serializable {
             throw new SignRequestSignatureException("Cannot verify certificate in createPKCS7(), did I sign this?");
         }
         Collection<Certificate> chain = getCertificateChain();
-        ArrayList<Certificate> certList = new ArrayList<Certificate>();
-        if (cert != null) {
-            certList.add(cert);
-        }
-        if (includeChain) {
-            certList.addAll(chain);
-        }
+        ArrayList<X509CertificateHolder> certList = new ArrayList<X509CertificateHolder>();
+        try {
+            if (cert != null) {
+                certList.add(new JcaX509CertificateHolder((X509Certificate) cert));
+            }
+            if (includeChain) {
+                for (Certificate certificate : chain) {
+                    certList.add(new JcaX509CertificateHolder((X509Certificate) certificate));
+                }
+            }
+        } catch (CertificateEncodingException e) {
+            throw new SignRequestSignatureException("Could not encode certificate", e);
+        } 
         try {
             CMSProcessable msg = new CMSProcessableByteArray("EJBCA".getBytes());
             CMSSignedDataGenerator gen = new CMSSignedDataGenerator();
