@@ -726,7 +726,7 @@ public class UpgradeSessionBean implements UpgradeSessionLocal, UpgradeSessionRe
                 }
             }
             RoleData tempSuperAdminRole = roleAccessSession.findRole(tempSuperAdminRoleName);
-            if (defaultRole != null) {
+            if (tempSuperAdminRole != null) {
                 try {
                     roleMgmtSession.remove(admin, tempSuperAdminRole);
                 } catch (RoleNotFoundException e) {
@@ -734,7 +734,7 @@ public class UpgradeSessionBean implements UpgradeSessionLocal, UpgradeSessionRe
                 }
             }
             RoleData publicWebRole = roleAccessSession.findRole(publicWebRoleName);
-            if (defaultRole != null) {
+            if (publicWebRole != null) {
                 try {
                     roleMgmtSession.remove(admin, publicWebRole);
                 } catch (RoleNotFoundException e) {
