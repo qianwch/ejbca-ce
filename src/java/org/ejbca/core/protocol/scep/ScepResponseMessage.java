@@ -43,12 +43,12 @@ import org.bouncycastle.cert.jcajce.JcaX509CRLHolder;
 import org.bouncycastle.cms.CMSEnvelopedData;
 import org.bouncycastle.cms.CMSEnvelopedDataGenerator;
 import org.bouncycastle.cms.CMSException;
-import org.bouncycastle.cms.CMSProcessable;
 import org.bouncycastle.cms.CMSProcessableByteArray;
 import org.bouncycastle.cms.CMSSignedData;
 import org.bouncycastle.cms.CMSSignedDataGenerator;
 import org.bouncycastle.cms.CMSSignedGenerator;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.cms.CMSTypedData;
+import org.bouncycastle.cms.jcajce.JceCMSContentEncryptorBuilder;
 import org.bouncycastle.util.CollectionStore;
 import org.cesecore.certificates.certificate.request.CertificateResponseMessage;
 import org.cesecore.certificates.certificate.request.FailInfo;
@@ -206,7 +206,7 @@ public class ScepResponseMessage implements CertificateResponseMessage {
                 }               
             }
 
-            CMSProcessable msg;
+            CMSTypedData msg;
             // Create encrypted response if this is success and NOT a CRL response message
             if (status.equals(ResponseStatus.SUCCESS)) {
 
@@ -237,7 +237,7 @@ public class ScepResponseMessage implements CertificateResponseMessage {
                 if(crl != null) {
                     gen.addCRL(new JcaX509CRLHolder((X509CRL) crl));
                 }
-                CMSSignedData s = gen.generate(null, false, BouncyCastleProvider.PROVIDER_NAME);
+                CMSSignedData s = gen.generate(null, false);
 
                 // Envelope the CMS message
                 if (recipientKeyInfo != null) {
@@ -252,10 +252,11 @@ public class ScepResponseMessage implements CertificateResponseMessage {
                     edGen.addKeyTransRecipient((X509Certificate) cert);
                 }
                 try {
-                    CMSEnvelopedData ed = edGen.generate(new CMSProcessableByteArray(s.getEncoded()), SMIMECapability.dES_CBC.getId(),
-                            BouncyCastleProvider.PROVIDER_NAME);
-
-                    log.debug("Enveloped data is " + ed.getEncoded().length + " bytes long");
+                    JceCMSContentEncryptorBuilder jceCMSContentEncryptorBuilder = new JceCMSContentEncryptorBuilder(SMIMECapability.dES_CBC);
+                    CMSEnvelopedData ed = edGen.generate(new CMSProcessableByteArray(s.getEncoded()), jceCMSContentEncryptorBuilder.build());
+                    if (log.isDebugEnabled()) {
+                        log.debug("Enveloped data is " + ed.getEncoded().length + " bytes long");
+                    }
                     msg = new CMSProcessableByteArray(ed.getEncoded());
                 } catch (IOException e) {
                     throw new IllegalStateException("Unexpected IOException caught", e);
@@ -327,7 +328,7 @@ public class ScepResponseMessage implements CertificateResponseMessage {
             log.debug("Signing SCEP message with cert: "+CertTools.getSubjectDN(cacert));
             gen1.addSigner(signKey, (X509Certificate)cacert, digestAlg, new AttributeTable(attributes), null);
             // The un-encoded response message itself
-            final CMSSignedData signedData = gen1.generate(msg, true, provider);
+            final CMSSignedData signedData = gen1.generate(msg, true);
             try {
                 responseMessage = signedData.getEncoded();
             } catch (IOException e) {
