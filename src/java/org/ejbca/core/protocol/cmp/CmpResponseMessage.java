@@ -53,6 +53,7 @@ import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.cms.CMSSignedGenerator;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.cesecore.certificates.certificate.request.CertificateResponseMessage;
 import org.cesecore.certificates.certificate.request.FailInfo;
 import org.cesecore.certificates.certificate.request.RequestMessage;
@@ -102,9 +103,9 @@ public class CmpResponseMessage implements CertificateResponseMessage {
     private String transactionId = null;
 
     /** Default digest algorithm for CMP response message, can be overridden */
-    private String digestAlg = CMSSignedGenerator.DIGEST_SHA1;
+    private String digest  = CMSSignedGenerator.DIGEST_SHA1;
     /** The default provider is BC, if nothing else is specified when setting SignKeyInfo */
-    private String provider = "BC";
+    private String provider = BouncyCastleProvider.PROVIDER_NAME;
 
     /** Certificate to be in certificate response message, not serialized */
     private transient Certificate cert = null;
@@ -286,10 +287,10 @@ public class CmpResponseMessage implements CertificateResponseMessage {
                 responseMessage = CmpMessageHelper.protectPKIMessageWithPBE(myPKIMessage, pbeKeyId, pbeKey, pbeDigestAlg, pbeMacAlg,
                         pbeIterationCount);
             } else {
-                myPKIHeader.setProtectionAlg(new AlgorithmIdentifier(digestAlg));
+                myPKIHeader.setProtectionAlg(new AlgorithmIdentifier(digest));
                 PKIHeader header = myPKIHeader.build();
                 myPKIMessage = new PKIMessage(header, myPKIBody);                        
-                responseMessage = CmpMessageHelper.signPKIMessage(myPKIMessage, signCertChain, signKey, digestAlg, provider);
+                responseMessage = CmpMessageHelper.signPKIMessage(myPKIMessage, signCertChain, signKey, digest, provider);
             }
             
             ret = true;
@@ -345,9 +346,9 @@ public class CmpResponseMessage implements CertificateResponseMessage {
     }
 
     @Override
-    public void setPreferredDigestAlg(String digest) {
-        if(StringUtils.isNotEmpty(digest)) { 
-            this.digestAlg = digest;
+    public void setPreferredDigestAlg(String digest){
+        if(!StringUtils.isEmpty(digest)) { 
+            this.digest = digest;
         }
     }
 
