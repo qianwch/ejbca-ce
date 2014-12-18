@@ -34,10 +34,10 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.asn1.ASN1Integer;
 import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.ASN1TaggedObject;
 import org.bouncycastle.asn1.DERBitString;
-import org.bouncycastle.asn1.DERInteger;
 import org.bouncycastle.asn1.DEROutputStream;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.cmp.PKIBody;
@@ -329,7 +329,7 @@ public class CrmfRequestMessage extends BaseCmpMessage implements ICrmfRequestMe
         BigInteger ret = null;
         final CertRequest request = getReq().getCertReq();
         final CertTemplate templ = request.getCertTemplate();
-        final DERInteger serno = templ.getSerialNumber();
+        final ASN1Integer serno = templ.getSerialNumber();
         if (serno != null) {
             ret = serno.getValue();
         }
