@@ -93,6 +93,7 @@ import org.bouncycastle.cms.jcajce.JcaSignerInfoGeneratorBuilder;
 import org.bouncycastle.cms.jcajce.JceCMSContentEncryptorBuilder;
 import org.bouncycastle.cms.jcajce.JceKeyTransEnvelopedRecipient;
 import org.bouncycastle.cms.jcajce.JceKeyTransRecipientInfoGenerator;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.BufferingContentSigner;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.ContentVerifierProvider;
@@ -519,7 +520,7 @@ public class X509CA extends CA implements Serializable {
             String signatureAlgorithmName = AlgorithmTools.getAlgorithmNameFromDigestAndKey(CMSSignedGenerator.DIGEST_SHA1, privateKey.getAlgorithm());
             try {
                 ContentSigner contentSigner = new JcaContentSignerBuilder(signatureAlgorithmName).setProvider(cryptoToken.getSignProviderName()).build(privateKey);
-                JcaDigestCalculatorProviderBuilder calculatorProviderBuilder = new JcaDigestCalculatorProviderBuilder();
+                JcaDigestCalculatorProviderBuilder calculatorProviderBuilder = new JcaDigestCalculatorProviderBuilder().setProvider(BouncyCastleProvider.PROVIDER_NAME);
                 JcaSignerInfoGeneratorBuilder builder = new JcaSignerInfoGeneratorBuilder(calculatorProviderBuilder.build());
                 gen.addSignerInfoGenerator(builder.build(contentSigner, (X509Certificate) getCACertificate()));
             } catch (OperatorCreationException e) {
@@ -1536,7 +1537,7 @@ public class X509CA extends CA implements Serializable {
         final PublicKey pk = cryptoToken.getPublicKey(alias);
         byte[] keyId = KeyTools.createSubjectKeyId(pk).getKeyIdentifier();
         edGen.addRecipientInfoGenerator(new JceKeyTransRecipientInfoGenerator(keyId, pk));
-        JceCMSContentEncryptorBuilder jceCMSContentEncryptorBuilder = new JceCMSContentEncryptorBuilder(NISTObjectIdentifiers.id_aes256_CBC);
+        JceCMSContentEncryptorBuilder jceCMSContentEncryptorBuilder = new JceCMSContentEncryptorBuilder(NISTObjectIdentifiers.id_aes256_CBC).setProvider(BouncyCastleProvider.PROVIDER_NAME);
         ed = edGen.generate(new CMSProcessableByteArray(baos.toByteArray()), jceCMSContentEncryptorBuilder.build());
         log.info("Encrypted keys using key alias '"+alias+"' from Crypto Token "+cryptoToken.getId());
         return ed.getEncoded();
@@ -1579,7 +1580,7 @@ public class X509CA extends CA implements Serializable {
         final PublicKey pk = cryptoToken.getPublicKey(keyAlias);
         byte[] keyId = KeyTools.createSubjectKeyId(pk).getKeyIdentifier();
         edGen.addRecipientInfoGenerator(new JceKeyTransRecipientInfoGenerator(keyId, pk));
-        JceCMSContentEncryptorBuilder jceCMSContentEncryptorBuilder = new JceCMSContentEncryptorBuilder(NISTObjectIdentifiers.id_aes256_CBC);
+        JceCMSContentEncryptorBuilder jceCMSContentEncryptorBuilder = new JceCMSContentEncryptorBuilder(NISTObjectIdentifiers.id_aes256_CBC).setProvider(BouncyCastleProvider.PROVIDER_NAME);
         ed = edGen.generate(new CMSProcessableByteArray(data), jceCMSContentEncryptorBuilder.build());
         log.info("Encrypted data using key alias '"+keyAlias+"' from Crypto Token "+cryptoToken.getId());
         return ed.getEncoded();

@@ -47,6 +47,7 @@ import org.bouncycastle.cms.DefaultSignedAttributeTableGenerator;
 import org.bouncycastle.cms.jcajce.JcaSignerInfoGeneratorBuilder;
 import org.bouncycastle.cms.jcajce.JceCMSContentEncryptorBuilder;
 import org.bouncycastle.cms.jcajce.JceKeyTransRecipientInfoGenerator;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
@@ -70,6 +71,7 @@ public class ScepRequestGenerator {
     private X509Certificate cacert = null;
     private String reqdn = null;
     private KeyPair keys = null;
+    private String signatureProvider = null;
     private String digestOid = CMSSignedGenerator.DIGEST_SHA1;
     private String senderNonce = null;
 
@@ -86,8 +88,9 @@ public class ScepRequestGenerator {
     	}
     }
     
-    public void setKeys(KeyPair myKeys) {
+    public void setKeys(KeyPair myKeys, String signatureProvider) {
         this.keys = myKeys;
+        this.signatureProvider = signatureProvider;
     }
     public void setDigestOid(String oid) {
         digestOid = oid;
@@ -192,8 +195,8 @@ public class ScepRequestGenerator {
     private CMSEnvelopedData envelope(CMSTypedData envThis) throws NoSuchAlgorithmException, NoSuchProviderException, CMSException, CertificateEncodingException {
         CMSEnvelopedDataGenerator edGen = new CMSEnvelopedDataGenerator();
         // Envelope the CMS message
-        edGen.addRecipientInfoGenerator(new JceKeyTransRecipientInfoGenerator(cacert));
-        JceCMSContentEncryptorBuilder jceCMSContentEncryptorBuilder = new JceCMSContentEncryptorBuilder(SMIMECapability.dES_CBC);
+        edGen.addRecipientInfoGenerator(new JceKeyTransRecipientInfoGenerator(cacert).setProvider(BouncyCastleProvider.PROVIDER_NAME));
+        JceCMSContentEncryptorBuilder jceCMSContentEncryptorBuilder = new JceCMSContentEncryptorBuilder(SMIMECapability.dES_CBC).setProvider(BouncyCastleProvider.PROVIDER_NAME);
         CMSEnvelopedData ed = edGen.generate(envThis, jceCMSContentEncryptorBuilder.build());
         return ed;
     }
@@ -239,8 +242,8 @@ public class ScepRequestGenerator {
        
         String signatureAlgorithmName = AlgorithmTools.getAlgorithmNameFromDigestAndKey(digestOid, keys.getPrivate().getAlgorithm());
         try {
-            ContentSigner contentSigner = new JcaContentSignerBuilder(signatureAlgorithmName).build(keys.getPrivate());
-            JcaDigestCalculatorProviderBuilder calculatorProviderBuilder = new JcaDigestCalculatorProviderBuilder();
+            ContentSigner contentSigner = new JcaContentSignerBuilder(signatureAlgorithmName).setProvider(signatureProvider).build(keys.getPrivate());
+            JcaDigestCalculatorProviderBuilder calculatorProviderBuilder = new JcaDigestCalculatorProviderBuilder().setProvider(BouncyCastleProvider.PROVIDER_NAME);
             JcaSignerInfoGeneratorBuilder builder = new JcaSignerInfoGeneratorBuilder(calculatorProviderBuilder.build());
             builder.setSignedAttributeGenerator(new DefaultSignedAttributeTableGenerator(new AttributeTable(attributes)));
             gen1.addSignerInfoGenerator(builder.build(contentSigner, cert));
