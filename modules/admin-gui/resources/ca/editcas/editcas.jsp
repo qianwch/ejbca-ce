@@ -911,8 +911,9 @@
            if ( (autoactivate != null) && (autoactivate.equals("true")) ) {
                // it is not possible to use empty autoactivation passwords for soft tokens
                if ( (authenticationcode != null) && (authenticationcode.length() > 0) ) {
-                   String properties = BaseCryptoToken.setAutoActivatePin(catoken.getProperties(), authenticationcode, true);
-                   catoken.setProperties(properties);
+                   final Properties prop = catoken.getProperties();
+                   BaseCryptoToken.setAutoActivatePin(prop, authenticationcode, true);
+                   catoken.setProperties(prop);
                }
            } else {
                // Delete any present auto activation pin
