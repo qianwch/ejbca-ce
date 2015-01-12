@@ -673,7 +673,7 @@ regards to DN-contents, extensions etc.
 <p>This section will show you how to create a certificate profile suitable for SSL/TLS servers, such as web servers.
 </p>
 <ul>
-<li>Under "CA Functions", press "Edit Certificate Profiles".</li>
+<li>Under "CA Functions", press "Certificate Profiles".</li>
 <li>Enter a name for your end entity certificate profile e.g. "SSLServerCertificateProfile", and press "Add".</li>
 <li>Select "SSLServerCertificateProfile" and press "Edit Certificate Profile".</li>
 <li>Under "Validity" enter 365d (1 year validity).</li>
@@ -960,7 +960,7 @@ In practice DN comparisons is often done using string comparisons, where the str
 For historical reasons EJBCA uses Ldap DN order. Some applications do require X.500 DN order however and therefore EJBCA gives you the choice.
 There are two places in EJBCA where this can be configured:
 <ul>
-<li>In the Certificate profile (Edit certificate profiles)</li>
+<li>In the Certificate profile (Certificate Profiles)</li>
 <li>In the CA configuration (Edit Certificate Authorities)</li>
 </ul>
 The relationship between the settings is that they are both evaluated in a logical AND expression. 
@@ -1674,7 +1674,7 @@ The administrators certificates will be issued by a CA called ManagementCA
 </p>
 <p>
 <ul>
-<li>Under "CA Functions" -> "Edit Certificate Profiles"</li>
+<li>Under "CA Functions" -> "Certificate Profiles"</li>
 <li>Enter a name for your end entity certificate profile e.g. "AdministratorEndEntityCertificateProfile"</li>
 <li>Select "ENDUSER"</li>
 <li>Press "Use Selected as Template"</li>
