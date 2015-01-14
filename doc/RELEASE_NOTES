@@ -1,3 +1,13 @@
+EJBCA 5.0.15
+-----------
+This is a maintenance release concerning a single issue.
+
+* Noteworthy changes:
+- Enabling the auto-activation of soft CAs removed the token keys from database
+
+Read the full Changelog for details.
+For upgrade instructions, please see UPGRADE.
+
 EJBCA 5.0.14
 -----------
 This is a maintenance release with only minor bug fixes. In all 2 issues have been fixed.

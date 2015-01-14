@@ -1,3 +1,8 @@
+EJBCA 5.0.15, 2015-01-14
+---
+Bug
+    [ECA-4041] - Enabling the auto-activation of soft CA's will remove the token keys from database
+
 EJBCA 5.0.14, 2014-04-02
 ---
 Bug
