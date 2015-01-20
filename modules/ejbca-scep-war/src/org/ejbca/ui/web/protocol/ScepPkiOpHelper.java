@@ -29,6 +29,7 @@ import org.cesecore.certificates.ca.CAInfo;
 import org.cesecore.certificates.ca.CaSessionLocal;
 import org.cesecore.certificates.ca.catoken.CAToken;
 import org.cesecore.certificates.ca.catoken.CATokenConstants;
+import org.cesecore.certificates.certificate.CertificateStoreSessionLocal;
 import org.cesecore.certificates.certificate.certextensions.CertificateExtensionException;
 import org.cesecore.certificates.certificate.request.ResponseMessage;
 import org.cesecore.certificates.certificateprofile.CertificateProfileSessionLocal;
@@ -72,6 +73,7 @@ public class ScepPkiOpHelper {
     private CertificateProfileSessionLocal certProfileSession;
     private EndEntityManagementSessionLocal endEntityManagementSession;    
     private CryptoTokenManagementSessionLocal cryptoTokenManagementSession;
+    private CertificateStoreSessionLocal certificateStoreSession;
     
     private ScepConfiguration scepConfiguration;
 
@@ -81,9 +83,9 @@ public class ScepPkiOpHelper {
      * @param admin administrator performing this
      * @param signsession signsession used to request certificates
      */
-    public ScepPkiOpHelper(AuthenticationToken admin, String alias, ScepConfiguration scepConfig, SignSessionLocal signsession, CaSessionLocal caSession, EndEntityProfileSessionLocal endEntityProfileSession, 
-                    CertificateProfileSessionLocal certProfileSession, EndEntityManagementSessionLocal endEntityManagementSession, 
-                    CryptoTokenManagementSessionLocal cryptoTokenManagementSession) {
+    public ScepPkiOpHelper(AuthenticationToken admin, String alias, ScepConfiguration scepConfig, SignSessionLocal signsession,
+            CaSessionLocal caSession, EndEntityProfileSessionLocal endEntityProfileSession, CertificateProfileSessionLocal certProfileSession,
+            EndEntityManagementSessionLocal endEntityManagementSession, CryptoTokenManagementSessionLocal cryptoTokenManagementSession, CertificateStoreSessionLocal certificateStoreSession) {
     	if (log.isTraceEnabled()) {
     		log.trace(">ScepPkiOpHelper");
     	}
@@ -96,6 +98,7 @@ public class ScepPkiOpHelper {
         this.certProfileSession = certProfileSession;
         this.endEntityManagementSession = endEntityManagementSession;
         this.cryptoTokenManagementSession = cryptoTokenManagementSession;
+        this.certificateStoreSession = certificateStoreSession;
     	if (log.isTraceEnabled()) {
     		log.trace("<ScepPkiOpHelper");
     	}
@@ -167,7 +170,8 @@ public class ScepPkiOpHelper {
     private boolean addOrEditUser(ScepRequestMessage reqmsg) {
         
         // Try to find the CA name from the issuerDN in the request. If we can't find it, we use the default
-        String caName = getCAName(CertTools.stringToBCDNString(reqmsg.getIssuerDN()));
+        String issuerDN = certificateStoreSession.getCADnFromRequest(reqmsg);
+        String caName = getCAName(issuerDN);
         if(StringUtils.isEmpty(caName)) {
             log.error("No CA was set in the scep.propeties file.");
             return false;

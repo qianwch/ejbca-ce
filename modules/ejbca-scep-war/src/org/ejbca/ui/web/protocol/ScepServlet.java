@@ -40,6 +40,7 @@ import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.certificates.ca.CADoesntExistsException;
 import org.cesecore.certificates.ca.CAInfo;
 import org.cesecore.certificates.ca.CaSessionLocal;
+import org.cesecore.certificates.certificate.CertificateStoreSessionLocal;
 import org.cesecore.certificates.certificateprofile.CertificateProfileSessionLocal;
 import org.cesecore.configuration.GlobalConfigurationSessionLocal;
 import org.cesecore.keys.token.CryptoTokenManagementSessionLocal;
@@ -90,6 +91,8 @@ public class ScepServlet extends HttpServlet {
     private SignSessionLocal signsession;
     @EJB
     private CaSessionLocal casession;
+    @EJB
+    private CertificateStoreSessionLocal certificateStoreSession;
     @EJB
     private EndEntityProfileSessionLocal endEntityProfileSession;
     @EJB
@@ -235,7 +238,7 @@ public class ScepServlet extends HttpServlet {
                 
                 byte[] scepmsg = Base64.decode(message.getBytes());
                 ScepPkiOpHelper helper = new ScepPkiOpHelper(administrator, alias, scepConfig, signsession, casession, endEntityProfileSession, 
-                                    certProfileSession, endEntityManagementSession, cryptoTokenManagementSession);
+                                    certProfileSession, endEntityManagementSession, cryptoTokenManagementSession, certificateStoreSession);
                 
                 boolean includeCACert = scepConfig.getIncludeCA(alias);
                 boolean isRAModeOK = scepConfig.getRAMode(alias);
