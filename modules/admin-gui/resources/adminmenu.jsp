@@ -5,6 +5,7 @@
 org.cesecore.authorization.AuthorizationDeniedException,
 org.cesecore.authorization.control.AuditLogRules,
 org.cesecore.authorization.control.CryptoTokenRules,
+org.cesecore.authorization.control.StandardRules,
 org.ejbca.config.GlobalConfiguration,
 org.ejbca.core.model.authorization.AccessRulesConstants,
 org.cesecore.keybind.InternalKeyBindingRules
@@ -87,7 +88,7 @@ org.cesecore.keybind.InternalKeyBindingRules
     final String HTEDITHARDTOKENPROFILES_RESOURCE       = "/hardtoken_functionality/edit_hardtoken_profiles";
     final String LOGVIEW_RESOURCE                       = AuditLogRules.VIEW.resource(); 
     final String SYSTEMCONFIGURATION_RESOURCE           = AccessRulesConstants.REGULAR_EDITSYSTEMCONFIGURATION;
-    final String SERVICES_RESOURCE                      = "/super_administrator";
+    final String SERVICES_RESOURCE                      = StandardRules.ROLE_ROOT.resource();
     final String INTERNALKEYBINDING_RESOURCE            = InternalKeyBindingRules.BASE.resource();
     final String ADMINPRIVILEGES_RESOURCE               = "/system_functionality/edit_administrator_privileges";
  %>
