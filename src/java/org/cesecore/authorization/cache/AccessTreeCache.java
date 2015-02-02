@@ -58,7 +58,7 @@ public class AccessTreeCache {
         }
         accessTree.buildTree(roles);
         this.accessTreeUpdatenumber = authorizationTreeUpdateNumber;
-        lastUpdateTime = System.currentTimeMillis();
+        setLastUpdateToNow();
     }
 
     /**
@@ -79,6 +79,9 @@ public class AccessTreeCache {
     	accessTreeUpdatenumber = -1;
     }
     
+    public void setLastUpdateToNow() {
+        lastUpdateTime = System.currentTimeMillis();
+    }
     public AccessTree getAccessTree() {
         return accessTree;
     }
