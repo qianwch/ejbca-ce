@@ -1,14 +1,24 @@
-    <project name="jboss" basedir=".." default="jee:deploy" xmlns:jboss="jboss">
+<project name="jboss" basedir=".." default="jee:deploy" xmlns:jboss="jboss">
 	<property environment="env"/>
 
-    <!--For passing commands in jboss-cli.bat we have to escape double quotes -->
-    <condition property="quot" value="\&quot;" else="&quot;">
-        <os family="windows" />
-    </condition>
+	<!-- ============================================================================================ -->
+	<!-- We replace "\" with "/" if OS is windows and set the new path to appserver.home.win variable -->
+	<!-- ============================================================================================ -->
+	<pathconvert property="appserver.home.win" targetos="windows">
+		<path path="${appserver.home}" />
+		<filtermapper>
+			<replacestring from="\" to="/" />
+		</filtermapper>
+	</pathconvert>
 
-    <!-- ============ -->
-    <!-- Detecting OS -->
-    <!-- ============ -->
+	<!--For passing commands in jboss-cli.bat we have to escape double quotes -->
+	<condition property="quot" value="\&quot;" else="&quot;">
+		<os family="windows" />
+	</condition>
+
+	<!-- ============ -->
+	<!-- Detecting OS -->
+	<!-- ============ -->
 	<condition property="isWindows">
 		<os family="windows" />
 	</condition>
@@ -16,62 +26,68 @@
 		<os family="unix" />
 	</condition>
 
-    <condition property="tlsprotocol" value="TLSv1" else="TLSv1,TLSv1.1,TLSv1.2">
-        <equals arg1="${ant.java.version}" arg2="1.6" />
-    </condition>
-    
-    <condition property="jboss7">
+	<!-- In case of windows use the path defined in appserver.home.win -->
+	<condition property="appserverhome" value="${appserver.home.win}" else="${appserver.home}">
+		<os family="windows"/>
+	</condition>
+
+	<condition property="tlsprotocol" value="TLSv1" else="TLSv1,TLSv1.1,TLSv1.2">
+		<equals arg1="${ant.java.version}" arg2="1.6" />
+	</condition>
+
+	<condition property="jboss7">
 		<or>
-        	<equals arg1="${appserver.subtype}" arg2="jboss7" />
-        	<equals arg1="${appserver.subtype}" arg2="jbosseap6" />
-        </or>
-    </condition>
+			<equals arg1="${appserver.subtype}" arg2="jboss7" />
+			<equals arg1="${appserver.subtype}" arg2="jbosseap6" />
+		</or>
+	</condition>
 
- 
+
 	<!-- ============================================================================ -->
-    <!-- Miscelaneous targets for detecting JBoss versions, setting-up file-paths etc -->
-    <!-- ============================================================================ -->
+	<!-- Miscelaneous targets for detecting JBoss versions, setting-up file-paths etc -->
+	<!-- ============================================================================ -->
 
-    <target name="set-paths-jboss7" if="jboss7">
-        <!-- Paths for JBoss 7 -->
-        <property name="jboss7.mode" value="standalone"/>
-	    <property name="jboss.server.home.dir" value="${appserver.home}/${jboss7.mode}"/>
-        <property name="jboss.conf.dir" value="${jboss.server.home.dir}/configuration"/>
-	    <property name="jboss.deploy.dir" value="${jboss.server.home.dir}/deployments"/>
-	    <property name="jboss.farm.dir" value="${jboss.deploy.dir}"/> <!-- TODO -->
-	    <property name="keystore.file" value="configuration/keystore/keystore.jks"/>
-	    <property name="truststore.file" value="configuration/keystore/truststore.jks"/>
-    </target>
+	<target name="set-paths-jboss7" if="jboss7">
+		<!-- Paths for JBoss 7 -->
+		<property name="jboss7.mode" value="standalone"/>
+		<property name="jboss.server.home.dir" value="${appserverhome}/${jboss7.mode}"/>
+		<property name="jboss.conf.dir" value="${jboss.server.home.dir}/configuration"/>
+		<property name="jboss.deploy.dir" value="${jboss.server.home.dir}/deployments"/>
+		<property name="jboss.farm.dir" value="${jboss.deploy.dir}"/>
+		<!-- TODO -->
+		<property name="keystore.file" value="configuration/keystore/keystore.jks"/>
+		<property name="truststore.file" value="configuration/keystore/truststore.jks"/>
+	</target>
 
-    <target name="set-paths-not-jboss7" unless="jboss7">
-        <!-- Paths for JBoss 4, 5 and 6 -->
-        <property name="jboss.config" value="default"/>
-        <property name="jboss.farm.name" value="deploy"/>
-	    <property name="jboss.server.home.dir" value="${appserver.home}/server/${jboss.config}"/>
-        <property name="jboss.conf.dir" value="${jboss.server.home.dir}/conf"/>
-	    <property name="jboss.farm.dir" value="${jboss.server.home.dir}/${jboss.farm.name}"/>
-	    <property name="jboss.deploy.dir" value="${jboss.server.home.dir}/deploy"/>
-	    <property name="keystore.file" value="conf/keystore/keystore.jks"/>
-	    <property name="truststore.file" value="conf/keystore/truststore.jks"/>
-    </target>
-	
-    <target name="set-paths" depends="set-paths-jboss7, set-paths-not-jboss7">
-    </target>
+	<target name="set-paths-not-jboss7" unless="jboss7">
+		<!-- Paths for JBoss 4, 5 and 6 -->
+		<property name="jboss.config" value="default"/>
+		<property name="jboss.farm.name" value="deploy"/>
+		<property name="jboss.server.home.dir" value="${appserverhome}/server/${jboss.config}"/>
+		<property name="jboss.conf.dir" value="${jboss.server.home.dir}/conf"/>
+		<property name="jboss.farm.dir" value="${jboss.server.home.dir}/${jboss.farm.name}"/>
+		<property name="jboss.deploy.dir" value="${jboss.server.home.dir}/deploy"/>
+		<property name="keystore.file" value="conf/keystore/keystore.jks"/>
+		<property name="truststore.file" value="conf/keystore/truststore.jks"/>
+	</target>
+
+	<target name="set-paths" depends="set-paths-jboss7, set-paths-not-jboss7">
+	</target>
 
 	<target name="jee:check" depends="set-paths">
 		<!--
             we could have a dedicated jboss for ejbca, so give users a chance to override
             otherwise, try to pick the one from environment if it exists
             -->
-		<fail message="Please set the property 'appserver.home' for this project" unless="appserver.home"/>
+		<fail message="Please set the property 'appserver.home' for this project" unless="appserverhome"/>
 		<!-- jboss-j2ee.jar is JBoss 4.2.x, jboss-appclient.jar is JBoss 5.x and 6.x, modules.xml is JBoss 7.x. Available does not touch the property
 		     if the file does not exist, which is why this works. -->
-		<available file="${appserver.home}/client/jboss-j2ee.jar" property="appserver.home.valid"/>
-		<available file="${appserver.home}/client/jboss-appclient.jar" property="appserver.home.valid"/>
-        <available file="${appserver.home}/modules/org/jboss/as/standalone/main/module.xml" property="appserver.home.valid"/>
-		<available file="${appserver.home}/modules/system/layers/base/org/jboss/as/standalone/main/module.xml" property="appserver.home.valid"/>
-		<fail message="'appserver.home' (${appserver.home}) does not seem to be a valid JBoss home directory" unless="appserver.home.valid"/>
-		<echo message="Using appserver.home : ${appserver.home}"/>
+		<available file="${appserverhome}/client/jboss-j2ee.jar" property="appserver.home.valid"/>
+		<available file="${appserverhome}/client/jboss-appclient.jar" property="appserver.home.valid" />
+		<available file="${appserverhome}/modules/org/jboss/as/standalone/main/module.xml" property="appserver.home.valid" />
+		<available file="${appserverhome}/modules/system/layers/base/org/jboss/as/standalone/main/module.xml" property="appserver.home.valid" />
+		<fail message="'appserver.home' (${appserverhome}) does not seem to be a valid JBoss home directory" unless="appserver.home.valid" />
+		<echo message="Using appserver.home : ${appserverhome}" />
 	</target>
 
 	<target name="detect-tomcatdir" depends="set-paths">
@@ -83,7 +99,7 @@
 		<available file="${jboss.deploy.dir}/jboss-web.deployer" type="dir" property="jboss.web" value="tomcat60"/>
 		<available file="${jboss.deploy.dir}/jbossweb.sar" type="dir" property="jboss.web" value="tomcat60jboss5"/>
 		<available file="${jboss.conf.dir}/${jboss7.mode}.xml" type="file" property="jboss.web" value="jboss7"/>
-		
+
 		<fail message="Could not detect JBoss Servlet container version" unless="jboss.web"/>
 
 		<!-- configure the tomcat bundle -->
@@ -98,34 +114,34 @@
 	</target>
 
 
-        <!-- ================================================================ -->
-        <!-- Generic targets used for supporting different versions of JBoss. -->
-        <!-- ================================================================ -->
+	<!-- ================================================================ -->
+	<!-- Generic targets used for supporting different versions of JBoss. -->
+	<!-- ================================================================ -->
 
-        <!-- Deploys the main (CA) datasource. -->
-        <target name="jee:deployDS" depends="jee:deployDSJBoss5,jee:deployDSJBoss7"  />
+	<!-- Deploys the main (CA) datasource. -->
+	<target name="jee:deployDS" depends="jee:deployDSJBoss5,jee:deployDSJBoss7"  />
 
-        <!-- Deploys the OCSP datasource. -->
-        <target name="jee:deployOCSPDS" if="ocsp-datasource.jndi-name">
-            <antcall target="jee:deployOCSPDSJBoss5" />
-            <antcall target="jee:deployOCSPDSJBoss7" />
-        </target>
+	<!-- Deploys the OCSP datasource. -->
+	<target name="jee:deployOCSPDS" if="ocsp-datasource.jndi-name">
+		<antcall target="jee:deployOCSPDSJBoss5" />
+		<antcall target="jee:deployOCSPDSJBoss7" />
+	</target>
 
-        <!-- Deploys the services (mail etc). -->
-        <target name="jee:deployServices" depends="jee:deployServicesJBoss5,jee:deployServicesJBoss7"  />
+	<!-- Deploys the services (mail etc). -->
+	<target name="jee:deployServices" depends="jee:deployServicesJBoss5,jee:deployServicesJBoss7"  />
 
-        <!-- Configures the web interface component of the application server. -->
-        <target name="jee:web-configure" depends="jee:web-configureJBoss5,jee:web-configureJBoss7" unless="web.noconfigure" />
+	<!-- Configures the web interface component of the application server. -->
+	<target name="jee:web-configure" depends="jee:web-configureJBoss5,jee:web-configureJBoss7" unless="web.noconfigure" />
 
-        <!-- Notifies the application server to perform (re)deployment of an application. -->
-        <target name="notifyDeploymentScanner" depends="notifyDeploymentScannerJBoss5,notifyDeploymentScannerJBoss7" />
+	<!-- Notifies the application server to perform (re)deployment of an application. -->
+	<target name="notifyDeploymentScanner" depends="notifyDeploymentScannerJBoss5,notifyDeploymentScannerJBoss7" />
 
-        <!-- Determines if server is running or not, and fails if it isn't. -->
+	<!-- Determines if server is running or not, and fails if it isn't. -->
 	<target name="jee:assert-run"  depends="jee:assert-runJBoss5,jee:assert-runJBoss7" />
 
-        <!-- ========================================================== -->
-        <!-- These are implementation-specific targets for the JBoss 5. -->
-        <!-- ========================================================== -->
+	<!-- ========================================================== -->
+	<!-- These are implementation-specific targets for the JBoss 5. -->
+	<!-- ========================================================== -->
 
 	<target name="jee:deployDSJBoss5" unless="jboss7" depends="set-paths">
 		<copy todir="${jboss.farm.dir}" overwrite="true">
@@ -144,103 +160,103 @@
 		<chmod file="${jboss.farm.dir}/ejbca-ds.xml" perm="600"/>
 	</target>
 
-        <target name="jee:deployOCSPDSJBoss5" unless="jboss7" depends="set-paths">
-                <copy todir="${jboss.farm.dir}" overwrite="true">
-                    <fileset dir="src/appserver/jboss">
-                        <include name="ocsp-ds.xml"/>
-                    </fileset>
-                    <filterchain>
-                        <expandproperties/>
-                    </filterchain>
-                </copy>
-                <chmod file="${jboss.farm.dir}/ocsp-ds.xml" perm="600"/>
-        </target>
+	<target name="jee:deployOCSPDSJBoss5" unless="jboss7" depends="set-paths">
+		<copy todir="${jboss.farm.dir}" overwrite="true">
+			<fileset dir="src/appserver/jboss">
+				<include name="ocsp-ds.xml"/>
+			</fileset>
+			<filterchain>
+				<expandproperties/>
+			</filterchain>
+		</copy>
+		<chmod file="${jboss.farm.dir}/ocsp-ds.xml" perm="600"/>
+	</target>
 
-        <target name="jee:deployExtRAGUIDSJBoss5" unless="jboss7" depends="set-paths">
-            <copy todir="${jboss.farm.dir}" overwrite="true">
-                <fileset dir="modules/externalra-gui/resources">
-                    <include name="externalragui-ds.xml"/>
-                </fileset>
-                <filterchain>
-                    <expandproperties/>
-                </filterchain>
-            </copy>
-            <chmod file="${jboss.farm.dir}/externalragui-ds.xml" perm="600"/>
-         </target>
+	<target name="jee:deployExtRAGUIDSJBoss5" unless="jboss7" depends="set-paths">
+		<copy todir="${jboss.farm.dir}" overwrite="true">
+			<fileset dir="modules/externalra-gui/resources">
+				<include name="externalragui-ds.xml"/>
+			</fileset>
+			<filterchain>
+				<expandproperties/>
+			</filterchain>
+		</copy>
+		<chmod file="${jboss.farm.dir}/externalragui-ds.xml" perm="600"/>
+	</target>
 
-    <target name="jee:deployExtRASCEPDSJBoss5" unless="jboss7" depends="set-paths">
-        <copy todir="${jboss.farm.dir}" overwrite="true">
-            <fileset dir="modules/externalra-scep/resources">
-                <include name="ramessage-ds.xml"/>
-            </fileset>
-            <filterchain>
-                <expandproperties/>
-            </filterchain>
-        </copy>
-        <chmod file="${jboss.farm.dir}/ramessage-ds.xml" perm="600"/>
-     </target>
+	<target name="jee:deployExtRASCEPDSJBoss5" unless="jboss7" depends="set-paths">
+		<copy todir="${jboss.farm.dir}" overwrite="true">
+			<fileset dir="modules/externalra-scep/resources">
+				<include name="ramessage-ds.xml"/>
+			</fileset>
+			<filterchain>
+				<expandproperties/>
+			</filterchain>
+		</copy>
+		<chmod file="${jboss.farm.dir}/ramessage-ds.xml" perm="600"/>
+	</target>
 
-        <target name="jee:deployServicesJBoss5" unless="jboss7" depends="set-paths">
-            <copy todir="${jboss.farm.dir}" overwrite="true">
-                <fileset dir="src/appserver/jboss">
-                    <include name="ejbca-mail-service.xml" />
-                </fileset>
-                <filterchain>
-                    <expandproperties />
-                </filterchain>
-            </copy>
-            <chmod file="${jboss.farm.dir}/ejbca-mail-service.xml" perm="600"/>
-        </target>
+	<target name="jee:deployServicesJBoss5" unless="jboss7" depends="set-paths">
+		<copy todir="${jboss.farm.dir}" overwrite="true">
+			<fileset dir="src/appserver/jboss">
+				<include name="ejbca-mail-service.xml" />
+			</fileset>
+			<filterchain>
+				<expandproperties />
+			</filterchain>
+		</copy>
+		<chmod file="${jboss.farm.dir}/ejbca-mail-service.xml" perm="600"/>
+	</target>
 
 	<target name="jee:web-configureJBoss5" depends="jee:check,detect-tomcatdir" unless="jboss7,web.noconfigure">
-            <echo message="Using JBoss deploy directory ${jboss.farm.dir}"/>
-            <!-- If the web.nosslconfigure option was provided, don't deploy the SSL by commenting it out from the deployed file. -->
-            <condition property="definitions_away_begin" value="&#x3C;!--">
-                <istrue value="${web.nosslconfigure}" />
-            </condition>
-            <condition property="definitions_away_end" value="-->">
-                <istrue value="${web.nosslconfigure}" />
-            </condition>
-            <property name="definitions_away_begin" value="" />
-            <property name="definitions_away_end" value="" />
+		<echo message="Using JBoss deploy directory ${jboss.farm.dir}"/>
+		<!-- If the web.nosslconfigure option was provided, don't deploy the SSL by commenting it out from the deployed file. -->
+		<condition property="definitions_away_begin" value="&#x3C;!--">
+			<istrue value="${web.nosslconfigure}" />
+		</condition>
+		<condition property="definitions_away_end" value="-->">
+			<istrue value="${web.nosslconfigure}" />
+		</condition>
+		<property name="definitions_away_begin" value="" />
+		<property name="definitions_away_end" value="" />
 
-            <!-- Set dummy value if password is not defined. If defined the old value is kept -->
-            <property name="java.trustpassword" value="changeThisToThePassword"/>
-            <property name="httpsserver.password" value="changeThisToThePassword"/>
+		<!-- Set dummy value if password is not defined. If defined the old value is kept -->
+		<property name="java.trustpassword" value="changeThisToThePassword"/>
+		<property name="httpsserver.password" value="changeThisToThePassword"/>
 
-            <!-- Copy the server configuration file to JBoss directory. -->
-            <copy todir="${tomcat.dir}" overwrite="true">
-                <fileset dir="src/appserver/jboss/${jboss.web}"/>
-                <filterchain>
-                    <tokenfilter>
-                        <replacestring from="@keystore.file@" to="${keystore.file}"/>
-                        <replacestring from="@truststore.file@" to="${truststore.file}"/>
-                        <replacestring from="@httpsserver.password@" to="${httpsserver.password}"/>
-                        <replacestring from="@java.trustpassword@" to="${java.trustpassword}"/>
-                        <replacestring from="@httpserver.pubhttp@" to="${httpserver.pubhttp}"/>
-                        <replacestring from="@httpserver.pubhttps@" to="${httpserver.pubhttps}"/>
-                        <replacestring from="@httpserver.privhttps@" to="${httpserver.privhttps}"/>
-                    	<replacestring from="@httpserver.external.fqdn@" to="${httpserver.external.fqdn}"/>
-                        <replacestring from="@web.contentencoding@" to="${web.contentencoding}"/>
-                        <replacestring from="@httpsserver.bindaddress.pubhttp@" to="${httpsserver.bindaddress.pubhttp}"/>
-                        <replacestring from="@httpsserver.bindaddress.pubhttps@" to="${httpsserver.bindaddress.pubhttps}"/>
-                        <replacestring from="@httpsserver.bindaddress.privhttps@" to="${httpsserver.bindaddress.privhttps}"/>
-                        <replacestring from="@definitions_away_begin@" to="${definitions_away_begin}"/>
-                        <replacestring from="@definitions_away_end@" to="${definitions_away_end}"/>
-                    </tokenfilter>
-                </filterchain>
-                <filterchain>
-                    <expandproperties />
-                </filterchain>
-            </copy>
-            <chmod file="${tomcat.dir}/server.xml" perm="600"/>
-            <chmod file="${tomcat.dir}/standalone.xml" perm="600"/>
-        </target>
+		<!-- Copy the server configuration file to JBoss directory. -->
+		<copy todir="${tomcat.dir}" overwrite="true">
+			<fileset dir="src/appserver/jboss/${jboss.web}"/>
+			<filterchain>
+				<tokenfilter>
+					<replacestring from="@keystore.file@" to="${keystore.file}"/>
+					<replacestring from="@truststore.file@" to="${truststore.file}"/>
+					<replacestring from="@httpsserver.password@" to="${httpsserver.password}"/>
+					<replacestring from="@java.trustpassword@" to="${java.trustpassword}"/>
+					<replacestring from="@httpserver.pubhttp@" to="${httpserver.pubhttp}"/>
+					<replacestring from="@httpserver.pubhttps@" to="${httpserver.pubhttps}"/>
+					<replacestring from="@httpserver.privhttps@" to="${httpserver.privhttps}"/>
+					<replacestring from="@httpserver.external.fqdn@" to="${httpserver.external.fqdn}"/>
+					<replacestring from="@web.contentencoding@" to="${web.contentencoding}"/>
+					<replacestring from="@httpsserver.bindaddress.pubhttp@" to="${httpsserver.bindaddress.pubhttp}"/>
+					<replacestring from="@httpsserver.bindaddress.pubhttps@" to="${httpsserver.bindaddress.pubhttps}"/>
+					<replacestring from="@httpsserver.bindaddress.privhttps@" to="${httpsserver.bindaddress.privhttps}"/>
+					<replacestring from="@definitions_away_begin@" to="${definitions_away_begin}"/>
+					<replacestring from="@definitions_away_end@" to="${definitions_away_end}"/>
+				</tokenfilter>
+			</filterchain>
+			<filterchain>
+				<expandproperties />
+			</filterchain>
+		</copy>
+		<chmod file="${tomcat.dir}/server.xml" perm="600"/>
+		<chmod file="${tomcat.dir}/standalone.xml" perm="600"/>
+	</target>
 
-        <!-- Dummy target, we do not support live redeployments with JBoss 5 -->
-        <target name="notifyDeploymentScannerJBoss5" depends="set-paths" unless="jboss7" />
+	<!-- Dummy target, we do not support live redeployments with JBoss 5 -->
+	<target name="notifyDeploymentScannerJBoss5" depends="set-paths" unless="jboss7" />
 
-        <target name="jee:assert-runJBoss5" unless="jboss7">
+	<target name="jee:assert-runJBoss5" unless="jboss7">
 		<echo message="Checking that the JEE server is up and running..."/>
 		<waitfor maxwait="2" maxwaitunit="second" timeoutproperty="jee.notrunning">
 			<http url="http://localhost:${httpserver.pubhttp}/"/>
@@ -248,37 +264,37 @@
 		<fail message="Please start JEE server before running this script" if="jee.notrunning"/>
 	</target>
 
-        <!-- ========================================================== -->
-        <!-- These are implementation-specific targets for the JBoss 7. -->
-        <!-- ========================================================== -->
+	<!-- ========================================================== -->
+	<!-- These are implementation-specific targets for the JBoss 7. -->
+	<!-- ========================================================== -->
 
-        <target name="jee:deployServicesJBoss7" depends="set-paths,jee:assert-runJBoss7" if="jboss7">
-        	<!-- Remove ejbca deployment first, so reload is fast enough. Needed to make scripting slightly more stable in JBoss -->
-            <jboss:admsilent arg="undeploy ejbca.ear --keep-content" failonerror="false" />
-            <!-- Remove the current definitions. -->
-            <jboss:admsilent arg='/subsystem=mail/mail-session="${mail.jndi-name}":remove' failonerror="false" />
-            <jboss:admsilent arg='/socket-binding-group=standard-sockets/remote-destination-outbound-socket-binding=ejbca-mail-smtp:remove' failonerror="false" />
-            <jboss:admsilent arg=":reload" />
-            <!-- We must wait a few seconds, or some race conditions could happen. The problem is that :reload is a non-blocking operation, and JBoss CLI is not very stable... -->
-    	    <jboss:jbosswaitready/>
-            <!-- Construct the parameters for adding the server based on whether we use authentication or not (not specifying the username/password means no authentication). -->
-            <condition property="jboss7.ejbca-mail-smtp.params" value='outbound-socket-binding-ref=ejbca-mail-smtp, ssl="${mail.smtp.starttls.enable}", username="${mail.user}", password="${mail.password}"' else='outbound-socket-binding-ref=ejbca-mail-smtp, ssl="${mail.smtp.starttls.enable}"'>
-                <equals arg1="${mail.smtp.auth}" arg2="true" />
-            </condition>
+	<target name="jee:deployServicesJBoss7" depends="set-paths,jee:assert-runJBoss7" if="jboss7">
+		<!-- Remove ejbca deployment first, so reload is fast enough. Needed to make scripting slightly more stable in JBoss -->
+		<jboss:admsilent arg="undeploy ejbca.ear --keep-content" failonerror="false" />
+		<!-- Remove the current definitions. -->
+		<jboss:admsilent arg='/subsystem=mail/mail-session="${mail.jndi-name}":remove' failonerror="false" />
+		<jboss:admsilent arg='/socket-binding-group=standard-sockets/remote-destination-outbound-socket-binding=ejbca-mail-smtp:remove' failonerror="false" />
+		<jboss:admsilent arg=":reload" />
+		<!-- We must wait a few seconds, or some race conditions could happen. The problem is that :reload is a non-blocking operation, and JBoss CLI is not very stable... -->
+		<jboss:jbosswaitready/>
+		<!-- Construct the parameters for adding the server based on whether we use authentication or not (not specifying the username/password means no authentication). -->
+		<condition property="jboss7.ejbca-mail-smtp.params" value='outbound-socket-binding-ref=ejbca-mail-smtp, ssl="${mail.smtp.starttls.enable}", username="${mail.user}", password="${mail.password}"' else='outbound-socket-binding-ref=ejbca-mail-smtp, ssl="${mail.smtp.starttls.enable}"'>
+			<equals arg1="${mail.smtp.auth}" arg2="true" />
+		</condition>
 
-            <!-- Add new service definitions. -->
-            <jboss:adm arg='/socket-binding-group=standard-sockets/remote-destination-outbound-socket-binding=ejbca-mail-smtp:add(port="${mail.smtp.port}", host="${mail.smtp.host}")' />
-            <jboss:adm arg='/subsystem=mail/mail-session="${mail.jndi-name}":add(jndi-name="${mail.jndi-name}",from="${mail.from}")' />
-            <jboss:adm arg='/subsystem=mail/mail-session="${mail.jndi-name}"/server=smtp:add(${jboss7.ejbca-mail-smtp.params})' />
-            <jboss:admsilent arg=":reload" />
-            <!-- We must wait a few seconds, or some race conditions could happen. The problem is that :reload is a non-blocking operation, and JBoss CLI is not very stable... -->
-    	    <jboss:jbosswaitready/>
-            <jboss:admsilent arg="deploy --name=ejbca.ear" failonerror="false" />
-        </target>
+		<!-- Add new service definitions. -->
+		<jboss:adm arg='/socket-binding-group=standard-sockets/remote-destination-outbound-socket-binding=ejbca-mail-smtp:add(port="${mail.smtp.port}", host="${mail.smtp.host}")' />
+		<jboss:adm arg='/subsystem=mail/mail-session="${mail.jndi-name}":add(jndi-name="${mail.jndi-name}",from="${mail.from}")' />
+		<jboss:adm arg='/subsystem=mail/mail-session="${mail.jndi-name}"/server=smtp:add(${jboss7.ejbca-mail-smtp.params})' />
+		<jboss:admsilent arg=":reload" />
+		<!-- We must wait a few seconds, or some race conditions could happen. The problem is that :reload is a non-blocking operation, and JBoss CLI is not very stable... -->
+		<jboss:jbosswaitready/>
+		<jboss:admsilent arg="deploy --name=ejbca.ear" failonerror="false" />
+	</target>
 
 	<!-- JBoss EAP 6.2 requires that you create datasource with enabled=true, but JBoss 7.1.1 does not support this argument at all -->
 	<condition property="jbosseap6enabledflag" value="--enabled=true" else="">
-		<equals arg1="${appserver.subtype}" arg2="jbosseap6"/>		
+		<equals arg1="${appserver.subtype}" arg2="jbosseap6"/>
 	</condition>
 
 	<!-- For Linux the syntax is diffrent than in Windows 			   -->
@@ -287,138 +303,138 @@
 
 
 	<target name="jee:deployDSJBoss7" if="jboss7" depends="set-paths,jee:assert-runJBoss7">
-        <!-- We have to undeploy ejbca.ear before removing the datasource, or removal will fail. @TODO: Figure out how to detect if something is deployed or not. -->
-        <jboss:admsilent arg="undeploy ejbca.ear --keep-content" failonerror="false" />
-        <jboss:admsilent arg="data-source remove --name=ejbcads" failonerror="false" />
-        <jboss:adm arg='data-source add --name=ejbcads --driver-name="${database.driver}" --connection-url="${database.url}" --jndi-name="java:/${datasource.jndi-name}" ${jbosseap6enabledflag} --use-ccm=true --user-name="${database.username}" --password="${database.password}" --validate-on-match=true --background-validation=false --prepared-statements-cache-size=50 --share-prepared-statements=true --min-pool-size=5 --max-pool-size=150 --pool-prefill=true --transaction-isolation=TRANSACTION_READ_COMMITTED --check-valid-connection-sql="${database.valid.connection.sql}"' />
-    
-    <!-- If we don't reload now, JBoss AS 7 will get stuck. @TODO: Try this out with JBoss EAP 6, and see if we can report a bug. -->
-        <jboss:admsilent arg=":reload" />
-        <!-- We must wait a few seconds, or some race conditions could happen. The problem is that :reload is a non-blocking operation, and JBoss CLI is not very stable... -->
-	    <jboss:jbosswaitready/>
-        <jboss:admsilent arg="deploy --name=ejbca.ear" failonerror="false" />
+		<!-- We have to undeploy ejbca.ear before removing the datasource, or removal will fail. @TODO: Figure out how to detect if something is deployed or not. -->
+		<jboss:admsilent arg="undeploy ejbca.ear --keep-content" failonerror="false" />
+		<jboss:admsilent arg="data-source remove --name=ejbcads" failonerror="false" />
+		<jboss:adm arg='data-source add --name=ejbcads --driver-name="${database.driver}" --connection-url="${database.url}" --jndi-name="java:/${datasource.jndi-name}" ${jbosseap6enabledflag} --use-ccm=true --user-name="${database.username}" --password="${database.password}" --validate-on-match=true --background-validation=false --prepared-statements-cache-size=50 --share-prepared-statements=true --min-pool-size=5 --max-pool-size=150 --pool-prefill=true --transaction-isolation=TRANSACTION_READ_COMMITTED --check-valid-connection-sql="${database.valid.connection.sql}"' />
+
+		<!-- If we don't reload now, JBoss AS 7 will get stuck. @TODO: Try this out with JBoss EAP 6, and see if we can report a bug. -->
+		<jboss:admsilent arg=":reload" />
+		<!-- We must wait a few seconds, or some race conditions could happen. The problem is that :reload is a non-blocking operation, and JBoss CLI is not very stable... -->
+		<jboss:jbosswaitready/>
+		<jboss:admsilent arg="deploy --name=ejbca.ear" failonerror="false" />
 	</target>
 
 	<target name="jee:deployOCSPDSJBoss7" if="jboss7" depends="set-paths,jee:assert-runJBoss7" >
-            <!-- We have to undeploy ejbca.ear before removing the datasource, or removal will fail. @TODO: Figure out how to detect if something is deployed or not. -->
-            <jboss:admsilent arg="undeploy ejbca.ear --keep-content" failonerror="false" />
-            <jboss:admsilent arg="data-source remove --name=ocspds" failonerror="false" />
-  		    <jboss:adm arg='data-source add --name=ocspds --driver-name="${ocsp-database.driver}" --connection-url="${ocsp-database.url}" --jndi-name="java:/${ocsp-datasource.jndi-name}" ${jbosseap6enabledflag} --use-ccm=true --user-name="${ocsp-database.username}" --password="${ocsp-database.password}" --validate-on-match=true --background-validation=false --prepared-statements-cache-size=50 --share-prepared-statements=true --min-pool-size=5 --max-pool-size=20 --pool-prefill=true --transaction-isolation=TRANSACTION_READ_COMMITTED --jta=false --check-valid-connection-sql="${database.valid.connection.sql}"' />
+		<!-- We have to undeploy ejbca.ear before removing the datasource, or removal will fail. @TODO: Figure out how to detect if something is deployed or not. -->
+		<jboss:admsilent arg="undeploy ejbca.ear --keep-content" failonerror="false" />
+		<jboss:admsilent arg="data-source remove --name=ocspds" failonerror="false" />
+		<jboss:adm arg='data-source add --name=ocspds --driver-name="${ocsp-database.driver}" --connection-url="${ocsp-database.url}" --jndi-name="java:/${ocsp-datasource.jndi-name}" ${jbosseap6enabledflag} --use-ccm=true --user-name="${ocsp-database.username}" --password="${ocsp-database.password}" --validate-on-match=true --background-validation=false --prepared-statements-cache-size=50 --share-prepared-statements=true --min-pool-size=5 --max-pool-size=20 --pool-prefill=true --transaction-isolation=TRANSACTION_READ_COMMITTED --jta=false --check-valid-connection-sql="${database.valid.connection.sql}"' />
 
-            <!-- If we don't reload now, JBoss AS 7 will get stuck. @TODO: Try this out with JBoss EAP 6, and see if we can report a bug. -->
-            <jboss:admsilent arg=":reload" />
-            <!-- We must wait a few seconds, or some race conditions could happen. The problem is that :reload is a non-blocking operation, and JBoss CLI is not very stable... -->
-		    <jboss:jbosswaitready/>
-            <jboss:admsilent arg="deploy --name=ejbca.ear" failonerror="false" />
-    </target>
-
-	<target name="jee:deployExtRAGUIDSJBoss7" if="jboss7" depends="set-paths,jee:assert-runJBoss7" >
-            <!-- We have to undeploy the war file before removing the datasource, or removal will fail. @TODO: Figure out how to detect if something is deployed or not. -->
-            <jboss:admsilent arg="undeploy externalra-gui.war --keep-content" failonerror="false" />
-            <jboss:admsilent arg="data-source remove --name=extraguids" failonerror="false" />
-            <jboss:adm arg='data-source add --name=extraguids --driver-name="${externalra-database.driver}" --connection-url="${externalra-gui.datasource.jdbc-url}" --jndi-name="java:/ExternalRAGUIMessageDS" ${jbosseap6enabledflag} --use-ccm=true --user-name="${externalra-gui.datasource.username}" --password="${externalra-gui.datasource.password}" --validate-on-match=true --background-validation=false --prepared-statements-cache-size=50 --share-prepared-statements=true --min-pool-size=10 --max-pool-size=10 --pool-prefill=true --transaction-isolation=TRANSACTION_READ_COMMITTED --jta=false --check-valid-connection-sql="${database.valid.connection.sql}"' />
-
-            <!-- If we don't reload now, JBoss AS 7 will get stuck. @TODO: Try this out with JBoss EAP 6, and see if we can report a bug. -->
-            <jboss:admsilent arg=":reload" />
-            <jboss:admsilent arg="deploy --name=externalra-gui.war" failonerror="false" />
-    </target>
-
-	<target name="jee:deployExtRASCEPDSJBoss7" if="jboss7" depends="set-paths,jee:assert-runJBoss7" >
-            <!-- We have to undeploy the war file before removing the datasource, or removal will fail. @TODO: Figure out how to detect if something is deployed or not. -->
-            <jboss:admsilent arg="undeploy scepraserver.war --keep-content" failonerror="false" />
-            <jboss:admsilent arg="data-source remove --name=extrascepds" failonerror="false" />
-		    <jboss:adm arg='data-source add --name=extrascepds --driver-name="${externalra-database.driver}" --connection-url="${scep.ra.datasource.jdbc-url}" --jndi-name="java:/ScepRAMessageDS" ${jbosseap6enabledflag} --use-ccm=true --user-name="${scep.ra.datasource.username}" --password="${scep.ra.datasource.password}" --validate-on-match=true --background-validation=false --prepared-statements-cache-size=50 --share-prepared-statements=true --min-pool-size=10 --max-pool-size=10 --pool-prefill=true --transaction-isolation=TRANSACTION_READ_COMMITTED --jta=false --check-valid-connection-sql="${database.valid.connection.sql}"' />
-
-            <!-- If we don't reload now, JBoss AS 7 will get stuck. @TODO: Try this out with JBoss EAP 6, and see if we can report a bug. -->
-            <jboss:admsilent arg=":reload" />
-            <jboss:admsilent arg="deploy --name=scepraserver.war" failonerror="false" />
-    </target>
-
-	<target name="notifyDeploymentScannerJBoss7" depends="set-paths" if="jboss7,jee:assert-runJBoss7">
-	    <touch file="${jboss.farm.dir}/ejbca.ear.dodeploy" />
+		<!-- If we don't reload now, JBoss AS 7 will get stuck. @TODO: Try this out with JBoss EAP 6, and see if we can report a bug. -->
+		<jboss:admsilent arg=":reload" />
+		<!-- We must wait a few seconds, or some race conditions could happen. The problem is that :reload is a non-blocking operation, and JBoss CLI is not very stable... -->
+		<jboss:jbosswaitready/>
+		<jboss:admsilent arg="deploy --name=ejbca.ear" failonerror="false" />
 	</target>
 
-        <!-- Purges the old web configuration. -->
-        <target name="jee:web-configureJBoss7Cleanup" if="jboss7">
-            <echo message="Cleaning-up web configuration for JBoss 7 (ejbca must be deployed)." />
-            <jboss:admsilent arg="/socket-binding-group=standard-sockets/socket-binding=httpspub:remove" failonerror="false"/>
-            <jboss:admsilent arg="/subsystem=web/connector=httpspub:remove" failonerror="false" />
-            <jboss:admsilent arg="/socket-binding-group=standard-sockets/socket-binding=httpspriv:remove" failonerror="false" />
-            <jboss:admsilent arg="/subsystem=web/connector=httpspriv:remove" failonerror="false" />
-            <jboss:admsilent arg="/socket-binding-group=standard-sockets/socket-binding=http:remove" failonerror="false" />
-            <jboss:admsilent arg="/subsystem=web/connector=http:remove" failonerror="false" />
-            <jboss:admsilent arg="/system-property=org.apache.catalina.connector.URI_ENCODING:remove" failonerror="false" />
-            <jboss:admsilent arg="/system-property=org.apache.catalina.connector.USE_BODY_ENCODING_FOR_QUERY_STRING:remove" failonerror="false" />
-            <jboss:admsilent arg="/interfaces=/interface=http:remove" failonerror="false" />
-            <jboss:admsilent arg="/interfaces=/interface=httpspub:remove" failonerror="false" />
-            <jboss:admsilent arg="/interfaces=/interface=httpspriv:remove" failonerror="false" />
-			<jboss:admwaitreload/>
-            <jboss:admsilent arg=":reload" />
-			<jboss:admwaitreload/>
-        </target>
+	<target name="jee:deployExtRAGUIDSJBoss7" if="jboss7" depends="set-paths,jee:assert-runJBoss7" >
+		<!-- We have to undeploy the war file before removing the datasource, or removal will fail. @TODO: Figure out how to detect if something is deployed or not. -->
+		<jboss:admsilent arg="undeploy externalra-gui.war --keep-content" failonerror="false" />
+		<jboss:admsilent arg="data-source remove --name=extraguids" failonerror="false" />
+		<jboss:adm arg='data-source add --name=extraguids --driver-name="${externalra-database.driver}" --connection-url="${externalra-gui.datasource.jdbc-url}" --jndi-name="java:/ExternalRAGUIMessageDS" ${jbosseap6enabledflag} --use-ccm=true --user-name="${externalra-gui.datasource.username}" --password="${externalra-gui.datasource.password}" --validate-on-match=true --background-validation=false --prepared-statements-cache-size=50 --share-prepared-statements=true --min-pool-size=10 --max-pool-size=10 --pool-prefill=true --transaction-isolation=TRANSACTION_READ_COMMITTED --jta=false --check-valid-connection-sql="${database.valid.connection.sql}"' />
 
-        <target name="jee:web-configureJBoss7" depends="jee:check,jee:assert-runJBoss7" if="jboss7" unless="web.noconfigure">
-            <echo message="Setting-up web configuration for JBoss 7 (ejbca must be deployed)." />
-            <antcall target="jee:web-configureJBoss7Cleanup" />
-            <jboss:adm arg='/interfaces=/interface=http:add(inet-address="${httpsserver.bindaddress.pubhttp}")' />
-            <jboss:adm arg='/interfaces=/interface=httpspub:add(inet-address="${httpsserver.bindaddress.pubhttps}")' />
-            <jboss:adm arg='/interfaces=/interface=httpspriv:add(inet-address="${httpsserver.bindaddress.privhttps}")' />
-            <jboss:adm arg='/socket-binding-group=standard-sockets/socket-binding=http:add(port="${httpserver.pubhttp}",interface="http")' />
-            <jboss:adm arg="/subsystem=web/connector=http:add(protocol=HTTP/1.1, scheme=http, socket-binding=http)" />
-            <jboss:adm arg='/subsystem=web/connector=http:write-attribute(name=redirect-port, value="${httpserver.privhttps}")' />
-            <!--  Configure URI encoding to to be able to use UTF-8 in URLs, for downloading certificate and CRLs. -->
-            <jboss:adm arg='/system-property=org.apache.catalina.connector.URI_ENCODING:add(value="${web.contentencoding}")' />
-            <jboss:adm arg="/system-property=org.apache.catalina.connector.USE_BODY_ENCODING_FOR_QUERY_STRING:add(value=true)" />
-            <!--  Configure WSDL web-host rewriting to use the request host. Needed for webservices to work correctly when requiring client certificate. -->
-            <jboss:adm arg="/subsystem=webservices:write-attribute(name=wsdl-host, value=jbossws.undefined.host)" />
-            <jboss:adm arg="/subsystem=webservices:write-attribute(name=modify-wsdl-address, value=true)" />
-        	<!-- If the server is not so fast, we have to wait a little before we can reload, otherwise it will be bad -->
-			<jboss:admwaitreload/>
-            <jboss:adm arg=":reload" />
-			<jboss:admwaitreload/>
-            <antcall target="jee:web-configureJBoss7SSL" />
-        </target>
+		<!-- If we don't reload now, JBoss AS 7 will get stuck. @TODO: Try this out with JBoss EAP 6, and see if we can report a bug. -->
+		<jboss:admsilent arg=":reload" />
+		<jboss:admsilent arg="deploy --name=externalra-gui.war" failonerror="false" />
+	</target>
 
-        <target name="jee:web-configureJBoss7SSL" depends="jee:check" unless="web.nosslconfigure">
-            <echo message="Setting-up TLS web configuration for JBoss 7. Protocols allowed '${tlsprotocol}'." />
-            <!-- Set-up the private port which requires client certificate -->
-            <jboss:adm arg='/socket-binding-group=standard-sockets/socket-binding=httpspriv:add(port="${httpserver.privhttps}",interface="httpspriv")' />
-            <jboss:adm arg="/subsystem=web/connector=httpspriv:add(protocol=HTTP/1.1, scheme=https, socket-binding=httpspriv, secure=true)" />
-            <jboss:adm arg='/subsystem=web/connector=httpspriv/ssl=configuration:add(key-alias="${httpsserver.hostname}")' />
-            <jboss:adm arg='/subsystem=web/connector=httpspriv/ssl=configuration:write-attribute(name=password, value="${httpsserver.password}")' />
-            <jboss:adm arg='/subsystem=web/connector=httpspriv/ssl=configuration:write-attribute(name=certificate-key-file, value="${jboss.server.home.dir}/${keystore.file}")' />
-            <jboss:adm arg="/subsystem=web/connector=httpspriv/ssl=configuration:write-attribute(name=verify-client, value=true)" />
-            <jboss:adm arg='/subsystem=web/connector=httpspriv/ssl=configuration:write-attribute(name=ca-certificate-password, value="${java.trustpassword}")' />
-            <jboss:adm arg='/subsystem=web/connector=httpspriv/ssl=configuration:write-attribute(name=ca-certificate-file, value="${jboss.server.home.dir}/${truststore.file}")' />
-            <jboss:adm arg='/subsystem=web/connector=httpspriv/ssl=configuration:write-attribute(name=protocol, value="${tlsprotocol}")' />
-            <!-- Set-up the public SSL port which doesn't require the client certificate. -->
-            <jboss:adm arg='/socket-binding-group=standard-sockets/socket-binding=httpspub:add(port="${httpserver.pubhttps}",interface="httpspub")' />
-            <jboss:adm arg="/subsystem=web/connector=httpspub:add(protocol=HTTP/1.1, scheme=https, socket-binding=httpspub, secure=true)" />
-            <jboss:adm arg='/subsystem=web/connector=httpspub/ssl=configuration:add(key-alias="${httpsserver.hostname}")' />
-            <jboss:adm arg='/subsystem=web/connector=httpspub/ssl=configuration:write-attribute(name=password, value="${httpsserver.password}")' />
-            <jboss:adm arg='/subsystem=web/connector=httpspub/ssl=configuration:write-attribute(name=certificate-key-file, value="${jboss.server.home.dir}/${keystore.file}")' />
-            <jboss:adm arg='/subsystem=web/connector=httpspub/ssl=configuration:write-attribute(name=protocol, value="${tlsprotocol}")' />
-        	<!-- If the server is not so fast, we have to wait a little before we can reload, otherwise it will be bad -->
-			<jboss:admwaitreload/>
-            <jboss:adm arg=":reload" />
-			<jboss:admwaitreload/>
-        </target>
+	<target name="jee:deployExtRASCEPDSJBoss7" if="jboss7" depends="set-paths,jee:assert-runJBoss7" >
+		<!-- We have to undeploy the war file before removing the datasource, or removal will fail. @TODO: Figure out how to detect if something is deployed or not. -->
+		<jboss:admsilent arg="undeploy scepraserver.war --keep-content" failonerror="false" />
+		<jboss:admsilent arg="data-source remove --name=extrascepds" failonerror="false" />
+		<jboss:adm arg='data-source add --name=extrascepds --driver-name="${externalra-database.driver}" --connection-url="${scep.ra.datasource.jdbc-url}" --jndi-name="java:/ScepRAMessageDS" ${jbosseap6enabledflag} --use-ccm=true --user-name="${scep.ra.datasource.username}" --password="${scep.ra.datasource.password}" --validate-on-match=true --background-validation=false --prepared-statements-cache-size=50 --share-prepared-statements=true --min-pool-size=10 --max-pool-size=10 --pool-prefill=true --transaction-isolation=TRANSACTION_READ_COMMITTED --jta=false --check-valid-connection-sql="${database.valid.connection.sql}"' />
 
-    	<!-- JBoss 7, EAP 6 and WildFly 8 -->
-        <target name="jee:assert-runJBoss7" if="jboss7">
-            <echo message="Checking if JBoss is up and running..."/>
-            <jboss:jbosswaitready/>
-        	<condition property="jboss7.server.isrunning" value="true">
-                <equals arg1="${jboss7.server.status}" arg2="0" />
-            </condition>
-            <fail message="The requested action requires that JBoss is up and running." unless="jboss7.server.isrunning" />
-        </target>
+		<!-- If we don't reload now, JBoss AS 7 will get stuck. @TODO: Try this out with JBoss EAP 6, and see if we can report a bug. -->
+		<jboss:admsilent arg=":reload" />
+		<jboss:admsilent arg="deploy --name=scepraserver.war" failonerror="false" />
+	</target>
 
-        <!-- =================================== -->
-        <!-- Implementation-independent targets. -->
-        <!-- =================================== -->
+	<target name="notifyDeploymentScannerJBoss7" depends="set-paths" if="jboss7,jee:assert-runJBoss7">
+		<touch file="${jboss.farm.dir}/ejbca.ear.dodeploy" />
+	</target>
 
-        <target name="jee:deploytruststore" depends="set-paths" unless="web.nosslconfigure">
+	<!-- Purges the old web configuration. -->
+	<target name="jee:web-configureJBoss7Cleanup" if="jboss7">
+		<echo message="Cleaning-up web configuration for JBoss 7 (ejbca must be deployed)." />
+		<jboss:admsilent arg="/socket-binding-group=standard-sockets/socket-binding=httpspub:remove" failonerror="false"/>
+		<jboss:admsilent arg="/subsystem=web/connector=httpspub:remove" failonerror="false" />
+		<jboss:admsilent arg="/socket-binding-group=standard-sockets/socket-binding=httpspriv:remove" failonerror="false" />
+		<jboss:admsilent arg="/subsystem=web/connector=httpspriv:remove" failonerror="false" />
+		<jboss:admsilent arg="/socket-binding-group=standard-sockets/socket-binding=http:remove" failonerror="false" />
+		<jboss:admsilent arg="/subsystem=web/connector=http:remove" failonerror="false" />
+		<jboss:admsilent arg="/system-property=org.apache.catalina.connector.URI_ENCODING:remove" failonerror="false" />
+		<jboss:admsilent arg="/system-property=org.apache.catalina.connector.USE_BODY_ENCODING_FOR_QUERY_STRING:remove" failonerror="false" />
+		<jboss:admsilent arg="/interfaces=/interface=http:remove" failonerror="false" />
+		<jboss:admsilent arg="/interfaces=/interface=httpspub:remove" failonerror="false" />
+		<jboss:admsilent arg="/interfaces=/interface=httpspriv:remove" failonerror="false" />
+		<jboss:admwaitreload/>
+		<jboss:admsilent arg=":reload" />
+		<jboss:admwaitreload/>
+	</target>
+
+	<target name="jee:web-configureJBoss7" depends="jee:check,jee:assert-runJBoss7" if="jboss7" unless="web.noconfigure">
+		<echo message="Setting-up web configuration for JBoss 7 (ejbca must be deployed)." />
+		<antcall target="jee:web-configureJBoss7Cleanup" />
+		<jboss:adm arg='/interfaces=/interface=http:add(inet-address="${httpsserver.bindaddress.pubhttp}")' />
+		<jboss:adm arg='/interfaces=/interface=httpspub:add(inet-address="${httpsserver.bindaddress.pubhttps}")' />
+		<jboss:adm arg='/interfaces=/interface=httpspriv:add(inet-address="${httpsserver.bindaddress.privhttps}")' />
+		<jboss:adm arg='/socket-binding-group=standard-sockets/socket-binding=http:add(port="${httpserver.pubhttp}",interface="http")' />
+		<jboss:adm arg="/subsystem=web/connector=http:add(protocol=HTTP/1.1, scheme=http, socket-binding=http)" />
+		<jboss:adm arg='/subsystem=web/connector=http:write-attribute(name=redirect-port, value="${httpserver.privhttps}")' />
+		<!--  Configure URI encoding to to be able to use UTF-8 in URLs, for downloading certificate and CRLs. -->
+		<jboss:adm arg='/system-property=org.apache.catalina.connector.URI_ENCODING:add(value="${web.contentencoding}")' />
+		<jboss:adm arg="/system-property=org.apache.catalina.connector.USE_BODY_ENCODING_FOR_QUERY_STRING:add(value=true)" />
+		<!--  Configure WSDL web-host rewriting to use the request host. Needed for webservices to work correctly when requiring client certificate. -->
+		<jboss:adm arg="/subsystem=webservices:write-attribute(name=wsdl-host, value=jbossws.undefined.host)" />
+		<jboss:adm arg="/subsystem=webservices:write-attribute(name=modify-wsdl-address, value=true)" />
+		<!-- If the server is not so fast, we have to wait a little before we can reload, otherwise it will be bad -->
+		<jboss:admwaitreload/>
+		<jboss:adm arg=":reload" />
+		<jboss:admwaitreload/>
+		<antcall target="jee:web-configureJBoss7SSL" />
+	</target>
+
+	<target name="jee:web-configureJBoss7SSL" depends="jee:check" unless="web.nosslconfigure">
+		<echo message="Setting-up TLS web configuration for JBoss 7. Protocols allowed '${tlsprotocol}'." />
+		<!-- Set-up the private port which requires client certificate -->
+		<jboss:adm arg='/socket-binding-group=standard-sockets/socket-binding=httpspriv:add(port="${httpserver.privhttps}",interface="httpspriv")' />
+		<jboss:adm arg="/subsystem=web/connector=httpspriv:add(protocol=HTTP/1.1, scheme=https, socket-binding=httpspriv, secure=true)" />
+		<jboss:adm arg='/subsystem=web/connector=httpspriv/ssl=configuration:add(key-alias="${httpsserver.hostname}")' />
+		<jboss:adm arg='/subsystem=web/connector=httpspriv/ssl=configuration:write-attribute(name=password, value="${httpsserver.password}")' />
+		<jboss:adm arg='/subsystem=web/connector=httpspriv/ssl=configuration:write-attribute(name=certificate-key-file, value="${jboss.server.home.dir}/${keystore.file}")' />
+		<jboss:adm arg="/subsystem=web/connector=httpspriv/ssl=configuration:write-attribute(name=verify-client, value=true)" />
+		<jboss:adm arg='/subsystem=web/connector=httpspriv/ssl=configuration:write-attribute(name=ca-certificate-password, value="${java.trustpassword}")' />
+		<jboss:adm arg='/subsystem=web/connector=httpspriv/ssl=configuration:write-attribute(name=ca-certificate-file, value="${jboss.server.home.dir}/${truststore.file}")' />
+		<jboss:adm arg='/subsystem=web/connector=httpspriv/ssl=configuration:write-attribute(name=protocol, value="${tlsprotocol}")' />
+		<!-- Set-up the public SSL port which doesn't require the client certificate. -->
+		<jboss:adm arg='/socket-binding-group=standard-sockets/socket-binding=httpspub:add(port="${httpserver.pubhttps}",interface="httpspub")' />
+		<jboss:adm arg="/subsystem=web/connector=httpspub:add(protocol=HTTP/1.1, scheme=https, socket-binding=httpspub, secure=true)" />
+		<jboss:adm arg='/subsystem=web/connector=httpspub/ssl=configuration:add(key-alias="${httpsserver.hostname}")' />
+		<jboss:adm arg='/subsystem=web/connector=httpspub/ssl=configuration:write-attribute(name=password, value="${httpsserver.password}")' />
+		<jboss:adm arg='/subsystem=web/connector=httpspub/ssl=configuration:write-attribute(name=certificate-key-file, value="${jboss.server.home.dir}/${keystore.file}")' />
+		<jboss:adm arg='/subsystem=web/connector=httpspub/ssl=configuration:write-attribute(name=protocol, value="${tlsprotocol}")' />
+		<!-- If the server is not so fast, we have to wait a little before we can reload, otherwise it will be bad -->
+		<jboss:admwaitreload/>
+		<jboss:adm arg=":reload" />
+		<jboss:admwaitreload/>
+	</target>
+
+	<!-- JBoss 7, EAP 6 and WildFly 8 -->
+	<target name="jee:assert-runJBoss7" if="jboss7">
+		<echo message="Checking if JBoss is up and running..."/>
+		<jboss:jbosswaitready/>
+		<condition property="jboss7.server.isrunning" value="true">
+			<equals arg1="${jboss7.server.status}" arg2="0" />
+		</condition>
+		<fail message="The requested action requires that JBoss is up and running." unless="jboss7.server.isrunning" />
+	</target>
+
+	<!-- =================================== -->
+	<!-- Implementation-independent targets. -->
+	<!-- =================================== -->
+
+	<target name="jee:deploytruststore" depends="set-paths" unless="web.nosslconfigure">
 		<!-- copy the truststore file to the server -->
 		<available file="${ejbca.home}/p12/truststore.jks" property="truststore.file.present"/>
 		<fail message="Missing JKS truststorestore file in '${basedir}/p12/truststore.jks'" unless="truststore.file.present"/>
@@ -427,28 +443,28 @@
 		<chmod file="${jboss.server.home.dir}/${truststore.file}" perm="600"/>
 	</target>
 
-        <target name="jee:keystore" depends="jee:check" unless="web.nosslconfigure">
-            <echo message="Using JBoss deploy directory ${jboss.farm.dir}"/>
-            <!-- copy the keystore file to the server -->
-            <available file="p12/tomcat.jks" property="keystore.file.present"/>
-            <fail message="Missing JKS keystore file in '${basedir}/p12/tomcat.jks'" unless="keystore.file.present"/>
+	<target name="jee:keystore" depends="jee:check" unless="web.nosslconfigure">
+		<echo message="Using JBoss deploy directory ${jboss.farm.dir}"/>
+		<!-- copy the keystore file to the server -->
+		<available file="p12/tomcat.jks" property="keystore.file.present"/>
+		<fail message="Missing JKS keystore file in '${basedir}/p12/tomcat.jks'" unless="keystore.file.present"/>
 
-            <copy file="p12/tomcat.jks" tofile="${jboss.server.home.dir}/${keystore.file}" overwrite="true"/>
-            <chmod file="${jboss.server.home.dir}/${keystore.file}" perm="600"/>
+		<copy file="p12/tomcat.jks" tofile="${jboss.server.home.dir}/${keystore.file}" overwrite="true"/>
+		<chmod file="${jboss.server.home.dir}/${keystore.file}" perm="600"/>
 
-            <!-- Also deploy the truststore -->
-            <antcall target="jee:deploytruststore" />
-        </target>
-
-        <!-- ================= -->
-        <!-- Top-level targets -->
-        <!-- ================= -->
-
-    <target name="jee:undeploy" depends="jee:undeployJBoss7" />
-	<target name="jee:undeployJBoss7" if="jboss7">
-        <jboss:admsilent arg="undeploy ejbca.ear --keep-content" failonerror="false" />
+		<!-- Also deploy the truststore -->
+		<antcall target="jee:deploytruststore" />
 	</target>
-    <!-- Start deploy by undeploying EJBCA completely. This makes a new ant deploy on an already deployed system work faster and more stable. 
+
+	<!-- ================= -->
+	<!-- Top-level targets -->
+	<!-- ================= -->
+
+	<target name="jee:undeploy" depends="jee:undeployJBoss7" />
+	<target name="jee:undeployJBoss7" if="jboss7">
+		<jboss:admsilent arg="undeploy ejbca.ear --keep-content" failonerror="false" />
+	</target>
+	<!-- Start deploy by undeploying EJBCA completely. This makes a new ant deploy on an already deployed system work faster and more stable. 
          Ends with deployear that deploys a new version.
          To only upgrade ejbca.ear, "ant deployear" should normally be used instead of "ant deploy" -->
 	<target name="jee:deploy" depends="jee:undeploy, jee:deployServices, jee:deployDS, jee:deployOCSPDS, jee:deployear">
@@ -459,9 +475,9 @@
 			<fileset dir="${dist.dir}" includes="ejbca.ear"/>
 		</copy>
 		<chmod file="${dist.dir}/ejbca.ear" perm="600"/>
-	    <antcall target="notifyDeploymentScanner" />
+		<antcall target="notifyDeploymentScanner" />
 	</target>
-	
+
 	<target name="jee:deploy-scep-war" depends="jee:check, detect-tomcatdir, jee:deployExtRASCEPDSJBoss5,jee:deployExtRASCEPDSJBoss7">
 		<chmod dir="dist" includes="scepraserver.war" perm="600"/>
 		<copy todir="${jboss.farm.dir}" overwrite="true" file="dist/scepraserver.war"/>
@@ -472,7 +488,7 @@
 		<chmod dir="dist/externalra-gui" includes="externalra-gui.war" perm="600"/>
 		<copy todir="${jboss.farm.dir}" overwrite="true" file="dist/externalra-gui/externalra-gui.war"/>
 		<antcall target="notifyDeploymentScanner" />
-	    <!-- No web configure, do that manually don't want to do it every time for JBoss 7
+		<!-- No web configure, do that manually don't want to do it every time for JBoss 7
 	         Possibly make a separate target for it
 		<chmod dir="dist/externalra-gui" includes="server.xml" perm="600"/>
 		<copy todir="${tomcat.dir}" overwrite="true" file="dist/externalra-gui/server.xml"/>
@@ -480,10 +496,10 @@
 	</target>
 
 	<target name="jee:run" description="Start the JEE server">
-		<jee-server classname="org.jboss.Main" classpath="${appserver.home}/bin/run.jar">
+		<jee-server classname="org.jboss.Main" classpath="${appserverhome}/bin/run.jar">
 			<args>
-				<jvmarg value="-Djboss.home=${appserver.home}"/>
-			</args>
+				<jvmarg value="-Djboss.home=${appserverhome}" />jb
+					</args>
 		</jee-server>
 		<!--
             appserver.home.dir
@@ -508,22 +524,22 @@
 		<antcall target="jee:run"/>
 	</target>
 
-        <!-- ================= -->
-        <!-- Macro definitions -->
-        <!-- ================= -->
+	<!-- ================= -->
+	<!-- Macro definitions -->
+	<!-- ================= -->
 
 	<macrodef name="jee-server">
 		<attribute name="classname"/>
 		<attribute name="classpath"/>
 		<element name="args" optional="yes"/>
 		<sequential>
-            <local name="arg_escaped"/>
-            <loadresource property="arg_escaped">
-                <string value='@{arg}'/>
-                <filterchain>
-                    <tokenfilter>
-                        <filetokenizer/>
-                        <replacestring from='"' to='${quot}'/>
+			<local name="arg_escaped"/>
+			<loadresource property="arg_escaped">
+				<string value='@{arg}'/>
+				<filterchain>
+					<tokenfilter>
+						<filetokenizer/>
+						<replacestring from='"' to='${quot}'/>
                     </tokenfilter>
                 </filterchain>
             </loadresource>
@@ -555,33 +571,33 @@
                       <tokenfilter>
                           <filetokenizer/>
                           <replacestring from='"' to='${quot}'/>
-                      </tokenfilter>
-                  </filterchain>
-              </loadresource>
-            <echo message="@{arg}"/>
-            <exec executable="${appserver.home}/bin/${jbosscliexe}" failonerror="@{failonerror}" spawn="@{nooutput}">
-                    <arg value="-c" />
-                    <arg value="--command=${arg_escaped}" />
-            </exec>
-          </sequential>
-        </macrodef>
-	
-        <macrodef name="admsilent" uri="jboss" description="JBoss 7 CLI administration utility convenience wrapper, produces no output">
-            <attribute name="arg" />
-            <attribute name="failonerror" default="true" description="Fail the build if command exits with error."/>
-            <attribute name="resultproperty" default="admsilent.throwaway.result" description="Name of the property where the exit code should be stored at." />
-            <sequential>
-            <local name="arg_escaped"/>
-            <loadresource property="arg_escaped">
-                <string value='@{arg}'/>
-                <filterchain>
-                    <tokenfilter>
-                        <filetokenizer/>
-                        <replacestring from='"' to='${quot}'/>
+					</tokenfilter>
+				</filterchain>
+			</loadresource>
+			<echo message="@{arg}"/>
+			<exec executable="${appserverhome}/bin/${jbosscliexe}" failonerror="@{failonerror}" spawn="@{nooutput}">
+				<arg value="-c" />
+				<arg value="--command=${arg_escaped}" />
+			</exec>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="admsilent" uri="jboss" description="JBoss 7 CLI administration utility convenience wrapper, produces no output">
+		<attribute name="arg" />
+		<attribute name="failonerror" default="true" description="Fail the build if command exits with error."/>
+		<attribute name="resultproperty" default="admsilent.throwaway.result" description="Name of the property where the exit code should be stored at." />
+		<sequential>
+			<local name="arg_escaped"/>
+			<loadresource property="arg_escaped">
+				<string value='@{arg}'/>
+				<filterchain>
+					<tokenfilter>
+						<filetokenizer/>
+						<replacestring from='"' to='${quot}'/>
                     </tokenfilter>
                 </filterchain>
             </loadresource>
-                <exec executable="${appserver.home}/bin/${jbosscliexe}" failonerror="@{failonerror}" spawn="@{nooutput}" outputproperty="admsilent.throwaway.output" resultproperty="@{resultproperty}">
+        		<exec executable="${appserverhome}/bin/${jbosscliexe}" failonerror="@{failonerror}" spawn="@{nooutput}" outputproperty="admsilent.throwaway.output" resultproperty="@{resultproperty}">
                     <arg value="-c" />
                     <arg value="--command=${arg_escaped}" />
                 </exec>
@@ -600,43 +616,43 @@
                     <tokenfilter>
                         <filetokenizer/>
                         <replacestring from='"' to='${quot}'/>
-                    </tokenfilter>
-                </filterchain>
-            </loadresource>
-                <echo message="@{arg}"/>
-                <exec executable="${appserver.home}/bin/${jbosscliexe}" outputproperty="@{outputproperty}" failonerror="@{failonerror}">
-                    <arg value="-c" />
-                    <arg value="--command=${arg_escaped}" />
-                </exec>
-            </sequential>
-        </macrodef>
+					</tokenfilter>
+				</filterchain>
+			</loadresource>
+			<echo message="@{arg}"/>
+            <exec executable="${appserverhome}/bin/${jbosscliexe}" outputproperty="@{outputproperty}" failonerror="@{failonerror}">
+				<arg value="-c" />
+				<arg value="--command=${arg_escaped}" />
+			</exec>
+		</sequential>
+	</macrodef>
 
-        <macrodef name="admwaitreload" uri="jboss" description="JBoss 7 CLI reload wait macro">
-            <attribute name="failonerror" default="true" description="Fail the build if command exits with error."/>
-            <sequential>
-                <!-- Wait up to 240 seconds for EJBCA to be properly deployed after a JBoss7 :reload. -->
-                <retry retrycount="60">
-                    <sequential>
-                    	<echo message="Waiting (up to 240 seconds in total) for the application server to become ready for the next step..."/>
-                        <sleep seconds="4"/> 
-                        <jboss:admsilent arg="/deployment=ejbca.ear:read-attribute(name=status)" failonerror="true" />
-                    </sequential>
-                </retry>
-            </sequential>
-        </macrodef>
-        
-        <macrodef name="jbosswaitready" uri="jboss" description="JBoss 7 CLI wait until ready macro">
-            <attribute name="failonerror" default="true" description="Fail the build if command exits with error."/>
-            <sequential>
-                <!-- Wait up to 30 seconds for JBoss to be ready after a JBoss7 :reload. (assumed without EJBCA deployed) -->
-                <retry retrycount="15">
-                    <sequential>
-                        <echo message="Waiting (up to 30 seconds in total) for the application server to become ready for the next step..."/>
-                        <sleep seconds="2"/> 
-                        <jboss:admsilent arg=":read-attribute(name=server-state)" resultproperty="jboss7.server.status" failonerror="false" />
-                    </sequential>
-                </retry>
-            </sequential>
-        </macrodef>
+	<macrodef name="admwaitreload" uri="jboss" description="JBoss 7 CLI reload wait macro">
+		<attribute name="failonerror" default="true" description="Fail the build if command exits with error."/>
+		<sequential>
+			<!-- Wait up to 240 seconds for EJBCA to be properly deployed after a JBoss7 :reload. -->
+			<retry retrycount="60">
+				<sequential>
+					<echo message="Waiting (up to 240 seconds in total) for the application server to become ready for the next step..."/>
+					<sleep seconds="4"/>
+					<jboss:admsilent arg="/deployment=ejbca.ear:read-attribute(name=status)" failonerror="true" />
+				</sequential>
+			</retry>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="jbosswaitready" uri="jboss" description="JBoss 7 CLI wait until ready macro">
+		<attribute name="failonerror" default="true" description="Fail the build if command exits with error."/>
+		<sequential>
+			<!-- Wait up to 30 seconds for JBoss to be ready after a JBoss7 :reload. (assumed without EJBCA deployed) -->
+			<retry retrycount="15">
+				<sequential>
+					<echo message="Waiting (up to 30 seconds in total) for the application server to become ready for the next step..."/>
+					<sleep seconds="2"/>
+					<jboss:admsilent arg=":read-attribute(name=server-state)" resultproperty="jboss7.server.status" failonerror="false" />
+				</sequential>
+			</retry>
+		</sequential>
+	</macrodef>
 </project>
 
