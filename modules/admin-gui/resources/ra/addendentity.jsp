@@ -100,7 +100,7 @@
     // Initialize environment.
 
     GlobalConfiguration globalconfiguration = ejbcawebbean.initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR,
-            AccessRulesConstants.REGULAR_CREATEENDENTITY);
+    AccessRulesConstants.REGULAR_CREATEENDENTITY);
     rabean.initialize(request, ejbcawebbean);
     if (globalconfiguration.getIssueHardwareTokens())
         tokenbean.initialize(request, ejbcawebbean);
@@ -125,16 +125,16 @@
     boolean chooselastprofile = false;
     if (ejbcawebbean.getLastEndEntityProfile() != 0 && rabean.getEndEntityProfileName(ejbcawebbean.getLastEndEntityProfile()) != null) {
         for (int i = 0; i < profilenames.length; i++) {
-            if (rabean.getEndEntityProfileName(ejbcawebbean.getLastEndEntityProfile()).equals(profilenames[i]))
-                chooselastprofile = true;
+    if (rabean.getEndEntityProfileName(ejbcawebbean.getLastEndEntityProfile()).equals(profilenames[i]))
+        chooselastprofile = true;
         }
     }
 
     if (!noprofiles) {
         if (!chooselastprofile)
-            profileid = rabean.getEndEntityProfileId(profilenames[0]);
+    profileid = rabean.getEndEntityProfileId(profilenames[0]);
         else
-            profileid = ejbcawebbean.getLastEndEntityProfile();
+    profileid = ejbcawebbean.getLastEndEntityProfile();
     }
 
     boolean userexists = false;
@@ -686,11 +686,11 @@
 
     if (!noprofiles) {
         if (!useoldprofile) {
-            profile = rabean.getEndEntityProfile(profileid);
-            oldemail = "";
-            oldcardnumber = "";
+    profile = rabean.getEndEntityProfile(profileid);
+    oldemail = "";
+    oldcardnumber = "";
         } else
-            profile = oldprofile;
+    profile = oldprofile;
     } else
         profile = new EndEntityProfile();
 
@@ -703,17 +703,17 @@
         tokentexts = new String[RAInterfaceBean.tokentexts.length + hardtokenprofiles.keySet().size()];
         tokenids = new int[tokentexts.length];
         for (int i = 0; i < RAInterfaceBean.tokentexts.length; i++) {
-            tokentexts[i] = RAInterfaceBean.tokentexts[i];
-            tokenids[i] = RAInterfaceBean.tokenids[i];
+    tokentexts[i] = RAInterfaceBean.tokentexts[i];
+    tokenids[i] = RAInterfaceBean.tokenids[i];
         }
 
         Iterator iter = hardtokenprofiles.keySet().iterator();
         int index = 0;
         while (iter.hasNext()) {
-            String name = (String) iter.next();
-            tokentexts[index + RAInterfaceBean.tokentexts.length] = name;
-            tokenids[index + RAInterfaceBean.tokentexts.length] = ((Integer) hardtokenprofiles.get(name)).intValue();
-            index++;
+    String name = (String) iter.next();
+    tokentexts[index + RAInterfaceBean.tokentexts.length] = name;
+    tokenids[index + RAInterfaceBean.tokentexts.length] = ((Integer) hardtokenprofiles.get(name)).intValue();
+    index++;
         }
     }
 
@@ -722,7 +722,7 @@
     if (lastselectedhardtokenissuer == -1) {
         String value = profile.getValue(EndEntityProfile.DEFAULTTOKENISSUER, 0);
         if (value != null && !value.equals(""))
-            lastselectedhardtokenissuer = Integer.parseInt(value);
+    lastselectedhardtokenissuer = Integer.parseInt(value);
     }
     ArrayList<Integer>[] tokenissuers = null;
 
@@ -731,23 +731,23 @@
     if (usehardtokenissuers) {
         tokenissuers = new ArrayList[availabletokens.length];
         for (int i = 0; i < availabletokens.length; i++) {
-            if (Integer.parseInt(availabletokens[i]) > SecConst.TOKEN_SOFT) {
-                tokenissuers[i] = new ArrayList<Integer>();
-                for (int j = 0; j < availablehardtokenissuers.length; j++) {
-                    HardTokenIssuerInformation issuerdata = tokenbean.getHardTokenIssuerInformation(Integer
-                            .parseInt(availablehardtokenissuers[j]));
-                    if (issuerdata != null) {
-                        for(Integer value : issuerdata.getHardTokenIssuer().getAvailableHardTokenProfiles()) {                        
-                            if (Integer.parseInt(availabletokens[i]) == value.intValue())
-                                tokenissuers[i].add(Integer.valueOf(availablehardtokenissuers[j]));
-                        }
-                    }
+    if (Integer.parseInt(availabletokens[i]) > SecConst.TOKEN_SOFT) {
+        tokenissuers[i] = new ArrayList<Integer>();
+        for (int j = 0; j < availablehardtokenissuers.length; j++) {
+            HardTokenIssuerInformation issuerdata = tokenbean.getHardTokenIssuerInformation(Integer
+                    .parseInt(availablehardtokenissuers[j]));
+            if (issuerdata != null) {
+                for(Integer value : issuerdata.getHardTokenIssuer().getAvailableHardTokenProfiles()) {                        
+                    if (Integer.parseInt(availabletokens[i]) == value.intValue())
+                        tokenissuers[i].add(Integer.valueOf(availablehardtokenissuers[j]));
                 }
             }
         }
     }
+        }
+    }
 
-    Map<Integer, List<Integer>> availablecas = ejbcawebbean.getInformationMemory().getEndEntityAvailableCAs(profileid);
+    Map<Integer, List<Integer>> availablecas = ejbcawebbean.getInformationMemory().getCasAvailableToEndEntity(profileid);
     Collection authcas = null;
 
     pageContext.setAttribute("useradded", useradded);

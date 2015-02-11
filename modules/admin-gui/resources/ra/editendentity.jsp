@@ -100,7 +100,7 @@
 <%
     // Initialize environment.
     GlobalConfiguration globalconfiguration = ejbcawebbean.initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR,
-            AccessRulesConstants.REGULAR_EDITENDENTITY);
+    AccessRulesConstants.REGULAR_EDITENDENTITY);
     rabean.initialize(request, ejbcawebbean);
     if (globalconfiguration.getIssueHardwareTokens())
         tokenbean.initialize(request, ejbcawebbean);
@@ -522,22 +522,22 @@
 
     if (userdata != null && profile != null) {
         if (globalconfiguration.getIssueHardwareTokens()) {
-            TreeMap<String, Integer> hardtokenprofiles = ejbcawebbean.getInformationMemory().getHardTokenProfiles();
+    TreeMap<String, Integer> hardtokenprofiles = ejbcawebbean.getInformationMemory().getHardTokenProfiles();
 
-            tokentexts = new String[RAInterfaceBean.tokentexts.length + hardtokenprofiles.keySet().size()];
-            tokenids = new int[tokentexts.length];
-            for (int i = 0; i < RAInterfaceBean.tokentexts.length; i++) {
-                tokentexts[i] = RAInterfaceBean.tokentexts[i];
-                tokenids[i] = RAInterfaceBean.tokenids[i];
-            }
-            Iterator<String> iter = hardtokenprofiles.keySet().iterator();
-            int index = 0;
-            while (iter.hasNext()) {
-                String name = (String) iter.next();
-                tokentexts[index + RAInterfaceBean.tokentexts.length] = name;
-                tokenids[index + RAInterfaceBean.tokentexts.length] = ((Integer) hardtokenprofiles.get(name)).intValue();
-                index++;
-            }
+    tokentexts = new String[RAInterfaceBean.tokentexts.length + hardtokenprofiles.keySet().size()];
+    tokenids = new int[tokentexts.length];
+    for (int i = 0; i < RAInterfaceBean.tokentexts.length; i++) {
+        tokentexts[i] = RAInterfaceBean.tokentexts[i];
+        tokenids[i] = RAInterfaceBean.tokenids[i];
+    }
+    Iterator<String> iter = hardtokenprofiles.keySet().iterator();
+    int index = 0;
+    while (iter.hasNext()) {
+        String name = (String) iter.next();
+        tokentexts[index + RAInterfaceBean.tokentexts.length] = name;
+        tokenids[index + RAInterfaceBean.tokentexts.length] = ((Integer) hardtokenprofiles.get(name)).intValue();
+        index++;
+    }
         }
 
         availabletokens = profile.getValue(EndEntityProfile.AVAILKEYSTORE, 0).split(EndEntityProfile.SPLITCHAR);
@@ -546,27 +546,27 @@
         usekeyrecovery = globalconfiguration.getEnableKeyRecovery() && profile.getUse(EndEntityProfile.KEYRECOVERABLE, 0);
         usehardtokenissuers = globalconfiguration.getIssueHardwareTokens() && profile.getUse(EndEntityProfile.AVAILTOKENISSUER, 0);
         if (usehardtokenissuers) {
-            tokenissuers = new ArrayList[availabletokens.length];
-            for (int i = 0; i < availabletokens.length; i++) {
-                if (Integer.parseInt(availabletokens[i]) > SecConst.TOKEN_SOFT) {
-                    tokenissuers[i] = new ArrayList<Integer>();
-                    for (int j = 0; j < availablehardtokenissuers.length; j++) {
-                        HardTokenIssuerInformation issuerdata = tokenbean.getHardTokenIssuerInformation(Integer
-                                .parseInt(availablehardtokenissuers[j]));
-                        if (issuerdata != null) {
-                            Iterator<Integer> iter = issuerdata.getHardTokenIssuer().getAvailableHardTokenProfiles().iterator();
-                            while (iter.hasNext()) {
-                                if (Integer.parseInt(availabletokens[i]) == ((Integer) iter.next()).intValue())
-                                    tokenissuers[i].add(Integer.valueOf(availablehardtokenissuers[j]));
-                            }
-                        }
+    tokenissuers = new ArrayList[availabletokens.length];
+    for (int i = 0; i < availabletokens.length; i++) {
+        if (Integer.parseInt(availabletokens[i]) > SecConst.TOKEN_SOFT) {
+            tokenissuers[i] = new ArrayList<Integer>();
+            for (int j = 0; j < availablehardtokenissuers.length; j++) {
+                HardTokenIssuerInformation issuerdata = tokenbean.getHardTokenIssuerInformation(Integer
+                        .parseInt(availablehardtokenissuers[j]));
+                if (issuerdata != null) {
+                    Iterator<Integer> iter = issuerdata.getHardTokenIssuer().getAvailableHardTokenProfiles().iterator();
+                    while (iter.hasNext()) {
+                        if (Integer.parseInt(availabletokens[i]) == ((Integer) iter.next()).intValue())
+                            tokenissuers[i].add(Integer.valueOf(availablehardtokenissuers[j]));
                     }
                 }
             }
         }
     }
+        }
+    }
 
-    Map<Integer, List<Integer>> availablecas = ejbcawebbean.getInformationMemory().getEndEntityAvailableCAs(profileid);
+    Map<Integer, List<Integer>> availablecas = ejbcawebbean.getInformationMemory().getCasAvailableToEndEntity(profileid);
     editendentitybean.setExtendedInformation(userdata.getExtendedInformation());
     pageContext.setAttribute("profile", profile);
 
