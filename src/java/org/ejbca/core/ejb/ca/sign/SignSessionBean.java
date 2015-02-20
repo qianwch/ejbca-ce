@@ -76,6 +76,7 @@ import org.cesecore.jndi.JndiConstants;
 import org.cesecore.keys.token.CryptoToken;
 import org.cesecore.keys.token.CryptoTokenManagementSessionLocal;
 import org.cesecore.keys.token.CryptoTokenOfflineException;
+import org.cesecore.keys.util.PublicKeyWrapper;
 import org.cesecore.util.CertTools;
 import org.cesecore.util.CryptoProviderTools;
 import org.ejbca.config.GlobalConfiguration;
@@ -209,12 +210,26 @@ public class SignSessionBean implements SignSessionLocal, SignSessionRemote {
         return createCertificate(admin, username, password, pk, -1, null, null, CertificateProfileConstants.CERTPROFILE_NO_PROFILE,
                 SecConst.CAID_USEUSERDEFINED);
     }
+    
+    @Override
+    public Certificate createCertificate(AuthenticationToken admin, String username, String password, PublicKeyWrapper pk)
+            throws EjbcaException, ObjectNotFoundException, AuthorizationDeniedException, CesecoreException {
+        return createCertificate(admin, username, password, pk.getPublicKey());
+    }
 
     @Override
     public Certificate createCertificate(final AuthenticationToken admin, final String username, final String password, final PublicKey pk,
             final int keyusage, final Date notBefore, final Date notAfter) throws ObjectNotFoundException, AuthorizationDeniedException,
             EjbcaException, CesecoreException {
         return createCertificate(admin, username, password, pk, keyusage, notBefore, notAfter, CertificateProfileConstants.CERTPROFILE_NO_PROFILE,
+                SecConst.CAID_USEUSERDEFINED);
+    }
+    
+    @Override
+    public Certificate createCertificate(final AuthenticationToken admin, final String username, final String password, final PublicKeyWrapper pk,
+            final int keyusage, final Date notBefore, final Date notAfter) throws ObjectNotFoundException, AuthorizationDeniedException,
+            EjbcaException, CesecoreException {
+        return createCertificate(admin, username, password, pk.getPublicKey(), keyusage, notBefore, notAfter, CertificateProfileConstants.CERTPROFILE_NO_PROFILE,
                 SecConst.CAID_USEUSERDEFINED);
     }
 
@@ -324,6 +339,13 @@ public class SignSessionBean implements SignSessionLocal, SignSessionRemote {
             log.trace("<createCertificate(IRequestMessage)");
         }
         return ret;
+    }
+    
+    @Override
+    public Certificate createCertificate(final AuthenticationToken admin, final String username, final String password, final PublicKeyWrapper pk,
+            final int keyusage, final Date notBefore, final Date notAfter, final int certificateprofileid, final int caid)
+            throws ObjectNotFoundException, CADoesntExistsException, AuthorizationDeniedException, EjbcaException, CesecoreException {
+        return createCertificate(admin, username, password, pk.getPublicKey(), keyusage, notBefore, notAfter, certificateprofileid, caid);
     }
 
     @Override

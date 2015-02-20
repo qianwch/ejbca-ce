@@ -25,6 +25,7 @@ import java.util.Date;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.Extensions;
 import org.bouncycastle.cms.CMSSignedGenerator;
+import org.cesecore.keys.util.PublicKeyWrapper;
 import org.cesecore.util.CeSecoreNameStyle;
 
 
@@ -47,7 +48,7 @@ public class SimpleRequestMessage implements RequestMessage {
     static final long serialVersionUID = 1L;
 
     /** The public key */
-    protected PublicKey pubkey;
+    protected PublicKeyWrapper pubkey;
 
     /** manually set password */
     protected String password = null;
@@ -88,14 +89,14 @@ public class SimpleRequestMessage implements RequestMessage {
      * @param password password of the EJBCA user
      */
     public SimpleRequestMessage(final PublicKey pubkey, final String username, final String password) {
-        this.pubkey = pubkey;
+        this.pubkey = new PublicKeyWrapper(pubkey);
         this.username = username;
         this.password = password;
     }
 
     @Override
     public PublicKey getRequestPublicKey() throws InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException {
-    	return pubkey;
+    	return pubkey.getPublicKey();
     }
 
     /** set a password

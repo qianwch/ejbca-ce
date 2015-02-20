@@ -13,7 +13,6 @@
 package org.ejbca.core.ejb.ca.sign;
 
 import java.io.UnsupportedEncodingException;
-import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.util.Date;
 
@@ -33,6 +32,7 @@ import org.cesecore.certificates.certificate.request.RequestMessage;
 import org.cesecore.certificates.certificate.request.ResponseMessage;
 import org.cesecore.certificates.endentity.EndEntityInformation;
 import org.cesecore.keys.token.CryptoTokenOfflineException;
+import org.cesecore.keys.util.PublicKeyWrapper;
 import org.ejbca.core.EjbcaException;
 import org.ejbca.core.ejb.ra.NoSuchEndEntityException;
 import org.ejbca.core.model.ca.AuthLoginException;
@@ -98,7 +98,7 @@ public interface SignSession {
      * @throws AuthLoginException      If the password is incorrect.
      * @throws IllegalKeyException     if the public key is of wrong type.
      */
-    public Certificate createCertificate(AuthenticationToken admin, String username, String password, PublicKey pk) throws EjbcaException,
+    public Certificate createCertificate(AuthenticationToken admin, String username, String password, PublicKeyWrapper pk) throws EjbcaException,
             ObjectNotFoundException, CADoesntExistsException, AuthorizationDeniedException, CesecoreException;
 
     /**
@@ -127,8 +127,8 @@ public interface SignSession {
      * @throws AuthLoginException      If the password is incorrect.
      * @throws IllegalKeyException     if the public key is of wrong type.
      */
-    public Certificate createCertificate(AuthenticationToken admin, String username, String password, PublicKey pk, int keyusage, Date notBefore,
-            Date notAfter) throws EjbcaException, ObjectNotFoundException, CADoesntExistsException, AuthorizationDeniedException, CesecoreException;
+    Certificate createCertificate(AuthenticationToken admin, String username, String password, PublicKeyWrapper pk, int keyusage, Date notBefore,
+            Date notAfter) throws ObjectNotFoundException, AuthorizationDeniedException, EjbcaException, CesecoreException;
 
     /**
      * Requests for a certificate to be created for the passed public key wrapped in a self-signed
@@ -232,7 +232,7 @@ public interface SignSession {
      * 
      * @see org.bouncycastle.jce.X509KeyUsage
      */
-    public Certificate createCertificate(AuthenticationToken admin, String username, String password, PublicKey pk, int keyusage, Date notBefore,
+    public Certificate createCertificate(AuthenticationToken admin, String username, String password, PublicKeyWrapper pk, int keyusage, Date notBefore,
             Date notAfter, int certificateprofileid, int caid) throws ObjectNotFoundException, CADoesntExistsException, AuthorizationDeniedException,
             EjbcaException, CesecoreException;
 
