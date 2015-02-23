@@ -900,6 +900,13 @@ public class InternalKeyBindingMBean extends BaseManagedBean implements Serializ
         if (!availableCryptoTokens.isEmpty() && currentCryptoToken == null) {
             currentCryptoToken = (Integer) availableCryptoTokens.get(0).getValue();
         }
+        Collections.sort(availableCryptoTokens, new Comparator<SelectItem>() {
+            @Override
+            public int compare(SelectItem o1, SelectItem o2) {
+             
+                return o1.getLabel().compareToIgnoreCase(o2.getLabel());
+            }
+        });
         return availableCryptoTokens;
     }
 
@@ -981,6 +988,13 @@ public class InternalKeyBindingMBean extends BaseManagedBean implements Serializ
         if (currentCertificateAuthority == null && !availableCertificateAuthorities.isEmpty()) {
             currentCertificateAuthority = (Integer) availableCertificateAuthorities.get(0).getValue();
         }
+        Collections.sort(availableCertificateAuthorities, new Comparator<SelectItem>() {
+            @Override
+            public int compare(SelectItem o1, SelectItem o2) {
+             
+                return o1.getLabel().compareToIgnoreCase(o2.getLabel());
+            }
+        });
         return availableCertificateAuthorities;
     }
 
