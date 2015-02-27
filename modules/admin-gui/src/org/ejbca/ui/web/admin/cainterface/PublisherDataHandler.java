@@ -90,7 +90,7 @@ public class PublisherDataHandler implements Serializable {
 
     }
 
-    public void testConnection(String name) throws PublisherConnectionException, AuthorizationDeniedException {
+    public void testConnection(String name) throws PublisherConnectionException {
         publishersession.testConnection(publishersession.getPublisherId(name));
     }
 
