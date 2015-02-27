@@ -499,6 +499,7 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     @Override
     public BasePublisher getPublisher(AuthenticationToken authenticationToken, int id) throws AuthorizationDeniedException {
+        authorizedToEditPublishers(authenticationToken);
         return getPublisherInternal(id, true);
     }
 
