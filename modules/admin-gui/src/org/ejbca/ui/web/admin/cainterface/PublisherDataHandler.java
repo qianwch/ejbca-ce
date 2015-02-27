@@ -94,13 +94,13 @@ public class PublisherDataHandler implements Serializable {
         publishersession.testConnection(publishersession.getPublisherId(name));
     }
 
-    /** Method to get a reference to a publisher.*/
-    public BasePublisher getPublisher(int id) {
-        return publishersession.getPublisher(id);
+    /** Method to get a reference to a publisher. */
+    public BasePublisher getPublisher(int id) throws AuthorizationDeniedException {
+        return publishersession.getPublisher(administrator, id);
     }
 
-    public BasePublisher getPublisher(String name)  {
-        return publishersession.getPublisher(name);
+    public BasePublisher getPublisher(String name) throws AuthorizationDeniedException {
+        return publishersession.getPublisher(administrator, name);
     }
 
     public int getPublisherId(String name) {
