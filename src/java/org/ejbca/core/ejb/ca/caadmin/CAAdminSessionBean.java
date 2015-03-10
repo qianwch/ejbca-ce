@@ -1655,6 +1655,9 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
     public void importCACertificate(AuthenticationToken admin, String caname, Collection<Certificate> certificates)
             throws AuthorizationDeniedException, CAExistsException, IllegalCryptoTokenException {
         Certificate caCertificate = (Certificate) certificates.iterator().next();
+        if (!CertTools.isCA(caCertificate)) {
+            throw new IllegalStateException("Only CA certificates can be imported using this function.");
+        }
         CA ca = null;
         CAInfo cainfo = null;
 
