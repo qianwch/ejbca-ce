@@ -376,6 +376,11 @@ public final class CesecoreConfiguration {
         return value==null || Boolean.parseBoolean(value.trim());
     }
 
+    /** @return true key store content of Crypto Tokens should be cached. */
+    public static boolean isKeyStoreCacheEnabled() {
+        return Boolean.getBoolean(ConfigurationHolder.getString("cryptotoken.keystorecache"));
+    }
+
     /**
      * Gets the maximum number of entries in the CT cache. Each entry contains the SCTs for a
      * given certificate. Each SCT will be around 100-150 bytes, and a certificate will typically
