@@ -375,5 +375,11 @@ public final class CesecoreConfiguration {
         final String value = ConfigurationHolder.getString("pkcs11.disableHashingSignMechanisms");
         return value==null || Boolean.parseBoolean(value.trim());
     }
+    
+
+    /** @return true key store content of Crypto Tokens should be cached. */
+    public static boolean isKeyStoreCacheEnabled() {
+        return Boolean.parseBoolean(ConfigurationHolder.getString("cryptotoken.keystorecache"));
+    }
 }
 
