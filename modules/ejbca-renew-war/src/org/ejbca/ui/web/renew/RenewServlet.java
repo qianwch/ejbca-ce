@@ -115,7 +115,7 @@ public class RenewServlet extends HttpServlet {
 	    			endEntityManagementSession.changeUser(admin, userdata, false);
 	    			statusMessage = "Your request for certificate renewal has been submitted. You will be notified by mail of the status change and new password.";
 		    		} else {	    		    
-                        log.error("End entity with username " + username + " attempted to renew browser certificate, but password cannot be retireved ");
+                        log.warn("End entity with username " + username + " attempted to renew browser certificate, but password cannot be retrieved since notifications are not configured.");
                         statusMessage = "No notifications have been set for this end entity, so the new password can't be retrieved.";
                     }
 	    		} catch(WaitingForApprovalException ex) {
