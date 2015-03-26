@@ -1,3 +1,29 @@
+EJBCA 6.2.9, 2015-03-26
+---
+Bug
+	[ECA-3619] - Wrong administrator removed from role when deleting at the same time with two separate CA admins
+	[ECA-3788] - CLI needs to set argument --password together with the value when setting it
+	[ECA-3879] - Fix logging of default OCSP responder properly
+	[ECA-4049] - Certificates of non-CAs are accepted when importing external CAs
+	[ECA-4071] - A base64 decoder exception is thrown when inspecting a specially-crafted CSR
+	[ECA-4122] - Typo in Crypto Token HSM Slot
+	[ECA-4148] - EJBCA WS Test test25CreateandGetCRL fails when delta CRLs are enabled
+	[ECA-4152] - "Renew Browser Certificate" should require notifications to be set. 
+	[ECA-4156] - Regression: BaseCryptoToken has lost caching of keys since EJBCA4
+	[ECA-4160] - X509CertStoreSelector does not work as used in BC 1.51
+	[ECA-4173] - CLI command ca getcacert always outputs root CA certificate when using the -der option
+	[ECA-4179] - SCEP stress test regression
+	[ECA-4184] - WaitingForApprovalException declares property as public
+
+Improvement
+	[ECA-4128] - Replace references to deprecated class DiskFileUpload
+	[ECA-4137] - Test throw away CA issuance over web service interface
+	[ECA-4181] - Several EjbcaWS tests fail when EEP-limitations are enabled
+	[ECA-4182] - Replace deprecated classes: PEMWriter, DERObjectIdentifier and DERTags
+
+Task
+	[ECA-4090] - Remove broken NetID integration code
+
 EJBCA 6.2.8, 2015-03-05
 ---
 Bug
