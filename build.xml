@@ -1021,7 +1021,7 @@ SHA-256 checksum: ${cesecorebinSHA256}
 		</condition>
 		<replaceregexp file="src/internal.properties" encoding="UTF-8" match='(app.edition.verbose=).*'
 					replace='\1${app.edition}' />
-				<echo>Updated "app.edition.verbose" to: ${app.edition} edition:${edition}</echo>
+				<echo>Updated "app.edition.verbose" to: ${app.edition}</echo>
 	</target>
      
 	<!--
