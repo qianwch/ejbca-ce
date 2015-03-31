@@ -1007,15 +1007,15 @@ SHA-256 checksum: ${cesecorebinSHA256}
     </target>
 	
 	<target name="update-edition" depends="deprecated:check">
-		<condition property="app.edition" value="Enterprise" else="Unreleasedfoo" >
+		<condition property="app.edition.verbose" value="Enterprise" else="Unreleasedfoo" >
 			<matches string="${edition}" pattern="^ee$"/>
 		</condition>
-		<condition property="app.edition" value="Community" else="Unreleasedbar" >
+		<condition property="app.edition.verbose" value="Community" else="Unreleasedbar" >
 			<matches string="${edition}" pattern="^ce$"/>
 		</condition>
 		<replaceregexp file="src/internal.properties" encoding="UTF-8" match='(app.edition=).*'
 					replace='\1${app.edition}' />
-				<echo>Updated "app.edition" to: ${app.edition} edition:${edition}</echo>
+				<echo>Updated "app.edition" to: ${app.edition.verbose} edition:${edition}</echo>
 	</target>
 
 	<target name="update-svnrev-updatefile" if="Revision">
