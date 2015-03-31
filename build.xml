@@ -1014,8 +1014,8 @@ SHA-256 checksum: ${cesecorebinSHA256}
 			<matches string="${edition}" pattern="^ce$"/>
 		</condition>
 		<replaceregexp file="src/internal.properties" encoding="UTF-8" match='(app.edition=).*'
-					replace='\1r${app.edition}' />
-				<echo>Updated "app.edition" to: r${app.edition}</echo>
+					replace='\1${app.edition}' />
+				<echo>Updated "app.edition" to: ${app.edition} edition: ${edition}</echo>
 	</target>
 
 	<target name="update-svnrev-updatefile" if="Revision">
