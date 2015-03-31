@@ -1006,24 +1006,23 @@ SHA-256 checksum: ${cesecorebinSHA256}
 		<antcall target="update-svnrev-updatefile" /> <!-- do update of file only if property is set -->
     </target>
 	
-	<target name="update-edition" depends="deprecated:check">
-		<condition property="app.edition" value="Enterprise" else="Unreleasedfoo" >
-			<matches string="${edition}" pattern="^ee$"/>
-		</condition>
-		<condition property="app.edition" value="Community" else="Unreleasedbar" >
-			<matches string="${edition}" pattern="^ce$"/>
-		</condition>
-		<replaceregexp file="src/internal.properties" encoding="UTF-8" match='(app.edition.verbose=).*'
-					replace='\1${app.edition}' />
-				<echo>Updated "app.edition" to: ${app.edition.verbose} edition:${edition}</echo>
-	</target>
-
 	<target name="update-svnrev-updatefile" if="Revision">
 		<replaceregexp file="src/internal.properties" encoding="UTF-8" match='(svn.revision=).*'
 			replace='\1r${Revision}' />
 		<echo>Updated "svn.revision" to: r${Revision}</echo>
     </target>
 	
+	<target name="update-edition" depends="deprecated:check">
+		<condition property="app.edition" value="Enterprise" >
+			<matches string="${edition}" pattern="^ee$"/>
+		</condition>
+		<condition property="app.edition" value="Community" >
+			<matches string="${edition}" pattern="^ce$"/>
+		</condition>
+		<replaceregexp file="src/internal.properties" encoding="UTF-8" match='(app.edition.verbose=).*'
+					replace='\1${app.edition}' />
+				<echo>Updated "app.edition.verbose" to: ${app.edition} edition:${edition}</echo>
+	</target>
      
 	<!--
         Target for signing a JAR (JAR, EAR, WAR or ZIP)
