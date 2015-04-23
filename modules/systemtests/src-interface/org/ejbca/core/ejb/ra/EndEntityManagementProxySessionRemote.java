@@ -66,5 +66,5 @@ public interface EndEntityManagementProxySessionRemote {
      * @see org.ejbca.util.query.Query
      */
     Collection<EndEntityInformation> query(AuthenticationToken admin, Query query, String caauthorizationstring,
-            String endentityprofilestring, int numberofrows) throws IllegalQueryException;
+            String endentityprofilestring, int numberofrows, final String endentityAccessRule) throws IllegalQueryException;
 }

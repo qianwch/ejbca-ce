@@ -305,7 +305,7 @@ public interface EndEntityManagementSession {
      * @see org.ejbca.util.query.Query
      */
     Collection<EndEntityInformation> query(AuthenticationToken admin, Query query, String caauthorizationstring,
-            String endentityprofilestring, int numberofrows) throws IllegalQueryException;
+            String endentityprofilestring, int numberofrows, String endentityAccessRule) throws IllegalQueryException;
     
     /** Revoke and then delete a user. */
     void revokeAndDeleteUser(AuthenticationToken admin, String username, int reason) throws AuthorizationDeniedException, ApprovalException, WaitingForApprovalException, RemoveException, NotFoundException;

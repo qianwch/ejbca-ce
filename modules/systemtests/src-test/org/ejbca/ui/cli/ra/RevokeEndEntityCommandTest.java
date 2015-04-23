@@ -61,6 +61,7 @@ import org.ejbca.core.ejb.ra.EndEntityExistsException;
 import org.ejbca.core.ejb.ra.EndEntityManagementSessionRemote;
 import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.approval.WaitingForApprovalException;
+import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.core.model.ra.NotFoundException;
 import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
 import org.ejbca.ui.cli.infrastructure.command.CommandResult;
@@ -145,7 +146,7 @@ public class RevokeEndEntityCommandTest extends CaTestCase {
             query.add(UserMatch.MATCH_WITH_USERNAME, BasicMatch.MATCH_TYPE_EQUALS, USER_NAME);
             final String caauthstring = null;
             final String eeprofilestr = null;
-            Collection<EndEntityInformation> col = eeSession.query(admin, query, caauthstring, eeprofilestr, 0);
+            Collection<EndEntityInformation> col = eeSession.query(admin, query, caauthstring, eeprofilestr, 0, AccessRulesConstants.REVOKE_END_ENTITY);
             assertEquals(1, col.size());
             EndEntityInformation eei = col.iterator().next();
             assertEquals("CN="+USER_NAME+",O=PrimeKey,C=SE", eei.getDN());
@@ -156,7 +157,7 @@ public class RevokeEndEntityCommandTest extends CaTestCase {
 
             // Now unrevoke, will not change status of user, only of the certificate
             assertEquals(CommandResult.SUCCESS, command1.execute(HAPPY_PATH_UNREVOKE_ARGS));
-            col = eeSession.query(admin, query, caauthstring, eeprofilestr, 0);
+            col = eeSession.query(admin, query, caauthstring, eeprofilestr, 0, AccessRulesConstants.REVOKE_END_ENTITY);
             assertEquals(1, col.size());
             eei = col.iterator().next();
             assertEquals(EndEntityConstants.STATUS_REVOKED, eei.getStatus());
@@ -166,7 +167,7 @@ public class RevokeEndEntityCommandTest extends CaTestCase {
 
             // Revoke again, permanently
             command0.execute(HAPPY_PATH_REVOKE_PERMANENT_ARGS);
-            col = eeSession.query(admin, query, caauthstring, eeprofilestr, 0);
+            col = eeSession.query(admin, query, caauthstring, eeprofilestr, 0, AccessRulesConstants.REVOKE_END_ENTITY);
             assertEquals(1, col.size());
             eei = col.iterator().next();
             assertEquals(EndEntityConstants.STATUS_REVOKED, eei.getStatus());
@@ -176,7 +177,7 @@ public class RevokeEndEntityCommandTest extends CaTestCase {
 
             // Unrevokation will not do anything now
             command1.execute(HAPPY_PATH_UNREVOKE_ARGS);
-            col = eeSession.query(admin, query, caauthstring, eeprofilestr, 0);
+            col = eeSession.query(admin, query, caauthstring, eeprofilestr, 0, AccessRulesConstants.REVOKE_END_ENTITY);
             assertEquals(1, col.size());
             eei = col.iterator().next();
             assertEquals(EndEntityConstants.STATUS_REVOKED, eei.getStatus());

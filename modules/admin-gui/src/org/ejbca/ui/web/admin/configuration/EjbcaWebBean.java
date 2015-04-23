@@ -986,8 +986,8 @@ public class EjbcaWebBean implements Serializable {
         reloadCMPConfiguration();
     }
     
-    public Collection<String> getAuthorizedEEProfileNames() {
-        Map<String, Integer> eeps = this.informationmemory.getAuthorizedEndEntityProfileNames();
+    public Collection<String> getAuthorizedEEProfileNames(final String endentityAccessRule) {
+        Map<String, Integer> eeps = this.informationmemory.getAuthorizedEndEntityProfileNames(endentityAccessRule);
         return eeps.keySet();
     }
     

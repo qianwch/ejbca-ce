@@ -536,7 +536,7 @@ public class RolesManagedBean extends BaseManagedBean {
 
     private BasicAccessRuleSetEncoder getBasicRuleSetInternal(RoleData role) {
         GlobalConfiguration globalConfiguration = getEjbcaWebBean().getGlobalConfiguration();
-        return new BasicAccessRuleSetEncoder(role.getAccessRules().values(), getAuthorizationDataHandler().getAvailableAccessRules(),
+        return new BasicAccessRuleSetEncoder(role.getAccessRules().values(), getAuthorizationDataHandler().getAvailableAccessRules(AccessRulesConstants.CREATE_END_ENTITY),
                 globalConfiguration.getIssueHardwareTokens(), globalConfiguration.getEnableKeyRecovery());
     }
 
@@ -556,7 +556,7 @@ public class RolesManagedBean extends BaseManagedBean {
             // We need to create a new arraylist here, because the collection returned by role.getAccessRules().values() does not support addAll
             ArrayList<AccessRuleData> usedAccessRules = new ArrayList<AccessRuleData>();
             usedAccessRules.addAll(usedAccessRulesCollection);
-            Collection<String> rules = getAuthorizationDataHandler().getAvailableAccessRules();
+            Collection<String> rules = getAuthorizationDataHandler().getAvailableAccessRules(AccessRulesConstants.CREATE_END_ENTITY);
             Collection<AccessRuleData> unusedAccessRules = role.getDisjunctSetOfRules(rules);
             if (!unusedAccessRules.isEmpty()) {
                 usedAccessRules.addAll(unusedAccessRules);

@@ -34,6 +34,7 @@ import org.ejbca.config.GlobalConfiguration;
 import org.ejbca.core.ejb.authorization.ComplexAccessControlSessionRemote;
 import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileSessionRemote;
 import org.ejbca.core.ejb.ra.userdatasource.UserDataSourceSessionRemote;
+import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfileNotFoundException;
 import org.ejbca.ui.cli.infrastructure.command.CommandResult;
 import org.ejbca.ui.cli.infrastructure.parameter.Parameter;
@@ -96,7 +97,7 @@ public class ChangeRuleCommand extends BaseRolesCommand {
                             globalConfiguration.getIssueHardwareTokens(),
                             globalConfiguration.getEnableKeyRecovery(),
                             EjbRemoteHelper.INSTANCE.getRemoteSession(EndEntityProfileSessionRemote.class).getAuthorizedEndEntityProfileIds(
-                                    getAuthenticationToken()),
+                                    getAuthenticationToken(), AccessRulesConstants.CREATE_END_ENTITY),
                             EjbRemoteHelper.INSTANCE.getRemoteSession(UserDataSourceSessionRemote.class).getAuthorizedUserDataSourceIds(
                                     getAuthenticationToken(), true), EjbcaConfiguration.getCustomAvailableAccessRules());
 
@@ -170,7 +171,7 @@ public class ChangeRuleCommand extends BaseRolesCommand {
                         globalConfiguration.getIssueHardwareTokens(),
                         globalConfiguration.getEnableKeyRecovery(),
                         EjbRemoteHelper.INSTANCE.getRemoteSession(EndEntityProfileSessionRemote.class).getAuthorizedEndEntityProfileIds(
-                                getAuthenticationToken()),
+                                getAuthenticationToken(), AccessRulesConstants.CREATE_END_ENTITY),
                         EjbRemoteHelper.INSTANCE.getRemoteSession(UserDataSourceSessionRemote.class).getAuthorizedUserDataSourceIds(
                                 getAuthenticationToken(), true), EjbcaConfiguration.getCustomAvailableAccessRules());
 
