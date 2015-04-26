@@ -118,11 +118,13 @@
 <li>Validation tool for conformance checking of certificates and OCSP responders.</li>
 <li>EAC PKI for ePassports and eIDs, Country Verifying CA (CVCA) and Document Verifiers (DV) issuing Inspection System (IS) certificates.</li>
 <li>Certified access control and authorization module, for assurance and high trust role separation.</li>
-<li>Penetration tested with improved security.</li>
 <li><a href="http://www.3gpp.org/">3GPP</a>, i.e. LTE/4G, compatible PKI, using <a href="docs/adminguide.html#CMP">CMP</a> with multiple Vendor CAs.</li>
 <li>Certificate Transparency, RFC6962.</li>
 <li>CertSafe publisher to send, and revoke, certificates from a CertSafe server.</li>
+<li>Additional algorithms using HSMs through PKCS#11, <a href="docs/adminguide.html#Using%20SHA256WithRSAandMGF1%20(RSASSA-PSS)">RSASSA-PSS (SHA256WithRSAAndMGF1)</a>. Available through patches for Java.</li>
+<li>Support for Windows Autoenrollment with add-on autoenrollment proxy module.</li>
 <li>Support for GOST and DSTU algorithms (Russian and Ukrainian algorithms).</li>
+<li>Penetration tested with improved security.</li>
 </ul>
   </subsection>
   </section>
