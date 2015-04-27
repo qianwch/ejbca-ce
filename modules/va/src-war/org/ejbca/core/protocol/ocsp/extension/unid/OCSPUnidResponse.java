@@ -24,7 +24,7 @@ import org.bouncycastle.cert.ocsp.UnknownStatus;
 
 /** Class holding data returned by the OCSPUnidExtension
  * 
- * @version $Id$
+ * @version $Id: OCSPUnidResponse.java 19902 2014-09-30 14:32:24Z anatom $
  *
  */
 public class OCSPUnidResponse {

@@ -14,8 +14,6 @@
 	<property name="src.dir" location="${this.dir}/src"/>
 	<property name="src.test.dir" location="${this.dir}/src-test"/>
 	<property name="src.interface.dir" location="${this.dir}/src-interface"/>
-	<property name="test-ejb.jar" location="${systemtests.dist.dir}/systemtests-ejb.jar"/>
-	<property name="test-interface.jar" location="${systemtests.dist.dir}/systemtests-interfaces.jar" />
 
 	<!-- Include endorsed jars from Glassfish -->
 	<condition property="tests.jvmargs" value="-Djava.endorsed.dirs=${appserver.home}/modules/endorsed" else="">
@@ -57,8 +55,8 @@
 		<pathelement location="${mod.edition-specific-ejb.lib}"/>
 		<pathelement location="${mod.ejbca-util.lib}"/>
 		<pathelement location="${mysql.lib}"/>
-		<pathelement location="${test-interface.jar}"/>
-		<pathelement location="${test-ejb.jar}"/>
+		<pathelement location="${mod.systemtest-interface.lib}"/>
+		<pathelement location="${mod.systemtest-ejb.lib}"/>
 	</path>
 
 	<path id="systemtests.classpath">
@@ -104,6 +102,9 @@
 		<path location="${mod.cesecore-entity.lib}"/>
 		<path location="${mod.cesecore-common.lib}"/>
 		<path location="${mod.cesecore-ejb-interface.lib}"/>
+		<pathelement location="${mod.edition-specific-interface.lib}"/>
+		<pathelement location="${mod.edition-specific-ejb.lib}"/>
+		<path refid="lib.junit.classpath"/>
 	</path>
 
 	<target name="build" description="Build this module" depends="cesecore-ejb, va-ejbca-war, build-libs, compile-tests" /> 
@@ -122,7 +123,7 @@
 		<copy file="${systemtests.properties.file}" todir="${build.interface.dir}" failonerror="false"/>
 	</target>
 
-	<target name="systemtest-compile-src" depends="ejbca-properties, ejbca-ejb">
+	<target name="systemtest-compile-src" depends="ejbca-properties, ejbca-ejb, edition-specific-interface, eedition-ejb">
 		<mkdir dir="${build.src.dir}" />
 		<javac srcdir="${src.dir}" destdir="${build.src.dir}" debug="on" includeantruntime="no"
 			        	encoding="UTF-8" classpathref="compile-ejb.classpath" target="${java.target.version}">	
@@ -132,8 +133,8 @@
 	<target name="build-libs" depends="check-inproduction" unless="in-production-mode">
 		<antcall target="systemtest-compile-interfaces" />
 		<antcall target="systemtest-compile-src" />	
-		<jar destfile="${test-interface.jar}" basedir="${build.interface.dir}"/>
-		<jar destfile="${test-ejb.jar}" basedir="${build.src.dir}"/>
+		<jar destfile="${mod.systemtest-interface.lib}" basedir="${build.interface.dir}"/>
+		<jar destfile="${mod.systemtest-ejb.lib}" basedir="${build.src.dir}"/>
 	</target>
 
 	<target name="compile-tests" depends="assert-notinproduction, ejbca-properties, ejbca-ejb, ejbca-util, ejbca-ws-cli, ejbca-db-cli, ejbca-xkms-cli, ejbca-ejb-cli, clientToolBox, ejbca-ws">
@@ -232,7 +233,7 @@
 	<!-- =================================
           Run most system tests
          ================================= -->
-	<target name="run" depends="build, assert-appserverrunning, runws, runxkms" description="Run all system tests, enable CMP TCP to run those tests, set -Dmysql.lib=... to enable Cmp Unid test, use -Dtest.includep11=true to include P11 tests">
+	<target name="run" depends="build, assert-appserverrunning, runws, runxkms, edition-specific-interface, eedition-ejb" description="Run all system tests, enable CMP TCP to run those tests, set -Dmysql.lib=... to enable Cmp Unid test, use -Dtest.includep11=true to include P11 tests">
 		<antcall target="showtime"/>
 		<mkdir dir="${this.dir}/p12"/>
 		<!-- Workaround for tests using BatchMakeP12 -->

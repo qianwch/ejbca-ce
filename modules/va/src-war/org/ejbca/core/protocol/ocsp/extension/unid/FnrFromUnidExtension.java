@@ -27,7 +27,7 @@ import org.bouncycastle.asn1.ASN1ObjectIdentifier;
  * 
  * Fnr ::= IA5String
  * 
- * @version $Id$
+ * @version $Id: FnrFromUnidExtension.java 19902 2014-09-30 14:32:24Z anatom $
  *
  */
 public class FnrFromUnidExtension extends ASN1Object {

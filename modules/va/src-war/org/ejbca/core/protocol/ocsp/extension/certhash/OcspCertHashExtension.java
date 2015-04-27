@@ -35,7 +35,7 @@ import org.cesecore.certificates.ocsp.extension.OCSPExtension;
  * 
  * OID for this extension is 1.3.36.8.3.13
  * 
- * @version $Id$
+ * @version $Id: OcspCertHashExtension.java 19902 2014-09-30 14:32:24Z anatom $
  *
  */
 public class OcspCertHashExtension implements OCSPExtension{

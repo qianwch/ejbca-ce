@@ -55,7 +55,7 @@ import org.ejbca.util.IPatternLogger;
  * Servlet implementing server side of the Online Certificate Status Protocol (OCSP)
  * For a detailed description of OCSP refer to RFC2560.
  *
- * @version  $Id$
+ * @version  $Id: OCSPServlet.java 21089 2015-04-13 13:28:10Z jeklund $
  */
 public class OCSPServlet extends HttpServlet {
 
