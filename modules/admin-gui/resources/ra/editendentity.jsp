@@ -581,7 +581,7 @@
         }
     }
 
-    Map<Integer, List<Integer>> availablecas = ejbcawebbean.getInformationMemory().getCasAvailableToEndEntity(profileid);
+    Map<Integer, List<Integer>> availablecas = ejbcawebbean.getInformationMemory().getCasAvailableToEndEntity(profileid, AccessRulesConstants.EDIT_END_ENTITY);
     if (userdata!=null) {
         editendentitybean.setExtendedInformation(userdata.getExtendedInformation());
     }
