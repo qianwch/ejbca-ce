@@ -43,8 +43,6 @@ public class RAAuthorization implements Serializable {
     private String authcastring = null;
     private String authendentityprofilestring = null;
     private TreeMap<String, Integer> authprofilenames = null;
-    private TreeMap<String, Integer> authcreateprofilenames = null;
-	private TreeMap<String, Integer> authviewprofilenames = null;
 	private List<Integer> authprofileswithmissingcas = null;
     private AuthenticationToken admin;
     private AccessControlSessionLocal authorizationsession;
@@ -164,21 +162,7 @@ public class RAAuthorization implements Serializable {
     	}
     	return authprofilenames;  
     }
-/*    
-	public TreeMap<String, Integer> getCreateAuthorizedEndEntityProfileNames() {
-		if(authcreateprofilenames == null){
-			authcreateprofilenames = getAuthorizedEndEntityProfileNames(AccessRulesConstants.CREATE_END_ENTITY);
-		}
-		return authcreateprofilenames;  
-	}
-	      
-	public TreeMap<String, Integer> getViewAuthorizedEndEntityProfileNames(){
-	  if(authviewprofilenames == null){
-	  	  authviewprofilenames = getAuthorizedEndEntityProfileNames(AccessRulesConstants.VIEW_END_ENTITY);
-	  }
-	  return authviewprofilenames;
-	}
-*/	
+	
 	public List<Integer> getViewAuthorizedEndEntityProfilesWithMissingCAs() {
 	   if (authprofileswithmissingcas == null) {
 	       authprofileswithmissingcas = endEntityProfileSession.getAuthorizedEndEntityProfileIdsWithMissingCAs(admin);
@@ -190,23 +174,9 @@ public class RAAuthorization implements Serializable {
       authcastring=null;
       authendentityprofilestring=null;
       authprofilenames = null;
-	  authcreateprofilenames = null;
-	  authviewprofilenames = null;
 	  authprofileswithmissingcas = null;
     }
     
-    /*
-	private TreeMap<String, Integer> getAuthorizedEndEntityProfileNames(String rights) {
-		final TreeMap<String, Integer> returnval = new TreeMap<String, Integer>();
-		final Map<Integer, String> profilemap = this.endEntityProfileSession.getEndEntityProfileIdToNameMap();
-		for (final Integer next : endEntityProfileSession.getAuthorizedEndEntityProfileIds(admin)) {
-			if (this.endEntityAuthorization(admin, next.intValue(), rights)) {
-				returnval.put(profilemap.get(next), next);
-			}
-		}
-		return returnval;
-	}     
-    */
     /**
      * Help function used to check end entity profile authorization.
      */

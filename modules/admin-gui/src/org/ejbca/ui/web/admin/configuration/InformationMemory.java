@@ -156,27 +156,7 @@ public class InformationMemory implements Serializable {
     public List<Integer> getAuthorizedEndEntityProfileIdsWithMissingCAs() {
         return this.raauthorization.getViewAuthorizedEndEntityProfilesWithMissingCAs();
     }
-/*
-    /**
-     * Returns end entity profile names with create rights as a treemap of name (String) -> id (Integer)
-     * /
-    public TreeMap<String, Integer> getCreateAuthorizedEndEntityProfileNames() {
-        if (globalconfiguration.getEnableEndEntityProfileLimitations()) {
-            return this.raauthorization.getCreateAuthorizedEndEntityProfileNames();
-        }
-        return this.raauthorization.getAuthorizedEndEntityProfileNames();
-    }
 
-    /**
-     * Returns end entity profile names with view rights as a treemap of name (String) -> id (Integer)
-     * /
-    public TreeMap<String, Integer> getViewAuthorizedEndEntityProfileNames() {
-        if (globalconfiguration.getEnableEndEntityProfileLimitations()) {
-            return this.raauthorization.getViewAuthorizedEndEntityProfileNames();
-        }
-        return this.raauthorization.getAuthorizedEndEntityProfileNames();
-    }
-*/
     /**
      * Returns authorized end entity certificate profile names as a treemap of name (String) -> id (Integer)
      */
