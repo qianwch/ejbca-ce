@@ -29,7 +29,6 @@ import org.cesecore.roles.RoleNotFoundException;
 import org.cesecore.roles.access.RoleAccessSession;
 import org.cesecore.roles.management.RoleManagementSession;
 import org.ejbca.core.model.InternalEjbcaResources;
-import org.ejbca.core.model.authorization.AccessRulesConstants;
 
 /**
  * A class handling the authorization data.
@@ -219,15 +218,4 @@ public class AuthorizationDataHandler implements Serializable {
         roleManagementSession.removeSubjectsFromRole(administrator, role, subjects);
         informationmemory.administrativePriviledgesEdited();
     }
-
-
-/*
-    private void authorizedToAddAccessRules(Collection<AccessRuleData> accessrules) throws AuthorizationDeniedException {
-        for (AccessRuleData accessRule : accessrules) {
-            if (!this.informationmemory.getAuthorizedAccessRules(AccessRulesConstants.CREATE_END_ENTITY).contains(accessRule)) {
-                throw new AuthorizationDeniedException("Accessruleset contained non authorized access rules");
-            }
-        }
-    }
-*/
 }
