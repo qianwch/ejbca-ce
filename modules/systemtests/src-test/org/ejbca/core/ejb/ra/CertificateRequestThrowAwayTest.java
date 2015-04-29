@@ -146,7 +146,7 @@ public class CertificateRequestThrowAwayTest extends CaTestCase {
             assertCAConfig(false, true, true);
             // Run through all possible configurations of what to store in the database
             for (int i = 0; i <= 7; i++) {
-                generateCertificatePkcs10(certificateProfileId, (i & 1) > 0, (i & 2) > 0, (i & 4) > 0, false);
+                generateCertificatePkcs10(certificateProfileId, profile, (i & 1) > 0, (i & 2) > 0, (i & 4) > 0, false);
             }
         } finally {
             certificateProfileSession.removeCertificateProfile(admin, TESTCA_NAME);
@@ -167,7 +167,7 @@ public class CertificateRequestThrowAwayTest extends CaTestCase {
             assertCAConfig(false, true, true);
             // Run through all possible configurations of what to store in the database
             for (int i = 0; i <= 7; i++) {
-                generateCertificatePkcs10(certificateProfileId, (i & 1) > 0, (i & 2) > 0, (i & 4) > 0, true);
+                generateCertificatePkcs10(certificateProfileId, profile, (i & 1) > 0, (i & 2) > 0, (i & 4) > 0, true);
             }
         } finally {
             certificateProfileSession.removeCertificateProfile(admin, TESTCA_NAME);
@@ -186,7 +186,7 @@ public class CertificateRequestThrowAwayTest extends CaTestCase {
         endEntityProfileSession.addEndEntityProfile(admin, TESTCA_NAME, endEntityProfile);
         try {
             assertCAConfig(false, true, true);
-            generateCertificatePkcs10(certificateProfileId, false, true, true, true);
+            generateCertificatePkcs10(certificateProfileId, profile, false, true, true, true);
         } finally {
             certificateProfileSession.removeCertificateProfile(admin, TESTCA_NAME);
             endEntityProfileSession.removeEndEntityProfile(admin, TESTCA_NAME);
@@ -201,27 +201,8 @@ public class CertificateRequestThrowAwayTest extends CaTestCase {
 
     /**
      * Reconfigure CA, process a certificate request and assert that the right things were stored in the database.
-     * @throws AuthorizationDeniedException 
-     * @throws CertificateExtensionException 
-     * @throws CreateException 
-     * @throws IOException 
-     * @throws EjbcaException 
-     * @throws UserDoesntFullfillEndEntityProfile 
-     * @throws ObjectNotFoundException 
-     * @throws InvalidKeySpecException 
-     * @throws CertificateException 
-     * @throws SignatureException 
-     * @throws InvalidAlgorithmParameterException 
-     * @throws NoSuchProviderException 
-     * @throws NoSuchAlgorithmException 
-     * @throws CertificateEncodingException 
-     * @throws InvalidKeyException 
-     * 
-     * @throws CesecoreException
-     * @throws OperatorCreationException 
-     * @throws RemoveException 
      */
-    private void generateCertificatePkcs10(int certificateProfileId, boolean useCertReqHistory, boolean useUserStorage,
+    private void generateCertificatePkcs10(int certificateProfileId, CertificateProfile certificateProfile, boolean useCertReqHistory, boolean useUserStorage,
             boolean useCertificateStorage, boolean raw) throws AuthorizationDeniedException, RemoveException, CertificateParsingException,
             InvalidKeyException, InvalidAlgorithmParameterException, OperatorCreationException, NoSuchAlgorithmException, InvalidKeySpecException,
             NoSuchProviderException, SignatureException, ObjectNotFoundException, CertificateException, ApprovalException, IOException,
@@ -233,10 +214,11 @@ public class CertificateRequestThrowAwayTest extends CaTestCase {
         EndEntityInformation userData = getNewUserData(certificateProfileId);
         Certificate certificate = doPkcs10Request(userData, raw);
         assertNotNull("No certificate returned from PKCS#10 request.", certificate);
-        assertEquals("UserData was or wasn't available in database.", useUserStorage, userDataExists(userData));
-        assertEquals("Certificate Request History was or wasn't available in database.", useCertReqHistory,
+        assertEquals("UserData " + (useUserStorage ? "wasn't" : "was") + " available in database.", useUserStorage, userDataExists(userData));
+        assertEquals("Certificate Request History " + (useCertReqHistory ? "wasn't" : " was") + " available in database.", useCertReqHistory,
                 certificateRequestHistoryExists(certificate));
-        assertEquals("Certificate was or wasn't available in database.", useCertificateStorage, certificateExists(certificate));
+        assertEquals("Certificate " + (useCertificateStorage && certificateProfile.getUseCertificateStorage() ? "wasn't" : "was")
+                + " available in database.", useCertificateStorage && certificateProfile.getUseCertificateStorage(), certificateExists(certificate));
 
         // Clean up what we can
         if (useUserStorage) {
