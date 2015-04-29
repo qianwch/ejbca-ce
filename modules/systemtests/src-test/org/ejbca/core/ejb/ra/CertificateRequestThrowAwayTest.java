@@ -29,6 +29,7 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateParsingException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Arrays;
 import java.util.Random;
 
 import javax.ejb.CreateException;
@@ -47,10 +48,13 @@ import org.cesecore.certificates.ca.CAInfo;
 import org.cesecore.certificates.ca.CaSessionRemote;
 import org.cesecore.certificates.certificate.CertificateConstants;
 import org.cesecore.certificates.certificate.CertificateStoreSessionRemote;
+import org.cesecore.certificates.certificate.InternalCertificateStoreSessionRemote;
 import org.cesecore.certificates.certificate.certextensions.CertificateExtensionException;
 import org.cesecore.certificates.certificate.request.PKCS10RequestMessage;
 import org.cesecore.certificates.certificate.request.X509ResponseMessage;
+import org.cesecore.certificates.certificateprofile.CertificateProfile;
 import org.cesecore.certificates.certificateprofile.CertificateProfileConstants;
+import org.cesecore.certificates.certificateprofile.CertificateProfileSessionRemote;
 import org.cesecore.certificates.endentity.EndEntityConstants;
 import org.cesecore.certificates.endentity.EndEntityInformation;
 import org.cesecore.certificates.endentity.EndEntityType;
@@ -66,9 +70,12 @@ import org.ejbca.core.EjbcaException;
 import org.ejbca.core.ejb.ca.CaTestCase;
 import org.ejbca.core.ejb.ca.caadmin.CAAdminSessionRemote;
 import org.ejbca.core.ejb.ca.store.CertReqHistoryProxySessionRemote;
+import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileSessionRemote;
 import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.approval.ApprovalException;
 import org.ejbca.core.model.ra.NotFoundException;
+import org.ejbca.core.model.ra.raadmin.EndEntityProfile;
+import org.ejbca.core.model.ra.raadmin.EndEntityProfileNotFoundException;
 import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
 import org.junit.After;
 import org.junit.Before;
@@ -101,11 +108,18 @@ public class CertificateRequestThrowAwayTest extends CaTestCase {
 
     private CAAdminSessionRemote caAdminSession = EjbRemoteHelper.INSTANCE.getRemoteSession(CAAdminSessionRemote.class);
     private CaSessionRemote caSession = EjbRemoteHelper.INSTANCE.getRemoteSession(CaSessionRemote.class);
-    private CertificateRequestSessionRemote certificateRequestSession = EjbRemoteHelper.INSTANCE.getRemoteSession(CertificateRequestSessionRemote.class);
+    private CertificateProfileSessionRemote certificateProfileSession = EjbRemoteHelper.INSTANCE
+            .getRemoteSession(CertificateProfileSessionRemote.class);
+    private CertificateRequestSessionRemote certificateRequestSession = EjbRemoteHelper.INSTANCE
+            .getRemoteSession(CertificateRequestSessionRemote.class);
     private CertificateStoreSessionRemote certificateStoreSession = EjbRemoteHelper.INSTANCE.getRemoteSession(CertificateStoreSessionRemote.class);
-    private CertReqHistoryProxySessionRemote certReqHistoryProxySession = EjbRemoteHelper.INSTANCE
-            .getRemoteSession(CertReqHistoryProxySessionRemote.class, EjbRemoteHelper.MODULE_TEST);
-    private EndEntityManagementSessionRemote endEntityManagementSession = EjbRemoteHelper.INSTANCE.getRemoteSession(EndEntityManagementSessionRemote.class);
+    private CertReqHistoryProxySessionRemote certReqHistoryProxySession = EjbRemoteHelper.INSTANCE.getRemoteSession(
+            CertReqHistoryProxySessionRemote.class, EjbRemoteHelper.MODULE_TEST);
+    private EndEntityManagementSessionRemote endEntityManagementSession = EjbRemoteHelper.INSTANCE
+            .getRemoteSession(EndEntityManagementSessionRemote.class);
+    private EndEntityProfileSessionRemote endEntityProfileSession = EjbRemoteHelper.INSTANCE.getRemoteSession(EndEntityProfileSessionRemote.class);
+    private InternalCertificateStoreSessionRemote internalCertificateStoreSession = EjbRemoteHelper.INSTANCE.getRemoteSession(
+            InternalCertificateStoreSessionRemote.class, EjbRemoteHelper.MODULE_TEST);
 
     @BeforeClass
     public static void setupBeforeClass() throws Exception {
@@ -121,24 +135,64 @@ public class CertificateRequestThrowAwayTest extends CaTestCase {
 
     @Test
     public void testCAConfigurationsWithIRequestMessage() throws Exception {
-        LOG.trace(">testCAConfigurationsWithIRequestMessage");
-        // Run through all possible configurations of what to store in the database
-        for (int i = 0; i <= 7; i++) {
-            generateCertificatePkcs10((i & 1) > 0, (i & 2) > 0, (i & 4) > 0, false);
+        CertificateProfile profile = new CertificateProfile(CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER);
+        profile.setUseCertificateStorage(true);
+        int certificateProfileId = certificateProfileSession.addCertificateProfile(admin, TESTCA_NAME, profile);
+        EndEntityProfile endEntityProfile = new EndEntityProfile();
+        endEntityProfile.setAvailableCertificateProfileIds(Arrays.asList(certificateProfileId));
+        endEntityProfile.setAvailableCAs(Arrays.asList(CaTestCase.getTestCAId(TESTCA_NAME)));
+        endEntityProfileSession.addEndEntityProfile(admin, TESTCA_NAME, endEntityProfile);
+        try {
+            assertCAConfig(false, true, true);
+            // Run through all possible configurations of what to store in the database
+            for (int i = 0; i <= 7; i++) {
+                generateCertificatePkcs10(certificateProfileId, (i & 1) > 0, (i & 2) > 0, (i & 4) > 0, false);
+            }
+        } finally {
+            certificateProfileSession.removeCertificateProfile(admin, TESTCA_NAME);
+            endEntityProfileSession.removeEndEntityProfile(admin, TESTCA_NAME);
         }
-        LOG.trace("<testCAConfigurationsWithIRequestMessage");
     }
 
     @Test
     public void testCAConfigurationsWithStringRequest() throws Exception {
-        LOG.trace(">testCAConfigurationsWithStringRequest");
-        // Run through all possible configurations of what to store in the database
-        for (int i = 0; i <= 7; i++) {
-            generateCertificatePkcs10((i & 1) > 0, (i & 2) > 0, (i & 4) > 0, true);
+        CertificateProfile profile = new CertificateProfile(CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER);
+        profile.setUseCertificateStorage(true);
+        int certificateProfileId = certificateProfileSession.addCertificateProfile(admin, TESTCA_NAME, profile);
+        EndEntityProfile endEntityProfile = new EndEntityProfile();
+        endEntityProfile.setAvailableCertificateProfileIds(Arrays.asList(certificateProfileId));
+        endEntityProfile.setAvailableCAs(Arrays.asList(CaTestCase.getTestCAId(TESTCA_NAME)));
+        endEntityProfileSession.addEndEntityProfile(admin, TESTCA_NAME, endEntityProfile);
+        try {
+            assertCAConfig(false, true, true);
+            // Run through all possible configurations of what to store in the database
+            for (int i = 0; i <= 7; i++) {
+                generateCertificatePkcs10(certificateProfileId, (i & 1) > 0, (i & 2) > 0, (i & 4) > 0, true);
+            }
+        } finally {
+            certificateProfileSession.removeCertificateProfile(admin, TESTCA_NAME);
+            endEntityProfileSession.removeEndEntityProfile(admin, TESTCA_NAME);
         }
-        LOG.trace("<testCAConfigurationsWithStringRequest");
     }
 
+    @Test
+    public void testCertificateProfileConfiguration() throws Exception {
+        CertificateProfile profile = new CertificateProfile(CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER);
+        profile.setUseCertificateStorage(false);
+        int certificateProfileId = certificateProfileSession.addCertificateProfile(admin, TESTCA_NAME, profile);
+        EndEntityProfile endEntityProfile = new EndEntityProfile();
+        endEntityProfile.setAvailableCertificateProfileIds(Arrays.asList(certificateProfileId));
+        endEntityProfile.setAvailableCAs(Arrays.asList(CaTestCase.getTestCAId(TESTCA_NAME)));
+        endEntityProfileSession.addEndEntityProfile(admin, TESTCA_NAME, endEntityProfile);
+        try {
+            assertCAConfig(false, true, true);
+            generateCertificatePkcs10(certificateProfileId, false, true, true, true);
+        } finally {
+            certificateProfileSession.removeCertificateProfile(admin, TESTCA_NAME);
+            endEntityProfileSession.removeEndEntityProfile(admin, TESTCA_NAME);
+        }
+    }
+    
     @After
     public void tearDown() throws Exception {
         removeTestCA(TESTCA_NAME);
@@ -167,27 +221,32 @@ public class CertificateRequestThrowAwayTest extends CaTestCase {
      * @throws OperatorCreationException 
      * @throws RemoveException 
      */
-    private void generateCertificatePkcs10(boolean useCertReqHistory, boolean useUserStorage, boolean useCertificateStorage, boolean raw)
-            throws AuthorizationDeniedException, InvalidKeyException, CertificateEncodingException, NoSuchAlgorithmException,
-            NoSuchProviderException, InvalidAlgorithmParameterException, SignatureException, CertificateException, InvalidKeySpecException,
-            ObjectNotFoundException, OperatorCreationException, UserDoesntFullfillEndEntityProfile, EjbcaException, IOException, CreateException,
-            CesecoreException, CertificateExtensionException, RemoveException {
+    private void generateCertificatePkcs10(int certificateProfileId, boolean useCertReqHistory, boolean useUserStorage,
+            boolean useCertificateStorage, boolean raw) throws AuthorizationDeniedException, RemoveException, CertificateParsingException,
+            InvalidKeyException, InvalidAlgorithmParameterException, OperatorCreationException, NoSuchAlgorithmException, InvalidKeySpecException,
+            NoSuchProviderException, SignatureException, ObjectNotFoundException, CertificateException, ApprovalException, IOException,
+            CreateException, UserDoesntFullfillEndEntityProfile, EjbcaException, CesecoreException, CertificateExtensionException,
+            EndEntityProfileNotFoundException {
         LOG.trace(">generateCertificatePkcs10");
         LOG.info("useCertReqHistory=" + useCertReqHistory + " useUserStorage=" + useUserStorage + " useCertificateStorage=" + useCertificateStorage);
         reconfigureCA(useCertReqHistory, useUserStorage, useCertificateStorage);
-        EndEntityInformation userData = getNewUserData();
+        EndEntityInformation userData = getNewUserData(certificateProfileId);
         Certificate certificate = doPkcs10Request(userData, raw);
         assertNotNull("No certificate returned from PKCS#10 request.", certificate);
         assertEquals("UserData was or wasn't available in database.", useUserStorage, userDataExists(userData));
         assertEquals("Certificate Request History was or wasn't available in database.", useCertReqHistory,
                 certificateRequestHistoryExists(certificate));
         assertEquals("Certificate was or wasn't available in database.", useCertificateStorage, certificateExists(certificate));
+
         // Clean up what we can
         if (useUserStorage) {
             endEntityManagementSession.deleteUser(admin, userData.getUsername());
         }
         if (useCertReqHistory) {
             certReqHistoryProxySession.removeCertReqHistoryData(CertTools.getFingerprintAsString(certificate));
+        }
+        if (certificate != null) {
+            internalCertificateStoreSession.removeCertificate(certificate);
         }
         LOG.trace("<generateCertificatePkcs10");
     }
@@ -224,11 +283,12 @@ public class CertificateRequestThrowAwayTest extends CaTestCase {
         assertCAConfig(useCertReqHistory, useUserStorage, useCertificateStorage);
     }
 
-    private EndEntityInformation getNewUserData() {
+    private EndEntityInformation getNewUserData(int certificateProfileId) throws EndEntityProfileNotFoundException {
         String username = "throwAwayTest-" + random.nextInt();
         String password = "foo123";
-        EndEntityInformation userData = new EndEntityInformation(username, "CN=" + username, super.getTestCAId(TESTCA_NAME), null, null,
-                EndEntityConstants.STATUS_NEW, new EndEntityType(EndEntityTypes.ENDUSER), SecConst.EMPTY_ENDENTITYPROFILE, CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER, null, null,
+        int endEntityProfileId = endEntityProfileSession.getEndEntityProfileId(TESTCA_NAME);
+        EndEntityInformation userData = new EndEntityInformation(username, "CN=" + username, CaTestCase.getTestCAId(TESTCA_NAME), null, null,
+                EndEntityConstants.STATUS_NEW, new EndEntityType(EndEntityTypes.ENDUSER), endEntityProfileId, certificateProfileId, null, null,
                 SecConst.TOKEN_SOFT_BROWSERGEN, 0, null);
         userData.setPassword(password);
         return userData;
@@ -238,31 +298,20 @@ public class CertificateRequestThrowAwayTest extends CaTestCase {
      * Generate a new keypair and PKCS#10 request and request a new certificate in a single transaction.
      * 
      * @param raw true if an encoded request should be sent, false if an EJBCA PKCS10RequestMessage should be used.
-     * @throws InvalidAlgorithmParameterException 
-     * @throws CesecoreException
-     * @throws CADoesntExistsException
-     * @throws OperatorCreationException 
-     * @throws EjbcaException 
-     * @throws UserDoesntFullfillEndEntityProfile 
-     * @throws CreateException 
-     * @throws AuthorizationDeniedException 
-     * @throws ApprovalException 
-     * @throws CertificateException 
-     * @throws ObjectNotFoundException 
-     * @throws SignatureException 
-     * @throws NoSuchProviderException 
-     * @throws InvalidKeySpecException 
-     * @throws NoSuchAlgorithmException 
-     * @throws NotFoundException 
-     * @throws InvalidKeyException 
-     * @throws CertificateParsingException 
-     * @throws CertificateExtensionException 
      */
-    private Certificate doPkcs10Request(EndEntityInformation userData, boolean raw) throws InvalidAlgorithmParameterException, OperatorCreationException, IOException, CertificateParsingException, InvalidKeyException, CADoesntExistsException, NotFoundException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException, SignatureException, ObjectNotFoundException, CertificateException, ApprovalException, AuthorizationDeniedException, CreateException, UserDoesntFullfillEndEntityProfile, EjbcaException, CesecoreException, CertificateExtensionException {
+    private Certificate doPkcs10Request(EndEntityInformation userData, boolean raw) throws InvalidAlgorithmParameterException,
+            OperatorCreationException, IOException, CertificateParsingException, InvalidKeyException, CADoesntExistsException, NotFoundException,
+            NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException, SignatureException, ObjectNotFoundException,
+            CertificateException, ApprovalException, AuthorizationDeniedException, CreateException, UserDoesntFullfillEndEntityProfile,
+            EjbcaException, CesecoreException, CertificateExtensionException {
         Certificate ret;
         KeyPair rsakeys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA); // Use short keys, since this will be done many times
-        byte[] rawPkcs10req = CertTools.genPKCS10CertificationRequest("SHA256WithRSA", CertTools.stringToBcX500Name("CN=ignored"), rsakeys.getPublic(),
-                new DERSet(), rsakeys.getPrivate(), null).toASN1Structure().getEncoded();
+
+        // PrivateKey signingKey = cryptoTokenManagementProxySession.getPrivateKey(caSession.getCAInfo(admin, TESTCA_NAME).getCAToken().getCryptoTokenId(), CAToken.SOFTPRIVATESIGNKEYALIAS);
+
+        byte[] rawPkcs10req = CertTools
+                .genPKCS10CertificationRequest("SHA256WithRSA", CertTools.stringToBcX500Name("CN=ignored"), rsakeys.getPublic(), new DERSet(),
+                        rsakeys.getPrivate(), null).toASN1Structure().getEncoded();
         if (raw) {
             ret = CertTools.getCertfromByteArray(certificateRequestSession.processCertReq(admin, userData, new String(Base64.encode(rawPkcs10req)),
                     CertificateConstants.CERT_REQ_TYPE_PKCS10, null, CertificateConstants.CERT_RES_TYPE_CERTIFICATE));
@@ -288,8 +337,8 @@ public class CertificateRequestThrowAwayTest extends CaTestCase {
     private boolean certificateExists(Certificate certificate) {
         return certificateStoreSession.getCertificateInfo(CertTools.getFingerprintAsString(certificate)) != null;
     }
-    
+
     public String getRoleName() {
-        return this.getClass().getSimpleName(); 
+        return this.getClass().getSimpleName();
     }
 }
