@@ -12,7 +12,6 @@
  *************************************************************************/
 package org.cesecore.certificates.certificate;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -37,9 +36,7 @@ import javax.ejb.TransactionAttributeType;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
-import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.DERBitString;
-import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.asn1.x509.Extensions;
 import org.bouncycastle.asn1.x509.KeyUsage;
 import org.bouncycastle.operator.OperatorCreationException;
@@ -369,7 +366,7 @@ public class CertificateCreateSessionBean implements CertificateCreateSessionLoc
                 serialNo = CertTools.getSerialNumberAsString(cert);
                 cafingerprint = CertTools.getFingerprintAsString(cacert);
                 // Store certificate in the database, if this CA is configured to do so.
-                if (!ca.isUseCertificateStorage()) {
+                if (!ca.isUseCertificateStorage() || !certProfile.getUseCertificateStorage()) {
                     break; // We have our cert and we don't need to store it.. Move on..
                 }
                 try {
@@ -412,7 +409,7 @@ public class CertificateCreateSessionBean implements CertificateCreateSessionLoc
             	if (revreason != RevokedCertInfo.NOT_REVOKED) {
                     // If we don't store the certificate in the database, we wont support revocation/reactivation so issuing revoked certificates would be
                     // really strange.
-                    if (ca.isUseCertificateStorage()) {
+                    if (ca.isUseCertificateStorage() && certProfile.getUseCertificateStorage()) {
                         certificateStoreSession.setRevokeStatusNoAuth(admin, cert, new Date(), revreason, endEntityInformation.getDN());
                     } else {
                         log.warn("CA configured to revoke issued certificates directly, but not to store issued the certificates. Revocation will be ignored. Please verify your configuration.");

@@ -25,7 +25,6 @@ import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
 import java.security.SignatureException;
 import java.security.cert.Certificate;
-import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateParsingException;
 import java.security.spec.InvalidKeySpecException;
@@ -66,6 +65,7 @@ import org.cesecore.util.Base64;
 import org.cesecore.util.CertTools;
 import org.cesecore.util.CryptoProviderTools;
 import org.cesecore.util.EjbRemoteHelper;
+import org.cesecore.util.TraceLogMethodsRule;
 import org.ejbca.core.EjbcaException;
 import org.ejbca.core.ejb.ca.CaTestCase;
 import org.ejbca.core.ejb.ca.caadmin.CAAdminSessionRemote;
@@ -80,7 +80,9 @@ import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
 
 /**
  * Test the combined function for editing and requesting a keystore/certificate in a single transaction.
@@ -98,10 +100,11 @@ import org.junit.Test;
  * 
  * @version $Id$
  */
-public class CertificateRequestThrowAwayTest extends CaTestCase {
+public class CertificateRequestThrowAwayTest {
 
     private static final Logger LOG = Logger.getLogger(CertificateRequestThrowAwayTest.class);
-    private static final AuthenticationToken admin = new TestAlwaysAllowLocalAuthenticationToken(new UsernamePrincipal("CertificateRequestThrowAwayTest"));
+    private static final AuthenticationToken admin = new TestAlwaysAllowLocalAuthenticationToken(new UsernamePrincipal(
+            "CertificateRequestThrowAwayTest"));
     private static final Random random = new SecureRandom();
 
     private static final String TESTCA_NAME = "ThrowAwayTestCA";
@@ -121,18 +124,21 @@ public class CertificateRequestThrowAwayTest extends CaTestCase {
     private InternalCertificateStoreSessionRemote internalCertificateStoreSession = EjbRemoteHelper.INSTANCE.getRemoteSession(
             InternalCertificateStoreSessionRemote.class, EjbRemoteHelper.MODULE_TEST);
 
+
+
+    @Rule
+    public TestRule traceLogMethodsRule = new TraceLogMethodsRule();
+
     @BeforeClass
     public static void setupBeforeClass() throws Exception {
         CryptoProviderTools.installBCProviderIfNotAvailable();
     }
-    
+
     @Before
     public void setUp() throws Exception {
-        super.setUp();
-        createTestCA(TESTCA_NAME); // Create test CA
-        assertCAConfig(false, true, true);
+        CaTestCase.createTestCA(TESTCA_NAME);
     }
-
+    
     @Test
     public void testCAConfigurationsWithIRequestMessage() throws Exception {
         CertificateProfile profile = new CertificateProfile(CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER);
@@ -192,15 +198,15 @@ public class CertificateRequestThrowAwayTest extends CaTestCase {
             endEntityProfileSession.removeEndEntityProfile(admin, TESTCA_NAME);
         }
     }
-    
+
     @After
     public void tearDown() throws Exception {
-        removeTestCA(TESTCA_NAME);
-        super.tearDown();
+        CaTestCase.removeTestCA(TESTCA_NAME);
     }
 
     /**
      * Reconfigure CA, process a certificate request and assert that the right things were stored in the database.
+     * @throws EndEntityProfileNotFoundException 
      */
     private void generateCertificatePkcs10(int certificateProfileId, CertificateProfile certificateProfile, boolean useCertReqHistory, boolean useUserStorage,
             boolean useCertificateStorage, boolean raw) throws AuthorizationDeniedException, RemoveException, CertificateParsingException,
@@ -288,9 +294,6 @@ public class CertificateRequestThrowAwayTest extends CaTestCase {
             EjbcaException, CesecoreException, CertificateExtensionException {
         Certificate ret;
         KeyPair rsakeys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA); // Use short keys, since this will be done many times
-
-        // PrivateKey signingKey = cryptoTokenManagementProxySession.getPrivateKey(caSession.getCAInfo(admin, TESTCA_NAME).getCAToken().getCryptoTokenId(), CAToken.SOFTPRIVATESIGNKEYALIAS);
-
         byte[] rawPkcs10req = CertTools
                 .genPKCS10CertificationRequest("SHA256WithRSA", CertTools.stringToBcX500Name("CN=ignored"), rsakeys.getPublic(), new DERSet(),
                         rsakeys.getPrivate(), null).toASN1Structure().getEncoded();
