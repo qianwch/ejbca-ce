@@ -143,6 +143,8 @@ public class RequestInstance {
 		this.endEntityManagementSession = endEntityManagementSession;
 		this.endEntityAccessSession = endEntityAccessSession;
 		this.globalConfigurationSession = globalConfigurationSession;
+		this.certificateStoreSession = certificateStoreSession;
+
 	}
 
 	/**************************************************************
