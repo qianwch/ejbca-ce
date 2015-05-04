@@ -80,6 +80,7 @@ public class ErrorCode implements Serializable {
     private static final String _CERTIFICATE_IMPORT = "CERTIFICATE_IMPORT"; // Failure during import of a certificate
     private static final String _NAMECONSTRAINT_VIOLATION = "NAMECONSTRAINT_VIOLATION"; // End-entity does not satisfy name constraints of CA
     private static final String _UNKNOWN_PROFILE_TYPE = "UNKNOWN_PROFILE_TYPE"; // The profile type is neither end entity profile nor certificate profile
+    private static final String _BAD_REQUEST_SIGNATURE = "BAD_REQUEST_SIGNATURE"; // Failure to verify request signature.
 
     /** Default constructor. */
     private ErrorCode() {}
@@ -174,7 +175,8 @@ public class ErrorCode implements Serializable {
     public static final ErrorCode CERTIFICATE_IMPORT = new ErrorCode(_CERTIFICATE_IMPORT);
     public static final ErrorCode NAMECONSTRAINT_VIOLATION = new ErrorCode(_NAMECONSTRAINT_VIOLATION);
     public static final ErrorCode UNKNOWN_PROFILE_TYPE = new ErrorCode(_UNKNOWN_PROFILE_TYPE);
-
+    /** Failure to verify request signature. */
+    public static final ErrorCode BAD_REQUEST_SIGNATURE = new ErrorCode(_BAD_REQUEST_SIGNATURE);
 
     /** Get the internal error code. */
     public String getInternalErrorCode() {
