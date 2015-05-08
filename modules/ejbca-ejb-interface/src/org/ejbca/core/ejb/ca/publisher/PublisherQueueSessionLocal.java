@@ -14,11 +14,13 @@ package org.ejbca.core.ejb.ca.publisher;
 
 import java.security.cert.Certificate;
 import java.util.Collection;
+import java.util.List;
 
 import javax.ejb.CreateException;
 import javax.ejb.Local;
 
 import org.cesecore.authentication.tokens.AuthenticationToken;
+import org.cesecore.certificates.certificate.CertificateDataWrapper;
 import org.cesecore.certificates.endentity.ExtendedInformation;
 import org.ejbca.core.model.ca.publisher.BasePublisher;
 import org.ejbca.core.model.ca.publisher.PublisherException;
@@ -112,12 +114,21 @@ public interface PublisherQueueSessionLocal {
 
     
     /** Publishers do not run a part of regular transactions and expect to run in auto-commit mode. */
-	public boolean storeCertificateNonTransactional(BasePublisher publisher, AuthenticationToken admin, Certificate cert, String username, String password, String userDN,
-    		String cafp, int status, int type, long revocationDate, int revocationReason, String tag, int certificateProfileId,
-    		long lastUpdate, ExtendedInformation extendedinformation) throws PublisherException;
+    boolean storeCertificateNonTransactional(BasePublisher publisher, AuthenticationToken admin, CertificateDataWrapper cert,
+            String password, String userDN, ExtendedInformation extendedinformation) throws PublisherException;
 
     /** Publishers do not run a part of regular transactions and expect to run in auto-commit mode. */
 	public boolean storeCRLNonTransactional(BasePublisher publisher, AuthenticationToken admin, byte[] incrl, String cafp, int number, String userDN) throws PublisherException;
+
+    /**
+     * Publishers do not run as part of regular transactions and expect to run in auto-commit mode.
+     * This method is invoked locally to publish to multiple publishers in parallel.
+     * 
+     * The implementing method returns the result in the same order as the publishers are provided.
+     * Each result Object is either a PublisherException (if the publishing failed) or a Boolean.TRUE (if the publishing succeeded).
+     */
+    List<Object> storeCertificateNonTransactionalInternal(List<BasePublisher> publishers, AuthenticationToken admin, CertificateDataWrapper certWrapper,
+            String password, String userDN, ExtendedInformation extendedinformation);
 
     /** Publishers digest queues in transaction-based "chunks". */
 	int doChunk(AuthenticationToken admin, int publisherId, BasePublisher publisher);

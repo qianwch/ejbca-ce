@@ -14,12 +14,13 @@
 package org.ejbca.core.ejb.ca.publisher;
 
 import java.io.UnsupportedEncodingException;
-import java.security.cert.Certificate;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -39,7 +40,9 @@ import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.authorization.control.AccessControlSessionLocal;
 import org.cesecore.authorization.control.StandardRules;
-import org.cesecore.certificates.certificate.CertificateConstants;
+import org.cesecore.certificates.certificate.CertificateData;
+import org.cesecore.certificates.certificate.CertificateDataWrapper;
+import org.cesecore.certificates.certificate.CertificateStoreSessionLocal;
 import org.cesecore.certificates.endentity.ExtendedInformation;
 import org.cesecore.jndi.JndiConstants;
 import org.cesecore.util.Base64GetHashMap;
@@ -83,6 +86,8 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
     @EJB
     private AccessControlSessionLocal authorizationSession;
     @EJB
+    private CertificateStoreSessionLocal certificateStoreSession;
+    @EJB
     private PublisherQueueSessionLocal publisherQueueSession;
     @EJB
     private SecurityEventsLoggerSessionLocal auditSession;
@@ -97,87 +102,43 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
     }
 
     @Override
-    public boolean storeCertificate(AuthenticationToken admin, Collection<Integer> publisherids, Certificate incert, String username, String password, String userDN, String cafp,
-            int status, int type, long revocationDate, int revocationReason, String tag, int certificateProfileId, long lastUpdate,
-            ExtendedInformation extendedinformation) throws AuthorizationDeniedException {
-        int caid = CertTools.getIssuerDN(incert).hashCode();
+    public boolean storeCertificate(AuthenticationToken admin, Collection<Integer> publisherids, CertificateDataWrapper certWrapper,
+            String password, String userDN, ExtendedInformation extendedinformation) throws AuthorizationDeniedException {
+        final CertificateData certificateData = certWrapper.getCertificateData();
+        final int caid = certificateData.getIssuerDN().hashCode();
         if (!authorizationSession.isAuthorized(admin, StandardRules.CAACCESS.resource() + caid)) {
             final String msg = intres.getLocalizedMessage("caadmin.notauthorizedtoca", admin.toString(), caid);
             throw new AuthorizationDeniedException(msg);
         }
-        
-        
         if (publisherids == null) {
-    		return true;
-    	}
-        String certSerno = CertTools.getSerialNumberAsString(incert);
+            return true;
+        }
+        final int status = certificateData.getStatus();
+        final int revocationReason = certificateData.getRevocationReason();
+        final String username = certificateData.getUsername();
         boolean returnval = true;
-        for (Integer id : publisherids) {
-            int publishStatus = PublisherConst.STATUS_PENDING;
+        final List<BasePublisher> publishersToTryDirect = new ArrayList<BasePublisher>();
+        final List<BasePublisher> publishersToQueuePending = new ArrayList<BasePublisher>();
+        final List<BasePublisher> publishersToQueueSuccess = new ArrayList<BasePublisher>();
+        for (final Integer id : publisherids) {
             BasePublisher publ = getPublisherInternal(id, null, true);
             if (publ != null) {
                 // If the publisher will not publish the certificate, break out directly and do not call the publisher or queue the certificate
                 if (publ.willPublishCertificate(status, revocationReason)) {
-                    final String name = getPublisherName(id);
-                    String fingerprint = CertTools.getFingerprintAsString(incert);
-                    // If it should be published directly
-                    if (!publ.getOnlyUseQueue()) {
-                        try {
-                            try {
-                                if (publisherQueueSession.storeCertificateNonTransactional(publ, admin, incert, username, password, userDN, cafp, status, type, revocationDate, revocationReason,
-                                        tag, certificateProfileId, lastUpdate, extendedinformation)) {
-                                    publishStatus = PublisherConst.STATUS_SUCCESS;
-                                } else {
-                                    throw new PublisherException("Return code from publisher is false.");
-                                }
-                            } catch (EJBException e) {
-                                final Throwable t = e.getCause();
-                                if (t instanceof PublisherException) {
-                                    throw (PublisherException)t;
-                                } else {
-                                    throw e;
-                                }
-                            }
-                            final String msg = intres.getLocalizedMessage("publisher.store", CertTools.getSubjectDN(incert), name);
-                            final Map<String, Object> details = new LinkedHashMap<String, Object>();
-                            details.put("msg", msg);
-                            auditSession.log(EjbcaEventTypes.PUBLISHER_STORE_CERTIFICATE, EventStatus.SUCCESS, EjbcaModuleTypes.PUBLISHER, EjbcaServiceTypes.EJBCA, admin.toString(), null, username, certSerno, details);
-                        } catch (PublisherException pe) {
-                            final String msg = intres.getLocalizedMessage("publisher.errorstore", name, fingerprint);
-                            final Map<String, Object> details = new LinkedHashMap<String, Object>();
-                            details.put("msg", msg);
-                            details.put("error", pe.getMessage());
-                            auditSession.log(EjbcaEventTypes.PUBLISHER_STORE_CERTIFICATE, EventStatus.FAILURE, EjbcaModuleTypes.PUBLISHER, EjbcaServiceTypes.EJBCA, admin.toString(), null, username, certSerno, details);
+                    if (publ.getOnlyUseQueue()) {
+                        if (publ.getUseQueueForCertificates()) {
+                            publishersToQueuePending.add(publ);
+                            // Publishing to the queue directly is not considered a successful write to the publisher (since we don't know that it will be)
+                            returnval = false;
+                        } else {
+                            // NOOP: This publisher is configured to only write to the queue, but not for certificates
                         }
-                    }
-                    if (publishStatus != PublisherConst.STATUS_SUCCESS) {
-                        returnval = false;
-                    }
-                    if (log.isDebugEnabled()) {
-                        log.debug("KeepPublishedInQueue: " + publ.getKeepPublishedInQueue());
-                        log.debug("UseQueueForCertificates: " + publ.getUseQueueForCertificates());
-                    }
-                    if ((publishStatus != PublisherConst.STATUS_SUCCESS || publ.getKeepPublishedInQueue())
-                            && publ.getUseQueueForCertificates()) {
-                        // Write to the publisher queue either for audit reasons or to be able try again
-                        PublisherQueueVolatileInformation pqvd = new PublisherQueueVolatileInformation();
-                        pqvd.setUsername(username);
-                        pqvd.setPassword(password);
-                        pqvd.setExtendedInformation(extendedinformation);
-                        pqvd.setUserDN(userDN);
-                        String fp = CertTools.getFingerprintAsString(incert);
-                        try {
-                            publisherQueueSession.addQueueData(id.intValue(), PublisherConst.PUBLISH_TYPE_CERT, fp, pqvd, publishStatus);
-                            final String msg = intres.getLocalizedMessage("publisher.storequeue", name, fp, status);
-                            log.info(msg);
-                        } catch (CreateException e) {
-                            final String msg = intres.getLocalizedMessage("publisher.errorstorequeue", name, fp, status);
-                            log.info(msg, e);
-                        }
+                    } else {
+                        publishersToTryDirect.add(publ);
                     }
                 } else {
                     if (log.isDebugEnabled()) {
-                        log.debug("Not storing or queuing certificate for Publisher with id "+id+" because publisher will not publish it.");
+                        log.debug("Not storing or queuing certificate for Publisher with id " + id + " because publisher will not publish it.");
                     }
                 }
             } else {
@@ -186,15 +147,73 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
                 returnval = false;
             }
         }
+        final String fingerprint = certificateData.getFingerprint();
+        final List<Object> publisherResults = publisherQueueSession.storeCertificateNonTransactionalInternal(publishersToTryDirect, admin,
+                certWrapper, password, userDN, extendedinformation);
+        final String certSerno = certificateData.getSerialNumber();
+        for (int i = 0; i < publishersToTryDirect.size(); i++) {
+            final Object publisherResult = publisherResults.get(i);
+            final BasePublisher publ = publishersToTryDirect.get(i);
+            final int id = publ.getPublisherId();
+            final String name = getPublisherName(id);
+            if (!(publisherResult instanceof PublisherException)) {
+                final String msg = intres.getLocalizedMessage("publisher.store", certificateData.getSubjectDN(), name);
+                final Map<String, Object> details = new LinkedHashMap<String, Object>();
+                details.put("msg", msg);
+                auditSession.log(EjbcaEventTypes.PUBLISHER_STORE_CERTIFICATE, EventStatus.SUCCESS, EjbcaModuleTypes.PUBLISHER,
+                        EjbcaServiceTypes.EJBCA, admin.toString(), null, username, certSerno, details);
+                if (publ.getKeepPublishedInQueue() && publ.getUseQueueForCertificates()) {
+                    publishersToQueueSuccess.add(publ);
+                }
+            } else {
+                final String msg = intres.getLocalizedMessage("publisher.errorstore", name, fingerprint);
+                final Map<String, Object> details = new LinkedHashMap<String, Object>();
+                details.put("msg", msg);
+                details.put("error", ((PublisherException) publisherResult).getMessage());
+                auditSession.log(EjbcaEventTypes.PUBLISHER_STORE_CERTIFICATE, EventStatus.FAILURE, EjbcaModuleTypes.PUBLISHER,
+                        EjbcaServiceTypes.EJBCA, admin.toString(), null, username, certSerno, details);
+                if (publ.getUseQueueForCertificates()) {
+                    publishersToQueuePending.add(publ);
+                }
+                returnval = false;
+            }
+        }
+        addQueueData(publishersToQueueSuccess, username, password, extendedinformation, userDN, fingerprint, status, PublisherConst.STATUS_SUCCESS);
+        addQueueData(publishersToQueuePending, username, password, extendedinformation, userDN, fingerprint, status, PublisherConst.STATUS_PENDING);
         return returnval;
     }
 
     @Override
-    public void revokeCertificate(AuthenticationToken admin, Collection<Integer> publisherids, Certificate cert, String username, String userDN,
-            String cafp, int type, int reason, long revocationDate, String tag, int certificateProfileId, long lastUpdate)
-            throws AuthorizationDeniedException {
-        storeCertificate(admin, publisherids, cert, username, null, userDN, cafp, CertificateConstants.CERT_REVOKED, type, revocationDate, reason,
-                tag, certificateProfileId, lastUpdate, null);
+    public boolean storeCertificate(AuthenticationToken admin, Collection<Integer> publisherids, String fingerprint,
+            String password, String userDN, ExtendedInformation extendedinformation) throws AuthorizationDeniedException {
+        final CertificateDataWrapper certificateDataWrapper = certificateStoreSession.getCertificateData(fingerprint);
+        return storeCertificate(admin, publisherids, certificateDataWrapper, password, userDN, extendedinformation);
+    }
+
+    private void addQueueData(final List<BasePublisher> publishersToQueue, final String username, final String password,
+            final ExtendedInformation extendedInformation, final String userDN, final String fingerprint, final int status, final int publisherStatus) {
+        for (final BasePublisher publ : publishersToQueue) {
+            final int id = publ.getPublisherId();
+            final String name = getPublisherName(id);
+            if (log.isDebugEnabled()) {
+                log.debug("KeepPublishedInQueue: " + publ.getKeepPublishedInQueue());
+                log.debug("UseQueueForCertificates: " + publ.getUseQueueForCertificates());
+            }
+            // Write to the publisher queue either for audit reasons or to be able try again
+            PublisherQueueVolatileInformation pqvd = new PublisherQueueVolatileInformation();
+            pqvd.setUsername(username);
+            pqvd.setPassword(password);
+            pqvd.setExtendedInformation(extendedInformation);
+            pqvd.setUserDN(userDN);
+            try {
+                publisherQueueSession.addQueueData(id, PublisherConst.PUBLISH_TYPE_CERT, fingerprint, pqvd, publisherStatus);
+                final String msg = intres.getLocalizedMessage("publisher.storequeue", name, fingerprint, status);
+                log.info(msg);
+            } catch (CreateException e) {
+                final String msg = intres.getLocalizedMessage("publisher.errorstorequeue", name, fingerprint, status);
+                log.info(msg, e);
+            }
+        }
     }
 
     @Override

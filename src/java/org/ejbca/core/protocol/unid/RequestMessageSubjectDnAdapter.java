@@ -23,15 +23,12 @@ import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
-import java.util.Collection;
 import java.util.Date;
 
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.Extensions;
 import org.bouncycastle.jce.X509Principal;
-import org.cesecore.certificates.certificate.request.CertificateResponseMessage;
 import org.cesecore.certificates.certificate.request.RequestMessage;
-import org.cesecore.certificates.certificate.request.ResponseMessage;
 import org.cesecore.util.CertTools;
 import org.ejbca.core.protocol.cmp.ICrmfRequestMessage;
 
@@ -167,21 +164,10 @@ class RequestMessageSubjectDnAdapter implements ICrmfRequestMessage {
 	public int getRequestId() {
 		return this.original.getRequestId();
 	}
-	@Override
-	public CertificateResponseMessage createResponseMessage(Class<? extends ResponseMessage> responseClass,
-			RequestMessage req, Collection<Certificate> certs, PrivateKey signPriv,
-			String provider) {
-		return this.original.createResponseMessage(responseClass, req, certs, signPriv, provider);
-	}
 	
     @Override
     public void setResponseKeyInfo(PrivateKey key, String provider) {
         this.original.setResponseKeyInfo(key, provider);
-    }
-
-    @Override
-    public CertificateResponseMessage createResponseMessage(Class<? extends ResponseMessage> responseClass, RequestMessage req, Collection<Certificate> certs) {
-        return this.original.createResponseMessage(responseClass, req, certs);
     }
 
 	@Override

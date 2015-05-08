@@ -42,6 +42,8 @@ import org.cesecore.authorization.user.AccessMatchType;
 import org.cesecore.authorization.user.AccessUserAspectData;
 import org.cesecore.authorization.user.matchvalues.X500PrincipalAccessMatchValue;
 import org.cesecore.certificates.certificate.CertificateConstants;
+import org.cesecore.certificates.certificate.CertificateData;
+import org.cesecore.certificates.certificate.CertificateDataWrapper;
 import org.cesecore.certificates.certificate.CertificateInfo;
 import org.cesecore.certificates.certificate.CertificateStoreSessionRemote;
 import org.cesecore.certificates.certificate.InternalCertificateStoreSessionRemote;
@@ -309,19 +311,19 @@ public class PublisherTest {
 	 */
 	@Test
 	public void test07StoreCertToDummy() throws CertificateException, AuthorizationDeniedException {
-		log.trace(">test07StoreCertToDummy()");
-		final Certificate cert = CertTools.getCertfromByteArray(testcert);
-		final ArrayList<Integer> publishers = new ArrayList<Integer>();
-		publishers.add(Integer.valueOf(this.publisherProxySession.getPublisherId(newName)));
+        log.trace(">test07StoreCertToDummy()");
+        final Certificate cert = CertTools.getCertfromByteArray(testcert);
+        final ArrayList<Integer> publishers = new ArrayList<Integer>();
+        publishers.add(Integer.valueOf(this.publisherProxySession.getPublisherId(newName)));
 
-		final boolean ret = this.publisherSession.storeCertificate(
-				this.admin, publishers, cert, "test05", "foo123", null, null,
-				CertificateConstants.CERT_ACTIVE,
-				CertificateConstants.CERTTYPE_ENDENTITY,
-				-1, RevokedCertInfo.NOT_REVOKED, "foo",
-				CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER, new Date().getTime(), null);
-		assertTrue("Storing certificate to dummy publisher failed", ret);
-		log.trace("<test07StoreCertToDummyr()");
+        final CertificateData cd = new CertificateData(cert, cert.getPublicKey(), "test05", null, CertificateConstants.CERT_ACTIVE, CertificateConstants.CERTTYPE_ENDENTITY,
+                CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER, "foo", System.currentTimeMillis(), true);
+        cd.setRevocationReason(RevokedCertInfo.NOT_REVOKED);
+        cd.setRevocationDate(-1L);
+        final CertificateDataWrapper cdw = new CertificateDataWrapper(cd, null);
+        final boolean ret = publisherSession.storeCertificate(internalAdmin, publishers, cdw, "foo123", CertTools.getSubjectDN(cert), null);
+        assertTrue("Storing certificate to dummy publisher failed", ret);
+        log.trace("<test07StoreCertToDummyr()");
 	}
 
 	/**
@@ -351,89 +353,101 @@ public class PublisherTest {
 	public void test14VAPublisherCustom() throws AuthorizationDeniedException, PublisherConnectionException, CertificateException {
 		log.trace(">test14ExternalOCSPPublisher()");
 
-		final String publisherName = "TESTEXTOCSP";
-		try {
-			CustomPublisherContainer publisher = new CustomPublisherContainer();
-			publisher.setClassPath(ValidationAuthorityPublisher.class.getName());
-			// We use the default EjbcaDS datasource here, because it probably exists during our junit test run
-			final String jndiPrefix = this.configurationSession.getProperty(InternalConfiguration.CONFIG_DATASOURCENAMEPREFIX);
-			final String jndiName = jndiPrefix + this.configurationSession.getProperty(DatabaseConfiguration.CONFIG_DATASOURCENAME);
-			log.debug("jndiPrefix=" + jndiPrefix + " jndiName=" + jndiName);
-			publisher.setPropertyData("dataSource " + jndiName);
-			publisher.setDescription("Used in Junit Test, Remove this one");
-			publisherNames.add(publisherName);
-			this.publisherProxySession.addPublisher(internalAdmin, publisherName, publisher);
-		} catch (PublisherExistsException pee) {
-			log.error(pee);
-			assertTrue("Creating External OCSP Publisher failed", false);
-		}
-		final int id = this.publisherProxySession.getPublisherId(publisherName);
-		this.publisherProxySession.testConnection(id);
+        final String publisherName = "TESTEXTOCSP";
+        try {
+            CustomPublisherContainer publisher = new CustomPublisherContainer();
+            publisher.setClassPath(ValidationAuthorityPublisher.class.getName());
+            // We use the default EjbcaDS datasource here, because it probably exists during our junit test run
+            final String jndiPrefix = this.configurationSession.getProperty(InternalConfiguration.CONFIG_DATASOURCENAMEPREFIX);
+            final String jndiName = jndiPrefix + this.configurationSession.getProperty(DatabaseConfiguration.CONFIG_DATASOURCENAME);
+            log.debug("jndiPrefix=" + jndiPrefix + " jndiName=" + jndiName);
+            publisher.setPropertyData("dataSource " + jndiName);
+            publisher.setDescription("Used in Junit Test, Remove this one");
+            publisherNames.add(publisherName);
+            this.publisherProxySession.addPublisher(internalAdmin, publisherName, publisher);
+        } catch (PublisherExistsException pee) {
+            log.error(pee);
+            assertTrue("Creating External OCSP Publisher failed", false);
+        }
+        final int id = this.publisherProxySession.getPublisherId(publisherName);
+        this.publisherProxySession.testConnection(id);
 
-		final Certificate cert = CertTools.getCertfromByteArray(testcert);
-		try {
-			ArrayList<Integer> publishers = new ArrayList<Integer>();
-			publishers.add(Integer.valueOf(this.publisherProxySession.getPublisherId(publisherName)));
+        final Certificate cert = CertTools.getCertfromByteArray(testcert);
+        try {
+            ArrayList<Integer> publishers = new ArrayList<Integer>();
+            publishers.add(Integer.valueOf(this.publisherProxySession.getPublisherId(publisherName)));
 
-			final boolean ret = this.publisherSession.storeCertificate(
-					this.admin, publishers, cert, "test05", "foo123", null, null,
-					CertificateConstants.CERT_ACTIVE,
-					CertificateConstants.CERTTYPE_ENDENTITY,
-					-1, RevokedCertInfo.NOT_REVOKED, "foo",
-					CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER, new Date().getTime(), null);
-			assertTrue("Error storing certificate to external ocsp publisher", ret);
+            CertificateData cd = new CertificateData(cert, cert.getPublicKey(), "test05", null, CertificateConstants.CERT_ACTIVE, CertificateConstants.CERTTYPE_ENDENTITY,
+                    CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER, null, System.currentTimeMillis(), true);
+            cd.setRevocationReason(RevokedCertInfo.NOT_REVOKED);
+            cd.setRevocationDate(-1L);
+            CertificateDataWrapper cdw = new CertificateDataWrapper(cd, null);
+            final boolean ret = publisherSession.storeCertificate(internalAdmin, publishers, cdw, "foo123", CertTools.getSubjectDN(cert), null);
+            assertTrue("Error storing certificate to external ocsp publisher", ret);
 
-			this.publisherProxySession.revokeCertificate(
-					internalAdmin, publishers, cert, "test05", null, null,
-					CertificateConstants.CERTTYPE_ENDENTITY,
-					RevokedCertInfo.REVOCATION_REASON_CACOMPROMISE,
-					new Date().getTime(), "foo", CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER, new Date().getTime());
-		} finally {
-			this.internalCertStoreSession.removeCertificate(cert);
-		}
-		log.trace("<test14ExternalOCSPPublisherCustom()");
+            CertificateData cd2 = new CertificateData(cert, cert.getPublicKey(), "test05", null, CertificateConstants.CERT_REVOKED, CertificateConstants.CERTTYPE_ENDENTITY,
+                    CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER, null, System.currentTimeMillis(), true);
+            cd.setRevocationReason(RevokedCertInfo.REVOCATION_REASON_CACOMPROMISE);
+            cd.setRevocationDate(new Date());
+            CertificateDataWrapper cdw2 = new CertificateDataWrapper(cd2, null);
+            final boolean ret2 = publisherSession.storeCertificate(internalAdmin, publishers, cdw2, "foo123", CertTools.getSubjectDN(cert), null);
+            assertTrue("Error storing certificate to external ocsp publisher", ret2);
+        } finally {
+            this.internalCertStoreSession.removeCertificate(cert);
+        }
 	}
 
-	private void storeCert(ArrayList<Integer> publishers, Certificate cert, long lastUpdate, int revokationReason, boolean doDelete) throws AuthorizationDeniedException {
-		final int certProfileID = CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER;
-		final String tag = "foo";
-		final String userName = "nytt 1";
-		final String cafp = "CA fingerprint could be anything in this test.";
-		final boolean ret = this.publisherSession.storeCertificate(this.admin, publishers, cert, userName, "foo123", null, cafp, CertificateConstants.CERT_ACTIVE, CertificateConstants.CERTTYPE_ENDENTITY, -1, revokationReason, tag, certProfileID, lastUpdate, null);
-		assertTrue("Error storing certificate to external ocsp publisher", ret);
+    private void storeCert(ArrayList<Integer> publishers, Certificate cert, long lastUpdate, int revokationReason, boolean doDelete) throws AuthorizationDeniedException {
+        final int certProfileID = CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER;
+        final String tag = "foo";
+        final String userName = "nytt 1";
+        final String cafp = "CA fingerprint could be anything in this test.";
+        CertificateData cd = new CertificateData(cert, cert.getPublicKey(), userName, cafp, CertificateConstants.CERT_ACTIVE, CertificateConstants.CERTTYPE_ENDENTITY,
+                certProfileID, tag, lastUpdate, true);
+        cd.setRevocationReason(revokationReason);
+        cd.setRevocationDate(-1L);
+        CertificateDataWrapper cdw = new CertificateDataWrapper(cd, null);
+        final boolean ret = publisherSession.storeCertificate(internalAdmin, publishers, cdw, "foo123", CertTools.getSubjectDN(cert), null);
+        assertTrue("Error storing certificate to external ocsp publisher", ret);
 
-		final CertificateInfo info = this.certificateStoreSession.getCertificateInfo(CertTools.getFingerprintAsString(cert));
-		if ( doDelete ) {
-			assertNull("The certificate should not exist in the DB.", info);
-			return;
-		}
+        final CertificateInfo info = this.certificateStoreSession.getCertificateInfo(CertTools.getFingerprintAsString(cert));
+        if ( doDelete ) {
+            assertNull("The certificate should not exist in the DB.", info);
+            return;
+        }
         assertNotNull("The certificate must be in DB.", info);
-		
-		assertEquals( CertificateConstants.CERT_ACTIVE, info.getStatus() );
-		assertEquals( revokationReason, info.getRevocationReason() );
-		assertEquals( certProfileID, info.getCertificateProfileId() );
-		assertEquals( tag, info.getTag() );
-		assertEquals( lastUpdate, info.getUpdateTime().getTime() );
-		assertEquals( userName, info.getUsername() );
-		assertEquals( cafp, info.getCAFingerprint() );
+        
+        assertEquals( CertificateConstants.CERT_ACTIVE, info.getStatus() );
+        assertEquals( revokationReason, info.getRevocationReason() );
+        assertEquals( certProfileID, info.getCertificateProfileId() );
+        assertEquals( tag, info.getTag() );
+        assertEquals( lastUpdate, info.getUpdateTime().getTime() );
+        assertEquals( userName, info.getUsername() );
+        assertEquals( cafp, info.getCAFingerprint() );
         final byte[] subjectKeyId = KeyTools.createSubjectKeyId(cert.getPublicKey()).getKeyIdentifier();
         final String keyIdStr = new String(Base64.encode(subjectKeyId));
-		assertEquals( keyIdStr, info.getSubjectKeyId());
-	}
-	private void revokeCert(ArrayList<Integer> publishers, Certificate cert, long lastUpdate) throws AuthorizationDeniedException {
-		final int certProfileID = 12345;
-		final String tag = "foobar";
-		final String userName = "nytt 2";
-		final String cafp = "CA fingerprint could be anything in this test. Could also change value.";
-		this.publisherProxySession.revokeCertificate(internalAdmin, publishers, cert, userName, null, cafp, CertificateConstants.CERTTYPE_ENDENTITY, RevokedCertInfo.REVOCATION_REASON_UNSPECIFIED, new Date().getTime(), tag, certProfileID, lastUpdate);
-		final CertificateInfo info = this.certificateStoreSession.getCertificateInfo(CertTools.getFingerprintAsString(cert));
-		assertEquals( CertificateConstants.CERT_REVOKED, info.getStatus() );
-		assertEquals( certProfileID, info.getCertificateProfileId() );
-		assertEquals( tag, info.getTag() );
-		assertEquals( lastUpdate, info.getUpdateTime().getTime() );
-		assertEquals( userName, info.getUsername() );
-		assertEquals( cafp, info.getCAFingerprint() );
-	}
+        assertEquals( keyIdStr, info.getSubjectKeyId());
+    }
+    private void revokeCert(ArrayList<Integer> publishers, Certificate cert, long lastUpdate) throws AuthorizationDeniedException {
+        final int certProfileID = 12345;
+        final String tag = "foobar";
+        final String userName = "nytt 2";
+        final String cafp = "CA fingerprint could be anything in this test. Could also change value.";
+        CertificateData cd = new CertificateData(cert, cert.getPublicKey(), userName, cafp, CertificateConstants.CERT_REVOKED, CertificateConstants.CERTTYPE_ENDENTITY,
+                certProfileID, tag, lastUpdate, true);
+        cd.setRevocationReason(RevokedCertInfo.REVOCATION_REASON_UNSPECIFIED);
+        cd.setRevocationDate(new Date());
+        CertificateDataWrapper cdw = new CertificateDataWrapper(cd, null);
+        final boolean ret = publisherSession.storeCertificate(internalAdmin, publishers, cdw, "foo123", CertTools.getSubjectDN(cert), null);
+        assertTrue("Error storing certificate to external ocsp publisher", ret);
+        final CertificateInfo info = this.certificateStoreSession.getCertificateInfo(CertTools.getFingerprintAsString(cert));
+        assertEquals( CertificateConstants.CERT_REVOKED, info.getStatus() );
+        assertEquals( certProfileID, info.getCertificateProfileId() );
+        assertEquals( tag, info.getTag() );
+        assertEquals( lastUpdate, info.getUpdateTime().getTime() );
+        assertEquals( userName, info.getUsername() );
+        assertEquals( cafp, info.getCAFingerprint() );
+    }
 	/**
 	 * Test the VA publisher. It toggles "OnlyPublishRevoked" to see that no new certificates are published when set.
 	 * @throws AuthorizationDeniedException

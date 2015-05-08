@@ -28,7 +28,6 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -40,9 +39,7 @@ import org.bouncycastle.asn1.cmp.PKIHeader;
 import org.bouncycastle.asn1.cmp.PKIMessage;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.Extensions;
-import org.cesecore.certificates.certificate.request.CertificateResponseMessage;
 import org.cesecore.certificates.certificate.request.RequestMessage;
-import org.cesecore.certificates.certificate.request.ResponseMessage;
 import org.cesecore.configuration.GlobalConfigurationSession;
 import org.cesecore.util.Base64;
 import org.cesecore.util.CertTools;
@@ -367,20 +364,8 @@ public class NestedMessageContent extends BaseCmpMessage implements RequestMessa
 
     @Override
     public void setKeyInfo(final Certificate cert, final PrivateKey key, final String provider) {}
-
-    @Override
-    public CertificateResponseMessage createResponseMessage(Class<? extends ResponseMessage> responseClass, RequestMessage req, Collection<Certificate> certs, PrivateKey signPriv,
-            String provider) {
-        return null;
-    }
     
     @Override
     public void setResponseKeyInfo(PrivateKey key, String provider) {
     }
-
-    @Override
-    public CertificateResponseMessage createResponseMessage(Class<? extends ResponseMessage> responseClass, RequestMessage req, Collection<Certificate> certs) {
-        return null;
-    }
-
 }

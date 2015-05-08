@@ -230,7 +230,7 @@ public class StandaloneOcspResponseGeneratorSessionTest {
             externalCa.setCAToken(token);
             externalCa.setCertificateChain(Arrays.asList(externalCaCertificate));
             caSession.addCA(authenticationToken, externalCa);
-            certificateStoreSession.storeCertificate(authenticationToken, externalCaCertificate, externalCaName, "1234",
+            certificateStoreSession.storeCertificateRemote(authenticationToken, externalCaCertificate, externalCaName, "1234",
                     CertificateConstants.CERT_ACTIVE, CertificateConstants.CERTTYPE_ROOTCA,
                     CertificateProfileConstants.CERTPROFILE_NO_PROFILE, null, new Date().getTime());
             ocspResponseGeneratorSession.reloadOcspSigningCache();
@@ -255,7 +255,7 @@ public class StandaloneOcspResponseGeneratorSessionTest {
                         BouncyCastleProvider.PROVIDER_NAME).build(externalCaKeys.getPrivate()), 20480);
                 final X509CertificateHolder certHolder = certbuilder.build(signer);
                 X509Certificate importedCertificate = (X509Certificate) CertTools.getCertfromByteArray(certHolder.getEncoded());
-                certificateStoreSession.storeCertificate(authenticationToken, importedCertificate, externalUsername, "1234",
+                certificateStoreSession.storeCertificateRemote(authenticationToken, importedCertificate, externalUsername, "1234",
                         CertificateConstants.CERT_ACTIVE, CertificateConstants.CERTTYPE_ENDENTITY,
                         CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER, null, new Date().getTime());
                 try {
@@ -313,7 +313,7 @@ public class StandaloneOcspResponseGeneratorSessionTest {
             externalCa.setCAToken(token);
             externalCa.setCertificateChain(Arrays.asList(externalCaCertificate));
             caSession.addCA(authenticationToken, externalCa);
-            certificateStoreSession.storeCertificate(authenticationToken, externalCaCertificate, externalCaName, "1234",
+            certificateStoreSession.storeCertificateRemote(authenticationToken, externalCaCertificate, externalCaName, "1234",
                     CertificateConstants.CERT_ACTIVE, CertificateConstants.CERTTYPE_ROOTCA,
                     CertificateProfileConstants.CERTPROFILE_NO_PROFILE, null, new Date().getTime());
             ocspResponseGeneratorSession.reloadOcspSigningCache();
@@ -338,7 +338,7 @@ public class StandaloneOcspResponseGeneratorSessionTest {
                         BouncyCastleProvider.PROVIDER_NAME).build(externalCaKeys.getPrivate()), 20480);
                 final X509CertificateHolder certHolder = certbuilder.build(signer);
                 X509Certificate importedCertificate = (X509Certificate) CertTools.getCertfromByteArray(certHolder.getEncoded());
-                certificateStoreSession.storeCertificate(authenticationToken, importedCertificate, externalUsername, "1234",
+                certificateStoreSession.storeCertificateRemote(authenticationToken, importedCertificate, externalUsername, "1234",
                         CertificateConstants.CERT_ACTIVE, CertificateConstants.CERTTYPE_ENDENTITY,
                         CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER, null, new Date().getTime());
                 try {
@@ -387,7 +387,7 @@ public class StandaloneOcspResponseGeneratorSessionTest {
             externalCa.setCAToken(token);
             externalCa.setCertificateChain(Arrays.asList(externalCaCertificate));
             caSession.addCA(authenticationToken, externalCa);
-            certificateStoreSession.storeCertificate(authenticationToken, externalCaCertificate, externalCaName, "1234",
+            certificateStoreSession.storeCertificateRemote(authenticationToken, externalCaCertificate, externalCaName, "1234",
                     CertificateConstants.CERT_ACTIVE, CertificateConstants.CERTTYPE_ROOTCA,
                     CertificateProfileConstants.CERTPROFILE_NO_PROFILE, null, new Date().getTime());
             ocspResponseGeneratorSession.reloadOcspSigningCache();
@@ -412,7 +412,7 @@ public class StandaloneOcspResponseGeneratorSessionTest {
                         BouncyCastleProvider.PROVIDER_NAME).build(externalCaKeys.getPrivate()), 20480);
                 final X509CertificateHolder certHolder = certbuilder.build(signer);
                 X509Certificate importedCertificate = (X509Certificate) CertTools.getCertfromByteArray(certHolder.getEncoded());
-                certificateStoreSession.storeCertificate(authenticationToken, importedCertificate, externalUsername, "1234",
+                certificateStoreSession.storeCertificateRemote(authenticationToken, importedCertificate, externalUsername, "1234",
                         CertificateConstants.CERT_REVOKED, CertificateConstants.CERTTYPE_ENDENTITY,
                         CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER, null, new Date().getTime());
                 try {
@@ -777,7 +777,7 @@ public class StandaloneOcspResponseGeneratorSessionTest {
         cryptoTokenManagementSession.createKeyPair(authenticationToken, cryptoTokenId, "signKeyAlias", "1024");
         X509Certificate signerIssuerCaCertificate = (X509Certificate) signatureIssuerCa.getCACertificate();
         //Store the CA Certificate.
-        certificateStoreSession.storeCertificate(authenticationToken, signerIssuerCaCertificate, "foo", "1234", CertificateConstants.CERT_ACTIVE,
+        certificateStoreSession.storeCertificateRemote(authenticationToken, signerIssuerCaCertificate, "foo", "1234", CertificateConstants.CERT_ACTIVE,
                 CertificateConstants.CERTTYPE_ROOTCA, CertificateProfileConstants.CERTPROFILE_FIXED_ROOTCA, "footag", new Date().getTime());
         final String signatureRequired = cesecoreConfigurationProxySession.getConfigurationValue(OcspConfiguration.SIGNATUREREQUIRED);
         cesecoreConfigurationProxySession.setConfigurationValue(OcspConfiguration.SIGNATUREREQUIRED, "true");
@@ -804,8 +804,7 @@ public class StandaloneOcspResponseGeneratorSessionTest {
                 // Try to send a signed OCSP requests
                 final OCSPReq ocspRequestSigned = buildOcspRequest(ocspAuthenticationCertificate, ocspAuthenticationKeyPair.getPrivate(),
                         (X509Certificate) x509ca.getCACertificate() , ocspSigningCertificate.getSerialNumber());
-                certificateStoreSession.setRevokeStatus(authenticationToken, ocspAuthenticationCertificate,
-                        RevokedCertInfo.REVOCATION_REASON_KEYCOMPROMISE, null);
+                certificateStoreSession.setRevokeStatus(authenticationToken, ocspAuthenticationCertificate, new Date(), RevokedCertInfo.REVOCATION_REASON_KEYCOMPROMISE);
                 final OCSPResp ocspResponseSigned = sendRequest(ocspRequestSigned);
                 assertEquals("We expected an 'UNAUTHORIZED' status code: ", OCSPResp.UNAUTHORIZED, ocspResponseSigned.getStatus());
              //   validateSuccessfulResponse((BasicOCSPResp) ocspResponseSigned.getResponseObject(), ocspSigningCertificate.getPublicKey());

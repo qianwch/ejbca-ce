@@ -103,7 +103,7 @@ import org.cesecore.certificates.ca.extendedservices.ExtendedCAServiceResponse;
 import org.cesecore.certificates.ca.extendedservices.ExtendedCAServiceTypes;
 import org.cesecore.certificates.ca.extendedservices.IllegalExtendedCAServiceRequestException;
 import org.cesecore.certificates.certificate.CertificateConstants;
-import org.cesecore.certificates.certificate.CertificateInfo;
+import org.cesecore.certificates.certificate.CertificateDataWrapper;
 import org.cesecore.certificates.certificate.CertificateRevokeException;
 import org.cesecore.certificates.certificate.CertificateStoreSessionLocal;
 import org.cesecore.certificates.certificate.request.CertificateResponseMessage;
@@ -610,7 +610,8 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
                 List<Certificate> xkmscerts = ((XKMSCAServiceInfo) next).getCertificatePath();
                 if (xkmscerts != null) {
                     X509Certificate xkmscert = (X509Certificate)xkmscerts.get(0);
-                    revocationSession.revokeCertificate(admin, xkmscert, cainfo.getCRLPublishers(), RevokedCertInfo.REVOCATION_REASON_UNSPECIFIED, cainfo.getSubjectDN());        
+                    final CertificateDataWrapper cdw = certificateStoreSession.getCertificateData(CertTools.getFingerprintAsString(xkmscert));
+                    revocationSession.revokeCertificate(admin, cdw, cainfo.getCRLPublishers(), new Date(), RevokedCertInfo.REVOCATION_REASON_UNSPECIFIED, cainfo.getSubjectDN());         
                 }
                 initExternalCAService(admin, caid, next);
             }
@@ -627,7 +628,8 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
                 List<Certificate> cmscerts = ((CmsCAServiceInfo) next).getCertificatePath();
                 if (cmscerts != null) {
                     X509Certificate cmscert = (X509Certificate)cmscerts.get(0);
-                    revocationSession.revokeCertificate(admin, cmscert, cainfo.getCRLPublishers(), RevokedCertInfo.REVOCATION_REASON_UNSPECIFIED, cainfo.getSubjectDN());         
+                    final CertificateDataWrapper cdw = certificateStoreSession.getCertificateData(CertTools.getFingerprintAsString(cmscert));
+                    revocationSession.revokeCertificate(admin, cdw, cainfo.getCRLPublishers(), new Date(), RevokedCertInfo.REVOCATION_REASON_UNSPECIFIED, cainfo.getSubjectDN());         
                 }
                 initExternalCAService(admin, caid, next);
             }
@@ -1918,9 +1920,10 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
         CA ca = caSession.getCAForEdit(admin, caid);
         try {
             // Revoke all issued CA certificates for this CA
-            Collection<Certificate> cacerts = certificateStoreSession.findCertificatesBySubject(ca.getSubjectDN());
-            for (Certificate certificate : cacerts) {
-                revocationSession.revokeCertificate(admin, certificate, ca.getCRLPublishers(), reason, ca.getSubjectDN());
+            final List<CertificateDataWrapper> cacerts = certificateStoreSession.getCertificateDatasBySubject(ca.getSubjectDN());
+            final Date now = new Date();
+            for (final CertificateDataWrapper cdw : cacerts) {
+                revocationSession.revokeCertificate(admin, cdw, ca.getCRLPublishers(), now, reason, ca.getSubjectDN());
             }
             // Revoke all certificates issued by this CA. If this is a root CA the CA certificates will be included in this batch as well
             // but if this is a subCA these are only the "entity" certificates issued by this CA
@@ -2788,23 +2791,15 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
                 name = "SYSTEMCA";
             }
             // Store CA certificate in the database if it does not exist
-            long updateTime = new Date().getTime();
-            int profileId = 0;
-            String tag = null;
-            CertificateInfo ci = certificateStoreSession.getCertificateInfo(fingerprint);
-            if (ci == null) {
-                // If we don't have it in the database, store it setting
-                // certificateProfileId = 0 and tag = null
-                certificateStoreSession.storeCertificate(admin, cert, name, cafp, CertificateConstants.CERT_ACTIVE, type, profileId, tag, updateTime);
+            CertificateDataWrapper certificateDataWrapper = certificateStoreSession.getCertificateData(fingerprint);
+            if (certificateDataWrapper==null) {
+                // If we don't have it in the database, store it
+                long updateTime = System.currentTimeMillis();
+                certificateDataWrapper = certificateStoreSession.storeCertificate(admin, cert, name, cafp, CertificateConstants.CERT_ACTIVE, type, EndEntityInformation.NO_CERTIFICATEPROFILE, null, updateTime);
                 certificateStoreSession.reloadCaCertificateCache();
-            } else {
-                updateTime = ci.getUpdateTime().getTime();
-                profileId = ci.getCertificateProfileId();
-                tag = ci.getTag();
             }
             if (usedpublishers != null) {
-                publisherSession.storeCertificate(admin, usedpublishers, cert, cafp, null, caDataDN, fingerprint, CertificateConstants.CERT_ACTIVE,
-                        type, -1, RevokedCertInfo.NOT_REVOKED, tag, profileId, updateTime, null);
+                publisherSession.storeCertificate(admin, usedpublishers, certificateDataWrapper, null, caDataDN, null);
             }
         }
 

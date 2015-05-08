@@ -236,35 +236,10 @@ public interface RequestMessage extends Serializable {
     public int getRequestId();
     
     /**
-     * Create a response class with information from the request. Information such as nounces etc are taken 
-     * from the request to match the response. The response can be signed and encrypted if the class so requires.
-     * 
-     * @param responseClass
-     * @param req
-     * @param cert
-     * @param signPriv
-     * @param provider
-     * @return IResponseMessage
-     */
-    public CertificateResponseMessage createResponseMessage(Class<? extends ResponseMessage> responseClass, RequestMessage req, Collection<Certificate> certs, PrivateKey signPriv, String provider);
-
-    /**
      * Sets the private key needed to create a response message.
      *
      * @param key private key.
      * @param provider the provider to use, if the private key is on a HSM you must use a special provider. If null is given, the default BC provider is used.
      */
     public void setResponseKeyInfo(PrivateKey key, String provider);
-
-    /**
-     * Create a response class with information from the request. Information such as nounces etc are taken 
-     * from the request to match the response. The response can be signed and encrypted if the class so requires, and signing key and provider has been set in the response message.
-     * 
-     * @param responseClass
-     * @param req
-     * @param cert
-     * @return IResponseMessage
-     */
-    public CertificateResponseMessage createResponseMessage(Class<? extends ResponseMessage> responseClass, RequestMessage req, Collection<Certificate> certs);
-    
 }

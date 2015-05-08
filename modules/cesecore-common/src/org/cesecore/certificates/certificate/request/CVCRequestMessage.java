@@ -21,12 +21,11 @@ import java.security.PublicKey;
 import java.security.SignatureException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
-import java.util.Collection;
 import java.util.Date;
 
 import org.apache.log4j.Logger;
-import org.bouncycastle.asn1.x509.Extensions;
 import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x509.Extensions;
 import org.bouncycastle.cms.CMSSignedGenerator;
 import org.cesecore.util.CertTools;
 import org.ejbca.cvc.CVCAuthenticatedRequest;
@@ -330,21 +329,11 @@ public class CVCRequestMessage implements RequestMessage {
     }
     
     @Override
-    public CertificateResponseMessage createResponseMessage(Class<? extends ResponseMessage> responseClass, RequestMessage req, Collection<Certificate> certs, PrivateKey signPriv, String provider) {
-    	return RequestMessageUtils.createResponseMessage(responseClass, req, certs, signPriv, provider);
-    }
-    
-    @Override
     public void setResponseKeyInfo(PrivateKey key, String provider) {
         this.responsePrivateKey = key;
         if (provider != null) {
             this.responseProvider = provider;
         }
-    }
-
-    @Override
-    public CertificateResponseMessage createResponseMessage(Class<? extends ResponseMessage> responseClass, RequestMessage req, Collection<Certificate> certs) {
-        return createResponseMessage(responseClass, req, certs, responsePrivateKey, responseProvider);
     }
 
     /** Specific to CVC request messages, EAC requests contains a sequence */

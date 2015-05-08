@@ -20,6 +20,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.lang.reflect.Method;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,6 +32,8 @@ import org.apache.log4j.Logger;
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authentication.tokens.UsernamePrincipal;
 import org.cesecore.certificates.certificate.CertificateConstants;
+import org.cesecore.certificates.certificate.CertificateData;
+import org.cesecore.certificates.certificate.CertificateDataWrapper;
 import org.cesecore.certificates.certificate.InternalCertificateStoreSessionRemote;
 import org.cesecore.certificates.certificateprofile.CertificateProfileConstants;
 import org.cesecore.certificates.crl.RevokedCertInfo;
@@ -184,10 +187,12 @@ public class PublisherQueueTest {
             Certificate cert = CertTools.getCertfromByteArray(testcert);
             ArrayList<Integer> publishers = new ArrayList<Integer>();
             publishers.add(Integer.valueOf(publisherProxySession.getPublisherId("TESTEXTOCSPQUEUE")));
-
-            ret = publisherSession.storeCertificate(internalAdmin, publishers, cert, "test05", "foo123", null, null, CertificateConstants.CERT_ACTIVE,
-                    CertificateConstants.CERTTYPE_ENDENTITY, -1, RevokedCertInfo.NOT_REVOKED, "foo",
-                    CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER, new Date().getTime(), null);
+            CertificateData cd = new CertificateData(cert, cert.getPublicKey(), "test05", null, CertificateConstants.CERT_ACTIVE, CertificateConstants.CERTTYPE_ENDENTITY,
+                    CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER, null, System.currentTimeMillis(), true);
+            cd.setRevocationReason(RevokedCertInfo.NOT_REVOKED);
+            cd.setRevocationDate(-1L);
+            CertificateDataWrapper cdw = new CertificateDataWrapper(cd, null);
+            ret = publisherSession.storeCertificate(internalAdmin, publishers, cdw, "foo123", CertTools.getSubjectDN(cert), null);
             assertFalse("Storing certificate to external ocsp publisher should fail.", ret);
 
             // Now this certificate fingerprint should be in the queue
@@ -235,9 +240,12 @@ public class PublisherQueueTest {
             ArrayList<Integer> publishers = new ArrayList<Integer>();
             publishers.add(Integer.valueOf(publisherProxySession.getPublisherId("TESTEXTOCSPQUEUE")));
 
-            ret = publisherSession.storeCertificate(internalAdmin, publishers, cert, "test05", "foo123", null, null, CertificateConstants.CERT_ACTIVE,
-                    CertificateConstants.CERTTYPE_ENDENTITY, -1, RevokedCertInfo.NOT_REVOKED, "foo",
-                    CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER, new Date().getTime(), null);
+            CertificateData cd = new CertificateData(cert, cert.getPublicKey(), "test05", null, CertificateConstants.CERT_ACTIVE, CertificateConstants.CERTTYPE_ENDENTITY,
+                    CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER, null, System.currentTimeMillis(), true);
+            cd.setRevocationReason(RevokedCertInfo.NOT_REVOKED);
+            cd.setRevocationDate(-1L);
+            CertificateDataWrapper cdw = new CertificateDataWrapper(cd, null);
+            ret = publisherSession.storeCertificate(internalAdmin, publishers, cdw, "foo123", CertTools.getSubjectDN(cert), null);
             assertTrue("Storing certificate to external ocsp publisher should succeed.", ret);
 
             // Now this certificate fingerprint should NOT be in the queue
@@ -266,11 +274,15 @@ public class PublisherQueueTest {
                 // We use the default EjbcaDS datasource here, because it probably exists during our junit test run
                 String jndiName = configurationSession.getProperty(InternalConfiguration.CONFIG_DATASOURCENAMEPREFIX)
                         + configurationSession.getProperty(DatabaseConfiguration.CONFIG_DATASOURCENAME);
-                log.debug("jndiName=" + jndiName);
+                if (log.isDebugEnabled()) {
+                    log.debug("jndiName=" + jndiName);
+                }
                 vaPublisher.setDataSource(jndiName);
                 vaPublisher.setDescription("Used in Junit Test, Remove this one");
                 vaPublisher.setOnlyUseQueue(true);
-                assertFalse(vaPublisher.getOnlyPublishRevoked());
+                Method getOnlyPublishRevoked = ValidationAuthorityPublisher.class.getDeclaredMethod("getOnlyPublishRevoked");
+                getOnlyPublishRevoked.setAccessible(true);         
+                assertFalse((Boolean) getOnlyPublishRevoked.invoke(vaPublisher));
                 publisherProxySession.addPublisher(internalAdmin, "TESTEXTOCSPQUEUE", vaPublisher);
                 ret = true;
             } catch (PublisherExistsException pee) {
@@ -284,9 +296,12 @@ public class PublisherQueueTest {
             publishers.add(Integer.valueOf(publisherProxySession.getPublisherId("TESTEXTOCSPQUEUE")));
 
             // storeCertificate should return false as we have not published to all publishers but instead only pushed to the queue
-            ret = publisherSession.storeCertificate(internalAdmin, publishers, cert, "test05", "foo123", null, null, CertificateConstants.CERT_ACTIVE,
-                    CertificateConstants.CERTTYPE_ENDENTITY, -1, RevokedCertInfo.NOT_REVOKED, "foo",
-                    CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER, new Date().getTime(), null);
+            CertificateData cd = new CertificateData(cert, cert.getPublicKey(), "test05", null, CertificateConstants.CERT_ACTIVE, CertificateConstants.CERTTYPE_ENDENTITY,
+                    CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER, null, System.currentTimeMillis(), true);
+            cd.setRevocationReason(RevokedCertInfo.NOT_REVOKED);
+            cd.setRevocationDate(-1L);
+            CertificateDataWrapper cdw = new CertificateDataWrapper(cd, null);
+            ret = publisherSession.storeCertificate(internalAdmin, publishers, cdw, "foo123", CertTools.getSubjectDN(cert), null);
             assertFalse("Storing certificate to all external ocsp publisher should return false.", ret);
 
             // Now this certificate fingerprint should be in the queue
@@ -338,7 +353,12 @@ public class PublisherQueueTest {
             //
             // Publish a non revoked certificate, since this publisher only stores revoked certificates it should not show up in the queue
             // storeCertificate should return false as we have not published to all publishers but instead only pushed to the queue
-            ret = publisherSession.storeCertificate(internalAdmin, publishers, cert, "test05", "foo123", null, null, CertificateConstants.CERT_ACTIVE, CertificateConstants.CERTTYPE_ENDENTITY, -1, RevokedCertInfo.NOT_REVOKED, "foo", CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER, new Date().getTime(), null);
+            CertificateData cd = new CertificateData(cert, cert.getPublicKey(), "test05", null, CertificateConstants.CERT_ACTIVE, CertificateConstants.CERTTYPE_ENDENTITY,
+                    CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER, null, System.currentTimeMillis(), true);
+            cd.setRevocationReason(RevokedCertInfo.NOT_REVOKED);
+            cd.setRevocationDate(-1L);
+            CertificateDataWrapper cdw = new CertificateDataWrapper(cd, null);
+            ret = publisherSession.storeCertificate(internalAdmin, publishers, cdw, "foo123", CertTools.getSubjectDN(cert), null);
             assertTrue("Storing ACTIVE certificate to external ocsp publisher the only publishes REVOKED should return true.", ret);
             // Now this certificate fingerprint should not be be in the queue, since we don't publish revoked
             Collection<PublisherQueueData> c = publisherQueueSession.getPendingEntriesForPublisher(id);
@@ -346,7 +366,12 @@ public class PublisherQueueTest {
             
             //
             // Now publish a revoked certificate, it should show up in the queue
-            ret = publisherSession.storeCertificate(internalAdmin, publishers, cert, "test05", "foo123", null, null, CertificateConstants.CERT_REVOKED, CertificateConstants.CERTTYPE_ENDENTITY, new Date().getTime(), RevokedCertInfo.REVOCATION_REASON_CERTIFICATEHOLD, "foo", CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER, new Date().getTime(), null);
+            CertificateData cd2 = new CertificateData(cert, cert.getPublicKey(), "test05", null, CertificateConstants.CERT_REVOKED, CertificateConstants.CERTTYPE_ENDENTITY,
+                    CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER, null, System.currentTimeMillis(), true);
+            cd2.setRevocationReason(RevokedCertInfo.REVOCATION_REASON_CERTIFICATEHOLD);
+            cd2.setRevocationDate(System.currentTimeMillis());
+            CertificateDataWrapper cdw2 = new CertificateDataWrapper(cd2, null);
+            ret = publisherSession.storeCertificate(internalAdmin, publishers, cdw2, "foo123", CertTools.getSubjectDN(cert), null);
             assertFalse("Storing certificate to all external ocsp publisher should return false.", ret);
             // Now this certificate fingerprint should be in the queue
             c = publisherQueueSession.getPendingEntriesForPublisher(id);
@@ -358,7 +383,12 @@ public class PublisherQueueTest {
             publisherQueueSession.removeQueueData(d.getPk());
             //
             // Try some variants of revocation information, it should show up in the queue, but status must be SecConst.CERT_REVOKED at least
-            ret = publisherSession.storeCertificate(internalAdmin, publishers, cert, "test05", "foo123", null, null, CertificateConstants.CERT_REVOKED, CertificateConstants.CERTTYPE_ENDENTITY, -1, RevokedCertInfo.REVOCATION_REASON_CERTIFICATEHOLD, "foo", CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER, new Date().getTime(), null);
+            CertificateData cd3 = new CertificateData(cert, cert.getPublicKey(), "test05", null, CertificateConstants.CERT_REVOKED, CertificateConstants.CERTTYPE_ENDENTITY,
+                    CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER, "foo", System.currentTimeMillis(), true);
+            cd3.setRevocationReason(RevokedCertInfo.REVOCATION_REASON_CERTIFICATEHOLD);
+            cd3.setRevocationDate(System.currentTimeMillis());
+            CertificateDataWrapper cdw3 = new CertificateDataWrapper(cd3, null);
+            ret = publisherSession.storeCertificate(internalAdmin, publishers, cdw3, "foo123", CertTools.getSubjectDN(cert), null);
             assertFalse("Storing certificate to all external ocsp publisher should return false.", ret);
             // Now this certificate fingerprint should be in the queue
             c = publisherQueueSession.getPendingEntriesForPublisher(id);
@@ -369,7 +399,12 @@ public class PublisherQueueTest {
             // Remove it for next test
             publisherQueueSession.removeQueueData(d.getPk());
             // Try some variants of revocation information, it should show up in the queue
-            ret = publisherSession.storeCertificate(internalAdmin, publishers, cert, "test05", "foo123", null, null, CertificateConstants.CERT_REVOKED, CertificateConstants.CERTTYPE_ENDENTITY, -1, RevokedCertInfo.NOT_REVOKED, "foo", CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER, new Date().getTime(), null);
+            CertificateData cd4 = new CertificateData(cert, cert.getPublicKey(), "test05", null, CertificateConstants.CERT_REVOKED, CertificateConstants.CERTTYPE_ENDENTITY,
+                    CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER, "foo", System.currentTimeMillis(), true);
+            cd4.setRevocationReason(RevokedCertInfo.NOT_REVOKED);
+            cd4.setRevocationDate(-1);
+            CertificateDataWrapper cdw4 = new CertificateDataWrapper(cd4, null);
+            ret = publisherSession.storeCertificate(internalAdmin, publishers, cdw4, "foo123", CertTools.getSubjectDN(cert), null);
             assertFalse("Storing certificate to all external ocsp publisher should return false.", ret);
             // Now this certificate fingerprint should be in the queue
             c = publisherQueueSession.getPendingEntriesForPublisher(id);
@@ -384,7 +419,12 @@ public class PublisherQueueTest {
             // - status is not revoked
             // - revocation reason is not REVOCATION_REASON_REMOVEFROMCRL even if status is active
             // This one should also should show up in the queue
-            ret = publisherSession.storeCertificate(internalAdmin, publishers, cert, "test05", "foo123", null, null, CertificateConstants.CERT_ACTIVE, CertificateConstants.CERTTYPE_ENDENTITY, -1, RevokedCertInfo.REVOCATION_REASON_REMOVEFROMCRL, "foo", CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER, new Date().getTime(), null);
+            CertificateData cd5 = new CertificateData(cert, cert.getPublicKey(), "test05", null, CertificateConstants.CERT_ACTIVE, CertificateConstants.CERTTYPE_ENDENTITY,
+                    CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER, "foo", System.currentTimeMillis(), true);
+            cd5.setRevocationReason(RevokedCertInfo.REVOCATION_REASON_REMOVEFROMCRL);
+            cd5.setRevocationDate(-1);
+            CertificateDataWrapper cdw5 = new CertificateDataWrapper(cd5, null);
+            ret = publisherSession.storeCertificate(internalAdmin, publishers, cdw5, "foo123", CertTools.getSubjectDN(cert), null);
             assertFalse("Storing certificate to all external ocsp publisher should return false.", ret);
             // Now this certificate fingerprint should be in the queue
             c = publisherQueueSession.getPendingEntriesForPublisher(id);
