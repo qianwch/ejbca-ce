@@ -12,7 +12,6 @@
  *************************************************************************/
 package org.ejbca.ui.cli.ra;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 import java.security.InvalidAlgorithmParameterException;
@@ -160,7 +159,5 @@ public class UnRevokeEndEntityCommandTest {
         command.execute(args);
         assertFalse("Certificate was not unrevoked.",
                 certificateStoreSession.isRevoked(x509ca.getSubjectDN(), CertTools.getSerialNumber(certificate)));
-        assertEquals("End entity was not set to generated.", EndEntityConstants.STATUS_GENERATED,
-                endEntityAccessSession.findUser(authenticationToken, TESTCLASS_NAME).getStatus());
     }
 }
