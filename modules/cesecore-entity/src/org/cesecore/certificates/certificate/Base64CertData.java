@@ -70,6 +70,16 @@ public class Base64CertData extends ProtectedData implements Serializable {
             throw new RuntimeException(msg);
         }
     }
+    
+    /**
+     * Copy constructor
+     */
+    public Base64CertData(final Base64CertData copy) {
+        setBase64Cert(copy.getBase64Cert());
+        setFingerprint(copy.getFingerprint());
+        setRowProtection(copy.getRowProtection());
+        setRowVersion(copy.getRowVersion());
+    }
 
     public Base64CertData() {
     }
@@ -132,6 +142,40 @@ public class Base64CertData extends ProtectedData implements Serializable {
     @Override
     public void setRowProtection(String rowProtection) {
         this.rowProtection = rowProtection;
+    }
+
+    //
+    // Comparators
+    //
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (!(obj instanceof Base64CertData)) {
+            return false;
+        }
+        return equals((Base64CertData) obj);
+    }
+    
+    public boolean equals(final Base64CertData other) {
+        if (other==null) {
+            return false;
+        }
+        if (!fingerprint.equals(other.fingerprint)) {
+            return false;
+        }
+        if (!base64Cert.equals(other.base64Cert)) {
+            return false;
+        }
+        if (rowProtection!=null && !rowProtection.equals(other.rowProtection)) {
+            return false;
+        }
+        if (rowProtection==null && other.rowProtection!=null) {
+            return false;
+        }
+        if (rowVersion!=other.rowVersion) {
+            return false;
+        }
+        return true;
     }
 
     //

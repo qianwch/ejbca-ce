@@ -15,7 +15,6 @@ package org.ejbca.core.model.ca.publisher;
 
 import java.security.cert.Certificate;
 import java.security.cert.X509CRL;
-import java.security.cert.X509Certificate;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -26,10 +25,12 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.x509.Extension;
 import org.cesecore.authentication.tokens.AuthenticationToken;
+import org.cesecore.certificates.certificate.Base64CertData;
 import org.cesecore.certificates.certificate.CertificateConstants;
+import org.cesecore.certificates.certificate.CertificateData;
 import org.cesecore.certificates.crl.RevokedCertInfo;
 import org.cesecore.certificates.endentity.ExtendedInformation;
-import org.cesecore.keys.util.KeyTools;
+import org.cesecore.config.CesecoreConfiguration;
 import org.cesecore.util.Base64;
 import org.cesecore.util.CertTools;
 import org.ejbca.core.model.InternalEjbcaResources;
@@ -172,31 +173,52 @@ public class ValidationAuthorityPublisher extends BasePublisher implements ICust
         log.debug("storeCert='" + getStoreCert() + "'.");
     }
 
+    @Override
+    public boolean isFullEntityPublishingSupported() {
+        return true;
+    }
+
     private class StoreCertPreparer implements Preparer {
-        private final Certificate incert;
-        private final String username;
-        private final String cafp;
+        private final String fingerprint; 
+        private final String issuerDN;
+        private final String subjectDN;
+        private final String cAFingerprint;
         private final int status;
         private final int type;
+        private final String serialNumber;
+        private final long expireDate;
         private final long revocationDate;
-        private final int reason;
+        private final int revocationReason;
+        private String base64Cert;
+        private final String username;
         private final String tag;
-        private final int certificateProfileId;
-        private final long updateTime;
+        private final Integer certificateProfileId;
+        private final Long updateTime;
+        private final String subjectKeyId;
+        //private final int rowVersion = 0;       // Publishing of this is currently not supported
+        //private String rowProtection = null;    // Publishing of this is currently not supported
         boolean isDelete = false;
 
-        StoreCertPreparer(Certificate ic, String un, String cfp, int s, long d, int r, int t, String tag, int profid, long utime) {
+        StoreCertPreparer(String fingerprint, String issuerDN, String subjectDN, String cAFingerprint, int status, int type, String serialNumber,
+                long expireDate, long revocationDate, int revocationReason, String base64Cert, String username, String tag, Integer certificateProfileId,
+                Long updateTime, final String subjectKeyId, int rowVersion, String rowProtection) {
             super();
-            this.incert = ic;
-            this.username = un;
-            this.cafp = cfp;
-            this.status = s;
-            this.revocationDate = d;
-            this.reason = r;
-            this.type = t;
+            this.fingerprint = fingerprint;
+            this.issuerDN = issuerDN;
+            this.subjectDN = subjectDN;
+            this.cAFingerprint = cAFingerprint;
+            this.status = status;
+            this.type = type;
+            this.serialNumber = serialNumber;
+            this.expireDate = expireDate;
+            this.revocationDate = revocationDate;
+            this.revocationReason = revocationReason;
+            this.base64Cert = base64Cert;
+            this.username = username;
             this.tag = tag;
-            this.certificateProfileId = profid;
-            this.updateTime = utime;
+            this.certificateProfileId = certificateProfileId;
+            this.updateTime = updateTime;
+            this.subjectKeyId = subjectKeyId;
         }
 
         @Override
@@ -209,7 +231,7 @@ public class ValidationAuthorityPublisher extends BasePublisher implements ICust
         }
 
         private void prepareDelete(PreparedStatement ps) throws Exception {
-            ps.setString(1, CertTools.getFingerprintAsString(this.incert));
+            ps.setString(1, fingerprint);
         }
 
         private void prepareNewUpdate(PreparedStatement ps) throws Exception {
@@ -218,41 +240,33 @@ public class ValidationAuthorityPublisher extends BasePublisher implements ICust
             // contain sensitive information.
             // On the other hand some OCSP Extension plug-ins may not work without the certificate.
             // A regular OCSP responder works fine without the certificate.
-            final String cert;
+            final String base64Cert;
             if (getStoreCert()) {
-                cert = new String(Base64.encode(this.incert.getEncoded(), true));
+                base64Cert = this.base64Cert;
             } else {
-                cert = null;
+                base64Cert = null;
             }
-            ps.setString(1, cert);
-            ps.setString(2, CertTools.getSubjectDN(this.incert));
-            ps.setString(3, CertTools.getIssuerDN(this.incert));
-            ps.setString(4, this.cafp);
-            ps.setString(5, ((X509Certificate) this.incert).getSerialNumber().toString());
-            ps.setInt(6, this.status);
-            ps.setInt(7, this.type);
-            ps.setString(8, this.username);
-            ps.setLong(9, ((X509Certificate) this.incert).getNotAfter().getTime());
-            ps.setLong(10, this.revocationDate);
-            ps.setInt(11, this.reason);
-            ps.setString(12, this.tag);
-            ps.setInt(13, this.certificateProfileId);
-            ps.setLong(14, this.updateTime);
-            final String fingerprint = CertTools.getFingerprintAsString(this.incert);
-            String subjectKeyId = null;
-            try {
-                subjectKeyId = new String(Base64.encode(KeyTools.createSubjectKeyId(this.incert.getPublicKey()).getKeyIdentifier(), false));
-            } catch (Exception e) {
-                log.warn("Error constructing subjectKeyId for certificate, using null: " + fingerprint);
-            }
+            ps.setString(1, base64Cert);
+            ps.setString(2, subjectDN);
+            ps.setString(3, issuerDN);
+            ps.setString(4, cAFingerprint);
+            ps.setString(5, serialNumber);
+            ps.setInt(6, status);
+            ps.setInt(7, type);
+            ps.setString(8, username);
+            ps.setLong(9, expireDate);
+            ps.setLong(10, revocationDate);
+            ps.setInt(11, revocationReason);
+            ps.setString(12, tag);
+            ps.setInt(13, certificateProfileId);
+            ps.setLong(14, updateTime);
             ps.setString(15, subjectKeyId);
-            ps.setString(16, fingerprint); // This is the last ? in the statement
+            ps.setString(16, fingerprint);
         }
 
         @Override
         public String getInfoString() {
-            return "Store:, Username: " + this.username + ", Issuer:" + CertTools.getIssuerDN(this.incert) + ", Serno: "
-                    + CertTools.getSerialNumberAsString(this.incert) + ", Subject: " + CertTools.getSubjectDN(this.incert);
+            return "Store:, Username: " + this.username + ", Issuer:" + issuerDN + ", Serno: " + serialNumber + ", Subject: " + subjectDN;
         }
     }
 
@@ -307,15 +321,32 @@ public class ValidationAuthorityPublisher extends BasePublisher implements ICust
     }
 
     @Override
-    public boolean storeCertificate(AuthenticationToken admin, Certificate incert, String username, String password, String userDN, String cafp,
-            int status, int type, long revocationDate, int revocationReason, String tag, int certificateProfileId, long lastUpdate,
-            ExtendedInformation extendedinformation) throws PublisherException {
-        if (log.isDebugEnabled()) {
-            final String fingerprint = CertTools.getFingerprintAsString(incert);
-            log.debug("Publishing certificate with fingerprint " + fingerprint + ", status " + status + ", type " + type + " to external VA.");
+    public boolean storeCertificate(final AuthenticationToken authenticationToken, final CertificateData certificateData, final Base64CertData base64CertData) throws PublisherException {
+        final String fingerprint = certificateData.getFingerprint(); 
+        final String issuerDN = certificateData.getIssuerDN();
+        final String subjectDN = certificateData.getSubjectDN();
+        final String cAFingerprint = certificateData.getCaFingerprint();
+        final int status = certificateData.getStatus();
+        final int type = certificateData.getType();
+        final String serialNumber = certificateData.getSerialNumber();
+        final long expireDate = certificateData.getExpireDate();
+        final long revocationDate = certificateData.getRevocationDate();
+        final int revocationReason = certificateData.getRevocationReason();
+        String base64Cert = certificateData.getBase64Cert();
+        final String username = certificateData.getUsername();
+        final String tag  = certificateData.getTag();
+        final Integer certificateProfileId = certificateData.getCertificateProfileId();
+        final Long updateTime = certificateData.getUpdateTime();
+        final String subjectKeyId = certificateData.getSubjectKeyId();
+        final int rowVersion = certificateData.getRowVersion();
+        final String rowProtection = null;  // Publishing of integrity protection is currently not supported 
+        // Check if we are using Base64CertData table and take the certificate from there if needed
+        if (getStoreCert() && base64Cert==null && CesecoreConfiguration.useBase64CertTable()) {
+            base64Cert = base64CertData.getBase64Cert();
         }
-        final StoreCertPreparer prep = new StoreCertPreparer(incert, username, cafp, status, revocationDate, revocationReason, type, tag,
-                certificateProfileId, lastUpdate);
+        // Send the request to the remote DB
+        final StoreCertPreparer prep = new StoreCertPreparer(fingerprint, issuerDN, subjectDN, cAFingerprint, status, type, serialNumber, expireDate,
+                revocationDate, revocationReason, base64Cert, username, tag, certificateProfileId, updateTime, subjectKeyId, rowVersion, rowProtection);
         final boolean doOnlyPublishRevoked = getOnlyPublishRevoked();
         try {
             if (doOnlyPublishRevoked) {
@@ -339,10 +370,20 @@ public class ValidationAuthorityPublisher extends BasePublisher implements ICust
             }
             newCert(prep);
             return true;
-        } catch (Throwable e) {
-            throwPublisherException(e, prep);
-            return false;
+        } catch (Exception e) {          
+            final String lmsg = intres.getLocalizedMessage("publisher.errorvapubl", getDataSource(), prep.getInfoString());
+            log.error(lmsg, e);
+            final PublisherException pe = new PublisherException(lmsg);
+            pe.initCause(e);
+            throw pe;            
         }
+    }
+
+    @Override
+    public boolean storeCertificate(AuthenticationToken admin, Certificate incert, String username, String password, String userDN, String cafp,
+            int status, int type, long revocationDate, int revocationReason, String tag, int certificateProfileId, long lastUpdate,
+            ExtendedInformation extendedinformation) throws PublisherException {
+        throw new UnsupportedOperationException("Legacy storeCertificate method should never have been invoked for this publisher.");
     }
 
     private class StoreCRLPreparer implements Preparer {

@@ -17,6 +17,8 @@ import java.io.Serializable;
 import java.security.cert.Certificate;
 
 import org.cesecore.authentication.tokens.AuthenticationToken;
+import org.cesecore.certificates.certificate.Base64CertData;
+import org.cesecore.certificates.certificate.CertificateData;
 import org.cesecore.certificates.endentity.ExtendedInformation;
 import org.cesecore.internal.UpgradeableDataHashMap;
 
@@ -29,7 +31,7 @@ import org.cesecore.internal.UpgradeableDataHashMap;
  *
  * @version $Id$
  */
-public abstract class BasePublisher extends UpgradeableDataHashMap implements Serializable, Cloneable {    
+public abstract class BasePublisher extends UpgradeableDataHashMap implements Serializable, Cloneable, FullEntityPublisher {    
 
     private static final long serialVersionUID = -735659148394853025L;
     public static final String TRUE  = "true";
@@ -174,6 +176,16 @@ public abstract class BasePublisher extends UpgradeableDataHashMap implements Se
      * @throws PublisherException if a communication or other error occurs.
      */    
     public abstract boolean storeCertificate(AuthenticationToken admin, Certificate incert, String username, String password, String userDN, String cafp, int status, int type, long revocationDate, int revocationReason, String tag, int certificateProfileId, long lastUpdate, ExtendedInformation extendedinformation) throws PublisherException;
+
+    @Override
+    public boolean storeCertificate(final AuthenticationToken authenticationToken, final CertificateData certificateData, final Base64CertData base64CertData) throws PublisherException {
+        throw new UnsupportedOperationException("This publisher has not implemented this method, and it has been called in error.");
+    }
+
+    @Override
+    public boolean isFullEntityPublishingSupported() {
+        return false;
+    }
 
     /**
      * Published a CRL to a CRL store.

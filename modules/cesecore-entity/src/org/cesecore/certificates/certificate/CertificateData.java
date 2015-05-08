@@ -113,13 +113,13 @@ public class CertificateData extends ProtectedData implements Serializable {
      * @param certprofileid certificate profile id, can be 0
      * @param tag a custom tag to map the certificate to any custom defined tag
      * @param updatetime the time the certificate was updated in the database, i.e. System.currentTimeMillis().
-     * @param useBase64CertTable true if a special table is used for the encoded certificates. NOTE: If true then the caller must store the certificate in Base64CertData as well. 
+     * @param storeCertificate true if a special table is used for the encoded certificates, or if certificate data isn't supposed to be stored at all. NOTE: If true then the caller must store the certificate in Base64CertData as well. 
      */
     public CertificateData(Certificate incert, PublicKey enrichedpubkey, String username, String cafp, int status, int type, int certprofileid,
-            String tag, long updatetime, boolean useBase64CertTable) {
+            String tag, long updatetime, boolean storeCertificate) {
         // Extract all fields to store with the certificate.
         try {
-            if ( !useBase64CertTable ) {
+            if (storeCertificate ) {
                 setBase64Cert(new String(Base64.encode(incert.getEncoded())));
             }
 
@@ -165,6 +165,30 @@ public class CertificateData extends ProtectedData implements Serializable {
         }
     }
 
+    /**
+     * Copy Constructor
+     */
+    public CertificateData(CertificateData copy) {
+        setBase64Cert(copy.getBase64Cert());
+        setFingerprint(copy.getFingerprint());
+        setSubjectDN(copy.getSubjectDN());
+        setIssuerDN(copy.getIssuerDN());
+        setSerialNumber(copy.getSerialNumber());
+        setUsername(copy.getUsername());
+        setStatus(copy.getStatus());
+        setType(copy.getType());
+        setCaFingerprint(copy.getCaFingerprint());
+        setExpireDate(copy.getExpireDate());
+        setRevocationDate(copy.getRevocationDate());
+        setRevocationReason(copy.getRevocationReason());
+        setUpdateTime(copy.getUpdateTime());
+        setCertificateProfileId(copy.getCertificateProfileId());
+        setSubjectKeyId(copy.getSubjectKeyId());
+        setTag(copy.getTag());
+        setRowVersion(copy.getRowVersion());
+        setRowProtection(copy.getRowProtection());
+    }
+    
     public CertificateData() {
     }
 
@@ -530,6 +554,32 @@ public class CertificateData extends ProtectedData implements Serializable {
             return null;
         }
     }
+    /**
+     * Returns the certificate as an object.
+     * 
+     * @return The certificate or null if it doesn't exist or is blank/null in the database
+     */
+    @Transient
+    public Certificate getCertificate(final Base64CertData base64CertData) {
+        try {
+            String certEncoded = null;
+            if (base64Cert!=null && base64Cert.length()>0 ) {
+                certEncoded = base64Cert;
+            } else if (base64CertData!=null) {
+                certEncoded = base64CertData.getBase64Cert();
+            }
+            if (certEncoded==null || certEncoded.isEmpty()) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Certificate data was null or empty. Fingerprint of certificate: " + fingerprint);
+                }
+                return null;
+            }
+            return CertTools.getCertfromByteArray(Base64.decode(certEncoded.getBytes()));
+        } catch (CertificateException ce) {
+            log.error("Can't decode certificate.", ce);
+            return null;
+        }
+    }
 
     /**
      * DN of issuer of certificate
@@ -708,15 +758,6 @@ public class CertificateData extends ProtectedData implements Serializable {
     /** @return the found entity instance or null if the entity does not exist */
     public static CertificateData findByFingerprint(EntityManager entityManager, String fingerprint) {
         return entityManager.find(CertificateData.class, fingerprint);
-    }
-
-    /** @return return the query results as a List. */
-    @SuppressWarnings("unchecked")
-    public static List<CertificateData> findBySubjectDNAndIssuerDN(EntityManager entityManager, String subjectDN, String issuerDN) {
-        final Query query = entityManager.createQuery("SELECT a FROM CertificateData a WHERE a.subjectDN=:subjectDN AND a.issuerDN=:issuerDN");
-        query.setParameter("subjectDN", subjectDN);
-        query.setParameter("issuerDN", issuerDN);
-        return query.getResultList();
     }
 
     /** @return return the query results as a Set. */
@@ -964,19 +1005,63 @@ public class CertificateData extends ProtectedData implements Serializable {
         revokedCertInfos.closeForWrite();
         return revokedCertInfos;
     }
+    
+    /** @return return the query results as a List of maximum 500 elements. */
+    @SuppressWarnings("unchecked")
+    public static List<CertificateData> findByExpireDateWithLimit(EntityManager entityManager, long expireDate) {
+        return findByExpireDateWithLimit(entityManager, expireDate, CertificateConstants.MAXIMUM_QUERY_ROWCOUNT);
+    }
 
     /** @return return the query results as a List. */
     @SuppressWarnings("unchecked")
-    public static List<CertificateData> findByExpireDateWithLimit(EntityManager entityManager, long expireDate) {
+    public static List<CertificateData> findByExpireDateWithLimit(EntityManager entityManager, long expireDate, int maxNumberOfResults) {
         final Query query = entityManager
                 .createQuery("SELECT a FROM CertificateData a WHERE a.expireDate<:expireDate AND (a.status=:status1 OR a.status=:status2)");
         query.setParameter("expireDate", expireDate);
         query.setParameter("status1", CertificateConstants.CERT_ACTIVE);
         query.setParameter("status2", CertificateConstants.CERT_NOTIFIEDABOUTEXPIRATION);
-        query.setMaxResults(CertificateConstants.MAXIMUM_QUERY_ROWCOUNT);
+        query.setMaxResults(maxNumberOfResults);
         return query.getResultList();
     }
+    
+    /** @return return the query results as a List of maximum 500 elements. */
+    @SuppressWarnings("unchecked")
+    public static List<CertificateData> findByExpireDateAndIssuerWithLimit(EntityManager entityManager, long expireDate, String issuerDN) {
+        return findByExpireDateAndIssuerWithLimit(entityManager, expireDate, issuerDN, CertificateConstants.MAXIMUM_QUERY_ROWCOUNT);
+    }
 
+    /** @return return the query results as a List. */
+    @SuppressWarnings("unchecked")
+    public static List<CertificateData> findByExpireDateAndIssuerWithLimit(EntityManager entityManager, long expireDate, String issuerDN, int maxNumberOfResults) {
+        final Query query = entityManager
+                .createQuery("SELECT a FROM CertificateData a WHERE a.expireDate<:expireDate AND (a.status=:status1 OR a.status=:status2) AND issuerDN=:issuerDN");
+        query.setParameter("expireDate", expireDate);
+        query.setParameter("status1", CertificateConstants.CERT_ACTIVE);
+        query.setParameter("status2", CertificateConstants.CERT_NOTIFIEDABOUTEXPIRATION);
+        query.setParameter("issuerDN", issuerDN);
+        query.setMaxResults(maxNumberOfResults);
+        return query.getResultList();
+    }
+    
+    /** @return return the query results as a List of maximum 500 elements. */
+    @SuppressWarnings("unchecked")
+    public static List<CertificateData> findByExpireDateAndTypeWithLimit(EntityManager entityManager, long expireDate, int certificateType) {
+        return findByExpireDateAndTypeWithLimit(entityManager, expireDate, certificateType, CertificateConstants.MAXIMUM_QUERY_ROWCOUNT);
+    }
+    
+    /** @return return the query results as a List. */
+    @SuppressWarnings("unchecked")
+    public static List<CertificateData> findByExpireDateAndTypeWithLimit(EntityManager entityManager, long expireDate, int certificateType, int maxNumberOfResults) {
+        final Query query = entityManager
+                .createQuery("SELECT a FROM CertificateData a WHERE a.expireDate<:expireDate AND (a.status=:status1 OR a.status=:status2) AND a.type=:ctype");
+        query.setParameter("expireDate", expireDate);
+        query.setParameter("status1", CertificateConstants.CERT_ACTIVE);
+        query.setParameter("status2", CertificateConstants.CERT_NOTIFIEDABOUTEXPIRATION);
+        query.setParameter("ctype", certificateType);
+        query.setMaxResults(maxNumberOfResults);
+        return query.getResultList();
+    }
+    
     @SuppressWarnings("unchecked")
     public static List<String> findUsernamesByExpireTimeWithLimit(EntityManager entityManager, long minExpireTime, long maxExpireTime) {
         // TODO: Would it be more effective to drop the NOT NULL of this query and remove it from the result?

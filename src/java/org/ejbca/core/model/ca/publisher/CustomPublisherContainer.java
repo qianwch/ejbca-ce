@@ -21,6 +21,8 @@ import java.util.Iterator;
 import java.util.Properties;
 
 import org.cesecore.authentication.tokens.AuthenticationToken;
+import org.cesecore.certificates.certificate.Base64CertData;
+import org.cesecore.certificates.certificate.CertificateData;
 import org.cesecore.certificates.endentity.ExtendedInformation;
 
 
@@ -92,6 +94,20 @@ public class CustomPublisherContainer extends BasePublisher{
 		return prop;
 	}
   
+    @Override
+    public boolean isFullEntityPublishingSupported() {
+        return getCustomPublisher() instanceof FullEntityPublisher
+                && ((FullEntityPublisher)getCustomPublisher()).isFullEntityPublishingSupported();
+    }
+    
+    @Override
+    public boolean storeCertificate(final AuthenticationToken authenticationToken, final CertificateData certificateData, final Base64CertData base64CertData) throws PublisherException {
+        if (isFullEntityPublishingSupported()) {
+            return ((FullEntityPublisher)this.getCustomPublisher()).storeCertificate(authenticationToken, certificateData, base64CertData);
+        } else {
+            return super.storeCertificate(authenticationToken, certificateData, base64CertData);
+        }
+    }
     
 	/**
 	 * @see org.ejbca.core.model.ca.publisher.BasePublisher

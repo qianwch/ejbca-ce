@@ -215,18 +215,8 @@ public class UnidFnrHandlerTest {
 		public int getRequestId() {
 			return 0;
 		}
-		@Override
-		public CertificateResponseMessage createResponseMessage(Class<? extends ResponseMessage> responseClass,
-				RequestMessage req, Collection<Certificate> certs, PrivateKey signPriv,
-				String provider) {
-			return null;
-		}
 	    @Override
 	    public void setResponseKeyInfo(PrivateKey key, String provider) {
-	    }
-	    @Override
-	    public CertificateResponseMessage createResponseMessage(Class<? extends ResponseMessage> responseClass, RequestMessage req, Collection<Certificate> certs) {
-	        return null;
 	    }
 		@Override
 		public int getPbeIterationCount() {
