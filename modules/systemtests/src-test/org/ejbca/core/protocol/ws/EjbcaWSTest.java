@@ -257,6 +257,11 @@ public class EjbcaWSTest extends CommonEjbcaWS {
     public void test060RevokeCert() throws Exception {
         revokeCert();
     }
+    
+    @Test
+    public void test03_8DontStoreFullCert() throws Exception {
+        certificateRequestDontStoreFullCert();
+    }
 
     @Test
     public void test061RevokeCertBackdated() throws Exception {
