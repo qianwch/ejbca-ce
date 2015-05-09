@@ -12,7 +12,6 @@
  *************************************************************************/
 package org.ejbca.core.ejb.ca.publisher;
 
-import java.security.cert.Certificate;
 import java.util.Collection;
 import java.util.HashMap;
 
