@@ -839,11 +839,14 @@ This setting is by default true and shouldn't be modified unless understood well
 <subsubsection name="Store Certificate Data">
 <p>
 Disabling this setting allows meta information about certificates be stored, but will omit storing the actual certificate data (base64Cert) to the database.
-Meta information about the certificate includes revocation status, expiration information, fingerprint, etc.
+Meta information about the certificate includes revocation status, expiration information, fingerprint, etc. OCSP extensions
 </p>
 <note>
 Disabling this setting will prevent features that depends on the actual certificate data being present from working.
 This setting is by default true and shouldn't be modified unless understood well.
+</note>
+<note>
+This setting, when set false, also disables most OCSP extensions for affected certificates, since these are commonly dependent on the certificate being present in the VA.
 </note>
 </subsubsection>
 <subsubsection name="Path Length Constraints">
