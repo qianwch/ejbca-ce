@@ -49,6 +49,12 @@ public interface PublisherSessionLocal extends PublisherSession {
 
     /**
      * Adds a publisher to the database.
+     * 
+     * @param admin AuthenticationToken of admin
+     * @param name the name of the publisher to add.
+     * @param publisher the publisher to add
+     * @return the publisher ID as added
+     * 
      * @throws PublisherExistsException if publisher already exists.
      * @throws AuthorizationDeniedException required access rights are ca_functionality/edit_publisher
      */
