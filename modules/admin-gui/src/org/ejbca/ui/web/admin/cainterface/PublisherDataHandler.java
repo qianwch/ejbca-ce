@@ -67,7 +67,7 @@ public class PublisherDataHandler implements Serializable {
     public boolean removePublisher(String name) throws AuthorizationDeniedException {
         boolean returnval = true;
         int publisherid = publishersession.getPublisherId(name);
-        if (!caadminsession.exitsPublisherInCAs(administrator, publisherid)
+        if (!caadminsession.exitsPublisherInCAs(publisherid)
                 && !certificateProfileSession.existsPublisherIdInCertificateProfiles(publisherid)) {
             publishersession.removePublisher(administrator, name);
             this.info.publishersEdited();

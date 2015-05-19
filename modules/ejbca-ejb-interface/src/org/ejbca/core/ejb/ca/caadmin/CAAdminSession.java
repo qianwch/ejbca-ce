@@ -417,7 +417,7 @@ public interface CAAdminSession {
      * Method used to check if publishers id exists in any CAs CRLPublishers
      * Collection.
      */
-    boolean exitsPublisherInCAs(AuthenticationToken admin, int publisherid);
+    boolean exitsPublisherInCAs(int publisherid);
 
     /**
      * Method that publishes the given CA certificate chain to the list of
