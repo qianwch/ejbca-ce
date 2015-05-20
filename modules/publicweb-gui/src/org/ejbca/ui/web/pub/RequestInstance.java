@@ -429,7 +429,11 @@ public class RequestInstance {
 					    try {
 					        pkcs10Req(request, response, username, password, resulttype, helper, reqBytes);
 					    } catch(Exception exp) {
-					        iErrorMessage = intres.getLocalizedMessage("certreq.failed", exp.getLocalizedMessage());
+					        if(exp.getCause() instanceof NullPointerException) {
+					            iErrorMessage = "Failed to parse request";
+					        } else {
+					            iErrorMessage = intres.getLocalizedMessage("certreq.failed", exp.getLocalizedMessage());
+					        }
 					    }
 					} else {
 						throw new SignRequestException("No request bytes received.");
@@ -657,7 +661,7 @@ public class RequestInstance {
         if (log.isDebugEnabled()) {
             log.debug("Received PKCS10 request: " + new String(reqBytes));
         }
-		CertificateRequestResponse result = helper.pkcs10CertRequest(signSession, caSession, reqBytes, username, password, resulttype);
+        CertificateRequestResponse result = helper.pkcs10CertRequest(signSession, caSession, reqBytes, username, password, resulttype);
 		byte[] b64data = result.getEncoded(); // PEM cert, cert-chain or PKCS7
 		byte[] b64subject = result.getCertificate().getEncoded(); // always a PEM cert of the subject
 		if (Boolean.valueOf(getParameter("showResultPage")) && !isCertIssuerThrowAwayCA(b64subject, username)) {
