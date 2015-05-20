@@ -130,7 +130,7 @@ public class CaRemovePublisherCommand extends BaseCaAdminCommand {
                 }
                 // Check that there are no references left
                 if (caAdminSession.exitsPublisherInCAs(publisherId) || certificateProfileSession.existsPublisherIdInCertificateProfiles(publisherId)) {
-                    log.error("Unable to remove publisher that still still has references in CAs or Certificate Profiles.");
+                    log.error("Unable to remove publisher that still has references in CAs or Certificate Profiles.");
                     return CommandResult.FUNCTIONAL_FAILURE;                    
                 }
                 pubsession.removePublisher(getAuthenticationToken(), name);
