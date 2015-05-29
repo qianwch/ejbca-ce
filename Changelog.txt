@@ -1,3 +1,43 @@
+EJBCA 6.2.10, 2015-05-29
+---
+Bug
+	[ECA-2138] - External RA GUI cannot handle SubCA certificates with critical CDP
+	[ECA-2282] - Publishing certificate from certificate view GUI to queued publisher causes error message but publishing works anyway
+	[ECA-3789] - Stack trace if CAs in Certificate Profile and End Entity Profile don't match
+	[ECA-3887] - An NPE is thrown at user when submitting invalid CSR during enrollment
+	[ECA-3999] - Make healtcheck setting configurable for new CAs
+	[ECA-4104] - Removing PKCS#11 token makes Cypto Token GUI unusable
+	[ECA-4141] - Several issues regarding End Entity Rules in basic mode
+	[ECA-4147] - Review/fix usage of getAuthorizedEndEntityProfileIds
+	[ECA-4180] - Update FileUpload library used by ExternalRA GUI
+	[ECA-4195] - Ocsp key renewal timer not starting automatically
+	[ECA-4203] - "Check Certificate Status" reports incorrect/misleading status
+	[ECA-4209] - Regression: Ad hoc upgrade of OCSP might be broken by the CachingCryptoToken
+	[ECA-4232] - Regression: Certificate keyUsage invalid from CSR when using allowKeyUsage override
+	[ECA-4243] - POP is not verified properly on WS requests
+	[ECA-4246] - EJBCA Token Certificate Enrollment: Text differs from button name
+	[ECA-4249] - ClientToolBox OCSP test does not work with HTTP GET
+
+Improvement
+	[ECA-4081] - Remove name lookup done by OCSP responder
+	[ECA-4146] - Upgrade BouncyCastle to 1.52
+	[ECA-4157] - Allow import of certificates for non-revoked end entities using importcert command
+	[ECA-4191] - Upgrade cert-cvc project to BC 1.52
+	[ECA-4192] - Replace deprecated methods: constructor for AuthorityKeyIdentifier,  and ECPoint.getX/getY
+	[ECA-4194] - Add possibility to prompt for password in CLI calls to setpwd
+	[ECA-4196] - Replace EJBCA logotypes in documentation	
+	[ECA-4210] - Validate OCSP signing chain
+	[ECA-4223] - Add favicon to ExternalRA GUI
+	[ECA-4227] - Update EJBCA logo and favicon
+	[ECA-4231] - Change variable names in BaseCaAdminCommand.java
+	[ECA-4266] - Small documentation improvements
+
+New Feature
+	[ECA-4214] - Ability to rename end entities
+	[ECA-4226] - CLI command to remove Publisher with dependencies
+	[ECA-4233] - Add Certificate Profiles setting to limit certificate storage
+	[ECA-4242] - Certificate Profile Setting for restricting certificate data being written to the CertificateData/Base64CertData tables
+
 EJBCA 6.2.9, 2015-03-26
 ---
 Bug
@@ -565,7 +605,7 @@ Task
 EJBCA 6.0.0, 2013-11-08
 ---
 
-** Bug
+Bug
 	[ECA-1015] - A ' is valid in an email address - but gets stripped by EJBCA.
 	[ECA-1640] - Sample code for advanced custom extension missing some arguments
 	[ECA-1947] - LDAPPublisher have problems with comma in DN
@@ -686,7 +726,7 @@ EJBCA 6.0.0, 2013-11-08
 	[ECA-3294] - Security issue
 	[ECA-3300] - OCSP Transaction Logger outputs a newline between each log entry
 
-** Improvement
+Improvement
 	[ECA-519] - Move configuration file from bin/ to conf/
 	[ECA-786] - Email notification cannot be edited correctly
 	[ECA-1010] - Simplify installation procedure
@@ -788,13 +828,13 @@ EJBCA 6.0.0, 2013-11-08
 	[ECA-3263] - Allow AnyCA to be the only selected available CA in EEPs
 	[ECA-3285] - Datasources should have validate-on-match=true in order to reconnect from failures
 
-** Master Ticket
+Master Ticket
 	[ECA-3049] - Optimize trunk
 	[ECA-3116] - Possibility to Export/Import all CA configurations (a.k.a "The Great Dump")
 	[ECA-3252] - CMP log fixes for CC test plan
 	[ECA-3261] - Master ticket for OCSP log tickets 
 
-** New Feature
+New Feature
 	[ECA-862] - Command for ascii/XML dump of CA installation
 	[ECA-1866] - WS-API to get last CRL for a CA
 	[ECA-1998] - Support for GOST R digital signature and hash algorithms
@@ -817,7 +857,7 @@ EJBCA 6.0.0, 2013-11-08
 	[ECA-3095] - HSM slot label. Resolve existent issues from ECA-3071, add support for GUI/CLI/Upgrade
 	[ECA-3128] - Add support for slot labels to ca init command, database protection and ocsp
 
-** Task
+Task
 	[ECA-2296] - Master Issue: Look over authorization in all session beans.
 	[ECA-2298] - Master issue: Unify all names in EJBCA
 	[ECA-2317] - Migrate OCSP functionality from CESeCore to EJBCA
@@ -890,7 +930,7 @@ EJBCA 6.0.0, 2013-11-08
 	[ECA-3241] - Eliminate deprecated values from ocsp.properties as far as possible and remove them from all but upgrade code.
 	[ECA-3291] - Access rules unclear
 
-** Technical task
+Technical task
 	[ECA-3152] - Possibility to Export/Import all CryptoTokens
 	[ECA-3153] - Possibility to Export/Import all CAs
 	[ECA-3154] - Possibility to Export/Import all Certificate Profiles
@@ -1032,7 +1072,7 @@ Bug
 
 EJBCA 5.0.6, 2012-10-15
 ---
-** Bug
+Bug
 	[ECA-2695] - Creating a CA via the CLI doesn't update the ca cache.
 	[ECA-2704] - Error in usage text for 'ejbca.sh ra listusers'
 	[ECA-2712] - Some properties in ejbca.properties are never read
@@ -1058,7 +1098,7 @@ EJBCA 5.0.6, 2012-10-15
 	[ECA-2799] - Improve RFC 4387 feature documentation
 	[ECA-2809] - Unable to use "modified" at the "Search End Entities" page.
 
-** Improvement
+Improvement
 	[ECA-1696] - CertTools.getCertsFromPEM(*) should declare it returns a List as the order of certificates are important
 	[ECA-2183] - There is a code which will be never executed for external SCEP
 	[ECA-2656] - Unable to receive certificates from external CA that has invalid algorithm id parameters
@@ -1067,13 +1107,13 @@ EJBCA 5.0.6, 2012-10-15
 	[ECA-2776] - Disable jasper compilation in default build
 
 
-** New Feature
+New Feature
 	[ECA-2727] - Self-registration with admin approval
 	[ECA-2740] - Ant target for renewing application server keystore
 	[ECA-2747] - Extended Key Usage for WiFi EAP authentication
 	[ECA-2788] - Support CertHash extension in OCSP responder
 
-** Task
+Task
 	[ECA-2716] - Remove unused properties
 
 
@@ -1502,15 +1542,15 @@ Improvement
 
 EJBCA 4.0.9, 2012-02-13
 ---
-** Bug
+Bug
 	[ECA-2574] - Minor XSS issue
 
 EJBCA 4.0.8, 2012-02-09
 ---
-** New Feature
+New Feature
 	[ECA-2539] - CMP: Get KeyUpdateRequest working even in RA mode 
 
-** Bug
+Bug
 	[ECA-2261] - SenderKeyID does not need to be set in a CMP request
 	[ECA-2476] - null pointer when trying to recover lost HSM in external OCSP
 	[ECA-2482] - Minor XSS issues
@@ -1519,7 +1559,7 @@ EJBCA 4.0.8, 2012-02-09
 	[ECA-2552] - CMP: Skip verifying CertificateConfirmationRequest if not required
 	[ECA-2567] - CMP: Should use EjbRemoteHelper in CrmfRARequestTest
 
-** Improvement
+Improvement
 	[ECA-1978] - Certificate Profile form improved
 	[ECA-2094] - Edit CA form improved
 	[ECA-2454] - Improve all table layout (rows: header, sections, footer)
@@ -1528,7 +1568,7 @@ EJBCA 4.0.8, 2012-02-09
 	[ECA-2501] - More efficient CRL download
 	[ECA-2518] - Add link to Help page for ECDSA keys
 
-** Task
+Task
 	[ECA-2157] - Clean up CSS code
 
 EJBCA 4.0.7, 2011-12-25
