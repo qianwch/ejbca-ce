@@ -34,6 +34,7 @@ public class ErrorCode implements Serializable {
     private String internalErrorCode = _NOT_SPECIFIED;
 
     private static final String _CA_NOT_EXISTS = "CA_NOT_EXISTS"; // CA does not exist.
+    private static final String _CA_ALREADY_EXISTS = "CA_ALREADY_EXISTS"; // CA already exists.
     private static final String _CA_ID_EQUALS_ZERO = "CA_ID_EQUALS_ZERO"; // CA ID can't be equal to zero.
     private static final String _EE_PROFILE_NOT_EXISTS = "EE_PROFILE_NOT_EXISTS"; // End Entity profile does not exist.
     private static final String _CERT_PROFILE_NOT_EXISTS = "CERT_PROFILE_NOT_EXISTS"; // Certificate profile does not exist.
@@ -79,7 +80,11 @@ public class ErrorCode implements Serializable {
     private static final String _INTERNAL_KEY_BINDING_NAME_IN_USE = "INTERNAL_KEY_BINDING_NAME_IN_USE"; // An InternalKeyBinding with the name already exists
     private static final String _CERTIFICATE_IMPORT = "CERTIFICATE_IMPORT"; // Failure during import of a certificate
     private static final String _NAMECONSTRAINT_VIOLATION = "NAMECONSTRAINT_VIOLATION"; // End-entity does not satisfy name constraints of CA
-
+    private static final String _SIGNED_BY_EXTERNAL_CA_NOT_SUPPORTED = "SIGNED_BY_EXTERNAL_CA_NOT_SUPPORTED"; // when trying to create a new CA signed by an external CA using the WS
+    private static final String _BAD_CERTIFICATE_PROFILE_TYPE = "BAD_CERTIFICATE_PROFILE_TYPE"; // when using a cert/endentity profile of the wrong type
+    private static final String _ROLE_DOES_NOT_EXIST = "ROLE_DOES_NOT_EXIST"; // When trying to find a role that does not exist
+    
+    
     /** Default constructor. */
     private ErrorCode() {}
 
@@ -92,6 +97,8 @@ public class ErrorCode implements Serializable {
 
     /** CA does not exist. */
     public static final ErrorCode CA_NOT_EXISTS = new ErrorCode(_CA_NOT_EXISTS);
+    /** CA already exists. */
+    public static final ErrorCode CA_ALREADY_EXISTS = new ErrorCode(_CA_ALREADY_EXISTS);
     /** CA ID can't be equal to zero. */
     public static final ErrorCode CA_ID_EQUALS_ZERO = new ErrorCode(_CA_ID_EQUALS_ZERO);
     /** End Entity profile does not exist. */
@@ -172,8 +179,10 @@ public class ErrorCode implements Serializable {
     public static final ErrorCode INTERNAL_KEY_BINDING_NAME_IN_USE = new ErrorCode(_INTERNAL_KEY_BINDING_NAME_IN_USE);
     public static final ErrorCode CERTIFICATE_IMPORT = new ErrorCode(_CERTIFICATE_IMPORT);
     public static final ErrorCode NAMECONSTRAINT_VIOLATION = new ErrorCode(_NAMECONSTRAINT_VIOLATION);
-
-
+    public static final ErrorCode SIGNED_BY_EXTERNAL_CA_NOT_SUPPORTED = new ErrorCode(_SIGNED_BY_EXTERNAL_CA_NOT_SUPPORTED);
+    public static final ErrorCode BAD_CERTIFICATE_PROFILE_TYPE = new ErrorCode(_BAD_CERTIFICATE_PROFILE_TYPE);
+    public static final ErrorCode ROLE_DOES_NOT_EXIST = new ErrorCode(_ROLE_DOES_NOT_EXIST);
+    
     /** Get the internal error code. */
     public String getInternalErrorCode() {
         return internalErrorCode;

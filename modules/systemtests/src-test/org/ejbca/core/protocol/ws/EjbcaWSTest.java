@@ -13,6 +13,7 @@
 package org.ejbca.core.protocol.ws;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -38,6 +39,7 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Properties;
 import java.util.Set;
 import java.util.TimeZone;
 
@@ -50,10 +52,17 @@ import org.cesecore.ErrorCode;
 import org.cesecore.authentication.tokens.AuthenticationSubject;
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authorization.AuthorizationDeniedException;
+import org.cesecore.authorization.control.StandardRules;
+import org.cesecore.authorization.rules.AccessRuleData;
+import org.cesecore.authorization.rules.AccessRuleState;
+import org.cesecore.authorization.user.AccessMatchType;
+import org.cesecore.authorization.user.AccessUserAspectData;
+import org.cesecore.authorization.user.matchvalues.X500PrincipalAccessMatchValue;
 import org.cesecore.certificates.ca.CADoesntExistsException;
 import org.cesecore.certificates.ca.CAInfo;
 import org.cesecore.certificates.ca.CaSessionRemote;
 import org.cesecore.certificates.ca.catoken.CAToken;
+import org.cesecore.certificates.ca.catoken.CATokenConstants;
 import org.cesecore.certificates.certificate.CertificateStoreSessionRemote;
 import org.cesecore.certificates.certificateprofile.CertificateProfile;
 import org.cesecore.certificates.certificateprofile.CertificateProfileConstants;
@@ -65,9 +74,14 @@ import org.cesecore.certificates.endentity.EndEntityTypes;
 import org.cesecore.certificates.endentity.ExtendedInformation;
 import org.cesecore.certificates.util.AlgorithmConstants;
 import org.cesecore.configuration.CesecoreConfigurationProxySessionRemote;
+import org.cesecore.keys.token.CryptoToken;
+import org.cesecore.keys.token.CryptoTokenInfo;
 import org.cesecore.keys.token.CryptoTokenTestUtils;
+import org.cesecore.keys.token.KeyPairInfo;
+import org.cesecore.keys.token.SoftCryptoToken;
 import org.cesecore.keys.util.KeyTools;
 import org.cesecore.mock.authentication.SimpleAuthenticationProviderSessionRemote;
+import org.cesecore.roles.RoleData;
 import org.cesecore.util.Base64;
 import org.cesecore.util.CertTools;
 import org.cesecore.util.EjbRemoteHelper;
@@ -76,6 +90,7 @@ import org.ejbca.config.GlobalConfiguration;
 import org.ejbca.core.EjbcaException;
 import org.ejbca.core.ejb.approval.ApprovalExecutionSessionRemote;
 import org.ejbca.core.ejb.approval.ApprovalSessionRemote;
+import org.ejbca.core.ejb.ca.CaTestCase;
 import org.ejbca.core.ejb.ca.caadmin.CAAdminSessionRemote;
 import org.ejbca.core.ejb.config.GlobalConfigurationSessionRemote;
 import org.ejbca.core.ejb.hardtoken.HardTokenSessionRemote;
@@ -87,6 +102,7 @@ import org.ejbca.core.model.hardtoken.HardTokenConstants;
 import org.ejbca.core.protocol.ws.client.gen.AlreadyRevokedException_Exception;
 import org.ejbca.core.protocol.ws.client.gen.ApprovalException_Exception;
 import org.ejbca.core.protocol.ws.client.gen.CertificateResponse;
+import org.ejbca.core.protocol.ws.client.gen.EjbcaException_Exception;
 import org.ejbca.core.protocol.ws.client.gen.HardTokenDataWS;
 import org.ejbca.core.protocol.ws.client.gen.IllegalQueryException_Exception;
 import org.ejbca.core.protocol.ws.client.gen.KeyStore;
@@ -99,6 +115,7 @@ import org.ejbca.core.protocol.ws.client.gen.UserMatch;
 import org.ejbca.core.protocol.ws.client.gen.WaitingForApprovalException_Exception;
 import org.ejbca.core.protocol.ws.common.CertificateHelper;
 import org.ejbca.core.protocol.ws.common.KeyStoreHelper;
+import org.ejbca.util.KeyValuePair;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -784,6 +801,284 @@ public class EjbcaWSTest extends CommonEjbcaWS {
         UserDataVOWS user = ejbcaraws.findUser(criteria).get(0);
         assertEquals("stored cardnumber ws", "1234fa", user.getCardNumber());
     }
+    
+    @Test
+    public void test70CreateSoftCryptoToken() throws Exception {
+        log.trace(">test70CreateSoftCryptoToken()");
+        
+        String ctname = "NewTestCryptoTokenThroughWS";
+        
+        // Remove any residues from earlier test runs
+        Integer ctid = cryptoTokenManagementSession.getIdFromName(ctname);
+        if(ctid != null) {
+            cryptoTokenManagementSession.deleteCryptoToken(intAdmin, ctid.intValue());
+        }
+        
+        try {
+            ArrayList<KeyValuePair> cryptotokenProperties = new ArrayList<KeyValuePair>();
+            cryptotokenProperties.add(new KeyValuePair(CryptoToken.ALLOW_EXTRACTABLE_PRIVATE_KEY, Boolean.toString(false)));
+            cryptotokenProperties.add(new KeyValuePair(SoftCryptoToken.NODEFAULTPWD, Boolean.TRUE.toString()));
+            
+            ejbcaraws.createCryptoToken(ctname, "SoftCryptoToken", "1234", false, cryptotokenProperties);
+            ctid = cryptoTokenManagementSession.getIdFromName(ctname);
+            assertNotNull("Creating a new SoftCryptoToken failed", ctid);
+            CryptoTokenInfo token = cryptoTokenManagementSession.getCryptoTokenInfo(intAdmin, ctid.intValue());
+            
+            Properties ctproperties = token.getCryptoTokenProperties();
+            assertEquals(3, ctproperties.keySet().size());
+            assertTrue(ctproperties.containsKey(SoftCryptoToken.NODEFAULTPWD));
+            assertEquals(ctproperties.getProperty(SoftCryptoToken.NODEFAULTPWD), Boolean.TRUE.toString());
+            
+            assertEquals("SoftCryptoToken", token.getType());
+            assertFalse(Boolean.getBoolean((String)token.getCryptoTokenProperties().get(CryptoToken.ALLOW_EXTRACTABLE_PRIVATE_KEY)));
+            assertTrue(token.isActive());
+            cryptoTokenManagementSession.deactivate(intAdmin, ctid.intValue());
+            assertFalse(cryptoTokenManagementSession.isCryptoTokenStatusActive(intAdmin, ctid.intValue()));
+            cryptoTokenManagementSession.activate(intAdmin, ctid.intValue(), "1234".toCharArray());
+            assertTrue(cryptoTokenManagementSession.isCryptoTokenStatusActive(intAdmin, ctid.intValue()));
+        } finally {
+            ctid = cryptoTokenManagementSession.getIdFromName(ctname);
+            if(ctid != null) {
+                cryptoTokenManagementSession.deleteCryptoToken(intAdmin, ctid.intValue());
+            }
+        }
+        log.trace("<test70CreateSoftCryptoToken()");
+    }
+
+    @Test
+    public void test71GenerateCryptoTokenKeys() throws Exception {
+        log.trace(">test71GenerateCryptoTokenKeys()");
+
+        String ctname = "NewTestCryptoTokenThroughWS";
+        
+        // Remove any residues from earlier test runs
+        Integer ctid = cryptoTokenManagementSession.getIdFromName(ctname);
+        if(ctid != null) {
+            cryptoTokenManagementSession.deleteCryptoToken(intAdmin, ctid.intValue());
+        }
+        
+        try {
+            ArrayList<KeyValuePair> cryptotokenProperties = new ArrayList<KeyValuePair>();
+            cryptotokenProperties.add(new KeyValuePair(CryptoToken.ALLOW_EXTRACTABLE_PRIVATE_KEY, Boolean.toString(false)));
+            cryptotokenProperties.add(new KeyValuePair(SoftCryptoToken.NODEFAULTPWD, Boolean.TRUE.toString()));
+            ejbcaraws.createCryptoToken(ctname, "SoftCryptoToken", "1234", false, cryptotokenProperties);
+            ctid = cryptoTokenManagementSession.getIdFromName(ctname);
+            
+            String keyAlias = "testWSGeneratedKeys";
+            ejbcaraws.generateCryptoTokenKeys(ctname, keyAlias, "RSA1024");
+            List<String> keyAliases = cryptoTokenManagementSession.getKeyPairAliases(intAdmin, ctid.intValue());
+            assertTrue(keyAliases.contains(keyAlias));
+            KeyPairInfo keyInfo = cryptoTokenManagementSession.getKeyPairInfo(intAdmin, ctid.intValue(), keyAlias);
+            assertEquals("RSA", keyInfo.getKeyAlgorithm());
+            assertEquals("1024", keyInfo.getKeySpecification());
+        } finally {
+            ctid = cryptoTokenManagementSession.getIdFromName(ctname);
+            if(ctid != null) {
+                cryptoTokenManagementSession.deleteCryptoToken(intAdmin, ctid.intValue());
+            }
+        }
+        log.trace("<test71GenerateCryptoTokenKeys()");
+    }
+
+    @Test
+    public void test72CreateCA() throws Exception {
+        log.trace(">test72CreateCA()");
+        
+        String caname = "NewTestCAThroughWS";
+        String ctname = caname + "CryptoToken";
+        
+        // Remove any residues from earlier test runs
+        if(caSession.existsCa(caname)) {
+            int caid = caSession.getCAInfo(intAdmin, caname).getCAId();
+            caSession.removeCA(intAdmin, caid);
+        }
+        
+        Integer ctid = cryptoTokenManagementSession.getIdFromName(ctname);
+        if(ctid != null) {
+            cryptoTokenManagementSession.deleteCryptoToken(intAdmin, ctid.intValue());
+        }
+        
+        try {
+            // create cryptotoken
+            ArrayList<KeyValuePair> cryptotokenProperties = new ArrayList<KeyValuePair>();
+            cryptotokenProperties.add(new KeyValuePair(CryptoToken.ALLOW_EXTRACTABLE_PRIVATE_KEY, Boolean.toString(false)));
+            cryptotokenProperties.add(new KeyValuePair(SoftCryptoToken.NODEFAULTPWD, Boolean.TRUE.toString()));
+            ejbcaraws.createCryptoToken(ctname, "SoftCryptoToken", "1234", true, cryptotokenProperties);
+            ctid = cryptoTokenManagementSession.getIdFromName(ctname);
+
+            // generate keys
+            final String decKeyAlias = CAToken.SOFTPRIVATEDECKEYALIAS;
+            ejbcaraws.generateCryptoTokenKeys(ctname, decKeyAlias, "RSA1024");
+            final String signKeyAlias = CAToken.SOFTPRIVATESIGNKEYALIAS;
+            ejbcaraws.generateCryptoTokenKeys(ctname, signKeyAlias, "RSA1024");
+            final String testKeyAlias = "test72CreateCATestKey";
+            ejbcaraws.generateCryptoTokenKeys(ctname, testKeyAlias, "secp256r1");
+            
+            // construct the ca token properties
+            final ArrayList<KeyValuePair> purposeKeyMapping = new ArrayList<KeyValuePair>();
+            purposeKeyMapping.add(new KeyValuePair(CATokenConstants.CAKEYPURPOSE_DEFAULT_STRING, CAToken.SOFTPRIVATEDECKEYALIAS));
+            purposeKeyMapping.add(new KeyValuePair(CATokenConstants.CAKEYPURPOSE_CERTSIGN_STRING, CAToken.SOFTPRIVATESIGNKEYALIAS));
+            purposeKeyMapping.add(new KeyValuePair(CATokenConstants.CAKEYPURPOSE_CRLSIGN_STRING, CAToken.SOFTPRIVATESIGNKEYALIAS));
+            purposeKeyMapping.add(new KeyValuePair(CATokenConstants.CAKEYPURPOSE_TESTKEY_STRING, testKeyAlias));
+            
+            // Try to create a CA signed by an external CA. It should fail.
+            try {
+                ejbcaraws.createCA(caname, "CN="+caname, "x509", 3L, null, "SHA256WithRSA", CAInfo.SIGNEDBYEXTERNALCA, ctname, purposeKeyMapping, null);
+                fail("It was possible to create a CA signed by an external CA");
+            } catch(EjbcaException_Exception e) {
+                if(!e.getFaultInfo().getErrorCode().getInternalErrorCode().equals(ErrorCode.SIGNED_BY_EXTERNAL_CA_NOT_SUPPORTED.getInternalErrorCode())) {
+                    throw e;
+                }
+            }
+            
+            // Try to create a CA that already exists. It should fail
+            String existingTestCA = "WSCreateCATestTestingExistingCA";
+            CaTestCase.createTestCA(existingTestCA);
+            try {
+                ejbcaraws.createCA(existingTestCA, caSession.getCAInfo(intAdmin, existingTestCA).getSubjectDN(), "x509", 3L, null, "SHA256WithRSA", 
+                        CAInfo.SELFSIGNED, ctname, purposeKeyMapping, null);
+                fail("It was possible to create a CA even though the CA already exists");
+            } catch(EjbcaException_Exception e) {
+                if(!e.getFaultInfo().getErrorCode().getInternalErrorCode().equals(ErrorCode.CA_ALREADY_EXISTS.getInternalErrorCode())) {
+                    throw e;
+                }
+                caSession.removeCA(intAdmin, caSession.getCAInfo(intAdmin, existingTestCA).getCAId());
+            }
+            
+            // Try to create a CA. It should succeed (Happy path test)
+            ejbcaraws.createCA(caname, "CN="+caname, "x509", 3L, null, "SHA256WithRSA", CAInfo.SELFSIGNED, ctname, purposeKeyMapping, null);
+            
+            // Verify the new CA's parameters
+            CAInfo cainfo = caSession.getCAInfo(intAdmin, caname);
+            assertNotNull(cainfo);
+            assertEquals(caname, cainfo.getName());
+            assertEquals("CN=" + caname, cainfo.getSubjectDN());
+            assertEquals(CertificateProfileConstants.CERTPROFILE_FIXED_ROOTCA, cainfo.getCertificateProfileId());
+            assertEquals(CAInfo.SELFSIGNED, cainfo.getSignedBy());
+            assertEquals(CAInfo.CATYPE_X509, cainfo.getCAType());
+
+        } finally {
+            if(caSession.existsCa(caname)) {
+                int caid = caSession.getCAInfo(intAdmin, caname).getCAId();
+                caSession.removeCA(intAdmin, caid);
+            }
+            
+            ctid = cryptoTokenManagementSession.getIdFromName(ctname);
+            if(ctid != null) {
+                cryptoTokenManagementSession.deleteCryptoToken(intAdmin, ctid.intValue());
+            }
+        }
+        log.trace("<test72CreateCA()");
+    }
+
+    @Test
+    public void test73ManageSubjectInRole() throws Exception {
+        log.trace(">test73AddSubjectToRole()");
+        
+        String rolename = "TestWSNewAccessRole";
+        String testAdminUsername = "newWsAdminUserName";
+        
+     // Remove any residues from earlier test runs
+        RoleData role = roleAccessSession.findRole(rolename);
+        if(role != null) {
+            roleManagementSession.remove(intAdmin, role);
+        }
+        
+        try {
+            CAInfo cainfo = caSession.getCAInfo(intAdmin, getAdminCAName());
+            assertNotNull("No CA with name " + getAdminCAName() + " was found.", cainfo);
+            
+            // Create/update the admin end entity and issue its certificate
+            EndEntityInformation adminUser = endEntityAccessSession.findUser(intAdmin, testAdminUsername);
+            if(adminUser == null) {
+                adminUser = new EndEntityInformation();
+                adminUser.setUsername(testAdminUsername);
+                adminUser.setPassword("foo123");
+                adminUser.setDN("CN="+testAdminUsername);
+                adminUser.setCAId(cainfo.getCAId());
+                adminUser.setEmail(null);
+                adminUser.setSubjectAltName(null);
+                adminUser.setStatus(UserDataVOWS.STATUS_NEW);
+                adminUser.setTokenType(SecConst.TOKEN_SOFT_JKS);
+                adminUser.setEndEntityProfileId(SecConst.EMPTY_ENDENTITYPROFILE);
+                adminUser.setCertificateProfileId(CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER);
+                adminUser.setType(new EndEntityType(EndEntityTypes.ENDUSER, EndEntityTypes.ADMINISTRATOR));
+                log.info("Adding new user: "+adminUser.getUsername());
+                endEntityManagementSession.addUser(intAdmin, adminUser, true);
+            } else {
+                adminUser.setStatus(UserDataVOWS.STATUS_NEW);
+                adminUser.setPassword("foo123");
+                log.info("Changing user: "+adminUser.getUsername());
+                endEntityManagementSession.changeUser(intAdmin, adminUser, true);
+            }
+            BatchCreateTool.createUser(intAdmin, "p12", adminUser.getUsername());
+            adminUser = endEntityAccessSession.findUser(intAdmin, testAdminUsername);
+        
+            // Create a new role
+            log.info("Creating new role: "+rolename);
+            role = roleManagementSession.create(intAdmin, rolename);
+            
+            // Set access rules for the new role
+            final List<AccessRuleData> accessRules = new ArrayList<AccessRuleData>();
+            accessRules.add(new AccessRuleData(rolename, StandardRules.ROLE_ROOT.resource(), AccessRuleState.RULE_ACCEPT, true));
+            role = roleManagementSession.addAccessRulesToRole(intAdmin, role, accessRules);
+            
+            // Verify that there are no admins from the start
+            assertTrue(role.getAccessUsers().size()==0);
+        
+            
+            // Add adminUser to a non-existing role. It should fail
+            try {
+                ejbcaraws.addSubjectToRole("NoneExistingRole", getAdminCAName(), X500PrincipalAccessMatchValue.WITH_FULLDN.name(), 
+                        AccessMatchType.TYPE_EQUALCASE.name(), adminUser.getCertificateDN());
+                fail("Succeeded in adding subject to a non-existing role");
+            } catch(EjbcaException_Exception e) {
+                if(!e.getFaultInfo().getErrorCode().getInternalErrorCode().equals(ErrorCode.ROLE_DOES_NOT_EXIST.getInternalErrorCode())) {
+                    throw e;
+                }
+            }
+            
+            // Add adminUser to the new role. It should succeed
+            ejbcaraws.addSubjectToRole(rolename, getAdminCAName(), X500PrincipalAccessMatchValue.WITH_FULLDN.name(), 
+                    AccessMatchType.TYPE_EQUALCASE.name(), adminUser.getCertificateDN());
+            role = roleAccessSession.findRole(rolename);
+            
+            // Verify the admin data
+            Collection <AccessUserAspectData> admins = role.getAccessUsers().values();
+            assertTrue(admins.size()==1);
+            AccessUserAspectData addedAdmin = admins.iterator().next();
+            assertEquals(cainfo.getCAId(), addedAdmin.getCaId().intValue());
+            assertEquals(AccessMatchType.TYPE_EQUALCASE.getNumericValue(), addedAdmin.getMatchType());
+            assertEquals(adminUser.getCertificateDN(), addedAdmin.getMatchValue());
+            assertEquals(X500PrincipalAccessMatchValue.WITH_FULLDN.getNumericValue(), addedAdmin.getMatchWith());
+
+            
+            // Remove adminUser specified by a non-existing CA. It should fail
+            try {
+                ejbcaraws.removeSubjectFromRole(rolename, "NoneExistingCA", X500PrincipalAccessMatchValue.WITH_FULLDN.name(), 
+                        AccessMatchType.TYPE_EQUALCASE.name(), adminUser.getCertificateDN());
+                fail("Succeeded in adding subject to a non-existing role");
+            } catch(EjbcaException_Exception e) {
+                if(!e.getFaultInfo().getErrorCode().getInternalErrorCode().equals(ErrorCode.CA_NOT_EXISTS.getInternalErrorCode())) {
+                    throw e;
+                }
+            }
+            
+            // Remove adminUser from the new role. It should succeed
+            ejbcaraws.removeSubjectFromRole(rolename, getAdminCAName(), X500PrincipalAccessMatchValue.WITH_FULLDN.name(), 
+                    AccessMatchType.TYPE_EQUALCASE.name(), adminUser.getCertificateDN());
+            role = roleAccessSession.findRole(rolename);            
+            assertTrue(role.getAccessUsers().values().size()==0);
+            
+        } finally {
+            endEntityManagementSession.revokeAndDeleteUser(intAdmin, testAdminUsername, RevokedCertInfo.REVOCATION_REASON_PRIVILEGESWITHDRAWN);
+            if(roleAccessSession.findRole(rolename)!=null) {
+                roleManagementSession.remove(intAdmin, roleAccessSession.findRole(rolename));
+            }
+        }
+        log.trace("<test73AddSubjectToRole()");
+    }
+
 
     private void testCertificateRequestWithSpecialChars(String requestedSubjectDN, String expectedSubjectDN) throws Exception {
         String userName = "wsSpecialChars" + secureRandom.nextLong();

@@ -265,6 +265,7 @@
 		<!-- Dependecies from multiple places -->
 		<include name="com/novosec/pkix/asn1/**/*.java"/>
 		<include name="org/cesecore/certificates/certificate/request/X509ResponseMessage.java"/>
+		<include name="org/ejbca/util/KeyValuePair.java"/>
 		<!-- Dependecies from EJB CLI and CTB -->
 		<include name="org/ejbca/util/CliTools.java"/>
 		<!-- Dependecies from EJB CLI and XMKS -->

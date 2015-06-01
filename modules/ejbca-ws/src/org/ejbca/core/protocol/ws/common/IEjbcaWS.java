@@ -48,6 +48,7 @@ import org.ejbca.core.protocol.ws.objects.TokenCertificateResponseWS;
 import org.ejbca.core.protocol.ws.objects.UserDataSourceVOWS;
 import org.ejbca.core.protocol.ws.objects.UserDataVOWS;
 import org.ejbca.core.protocol.ws.objects.UserMatch;
+import org.ejbca.util.KeyValuePair;
 import org.ejbca.util.query.IllegalQueryException;
 
 /**
@@ -155,7 +156,7 @@ public interface IEjbcaWS {
 	 */
 	public abstract List<Certificate> getLastCAChain(String caname) 
 	throws AuthorizationDeniedException, CADoesntExistsException, EjbcaException;
-
+	
 	/**
 	 * Retrieves the latest certificate issued to the user.
 	 * 
@@ -177,6 +178,89 @@ public interface IEjbcaWS {
 	throws AuthorizationDeniedException, EjbcaException;
 	
 	/**
+	 * Creates a new cryptotoken
+	 * 
+	 * @param tokenName The name of the cryptotoken
+	 * @param tokenType The type of the cryptotoken. Available types: SoftCryptoToken, PKCS11CryptoToken
+	 * @param activationPin Pin code for the cryptotoken
+	 * @param autoActivate Set to true|false to allow|disallow whether cryptotoken should be autoactivated or not
+	 * @param cryptotokenProperties as a List of KeyValuePair objects. See {@link org.ejbca.core.protocol.ws.objects.CryptoTokenConstantsWS}
+	 * @throws EjbcaException
+	 * @throws AuthorizationDeniedException
+	 * @see org.ejbca.core.protocol.ws.objects.CryptoTokenConstantsWS
+	 */
+	abstract void createCryptoToken(String tokenName, String tokenType, String activationPin, boolean autoActivate, 
+	        List<KeyValuePair> cryptotokenProperties) throws AuthorizationDeniedException, EjbcaException;
+  
+	/**
+	 * Generates a key pair in the specified cryptotoken
+	 *  
+	 * @param cryptoTokenName The name of the cryptotoken
+	 * @param keyPairAlias Key pair alias
+	 * @param keySpecification Key specification, for example RSA2048, secp256r1, DSA1024, gost3410, dstu4145
+	 * @throws AuthorizationDeniedException
+	 * @throws EjbcaException
+	 */
+	abstract void generateCryptoTokenKeys(String cryptoTokenName, String keyPairAlias, String keySpecification) 
+	        throws AuthorizationDeniedException, EjbcaException;
+  
+	/**
+	 * Creates a new CA using the specified cryptotoken
+	 * 
+	 * @param caname The CA name
+	 * @param cadn The CA subjectDN
+	 * @param catype The CA type. It could be either 'x509' or 'cvc'
+	 * @param validityInDays Validity of the CA in days.
+	 * @param certprofile Makes the CA use the certificate profile 'certprofile' instead of the default ROOTCA or SUBCA.
+	 * @param signAlg Signing Algorithm may be one of the following: SHA1WithRSA, SHA256WithRSA, SHA384WithRSA, SHA512WithRSA
+	 * SHA256WithRSAAndMGF1, SHA1withECDSA, SHA224withECDSA, SHA256withECDSA, SHA384withECDSA, SHA512withECDSA, SHA1WithDSA, 
+	 * GOST3411withECGOST3410, GOST3411withDSTU4145
+	 * @param signedByCAId The ID of a CA that will sign this CA. Use '1' for self signed CA (i.e. a root CA).
+	 * CAs created using the WS cannot be signed by external CAs.
+	 * @param cryptoTokenName The name of the cryptotoken associated with the CA
+	 * @param purposeKeyMapping The mapping the the cryptotoken keys and their purpose. See {@link org.ejbca.core.protocol.ws.objects.CAConstantsWS}
+	 * @param caProperties Optional CA properties. See {@link org.ejbca.core.protocol.ws.objects.CAConstantsWS}
+	 * @throws EjbcaException
+	 * @throws AuthorizationDeniedException
+	 * @see org.ejbca.core.protocol.ws.objects.CAConstantsWS
+	 */
+	abstract void createCA(String caname, String cadn, String catype, long validityInDays, String certprofile, 
+	        String signAlg, int signedByCAId, String cryptoTokenName, List<KeyValuePair> purposeKeyMapping, 
+	        List<KeyValuePair> caProperties) throws EjbcaException, AuthorizationDeniedException;
+  
+	/**
+	 * Adds an administrator to the specified role
+	 * 
+	 * @param roleName The role to add the admin to
+	 * @param caName Name of the CA that issued the new administrator's certificate
+	 * @param matchWith Could be any of: NONE, WITH_COUNTRY, WITH_DOMAINCOMPONENT, WITH_STATEORPROVINCE, WITH_LOCALITY, WITH_ORGANIZATION,
+            WITH_ORGANIZATIONALUNIT, WITH_TITLE, WITH_COMMONNAME, WITH_UID, WITH_DNSERIALNUMBER, WITH_SERIALNUMBER,
+            WITH_DNEMAILADDRESS, WITH_RFC822NAME, WITH_UPN, WITH_FULLDN
+	 * @param matchType Could be one of: TYPE_EQUALCASE, TYPE_EQUALCASEINS, TYPE_NOT_EQUALCASE, TYPE_NOT_EQUALCASEINS, TYPE_NONE
+	 * @param matchValue That value to match against
+	 * @throws EjbcaException
+	 * @throws AuthorizationDeniedException
+	 */
+	abstract void addSubjectToRole(String roleName, String caName, String matchWith, String matchType, String matchValue) 
+	        throws EjbcaException, AuthorizationDeniedException;
+  
+	/**
+	 * Removes an administrator from the specified role
+	 * 
+	 * @param roleName The role to remove the admin from
+	 * @param caName Name of the CA that issued the administrator's certificate
+	 * @param matchWith Could be any of: NONE, WITH_COUNTRY, WITH_DOMAINCOMPONENT, WITH_STATEORPROVINCE, WITH_LOCALITY, WITH_ORGANIZATION,
+            WITH_ORGANIZATIONALUNIT, WITH_TITLE, WITH_COMMONNAME, WITH_UID, WITH_DNSERIALNUMBER, WITH_SERIALNUMBER,
+            WITH_DNEMAILADDRESS, WITH_RFC822NAME, WITH_UPN, WITH_FULLDN
+	 * @param matchType Could be one of: TYPE_EQUALCASE, TYPE_EQUALCASEINS, TYPE_NOT_EQUALCASE, TYPE_NOT_EQUALCASEINS, TYPE_NONE
+	 * @param matchValue The value to match against
+	 * @throws EjbcaException
+	 * @throws AuthorizationDeniedException
+	 */
+	abstract void removeSubjectFromRole(String roleName, String caName, String matchWith, String matchType, String matchValue) 
+	        throws EjbcaException, AuthorizationDeniedException;
+  
+ 	/**
 	 *  Generates a certificate for a user.
 	 * 
 	 *  Works the same as pkcs10Request.

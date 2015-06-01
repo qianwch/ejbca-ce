@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.InvalidParameterException;
 import java.security.KeyPair;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -41,6 +42,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -79,13 +81,26 @@ import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.authorization.control.AccessControlSessionLocal;
 import org.cesecore.authorization.control.AuditLogRules;
 import org.cesecore.authorization.control.StandardRules;
+import org.cesecore.authorization.user.AccessMatchType;
+import org.cesecore.authorization.user.AccessUserAspectData;
+import org.cesecore.authorization.user.matchvalues.AccessMatchValue;
+import org.cesecore.authorization.user.matchvalues.AccessMatchValueReverseLookupRegistry;
+import org.cesecore.authorization.user.matchvalues.InvalidMatchValueException;
+import org.cesecore.authorization.user.matchvalues.X500PrincipalAccessMatchValue;
 import org.cesecore.certificates.ca.CAConstants;
 import org.cesecore.certificates.ca.CADoesntExistsException;
+import org.cesecore.certificates.ca.CAExistsException;
 import org.cesecore.certificates.ca.CAInfo;
 import org.cesecore.certificates.ca.CAOfflineException;
+import org.cesecore.certificates.ca.CVCCAInfo;
 import org.cesecore.certificates.ca.CaSessionLocal;
 import org.cesecore.certificates.ca.SignRequestException;
 import org.cesecore.certificates.ca.SignRequestSignatureException;
+import org.cesecore.certificates.ca.SignedByExternalCANotSupportedException;
+import org.cesecore.certificates.ca.X509CAInfo;
+import org.cesecore.certificates.ca.catoken.CAToken;
+import org.cesecore.certificates.ca.catoken.CATokenConstants;
+import org.cesecore.certificates.ca.extendedservices.ExtendedCAServiceInfo;
 import org.cesecore.certificates.certificate.CertificateConstants;
 import org.cesecore.certificates.certificate.CertificateInfo;
 import org.cesecore.certificates.certificate.CertificateStatus;
@@ -97,22 +112,39 @@ import org.cesecore.certificates.certificate.request.RequestMessage;
 import org.cesecore.certificates.certificate.request.RequestMessageUtils;
 import org.cesecore.certificates.certificate.request.ResponseMessage;
 import org.cesecore.certificates.certificate.request.X509ResponseMessage;
+import org.cesecore.certificates.certificateprofile.CertificatePolicy;
 import org.cesecore.certificates.certificateprofile.CertificateProfile;
+import org.cesecore.certificates.certificateprofile.CertificateProfileConstants;
+import org.cesecore.certificates.certificateprofile.CertificateProfileDoesNotExistException;
 import org.cesecore.certificates.certificateprofile.CertificateProfileSessionLocal;
 import org.cesecore.certificates.crl.CrlStoreSessionLocal;
 import org.cesecore.certificates.crl.RevokedCertInfo;
 import org.cesecore.certificates.endentity.EndEntityConstants;
 import org.cesecore.certificates.endentity.EndEntityInformation;
+import org.cesecore.certificates.util.AlgorithmConstants;
+import org.cesecore.keys.token.BaseCryptoToken;
 import org.cesecore.keys.token.CryptoTokenAuthenticationFailedException;
+import org.cesecore.keys.token.CryptoTokenClassNotFoundException;
 import org.cesecore.keys.token.CryptoTokenManagementSessionLocal;
 import org.cesecore.keys.token.CryptoTokenOfflineException;
+import org.cesecore.keys.token.KeyPairInfo;
+import org.cesecore.keys.token.PKCS11CryptoToken;
+import org.cesecore.keys.token.SoftCryptoToken;
+import org.cesecore.keys.token.p11.exception.NoSuchSlotException;
 import org.cesecore.keys.util.KeyTools;
+import org.cesecore.roles.RoleData;
+import org.cesecore.roles.RoleNotFoundException;
+import org.cesecore.roles.access.RoleAccessSessionLocal;
+import org.cesecore.roles.management.RoleManagementSessionLocal;
 import org.cesecore.util.Base64;
 import org.cesecore.util.CertTools;
+import org.cesecore.util.SimpleTime;
+import org.cesecore.util.StringTools;
 import org.ejbca.config.Configuration;
 import org.ejbca.config.GlobalConfiguration;
 import org.ejbca.config.WebServiceConfiguration;
 import org.ejbca.core.EjbcaException;
+import org.ejbca.core.ejb.CertificateProfileTypeNotAcceptedException;
 import org.ejbca.core.ejb.ServiceLocatorException;
 import org.ejbca.core.ejb.approval.ApprovalSessionLocal;
 import org.ejbca.core.ejb.audit.enums.EjbcaEventTypes;
@@ -148,6 +180,10 @@ import org.ejbca.core.model.approval.approvalrequests.ViewHardTokenDataApprovalR
 import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.core.model.ca.AuthLoginException;
 import org.ejbca.core.model.ca.AuthStatusException;
+import org.ejbca.core.model.ca.caadmin.extendedcaservices.CmsCAServiceInfo;
+import org.ejbca.core.model.ca.caadmin.extendedcaservices.HardTokenEncryptCAServiceInfo;
+import org.ejbca.core.model.ca.caadmin.extendedcaservices.KeyRecoveryCAServiceInfo;
+import org.ejbca.core.model.ca.caadmin.extendedcaservices.XKMSCAServiceInfo;
 import org.ejbca.core.model.ca.publisher.PublisherException;
 import org.ejbca.core.model.ca.store.CertReqHistory;
 import org.ejbca.core.model.hardtoken.HardTokenConstants;
@@ -196,6 +232,7 @@ import org.ejbca.cvc.PublicKeyEC;
 import org.ejbca.cvc.exception.ConstructionException;
 import org.ejbca.cvc.exception.ParseException;
 import org.ejbca.util.IPatternLogger;
+import org.ejbca.util.KeyValuePair;
 import org.ejbca.util.passgen.AllPrintableCharPasswordGenerator;
 import org.ejbca.util.passgen.IPasswordGenerator;
 import org.ejbca.util.passgen.PasswordGeneratorFactory;
@@ -260,11 +297,14 @@ public class EjbcaWS implements IEjbcaWS {
     private PublishingCrlSessionLocal publishingCrlSession;
     @EJB
     private SignSessionLocal signSession;
-
     @EJB
     private UserDataSourceSessionLocal userDataSourceSession;
     @EJB
     private WebAuthenticationProviderSessionLocal webAuthenticationSession;
+    @EJB
+    private RoleAccessSessionLocal roleAccessSession;
+    @EJB
+    private RoleManagementSessionLocal roleManagementSession;
 
 	/** The maximum number of rows returned in array responses. */
 	private static final int MAXNUMBEROFROWS = 100;
@@ -473,6 +513,321 @@ public class EjbcaWS implements IEjbcaWS {
 		}
 		return retval;
 	}
+	
+    @Override
+    public void createCryptoToken(String tokenName, String tokenType, String activationPin, boolean autoActivate, 
+            List<KeyValuePair> cryptotokenProperties) throws AuthorizationDeniedException, EjbcaException {
+        log.info("Trying to create a cryptotoken of type " + tokenType + "   and autoactivate: " + autoActivate);
+        
+        EjbcaWSHelper ejbhelper = new EjbcaWSHelper(wsContext, authorizationSession, caAdminSession, caSession, certificateProfileSession, certificateStoreSession, endEntityAccessSession, endEntityProfileSession, hardTokenSession, endEntityManagementSession, webAuthenticationSession, cryptoTokenManagementSession);
+        AuthenticationToken admin = ejbhelper.getAdmin();
+        final IPatternLogger logger = TransactionLogger.getPatternLogger();
+        logAdminName(admin,logger);
+        
+        final String className;
+        if (SoftCryptoToken.class.getSimpleName().equals(tokenType)) {
+            className = SoftCryptoToken.class.getName();
+        } else if (PKCS11CryptoToken.class.getSimpleName().equals(tokenType)) {
+            className = PKCS11CryptoToken.class.getName();
+        } else {
+            throw new CryptoTokenClassNotFoundException("Invalid crypto token type: " + tokenType + ". Valid types: SoftCryptoToken and PKCS11CryptoToken");
+        }
+        
+        Properties ctproperties = getPropertiesFromList(cryptotokenProperties);
+        if(log.isDebugEnabled()) {
+            log.debug("Creating " + tokenType + " cryptotoken with the following " + ctproperties.keySet().size() + " properties:");
+            for(Object key : ctproperties.keySet()){
+                log.debug("cryptotoken property:     " + key + " : " + ctproperties.getProperty((String) key) );
+            }
+        }
+        
+        final char[] authenticationCode = StringTools.passwordDecryption(activationPin, "CryptoToken pin").toCharArray();;
+        if (autoActivate) {
+            BaseCryptoToken.setAutoActivatePin(ctproperties, new String(authenticationCode), true);
+        }
+        
+        try {
+            cryptoTokenManagementSession.createCryptoToken(admin, tokenName, className, ctproperties, null, authenticationCode);
+        } catch (AuthorizationDeniedException e) {
+            throw EjbcaWSHelper.getEjbcaException(e, logger, ErrorCode.NOT_AUTHORIZED, Level.ERROR);
+        } catch (CesecoreException e) {
+            throw EjbcaWSHelper.getEjbcaException(e, null, e.getErrorCode(), null);
+        } catch (RuntimeException e) {  // ClassCastException, EJBException ...
+            throw EjbcaWSHelper.getInternalException(e, logger);
+        } catch (NoSuchSlotException e) {
+            throw EjbcaWSHelper.getInternalException(e, TransactionLogger.getPatternLogger());
+        } finally {
+            logger.writeln();
+            logger.flush();
+        }
+ 
+    }
+    
+    @Override
+    public void generateCryptoTokenKeys(String cryptoTokenName, String keyPairAlias, String keySpecification) 
+            throws AuthorizationDeniedException, EjbcaException {
+        EjbcaWSHelper ejbhelper = new EjbcaWSHelper(wsContext, authorizationSession, caAdminSession, caSession, certificateProfileSession, certificateStoreSession, endEntityAccessSession, endEntityProfileSession, hardTokenSession, endEntityManagementSession, webAuthenticationSession, cryptoTokenManagementSession);
+        AuthenticationToken admin = ejbhelper.getAdmin();
+        final IPatternLogger logger = TransactionLogger.getPatternLogger();
+        logAdminName(admin,logger);
+        
+        int ctokenId = cryptoTokenManagementSession.getIdFromName(cryptoTokenName);
+        try {
+            cryptoTokenManagementSession.createKeyPair(admin, ctokenId, keyPairAlias, keySpecification);
+        } catch (AuthorizationDeniedException e) {
+            throw EjbcaWSHelper.getEjbcaException(e, logger, ErrorCode.NOT_AUTHORIZED, Level.ERROR);
+        } catch (CesecoreException e) {
+            throw EjbcaWSHelper.getEjbcaException(e, null, e.getErrorCode(), null);
+        } catch (RuntimeException e) {  // ClassCastException, EJBException ...
+            throw EjbcaWSHelper.getInternalException(e, logger);
+        } catch (InvalidKeyException e) {
+            throw EjbcaWSHelper.getEjbcaException(e, null, ErrorCode.INVALID_KEY, Level.INFO);
+        } catch (InvalidAlgorithmParameterException e) {
+            throw EjbcaWSHelper.getEjbcaException(e, null, ErrorCode.INVALID_KEY_SPEC, Level.INFO);
+        } finally {
+            logger.writeln();
+            logger.flush();
+        }
+    }
+    
+    @Override
+    public void createCA(String caname, String cadn, String catype, long validityInDays, String certprofile, 
+            String signAlg, int signedByCAId, String cryptoTokenName, List<KeyValuePair> purposeKeyMapping, 
+            List<KeyValuePair> caProperties) throws EjbcaException, AuthorizationDeniedException {
+        final IPatternLogger logger = TransactionLogger.getPatternLogger();
+        try {
+            if(signedByCAId == CAInfo.SIGNEDBYEXTERNALCA) {
+                throw new SignedByExternalCANotSupportedException("Creating a new certificate signed by an external CA is not allowed using the WS");
+            }
+
+            // Check that the CA doesn't exist already
+            if (caSession.existsCa(caname)) {
+                throw new CAExistsException("Cannot create CA '" + caname + "'. CA already exists");
+            }
+
+            EjbcaWSHelper ejbhelper = new EjbcaWSHelper(wsContext, authorizationSession, caAdminSession, caSession, certificateProfileSession, certificateStoreSession, endEntityAccessSession, endEntityProfileSession, hardTokenSession, endEntityManagementSession, webAuthenticationSession, cryptoTokenManagementSession);
+            AuthenticationToken admin = ejbhelper.getAdmin();
+            logAdminName(admin,logger);
+        
+            Properties catokenProperties = getPropertiesFromList(purposeKeyMapping);
+
+            // Get the profile ID from the name if we specified a certain profile name.
+            // Check also that the specified profile is of type either ROOTCA or SUBCA
+            final int certProfileId = getAndVerifyCertificateProfile(certprofile, signedByCAId);
+            final int cryptoTokenId = cryptoTokenManagementSession.getIdFromName(cryptoTokenName);
+        
+            // Create the CA Token
+            final CAToken caToken = new CAToken(cryptoTokenId, catokenProperties);
+            caToken.setSignatureAlgorithm(signAlg);
+            caToken.setEncryptionAlgorithm(AlgorithmConstants.SIGALG_SHA1_WITH_RSA);
+
+            final String dn = CertTools.stringToBCDNString(cadn);
+            Properties caPropertiesProperties = getPropertiesFromList(caProperties);
+            final ArrayList<CertificatePolicy> policies = getCertificatePolicies(caPropertiesProperties.getProperty(CAConstants.POLICYID));
+            // Create the CA Info
+            CAInfo cainfo = null;
+            if(StringUtils.equalsIgnoreCase("cvc", catype)) {
+                // Get keysequence from SERIALNUMBER in DN is it exists
+                final String keysequence = CertTools.getPartFromDN(dn, "SN");
+                if (keysequence != null) {
+                    caToken.setKeySequence(keysequence);
+                    if (StringUtils.isNumeric(keysequence)) {
+                        caToken.setKeySequenceFormat(StringTools.KEY_SEQUENCE_FORMAT_NUMERIC);
+                    } else {
+                        caToken.setKeySequenceFormat(StringTools.KEY_SEQUENCE_FORMAT_ALPHANUMERIC);
+                    }
+                }
+                cainfo = createCVCCAInfo(dn, caname, certProfileId, validityInDays, signedByCAId, caToken);
+            } else if(StringUtils.equalsIgnoreCase("x509", catype)) {
+                final KeyPairInfo kpi = cryptoTokenManagementSession.getKeyPairInfo(admin, cryptoTokenId, caToken.getAliasFromPurpose(CATokenConstants.CAKEYPURPOSE_CERTSIGN));
+                final String keyspec = kpi == null ? "" : kpi.getKeySpecification();
+                final String keytype = kpi == null ? "" : kpi.getKeyAlgorithm();
+
+                // Create and active OSCP CA Service.
+                ArrayList<ExtendedCAServiceInfo> extendedcaservices = new ArrayList<ExtendedCAServiceInfo>();
+                String extendedServiceKeySpec = keyspec;
+                extendedcaservices.add(new XKMSCAServiceInfo(ExtendedCAServiceInfo.STATUS_INACTIVE, "CN=XKMSCertificate, " + dn, "",
+                        extendedServiceKeySpec, keytype));
+                extendedcaservices.add(new CmsCAServiceInfo(ExtendedCAServiceInfo.STATUS_INACTIVE, "CN=CmsCertificate, " + dn, "",
+                        extendedServiceKeySpec, keytype));
+                extendedcaservices.add(new HardTokenEncryptCAServiceInfo(ExtendedCAServiceInfo.STATUS_ACTIVE));
+                extendedcaservices.add(new KeyRecoveryCAServiceInfo(ExtendedCAServiceInfo.STATUS_ACTIVE));
+                cainfo = createX509CaInfo(dn, caname, certProfileId, validityInDays, signedByCAId, caToken, policies, extendedcaservices);
+            }
+        
+            caAdminSession.createCA(admin, cainfo);
+            
+        } catch (AuthorizationDeniedException e) {
+            throw EjbcaWSHelper.getEjbcaException(e, logger, ErrorCode.NOT_AUTHORIZED, Level.ERROR);
+        } catch (CesecoreException e) {
+            throw EjbcaWSHelper.getEjbcaException(e, null, e.getErrorCode(), null);
+        } catch (RuntimeException e) {  // ClassCastException, EJBException ...
+            throw EjbcaWSHelper.getInternalException(e, logger);
+        } finally {
+            logger.writeln();
+            logger.flush();
+        }
+    }
+    
+    @Override
+    public void addSubjectToRole(String roleName, String caName, String matchWith, String matchType, String matchValue) 
+            throws EjbcaException, AuthorizationDeniedException {
+        EjbcaWSHelper ejbhelper = new EjbcaWSHelper(wsContext, authorizationSession, caAdminSession, caSession, certificateProfileSession, certificateStoreSession, endEntityAccessSession, endEntityProfileSession, hardTokenSession, endEntityManagementSession, webAuthenticationSession, cryptoTokenManagementSession);
+        AuthenticationToken admin = ejbhelper.getAdmin();
+        final IPatternLogger logger = TransactionLogger.getPatternLogger();
+        logAdminName(admin,logger);
+        
+        try {
+            manageSubjectInRole(admin, roleName, caName, matchWith, matchType, matchValue, true);
+        } catch (AuthorizationDeniedException e) {
+            throw EjbcaWSHelper.getEjbcaException(e, logger, ErrorCode.NOT_AUTHORIZED, Level.ERROR);
+        } catch (CesecoreException e) {
+            throw EjbcaWSHelper.getEjbcaException(e, null, e.getErrorCode(), null);
+        } catch (RuntimeException e) {  // ClassCastException, EJBException ...
+            throw EjbcaWSHelper.getInternalException(e, logger);    
+        } catch (RoleNotFoundException e) {
+            throw EjbcaWSHelper.getEjbcaException(e, null, ErrorCode.ROLE_DOES_NOT_EXIST, Level.INFO);
+        } finally {
+            logger.writeln();
+            logger.flush();
+        }
+    }
+    
+    @Override
+    public void removeSubjectFromRole(String roleName, String caName, String matchWith, String matchType, String matchValue) 
+            throws EjbcaException, AuthorizationDeniedException {
+        EjbcaWSHelper ejbhelper = new EjbcaWSHelper(wsContext, authorizationSession, caAdminSession, caSession, certificateProfileSession, certificateStoreSession, endEntityAccessSession, endEntityProfileSession, hardTokenSession, endEntityManagementSession, webAuthenticationSession, cryptoTokenManagementSession);
+        AuthenticationToken admin = ejbhelper.getAdmin();
+        final IPatternLogger logger = TransactionLogger.getPatternLogger();
+        logAdminName(admin,logger);
+        
+        try {
+            manageSubjectInRole(admin, roleName, caName, matchWith, matchType, matchValue, false);
+        } catch (AuthorizationDeniedException e) {
+            throw EjbcaWSHelper.getEjbcaException(e, logger, ErrorCode.NOT_AUTHORIZED, Level.ERROR);
+        } catch (CesecoreException e) {
+            throw EjbcaWSHelper.getEjbcaException(e, null, e.getErrorCode(), null);
+        } catch (RuntimeException e) {  // ClassCastException, EJBException ...
+            throw EjbcaWSHelper.getInternalException(e, logger);    
+        } catch (RoleNotFoundException e) {
+            throw EjbcaWSHelper.getEjbcaException(e, null, ErrorCode.ROLE_DOES_NOT_EXIST, Level.INFO);
+        } finally {
+            logger.writeln();
+            logger.flush();
+        }
+    }
+    
+    private void manageSubjectInRole(AuthenticationToken admin, String roleName, String caName, String matchWith, 
+            String matchType, String matchValue, boolean operationAdd) throws RoleNotFoundException, CADoesntExistsException, 
+            AuthorizationDeniedException {
+        
+        if(StringUtils.isEmpty(roleName) || StringUtils.isEmpty(caName) || StringUtils.isEmpty(matchWith) || 
+                        StringUtils.isEmpty(matchType) || StringUtils.isEmpty(matchValue)) {
+            throw new InvalidParameterException("Invalid input. One of the following parameters is 'null': roleName, caName, " +
+                    "matchWith, matchType, matchValue");
+        }
+        
+        RoleData roledata = roleAccessSession.findRole(roleName);
+        if(roledata == null) {
+            throw new RoleNotFoundException("There is no role: " + roleName);
+        }
+        
+        CAInfo caInfo = caSession.getCAInfo(admin, caName);
+        int caid = caInfo.getCAId();
+        
+        AccessMatchValue accessMatchWith = AccessMatchValueReverseLookupRegistry.INSTANCE.lookupMatchValueFromTokenTypeAndName(
+                X500PrincipalAccessMatchValue.WITH_SERIALNUMBER.getTokenType(), matchWith);
+        if (accessMatchWith == null) {
+            throw new InvalidMatchValueException("No such thing to match with as \"" + matchWith + "\".");
+        }
+        AccessMatchType accessMatchType = AccessMatchType.matchFromName(matchType);
+        if (accessMatchType == null) {
+            throw new InvalidMatchValueException("No such type to match with as \"" + matchType + "\".");
+        }
+        AccessUserAspectData accessUser = new AccessUserAspectData(roleName, caid, accessMatchWith, accessMatchType, matchValue);
+        Collection<AccessUserAspectData> accessUsers = new ArrayList<AccessUserAspectData>();
+        accessUsers.add(accessUser);
+        if(operationAdd) {
+            roleManagementSession.addSubjectsToRole(admin, roledata, accessUsers);
+        } else {
+            roleManagementSession.removeSubjectsFromRole(admin, roledata, accessUsers);
+        }
+        
+    }
+    
+    private ArrayList<CertificatePolicy> getCertificatePolicies(String policyId) {
+        final ArrayList<CertificatePolicy> policies = new ArrayList<CertificatePolicy>(1);
+        if(StringUtils.isNotEmpty(policyId)){
+            String[] array = policyId.split(" ");
+            for (int i = 0; i < array.length; i += 2) {
+                String id = array[i + 0];
+                String cpsurl = "";
+                if (array.length > i + 1) {
+                    cpsurl = array[i + 1];
+                }
+                policies.add(new CertificatePolicy(id, CertificatePolicy.id_qt_cps, cpsurl));
+            }
+        }
+        return policies;
+    }
+    
+    private int getAndVerifyCertificateProfile(String profilename, int signedByCAId) throws CertificateProfileDoesNotExistException, CertificateProfileTypeNotAcceptedException {
+        final int certProfileId;
+        if (profilename == null) {
+            if (signedByCAId == CAInfo.SELFSIGNED) {
+                certProfileId = CertificateProfileConstants.CERTPROFILE_FIXED_ROOTCA;
+            } else {
+                certProfileId = CertificateProfileConstants.CERTPROFILE_FIXED_SUBCA;
+            }
+        } else {
+            certProfileId = certificateProfileSession.getCertificateProfileId(profilename);
+            if (certProfileId == 0) {
+                throw new CertificateProfileDoesNotExistException("Cannot create CA. Certificate profile with name '" + profilename + "' does not exist.");
+            }
+
+            CertificateProfile certificateProfile = certificateProfileSession.getCertificateProfile(profilename);
+            if (certificateProfile.getType() != CertificateConstants.CERTTYPE_ROOTCA
+                    && certificateProfile.getType() != CertificateConstants.CERTTYPE_SUBCA) {
+                throw new CertificateProfileTypeNotAcceptedException("Cannot create CA. Certificate profile " + profilename + " is not of type ROOTCA or SUBCA.");
+            }
+            if(((certificateProfile.getType()==CertificateConstants.CERTTYPE_ROOTCA) && (signedByCAId != CAInfo.SELFSIGNED))
+                    || (((certificateProfile.getType()==CertificateConstants.CERTTYPE_SUBCA) && (signedByCAId == CAInfo.SELFSIGNED)))) {
+                throw new CertificateProfileTypeNotAcceptedException("Cannot create CA. Certificate profile type and CA signed-by parameters do not match");
+            }
+        }
+        return certProfileId;
+
+    }
+
+    private CAInfo createX509CaInfo(String dn, String caname, int certificateProfileId, long validity, int signedByCAId, CAToken catokeninfo,
+            List<CertificatePolicy> policies, List<ExtendedCAServiceInfo> extendedcaservices) {
+        X509CAInfo cainfo = new X509CAInfo(dn, caname, CAConstants.CA_ACTIVE, certificateProfileId, validity,                                             
+                signedByCAId, new ArrayList<java.security.cert.Certificate>(), catokeninfo);
+        
+        cainfo.setDescription(caname + " created using Web Services");
+        cainfo.setCertificateChain(new ArrayList<java.security.cert.Certificate>());
+        cainfo.setPolicies(policies);
+        cainfo.setExtendedCAServiceInfos(extendedcaservices);
+        cainfo.setDeltaCRLPeriod(0 * SimpleTime.MILLISECONDS_PER_HOUR);
+        return cainfo;
+    }
+
+    private CAInfo createCVCCAInfo(String dn, String caname, int certificateProfileId, long validity, int signedByCa, CAToken catokeninfo) {
+        CVCCAInfo cainfo = new CVCCAInfo(dn, caname, CAConstants.CA_ACTIVE,
+                certificateProfileId, validity, signedByCa, new ArrayList<java.security.cert.Certificate>(), catokeninfo);
+        cainfo.setDescription("Initial CA");
+        return cainfo;
+    }
+    
+    private Properties getPropertiesFromList(List<KeyValuePair> list) {
+        Properties properties = new Properties();
+        if(list != null) {
+            for(KeyValuePair kv : list) {
+                properties.put(kv.getKey(), kv.getValue());
+            }
+        }
+        return properties;
+    }
 
 
 	/**
