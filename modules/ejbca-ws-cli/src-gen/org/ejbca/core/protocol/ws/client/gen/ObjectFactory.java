@@ -125,6 +125,16 @@ public class ObjectFactory {
     private final static QName _CreateCRL_QNAME = new QName("http://ws.protocol.core.ejbca.org/", "createCRL");
     private final static QName _CaRenewCertRequestResponseReturn_QNAME = new QName("", "return");
     private final static QName _CaCertResponseArg1_QNAME = new QName("", "arg1");
+    private final static QName _CreateCryptoToken_QNAME = new QName("http://ws.protocol.core.ejbca.org/", "createCryptoToken");
+    private final static QName _CreateCryptoTokenResponse_QNAME = new QName("http://ws.protocol.core.ejbca.org/", "createCryptoTokenResponse");
+    private final static QName _GenerateCryptoTokenKeys_QNAME = new QName("http://ws.protocol.core.ejbca.org/", "generateCryptoTokenKeys");
+    private final static QName _GenerateCryptoTokenKeysResponse_QNAME = new QName("http://ws.protocol.core.ejbca.org/", "generateCryptoTokenKeysResponse");
+    private final static QName _CreateCA_QNAME = new QName("http://ws.protocol.core.ejbca.org/", "createCA");
+    private final static QName _CreateCAResponse_QNAME = new QName("http://ws.protocol.core.ejbca.org/", "createCAResponse");
+    private final static QName _AddSubjectToRole_QNAME = new QName("http://ws.protocol.core.ejbca.org/", "addSubjectToRole");
+    private final static QName _AddSubjectToRoleResponse_QNAME = new QName("http://ws.protocol.core.ejbca.org/", "addSubjectToRoleResponse");
+    private final static QName _RemoveSubjectFromRole_QNAME = new QName("http://ws.protocol.core.ejbca.org/", "removeSubjectFromRole");
+    private final static QName _RemoveSubjectFromRoleResponse_QNAME = new QName("http://ws.protocol.core.ejbca.org/", "removeSubjectFromRoleResponse");
 
     /**
      * Create a new ObjectFactory that can be used to create new instances of schema derived classes for package: org.ejbca.core.protocol.ws.client.gen
@@ -1036,6 +1046,87 @@ public class ObjectFactory {
     public GetPublisherQueueLengthResponse createGetPublisherQueueLengthResponse() {
         return new GetPublisherQueueLengthResponse();
     }
+    
+    /**
+     * Create an instance of {@link CreateCryptoToken }
+     *
+     */
+    public CreateCryptoToken createCreateCryptoToken() {
+        return new CreateCryptoToken();
+    }
+    
+    /**
+     * Create an instance of {@link CreateCryptoTokenResponse }
+     *
+     */
+    public CreateCryptoTokenResponse createCreateCryptoTokenResponse() {
+        return new CreateCryptoTokenResponse();
+    }
+    
+    /**
+     * Create an instance of {@link GenerateCryptoTokenKeys }
+     *
+     */
+    public GenerateCryptoTokenKeys createGenerateCryptoTokenKeys() {
+        return new GenerateCryptoTokenKeys();
+    }
+    
+    /**
+     * Create an instance of {@link GenerateCryptoTokenKeysResponse }
+     *
+     */
+    public GenerateCryptoTokenKeysResponse createGenerateCryptoTokenKeysResponse() {
+        return new GenerateCryptoTokenKeysResponse();
+    }
+    
+    /**
+     * Create an instance of {@link CreateCA }
+     *
+     */
+    public CreateCA createCreateCA() {
+        return new CreateCA();
+    }
+    
+    /**
+     * Create an instance of {@link CreateCAResponse }
+     *
+     */
+    public CreateCAResponse createCreateCAResponse() {
+        return new CreateCAResponse();
+    }
+
+    /**
+     * Create an instance of {@link AddSubjectToRole }
+     *
+     */
+    public AddSubjectToRole createAddSubjectToRole() {
+        return new AddSubjectToRole();
+    }
+    
+    /**
+     * Create an instance of {@link AddSubjectToRoleResponse }
+     *
+     */
+    public AddSubjectToRoleResponse createAddSubjectToRoleResponse() {
+        return new AddSubjectToRoleResponse();
+    }
+
+    /**
+     * Create an instance of {@link RemoveSubjectFromRole }
+     *
+     */
+    public RemoveSubjectFromRole createRemoveSubjectFromRole() {
+        return new RemoveSubjectFromRole();
+    }
+    
+    /**
+     * Create an instance of {@link RemoveSubjectFromRoleResponse }
+     *
+     */
+    public RemoveSubjectFromRoleResponse createRemoveSubjectFromRoleResponse() {
+        return new RemoveSubjectFromRoleResponse();
+    }
+
 
     /**
      * Create an instance of {@link JAXBElement }{@code <}{@link ExistsHardTokenResponse }{@code >}}
@@ -1944,6 +2035,96 @@ public class ObjectFactory {
     @XmlElementDecl(namespace = "", name = "arg1", scope = CaCertResponse.class)
     public JAXBElement<byte[]> createCaCertResponseArg1(byte[] value) {
         return new JAXBElement<byte[]>(_CaCertResponseArg1_QNAME, byte[].class, CaCertResponse.class, ((byte[]) value));
+    }
+    
+    /**
+     * Create an instance of {@link JAXBElement }{@code <}{@link CreateCryptoToken }{@code >}}
+     *
+     */
+    @XmlElementDecl(namespace = "http://ws.protocol.core.ejbca.org/", name = "createCryptoToken")
+    public JAXBElement<CreateCryptoToken> createCreateCryptoToken(CreateCryptoToken value) {
+        return new JAXBElement<CreateCryptoToken>(_CreateCryptoToken_QNAME, CreateCryptoToken.class, null, value);
+    }
+    
+    /**
+     * Create an instance of {@link JAXBElement }{@code <}{@link CreateCryptoTokenResponse }{@code >}}
+     *
+     */
+    @XmlElementDecl(namespace = "http://ws.protocol.core.ejbca.org/", name = "createCryptoTokenResponse")
+    public JAXBElement<CreateCryptoTokenResponse> createCreateCryptoTokenResponse(CreateCryptoTokenResponse value) {
+        return new JAXBElement<CreateCryptoTokenResponse>(_CreateCryptoTokenResponse_QNAME, CreateCryptoTokenResponse.class, null, value);
+    }
+    
+    /**
+     * Create an instance of {@link JAXBElement }{@code <}{@link GenerateCryptoToken }{@code >}}
+     *
+     */
+    @XmlElementDecl(namespace = "http://ws.protocol.core.ejbca.org/", name = "generateCryptoTokenKeys")
+    public JAXBElement<GenerateCryptoTokenKeys> createGenerateCryptoTokenKeys(GenerateCryptoTokenKeys value) {
+        return new JAXBElement<GenerateCryptoTokenKeys>(_GenerateCryptoTokenKeys_QNAME, GenerateCryptoTokenKeys.class, null, value);
+    }
+    
+    /**
+     * Create an instance of {@link JAXBElement }{@code <}{@link GenerateCryptoTokenKeysResponse }{@code >}}
+     *
+     */
+    @XmlElementDecl(namespace = "http://ws.protocol.core.ejbca.org/", name = "generateCryptoTokenKeysResponse")
+    public JAXBElement<GenerateCryptoTokenKeysResponse> createGenerateCryptoTokenKeysResponse(GenerateCryptoTokenKeysResponse value) {
+        return new JAXBElement<GenerateCryptoTokenKeysResponse>(_GenerateCryptoTokenKeysResponse_QNAME, GenerateCryptoTokenKeysResponse.class, null, value);
+    }
+    
+    /**
+     * Create an instance of {@link JAXBElement }{@code <}{@link CreateCA }{@code >}}
+     *
+     */
+    @XmlElementDecl(namespace = "http://ws.protocol.core.ejbca.org/", name = "createCA")
+    public JAXBElement<CreateCA> createCreateCA(CreateCA value) {
+        return new JAXBElement<CreateCA>(_CreateCA_QNAME, CreateCA.class, null, value);
+    }
+    
+    /**
+     * Create an instance of {@link JAXBElement }{@code <}{@link CreateCAResponse }{@code >}}
+     *
+     */
+    @XmlElementDecl(namespace = "http://ws.protocol.core.ejbca.org/", name = "createCAResponse")
+    public JAXBElement<CreateCAResponse> createCreateCAResponse(CreateCAResponse value) {
+        return new JAXBElement<CreateCAResponse>(_CreateCAResponse_QNAME, CreateCAResponse.class, null, value);
+    }
+    
+    /**
+     * Create an instance of {@link JAXBElement }{@code <}{@link AddSubjectToRole }{@code >}}
+     *
+     */
+    @XmlElementDecl(namespace = "http://ws.protocol.core.ejbca.org/", name = "addSubjectToRole")
+    public JAXBElement<AddSubjectToRole> createAddSubjectToRole(AddSubjectToRole value) {
+        return new JAXBElement<AddSubjectToRole>(_AddSubjectToRole_QNAME, AddSubjectToRole.class, null, value);
+    }
+    
+    /**
+     * Create an instance of {@link JAXBElement }{@code <}{@link AddSubjectToRoleResponse }{@code >}}
+     *
+     */
+    @XmlElementDecl(namespace = "http://ws.protocol.core.ejbca.org/", name = "addSubjectToRoleResponse")
+    public JAXBElement<AddSubjectToRoleResponse> createAddSubjectToRoleResponse(AddSubjectToRoleResponse value) {
+        return new JAXBElement<AddSubjectToRoleResponse>(_AddSubjectToRoleResponse_QNAME, AddSubjectToRoleResponse.class, null, value);
+    }
+
+    /**
+     * Create an instance of {@link JAXBElement }{@code <}{@link RemoveSubjectFromRole }{@code >}}
+     *
+     */
+    @XmlElementDecl(namespace = "http://ws.protocol.core.ejbca.org/", name = "removeSubjectFromRole")
+    public JAXBElement<RemoveSubjectFromRole> createRemoveSubjectFromRole(RemoveSubjectFromRole value) {
+        return new JAXBElement<RemoveSubjectFromRole>(_RemoveSubjectFromRole_QNAME, RemoveSubjectFromRole.class, null, value);
+    }
+    
+    /**
+     * Create an instance of {@link JAXBElement }{@code <}{@link RemoveSubjectFromRoleResponse }{@code >}}
+     *
+     */
+    @XmlElementDecl(namespace = "http://ws.protocol.core.ejbca.org/", name = "removeSubjectFromRoleResponse")
+    public JAXBElement<RemoveSubjectFromRoleResponse> createRemoveSubjectFromRoleResponse(RemoveSubjectFromRoleResponse value) {
+        return new JAXBElement<RemoveSubjectFromRoleResponse>(_RemoveSubjectFromRoleResponse_QNAME, RemoveSubjectFromRoleResponse.class, null, value);
     }
 
 }
