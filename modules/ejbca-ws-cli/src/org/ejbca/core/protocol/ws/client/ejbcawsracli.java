@@ -36,8 +36,11 @@ public class ejbcawsracli  {
                 cmd.execute();
             } else {
                 System.out.println(
-                    "Usage: edituser | finduser | findcerts | pkcs10req | pkcs12req | certreq | revokecert | getpublisherqueuelength | revoketoken | revokeuser | checkrevocationstatus | generatenewuser | createcrl | cacertrequest | cacertresponse | customlog | stress");
-            }
+                        "Usage: edituser | finduser | findcerts | pkcs10req | pkcs12req | certreq | revokecert | " +
+                        "getpublisherqueuelength | revoketoken | revokeuser | checkrevocationstatus | generatenewuser | " +
+                        "createcrl | cacertrequest | cacertresponse | customlog | createcryptotoken | " + 
+                        "generatectkeys | createca | addadmintorole | removeadminfromrole | getexpiredcerts | " +
+                        "getexpiredcertsbyissuer | getexpiredcertsbytype | stress");            }
         } catch (Exception e) {
         	Throwable cause = e.getCause();
         	if (cause instanceof EjbcaException_Exception) {
