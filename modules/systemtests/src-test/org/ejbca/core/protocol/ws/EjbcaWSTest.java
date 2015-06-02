@@ -1079,6 +1079,12 @@ public class EjbcaWSTest extends CommonEjbcaWS {
         log.trace("<test73AddSubjectToRole()");
     }
 
+    @Test
+    public void test74GetExpiredCerts() throws Exception {
+        log.trace(">test74GetExpiredCert()");
+        getExpiredCerts();
+        log.trace("<test74GetExpiredCert()");
+    }
 
     private void testCertificateRequestWithSpecialChars(String requestedSubjectDN, String expectedSubjectDN) throws Exception {
         String userName = "wsSpecialChars" + secureRandom.nextLong();

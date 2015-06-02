@@ -388,26 +388,137 @@ public class CertificateStoreSessionBean implements CertificateStoreSessionRemot
     }
 
     @Override
-    public Collection<Certificate> findCertificatesByExpireTimeWithLimit(Date expireTime) {
+    public List<Certificate> findCertificatesByExpireTimeWithLimit(Date expireTime) {
         if (log.isTraceEnabled()) {
             log.trace(">findCertificatesByExpireTimeWithLimit(), time=" + expireTime);
         }
         // First make expiretime in well know format
         log.debug("Looking for certs that expire before: " + expireTime);
-        Collection<CertificateData> coll = CertificateData.findByExpireDateWithLimit(entityManager, expireTime.getTime());
-        Collection<Certificate> ret = new ArrayList<Certificate>();
+        List<CertificateData> coll = CertificateData.findByExpireDateWithLimit(entityManager, expireTime.getTime());
         if (log.isDebugEnabled()) {
             log.debug("Found " + coll.size() + " certificates that expire before " + expireTime);
         }
-        Iterator<CertificateData> iter = coll.iterator();
-        while (iter.hasNext()) {
-            ret.add(iter.next().getCertificate(this.entityManager));
+        List<Certificate> ret = new ArrayList<Certificate>();
+        for(CertificateData certData : coll) {
+            ret.add(certData.getCertificate(this.entityManager));
         }
         if (log.isTraceEnabled()) {
             log.trace("<findCertificatesByExpireTimeWithLimit(), time=" + expireTime);
         }
         return ret;
     }
+    
+    @Override
+    public List<Certificate> findCertificatesByExpireTimeWithLimit(Date expireTime, int maxNumberOfResults) {
+        if (log.isTraceEnabled()) {
+            log.trace(">findCertificatesByExpireTimeWithLimit(), time=" + expireTime + " - maxNumberOfResults=" + maxNumberOfResults);
+        }
+        if(log.isDebugEnabled()) {
+            log.debug("Looking for certs that expire before: " + expireTime);
+        }
+        List<CertificateData> coll = CertificateData.findByExpireDateWithLimit(entityManager, expireTime.getTime(), maxNumberOfResults);
+        if (log.isDebugEnabled()) {
+            log.debug("Found " + coll.size() + " certificates that expire before " + expireTime);
+        }
+        List<Certificate> ret = new ArrayList<Certificate>();
+        for(CertificateData certData : coll) {
+            ret.add(certData.getCertificate(entityManager));
+        }
+        
+        if (log.isTraceEnabled()) {
+            log.trace("<findCertificatesByExpireTimeWithLimit(), time=" + expireTime + " - maxNumberOfResults=" + maxNumberOfResults);
+        }
+        return ret;
+    }
+    
+    @Override
+    public List<Certificate> findCertificatesByExpireTimeAndIssuerWithLimit(Date expireTime, String issuerDN) {
+        if (log.isTraceEnabled()) {
+            log.trace(">findCertificatesByExpireTimeWithLimit(), time=" + expireTime + "  - issuerDN=" + issuerDN);
+        }
+        if(log.isDebugEnabled()) {
+            log.debug("Looking for certs that expire before: " + expireTime);
+        }
+        List<CertificateData> coll = CertificateData.findByExpireDateAndIssuerWithLimit(entityManager, expireTime.getTime(), issuerDN);
+        if (log.isDebugEnabled()) {
+            log.debug("Found " + coll.size() + " certificates that expire before " + expireTime + " and issuerDN " + issuerDN);
+        }
+        List<Certificate> ret = new ArrayList<Certificate>(); 
+        for(CertificateData certData : coll) {
+            ret.add(certData.getCertificate(entityManager));
+        }
+        if (log.isTraceEnabled()) {
+            log.trace("<findCertificatesByExpireTimeWithLimit(), time=" + expireTime + "  - issuerDN=" + issuerDN);
+        }
+        return ret;
+    }
+    
+    @Override
+    public List<Certificate> findCertificatesByExpireTimeAndIssuerWithLimit(Date expireTime, String issuerDN, int maxNumberOfResults) {
+        if (log.isTraceEnabled()) {
+            log.trace(">findCertificatesByExpireTimeWithLimit(), time=" + expireTime + "  - issuerDN=" + issuerDN + "  - maxNumberOfResults=" + maxNumberOfResults);
+        }
+        if(log.isDebugEnabled()) {
+            log.debug("Looking for certs that expire before: " + expireTime);
+        }
+        List<CertificateData> coll = CertificateData.findByExpireDateAndIssuerWithLimit(entityManager, expireTime.getTime(), issuerDN, maxNumberOfResults);
+        if (log.isDebugEnabled()) {
+            log.debug("Found " + coll.size() + " certificates that expire before " + expireTime + " and issuerDN " + issuerDN);
+        }
+        List<Certificate> ret = new ArrayList<Certificate>(); 
+        for(CertificateData certData : coll) {
+            ret.add(certData.getCertificate(entityManager));
+        }
+        if (log.isTraceEnabled()) {
+            log.trace("<findCertificatesByExpireTimeWithLimit(), time=" + expireTime + "  issuerDN=" + issuerDN + "  - maxNumberOfResults=" + maxNumberOfResults);
+        }
+        return ret;
+    }
+    
+    @Override
+    public List<Certificate> findCertificatesByExpireTimeAndTypeWithLimit(Date expireTime, int certificateType) {
+        if (log.isTraceEnabled()) {
+            log.trace(">findCertificatesByExpireTimeAndTypeWithLimit(), time=" + expireTime + "  - type=" + certificateType);
+        }
+        if(log.isDebugEnabled()) {
+            log.debug("Looking for certs that expire before " + expireTime + " and of type " + certificateType);
+        }
+        List<CertificateData> coll = CertificateData.findByExpireDateAndTypeWithLimit(entityManager, expireTime.getTime(), certificateType);
+        if (log.isDebugEnabled()) {
+            log.debug("Found " + coll.size() + " certificates that expire before " + expireTime + " and of type " + certificateType);
+        }
+        List<Certificate> ret = new ArrayList<Certificate>();
+        for(CertificateData certData : coll) {
+            ret.add(certData.getCertificate(entityManager));
+        }
+        if (log.isTraceEnabled()) {
+            log.trace("<findCertificatesByExpireTimeAndTypeWithLimit(), time=" + expireTime + "  - type=" + certificateType);
+        }
+        return ret;
+    }
+    
+    @Override
+    public List<Certificate> findCertificatesByExpireTimeAndTypeWithLimit(Date expireTime, int certificateType, int maxNumberOfResults) {
+        if (log.isTraceEnabled()) {
+            log.trace(">findCertificatesByExpireTimeAndTypeWithLimit(), time=" + expireTime + "  - type=" + certificateType + "  - maxNumberOfResults=" + maxNumberOfResults);
+        }
+        if(log.isDebugEnabled()) {
+            log.debug("Looking for certs that expire before " + expireTime + " and of type " + certificateType);
+        }
+        List<CertificateData> coll = CertificateData.findByExpireDateAndTypeWithLimit(entityManager, expireTime.getTime(), certificateType, maxNumberOfResults);
+        if (log.isDebugEnabled()) {
+            log.debug("Found " + coll.size() + " certificates that expire before " + expireTime + " and of type " + certificateType);
+        }
+        List<Certificate> ret = new ArrayList<Certificate>();
+        for(CertificateData certData : coll) {
+            ret.add(certData.getCertificate(entityManager));
+        }
+        if (log.isTraceEnabled()) {
+            log.trace("<findCertificatesByExpireTimeAndTypeWithLimit(), time=" + expireTime + "  - type=" + certificateType + "  - maxNumberOfResults=" + maxNumberOfResults);
+        }
+        return ret;
+    }
+
 
     @Override
     public Collection<String> findUsernamesByExpireTimeWithLimit(Date expiretime) {
