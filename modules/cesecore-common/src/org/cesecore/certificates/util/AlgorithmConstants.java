@@ -18,6 +18,7 @@ package org.cesecore.certificates.util;
  */
 public final class AlgorithmConstants {
 
+    public static final String SIGALG_MD5_WITH_RSA             = "MD5WithRSA";
     public static final String SIGALG_SHA1_WITH_RSA            = "SHA1WithRSA";
     public static final String SIGALG_SHA256_WITH_RSA          = "SHA256WithRSA";
     public static final String SIGALG_SHA384_WITH_RSA          = "SHA384WithRSA";
@@ -26,6 +27,7 @@ public final class AlgorithmConstants {
     public static final String SIGALG_SHA224_WITH_ECDSA        = "SHA224withECDSA";   
     public static final String SIGALG_SHA256_WITH_ECDSA        = "SHA256withECDSA";   
     public static final String SIGALG_SHA384_WITH_ECDSA        = "SHA384withECDSA";   
+    public static final String SIGALG_SHA512_WITH_ECDSA        = "SHA512withECDSA";
     public static final String SIGALG_SHA256_WITH_RSA_AND_MGF1 = "SHA256WithRSAAndMGF1";
     public static final String SIGALG_SHA1_WITH_RSA_AND_MGF1   = "SHA1WithRSAAndMGF1"; // Not possible to select in Admin-GUI    
     public static final String SIGALG_SHA1_WITH_DSA            = "SHA1WithDSA";

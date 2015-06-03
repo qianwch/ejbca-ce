@@ -71,6 +71,7 @@ import org.bouncycastle.cms.RecipientInformationStore;
 import org.bouncycastle.cms.SignerId;
 import org.bouncycastle.cms.SignerInformation;
 import org.bouncycastle.cms.SignerInformationStore;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.cesecore.SystemTestsConfiguration;
 import org.cesecore.authentication.tokens.AuthenticationToken;
@@ -510,7 +511,6 @@ public class ProtocolScepHttpTest {
 
     @Test
     public void test10ScepGetCACaps() throws Exception {
-        log.debug(">test09ScepGetCACaps()");
         String reqUrl = httpReqPath + '/' + resourceScep + "?operation=GetCACaps&message=" + URLEncoder.encode(x509ca.getName(), "UTF-8");
         URL url = new URL(reqUrl);
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
@@ -533,8 +533,7 @@ public class ProtocolScepHttpTest {
         byte[] respBytes = baos.toByteArray();
         assertNotNull("Response can not be null.", respBytes);
         assertTrue(respBytes.length > 0);
-        assertEquals(new String(respBytes), "POSTPKIOperation\nSHA-1");
-        log.debug(">test09ScepGetCACaps()");
+        assertEquals(new String(respBytes), "POSTPKIOperation\nRenewal\nSHA-1");
     }
 
     @Test
@@ -562,7 +561,7 @@ public class ProtocolScepHttpTest {
         
         log.debug("<test10EnforcementOfUniquePublicKeys()");
     }
-
+    
     @Test
     public void test12EnforcementOfUniqueDN() throws Exception {
         
@@ -574,18 +573,18 @@ public class ProtocolScepHttpTest {
         // user.
         changeScepUser(userName2, userDN1);
 
-        final byte[] msgBytes = genScepRequest(false, CMSSignedGenerator.DIGEST_SHA1, userDN2, key2);
+        final byte[] msgBytes = genScepRequest(false, CMSSignedGenerator.DIGEST_SHA1, userDN2, key2, BouncyCastleProvider.PROVIDER_NAME);
         // Send message with GET
         final byte[] retMsg = sendScep(true, msgBytes, HttpServletResponse.SC_BAD_REQUEST);
         String returnMessageString = new String(retMsg);      
         String localizedMessage = InternalResourcesStub.getInstance().getLocalizedMessage(
-                "createcert.subjectdn_exists_for_another_user", "'" + userName2 + "'", "'" + userName1 + "'");
+                "createcert.subjectdn_exists_for_another_user", userName2, "'" + userName1 + "'");
         
         if("createcert.subjectdn_exists_for_another_user".equals(localizedMessage)) {
             String currentDirectory = System.getProperty("user.dir");
             throw new Error("Test can't continue, can't find language resource files. Current directory is " + currentDirectory);
         }
-        assertTrue(returnMessageString.indexOf(localizedMessage) >= 0);
+        assertTrue("Message was " + returnMessageString + " but did not include " + localizedMessage,  returnMessageString.indexOf(localizedMessage) >= 0);
     }
 
     
@@ -658,14 +657,14 @@ public class ProtocolScepHttpTest {
     private byte[] genScepRequest(boolean makeCrlReq, String digestoid, String userDN) throws InvalidKeyException, NoSuchAlgorithmException,
             NoSuchProviderException, SignatureException, InvalidAlgorithmParameterException, CertStoreException, IOException, CMSException,
             IllegalStateException, OperatorCreationException, CertificateException {
-        return genScepRequest(makeCrlReq, digestoid, userDN, key1);
+        return genScepRequest(makeCrlReq, digestoid, userDN, key1, BouncyCastleProvider.PROVIDER_NAME);
     }
 
-    private byte[] genScepRequest(boolean makeCrlReq, String digestoid, String userDN, KeyPair key) throws InvalidKeyException,
-            NoSuchAlgorithmException, NoSuchProviderException, SignatureException, InvalidAlgorithmParameterException, CertStoreException,
-            IOException, CMSException, IllegalStateException, OperatorCreationException, CertificateException {
+    private byte[] genScepRequest(boolean makeCrlReq, String digestoid, String userDN, KeyPair keyPair, String signatureProvider)
+            throws InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException, SignatureException, InvalidAlgorithmParameterException,
+            CertStoreException, IOException, CMSException, OperatorCreationException, CertificateException {
         ScepRequestGenerator gen = new ScepRequestGenerator();
-        gen.setKeys(key);
+        gen.setKeys(keyPair, signatureProvider);
         gen.setDigestOid(digestoid);
         byte[] msgBytes = null;
         // Create a transactionId
@@ -673,11 +672,12 @@ public class ProtocolScepHttpTest {
         this.rand.nextBytes(randBytes);
         byte[] digest = CertTools.generateMD5Fingerprint(randBytes);
         transId = new String(Base64.encode(digest));
-
+        final X509Certificate senderCertificate = CertTools.genSelfCert("CN=SenderCertificate", 24 * 60 * 60 * 1000, null, keyPair.getPrivate(),
+                keyPair.getPublic(), AlgorithmConstants.SIGALG_SHA1_WITH_RSA, false);
         if (makeCrlReq) {
-            msgBytes = gen.generateCrlReq(userDN, transId, cacert);
+            msgBytes = gen.generateCrlReq(userDN, transId, cacert, senderCertificate, keyPair.getPrivate());
         } else {
-            msgBytes = gen.generateCertReq(userDN, "foo123", transId, cacert);
+            msgBytes = gen.generateCertReq(userDN, "foo123", transId, cacert, senderCertificate, keyPair.getPrivate());
         }
         assertNotNull(msgBytes);
         senderNonce = gen.getSenderNonce();

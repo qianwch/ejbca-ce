@@ -3547,6 +3547,22 @@ public abstract class CertTools {
      * @return the result
      * @throws CertificateEncodingException if there is a problem extracting the certificate information.
      */
+    public static final List<JcaX509CertificateHolder> convertToX509CertificateHolder(List<X509Certificate> certificateChain)
+            throws CertificateEncodingException {
+        final List<JcaX509CertificateHolder> certificateHolderChain = new ArrayList<JcaX509CertificateHolder>();
+        for (X509Certificate certificate : certificateChain) {
+            certificateHolderChain.add( new JcaX509CertificateHolder(certificate));
+        }
+        return certificateHolderChain;
+    }
+    
+    /**
+     * Converts a X509Certificate chain into a JcaX509CertificateHolder chain.
+     * 
+     * @param certificateChain input chain to be converted
+     * @return the result
+     * @throws CertificateEncodingException if there is a problem extracting the certificate information.
+     */
     public static final JcaX509CertificateHolder[] convertCertificateChainToCertificateHolderChain(X509Certificate[] certificateChain)
             throws CertificateEncodingException {
         final JcaX509CertificateHolder[] certificateHolderChain = new JcaX509CertificateHolder[certificateChain.length];

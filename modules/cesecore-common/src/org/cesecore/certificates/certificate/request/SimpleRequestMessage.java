@@ -76,6 +76,9 @@ public class SimpleRequestMessage implements RequestMessage {
     /** Requested certificate extensions */
     private Extensions x509Extensions = null;
     
+    private Date validityNotBefore = null;
+    private Date validityNotAfter = null;
+    
     /** Private key used for signing/encrypting response, if needed */
     private PrivateKey responsePrivateKey;
     /** Security provider used for the responsePrivateKey */
@@ -91,6 +94,35 @@ public class SimpleRequestMessage implements RequestMessage {
         this.pubkey = pubkey;
         this.username = username;
         this.password = password;
+    }
+    
+    /**
+     * Constructs a new Simple message handler object.
+     * @param pubkey the public key to be certified
+     * @param username username of the EJBCA user
+     * @param password password of the EJBCA user
+     * @param validityNotAfter the end validity of this certificate
+     */
+    public SimpleRequestMessage(final PublicKey pubkey, final String username, final String password, final Date validityNotAfter) {
+        this.pubkey = pubkey;
+        this.username = username;
+        this.password = password;
+        this.validityNotAfter = validityNotAfter;
+    }
+    
+    /**
+     * Constructs a new Simple message handler object.
+     * @param pubkey the public key to be certified
+     * @param username username of the EJBCA user
+     * @param password password of the EJBCA user
+     * @param the end validity of this certificate
+     */
+    public SimpleRequestMessage(final PublicKey pubkey, final String username, final String password, final Date validityNotBefore, final Date validityNotAfter) {
+        this.pubkey = pubkey;
+        this.username = username;
+        this.password = password;
+        this.validityNotBefore = validityNotBefore;
+        this.validityNotAfter = validityNotAfter;
     }
 
     @Override
@@ -170,14 +202,14 @@ public class SimpleRequestMessage implements RequestMessage {
     }
 
     @Override
-	public Date getRequestValidityNotBefore() {
-		return null;
-	}
-	
+    public Date getRequestValidityNotBefore() {
+        return validityNotBefore;
+    }
+    
     @Override
-	public Date getRequestValidityNotAfter() {
-		return null;
-	}
+    public Date getRequestValidityNotAfter() {
+        return validityNotAfter;
+    }
 	
     @Override
 	public Extensions getRequestExtensions() {

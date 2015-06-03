@@ -173,6 +173,13 @@ public abstract class CaTestUtils {
         cryptoTokenManagementSession.deleteCryptoToken(authenticationToken, cryptoTokenId);
     }
 
+    public static void removeCa(AuthenticationToken authenticationToken, CAInfo caInfo) throws AuthorizationDeniedException {
+        CaSessionRemote caSession = EjbRemoteHelper.INSTANCE.getRemoteSession(CaSessionRemote.class);
+        CryptoTokenManagementSessionRemote cryptoTokenManagementSession = EjbRemoteHelper.INSTANCE
+                .getRemoteSession(CryptoTokenManagementSessionRemote.class);
+        caSession.removeCA(authenticationToken, caInfo.getCAId());
+        cryptoTokenManagementSession.deleteCryptoToken(authenticationToken, caInfo.getCAToken().getCryptoTokenId());
+    }
 
     public static X509CA createTestX509CAOptionalGenKeys(String cadn, char[] tokenpin, boolean genKeys, boolean pkcs11) throws Exception {
         return CaTestUtils.createTestX509CAOptionalGenKeys(cadn, tokenpin, genKeys, pkcs11, "1024", -1);

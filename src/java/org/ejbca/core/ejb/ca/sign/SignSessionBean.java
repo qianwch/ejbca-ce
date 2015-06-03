@@ -28,6 +28,7 @@ import java.util.Map;
 import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.EJBException;
+import javax.ejb.FinderException;
 import javax.ejb.ObjectNotFoundException;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -44,8 +45,11 @@ import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.certificates.ca.CA;
 import org.cesecore.certificates.ca.CAConstants;
 import org.cesecore.certificates.ca.CADoesntExistsException;
+import org.cesecore.certificates.ca.CAOfflineException;
 import org.cesecore.certificates.ca.CaSessionLocal;
 import org.cesecore.certificates.ca.CertificateGenerationParams;
+import org.cesecore.certificates.ca.IllegalNameException;
+import org.cesecore.certificates.ca.IllegalValidityException;
 import org.cesecore.certificates.ca.SignRequestException;
 import org.cesecore.certificates.ca.SignRequestSignatureException;
 import org.cesecore.certificates.ca.catoken.CAToken;
@@ -56,6 +60,7 @@ import org.cesecore.certificates.certificate.CertificateCreateSessionLocal;
 import org.cesecore.certificates.certificate.CertificateStoreSessionLocal;
 import org.cesecore.certificates.certificate.IllegalKeyException;
 import org.cesecore.certificates.certificate.certextensions.CertificateExtensionException;
+import org.cesecore.certificates.certificate.exception.CertificateSerialNumberException;
 import org.cesecore.certificates.certificate.exception.CustomCertificateSerialNumberException;
 import org.cesecore.certificates.certificate.request.CertificateResponseMessage;
 import org.cesecore.certificates.certificate.request.FailInfo;
@@ -68,6 +73,7 @@ import org.cesecore.certificates.certificateprofile.CertificateProfileSessionLoc
 import org.cesecore.certificates.certificatetransparency.CTLogInfo;
 import org.cesecore.certificates.crl.CrlStoreSessionLocal;
 import org.cesecore.certificates.crl.RevokedCertInfo;
+import org.cesecore.certificates.endentity.EndEntityConstants;
 import org.cesecore.certificates.endentity.EndEntityInformation;
 import org.cesecore.certificates.endentity.ExtendedInformation;
 import org.cesecore.jndi.JndiConstants;
@@ -82,11 +88,13 @@ import org.ejbca.core.ejb.ca.auth.EndEntityAuthenticationSessionLocal;
 import org.ejbca.core.ejb.ca.publisher.PublisherSessionLocal;
 import org.ejbca.core.ejb.ca.store.CertReqHistorySessionLocal;
 import org.ejbca.core.ejb.config.GlobalConfigurationSessionLocal;
+import org.ejbca.core.ejb.ra.EndEntityAccessSessionLocal;
 import org.ejbca.core.ejb.ra.EndEntityManagementSessionLocal;
 import org.ejbca.core.ejb.ra.NoSuchEndEntityException;
 import org.ejbca.core.ejb.ra.UserData;
 import org.ejbca.core.model.InternalEjbcaResources;
 import org.ejbca.core.model.SecConst;
+import org.ejbca.core.model.approval.WaitingForApprovalException;
 import org.ejbca.core.model.ca.AuthLoginException;
 import org.ejbca.core.model.ca.AuthStatusException;
 
@@ -114,6 +122,8 @@ public class SignSessionBean implements SignSessionLocal, SignSessionRemote {
     private CertReqHistorySessionLocal certreqHistorySession;
     @EJB
     private CertificateCreateSessionLocal certificateCreateSession;
+    @EJB
+    private EndEntityAccessSessionLocal endEntityAccessSession;
     @EJB
     private EndEntityAuthenticationSessionLocal endEntityAuthenticationSession;
     @EJB
@@ -231,6 +241,50 @@ public class SignSessionBean implements SignSessionLocal, SignSessionRemote {
         }
         return createCertificate(admin, username, password, incert.getPublicKey(),
                 CertTools.sunKeyUsageToBC(((X509Certificate) incert).getKeyUsage()), null, null);
+    }
+    
+    @Override
+    public ResponseMessage createCertificateIgnoreStatus(final AuthenticationToken admin, final RequestMessage req,
+            Class<? extends CertificateResponseMessage> responseClass) throws AuthorizationDeniedException, WaitingForApprovalException, EjbcaException, CesecoreException {
+        final String username = req.getUsername();
+        EndEntityInformation retrievedUser = endEntityAccessSession.findUser(admin, username);
+        if (retrievedUser.getStatus() == EndEntityConstants.STATUS_GENERATED) {
+            try {
+                endEntityManagementSession.setUserStatus(admin, username, EndEntityConstants.STATUS_NEW);
+            } catch (FinderException e) {
+                throw new NoSuchEndEntityException("End entity with username " + username + " not found.", e);
+            }
+        }
+        try {
+            return createCertificate(admin, req, responseClass, null);
+        } catch (CryptoTokenOfflineException e) {
+            throw new CertificateCreateException("Error during certificate creation, rolling back.", e);
+        } catch (IllegalKeyException e) {
+            throw new CertificateCreateException("Error during certificate creation, rolling back.", e);
+        } catch (CADoesntExistsException e) {
+            throw new CertificateCreateException("Error during certificate creation, rolling back.", e);
+        } catch (SignRequestException e) {
+            throw new CertificateCreateException("Error during certificate creation, rolling back.", e);
+        } catch (SignRequestSignatureException e) {
+            throw new CertificateCreateException("Error during certificate creation, rolling back.", e);
+        } catch (AuthStatusException e) {
+            throw new CertificateCreateException("Error during certificate creation, rolling back.", e);
+        } catch (AuthLoginException e) {
+            throw new CertificateCreateException("Error during certificate creation, rolling back.", e);
+        } catch (CertificateExtensionException e) {
+            throw new CertificateCreateException("Error during certificate creation, rolling back.", e);
+        } catch (CustomCertificateSerialNumberException e) {
+            throw new CertificateCreateException("Error during certificate creation, rolling back.", e);
+        } catch (IllegalNameException e) {
+            throw new CertificateCreateException("Error during certificate creation, rolling back.", e);
+        } catch (CertificateSerialNumberException e) {
+            throw new CertificateCreateException("Error during certificate creation, rolling back.", e);
+        } catch (IllegalValidityException e) {
+            throw new CertificateCreateException("Error during certificate creation, rolling back.", e);
+        } catch (CAOfflineException e) {
+            throw new CertificateCreateException("Error during certificate creation, rolling back.", e);
+        }
+
     }
 
     @Override

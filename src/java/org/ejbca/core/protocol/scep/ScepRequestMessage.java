@@ -52,9 +52,16 @@ import org.bouncycastle.cms.CMSSignedData;
 import org.bouncycastle.cms.CMSSignedGenerator;
 import org.bouncycastle.cms.RecipientInformation;
 import org.bouncycastle.cms.RecipientInformationStore;
+import org.bouncycastle.cms.SignerId;
 import org.bouncycastle.cms.SignerInformation;
 import org.bouncycastle.cms.SignerInformationStore;
+import org.bouncycastle.cms.SignerInformationVerifier;
+import org.bouncycastle.cms.SignerInformationVerifierProvider;
+import org.bouncycastle.cms.jcajce.JcaSignerInfoVerifierBuilder;
 import org.bouncycastle.cms.jcajce.JceKeyTransEnvelopedRecipient;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
 import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequest;
 import org.cesecore.certificates.certificate.request.PKCS10RequestMessage;
 import org.cesecore.certificates.certificate.request.RequestMessage;
@@ -181,6 +188,19 @@ public class ScepRequestMessage extends PKCS10RequestMessage implements RequestM
         if (log.isTraceEnabled()) {
         	log.trace("<ScepRequestMessage");
         }
+    }
+    
+    /**
+     * This method verifies the signature of the PKCS#7 wrapper of this message. 
+     * 
+     * @param publicKey the public key of the keypair that signed this message
+     * @return true if signature verifies. 
+     * @throws CMSException if the underlying byte array of this SCEP message couldn't be read
+     * @throws OperatorCreationException if a signature verifier couldn't be constructed from the given public key
+     */
+    public boolean verifySignature(PublicKey publicKey) throws CMSException, OperatorCreationException {
+        CMSSignedData cmsSignedData = new CMSSignedData(scepmsg);
+        return cmsSignedData.verifySignatures(new ScepVerifierProvider(publicKey));
     }
 
     private void init() throws IOException {
@@ -726,6 +746,25 @@ public class ScepRequestMessage extends PKCS10RequestMessage implements RequestM
      */
     public Certificate getSignerCert(){
     	return signercert;
+    }
+    
+    private static class ScepVerifierProvider implements SignerInformationVerifierProvider {
+
+        private final SignerInformationVerifier signerInformationVerifier;
+
+        public ScepVerifierProvider(PublicKey publicKey) throws OperatorCreationException {
+            JcaDigestCalculatorProviderBuilder calculatorProviderBuilder = new JcaDigestCalculatorProviderBuilder()
+                    .setProvider(BouncyCastleProvider.PROVIDER_NAME);
+            JcaSignerInfoVerifierBuilder signerInfoVerifierBuilder = new JcaSignerInfoVerifierBuilder(calculatorProviderBuilder.build())
+                    .setProvider(BouncyCastleProvider.PROVIDER_NAME);
+            signerInformationVerifier = signerInfoVerifierBuilder.build(publicKey);
+        }
+
+        @Override
+        public SignerInformationVerifier get(SignerId signerId) throws OperatorCreationException {
+            return signerInformationVerifier;
+        }
+
     }
         
 } // ScepRequestMessage

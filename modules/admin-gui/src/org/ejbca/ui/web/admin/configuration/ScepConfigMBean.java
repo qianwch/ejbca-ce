@@ -60,6 +60,8 @@ public class ScepConfigMBean extends BaseManagedBean implements Serializable {
         private String raNameGenParameters;
         private String raNameGenPrefix;
         private String raNameGenPostfix;
+        private boolean clientCertificateRenewal;
+        private boolean allowClientCertificateRenewaWithOldKey;
         
         private ScepAliasGuiInfo(ScepConfiguration scepConfig, String alias) {
             if(alias != null) {
@@ -75,6 +77,8 @@ public class ScepConfigMBean extends BaseManagedBean implements Serializable {
                     this.raNameGenParameters = scepConfig.getRANameGenerationParameters(alias);
                     this.raNameGenPrefix = scepConfig.getRANameGenerationPrefix(alias);
                     this.raNameGenPostfix = scepConfig.getRANameGenerationPostfix(alias);
+                    this.clientCertificateRenewal = scepConfig.getClientCertificateRenewal(alias);
+                    this.allowClientCertificateRenewaWithOldKey = scepConfig.getAllowClientCertificateRenewalWithOldKey(alias);
                 } else {
                     this.mode = ScepConfiguration.DEFAULT_OPERATION_MODE.toUpperCase();
                     this.includeCA = Boolean.parseBoolean(ScepConfiguration.DEFAULT_INCLUDE_CA);
@@ -86,6 +90,9 @@ public class ScepConfigMBean extends BaseManagedBean implements Serializable {
                     this.raNameGenParameters = ScepConfiguration.DEFAULT_RA_NAME_GENERATION_PARAMETERS;
                     this.raNameGenPrefix = ScepConfiguration.DEFAULT_RA_NAME_GENERATION_PREFIX;
                     this.raNameGenPostfix = ScepConfiguration.DEFAULT_RA_NAME_GENERATION_POSTFIX;
+                    this.clientCertificateRenewal = Boolean.valueOf(ScepConfiguration.DEFAULT_CLIENT_CERTIFICATE_RENEWAL);
+                    this.allowClientCertificateRenewaWithOldKey = Boolean
+                            .valueOf(ScepConfiguration.DEFAULT_ALLOW_CLIENT_CERTIFICATE_RENEWAL_WITH_OLD_KEY);
                 }
             }
         }
@@ -112,6 +119,22 @@ public class ScepConfigMBean extends BaseManagedBean implements Serializable {
         public void setRaNameGenPrefix(String prefix) {this.raNameGenPrefix = prefix;}
         public String getRaNameGenPostfix() { return raNameGenPostfix; }
         public void setRaNameGenPostfix(String postfix) {this.raNameGenPostfix = postfix;}
+        
+        public boolean getClientCertificateRenewal() {
+            return this.clientCertificateRenewal;
+        }
+
+        public void setClientCertificateRenewal(boolean clientCertificateRenewal) {
+            this.clientCertificateRenewal = clientCertificateRenewal;
+        }
+
+        public boolean getAllowClientCertificateRenewaWithOldKey() {
+            return this.allowClientCertificateRenewaWithOldKey;
+        }
+
+        public void setAllowClientCertificateRenewaWithOldKey(boolean allowClientCertificateRenewaWithOldKey) {
+            this.allowClientCertificateRenewaWithOldKey = allowClientCertificateRenewaWithOldKey;
+        }
     }
 
     

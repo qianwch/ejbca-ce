@@ -64,8 +64,10 @@ import org.bouncycastle.cms.SignerId;
 import org.bouncycastle.cms.SignerInformation;
 import org.bouncycastle.cms.SignerInformationStore;
 import org.bouncycastle.jce.X509KeyUsage;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.encoders.Base64;
 import org.cesecore.certificates.certificate.request.ResponseStatus;
+import org.cesecore.certificates.util.AlgorithmConstants;
 import org.cesecore.util.CertTools;
 import org.cesecore.util.CryptoProviderTools;
 import org.ejbca.core.protocol.scep.ScepRequestGenerator;
@@ -225,7 +227,7 @@ class SCEPTest extends ClientToolBox {
             	
                 // Generate the SCEP GetCert request
                 final ScepRequestGenerator gen = new ScepRequestGenerator();                
-                gen.setKeys(StressTest.this.keyPair);
+                gen.setKeys(StressTest.this.keyPair, BouncyCastleProvider.PROVIDER_NAME);
                 gen.setDigestOid(CMSSignedGenerator.DIGEST_SHA1);
                 final int keyUsagelength = 9;
                 final boolean keyUsage[] = new boolean[keyUsagelength];
@@ -239,7 +241,11 @@ class SCEPTest extends ClientToolBox {
                                 bcKeyUsage += i<8 ? 1<<(7-i) : 1<<(15+8-i);
                             }
                         }
-                        msgBytes = gen.generateCertReq(userDN, "foo123", transactionId, this.sessionData.certchain[0], generateExtensions(bcKeyUsage));                    
+                        X509Certificate senderCertificate = CertTools.genSelfCert(userDN, 24 * 60 * 60 * 1000, null,
+                                StressTest.this.keyPair.getPrivate(), StressTest.this.keyPair.getPublic(), AlgorithmConstants.SIGALG_SHA1_WITH_RSA,
+                                false);
+                        msgBytes = gen.generateCertReq(userDN, "foo123", transactionId, this.sessionData.certchain[0],
+                                generateExtensions(bcKeyUsage), senderCertificate, StressTest.this.keyPair.getPrivate());                    
                     }
                     // Get some valuable things to verify later on
                     final String senderNonce = gen.getSenderNonce();
@@ -269,10 +275,12 @@ class SCEPTest extends ClientToolBox {
                 	//System.out.println("Waiting 5 secs...");
                 	Thread.sleep(5000); // wait 5 seconds between polls
                 	// Generate a SCEP GerCertInitial message
-                    gen.setKeys(StressTest.this.keyPair);
+                    gen.setKeys(StressTest.this.keyPair, BouncyCastleProvider.PROVIDER_NAME);
                     gen.setDigestOid(CMSSignedGenerator.DIGEST_SHA1);
-                    final byte[] msgBytes = gen.generateGetCertInitial(userDN, transactionId, this.sessionData.certchain[0]);                    
-                    // Get some valuable things to verify later on
+                    X509Certificate senderCertificate = CertTools.genSelfCert(userDN, 24 * 60 * 60 * 1000, null,
+                            StressTest.this.keyPair.getPrivate(), StressTest.this.keyPair.getPublic(), AlgorithmConstants.SIGALG_SHA1_WITH_RSA,
+                            false);
+                    final byte[] msgBytes = gen.generateGetCertInitial(userDN, transactionId, this.sessionData.certchain[0], senderCertificate, StressTest.this.keyPair.getPrivate());                       // Get some valuable things to verify later on
                     final String senderNonce = gen.getSenderNonce();
                 	
                     // Send message with GET
