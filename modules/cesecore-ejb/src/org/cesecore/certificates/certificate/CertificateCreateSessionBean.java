@@ -354,6 +354,14 @@ public class CertificateCreateSessionBean implements CertificateCreateSessionLoc
             } else {
                 maxRetrys = 5;
             }
+            // Before storing the new certificate, check if single active certificate constraint is active, and if so let's revoke all active and unexpired certificates
+            if (certProfile.isSingleActiveCertificateConstraint()) {
+                for (Certificate certificate : certificateStoreSession.findCertificatesBySubjectAndIssuer(data.getCertificateDN(),
+                        caSubjectDN, true)) {
+                    //Authorization to the CA was already checked at the head of this method, so no need to do so now
+                    certificateStoreSession.setRevokeStatusNoAuth(admin, certificate, new Date(), RevokedCertInfo.REVOCATION_REASON_SUPERSEDED, data.getDN());
+                }
+            }
             CertificateSerialNumberException storeEx = null; // this will not be null if stored == false after the below passage
             for (int retrycounter = 0; retrycounter < maxRetrys; retrycounter++) {
                 final CryptoToken cryptoToken = cryptoTokenManagementSession.getCryptoToken(ca.getCAToken().getCryptoTokenId());
