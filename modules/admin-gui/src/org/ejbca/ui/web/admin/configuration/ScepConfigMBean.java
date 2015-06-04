@@ -242,7 +242,8 @@ public class ScepConfigMBean extends BaseManagedBean implements Serializable {
             scepConfig.setRANameGenerationParameters(alias, currentAlias.getRaNameGenParams());
             scepConfig.setRANameGenerationPrefix(alias, currentAlias.getRaNameGenPrefix());
             scepConfig.setRANameGenerationPostfix(alias, currentAlias.getRaNameGenPostfix());
-            
+            scepConfig.setClientCertificateRenewal(alias, currentAlias.getClientCertificateRenewal());
+            scepConfig.setAllowClientCertificateRenewalWithOldKey(alias, currentAlias.getAllowClientCertificateRenewaWithOldKey());
             try {
                 globalConfigSession.saveConfiguration(authenticationToken, scepConfig, Configuration.ScepConfigID);
             } catch (AuthorizationDeniedException e) {
