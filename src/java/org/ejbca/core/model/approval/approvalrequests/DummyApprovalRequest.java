@@ -43,12 +43,11 @@ public class DummyApprovalRequest extends ApprovalRequest {
 	
     /**
      * Main constructor of an approval request
-     * @param requestAdminCert the certificate of the requesting admin
-     * @param requestSignature signature of the requestor (OPTIONAL, for future use)
-     * @param approvalRequestType one of TYPE_ constants
-     * @param numOfRequiredApprovals 
+     * @param requestAdmin
+     * @param requestSignature signature of the requester (OPTIONAL, for future use)
      * @param cAId the related cAId of the request that the approver must be authorized to or ApprovalDataVO.ANY_CA in applicable to any ca
      * @param endEntityProfileId the related profile id that the approver must be authorized to or ApprovalDataVO.ANY_ENDENTITYPROFILE if applicable to any end entity profile
+     * @param executable
      */
 	public DummyApprovalRequest(AuthenticationToken requestAdmin, String requestSignature, int cAId, int endEntityProfileId, boolean executable) {
 		super(requestAdmin, requestSignature, ApprovalRequest.REQUESTTYPE_SIMPLE, NUM_OF_REQUIRED_APPROVALS, cAId, endEntityProfileId);	
@@ -63,11 +62,11 @@ public class DummyApprovalRequest extends ApprovalRequest {
 		this.executable = executable;
 	} 
 	
-	/** Constuctor used in externaliziation only */
+	/** Constructor used in externalization only */
 	public DummyApprovalRequest() { }
     
 	/**
-	 * Should return true if the request if of the type that should be executed
+	 * Should return true if the request is of the type that should be executed
 	 * by the last approver.
 	 * 
 	 * False if the request admin should do a polling action to try again.
