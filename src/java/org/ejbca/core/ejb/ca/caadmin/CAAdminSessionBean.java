@@ -367,6 +367,9 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
             if (changed) {
                 certProfile.setAvailableCAs(availableCAs);
                 String name = certProfiles.get(certProfId);
+                if (log.isDebugEnabled()) {
+                    log.debug("Changing CA Ids in Certificate Profile "+name);
+                }
                 certificateProfileSession.changeCertificateProfile(authenticationToken, name, certProfile);
             }
         }
@@ -399,6 +402,9 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
             if (changed) {
                 endEntityProfile.setAvailableCAs(updated);
                 String name = endEntityProfiles.get(endEntityProfId);
+                if (log.isDebugEnabled()) {
+                    log.debug("Changing CA Ids in End Entity Profile "+name);
+                }
                 try {
                     endEntityProfileSession.changeEndEntityProfile(authenticationToken, name, endEntityProfile);
                 } catch (EndEntityProfileNotFoundException e) {
@@ -410,10 +416,12 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
         // Update End-Entities (only if it's possible to get the session bean)
         EndEntityManagementSessionLocal endEntityManagementSession = getEndEntityManagementSession();
         if (endEntityManagementSession != null) {
-            final Collection<EndEntityInformation> endEntities = endEntityManagementSession.findAllUsersByCaId(authenticationToken, fromId);
+            final Collection<EndEntityInformation> endEntities = endEntityManagementSession.findAllUsersByCaIdNoAuth(fromId);
             for (EndEntityInformation endEntityInfo : endEntities) {
-                endEntityInfo.setCAId(toId);
                 try {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Changing CA Id of End Entity "+endEntityInfo.getUsername());
+                    }
                     endEntityManagementSession.updateCAId(authenticationToken, endEntityInfo.getUsername(), toId);
                 } catch (NoSuchEndEntityException e) {
                     log.error("End entity "+endEntityInfo.getUsername()+" could no longer be found", e);
@@ -445,6 +453,9 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
             if (changed) {
                 dataSource.setApplicableCAs(applicableCAs);
                 String name = dataSources.get(dataSourceId);
+                if (log.isDebugEnabled()) {
+                    log.debug("Changing CA Ids in User Data Source "+name);
+                }
                 userDataSourceSession.changeUserDataSource(authenticationToken, name, dataSource);
             }
         }
@@ -470,6 +481,9 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
                     if (changed) {
                         workerProps.setProperty(BaseWorker.PROP_CAIDSTOCHECK, StringUtils.join(caIds, ';'));
                         serviceConf.setWorkerProperties(workerProps);
+                        if (log.isDebugEnabled()) {
+                            log.debug("Changing CA Ids in Service "+serviceName);
+                        }
                         serviceSession.changeService(authenticationToken, serviceName, serviceConf, false);
                     }
                 }
@@ -500,6 +514,9 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
                 
                 if (changed) {
                     keybind.setTrustedCertificateReferences(trustentries);
+                    if (log.isDebugEnabled()) {
+                        log.debug("Changing CA Ids in Internal Key Binding "+keybind.getName());
+                    }
                     try {
                         keyBindMgmtSession.persistInternalKeyBinding(authenticationToken, keybind);
                     } catch (InternalKeyBindingNameInUseException e) {
@@ -519,6 +536,9 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
                 changed = true;
             }
             if (changed) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Changing CA Ids in System Configuration");
+                }
                 globalConfigurationSession.saveConfiguration(authenticationToken, globalConfig);
             }
         }
@@ -536,6 +556,9 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
                 }
             }
             if (changed) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Changing CA Ids in CMP configuration");
+                }
                 globalConfigurationSession.saveConfiguration(authenticationToken, cmpConfig);
             }
         }
@@ -557,6 +580,9 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
             if (changed) {
                 final Map<Integer,AccessRuleData> rules = role.getAccessRules(); // Contains no CAIds. Used as-is
                 
+                if (log.isDebugEnabled()) {
+                    log.debug("Changing CA Ids in Role "+roleName);
+                }
                 try {
                     // Rename old role so we can replace it without getting locked out
                     final String oldTempName = roleName + "_CAIdUpdateOld" + random.nextLong();
@@ -576,6 +602,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
             }
         }
         
+        log.debug("Done updating CA Ids");
         final String detailsMsg = intres.getLocalizedMessage("caadmin.updatedcaid", fromId, toId, toDN);
         auditSession.log(EventTypes.CA_EDITING, EventStatus.SUCCESS, ModuleTypes.CA, ServiceTypes.CORE, authenticationToken.toString(), String.valueOf(toId),
                     null, null, detailsMsg);
