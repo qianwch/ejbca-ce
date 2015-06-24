@@ -47,6 +47,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
@@ -146,6 +147,7 @@ import org.cesecore.keys.util.KeyTools;
 import org.cesecore.roles.RoleData;
 import org.cesecore.roles.RoleExistsException;
 import org.cesecore.roles.RoleNotFoundException;
+import org.cesecore.roles.access.RoleAccessSessionLocal;
 import org.cesecore.roles.management.RoleManagementSessionLocal;
 import org.cesecore.util.Base64;
 import org.cesecore.util.CertTools;
@@ -227,6 +229,8 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
     private PublishingCrlSessionLocal publishingCrlSession;
     @EJB
     private RevocationSessionLocal revocationSession;
+    @EJB
+    private RoleAccessSessionLocal roleAccessSession;
     @EJB
     private RoleManagementSessionLocal roleManagementSession;
     @EJB
@@ -565,8 +569,11 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
         
         // Update Roles
         final Random random = new Random(System.nanoTime()); 
-        for (RoleData role : roleManagementSession.getAllRolesAuthorizedToEdit(authenticationToken)) {
+        final String toReplace = StandardRules.CAACCESS.resource()+String.valueOf(fromId);
+        final String toReplaceSlash = toReplace+"/";
+        for (RoleData role : roleAccessSession.getAllRoles()) {
             final String roleName = role.getRoleName();
+            // Look for references from user's CAs
             final Map<Integer,AccessUserAspectData> users = new HashMap<Integer,AccessUserAspectData>(role.getAccessUsers());
             boolean changed = false;
             for (int id : new ArrayList<Integer>(users.keySet())) {
@@ -577,9 +584,22 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
                     changed = true;
                 }
             }
-            if (changed) {
-                final Map<Integer,AccessRuleData> rules = role.getAccessRules(); // Contains no CAIds. Used as-is
+            // Look for references from access rules
+            final Map<Integer,AccessRuleData> rules = new HashMap<Integer,AccessRuleData>(role.getAccessRules());
+            for (int id : new ArrayList<Integer>(rules.keySet())) {
+                AccessRuleData rule = rules.get(id);
+                final String accessRuleName = rule.getAccessRuleName();
                 
+                if (accessRuleName.equals(toReplace) || accessRuleName.startsWith(toReplaceSlash)) {
+                    final String newName = StandardRules.CAACCESS.resource() + String.valueOf(toId) + accessRuleName.substring(toReplace.length());
+                    final int state = rule.getState();
+                    rule = new AccessRuleData(roleName, newName, rule.getInternalState(), rule.getRecursive());
+                    rule.setState(state);
+                    rules.put(id, rule);
+                    changed = true;
+                }
+            }
+            if (changed) {
                 if (log.isDebugEnabled()) {
                     log.debug("Changing CA Ids in Role "+roleName);
                 }
@@ -589,7 +609,6 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
                     roleManagementSession.renameRole(authenticationToken, roleName, oldTempName);
                     
                     RoleData newRole = roleManagementSession.create(authenticationToken, roleName);
-                    // Rights are unchanged because they don't reference CAs
                     newRole = roleManagementSession.addAccessRulesToRole(authenticationToken, newRole, rules.values());
                     newRole = roleManagementSession.addSubjectsToRole(authenticationToken, newRole, users.values());
 
