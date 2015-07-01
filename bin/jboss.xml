@@ -368,13 +368,28 @@
 		<jboss:admsilent arg="/interfaces=/interface=http:remove" failonerror="false" />
 		<jboss:admsilent arg="/interfaces=/interface=httpspub:remove" failonerror="false" />
 		<jboss:admsilent arg="/interfaces=/interface=httpspriv:remove" failonerror="false" />
-		<jboss:admwaitreload/>
+		<jboss:jbosswaitready/>
 		<jboss:admsilent arg=":reload" />
+		<jboss:jbosswaitready/>
+	</target>
+
+	<target name="jboss:reload">
+		<!-- If the server is not so fast, we have to wait a little before we can reload, otherwise it will be bad -->
 		<jboss:admwaitreload/>
 	</target>
 
-	<target name="jee:web-configureJBoss7" depends="jee:check,jee:assert-runJBoss7" if="jboss7" unless="web.noconfigure">
+	<target name="jee:web-configureJBoss7" depends="jee:check,jee:assert-runJBoss7,jboss:reload" if="jboss7" unless="web.noconfigure">
 		<echo message="Setting-up web configuration for JBoss 7 (ejbca must be deployed)." />
+		<jboss:admsilent arg="undeploy ejbca.ear" failonerror="false" />
+		<antcall target="jee:web-configureJBoss7Web" />
+		<!-- We must wait a few seconds, or some race conditions could happen. The problem is that :reload is a non-blocking operation, and JBoss CLI is not very stable... -->
+		<jboss:jbosswaitready />
+		<antcall target="jee:deployear" />
+	</target>
+
+	<target name="jee:web-configureJBoss7Web" depends="jee:check,jee:assert-runJBoss7" if="jboss7" unless="web.noconfigure">
+		<echo message="Setting-up web configuration for JBoss 7 (ejbca must be deployed)." />
+		<jboss:admsilent arg="undeploy ejbca.ear --keep-content" failonerror="false" />
 		<antcall target="jee:web-configureJBoss7Cleanup" />
 		<jboss:adm arg='/interfaces=/interface=http:add(inet-address="${httpsserver.bindaddress.pubhttp}")' />
 		<jboss:adm arg='/interfaces=/interface=httpspub:add(inet-address="${httpsserver.bindaddress.pubhttps}")' />
@@ -388,15 +403,16 @@
 		<!--  Configure WSDL web-host rewriting to use the request host. Needed for webservices to work correctly when requiring client certificate. -->
 		<jboss:adm arg="/subsystem=webservices:write-attribute(name=wsdl-host, value=jbossws.undefined.host)" />
 		<jboss:adm arg="/subsystem=webservices:write-attribute(name=modify-wsdl-address, value=true)" />
-		<!-- If the server is not so fast, we have to wait a little before we can reload, otherwise it will be bad -->
-		<jboss:admwaitreload/>
+		<jboss:jbosswaitready/>
 		<jboss:adm arg=":reload" />
-		<jboss:admwaitreload/>
+		<jboss:jbosswaitready/>
 		<antcall target="jee:web-configureJBoss7SSL" />
+		<jboss:admsilent arg="deploy --name=ejbca.ear" failonerror="false" />
 	</target>
 
 	<target name="jee:web-configureJBoss7SSL" depends="jee:check" unless="web.nosslconfigure">
-		<echo message="Setting-up TLS web configuration for JBoss 7. Protocols allowed '${tlsprotocol}'." />
+		<echo message="Setting-up SSL web configuration for JBoss 7." />
+		<jboss:admsilent arg="undeploy ejbca.ear --keep-content" failonerror="false" />
 		<!-- Set-up the private port which requires client certificate -->
 		<jboss:adm arg='/socket-binding-group=standard-sockets/socket-binding=httpspriv:add(port="${httpserver.privhttps}",interface="httpspriv")' />
 		<jboss:adm arg="/subsystem=web/connector=httpspriv:add(protocol=HTTP/1.1, scheme=https, socket-binding=httpspriv, secure=true)" />
@@ -406,18 +422,16 @@
 		<jboss:adm arg="/subsystem=web/connector=httpspriv/ssl=configuration:write-attribute(name=verify-client, value=true)" />
 		<jboss:adm arg='/subsystem=web/connector=httpspriv/ssl=configuration:write-attribute(name=ca-certificate-password, value="${java.trustpassword}")' />
 		<jboss:adm arg='/subsystem=web/connector=httpspriv/ssl=configuration:write-attribute(name=ca-certificate-file, value="${jboss.server.home.dir}/${truststore.file}")' />
-		<jboss:adm arg='/subsystem=web/connector=httpspriv/ssl=configuration:write-attribute(name=protocol, value="${tlsprotocol}")' />
 		<!-- Set-up the public SSL port which doesn't require the client certificate. -->
 		<jboss:adm arg='/socket-binding-group=standard-sockets/socket-binding=httpspub:add(port="${httpserver.pubhttps}",interface="httpspub")' />
 		<jboss:adm arg="/subsystem=web/connector=httpspub:add(protocol=HTTP/1.1, scheme=https, socket-binding=httpspub, secure=true)" />
 		<jboss:adm arg='/subsystem=web/connector=httpspub/ssl=configuration:add(key-alias="${httpsserver.hostname}")' />
 		<jboss:adm arg='/subsystem=web/connector=httpspub/ssl=configuration:write-attribute(name=password, value="${httpsserver.password}")' />
 		<jboss:adm arg='/subsystem=web/connector=httpspub/ssl=configuration:write-attribute(name=certificate-key-file, value="${jboss.server.home.dir}/${keystore.file}")' />
-		<jboss:adm arg='/subsystem=web/connector=httpspub/ssl=configuration:write-attribute(name=protocol, value="${tlsprotocol}")' />
-		<!-- If the server is not so fast, we have to wait a little before we can reload, otherwise it will be bad -->
-		<jboss:admwaitreload/>
+		<jboss:jbosswaitready/>
 		<jboss:adm arg=":reload" />
-		<jboss:admwaitreload/>
+		<jboss:jbosswaitready/>
+		<jboss:admsilent arg="deploy --name=ejbca.ear" failonerror="false" />
 	</target>
 
 	<!-- JBoss 7, EAP 6 and WildFly 8 -->
@@ -620,7 +634,7 @@
 				</filterchain>
 			</loadresource>
 			<echo message="@{arg}"/>
-            <exec executable="${appserverhome}/bin/${jbosscliexe}" outputproperty="@{outputproperty}" failonerror="@{failonerror}">
+			<exec executable="${appserverhome}/bin/${jbosscliexe}" outputproperty="@{outputproperty}" failonerror="@{failonerror}">
 				<arg value="-c" />
 				<arg value="--command=${arg_escaped}" />
 			</exec>
