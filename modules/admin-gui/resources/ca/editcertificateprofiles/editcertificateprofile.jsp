@@ -78,7 +78,7 @@
 		</h:panelGroup>
 
 		<h:outputLabel for="selectavailablebitlengths" value="#{web.text.AVAILABLEBITLENGTHS}"/>
-		<h:selectManyListbox id="selectavailablebitlengths" value="#{certProfileBean.certificateProfile.availableBitLengths}" size="5">
+		<h:selectManyListbox id="selectavailablebitlengths" value="#{certProfileBean.certificateProfile.availableBitLengths}" size="5" styleClass="number">
 			<f:selectItems value="#{certProfileBean.availableBitLengthsAvailable}"/>
 		</h:selectManyListbox>
 
