@@ -51,7 +51,7 @@ org.cesecore.keybind.InternalKeyBindingRules
     final String LOG_CONFIGURATION_LINK   =  ejbcawebbean.getBaseUrl() + globalconfiguration.getLogPath() 
                                                     + "/logconfiguration/logconfiguration.jsp";
     final String CONFIGURATION_LINK       =  ejbcawebbean.getBaseUrl() + globalconfiguration.getConfigPath() 
-                                                    + "/configuration.jsp";
+                                                    + "/systemconfiguration.jsf";
     final String CMPCONFIGURATION_LINK    =  ejbcawebbean.getBaseUrl() + globalconfiguration.getConfigPath()
            											+ "/cmpconfiguration.jsp";
     
