@@ -1,3 +1,17 @@
+EJBCA 6.3.2.2 
+-----------
+This patch release primarily fixes the issue of the DirectoryName component of subjectAltName not being included in certificates 
+
+Read the full Changelog for details.
+For upgrade instructions, please see UPGRADE.
+
+EJBCA 6.3.2.1
+-----------
+This patch release primarily fixes the issue of certain elliptic curves having different human readable names in the JDK vs BouncyCastle
+
+Read the full Changelog for details.
+For upgrade instructions, please see UPGRADE.
+
 EJBCA 6.3.2
 -----------
 This maintenance release contains 23 new features, bug fixes and improvements, in addition to all fixes made in 6.2.10. Below is a 

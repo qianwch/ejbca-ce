@@ -1,3 +1,18 @@
+EJBCA 6.3.2.2, 2015-07-16
+---
+Bug
+	[ECA-4339] - DirectoryName subjectAltName is not added
+	[ECA-4356] - Regression: Sorting of certificates has become random
+	[ECA-4357] - Regression: external-ra-gui doesn't deploy
+	
+EJBCA 6.3.2.1, 2015-06-17
+---
+Bug
+	[ECA-4326] - CRLDownload service can't handle multiple revocation changes in a CRL
+	[ECA-4333] - Detect available EC curves in JDK by OID
+Improvement
+	[ECA-4305] - Disable choice in self registration when referenced profile does not exist
+
 EJBCA 6.3.2, 2015-05-29
 ---
 Bug
