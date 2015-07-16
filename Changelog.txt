@@ -5,7 +5,7 @@ Bug
 	[ECA-4356] - Regression: Sorting of certificates has become random
 	[ECA-4357] - Regression: external-ra-gui doesn't deploy
 	
-EJBCA 6.3.2.1, 2015-06-17
+EJBCA 6.3.2.1, 2015-07-09
 ---
 Bug
 	[ECA-4326] - CRLDownload service can't handle multiple revocation changes in a CRL
