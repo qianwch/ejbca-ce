@@ -1,3 +1,16 @@
+EJBCA 6.3.2.1.1, 2015-06-21
+---
+Bug
+	[ECA-4364] - Regression: Error editing Publishers under CA Functions in Admin Web
+
+EJBCA 6.3.2.1, 2015-07-09
+---
+Bug
+        [ECA-4326] - CRLDownload service can't handle multiple revocation changes in a CRL
+        [ECA-4333] - Detect available EC curves in JDK by OID
+Improvement
+        [ECA-4305] - Disable choice in self registration when referenced profile does not exist
+
 EJBCA 6.3.2, 2015-05-29
 ---
 Bug
