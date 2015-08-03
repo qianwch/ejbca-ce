@@ -91,7 +91,7 @@ public interface SignSessionLocal extends SignSession {
      * @throws WaitingForApprovalException if an approval is already waiting for the status to be changed (does not require rollback)
      */
     ResponseMessage createCertificateIgnoreStatus(final AuthenticationToken admin, final RequestMessage req,
-            Class<? extends CertificateResponseMessage> responseClass) throws AuthorizationDeniedException, NoSuchEndEntityException,
+            Class<? extends CertificateResponseMessage> responseClass,  boolean ignorePassword) throws AuthorizationDeniedException, NoSuchEndEntityException,
             CertificateCreateException, CertificateRevokeException, InvalidAlgorithmException, ApprovalException, WaitingForApprovalException;
     
     /**
