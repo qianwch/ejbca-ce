@@ -52,6 +52,8 @@
   static final String CHECKBOX_ENABLECLIDEFAULTUSER			 = "checkboxenableclidefaultuser";
   static final String CHECKBOX_CLEARCACHES_EXCLUDE_CRYPTOTOKEN  = "checkboxclearcachesexcludecryptotokencache";
   
+  static final String CHECKBOX_CERTIFICATECHAINROOTFIRST 	 = "checkboxcertificatechainrootfirst";
+  
   static final String TEXTFIELD_CTLOG_URL                    = "textfieldctlogurl";
   static final String FILE_CTLOG_PUBLICKEY                   = "filectlogpublickey";
   static final String TEXTFIELD_CTLOG_TIMEOUT                = "textfieldctlogtimeout";
@@ -138,6 +140,7 @@
        gc.setIssueHardwareTokens(CHECKBOX_VALUE.equals(params.getParameter(CHECKBOX_ISSUEHARDWARETOKENS)));
        gc.setEnableCommandLineInterface(CHECKBOX_VALUE.equals(params.getParameter(CHECKBOX_ENABLECOMMANDLINEINTERFACE)));
        gc.setEnableCommandLineInterfaceDefaultUser(CHECKBOX_VALUE.equals(params.getParameter(CHECKBOX_ENABLECLIDEFAULTUSER)));
+       gc.setPublicWebCertChainOrderRootFirst(CHECKBOX_VALUE.equals(params.getParameter(CHECKBOX_CERTIFICATECHAINROOTFIRST)));
 
        if (params.contains(CHECKBOX_APPROVALUSEEMAILNOTIFICATIONS) && params.getParameter(CHECKBOX_APPROVALUSEEMAILNOTIFICATIONS).equals(CHECKBOX_VALUE)){
     	   gc.setUseApprovalNotifications(true);

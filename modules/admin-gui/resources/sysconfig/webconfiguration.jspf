@@ -411,4 +411,20 @@ function checkuseautoenroll(){
       </td>
     </tr>
     <% } /* CertificateTransparencyFactory.isCTAvailable() */ %>
+    
+    <tr id="Row1">
+  	  <td width="49%" valign="top">
+  	  	<h3>
+  	  		<c:out value="<%= ejbcawebbean.getText(\"CERTIFICATECHAINORDER\") %>"/>
+  	  	</h3>
+  	  	<p class="help"><c:out value="<%= ejbcawebbean.getText(\"CERTIFICATECHAINROOTFIRST_HELP\") %>"/></p>
+  	  </td>
+  	  <td width="51%" valign="top">
+  	  	<input type="checkbox" name="<%=CHECKBOX_CERTIFICATECHAINROOTFIRST %>" value="<%=CHECKBOX_VALUE %>" 
+  	  																					<% if(gc.getPublicWebCertChainOrderRootFirst()) 
+  	  																					    	out.write(" CHECKED "); %>
+			id="<%=CHECKBOX_CERTIFICATECHAINROOTFIRST%>" />
+		<label for="<%=CHECKBOX_CERTIFICATECHAINROOTFIRST%>"><c:out value="<%= ejbcawebbean.getText(\"CERTIFICATECHAINROOTFIRST\") %>" /></label>
+  	  </td>
+    </tr>
 
