@@ -115,7 +115,7 @@ public class ClientCertificateRenewalExtension implements ScepResponsePlugin {
             throw new NoSuchEndEntityException("End entity with username " + username + " does not exist.");
         }
         
-     // Find latest issued certificate
+        // Find latest issued certificate
         final X509Certificate latestIssued;
         if (useRolloverCert) {
             X509Certificate rolloverCert = certificateStoreSession.findLatestX509CertificateBySubject(reqmsg.getRequestDN(), cacert, true);
@@ -137,6 +137,11 @@ public class ClientCertificateRenewalExtension implements ScepResponsePlugin {
         }
 
         log.debug("Found existing certificate, will use client certificate renewal");
+        
+        // Verify that certificate is still valid
+        if(!CertTools.isCertificateValid(latestIssued)) {
+            throw new AuthStatusException("Re-enrollment request was attempted using an expired client certificate");
+        }
         
         // Double check that certificate hasn't been revoked
         final CertificateStatus certStatus = certificateStoreSession.getStatus(CertTools.getIssuerDN(latestIssued), latestIssued.getSerialNumber());
