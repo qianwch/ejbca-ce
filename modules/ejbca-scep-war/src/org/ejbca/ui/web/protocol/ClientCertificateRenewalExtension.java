@@ -28,6 +28,7 @@ import org.cesecore.certificates.endentity.EndEntityConstants;
 import org.cesecore.certificates.endentity.EndEntityInformation;
 import org.cesecore.keys.token.CryptoToken;
 import org.cesecore.keys.token.CryptoTokenManagementSessionLocal;
+import org.cesecore.util.CertTools;
 import org.ejbca.config.ScepConfiguration;
 import org.ejbca.core.EjbcaException;
 import org.ejbca.core.ejb.ca.sign.SignSessionLocal;
@@ -90,6 +91,10 @@ public class ClientCertificateRenewalExtension implements ScepResponsePlugin {
             if (latestIssued == null) {
                 throw new IllegalStateException("End entity with username " + username + " has status generated, but no certificate was found.");
             }
+            // Verify that certificate is still valid
+            if(!CertTools.isCertificateValid(latestIssued)) {
+                throw new AuthStatusException("Re-enrollment request was attempted using an expired client certificate");
+            }     
             //Double check that certificate hasn't been revoked
             if (!certificateStoreSession.getStatus(reqmsg.getIssuerDN(), latestIssued.getSerialNumber()).equals(CertificateStatus.OK)) {
                 throw new AuthStatusException("Certificate for end entity with username " + username + " was revoked.");
