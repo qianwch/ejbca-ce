@@ -1,3 +1,20 @@
+EJBCA 6.3.2.3, 2015-08-07
+---
+Bug
+	[ECA-4296] - SCEP Client Certificate Renewal shouldn't demand a challenge password
+	[ECA-4364] - Regression: Error editing Publishers under CA Functions in Admin Web
+	[ECA-4367] - ejbca-ws-generate not run after the addition of CA rollover WS operations
+	[ECA-4369] - NPE when trying to create custom publisher that is not pre-edited
+	[ECA-4371] - SCEP Client Certificate Renewal allows renewal using expired certificates
+
+Improvement
+	[ECA-4291] - Add system tests for EjbcaWS.caCertResponseForRollover
+	[ECA-4376] - Add "All CAs" option to Rollover Service worker. 
+	
+New Feature
+	[ECA-4360] - SCEP Client Certificate Renewal on a rollover CA
+	[ECA-4372] - New setting for specifying certificate chain order in the public web.
+
 EJBCA 6.3.2.2, 2015-07-16
 ---
 Bug

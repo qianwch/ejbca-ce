@@ -1,3 +1,10 @@
+EJBCA 6.3.2.3
+-----------
+This patch release primarily fixes bugs and adds missing functionality with respect to Client Certificate Renewal via SCEP. 
+
+Read the full Changelog for details.
+For upgrade instructions, please see UPGRADE.
+
 EJBCA 6.3.2.2 
 -----------
 This patch release primarily fixes the issue of the DirectoryName component of subjectAltName not being included in certificates 
