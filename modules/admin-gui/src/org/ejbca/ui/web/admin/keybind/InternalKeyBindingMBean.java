@@ -649,7 +649,7 @@ public class InternalKeyBindingMBean extends BaseManagedBean implements Serializ
         }
         if (changed) {
             if ("0".equals(currentInternalKeyBindingId)) {
-                inEditMode = true;
+                switchToEdit();
             }
             flushCurrentCache();
         }
@@ -699,8 +699,16 @@ public class InternalKeyBindingMBean extends BaseManagedBean implements Serializ
     /** @return true for any InternalKeyBinding where the user is authorized to edit */
     public boolean isSwitchToEditAllowed() {
         return !inEditMode
-                && accessControlSession.isAuthorizedNoLogging(authenticationToken, InternalKeyBindingRules.MODIFY.resource() + "/"
-                        + getCurrentInternalKeyBindingId());
+                && isAllowedToEdit();
+    }
+    
+    public boolean isAllowedToEdit() {
+        return accessControlSession.isAuthorizedNoLogging(authenticationToken, InternalKeyBindingRules.MODIFY.resource() + "/"
+                + getCurrentInternalKeyBindingId());
+    }
+    
+    public boolean isForbiddenToEdit() {
+        return !isAllowedToEdit();
     }
 
     /** @return true for any InternalKeyBinding except new id="0" */
@@ -811,8 +819,13 @@ public class InternalKeyBindingMBean extends BaseManagedBean implements Serializ
         }
     }
 
+    /**
+     * Switched to edit mode. Will fail silently if prohibited. 
+     */
     public void switchToEdit() {
-        inEditMode = true;
+        if (isSwitchToEditAllowed()) {
+            inEditMode = true;
+        }
     }
 
     public void switchToView() {

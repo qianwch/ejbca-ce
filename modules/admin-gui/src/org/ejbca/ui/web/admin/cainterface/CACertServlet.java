@@ -31,6 +31,7 @@ import org.cesecore.util.Base64;
 import org.cesecore.util.CertTools;
 import org.cesecore.util.StringTools;
 import org.ejbca.core.ejb.ca.sign.SignSessionLocal;
+import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.cvc.CardVerifiableCertificate;
 import org.ejbca.ui.web.RequestHelper;
 import org.ejbca.ui.web.admin.configuration.EjbcaWebBean;
@@ -96,7 +97,7 @@ public class CACertServlet extends HttpServlet {
         }
 
         try{
-          ejbcawebbean.initialize(req,"/ca_functionality/basic_functions");
+          ejbcawebbean.initialize(req, AccessRulesConstants.REGULAR_CABASICFUNCTIONS);
         } catch(Exception e){
            throw new java.io.IOException("Authorization Denied");
         }

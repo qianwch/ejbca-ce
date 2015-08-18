@@ -22,6 +22,7 @@ import org.cesecore.authorization.control.CryptoTokenRules;
 import org.cesecore.authorization.control.StandardRules;
 import org.cesecore.authorization.rules.AccessRuleData;
 import org.cesecore.authorization.rules.AccessRuleState;
+import org.cesecore.keybind.InternalKeyBindingRules;
 
 /**
  * Represents a set of predefined roles.
@@ -58,6 +59,14 @@ public enum DefaultRoles {
             new AccessRuleTemplate(AccessRulesConstants.ROLE_ADMINISTRATOR, AccessRuleState.RULE_ACCEPT, false), 
             new AccessRuleTemplate(AuditLogRules.VIEW.resource(), AccessRuleState.RULE_ACCEPT, true), 
             new AccessRuleTemplate(AccessRulesConstants.REGULAR_VIEWCERTIFICATE, AccessRuleState.RULE_ACCEPT, false)), 
+    AUDITOR("AUDITOR", 
+            new AccessRuleTemplate(AccessRulesConstants.ROLE_ADMINISTRATOR, AccessRuleState.RULE_ACCEPT, false), 
+            new AccessRuleTemplate(AccessRulesConstants.REGULAR_VIEWCERTIFICATE, AccessRuleState.RULE_ACCEPT, false),
+            new AccessRuleTemplate(AuditLogRules.VIEW.resource(), AccessRuleState.RULE_ACCEPT, true), 
+            new AccessRuleTemplate(InternalKeyBindingRules.VIEW.resource(), AccessRuleState.RULE_ACCEPT, true),
+            new AccessRuleTemplate(StandardRules.CAVIEW.resource(), AccessRuleState.RULE_ACCEPT, false),
+            new AccessRuleTemplate(StandardRules.CERTIFICATEPROFILEVIEW.resource(), AccessRuleState.RULE_ACCEPT, false)
+            ),
     HARDTOKENISSUER("HARDTOKENISSUER");
 
     private static Map<String, DefaultRoles> nameToObjectMap = new HashMap<String, DefaultRoles>();

@@ -1039,7 +1039,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
         final int caid = cainfo.getCAId();
         // Check authorization
         if (!accessSession.isAuthorizedNoLogging(admin, StandardRules.ROLE_ROOT.resource())) {
-            String msg = intres.getLocalizedMessage("caadmin.notauthorizedtoeditca", cainfo.getName());
+            String msg = intres.getLocalizedMessage("caadmin.notauthorizedtoeditca", admin.toString(), cainfo.getName());
             Map<String, Object> details = new LinkedHashMap<String, Object>();
             details.put("msg", msg);
             auditSession.log(EventTypes.ACCESS_CONTROL, EventStatus.FAILURE, ModuleTypes.CA, ServiceTypes.CORE, admin.toString(),
@@ -1131,7 +1131,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
             log.trace(">makeRequest: " + caid + ", certChain=" + certChain + ", nextSignKeyAlias=" + nextSignKeyAlias);
         }
         byte[] returnval = null;
-        if (!accessSession.isAuthorizedNoLogging(authenticationToken, AccessRulesConstants.REGULAR_RENEWCA)) {
+        if (!accessSession.isAuthorizedNoLogging(authenticationToken, StandardRules.CARENEW.resource())) {
             final String detailsMsg = intres.getLocalizedMessage("caadmin.notauthorizedtocertreq", Integer.valueOf(caid));
             auditSession.log(EventTypes.ACCESS_CONTROL, EventStatus.FAILURE, ModuleTypes.CA, ServiceTypes.CORE, authenticationToken.toString(),
                     String.valueOf(caid), null, null, detailsMsg);
@@ -1286,7 +1286,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
         if (log.isTraceEnabled()) {
             log.trace(">receiveResponse: " + caid);
         }
-        if (!accessSession.isAuthorizedNoLogging(authenticationToken, AccessRulesConstants.REGULAR_RENEWCA)) {
+        if (!accessSession.isAuthorizedNoLogging(authenticationToken, StandardRules.CARENEW.resource())) {
             final String detailsMsg = intres.getLocalizedMessage("caadmin.notauthorizedtocertresp", Integer.valueOf(caid));
             auditSession.log(EventTypes.ACCESS_CONTROL, EventStatus.FAILURE, ModuleTypes.CA, ServiceTypes.CORE, authenticationToken.toString(),
                     String.valueOf(caid), null, null, detailsMsg);
@@ -1766,8 +1766,8 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
     public void initExternalCAService(AuthenticationToken admin, int caid, ExtendedCAServiceInfo info) throws CADoesntExistsException,
             AuthorizationDeniedException, CAOfflineException {
         // check authorization
-        if (!accessSession.isAuthorizedNoLogging(admin, StandardRules.ROLE_ROOT.resource())) {
-            String msg = intres.getLocalizedMessage("caadmin.notauthorizedtoeditca", Integer.valueOf(caid));
+        if (!accessSession.isAuthorizedNoLogging(admin, StandardRules.ROLE_ROOT.resource())) {        
+            String msg = intres.getLocalizedMessage("caadmin.notauthorizedtoeditca", admin.toString(), caSession.getCAInfoInternal(caid));
             Map<String, Object> details = new LinkedHashMap<String, Object>();
             details.put("msg", msg);
             auditSession.log(EventTypes.ACCESS_CONTROL, EventStatus.FAILURE, ModuleTypes.CA, ServiceTypes.CORE, admin.toString(),
@@ -1840,7 +1840,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
         Collection<Certificate> cachain = null;
         Certificate cacertificate = null;
         // check authorization
-        if (!accessSession.isAuthorizedNoLogging(authenticationToken, AccessRulesConstants.REGULAR_RENEWCA)) {
+        if (!accessSession.isAuthorizedNoLogging(authenticationToken, StandardRules.CARENEW.resource())) {
             final String detailsMsg = intres.getLocalizedMessage("caadmin.notauthorizedtorenew", Integer.valueOf(caid));
             auditSession.log(EventTypes.ACCESS_CONTROL, EventStatus.FAILURE, ModuleTypes.CA, ServiceTypes.CORE, authenticationToken.toString(),
                     String.valueOf(caid), null, null, detailsMsg);
@@ -2713,7 +2713,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
     public void deactivateCAService(AuthenticationToken admin, int caid) throws AuthorizationDeniedException, CADoesntExistsException {
         // Authorize
         if (!accessSession.isAuthorizedNoLogging(admin, AccessRulesConstants.REGULAR_ACTIVATECA)) {
-            final String detailsMsg = intres.getLocalizedMessage("caadmin.notauthorizedtodeactivatetoken", Integer.valueOf(caid));
+            final String detailsMsg = intres.getLocalizedMessage("caadmin.notauthorizedtodeactivatetoken", caSession.getCAInfoInternal(caid).getName());
             auditSession.log(EventTypes.ACCESS_CONTROL, EventStatus.FAILURE, ModuleTypes.CA, ServiceTypes.CORE, admin.toString(),
                     String.valueOf(caid), null, null, detailsMsg);
             throw new AuthorizationDeniedException(detailsMsg);
