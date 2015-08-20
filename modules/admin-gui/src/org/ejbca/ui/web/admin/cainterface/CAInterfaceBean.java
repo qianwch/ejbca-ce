@@ -51,11 +51,13 @@ import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.authorization.control.AccessControlSessionLocal;
 import org.cesecore.authorization.control.CryptoTokenRules;
+import org.cesecore.authorization.control.StandardRules;
 import org.cesecore.certificates.ca.CAConstants;
 import org.cesecore.certificates.ca.CADoesntExistsException;
 import org.cesecore.certificates.ca.CAInfo;
 import org.cesecore.certificates.ca.CAOfflineException;
 import org.cesecore.certificates.ca.CVCCAInfo;
+import org.cesecore.certificates.ca.CaSessionLocal;
 import org.cesecore.certificates.ca.CvcCA;
 import org.cesecore.certificates.ca.CvcPlugin;
 import org.cesecore.certificates.ca.X509CAInfo;
@@ -144,6 +146,7 @@ public class CAInterfaceBean implements Serializable {
 	private EjbLocalHelper ejbLocalHelper = new EjbLocalHelper();
     private AccessControlSessionLocal accessControlSession;
     private CAAdminSessionLocal caadminsession;
+    private CaSessionLocal caSession;
     private CertificateCreateSessionLocal certcreatesession;
     private CertificateProfileSession certificateProfileSession;
     private CertificateStoreSessionLocal certificatesession;
@@ -174,6 +177,7 @@ public class CAInterfaceBean implements Serializable {
     // Public methods
     public void initialize(EjbcaWebBean ejbcawebbean) {
         if (!initialized) {
+          caSession = ejbLocalHelper.getCaSession();
           certificatesession = ejbLocalHelper.getCertificateStoreSession();
           certreqhistorysession = ejbLocalHelper.getCertReqHistorySession();
           crlStoreSession = ejbLocalHelper.getCrlStoreSession();
@@ -362,13 +366,21 @@ public class CAInterfaceBean implements Serializable {
       return cadatahandler;   
     }
     
-    public CAInfoView getCAInfo(String name) throws Exception{
+    public CAInfoView getCAInfo(String name) throws CADoesntExistsException, AuthorizationDeniedException {
       return cadatahandler.getCAInfo(name);   
     }
+    
+    public CAInfoView getCAInfoNoAuth(String name) throws CADoesntExistsException {
+        return cadatahandler.getCAInfoNoAuth(name);   
+     }
 
-    public CAInfoView getCAInfo(int caid) throws Exception{
+    public CAInfoView getCAInfo(int caid) throws CADoesntExistsException, AuthorizationDeniedException {
       return cadatahandler.getCAInfo(caid);   
-    }    
+    }  
+    
+    public CAInfoView getCAInfoNoAuth(int caid) throws CADoesntExistsException {
+        return cadatahandler.getCAInfoNoAuth(caid);   
+     }
     
     @Deprecated
     public void saveRequestInfo(CAInfo cainfo){
@@ -1168,6 +1180,22 @@ public class CAInterfaceBean implements Serializable {
 	    }
 	    return cryptoTokenInfo.getName();
 	}
+	
+	public boolean isAuthorizedToCa(int caid) {
+	    return caSession.authorizedToCANoLogging(authenticationToken, caid);
+	}
+	
+	/**
+	 * 
+	 * @return true if admin has general read rights to CAs, but no edit rights. 
+	 */
+    public boolean hasEditRight() {
+        return accessControlSession.isAuthorizedNoLogging(authenticationToken, StandardRules.CAEDIT.resource());
+    }
+    
+    public boolean hasCreateRight() {
+        return accessControlSession.isAuthorizedNoLogging(authenticationToken, StandardRules.CAADD.resource());
+    }
 	
 	public boolean isCaExportable(CAInfo caInfo) throws AuthorizationDeniedException {
 	    boolean ret = false;

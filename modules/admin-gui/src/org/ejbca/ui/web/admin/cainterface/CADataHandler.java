@@ -39,7 +39,7 @@ import org.cesecore.certificates.ca.CADoesntExistsException;
 import org.cesecore.certificates.ca.CAExistsException;
 import org.cesecore.certificates.ca.CAInfo;
 import org.cesecore.certificates.ca.CAOfflineException;
-import org.cesecore.certificates.ca.CaSession;
+import org.cesecore.certificates.ca.CaSessionLocal;
 import org.cesecore.certificates.ca.InvalidAlgorithmException;
 import org.cesecore.certificates.ca.extendedservices.ExtendedCAServiceInfo;
 import org.cesecore.certificates.certificate.CertificateRevokeException;
@@ -81,7 +81,7 @@ public class CADataHandler implements Serializable {
     private AccessRuleManagementSessionLocal accessRuleManagementSession;
     private AccessUserAspectManagerSessionLocal accessUserAspectManagerSession;
     private CAAdminSessionLocal caadminsession; 
-    private CaSession caSession;
+    private CaSessionLocal caSession;
     private CertificateProfileSession certificateProfileSession;
     private EndEntityProfileSession endEntityProfileSession;
     private EndEntityManagementSessionLocal endEntitySession;
@@ -222,10 +222,7 @@ public class CADataHandler implements Serializable {
       return false;
   }
 
-  /**
-   *  @see org.ejbca.core.model.ca.caadmin.CAAdminSessionLocal
-   */  
-  public CAInfoView getCAInfo(String name) throws Exception{
+  public CAInfoView getCAInfo(String name) throws CADoesntExistsException, AuthorizationDeniedException {
     CAInfoView cainfoview = null; 
     CAInfo cainfo = caSession.getCAInfo(administrator, name);
     if(cainfo != null) {
@@ -234,8 +231,22 @@ public class CADataHandler implements Serializable {
     return cainfoview;
   }
   
-  /** @see org.ejbca.core.ejb.ca.caadmin.CAAdminSessionBean */  
-  public CAInfoView getCAInfo(final int caid) throws Exception{
+  public CAInfoView getCAInfoNoAuth(String name) throws CADoesntExistsException {
+    CAInfoView cainfoview = null; 
+    CAInfo cainfo = caSession.getCAInfoInternal(-1, name, true);
+    if(cainfo != null) {
+      cainfoview = new CAInfoView(cainfo, ejbcawebbean, info.getPublisherIdToNameMap());
+    } 
+    return cainfoview;
+  }
+  
+  public CAInfoView getCAInfoNoAuth(final int caid) throws CADoesntExistsException {
+      final CAInfo cainfo = caSession.getCAInfoInternal(caid);
+      return new CAInfoView(cainfo, ejbcawebbean, info.getPublisherIdToNameMap());
+    }
+  
+
+  public CAInfoView getCAInfo(final int caid) throws CADoesntExistsException, AuthorizationDeniedException {
     final CAInfo cainfo = caSession.getCAInfo(administrator, caid);
     return new CAInfoView(cainfo, ejbcawebbean, info.getPublisherIdToNameMap());
   }
