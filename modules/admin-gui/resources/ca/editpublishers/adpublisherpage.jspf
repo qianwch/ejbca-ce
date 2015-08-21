@@ -1,6 +1,6 @@
 <%               
 
-   ActiveDirectoryPublisher adpublisher = (ActiveDirectoryPublisher) publisherhelper.publisherdata;
+   ActiveDirectoryPublisher adpublisher = (ActiveDirectoryPublisher) publisherhelper.getPublisherdata();
 
    int[]  useraccountcontrol = {ActiveDirectoryPublisher.UAC_NEVEREXPIRE , ActiveDirectoryPublisher.UAC_NORMAL, ActiveDirectoryPublisher.UAC_DISABLE};
    String[] useraccountcontroltexts =  {"ACCOUNTNEVEREXPIRE","ACCOUNTNORMAL","ACCOUNTDISABLED"};
@@ -56,7 +56,7 @@
          <%= ejbcawebbean.getText("SAMACCOUNTNAME") %>         
       </td>
       <td width="55%" valign="top">   
-        <select name="<%=EditPublisherJSPHelper.SELECT_ADSAMACCOUNTNAME%>" size="1"  >       
+        <select name="<%=EditPublisherJSPHelper.SELECT_ADSAMACCOUNTNAME%>" size="1" <% if(publisherhelper.isReadOnly()) { out.write("disabled"); } %> >       
             <% int currentsan = adpublisher.getSAMAccountName();
                for(int i=0;i < samaccountname.length; i++){ %>                                  
               <option value="<%=samaccountname[i]%>" <% if(currentsan == samaccountname[i]) out.write(" selected "); %>> 
@@ -72,6 +72,6 @@
       </td>
       <td width="55%" valign="top"> 
          <input type="text" name="<%=EditPublisherJSPHelper.TEXTFIELD_ADUSERDESCRIPTION%>" size="45" maxlength="255" 
-               value='<c:out value="<%= adpublisher.getUserDescription() %>"/>'> 
+               value='<c:out value="<%= adpublisher.getUserDescription() %>"/>' <% if(publisherhelper.isReadOnly()) { out.write("disabled"); } %>> 
       </td>
     </tr>

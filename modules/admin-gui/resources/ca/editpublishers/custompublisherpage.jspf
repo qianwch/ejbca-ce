@@ -1,5 +1,5 @@
 <%               
-  CustomPublisherContainer custompublisher = (CustomPublisherContainer) publisherhelper.publisherdata;
+  CustomPublisherContainer custompublisher = (CustomPublisherContainer) publisherhelper.getPublisherdata();
 %>
 
    <%-- Custom publisher settings --%>
@@ -22,7 +22,7 @@
             <% if (org.ejbca.config.WebConfiguration.isManualClassPathsEnabled()) { %>
                 onchange="document.getElementById('<%=EditPublisherJSPHelper.TEXTFIELD_CUSTOMCLASSPATH%>').disabled = (this.value != &quot;&quot;); return true"
             <% } %>
-            >
+            <% if(publisherhelper.isReadOnly()) { out.write("disabled"); } %> >
             
            <% 
            
@@ -60,7 +60,7 @@
         <% if (org.ejbca.config.WebConfiguration.isManualClassPathsEnabled()) { %>
             <br>
             <input type="text" name="<%=EditPublisherJSPHelper.TEXTFIELD_CUSTOMCLASSPATH%>" id="<%=EditPublisherJSPHelper.TEXTFIELD_CUSTOMCLASSPATH%>" size="45" maxlength="255"
-                   value='<c:out value="<%= customClassChoice ? currentClass : &quot;&quot; %>"/>'>
+                   value='<c:out value="<%= customClassChoice ? currentClass : &quot;&quot; %>"/>' <% if(publisherhelper.isReadOnly()) { out.write("disabled"); } %>>
             
             <% if (!customClassChoice) { %>
                 <script type="text/javascript">
@@ -80,7 +80,9 @@
          <%= ejbcawebbean.getText("PROPERTIESOFCUSTOM") %>
       </td>
       <td width="55%" valign="top">          
-         <textarea name="<%=EditPublisherJSPHelper.TEXTAREA_CUSTOMPROPERTIES%>" cols="45" rows="8"><c:out value="<%= custompublisher.getPropertyData() %>"/></textarea>
+         <textarea name="<%=EditPublisherJSPHelper.TEXTAREA_CUSTOMPROPERTIES%>" cols="45" rows="8" <% if(publisherhelper.isReadOnly()) { out.write("disabled"); } %>>
+         	<c:out value="<%= custompublisher.getPropertyData() %>"/>
+         </textarea>
       </td>
     </tr>
     

@@ -42,6 +42,7 @@ import org.cesecore.certificates.certificateprofile.CertificateProfileConstants;
 import org.cesecore.certificates.certificateprofile.CertificateProfileDoesNotExistException;
 import org.cesecore.certificates.certificateprofile.CertificateProfileExistsException;
 import org.cesecore.certificates.certificateprofile.CertificateProfileSessionLocal;
+import org.cesecore.certificates.certificateprofile.CertificateProfileSessionRemote;
 import org.ejbca.core.model.ca.publisher.BasePublisher;
 import org.ejbca.ui.web.admin.BaseManagedBean;
 
@@ -175,11 +176,22 @@ public class CertProfilesBean extends BaseManagedBean implements Serializable {
     }
 
     public boolean isAuthorizedToEdit() {
-        return isAuthorizedTo(StandardRules.CERTIFICATEPROFILEEDIT.resource());
+        return isAuthorizedTo(StandardRules.CERTIFICATEPROFILEEDIT.resource()) && isAuthorizedToSelectedCertificateProfile();
     }
     
-    public boolean isAuthorizedToOnlyView() {
+    public boolean isAuthorizedToOnlyView() {   
         return isAuthorizedTo(StandardRules.CERTIFICATEPROFILEVIEW.resource()) && !isAuthorizedToEdit();
+    }
+    
+    private boolean isAuthorizedToSelectedCertificateProfile() {
+        CertificateProfileSessionLocal certificateProfileSession = getEjbcaWebBean().getEjb().getCertificateProfileSession();
+        Integer selectedProfileId = getSelectedCertProfileId();
+        if (selectedProfileId != null) {
+            CertificateProfile certificateProfile = certificateProfileSession.getCertificateProfile(selectedProfileId);
+            return certificateProfileSession.getAuthorizedCertificateProfileIds(getAdmin(), certificateProfile.getType()).contains(selectedProfileId);
+        } else {
+            return true;
+        }
     }
     
     public String actionEdit() {

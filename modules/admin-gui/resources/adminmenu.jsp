@@ -74,7 +74,6 @@ org.cesecore.keybind.InternalKeyBindingRules
 
 
     final String MAIN_RESOURCE                          = AccessRulesConstants.ROLE_ADMINISTRATOR;
-    final String EDITPUBLISHERS_RESOURCE                = AccessRulesConstants.REGULAR_EDITPUBLISHER;
     final String RAEDITUSERDATASOURCES_RESOURCE         = AccessRulesConstants.REGULAR_EDITUSERDATASOURCES;
     final String RAEDITENDENTITYPROFILES_RESOURCE       = "/ra_functionality/edit_end_entity_profiles";
     final String RAADDENDENTITY_RESOURCE                = "/ra_functionality/create_end_entity";
@@ -162,7 +161,7 @@ org.cesecore.keybind.InternalKeyBindingRules
 				<li><a href="<%= CRYPTOTOKENS_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("NAV_CRYPTOTOKENS") %></a></li>
 <% } %>
 <%
-     if(ejbcawebbean.isAuthorizedNoLogSilent(EDITPUBLISHERS_RESOURCE)){ 
+     if(ejbcawebbean.isAuthorizedNoLogSilent(AccessRulesConstants.REGULAR_VIEWPUBLISHER)){ 
         if(!caheaderprinted){
           out.write("<li id=\"cat1\" class=\"section\"><strong>" + ejbcawebbean.getText("NAV_CAFUNCTIONS")+"</strong><ul>"); 
            caheaderprinted=true;
@@ -290,27 +289,6 @@ org.cesecore.keybind.InternalKeyBindingRules
    // --------------------------------------------------------------------------
    // SYSTEM FUNCTIONS
 %>
-
-<%
-   // If authorized to edit authorizations then display related links.
-     if(ejbcawebbean.isAuthorizedNoLogSilent(ADMINPRIVILEGES_RESOURCE)){
-       if(!systemheaderprinted){
-         out.write("<li id=\"cat7\" class=\"section\"><strong>" + ejbcawebbean.getText("NAV_SYSTEMFUNCTIONS")+"</strong><ul>"); 
-         systemheaderprinted=true;
-         }  %>
-				<li><a href="<%= ADMINISTRATORPRIV_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("NAV_ROLES") %></a></li>
-<% } %>
-
-
-<%   
-   // If authorized to edit Internal Key Bindings then display related links.
-     if(ejbcawebbean.isAuthorizedNoLogSilent(INTERNALKEYBINDING_RESOURCE)){
-       if(!systemheaderprinted){
-         out.write("<li id=\"cat7\" class=\"section\"><strong>" + ejbcawebbean.getText("NAV_SYSTEMFUNCTIONS")+"</strong><ul>"); 
-         systemheaderprinted=true;
-         }  %>
-				<li><a href="<%= INTERNALKEYBINDING_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("NAV_KEYBINDINGS") %></a></li>
-<% } %>
 
 <%
    // If authorized to edit authorizations then display related links.
