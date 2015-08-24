@@ -83,7 +83,6 @@ org.cesecore.keybind.InternalKeyBindingRules
     final String SYSTEMCONFIGURATION_RESOURCE           = StandardRules.REGULAR_EDITSYSTEMCONFIGURATION.resource();
     final String ADMINPRIVILEGES_RESOURCE               = "/system_functionality/edit_administrator_privileges";
     final String INTERNALKEYBINDING_RESOURCE            = InternalKeyBindingRules.VIEW.resource();
-    final String SERVICES_RESOURCE                      = StandardRules.ROLE_ROOT.resource();
  %>
 <%  
   boolean caheaderprinted     =false;
@@ -309,6 +308,16 @@ org.cesecore.keybind.InternalKeyBindingRules
          }  %>
 				<li><a href="<%= INTERNALKEYBINDING_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("NAV_KEYBINDINGS") %></a></li>
 <% } %>
+<%
+   // If authorized to edit services then display related links.
+     if(ejbcawebbean.isAuthorizedNoLogSilent(AccessRulesConstants.SERVICES_VIEW)){
+       if(!systemheaderprinted){
+         out.write("<li id=\"cat7\" class=\"section\"><strong>" + ejbcawebbean.getText("NAV_SYSTEMFUNCTIONS")+"</strong><ul>"); 
+         systemheaderprinted=true;
+         }  %>
+				<li><a href="<%= SERVICES_LINK %>" target="<%=GlobalConfiguration.MAINFRAME %>"><%=ejbcawebbean.getText("NAV_SERVICES") %></a></li>
+<% } %>
+
 <%
    if(systemheaderprinted){
      out.write("</ul></li>"); 
