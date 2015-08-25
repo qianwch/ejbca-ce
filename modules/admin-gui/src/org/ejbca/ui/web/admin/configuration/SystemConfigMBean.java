@@ -191,7 +191,7 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
     private String currentCTLogURL = null;
     private int currentCTLogTimeout;
     private UploadedFile currentCTLogPublicKeyFile = null;
-    private boolean excludeActiveCryptoTokensFromClearCaches = false;
+    private boolean excludeActiveCryptoTokensFromClearCaches = true;
     
     private final CaSessionLocal caSession = getEjbcaWebBean().getEjb().getCaSession();
     
