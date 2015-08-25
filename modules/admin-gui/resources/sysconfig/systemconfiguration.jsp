@@ -33,7 +33,7 @@ org.cesecore.authorization.control.StandardRules
 <head>
   <title><h:outputText value="#{web.ejbcaWebBean.globalConfiguration.ejbcaTitle}" /></title>
   <base href="<%= ejbcawebbean.getBaseUrl() %>" />
-  <link rel="stylesheet" type="text/css" href="<%= ejbcawebbean.getCssFile() %>" />
+  <link rel="stylesheet" type="text/css" href="<c:out value='<%=ejbcawebbean.getCssFile() %>' />" />
   <script src="<%= globalconfiguration.getAdminWebPath() %>ejbcajslib.js"></script>
   <style type="text/css">
   	input[type='checkbox'].checkBoxOverlay {

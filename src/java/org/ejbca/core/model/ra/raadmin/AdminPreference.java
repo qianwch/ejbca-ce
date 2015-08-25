@@ -20,11 +20,9 @@ import java.util.Iterator;
 import org.cesecore.internal.UpgradeableDataHashMap;
 import org.ejbca.config.GlobalConfiguration;
 
-
 /**
- * A class representing a admins personal preferenses.
+ * A class representing a admins personal preferences.
  *
- * @author  Philip Vendil
  * @version $Id$
  */
 public class AdminPreference extends UpgradeableDataHashMap implements Serializable, Cloneable {
