@@ -355,7 +355,7 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
         currentConfig = null;
         nodesInCluster = null;
         ctLogs = null;
-        excludeActiveCryptoTokensFromClearCaches = false;
+        excludeActiveCryptoTokensFromClearCaches = true;
     }
     
     public void toggleUseApprovalNotification() {
