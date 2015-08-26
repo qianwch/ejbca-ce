@@ -355,7 +355,7 @@ org.cesecore.authorization.control.StandardRules
 	
 	<%-- CTLogs --%>
 
-	<h:form id="ctlogsform" enctype="multipart/form-data" rendered="#{systemConfigMBean.selectedTab eq 'CTLogs'}">
+	<h:form id="ctlogsform" enctype="multipart/form-data" rendered="#{systemConfigMBean.selectedTab eq 'Certificate Tranceparency Logs'}">
  		<h:dataTable value="#{systemConfigMBean.ctLogs}" var="ctlog"
  	 		               styleClass="grid" style="border-collapse: collapse; right: auto; left: auto">
  	 	 	<h:column>

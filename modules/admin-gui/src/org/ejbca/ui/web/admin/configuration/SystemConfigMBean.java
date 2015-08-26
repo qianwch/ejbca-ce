@@ -526,7 +526,7 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
     public List<String> getAvailableTabs() {
         final List<String> availableTabs = new ArrayList<String>();
         availableTabs.add("Basic Configurations");
-        availableTabs.add("CTLogs");
+        availableTabs.add("Certificate Tranceparency Logs");
         availableTabs.add("Administrator Preferences");
         return availableTabs;
     }
