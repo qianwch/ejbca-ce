@@ -160,6 +160,7 @@ import org.cesecore.keys.token.p11.Pkcs11SlotLabelType;
 import org.cesecore.keys.util.KeyTools;
 import org.cesecore.util.CeSecoreNameStyle;
 import org.cesecore.util.CertTools;
+import org.cesecore.util.StringTools;
 import org.cesecore.util.log.ProbableErrorHandler;
 import org.cesecore.util.log.SaferAppenderListener;
 import org.cesecore.util.log.SaferDailyRollingFileAppender;
@@ -652,11 +653,12 @@ public class OcspResponseGeneratorSessionBean implements OcspResponseGeneratorSe
             }
         } else {
             if (log.isDebugEnabled()) {
-                log.debug("Requestor name is: " + new X500Name(new CeSecoreNameStyle(), ocspRequest.getRequestorName().getName().toString()).toString());
+                String requestor = CertTools.stringToBCDNString( ocspRequest.getRequestorName().getName().toString());
+                log.debug("Requestor name is: " + requestor);
             }
             if (transactionLogger.isEnabled()) {
-                String requestorName = new X500Name(new CeSecoreNameStyle(), ocspRequest.getRequestorName().getName().toString()).toString();
-                transactionLogger.paramPut(TransactionLogger.REQ_NAME, requestorName);
+                String requestor = CertTools.stringToBCDNString( ocspRequest.getRequestorName().getName().toString());
+                transactionLogger.paramPut(TransactionLogger.REQ_NAME, requestor);
             }
         }
 
