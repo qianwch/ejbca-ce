@@ -47,6 +47,7 @@ import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.CertificateParsingException;
+import java.security.cert.PKIXCertPathChecker;
 import java.security.cert.PKIXCertPathValidatorResult;
 import java.security.cert.PKIXParameters;
 import java.security.cert.TrustAnchor;
@@ -2574,10 +2575,12 @@ public abstract class CertTools {
      * 
      * @param certificate cert to verify
      * @param caCertChain collection of X509Certificate
+     * @param date Date to verify at, or null to use current time.
+     * @param optional PKIXCertPathChecker implementations to use during cert path validation
      * @return true if verified OK
      * @throws Exception if verification failed
      */
-    public static boolean verify(Certificate certificate, Collection<Certificate> caCertChain) throws Exception {
+    public static boolean verify(Certificate certificate, Collection<Certificate> caCertChain, Date date, PKIXCertPathChecker...pkixCertPathCheckers) throws Exception {
         try {
             ArrayList<Certificate> certlist = new ArrayList<Certificate>();
             // Create CertPath
@@ -2592,7 +2595,11 @@ public abstract class CertTools {
             java.security.cert.TrustAnchor anchor = new java.security.cert.TrustAnchor(cac[0], null);
             // Set the PKIX parameters
             java.security.cert.PKIXParameters params = new java.security.cert.PKIXParameters(java.util.Collections.singleton(anchor));
+            for (final PKIXCertPathChecker pkixCertPathChecker : pkixCertPathCheckers) {
+                params.addCertPathChecker(pkixCertPathChecker);
+            }
             params.setRevocationEnabled(false);
+            params.setDate(date);
             java.security.cert.CertPathValidator cpv = java.security.cert.CertPathValidator.getInstance("PKIX", "BC");
             java.security.cert.PKIXCertPathValidatorResult result = (java.security.cert.PKIXCertPathValidatorResult) cpv.validate(cp, params);
             if (log.isDebugEnabled()) {
@@ -2605,7 +2612,19 @@ public abstract class CertTools {
         }
         return true;
     }
-    
+
+    /**
+     * Check the certificate with CA certificate.
+     * 
+     * @param certificate cert to verify
+     * @param caCertChain collection of X509Certificate
+     * @return true if verified OK
+     * @throws Exception if verification failed
+     */
+    public static boolean verify(Certificate certificate, Collection<Certificate> caCertChain) throws Exception {
+        return verify(certificate, caCertChain, null);
+    }
+
     /**
      * Check the certificate with a list of trusted certificates.
      * The trusted certificates list can either be end entity certificates, in this case, only this certificate by this issuer
