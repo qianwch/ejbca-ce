@@ -124,6 +124,8 @@ public abstract class AccessRulesConstants {
                                                            REGULAR_REVOKEENDENTITY,
                                                            REGULAR_VIEWENDENTITYHISTORY,
                                                            REGULAR_APPROVEENDENTITY,
+                                                           SERVICES_EDIT,
+                                                           SERVICES_VIEW,
                                                            AuditLogRules.LOG.resource(),
                                                            AuditLogRules.LOG_CUSTOM.resource(),  
                                                            AuditLogRules.VIEW.resource(),
