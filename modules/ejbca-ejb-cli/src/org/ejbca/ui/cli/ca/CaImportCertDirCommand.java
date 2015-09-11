@@ -32,6 +32,7 @@ import org.cesecore.certificates.endentity.EndEntityConstants;
 import org.cesecore.certificates.endentity.EndEntityInformation;
 import org.cesecore.certificates.endentity.EndEntityType;
 import org.cesecore.certificates.endentity.EndEntityTypes;
+import org.cesecore.util.Base64;
 import org.cesecore.util.CertTools;
 import org.cesecore.util.CryptoProviderTools;
 import org.cesecore.util.EjbRemoteHelper;
@@ -306,7 +307,7 @@ public class CaImportCertDirCommand extends BaseCaAdminCommand {
     private int performImport(X509Certificate certificate, int status, int endEntityProfileId, int certificateProfileId, X509Certificate cacert,
             CAInfo caInfo, String filename, String issuer, String username) throws Exception {
         final String fingerprint = CertTools.getFingerprintAsString(certificate);
-        if (EjbRemoteHelper.INSTANCE.getRemoteSession(CertificateStoreSessionRemote.class).findCertificateByFingerprint(fingerprint) != null) {
+        if (EjbRemoteHelper.INSTANCE.getRemoteSession(CertificateStoreSessionRemote.class).findCertificateByFingerprintRemote(fingerprint) != null) {
             log.info("SKIP: Certificate with serial '" + CertTools.getSerialNumberAsString(certificate) + "' is already present, file: " + filename);
             return STATUS_REDUNDANT;
         }
@@ -350,7 +351,8 @@ public class CaImportCertDirCommand extends BaseCaAdminCommand {
         EjbRemoteHelper.INSTANCE.getRemoteSession(EndEntityManagementSessionRemote.class).changeUser(getAuthenticationToken(), userdata, false);
         log.info("User '" + username + "' has been updated.");
         // Finally import the certificate and revoke it if necessary
-        EjbRemoteHelper.INSTANCE.getRemoteSession(CertificateStoreSessionRemote.class).storeCertificateRemote(getAuthenticationToken(), certificate,
+        final String b64cert = new String(Base64.encode(certificate.getEncoded()));
+        EjbRemoteHelper.INSTANCE.getRemoteSession(CertificateStoreSessionRemote.class).storeCertificateRemote(getAuthenticationToken(), b64cert,
                 username, fingerprint, CertificateConstants.CERT_ACTIVE, CertificateConstants.CERTTYPE_ENDENTITY, certificateProfileId, null,
                 now.getTime());
         if (status == CertificateConstants.CERT_REVOKED) {
