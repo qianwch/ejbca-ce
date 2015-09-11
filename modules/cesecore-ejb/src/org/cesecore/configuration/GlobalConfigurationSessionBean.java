@@ -32,6 +32,7 @@ import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.cesecore.audit.enums.EventStatus;
 import org.cesecore.audit.enums.EventTypes;
@@ -42,6 +43,8 @@ import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.authorization.control.AccessControlSessionLocal;
 import org.cesecore.authorization.control.StandardRules;
+import org.cesecore.certificates.certificate.certextensions.AvailableCustomCertificateExtensionsConfiguration;
+import org.cesecore.config.AvailableExtendedKeyUsagesConfiguration;
 import org.cesecore.config.CesecoreConfiguration;
 import org.cesecore.internal.InternalResources;
 import org.cesecore.internal.UpgradeableDataHashMap;
@@ -87,7 +90,19 @@ public class GlobalConfigurationSessionBean implements GlobalConfigurationSessio
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     @Override
     public Properties getAllProperties(AuthenticationToken admin, String configID) throws AuthorizationDeniedException {
-        if (!accessSession.isAuthorized(admin, StandardRules.REGULAR_EDITSYSTEMCONFIGURATION.resource())) {
+        if (StringUtils.equals(AvailableExtendedKeyUsagesConfiguration.AVAILABLE_EXTENDED_KEY_USAGES_CONFIGURATION_ID, configID) && !accessSession.isAuthorized(admin, StandardRules.REGULAR_EDITAVAILABLEEKU.resource())) {
+            String msg = intres.getLocalizedMessage("authorization.notuathorizedtoresource", StandardRules.REGULAR_EDITAVAILABLEEKU.resource(), null);
+            Map<String, Object> details = new LinkedHashMap<String, Object>();
+            details.put("msg", msg);
+            auditSession.log(EventTypes.ACCESS_CONTROL, EventStatus.FAILURE, ModuleTypes.CA, ServiceTypes.CORE, admin.toString(), null, null, null, details);
+            throw new AuthorizationDeniedException(msg);
+        } else if (StringUtils.equals(AvailableCustomCertificateExtensionsConfiguration.AVAILABLE_CUSTOM_CERTIFICATE_EXTENSTIONS_CONFIGURATION_ID, configID) && !accessSession.isAuthorized(admin, StandardRules.REGULAR_EDITAVAILABLECUSTOMCERTEXTENSION.resource())) {
+            String msg = intres.getLocalizedMessage("authorization.notuathorizedtoresource", StandardRules.REGULAR_EDITAVAILABLECUSTOMCERTEXTENSION.resource(), null);
+            Map<String, Object> details = new LinkedHashMap<String, Object>();
+            details.put("msg", msg);
+            auditSession.log(EventTypes.ACCESS_CONTROL, EventStatus.FAILURE, ModuleTypes.CA, ServiceTypes.CORE, admin.toString(), null, null, null, details);
+            throw new AuthorizationDeniedException(msg);            
+        } else if (!accessSession.isAuthorized(admin, StandardRules.REGULAR_EDITSYSTEMCONFIGURATION.resource())) {
             String msg = intres.getLocalizedMessage("authorization.notuathorizedtoresource", StandardRules.REGULAR_EDITSYSTEMCONFIGURATION.resource(), null);
             Map<String, Object> details = new LinkedHashMap<String, Object>();
             details.put("msg", msg);
@@ -131,7 +146,7 @@ public class GlobalConfigurationSessionBean implements GlobalConfigurationSessio
                     }
                     result = GlobalConfigurationCacheHolder.INSTANCE.getNewConfiguration(configID);
                     // Call self bean as external here in order to create a transaction if no transaction exists (this method only has SUPPORTS to be as fast as possible)
-                    globalConfigSession.saveConfigurationNoLog(result);  
+                    globalConfigSession.saveConfigurationNoLog(result); 
                 }
             }
             return result;
@@ -148,52 +163,66 @@ public class GlobalConfigurationSessionBean implements GlobalConfigurationSessio
             log.trace(">saveConfiguration()");
         }
         String configID = conf.getConfigurationId();
-        if (this.accessSession.isAuthorized(admin, StandardRules.REGULAR_EDITSYSTEMCONFIGURATION.resource())) {
-            final GlobalConfigurationData gcdata = findByConfigurationId(configID);
-            if (gcdata != null) {
-                // Save object and create a diff over what has changed
-                @SuppressWarnings("unchecked")
-                final Map<Object, Object> orgmap = (Map<Object, Object>) GlobalConfigurationCacheHolder.INSTANCE.getConfiguration(gcdata.getData(), configID).saveData();
-                gcdata.setConfiguration(conf);
-                GlobalConfigurationCacheHolder.INSTANCE.updateConfiguration(conf, configID);
-                @SuppressWarnings("unchecked")
-                final Map<Object, Object> newmap = (Map<Object, Object>) conf.saveData();
-                // Get the diff of what changed
-                final Map<Object, Object> diff = UpgradeableDataHashMap.diffMaps(orgmap, newmap);
-                // Make security audit log record
-                final String msg = intres.getLocalizedMessage("globalconfig.savedconf", gcdata.getConfigurationId());
+        checkAuthorization(admin, configID);
+        
+        final GlobalConfigurationData gcdata = findByConfigurationId(configID);
+        if (gcdata != null) {
+            // Save object and create a diff over what has changed
+            @SuppressWarnings("unchecked")
+            final Map<Object, Object> orgmap = (Map<Object, Object>) GlobalConfigurationCacheHolder.INSTANCE.getConfiguration(gcdata.getData(), configID).saveData();
+            gcdata.setConfiguration(conf);
+            GlobalConfigurationCacheHolder.INSTANCE.updateConfiguration(conf, configID);
+            @SuppressWarnings("unchecked")
+            final Map<Object, Object> newmap = (Map<Object, Object>) conf.saveData();
+            // Get the diff of what changed
+            final Map<Object, Object> diff = UpgradeableDataHashMap.diffMaps(orgmap, newmap);
+            // Make security audit log record
+            final String msg = intres.getLocalizedMessage("globalconfig.savedconf", gcdata.getConfigurationId());
+            final Map<String, Object> details = new LinkedHashMap<String, Object>();
+            details.put("msg", msg);
+            for (Map.Entry<Object, Object> entry : diff.entrySet()) {
+                details.put(entry.getKey().toString(), entry.getValue().toString());
+            }
+            auditSession.log(EventTypes.SYSTEMCONF_EDIT, EventStatus.SUCCESS, ModuleTypes.GLOBALCONF, ServiceTypes.CORE,
+                    admin.toString(), null, null, null, details);
+        } else {
+            // Global configuration doesn't yet exists.
+            try {
+                saveConfigurationNoLog(conf);
+                final String msg = intres.getLocalizedMessage("globalconfig.createdconf", configID);
                 final Map<String, Object> details = new LinkedHashMap<String, Object>();
                 details.put("msg", msg);
-                for (Map.Entry<Object, Object> entry : diff.entrySet()) {
-                    details.put(entry.getKey().toString(), entry.getValue().toString());
-                }
-                auditSession.log(EventTypes.SYSTEMCONF_EDIT, EventStatus.SUCCESS, ModuleTypes.GLOBALCONF, ServiceTypes.CORE,
+                auditSession.log(EventTypes.SYSTEMCONF_CREATE, EventStatus.SUCCESS, ModuleTypes.GLOBALCONF, ServiceTypes.CORE,
                         admin.toString(), null, null, null, details);
-            } else {
-                // Global configuration doesn't yet exists.
-                try {
-                    saveConfigurationNoLog(conf);
-                    final String msg = intres.getLocalizedMessage("globalconfig.createdconf", configID);
-                    final Map<String, Object> details = new LinkedHashMap<String, Object>();
-                    details.put("msg", msg);
-                    auditSession.log(EventTypes.SYSTEMCONF_CREATE, EventStatus.SUCCESS, ModuleTypes.GLOBALCONF, ServiceTypes.CORE,
-                            admin.toString(), null, null, null, details);
-                } catch (Exception e) {
-                    final String msg = intres.getLocalizedMessage("globalconfig.errorcreateconf");
-                    log.info(msg, e);
-                    final Map<String, Object> details = new LinkedHashMap<String, Object>();
-                    details.put("msg", msg);
-                    details.put("error", e.getMessage());
-                    auditSession.log(EventTypes.SYSTEMCONF_CREATE, EventStatus.FAILURE, ModuleTypes.GLOBALCONF, ServiceTypes.CORE,
-                            admin.toString(), null, null, null, details);
-                }
+            } catch (Exception e) {
+                final String msg = intres.getLocalizedMessage("globalconfig.errorcreateconf");
+                log.info(msg, e);
+                final Map<String, Object> details = new LinkedHashMap<String, Object>();
+                details.put("msg", msg);
+                details.put("error", e.getMessage());
+                auditSession.log(EventTypes.SYSTEMCONF_CREATE, EventStatus.FAILURE, ModuleTypes.GLOBALCONF, ServiceTypes.CORE,
+                        admin.toString(), null, null, null, details);
             }
-        } else {
-            throw new AuthorizationDeniedException("Authorization was denied to user " + admin
-                    + " to resource " + StandardRules.REGULAR_EDITSYSTEMCONFIGURATION.resource() + ". Could not save configuration.");
         }
         if (log.isTraceEnabled()) {
             log.trace("<saveGlobalConfiguration()");
+        }
+    }
+    
+    private void checkAuthorization(final AuthenticationToken admin, final String configID) throws AuthorizationDeniedException {
+        if(StringUtils.equals(AvailableExtendedKeyUsagesConfiguration.AVAILABLE_EXTENDED_KEY_USAGES_CONFIGURATION_ID, configID)) {
+            if(!this.accessSession.isAuthorized(admin, StandardRules.REGULAR_EDITAVAILABLEEKU.resource())) {
+                throw new AuthorizationDeniedException("Authorization was denied to user " + admin
+                        + " to resource " + StandardRules.REGULAR_EDITAVAILABLEEKU.resource() + ". Could not save configuration.");
+            }
+        } else if(StringUtils.equals(AvailableCustomCertificateExtensionsConfiguration.AVAILABLE_CUSTOM_CERTIFICATE_EXTENSTIONS_CONFIGURATION_ID, configID)) {
+            if(!this.accessSession.isAuthorized(admin, StandardRules.REGULAR_EDITAVAILABLECUSTOMCERTEXTENSION.resource())) {
+                throw new AuthorizationDeniedException("Authorization was denied to user " + admin
+                        + " to resource " + StandardRules.REGULAR_EDITAVAILABLECUSTOMCERTEXTENSION.resource() + ". Could not save configuration.");
+            }
+        } else if(!this.accessSession.isAuthorized(admin, StandardRules.REGULAR_EDITSYSTEMCONFIGURATION.resource())) {
+            throw new AuthorizationDeniedException("Authorization was denied to user " + admin
+                    + " to resource " + StandardRules.REGULAR_EDITSYSTEMCONFIGURATION.resource() + ". Could not save configuration.");
         }
     }
     

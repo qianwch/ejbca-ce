@@ -70,6 +70,7 @@ import org.cesecore.certificates.ca.InvalidAlgorithmException;
 import org.cesecore.certificates.ca.X509CA;
 import org.cesecore.certificates.ca.extendedservices.ExtendedCAServiceInfo;
 import org.cesecore.certificates.ca.extendedservices.ExtendedCAServiceTypes;
+import org.cesecore.certificates.certificate.certextensions.AvailableCustomCertificateExtensionsConfiguration;
 import org.cesecore.certificates.certificateprofile.CertificatePolicy;
 import org.cesecore.certificates.certificateprofile.CertificateProfile;
 import org.cesecore.certificates.certificateprofile.CertificateProfileData;
@@ -396,6 +397,8 @@ public class UpgradeSessionBean implements UpgradeSessionLocal, UpgradeSessionRe
     	//Upgrade database
     	migrateDatabase("/400_500/400_500-upgrade-"+dbtype+".sql");
     	
+        final AvailableCustomCertificateExtensionsConfiguration cceConfig = (AvailableCustomCertificateExtensionsConfiguration) 
+                globalConfigurationSession.getCachedConfiguration(AvailableCustomCertificateExtensionsConfiguration.AVAILABLE_CUSTOM_CERTIFICATE_EXTENSTIONS_CONFIGURATION_ID );
     	// fix CAs that don't have classpath for extended CA services
     	Collection<Integer> caids = caSession.getAllCaIds();
     	for (Integer caid : caids) {
@@ -467,7 +470,7 @@ public class UpgradeSessionBean implements UpgradeSessionLocal, UpgradeSessionRe
 					if (!extendedcaserviceinfos.isEmpty()) {
 						cainfo.setExtendedCAServiceInfos(extendedcaserviceinfos);
 						final CryptoToken cryptoToken = cryptoTokenSession.getCryptoToken(ca.getCAToken().getCryptoTokenId());
-						ca.updateCA(cryptoToken, cainfo);
+						ca.updateCA(cryptoToken, cainfo, cceConfig);
 					}
 					// Finally store the upgraded CA
 					caSession.editCA(admin, ca, true);
@@ -588,6 +591,45 @@ public class UpgradeSessionBean implements UpgradeSessionLocal, UpgradeSessionRe
 
         return result;
     }
+    
+    
+    /**
+     * Upgrade access rules such that every role that already has access to /system_functionality/edit_systemconfiguration 
+     * will also have access to the new access rule /system_functionality/edit_available_extended_key_usages
+     * 
+     * @return true if the upgrade was successful and false otherwise
+     */
+    private boolean addNewAccessRulesToRoles() {
+        Collection<RoleData> roles = roleAccessSession.getAllRoles();
+        for (RoleData role : roles) {
+            final Map<Integer, AccessRuleData> rulemap = role.getAccessRules();
+            final Collection<AccessRuleData> rules = rulemap.values();
+            for (AccessRuleData rule : rules) {
+                if (StringUtils.equals(StandardRules.REGULAR_EDITSYSTEMCONFIGURATION.resource(), rule.getAccessRuleName()) && 
+                        rule.getInternalState().equals(AccessRuleState.RULE_ACCEPT)) {
+                    // Now we add a new rule
+                    final Collection<AccessRuleData> newrules = new ArrayList<AccessRuleData>();
+                    final AccessRuleData editAvailableEKURule = new AccessRuleData(role.getRoleName(), StandardRules.REGULAR_EDITAVAILABLEEKU.resource(), AccessRuleState.RULE_ACCEPT, false);
+                    final AccessRuleData editCustomCertExtensionsRule = new AccessRuleData(role.getRoleName(), StandardRules.REGULAR_EDITAVAILABLECUSTOMCERTEXTENSION.resource(), AccessRuleState.RULE_ACCEPT, false);
+                    newrules.add(editAvailableEKURule);
+                    newrules.add(editCustomCertExtensionsRule);
+                    try {
+                        addAccessRulesToRole(role, newrules);
+                        log.info("Added rule '" + editAvailableEKURule.toString() + "' to role '"+role.getRoleName()+"' since the role contained the '"+StandardRules.REGULAR_EDITSYSTEMCONFIGURATION+"' rule.");
+                    } catch (Exception e) {
+                        log.error("Not possible to add new access rule to role: "+role.getRoleName(), e);
+                    }                
+                }
+            }
+        }
+        
+        accessTreeUpdateSession.signalForAccessTreeUpdate();
+        accessControlSession.forceCacheExpire();
+        
+        //log.error("(this is not an error) Finished upgrade from ejbca 6.2.x with result: true");
+        return true;
+        
+    }      
     
     /**
      * This method adds read-only rules that were created for the new read-only admin in https://jira.primekey.se/browse/ECA-4344. It makes sure that any roles which previously
@@ -831,6 +873,7 @@ public class UpgradeSessionBean implements UpgradeSessionLocal, UpgradeSessionRe
     private void postMigrateDatabase6211() throws UpgradeFailedException {   
         // Next add access rules for the new audit role template, allowing easy restriction of resources where needed. 
         addReadOnlyRules();
+        addNewAccessRulesToRoles();
         log.info("Completed post upgrade procedure to 6.2.11");
     }
     

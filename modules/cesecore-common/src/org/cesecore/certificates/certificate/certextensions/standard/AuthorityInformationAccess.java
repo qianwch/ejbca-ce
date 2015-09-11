@@ -40,6 +40,7 @@ import org.cesecore.certificates.endentity.EndEntityInformation;
  * @version $Id$
  */
 public class AuthorityInformationAccess extends StandardCertificateExtension {
+    private static final long serialVersionUID = 4905519889052795925L;
     private static final Logger log = Logger.getLogger(AuthorityInformationAccess.class);
 
 

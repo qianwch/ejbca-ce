@@ -132,7 +132,9 @@ public abstract class AccessRulesConstants {
                                                            AuditLogRules.CONFIGURE.resource(),
                                                            REGULAR_SYSTEMFUNCTIONALITY,
                                                            StandardRules.EDITROLES.resource(),
-                                                           StandardRules.REGULAR_EDITSYSTEMCONFIGURATION.resource()};
+                                                           StandardRules.REGULAR_EDITSYSTEMCONFIGURATION.resource(),
+                                                           StandardRules.REGULAR_EDITAVAILABLEEKU.resource(),
+                                                           StandardRules.REGULAR_EDITAVAILABLECUSTOMCERTEXTENSION.resource()};
                                                        
     // Role Access Rules
     public static final  String[] ROLEACCESSRULES = {ROLE_PUBLICWEBUSER, ROLE_ADMINISTRATOR, StandardRules.ROLE_ROOT.resource()};

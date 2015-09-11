@@ -24,10 +24,21 @@
 org.ejbca.ui.web.admin.configuration.EjbcaWebBean,
 org.ejbca.config.GlobalConfiguration,
 org.ejbca.core.model.authorization.AccessRulesConstants,
-org.cesecore.authorization.control.StandardRules
+org.cesecore.authorization.control.StandardRules,
+org.cesecore.authorization.control.AccessControlSession
 "%>
 <jsp:useBean id="ejbcawebbean" scope="session" class="org.ejbca.ui.web.admin.configuration.EjbcaWebBean" />
-<% GlobalConfiguration globalconfiguration = ejbcawebbean.initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.REGULAR_EDITSYSTEMCONFIGURATION.resource()); %>
+<% 
+    AccessControlSession accessControlSession = ejbcawebbean.getEjb().getAccessControlSession();
+    GlobalConfiguration globalconfiguration = null;
+    if(accessControlSession.isAuthorized(ejbcawebbean.getAdminObject(), StandardRules.REGULAR_EDITSYSTEMCONFIGURATION.resource())) {
+        globalconfiguration = ejbcawebbean.initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.REGULAR_EDITSYSTEMCONFIGURATION.resource());
+    } else if(accessControlSession.isAuthorized(ejbcawebbean.getAdminObject(), StandardRules.REGULAR_EDITAVAILABLEEKU.resource())) {
+        globalconfiguration = ejbcawebbean.initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.REGULAR_EDITAVAILABLEEKU.resource());
+    } else if(accessControlSession.isAuthorized(ejbcawebbean.getAdminObject(), StandardRules.REGULAR_EDITAVAILABLECUSTOMCERTEXTENSION.resource())) {
+        globalconfiguration = ejbcawebbean.initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.REGULAR_EDITAVAILABLECUSTOMCERTEXTENSION.resource());
+    }
+%>
 <html>
 <f:view>
 <head>
@@ -461,7 +472,75 @@ org.cesecore.authorization.control.StandardRules
 			</h:panelGroup>
 		</h:panelGrid>
 	</h:form>
+
 	
+	<%-- Extended Key Usages --%>
+	
+	<h:form id="extkeyusageform" enctype="multipart/form-data" rendered="#{systemConfigMBean.selectedTab eq 'Extended Key Usages'}">
+		<h:dataTable value="#{systemConfigMBean.availableExtendedKeyUsages}" var="eku"
+					styleClass="grid" style="border-collapse: collapse; right: auto; left: auto">
+			<h:column>
+   				<f:facet name="header"><h:outputText value="OID"/></f:facet>
+				<h:outputText value="#{eku.oid}" title="#{eku.oid}"/>
+				<f:facet name="footer">
+					<h:inputText id="currentOid" value="#{systemConfigMBean.currentEKUOid}" />
+				</f:facet>
+			</h:column>
+			<h:column>
+   				<f:facet name="header"><h:outputText value="Readable Text"/></f:facet>
+				<h:outputText value="#{eku.name}"/>
+				<f:facet name="footer">
+					<h:inputText id="currentReadableName" value="#{systemConfigMBean.currentEKUReadableName}">
+   					</h:inputText>
+				</f:facet>
+			</h:column>
+			<h:column>
+   				<f:facet name="header">
+   					<h:outputText value="#{web.text.ACTION}"/>
+   				</f:facet>
+				<h:commandButton action="#{systemConfigMBean.removeEKU}"	value="#{web.text.REMOVE}" title="#{web.text.REMOVE}"/>
+				<f:facet name="footer">
+					<h:commandButton  value="#{web.text.ADD}" action="#{systemConfigMBean.addEKU}" />
+				</f:facet>
+			</h:column>
+		</h:dataTable>
+	</h:form>
+	
+	
+	<%-- Custom Certificate Extensions --%>
+	
+	<h:form id="customcertextensionsform" enctype="multipart/form-data" rendered="#{systemConfigMBean.selectedTab eq 'Custom Certificate Extensions'}">
+		<h:dataTable value="#{systemConfigMBean.availableCustomCertExtensions}" var="extension"
+					styleClass="grid" style="border-collapse: collapse; right: auto; left: auto">
+			<h:column>
+   				<f:facet name="header"><h:outputText value="ID"/></f:facet>
+				<h:outputText value="#{extension.id}" title="#{extension.id}"/>
+			</h:column>
+			<h:column>
+   				<f:facet name="header"><h:outputText value="OID"/></f:facet>
+				<h:outputText value="#{extension.oid}" title="#{extension.oid}"/>
+			</h:column>
+			<h:column>
+   				<f:facet name="header"><h:outputText value="Display Name"/></f:facet>
+				<!-- <h:outputText value="#{extension.displayName}"/> -->
+				<h:outputLink value="adminweb/sysconfig/customcertextension.jsf?extensionId=#{extension.id}">
+					<h:outputText value="#{extension.displayName}"/>
+				</h:outputLink>
+			</h:column>
+			<h:column>
+   				<f:facet name="header">
+   					<h:outputText value="#{web.text.ACTION}"/>
+   				</f:facet>
+				<h:commandButton action="#{systemConfigMBean.removeCustomCertExtension}" value="#{web.text.REMOVE}" title="#{web.text.REMOVE}"
+								rendered="#{systemConfigMBean.allowedToModify}" onclick="return confirm('#{web.text.CUSTOMCERTEXTENSION_CONF_DELETE}')" />
+			</h:column>
+		</h:dataTable>
+		<br/>
+		<h:outputLink value="adminweb/sysconfig/customcertextension.jsf?extensionId=0" rendered="#{systemConfigMBean.allowedToModify}">
+			<h:outputText value="#{web.text.CRYPTOTOKEN_CREATENEW}"/>
+		</h:outputLink>
+	</h:form>
+
 	<%	// Include Footer 
 	String footurl = globalconfiguration.getFootBanner(); %>
 	<jsp:include page="<%= footurl %>" />

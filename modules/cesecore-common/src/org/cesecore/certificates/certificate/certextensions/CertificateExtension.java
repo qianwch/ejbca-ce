@@ -13,8 +13,8 @@
 package org.cesecore.certificates.certificate.certextensions;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.security.PublicKey;
-import java.util.Iterator;
 import java.util.Properties;
 
 import org.bouncycastle.asn1.ASN1Encodable;
@@ -31,10 +31,13 @@ import org.cesecore.certificates.endentity.EndEntityInformation;
  * 
  * @version $Id$
  */
-public abstract class CertificateExtension {
+public abstract class CertificateExtension implements Serializable {
 	
-	private int id;
+    private static final long serialVersionUID = -9060880077003985783L;
+    
+    private int id;
 	private String oID;
+    private String displayName;
 	private boolean criticalFlag;
 	private Properties properties;
 	
@@ -67,6 +70,19 @@ public abstract class CertificateExtension {
 	}
 	
 	/**
+	 * @return This extension's readable name
+	 */
+	public String getDisplayName() {
+	    return displayName;
+	}
+	
+	/**
+	 * @param The extension's readable name
+	 */
+	public void setDisplayName(String displayName) {
+	    this.displayName = displayName;
+	}
+	/**
 	 * @return flag indicating if the extension should be marked as critical or not.
 	 */
 	public boolean isCriticalFlag() {
@@ -82,12 +98,12 @@ public abstract class CertificateExtension {
 
 	/**
 	 * The propertes configured for this extension. The properties are stripped
-	 * of the beginning "idX.property.". Soo searching for the property
+	 * of the beginning "idX.property.". So searching for the property
 	 * "id1.property.value" only the key "value" should be used in the returned property.
 	 * 
 	 * @return the properties configured for this certificate extension.
 	 */
-	protected Properties getProperties() {
+	public Properties getProperties() {
 		return properties;
 	}
 	
@@ -97,25 +113,14 @@ public abstract class CertificateExtension {
 	 * @param id, the uniqueID of the extension
 	 * @param oID, the OID 
 	 * @param criticalFlag if the extension should be marked as critical or not. 
-	 * @param config the complete configuration property file. The init method
-	 * parses it's own property file and creates a proprietary property file.
+	 * @param config the complete configuration property file.
 	 */
-	public void init(int id, String oID, boolean criticalFlag, Properties config){
+	public void init(int id, String oID, String displayName, boolean criticalFlag, Properties extensionProperties){
 		this.id = id;
 		this.oID = oID;
+        this.displayName = displayName;
 		this.criticalFlag = criticalFlag;
-	
-		this.properties = new Properties();
-		Iterator<Object> keyIter = config.keySet().iterator();
-		String matchString = "id" + id + ".property."; 
-		while(keyIter.hasNext()){
-			String nextKey = (String) keyIter.next();
-			if(nextKey.startsWith(matchString)){
-				if(nextKey.length() > matchString.length()){
-				  properties.put(nextKey.substring(matchString.length()), config.get(nextKey));				  
-				}
-			}			
-		}		
+		this.properties = extensionProperties;
 	}
 	
 	/**

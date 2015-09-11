@@ -32,8 +32,10 @@ import org.cesecore.certificates.ca.CAConstants;
 import org.cesecore.certificates.ca.CADoesntExistsException;
 import org.cesecore.certificates.ca.CAInfo;
 import org.cesecore.certificates.ca.CaSessionLocal;
+import org.cesecore.certificates.certificate.certextensions.AvailableCustomCertificateExtensionsConfiguration;
 import org.cesecore.certificates.certificateprofile.CertificateProfile;
 import org.cesecore.certificates.certificateprofile.CertificateProfileSession;
+import org.cesecore.config.AvailableExtendedKeyUsagesConfiguration;
 import org.cesecore.configuration.GlobalConfigurationSession;
 import org.cesecore.roles.RoleData;
 import org.cesecore.roles.management.RoleManagementSession;
@@ -95,6 +97,8 @@ public class InformationMemory implements Serializable {
 
     GlobalConfiguration globalconfiguration = null;
     CmpConfiguration cmpconfiguration = null;
+    AvailableExtendedKeyUsagesConfiguration availableExtendedKeyUsagesConfiguration = null;
+    AvailableCustomCertificateExtensionsConfiguration availableCustomCertExtensionsConfiguration = null;
     EndEntityProfileNameProxy endentityprofilenameproxy = null;
     CertificateProfileNameProxy certificateprofilenameproxy = null;
 
@@ -103,7 +107,7 @@ public class InformationMemory implements Serializable {
             ComplexAccessControlSessionLocal complexAccessControlSession, EndEntityProfileSession endEntityProfileSession,
             HardTokenSession hardtokensession, PublisherSessionLocal publishersession, UserDataSourceSession userdatasourcesession,
             CertificateProfileSession certificateProfileSession, GlobalConfigurationSession globalConfigurationSession, RoleManagementSessionLocal roleManagementSession,
-            GlobalConfiguration globalconfiguration, CmpConfiguration cmpconfig) {
+            GlobalConfiguration globalconfiguration, CmpConfiguration cmpconfig, AvailableExtendedKeyUsagesConfiguration ekuConfig, AvailableCustomCertificateExtensionsConfiguration cceConfig) {
         this.caadminsession = caadminsession;
         this.casession = caSession;
         this.administrator = administrator;
@@ -112,6 +116,8 @@ public class InformationMemory implements Serializable {
         this.userdatasourcesession = userdatasourcesession;
         this.globalconfiguration = globalconfiguration;
         this.cmpconfiguration = cmpconfig;
+        this.availableExtendedKeyUsagesConfiguration = ekuConfig;
+        this.availableCustomCertExtensionsConfiguration = cceConfig;
         this.certificateProfileSession = certificateProfileSession;
         this.raauthorization = new RAAuthorization(administrator, globalConfigurationSession, authorizationsession, complexAccessControlSession,
                 caSession, endEntityProfileSession);
@@ -264,6 +270,14 @@ public class InformationMemory implements Serializable {
     public CmpConfiguration getCMPConfiguration() {
         return cmpconfiguration;
     }
+    
+    public AvailableExtendedKeyUsagesConfiguration getAvailableExtendedKeyUsagesConfiguration() {
+        return availableExtendedKeyUsagesConfiguration;
+    }
+    
+    public AvailableCustomCertificateExtensionsConfiguration getAvailableCustomCertExtensionsConfiguration() {
+        return availableCustomCertExtensionsConfiguration;
+    }
 
     /**
      * Returns the end entity profile name proxy
@@ -304,7 +318,7 @@ public class InformationMemory implements Serializable {
         if (publishernames == null) {
             publishernames = new TreeMap<String, Integer>();
             Map<Integer, String> idtonamemap = getPublisherIdToNameMap();
-           for(Integer id : caadminsession.getAuthorizedPublisherIds(administrator)) {
+            for(Integer id : caadminsession.getAuthorizedPublisherIds(administrator)) {
                 publishernames.put(idtonamemap.get(id), id);
             }
         }
@@ -532,7 +546,15 @@ public class InformationMemory implements Serializable {
     public void cmpConfigurationEdited(CmpConfiguration cmpconfig) {
         this.cmpconfiguration = cmpconfig;
     }
-
+    
+    public void availableExtendedKeyUsagesConfigEdited(AvailableExtendedKeyUsagesConfiguration ekuConfig) {
+        this.availableExtendedKeyUsagesConfiguration = ekuConfig;
+    }
+    
+    public void availableCustomCertExtensionsConfigEdited(AvailableCustomCertificateExtensionsConfiguration cceConfig) {
+        this.availableCustomCertExtensionsConfiguration = cceConfig;
+    }
+  
     /**
      * Method that should be called every time the system configuration has been edited
      */
