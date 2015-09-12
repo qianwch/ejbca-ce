@@ -1080,13 +1080,13 @@ public class EjbcaWebBean implements Serializable {
     }
     
     public void clearAvailableExtendedKeyUsagesConfigCache() throws Exception {
-        globalConfigurationSession.flushConfigurationCache(AvailableExtendedKeyUsagesConfiguration.AVAILABLE_EXTENDED_KEY_USAGES_CONFIGURATION_ID);
+        globalConfigurationSession.flushConfigurationCache(AvailableExtendedKeyUsagesConfiguration.CONFIGURATION_ID);
         reloadAvailableExtendedKeyUsagesConfiguration();
     }
         
     public void reloadAvailableExtendedKeyUsagesConfiguration() throws Exception {
         availableExtendedKeyUsagesConfig = (AvailableExtendedKeyUsagesConfiguration) 
-                globalConfigurationSession.getCachedConfiguration(AvailableExtendedKeyUsagesConfiguration.AVAILABLE_EXTENDED_KEY_USAGES_CONFIGURATION_ID);
+                globalConfigurationSession.getCachedConfiguration(AvailableExtendedKeyUsagesConfiguration.CONFIGURATION_ID);
         if (informationmemory != null) {
             informationmemory.availableExtendedKeyUsagesConfigEdited(availableExtendedKeyUsagesConfig);
         }
@@ -1099,12 +1099,12 @@ public class EjbcaWebBean implements Serializable {
     }
     
     private void fillExtendedKeyUsagesFromFile() throws Exception {
-        
-        // If the file has already been removed, no need to go further
-        if(!ConfigurationHolder.isConfigFileExist("extendedkeyusage.properties")) {
+        // If the file has already been removed, no need to go further        
+        final URL url = ConfigurationHolder.class.getResource("/conf/extendedkeyusage.properties");
+        if(url == null) {
             return;
         }
-            
+        
         AvailableExtendedKeyUsagesConfiguration ekuConfig = getAvailableExtendedKeyUsagesConfiguration();
         
         // If the file has already been read once, don't read it again so as not to overwrite changes the 
@@ -1153,13 +1153,13 @@ public class EjbcaWebBean implements Serializable {
     }
     
     public void clearAvailableCustomCertExtensionsConfigCache() throws Exception {
-        globalConfigurationSession.flushConfigurationCache(AvailableCustomCertificateExtensionsConfiguration.AVAILABLE_CUSTOM_CERTIFICATE_EXTENSTIONS_CONFIGURATION_ID);
+        globalConfigurationSession.flushConfigurationCache(AvailableCustomCertificateExtensionsConfiguration.CONFIGURATION_ID);
         reloadAvailableCustomCertExtensionsConfiguration();
     }
         
     public void reloadAvailableCustomCertExtensionsConfiguration() throws Exception {
         availableCustomCertExtensionsConfig = (AvailableCustomCertificateExtensionsConfiguration) 
-                globalConfigurationSession.getCachedConfiguration(AvailableCustomCertificateExtensionsConfiguration.AVAILABLE_CUSTOM_CERTIFICATE_EXTENSTIONS_CONFIGURATION_ID);
+                globalConfigurationSession.getCachedConfiguration(AvailableCustomCertificateExtensionsConfiguration.CONFIGURATION_ID);
         if (informationmemory != null) {
             informationmemory.availableCustomCertExtensionsConfigEdited(availableCustomCertExtensionsConfig);
         }

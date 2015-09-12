@@ -945,7 +945,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
         final String aliasCertSign = caToken.getAliasFromPurpose(CATokenConstants.CAKEYPURPOSE_CERTSIGN);
         int caid = cainfo.getCAId();
         final AvailableCustomCertificateExtensionsConfiguration cceConfig = (AvailableCustomCertificateExtensionsConfiguration) globalConfigurationSession.getCachedConfiguration(
-                AvailableCustomCertificateExtensionsConfiguration.AVAILABLE_CUSTOM_CERTIFICATE_EXTENSTIONS_CONFIGURATION_ID);
+                AvailableCustomCertificateExtensionsConfiguration.CONFIGURATION_ID);
         if (cainfo.getSignedBy() == CAInfo.SELFSIGNED) {
             try {
                 // create selfsigned certificate
@@ -1448,7 +1448,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
             ca.setStatus(CAConstants.CA_ACTIVE);
 
             final AvailableCustomCertificateExtensionsConfiguration cceConfig = (AvailableCustomCertificateExtensionsConfiguration) 
-                    globalConfigurationSession.getCachedConfiguration(AvailableCustomCertificateExtensionsConfiguration.AVAILABLE_CUSTOM_CERTIFICATE_EXTENSTIONS_CONFIGURATION_ID);
+                    globalConfigurationSession.getCachedConfiguration(AvailableCustomCertificateExtensionsConfiguration.CONFIGURATION_ID);
             
             // activate External CA Services
             for (int type : ca.getExternalCAServiceTypes()) {
@@ -1614,7 +1614,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
                     }
                     final CryptoToken signCryptoToken = cryptoTokenSession.getCryptoToken(signca.getCAToken().getCryptoTokenId());
                     final AvailableCustomCertificateExtensionsConfiguration cceConfig = (AvailableCustomCertificateExtensionsConfiguration)
-                            globalConfigurationSession.getCachedConfiguration(AvailableCustomCertificateExtensionsConfiguration.AVAILABLE_CUSTOM_CERTIFICATE_EXTENSTIONS_CONFIGURATION_ID);
+                            globalConfigurationSession.getCachedConfiguration(AvailableCustomCertificateExtensionsConfiguration.CONFIGURATION_ID);
                     cacertificate = signca.generateCertificate(signCryptoToken, cadata, publickey, -1, null, cainfo.getValidity(), certprofile,
                             sequence, cceConfig);
                     // X509ResponseMessage works for both X509 CAs and CVC CAs, should really be called CertificateResponsMessage
@@ -1899,7 +1899,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
             mergeCertificatePoliciesFromCAAndProfile(ca.getCAInfo(), certprofile);
 
             final AvailableCustomCertificateExtensionsConfiguration cceConfig = (AvailableCustomCertificateExtensionsConfiguration) 
-                    globalConfigurationSession.getCachedConfiguration(AvailableCustomCertificateExtensionsConfiguration.AVAILABLE_CUSTOM_CERTIFICATE_EXTENSTIONS_CONFIGURATION_ID);
+                    globalConfigurationSession.getCachedConfiguration(AvailableCustomCertificateExtensionsConfiguration.CONFIGURATION_ID);
             
             if (ca.getSignedBy() == CAInfo.SELFSIGNED) {
                 // create selfsigned certificate
@@ -3056,7 +3056,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
     private void activateAndPublishExternalCAServices(AuthenticationToken admin, Collection<ExtendedCAServiceInfo> extendedCAServiceInfos, CA ca)
             throws AuthorizationDeniedException {
         final AvailableCustomCertificateExtensionsConfiguration cceConfig = (AvailableCustomCertificateExtensionsConfiguration) 
-                globalConfigurationSession.getCachedConfiguration(AvailableCustomCertificateExtensionsConfiguration.AVAILABLE_CUSTOM_CERTIFICATE_EXTENSTIONS_CONFIGURATION_ID);
+                globalConfigurationSession.getCachedConfiguration(AvailableCustomCertificateExtensionsConfiguration.CONFIGURATION_ID);
         
         // activate External CA Services
         Iterator<ExtendedCAServiceInfo> iter = extendedCAServiceInfos.iterator();

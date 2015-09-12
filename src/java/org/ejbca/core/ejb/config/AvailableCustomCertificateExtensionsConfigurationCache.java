@@ -22,7 +22,7 @@ import org.ejbca.config.EjbcaConfiguration;
  * 
  * Needed because EJB spec does not allow volatile, non-final fields in session beans.
  * 
- * @version $Id: AvailableCustomCertificateExtensionsConfigurationCache.java 21808 2015-09-08 10:51:39Z aveen4711 $
+ * @version $Id$
  */
 public class AvailableCustomCertificateExtensionsConfigurationCache implements ConfigurationCache {
 
