@@ -625,8 +625,6 @@ public class UpgradeSessionBean implements UpgradeSessionLocal, UpgradeSessionRe
         
         accessTreeUpdateSession.signalForAccessTreeUpdate();
         accessControlSession.forceCacheExpire();
-        
-        //log.error("(this is not an error) Finished upgrade from ejbca 6.2.x with result: true");
         return true;
         
     }      

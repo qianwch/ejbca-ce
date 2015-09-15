@@ -331,7 +331,7 @@ public class ServiceSessionBean implements ServiceSessionLocal, ServiceSessionRe
     }
 
     @Override
-    public Collection<Integer> getAuthorizedVisibleServiceIds() {
+    public Collection<Integer> getVisibleServiceIds() {
         Collection<Integer> allVisibleServiceIds = new ArrayList<Integer>();
             Collection<Integer> allServiceIds = getServiceIdToNameMap().keySet();
             for (int id : allServiceIds) {
