@@ -136,7 +136,7 @@ public class CustomCertExtensionMBean extends BaseManagedBean {
         currentPropertyValue = "";
     }
     
-    private AvailableCustomCertificateExtensionsConfiguration getAvailableExtensionsConfig() throws Exception{
+    private AvailableCustomCertificateExtensionsConfiguration getAvailableExtensionsConfig() {
         if(availableExtensionsConfig == null) {
             availableExtensionsConfig = getEjbcaWebBean().getAvailableCustomCertExtensionsConfiguration();
         }
@@ -155,7 +155,7 @@ public class CustomCertExtensionMBean extends BaseManagedBean {
                     this.currentExtensionId = id;
                 }
                 // Always switch to edit mode for new ones and view mode for all others
-                setCurrentExtensionEditMode(id == 0);
+                setCurrentExtensionEditMode(false);
             } catch (NumberFormatException e) {
                 String msg = "Could not parse the extension ID as an Integer. ";
                 FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, msg, null));
@@ -171,25 +171,8 @@ public class CustomCertExtensionMBean extends BaseManagedBean {
         
         if (this.currentExtensionGUIInfo == null) {
             final int id = getCurrentExtensionId();
-            try {
-                if(id == 0) {
-                    //flushCache();
-                    int newID = getUnusedID();
-                    if(newID==0) {
-                        FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Cannot add new Extensions. " +
-                                "All possible IDs are either already refering to an extension or are still used in at least one certificate profile.", null));
-                        return null;
-                    }
-                    this.currentExtensionGUIInfo = new CurrentExtensionGUIInfo(newID);
-                    this.currentExtensionId = newID;
-                } else {
-                    AvailableCustomCertificateExtensionsConfiguration cceConfig = getAvailableExtensionsConfig();
-                    this.currentExtensionGUIInfo = new CurrentExtensionGUIInfo(cceConfig.getCustomCertificateExtension(id));
-                }
-            } catch(Exception e) {
-                FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Failed to access AvailableCustomCertificateExtensionsConfiguration: " + e.getLocalizedMessage(), null));
-                return null;
-            }
+            AvailableCustomCertificateExtensionsConfiguration cceConfig = getAvailableExtensionsConfig();
+            this.currentExtensionGUIInfo = new CurrentExtensionGUIInfo(cceConfig.getCustomCertificateExtension(id));
         }
         return this.currentExtensionGUIInfo;
     }
@@ -206,7 +189,7 @@ public class CustomCertExtensionMBean extends BaseManagedBean {
             return;
         }
         if (StringUtils.isEmpty(currentExtensionGUIInfo.getDisplayName())) {
-            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "No CustomCertificateExension Display Name is set.", null));
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "No CustomCertificateExension Label is set.", null));
             return;
         }
         
@@ -219,13 +202,12 @@ public class CustomCertExtensionMBean extends BaseManagedBean {
             currentExtensionGUIInfo.setProperties("");
         }
         
-        AvailableCustomCertificateExtensionsConfiguration cceConfig = null;
+        AvailableCustomCertificateExtensionsConfiguration cceConfig = getAvailableExtensionsConfig();
         try {
-            cceConfig = getAvailableExtensionsConfig();
             cceConfig.addCustomCertExtension(currentExtensionGUIInfo.getId(), currentExtensionGUIInfo.getOid(), currentExtensionGUIInfo.getDisplayName(), currentExtensionGUIInfo.getClassPath(), currentExtensionGUIInfo.isCritical(), getPropertiesFromString(currentExtensionGUIInfo.getProperties()));
             getEjbcaWebBean().saveAvailableCustomCertExtensionsConfiguration(cceConfig);
         } catch(Exception e) {
-            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Failed to get AvailableCustomCertificateExtensionsConfiguration. " + e.getLocalizedMessage() , e.getLocalizedMessage()));
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Failed to edit Custom Certificate Extension. " + e.getLocalizedMessage() , e.getLocalizedMessage()));
             return;
         }
     }
@@ -241,20 +223,6 @@ public class CustomCertExtensionMBean extends BaseManagedBean {
             }
         }
         return properties;
-    }
-    
-    private int getUnusedID() throws Exception {
-        AvailableCustomCertificateExtensionsConfiguration cceConfig = getAvailableExtensionsConfig();
-        for(int i=1; i<255; i++) {
-            if(cceConfig.isCustomCertExtensionSupported(i)) {
-                continue;
-            }
-            if(isExtensionUsedInProfiles(i)) {
-                continue;
-            }
-            return i;
-        }
-        return 0;
     }
         
     // -------------------------------------------------------------
@@ -302,7 +270,7 @@ public class CustomCertExtensionMBean extends BaseManagedBean {
         flushPropertyCache();
     }
     
-    public void RemoveExtensionProperty() {
+    public void removeExtensionProperty() {
         final CurrentExtensionGUIInfo currentExtension = getCurrentExtensionGUIInfo();
         final String currentPropertiesString = currentExtension.getProperties();
         final Properties currentProperties = getPropertiesFromString(currentPropertiesString);
@@ -330,19 +298,6 @@ public class CustomCertExtensionMBean extends BaseManagedBean {
     }
     
     // ----------------------------------------------------------------
-
-    private boolean isExtensionUsedInProfiles(final int id) {
-        final CertificateProfileSessionLocal certprofileSession = getEjbcaWebBean().getEjb().getCertificateProfileSession();
-        Map<Integer, CertificateProfile> allCertProfiles = certprofileSession.getAllCertificateProfiles();
-        for(Entry<Integer, CertificateProfile> entry : allCertProfiles.entrySet()) {
-            final CertificateProfile cp = entry.getValue();
-            List<Integer> usedCertExts = cp.getUsedCertificateExtensions();
-            if(usedCertExts.contains(id)) {
-                return true;
-            }
-        }
-        return false;
-    }
     
     /** @return true if admin may create new or modify existing Custom Certificate Extensions. */
     public boolean isAllowedToModify() {

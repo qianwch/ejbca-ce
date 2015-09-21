@@ -599,7 +599,7 @@ public class UpgradeSessionBean implements UpgradeSessionLocal, UpgradeSessionRe
      * 
      * @return true if the upgrade was successful and false otherwise
      */
-    private boolean addNewAccessRulesToRoles() {
+    private boolean addEKUAndCustomCertExtensionsAccessRulestoRoles() {
         Collection<RoleData> roles = roleAccessSession.getAllRoles();
         for (RoleData role : roles) {
             final Map<Integer, AccessRuleData> rulemap = role.getAccessRules();
@@ -871,7 +871,7 @@ public class UpgradeSessionBean implements UpgradeSessionLocal, UpgradeSessionRe
     private void postMigrateDatabase6211() throws UpgradeFailedException {   
         // Next add access rules for the new audit role template, allowing easy restriction of resources where needed. 
         addReadOnlyRules();
-        addNewAccessRulesToRoles();
+        addEKUAndCustomCertExtensionsAccessRulestoRoles();
         log.error("(This is not an error) Completed post upgrade procedure to 6.2.11");
     }
     

@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.Set;
 
 import javax.faces.application.FacesMessage;
@@ -27,6 +28,7 @@ import javax.faces.model.ListDataModel;
 import javax.faces.model.SelectItem;
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.myfaces.custom.fileupload.UploadedFile;
 import org.cesecore.authorization.control.AccessControlSessionLocal;
@@ -420,7 +422,6 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
     }
 
     /** Invoked when the user wants to a add a new node to the cluster */
-    @SuppressWarnings("unchecked")
     public void addNode() {
         final String nodeToAdd = getCurrentNode();
         Set<String> nodes = currentConfig.getNodesInCluster(); 
@@ -430,7 +431,6 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
     }
 
     /** Invoked when the user wants to remove a node from the cluster */
-    @SuppressWarnings("unchecked")
     public void removeNode() {
         final String nodeToRemove = (String) nodesInCluster.getRowData();
         Set<String> nodes = currentConfig.getNodesInCluster(); 
@@ -532,15 +532,20 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
     
     private AvailableExtendedKeyUsagesConfiguration availableExtendedKeyUsagesConfig = null;
     private ListDataModel availableExtendedKeyUsages = null;
-    private String currentEKUOid = null;
-    private String currentEKUName = null;
+    private String currentEKUOid = "";
+    private String currentEKUName = "";
     
     public String getCurrentEKUOid() { return currentEKUOid; }
     public void setCurrentEKUOid(String oid) { currentEKUOid=oid; }
     public String getCurrentEKUReadableName() { return currentEKUName; }
     public void setCurrentEKUReadableName(String readableName) { currentEKUName=readableName; }
     
-    private AvailableExtendedKeyUsagesConfiguration getAvailableEKUConfig() throws Exception{
+    private void flushNewEKUCache() {
+        currentEKUOid = "";
+        currentEKUName = "";
+    }
+    
+    private AvailableExtendedKeyUsagesConfiguration getAvailableEKUConfig() {
         if(availableExtendedKeyUsagesConfig == null) {
             availableExtendedKeyUsagesConfig = getEjbcaWebBean().getAvailableExtendedKeyUsagesConfiguration();
         }
@@ -557,16 +562,12 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
     
     public ListDataModel getAvailableExtendedKeyUsages() {
         if(availableExtendedKeyUsages == null) {
-            try {
-                availableExtendedKeyUsages = new ListDataModel(getNewAvailableExtendedKeyUsages());
-            } catch(Exception e) {
-                FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Failed to access AvailableExtendedKeyUsagesConfiguration.", null));
-            }
+            availableExtendedKeyUsages = new ListDataModel(getNewAvailableExtendedKeyUsages());
         }
         return availableExtendedKeyUsages;
     }
     
-    private ArrayList<EKUInfo> getNewAvailableExtendedKeyUsages() throws Exception {
+    private ArrayList<EKUInfo> getNewAvailableExtendedKeyUsages() {
         availableExtendedKeyUsagesConfig = getEjbcaWebBean().getAvailableExtendedKeyUsagesConfiguration();
         ArrayList<EKUInfo> ekus = new ArrayList<EKUInfo>();
         Map<String, String> allEKU = availableExtendedKeyUsagesConfig.getAllEKUOidsAndNames();
@@ -578,26 +579,26 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
     
     public void addEKU() {
         
-        if (currentEKUOid == null) {
+        if (StringUtils.isEmpty(currentEKUOid)) {
             FacesContext.getCurrentInstance()
                     .addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "No ExtendedKeyUsage OID is set.", null));
             return;
         }
-        if (currentEKUName == null) {
+        if(StringUtils.isEmpty(currentEKUName)) {
             FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "No ExtendedKeyUsage Name is set.", null));
             return;
         }
         
-        AvailableExtendedKeyUsagesConfiguration ekuConfig = null;
+        AvailableExtendedKeyUsagesConfiguration ekuConfig = getAvailableEKUConfig();
+        ekuConfig.addExtKeyUsage(currentEKUOid, currentEKUName);
         try {
-            ekuConfig = getAvailableEKUConfig();
-            ekuConfig.addExtKeyUsage(currentEKUOid, currentEKUName);
             getEjbcaWebBean().saveAvailableExtendedKeyUsagesConfiguration(ekuConfig);
-            availableExtendedKeyUsages = new  ListDataModel(getNewAvailableExtendedKeyUsages());
         } catch(Exception e) {
-            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Failed to get AvailableExtendedKeyUsagesConfiguration.", e.getLocalizedMessage()));
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Failed to save AvailableExtendedKeyUsagesConfiguration.", e.getLocalizedMessage()));
             return;
         }
+        availableExtendedKeyUsages = new  ListDataModel(getNewAvailableExtendedKeyUsages());
+        flushNewEKUCache();
     }
 
     public void removeEKU() {
@@ -655,10 +656,23 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
     //               Custom Certificate Extensions
     // ----------------------------------------------------
     
+    private final String DEFAULT_EXTENSION_CLASSPATH = "org.cesecore.certificates.certificate.certextensions.BasicCertificateExtension";
     private AvailableCustomCertificateExtensionsConfiguration availableCustomCertExtensionsConfig = null;
     private ListDataModel availableCustomCertExtensions = null;
+    private String newOID = "";
+    private String newDisplayName = "";
+    
+    public String getNewOID() { return newOID; }
+    public void setNewOID(String oid) { newOID=oid; }
+    public String getNewDisplayName() { return newDisplayName; }
+    public void setNewDisplayName(String label) { newDisplayName=label; }
+    
+    private void flushNewExtensionCache() {
+        newOID = "";
+        newDisplayName = "";
+    }
  
-    private AvailableCustomCertificateExtensionsConfiguration getAvailableCustomCertExtensionsConfig() throws Exception{
+    private AvailableCustomCertificateExtensionsConfiguration getAvailableCustomCertExtensionsConfig() {
         if(availableCustomCertExtensionsConfig == null) {
             availableCustomCertExtensionsConfig = getEjbcaWebBean().getAvailableCustomCertExtensionsConfiguration();
         }
@@ -666,15 +680,11 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
     }
     
     public ListDataModel getAvailableCustomCertExtensions() {
-        try {
-            availableCustomCertExtensions = new ListDataModel(getNewAvailableCustomCertExtensions());
-        } catch(Exception e) {
-            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Failed to access AvailableCustomCertificateExtensionsConfiguration.", null));
-        }
+        availableCustomCertExtensions = new ListDataModel(getNewAvailableCustomCertExtensions());
         return availableCustomCertExtensions;
     }
     
-    private ArrayList<CustomCertExtensionInfo> getNewAvailableCustomCertExtensions() throws Exception {
+    private ArrayList<CustomCertExtensionInfo> getNewAvailableCustomCertExtensions() {
         availableCustomCertExtensionsConfig = getEjbcaWebBean().getAvailableCustomCertExtensionsConfiguration();
         ArrayList<CustomCertExtensionInfo> extensionsInfo = new ArrayList<CustomCertExtensionInfo>();
         ArrayList<CertificateExtension> allExtensions = availableCustomCertExtensionsConfig.getAllAvailableCustomCertificateExtensions();
@@ -687,15 +697,15 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
     public void removeCustomCertExtension() {
         final CustomCertExtensionInfo extensionToRemove = ((CustomCertExtensionInfo) availableCustomCertExtensions.getRowData());
         final int extid = extensionToRemove.getId();
+        AvailableCustomCertificateExtensionsConfiguration cceConfig = getAvailableCustomCertExtensionsConfig();
+        cceConfig.removeCustomCertExtension(Integer.valueOf(extensionToRemove.getId()));
         try {
-            AvailableCustomCertificateExtensionsConfiguration cceConfig = getAvailableCustomCertExtensionsConfig();
-            cceConfig.removeCustomCertExtension(Integer.valueOf(extensionToRemove.getId()));
             getEjbcaWebBean().saveAvailableCustomCertExtensionsConfiguration(cceConfig);
-            availableCustomCertExtensions = new ListDataModel(getNewAvailableCustomCertExtensions());
         } catch(Exception e) {
-            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Failed to access AvailableCustomCertificateExtensionsConfiguration: " + e.getLocalizedMessage(), null));
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Failed to save AvailableCustomCertificateExtensionsConfiguration: " + e.getLocalizedMessage(), null));
             return;
         }
+        availableCustomCertExtensions = new ListDataModel(getNewAvailableCustomCertExtensions());
         
         final ArrayList<String> cpNamedUsingExtension = getCertProfilesUsingExtension(extid);
         if(!cpNamedUsingExtension.isEmpty()) {
@@ -704,7 +714,58 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
             FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN, message, null));
         }
     }
-
+    
+    public void addCustomCertExtension() {
+        if (StringUtils.isEmpty(getNewOID())) {
+            FacesContext.getCurrentInstance()
+            .addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "No CustomCertificateExenstion OID is set.", null));
+            return;
+        }
+        if (StringUtils.isEmpty(getNewDisplayName())) {
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "No CustomCertificateExension Display Name is set.", null));
+            return;
+        }
+         
+        AvailableCustomCertificateExtensionsConfiguration cceConfig = getAvailableCustomCertExtensionsConfig();
+        try {
+            cceConfig.addCustomCertExtension(getUnusedID(), getNewOID(), getNewDisplayName(), DEFAULT_EXTENSION_CLASSPATH, false, new Properties());
+            getEjbcaWebBean().saveAvailableCustomCertExtensionsConfiguration(cceConfig);
+        } catch(Exception e) {
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, 
+                    "Failed to add Custom Certificate Extension. " + e.getLocalizedMessage() , e.getLocalizedMessage()));
+            return;
+        }
+        availableCustomCertExtensions = new ListDataModel(getNewAvailableCustomCertExtensions());
+        flushNewExtensionCache();
+    }
+    
+    private int getUnusedID() {
+        AvailableCustomCertificateExtensionsConfiguration cceConfig = getAvailableCustomCertExtensionsConfig();
+        for(int i=1; i<255; i++) {
+            if(cceConfig.isCustomCertExtensionSupported(i)) {
+                continue;
+            }
+            if(isExtensionUsedInProfiles(i)) {
+                continue;
+            }
+            return i;
+        }
+        return 0;
+    }
+    
+    private boolean isExtensionUsedInProfiles(final int id) {
+        final CertificateProfileSessionLocal certprofileSession = getEjbcaWebBean().getEjb().getCertificateProfileSession();
+        Map<Integer, CertificateProfile> allCertProfiles = certprofileSession.getAllCertificateProfiles();
+        for(Entry<Integer, CertificateProfile> entry : allCertProfiles.entrySet()) {
+            final CertificateProfile cp = entry.getValue();
+            List<Integer> usedCertExts = cp.getUsedCertificateExtensions();
+            if(usedCertExts.contains(id)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
     private ArrayList<String> getCertProfilesUsingExtension(final int id) {
         ArrayList<String> ret = new ArrayList<String>();
         final CertificateProfileSessionLocal certprofileSession = getEjbcaWebBean().getEjb().getCertificateProfileSession();
