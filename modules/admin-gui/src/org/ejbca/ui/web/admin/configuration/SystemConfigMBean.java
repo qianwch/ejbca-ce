@@ -89,7 +89,6 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
                 globalConfig = getEjbcaWebBean().getGlobalConfiguration();
             }
             
-            //CaSessionLocal caSession = getEjbcaWebBean().getEjb().getCaSession();
             try {
                 this.title = globalConfig.getEjbcaTitle();
                 this.headBanner = globalConfig.getHeadBanner();
@@ -372,7 +371,7 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
             }
         }
     }
-    
+
     /** Invoked when admin saves the admin preferences */
     public void saveCurrentAdminPreferences() {
         if(currentConfig != null) {
@@ -402,6 +401,7 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
         availableExtendedKeyUsagesConfig = null;
         availableCustomCertExtensions = null;
         availableCustomCertExtensionsConfig = null;
+        selectedCustomCertExtensionID = 0;
     }
     
     public void toggleUseApprovalNotification() {
@@ -655,12 +655,16 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
     // ----------------------------------------------------
     //               Custom Certificate Extensions
     // ----------------------------------------------------
-    
+   
     private final String DEFAULT_EXTENSION_CLASSPATH = "org.cesecore.certificates.certificate.certextensions.BasicCertificateExtension";
     private AvailableCustomCertificateExtensionsConfiguration availableCustomCertExtensionsConfig = null;
     private ListDataModel availableCustomCertExtensions = null;
+    private int selectedCustomCertExtensionID = 0;
     private String newOID = "";
     private String newDisplayName = "";
+ 
+    public int getSelectedCustomCertExtensionID() { return selectedCustomCertExtensionID; }
+    public void setSelectedCustomCertExtensionID(int id) { selectedCustomCertExtensionID=id; }
     
     public String getNewOID() { return newOID; }
     public void setNewOID(String oid) { newOID=oid; }
@@ -695,7 +699,7 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
     }
 
     public void removeCustomCertExtension() {
-        final CustomCertExtensionInfo extensionToRemove = ((CustomCertExtensionInfo) availableCustomCertExtensions.getRowData());
+        final CustomCertExtensionInfo extensionToRemove = (CustomCertExtensionInfo) availableCustomCertExtensions.getRowData();
         final int extid = extensionToRemove.getId();
         AvailableCustomCertificateExtensionsConfiguration cceConfig = getAvailableCustomCertExtensionsConfig();
         cceConfig.removeCustomCertExtension(Integer.valueOf(extensionToRemove.getId()));
@@ -737,6 +741,17 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
         }
         availableCustomCertExtensions = new ListDataModel(getNewAvailableCustomCertExtensions());
         flushNewExtensionCache();
+        flushCache();
+    }
+
+    public String actionEdit() {
+        selectCurrentRowData();
+        return "edit";   // Outcome is defined in faces-config.xml
+    }
+
+    private void selectCurrentRowData() {
+        final CustomCertExtensionInfo cceInfo = (CustomCertExtensionInfo) availableCustomCertExtensions.getRowData();
+        selectedCustomCertExtensionID = cceInfo.getId();
     }
     
     private int getUnusedID() {
