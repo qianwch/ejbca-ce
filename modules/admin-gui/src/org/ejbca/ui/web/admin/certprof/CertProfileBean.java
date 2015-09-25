@@ -34,8 +34,8 @@ import org.cesecore.authorization.control.StandardRules;
 import org.cesecore.certificates.ca.CAInfo;
 import org.cesecore.certificates.ca.CvcCA;
 import org.cesecore.certificates.certificate.CertificateConstants;
-import org.cesecore.certificates.certificate.certextensions.AvailableCustomCertificateExtensionsConfiguration;
-import org.cesecore.certificates.certificate.certextensions.CertificateExtension;
+import org.cesecore.certificates.certificate.certextensions.AvailableCertificateExtension;
+import org.cesecore.certificates.certificate.certextensions.CertificateExtensionFactory;
 import org.cesecore.certificates.certificateprofile.CertificatePolicy;
 import org.cesecore.certificates.certificateprofile.CertificateProfile;
 import org.cesecore.certificates.certificatetransparency.CTLogInfo;
@@ -43,7 +43,6 @@ import org.cesecore.certificates.certificatetransparency.CertificateTransparency
 import org.cesecore.certificates.util.AlgorithmConstants;
 import org.cesecore.certificates.util.DNFieldExtractor;
 import org.cesecore.certificates.util.DnComponents;
-import org.cesecore.config.AvailableExtendedKeyUsagesConfiguration;
 import org.cesecore.util.ValidityDate;
 import org.ejbca.config.GlobalConfiguration;
 import org.ejbca.cvc.AccessRightAuthTerm;
@@ -99,13 +98,16 @@ public class CertProfileBean extends BaseManagedBean implements Serializable {
         return getEjbcaWebBean().getEjb().getCertificateProfileSession().getCertificateProfileName(getSelectedCertProfileId());
     }
 
-    public CertificateProfile getCertificateProfile() {
+    public CertificateProfile getCertificateProfile() throws AuthorizationDeniedException {
         if (currentCertProfileId!=-1 && certificateProfile!=null && getSelectedCertProfileId().intValue() != currentCertProfileId) {
             reset();
         }
         if (certificateProfile==null) {
             currentCertProfileId = getSelectedCertProfileId().intValue();
             final CertificateProfile certificateProfile = getEjbcaWebBean().getEjb().getCertificateProfileSession().getCertificateProfile(currentCertProfileId);
+            if (!getEjbcaWebBean().getEjb().getCertificateProfileSession().getAuthorizedCertificateProfileIds(getAdmin(), certificateProfile.getType()).contains(getSelectedCertProfileId())) {
+                throw new AuthorizationDeniedException("Not authorized to certificate profile");
+            }
             try {
                 this.certificateProfile = certificateProfile.clone();
                 // Add some defaults
@@ -276,18 +278,11 @@ public class CertProfileBean extends BaseManagedBean implements Serializable {
         redirectToComponent("header_x509v3extensions");
     }
 
-    public List<SelectItem> getExtendedKeyUsageOidsAvailable() throws Exception {
+    public List<SelectItem/*<String,String*/> getExtendedKeyUsageOidsAvailable() {
         final List<SelectItem> ret = new ArrayList<SelectItem>();
-        AvailableExtendedKeyUsagesConfiguration ekuConfig = getEjbcaWebBean().getAvailableExtendedKeyUsagesConfiguration();
-        Map<String, String> ekus = ekuConfig.getAllEKUOidsAndNames();
-        for(Entry<String, String> eku : ekus.entrySet()) {
-            ret.add(new SelectItem(eku.getKey(), eku.getValue()));
-        }
-        ArrayList<String> usedEKUs = getCertificateProfile().getExtendedKeyUsageOids();
-        for(String oid : usedEKUs) {
-            if(!ekus.containsKey(oid)) {
-                ret.add(new SelectItem(oid, oid));
-            }
+        final Map<String, String> oidToTextMap = CertificateProfile.getAllExtendedKeyUsageTexts();
+        for (final Entry<String,String> current : oidToTextMap.entrySet()) {
+            ret.add(new SelectItem(current.getKey(), getEjbcaWebBean().getText(current.getValue())));
         }
         return ret;
     }
@@ -757,40 +752,26 @@ public class CertProfileBean extends BaseManagedBean implements Serializable {
         return ret;
     }
 
-    public List<SelectItem> getAvailableCertificateExtensionsAvailable() {
+    public List<SelectItem/*<Integer,String*/> getAvailableCertificateExtensionsAvailable() {
         final List<SelectItem> ret = new ArrayList<SelectItem>();
-
-        AvailableCustomCertificateExtensionsConfiguration cceConfig = null; 
-        try {
-            cceConfig = getEjbcaWebBean().getAvailableCustomCertExtensionsConfiguration();
-        } catch (Exception e) {
-            log.error(e);
-        }
-
-        for (final CertificateExtension current : cceConfig.getAllAvailableCustomCertificateExtensions()) {
-            ret.add(new SelectItem(current.getId(), current.getDisplayName()));
-        }
-        
-        List<Integer> usedExtensions = getCertificateProfile().getUsedCertificateExtensions();
-        for(int id : usedExtensions) {
-            if(!cceConfig.isCustomCertExtensionSupported(id)) {
-                String note = id + " (No longer used. Please unselect this option)";
-                ret.add(new SelectItem(id, note));
+        for (final AvailableCertificateExtension current : CertificateExtensionFactory.getInstance().getAvailableCertificateExtensions()) {
+            if (current.isTranslatable()) {
+                ret.add(new SelectItem(Integer.valueOf(current.getId()), getEjbcaWebBean().getText(current.getDisplayName())));
+            } else {
+                ret.add(new SelectItem(Integer.valueOf(current.getId()), current.getDisplayName()));
             }
         }
-
         return ret;
     }
     public int getAvailableCertificateExtensionsAvailableSize() { return Math.max(1, Math.min(6, getAvailableCertificateExtensionsAvailable().size())); };
 
     public List<SelectItem/*<Integer,String*/> getAvailableCAsAvailable() {
         final List<SelectItem> ret = new ArrayList<SelectItem>();
-        final List<Integer> allCAs = getEjbcaWebBean().getEjb().getCaSession().getAllCaIds();
         final List<Integer> authorizedCAs = getEjbcaWebBean().getEjb().getCaSession().getAuthorizedCaIds(getAdmin());
         final Map<Integer, String> caIdToNameMap = getEjbcaWebBean().getEjb().getCaSession().getCAIdToNameMap();
         ret.add(new SelectItem(String.valueOf(CertificateProfile.ANYCA), getEjbcaWebBean().getText("ANYCA")));
-        for (final Integer caId : allCAs) {
-            ret.add(new SelectItem(caId, caIdToNameMap.get(caId), "foo", (authorizedCAs.contains(caId) ? false : true)));
+        for (final Integer caId : authorizedCAs) {
+            ret.add(new SelectItem(caId, caIdToNameMap.get(caId)));
         }
         return ret;
     }
@@ -816,7 +797,7 @@ public class CertProfileBean extends BaseManagedBean implements Serializable {
     public void setApprovalEnabledKeyRecover(final boolean enabled) throws AuthorizationDeniedException { setApprovalEnabled(CAInfo.REQ_APPROVAL_KEYRECOVER, enabled); }
     public void setApprovalEnabledRevocation(final boolean enabled) throws AuthorizationDeniedException { setApprovalEnabled(CAInfo.REQ_APPROVAL_REVOCATION, enabled); }
     public void setApprovalEnabledActivateCa(final boolean enabled) throws AuthorizationDeniedException { setApprovalEnabled(CAInfo.REQ_APPROVAL_ACTIVATECA, enabled); }
-  
+
     private boolean isApprovalEnabled(final int approvalType) throws AuthorizationDeniedException {
         return getCertificateProfile().getApprovalSettings().contains(Integer.valueOf(approvalType));
     }

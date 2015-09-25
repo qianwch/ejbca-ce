@@ -19,12 +19,13 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.cert.X509Certificate;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Properties;
 import java.util.Random;
 
 import javax.xml.ws.soap.SOAPFaultException;
@@ -39,14 +40,11 @@ import org.bouncycastle.asn1.DERSet;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.bouncycastle.util.encoders.Hex;
-import org.cesecore.certificates.certificate.certextensions.AvailableCustomCertificateExtensionsConfiguration;
-import org.cesecore.certificates.certificate.certextensions.CertificateExtentionConfigurationException;
 import org.cesecore.certificates.certificateprofile.CertificateProfile;
 import org.cesecore.certificates.certificateprofile.CertificateProfileConstants;
 import org.cesecore.certificates.certificateprofile.CertificateProfileSessionRemote;
 import org.cesecore.certificates.crl.RevokedCertInfo;
 import org.cesecore.certificates.util.AlgorithmConstants;
-import org.cesecore.configuration.GlobalConfigurationSessionRemote;
 import org.cesecore.keys.util.KeyTools;
 import org.cesecore.util.Base64;
 import org.cesecore.util.CertTools;
@@ -92,9 +90,6 @@ public class CertificateExtensionTest extends CommonEjbcaWS {
     private final CertificateProfileSessionRemote certificateProfileSession = EjbRemoteHelper.INSTANCE.getRemoteSession(CertificateProfileSessionRemote.class);
     private final EndEntityManagementSessionRemote endEntityManagementSession = EjbRemoteHelper.INSTANCE.getRemoteSession(EndEntityManagementSessionRemote.class);
     private final EndEntityProfileSessionRemote endEntityProfileSession = EjbRemoteHelper.INSTANCE.getRemoteSession(EndEntityProfileSessionRemote.class);
-    private final GlobalConfigurationSessionRemote globalConfigurationSession = EjbRemoteHelper.INSTANCE.getRemoteSession(GlobalConfigurationSessionRemote.class);
-    
-    private AvailableCustomCertificateExtensionsConfiguration cceConfigBackup;
     
 	@BeforeClass
 	public static void setupAccessRights() {
@@ -105,18 +100,11 @@ public class CertificateExtensionTest extends CommonEjbcaWS {
 	public void setUpAdmin() throws Exception {
 		adminSetUpAdmin();
 	}
-	
-	@Before
-	public void setUp() {
-	    cceConfigBackup = (AvailableCustomCertificateExtensionsConfiguration) globalConfigurationSession.
-	            getCachedConfiguration(AvailableCustomCertificateExtensionsConfiguration.CONFIGURATION_ID);
-	}
 
 	@Override
 	@After
 	public void tearDown() throws Exception {
 		super.tearDown();
-		globalConfigurationSession.saveConfiguration(intAdmin, cceConfigBackup);
 	}
 
     @Test
@@ -150,19 +138,11 @@ public class CertificateExtensionTest extends CommonEjbcaWS {
 
 	@Test
 	public void test02GetCertSuccess() throws Exception {
-	    AvailableCustomCertificateExtensionsConfiguration cceConfig = new AvailableCustomCertificateExtensionsConfiguration(); 
-	    populateCustomCertExtensions(cceConfig);
-	    globalConfigurationSession.saveConfiguration(intAdmin, cceConfig);
-		
-	    getCertificateWithExtension(true);
+		getCertificateWithExtension(true);
 	}
 
 	@Test
 	public void test03GetCertFail() throws Exception {
-	    AvailableCustomCertificateExtensionsConfiguration cceConfig = new AvailableCustomCertificateExtensionsConfiguration(); 
-	    populateCustomCertExtensions(cceConfig);
-	    globalConfigurationSession.saveConfiguration(intAdmin, cceConfig);
-        
 		getCertificateWithExtension(false);
 	}
 
@@ -197,7 +177,7 @@ public class CertificateExtensionTest extends CommonEjbcaWS {
 	    assertEquals("dNSName=top.secret.domain.se", CertTools.getSubjectAlternativeName(cert)); 
 	    
 	    // Check that the number-of-redacted-lables-extension was added
-	    byte[] extValue = cert.getExtensionValue(CertTools.id_ct_redacted_domains);
+	    byte[] extValue = cert.getExtensionValue("1.3.6.1.4.1.11129.2.4.6");
 	    assertNotNull("Number of redacted labels (1.3.6.1.4.1.11129.2.4.6) didn't get added", extValue);
 	    
 	    // Check that the number-of-redacted-lables-extension has the write value
@@ -247,7 +227,7 @@ public class CertificateExtensionTest extends CommonEjbcaWS {
 		checkExtension( values, cert.getExtensionValue(sOID_several), sOID_several );
 	}
 	private void checkExtension(byte[] values[], byte extension[], String sOID) throws IOException {
-		assertNotNull(extension);
+		assertNotNull(getNoCertExtensionProperties(sOID), extension);
 		final byte octets[]; {
 			final ASN1Primitive asn1o = ASN1Primitive.fromByteArray(extension);
 			assertNotNull(asn1o);
@@ -317,17 +297,33 @@ public class CertificateExtensionTest extends CommonEjbcaWS {
 		assertTrue(certenv.getResponseType().equals(CertificateHelper.RESPONSETYPE_CERTIFICATE));
 		return (X509Certificate)CertificateHelper.getCertificate(certenv.getData());
 	}
-	
-	private void populateCustomCertExtensions(AvailableCustomCertificateExtensionsConfiguration cceConfig) throws CertificateExtentionConfigurationException {
-	    Properties props = new Properties();
-	    props.put("dynamic", "true");
-	    props.put("encoding", "RAW");
-	    cceConfig.addCustomCertExtension(1, sOID_one, "SingleExtension", "org.cesecore.certificates.certificate.certextensions.BasicCertificateExtension", false, props);
-	    props = new Properties();
-	    props.put("dynamic", "true");
-	    props.put("nvalues", Integer.toString(nrOfValues));
-	    props.put("encoding", "DEROCTETSTRING");
-	    cceConfig.addCustomCertExtension(2, sOID_several, "MultipleExtension", "org.cesecore.certificates.certificate.certextensions.BasicCertificateExtension", false, props);
+	private String getNoCertExtensionProperties(String sOID) {
+		final StringWriter sw = new StringWriter();
+		final PrintWriter pw = new PrintWriter(sw);
+		pw.println("No '"+sOID+"' extension in generated certificate.");
+		pw.println("The reason might be that '"+sOID+"' is not defined in the file src/java/certextensions.properties .");
+		pw.println("The files should look something like this:");
+		pw.println();
+		pw.println("id1.oid = "+sOID_one);
+		pw.println("id1.classpath=org.cesecore.certificates.certificate.certextensions.BasicCertificateExtension");
+		pw.println("id1.displayname=SingleExtension");
+		pw.println("id1.used=true");
+		pw.println("id1.translatable=false");
+		pw.println("id1.critical=false");
+		pw.println("id1.property.dynamic=true");
+		pw.println("id1.property.encoding=RAW");
+		pw.println();
+		pw.println("id2.oid = "+sOID_several);
+		pw.println("id2.classpath=org.cesecore.certificates.certificate.certextensions.BasicCertificateExtension");
+		pw.println("id2.displayname=MultipleExtension");
+		pw.println("id2.used=true");
+		pw.println("id2.translatable=false");
+		pw.println("id2.critical=false");
+		pw.println("id2.property.dynamic=true");
+		pw.println("id2.property.nvalues="+nrOfValues);
+		pw.println("id2.property.encoding=DEROCTETSTRING");
+		pw.flush();
+		return sw.toString();
 	}
 	
 	@Override

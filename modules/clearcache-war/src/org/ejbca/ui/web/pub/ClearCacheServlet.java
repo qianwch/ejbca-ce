@@ -32,11 +32,9 @@ import org.apache.log4j.Logger;
 import org.cesecore.authorization.control.AccessControlSessionLocal;
 import org.cesecore.certificates.ca.CaSessionLocal;
 import org.cesecore.certificates.certificate.CertificateStoreSessionLocal;
-import org.cesecore.certificates.certificate.certextensions.AvailableCustomCertificateExtensionsConfiguration;
 import org.cesecore.certificates.certificateprofile.CertificateProfileSessionLocal;
 import org.cesecore.certificates.certificatetransparency.CertificateTransparencyFactory;
 import org.cesecore.certificates.ocsp.OcspResponseGeneratorSessionLocal;
-import org.cesecore.config.AvailableExtendedKeyUsagesConfiguration;
 import org.cesecore.configuration.GlobalConfigurationSessionLocal;
 import org.cesecore.keybind.InternalKeyBindingDataSessionLocal;
 import org.cesecore.keys.token.CryptoToken;
@@ -98,9 +96,9 @@ public class ClearCacheServlet extends HttpServlet {
         			log.debug("Clear cache request denied from host "+req.getRemoteHost());
         		}
         		res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "The remote host "+req.getRemoteHost()+" is unknown");
-        	} else {
-        	    // Clear all known global configuration caches
-        	    for (final String globalConfigurationId : globalconfigurationsession.getIds()) {
+        	} else {       
+                // Clear all known global configuration caches
+                for (final String globalConfigurationId : globalconfigurationsession.getIds()) {
                     globalconfigurationsession.flushConfigurationCache(globalConfigurationId);
                     if(log.isDebugEnabled()){
                         if (GlobalConfiguration.GLOBAL_CONFIGURATION_ID.equals(globalConfigurationId)) {
@@ -109,10 +107,6 @@ public class ClearCacheServlet extends HttpServlet {
                             log.debug("CMP Configuration cache cleared.");
                         } else if (ScepConfiguration.SCEP_CONFIGURATION_ID.equals(globalConfigurationId)) {
                             log.debug("SCEP Configuration cache cleared.");
-                        } else if (AvailableExtendedKeyUsagesConfiguration.CONFIGURATION_ID.equals(globalConfigurationId)) {
-                            log.debug("Available Extended Key Usages Configuration cache cleared.");
-                        } else if (AvailableCustomCertificateExtensionsConfiguration.CONFIGURATION_ID.equals(globalConfigurationId)) {
-                            log.debug("Available Custom Certificate Extensions Configuration cache cleared.");
                         } else {
                             log.debug(globalConfigurationId + " Configuration cache cleared.");
                         }

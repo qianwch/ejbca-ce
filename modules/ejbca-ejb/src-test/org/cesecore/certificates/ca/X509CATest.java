@@ -21,6 +21,8 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.ByteArrayInputStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyPair;
@@ -46,10 +48,8 @@ import javax.security.auth.x500.X500Principal;
 
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1EncodableVector;
-import org.bouncycastle.asn1.ASN1Encoding;
 import org.bouncycastle.asn1.ASN1Enumerated;
 import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.ASN1Integer;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.ASN1Primitive;
@@ -86,7 +86,7 @@ import org.bouncycastle.util.encoders.Hex;
 import org.cesecore.certificates.ca.catoken.CAToken;
 import org.cesecore.certificates.ca.catoken.CATokenConstants;
 import org.cesecore.certificates.ca.extendedservices.ExtendedCAServiceInfo;
-import org.cesecore.certificates.certificate.certextensions.AvailableCustomCertificateExtensionsConfiguration;
+import org.cesecore.certificates.certificate.certextensions.CertificateExtensionFactory;
 import org.cesecore.certificates.certificate.request.PKCS10RequestMessage;
 import org.cesecore.certificates.certificateprofile.CertificatePolicy;
 import org.cesecore.certificates.certificateprofile.CertificateProfile;
@@ -118,9 +118,6 @@ import org.junit.Test;
 public class X509CATest {
 
 	public static final String CADN = "CN=TEST";
-	
-	// This will be an empty list of custom certificate extensions
-	private final AvailableCustomCertificateExtensionsConfiguration cceConfig = new AvailableCustomCertificateExtensionsConfiguration();
 	
 	public X509CATest() {
 		CryptoProviderTools.installBCProvider();
@@ -207,20 +204,19 @@ public class X509CATest {
         }
         
         // Generate a client certificate and check that it was generated correctly
-        EndEntityInformation user = new EndEntityInformation("username", "CN=User", 666, "rfc822Name=user@user.com,dnsName=foo.bar.com,directoryName=CN=Tomas\\,O=PrimeKey\\,C=SE", "user@user.com", new EndEntityType(EndEntityTypes.ENDUSER), 0, 0, EndEntityConstants.TOKEN_USERGEN, 0, null);
+        EndEntityInformation user = new EndEntityInformation("username", "CN=User", 666, "rfc822Name=user@user.com", "user@user.com", new EndEntityType(EndEntityTypes.ENDUSER), 0, 0, EndEntityConstants.TOKEN_USERGEN, 0, null);
         KeyPair keypair = genTestKeyPair(algName);
         CertificateProfile cp = new CertificateProfile(CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER);
         cp.addCertificatePolicy(new CertificatePolicy("1.1.1.2", null, null));
         cp.setUseCertificatePolicies(true);
-        Certificate usercert = x509ca.generateCertificate(cryptoToken, user, keypair.getPublic(), 0, null, 10L, cp, "00000", cceConfig);
+        Certificate usercert = x509ca.generateCertificate(cryptoToken, user, keypair.getPublic(), 0, null, 10L, cp, "00000");
         assertNotNull(usercert);
         assertEquals("CN=User", CertTools.getSubjectDN(usercert));
         assertEquals(CADN, CertTools.getIssuerDN(usercert));
         assertEquals(getTestKeyPairAlgName(algName).toUpperCase(), AlgorithmTools.getCertSignatureAlgorithmNameAsString(usercert).toUpperCase());
         assertEquals(new String(CertTools.getSubjectKeyId(cacert)), new String(CertTools.getAuthorityKeyId(usercert)));
         assertEquals("user@user.com", CertTools.getEMailAddress(usercert));
-        // directoryName is turned around, but it's just for string reasons in cert objects because it is gotten (internally in BC) getRFC2253Name().
-        assertEquals("rfc822name=user@user.com, dNSName=foo.bar.com, directoryName=c=SE,o=PrimeKey,cn=Tomas", CertTools.getSubjectAlternativeName(usercert));
+        assertEquals("rfc822name=user@user.com", CertTools.getSubjectAlternativeName(usercert));
         assertNull(CertTools.getUPNAltName(usercert));
         assertFalse(CertTools.isSelfSigned(usercert));
         usercert.verify(cryptoToken.getPublicKey(x509ca.getCAToken().getAliasFromPurpose(CATokenConstants.CAKEYPURPOSE_CERTSIGN)));
@@ -323,7 +319,7 @@ public class X509CATest {
 
         cainfo.setUseCrlDistributionPointOnCrl(true);
         cainfo.setDefaultCRLDistPoint(cdpURL);
-        ca.updateCA(cryptoToken, cainfo, cceConfig);
+        ca.updateCA(cryptoToken, cainfo);
         
         Collection<RevokedCertInfo> revcerts = new ArrayList<RevokedCertInfo>();
         X509CRLHolder crl = ca.generateCRL(cryptoToken, revcerts, 1);
@@ -343,7 +339,7 @@ public class X509CATest {
 
         cainfo.setUseCrlDistributionPointOnCrl(false);
         cainfo.setDefaultCRLDistPoint(null);
-        ca.updateCA(cryptoToken, cainfo, cceConfig);
+        ca.updateCA(cryptoToken, cainfo);
         crl = ca.generateCRL(cryptoToken, revcerts, 1);
         assertNotNull(crl);
         xcrl = CertTools.getCRLfromByteArray(crl.getEncoded());
@@ -367,7 +363,7 @@ public class X509CATest {
         cainfo.setUseCrlDistributionPointOnCrl(true);
         cainfo.setDefaultCRLDistPoint(cdpURL);
         cainfo.setCADefinedFreshestCRL(freshestCdpURL);
-        ca.updateCA(cryptoToken, cainfo, cceConfig);
+        ca.updateCA(cryptoToken, cainfo);
 
         Collection<RevokedCertInfo> revcerts = new ArrayList<RevokedCertInfo>();
         X509CRLHolder crl = ca.generateCRL(cryptoToken, revcerts, 1);
@@ -390,7 +386,7 @@ public class X509CATest {
         cainfo.setUseCrlDistributionPointOnCrl(false);
         cainfo.setDefaultCRLDistPoint(null);
         cainfo.setCADefinedFreshestCRL(null);
-        ca.updateCA(cryptoToken, cainfo, cceConfig);
+        ca.updateCA(cryptoToken, cainfo);
 
         crl = ca.generateCRL(cryptoToken, revcerts, 1);
         assertNotNull(crl);
@@ -424,7 +420,7 @@ public class X509CATest {
         CertificateProfile cp = new CertificateProfile(CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER);
         cp.addCertificatePolicy(new CertificatePolicy("1.1.1.2", null, null));
         cp.setUseCertificatePolicies(true);
-        Certificate usercert = ca.generateCertificate(cryptoToken, user, keypair.getPublic(), 0, null, 10L, cp, "00000", cceConfig);
+        Certificate usercert = ca.generateCertificate(cryptoToken, user, keypair.getPublic(), 0, null, 10L, cp, "00000");
         String authKeyId = new String(Hex.encode(CertTools.getAuthorityKeyId(usercert)));
         String keyhash = CertTools.getFingerprintAsString(cryptoToken.getPublicKey(ca.getCAToken().getAliasFromPurpose(CATokenConstants.CAKEYPURPOSE_CERTSIGN)).getEncoded());
 
@@ -435,7 +431,7 @@ public class X509CATest {
 		@SuppressWarnings({ "rawtypes", "unchecked" })
         X509CA ca1 = new X509CA((HashMap)o, 777, CADN, "test", CAConstants.CA_ACTIVE, new Date(), new Date());
 
-		Certificate usercert1 = ca.generateCertificate(cryptoToken, user, keypair.getPublic(), 0, null, 10L, cp, "00000", cceConfig);
+		Certificate usercert1 = ca.generateCertificate(cryptoToken, user, keypair.getPublic(), 0, null, 10L, cp, "00000");
 
         String authKeyId1 = new String(Hex.encode(CertTools.getAuthorityKeyId(usercert1)));
         PublicKey publicKey1 = cryptoToken.getPublicKey(ca1.getCAToken().getAliasFromPurpose(CATokenConstants.CAKEYPURPOSE_CERTSIGN));
@@ -447,7 +443,7 @@ public class X509CATest {
         CAData cadata = new CAData(cainfo.getSubjectDN(), cainfo.getName(), cainfo.getStatus(), ca);
 
         CA ca2 = cadata.getCA();
-		Certificate usercert2 = ca.generateCertificate(cryptoToken, user, keypair.getPublic(), 0, null, 10L, cp, "00000", cceConfig);
+		Certificate usercert2 = ca.generateCertificate(cryptoToken, user, keypair.getPublic(), 0, null, 10L, cp, "00000");
         String authKeyId2 = new String(Hex.encode(CertTools.getAuthorityKeyId(usercert2)));
         PublicKey publicKey2 = cryptoToken.getPublicKey(ca2.getCAToken().getAliasFromPurpose(CATokenConstants.CAKEYPURPOSE_CERTSIGN));
         String keyhash2 = CertTools.getFingerprintAsString(publicKey2.getEncoded());
@@ -479,7 +475,7 @@ public class X509CATest {
 		Collection<ExtendedCAServiceInfo> infos = new ArrayList<ExtendedCAServiceInfo>();
 		infos.add(new MyExtendedCAServiceInfo(0));
 		info.setExtendedCAServiceInfos(infos);
-		ca.updateCA(cryptoToken, info, cceConfig);
+		ca.updateCA(cryptoToken, info);
 		
 		assertEquals(ca.getExternalCAServiceTypes().size(), 1);
 		assertNotNull(ca.getExtendedCAServiceInfo(4711));
@@ -511,39 +507,6 @@ public class X509CATest {
 		ca.setStatus(CAConstants.CA_OFFLINE);
 		assertEquals(CAConstants.CA_OFFLINE, ca.getStatus());
 		assertEquals(CAConstants.CA_OFFLINE, ca.getCAInfo().getStatus());
-	}
-	
-	@Test
-	public void testCTRedactedLabels() throws Exception {
-        final CryptoToken cryptoToken = getNewCryptoToken();
-        final X509CA ca = createTestCA(cryptoToken, CADN);
-	    GeneralNames gns = CertTools.getGeneralNamesFromAltName("rfc822Name=foo@bar.com,dnsName=foo.bar.com,dnsName=(hidden).secret.se,dnsName=(hidden1).(hidden2).ultrasecret.no,directoryName=cn=Tomas\\,O=PrimeKey\\,C=SE");
-	    Extension ext = new Extension(Extension.subjectAlternativeName, false, gns.toASN1Primitive().getEncoded(ASN1Encoding.DER));
-	    ExtensionsGenerator gen = ca.getSubjectAltNameExtensionForCert(ext, false);
-	    Extensions exts = gen.generate();
-	    Extension genext = exts.getExtension(Extension.subjectAlternativeName);
-        Extension ctext = exts.getExtension(new ASN1ObjectIdentifier(CertTools.id_ct_redacted_domains));
-	    assertNotNull("A subjectAltName extension should be present", genext);
-	    assertNull("No CT redated extension should be present", ctext);
-        String altName = CertTools.getAltNameStringFromExtension(genext);
-        assertEquals("altName is not what it should be", "rfc822name=foo@bar.com, dNSName=foo.bar.com, dNSName=hidden.secret.se, dNSName=hidden1.hidden2.ultrasecret.no, directoryName=CN=Tomas,O=PrimeKey,C=SE", altName);
-	    // Test with CT publishing
-	    gen = ca.getSubjectAltNameExtensionForCert(ext, true);
-	    exts = gen.generate();
-	    genext = exts.getExtension(Extension.subjectAlternativeName);
-	    ctext = exts.getExtension(new ASN1ObjectIdentifier(CertTools.id_ct_redacted_domains));
-	    assertNotNull("A subjectAltName extension should be present", genext);
-	    assertNotNull("A CT redacted extension should be present", ctext);
-        ASN1Sequence seq = ASN1Sequence.getInstance(ctext.getExtnValue().getOctets());
-        assertEquals("should be three dnsNames", 3, seq.size());
-        ASN1Integer derInt = ASN1Integer.getInstance(seq.getObjectAt(0));
-        assertEquals("first dnsName should have 0 redacted labels", 0, derInt.getValue().intValue());
-        derInt = ASN1Integer.getInstance(seq.getObjectAt(1));
-        assertEquals("second dnsName should have 1 redacted labels", 1, derInt.getValue().intValue());
-        derInt = ASN1Integer.getInstance(seq.getObjectAt(2));
-        assertEquals("third dnsName should have 2 redacted labels", 2, derInt.getValue().intValue());
-        altName = CertTools.getAltNameStringFromExtension(genext);
-        assertEquals("altName is not what it should be", "rfc822name=foo@bar.com, dNSName=foo.bar.com, dNSName=hidden.secret.se, dNSName=hidden1.hidden2.ultrasecret.no, directoryName=CN=Tomas,O=PrimeKey,C=SE", altName);
 	}
 	
 	@Test
@@ -588,7 +551,7 @@ public class X509CATest {
 	    CertificateProfile cp = new CertificateProfile(CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER);
 	    cp.addCertificatePolicy(new CertificatePolicy("1.1.1.2", null, null));
 	    cp.setUseCertificatePolicies(true);
-	    Certificate usercert = x509ca.generateCertificate(cryptoToken, user, keypair.getPublic(), 0, null, 10L, cp, "00000", cceConfig);
+	    Certificate usercert = x509ca.generateCertificate(cryptoToken, user, keypair.getPublic(), 0, null, 10L, cp, "00000");
 	    assertNotNull(usercert);
 	    
 	    // Change CA keys, but not CA certificate, should not work to issue a certificate with this CA, when the 
@@ -596,7 +559,7 @@ public class X509CATest {
         cryptoToken.generateKeyPair(getTestKeySpec(algName), CAToken.SOFTPRIVATESIGNKEYALIAS);
 	    
 	    try {
-	        usercert = x509ca.generateCertificate(cryptoToken, user, keypair.getPublic(), 0, null, 10L, cp, "00000", cceConfig);
+	        usercert = x509ca.generateCertificate(cryptoToken, user, keypair.getPublic(), 0, null, 10L, cp, "00000");
 	        fail("should not work to issue this certificate");
 	    } catch (SignatureException e) {} // NOPMD: BC 1.47
         try {
@@ -615,7 +578,7 @@ public class X509CATest {
 	    Collection<Certificate> cachain = new ArrayList<Certificate>();
 	    cachain.add(cacert);
 	    x509ca.setCertificateChain(cachain);
-        usercert = x509ca.generateCertificate(cryptoToken, user, keypair.getPublic(), 0, null, 10L, cp, "00000", cceConfig);
+        usercert = x509ca.generateCertificate(cryptoToken, user, keypair.getPublic(), 0, null, 10L, cp, "00000");
         assertNotNull(usercert);
         Collection<RevokedCertInfo> revcerts = new ArrayList<RevokedCertInfo>();
         X509CRLHolder crl = x509ca.generateCRL(cryptoToken, revcerts, 1);
@@ -680,7 +643,7 @@ public class X509CATest {
         cp.addCertificatePolicy(new CertificatePolicy("1.1.1.2", null, null));
         cp.setUseCertificatePolicies(true);
         try {
-            testCa.generateCertificate(cryptoToken, user, keypair.getPublic(), 0, null, 10L, cp, "00000", cceConfig);
+            testCa.generateCertificate(cryptoToken, user, keypair.getPublic(), 0, null, 10L, cp, "00000");
             fail("Should throw CAOfflineException when trying to issue cert before PrivateKeyUsagePeriod starts.");
         } catch (CAOfflineException e) {
             // NOPMD: this is what we expect
@@ -689,7 +652,7 @@ public class X509CATest {
         // Sleep 6 seconds, now it should work
         Thread.sleep(6000);
         try {
-            Certificate cert = testCa.generateCertificate(cryptoToken, user, keypair.getPublic(), 0, null, 10L, cp, "00000", cceConfig);
+            Certificate cert = testCa.generateCertificate(cryptoToken, user, keypair.getPublic(), 0, null, 10L, cp, "00000");
             assertNotNull("A certificate should have been issued", cert);
         } catch (CAOfflineException e) {
             fail("Should not throw CAOfflineException when issuing a certificate within PrivateKeyUsagePeriod.");
@@ -698,7 +661,7 @@ public class X509CATest {
         // Sleep 5 seconds, now it should not work again since PrivateKeyUsagePeriod has expired
         Thread.sleep(5000);
         try {
-            testCa.generateCertificate(cryptoToken, user, keypair.getPublic(), 0, null, 10L, cp, "00000", cceConfig);
+            testCa.generateCertificate(cryptoToken, user, keypair.getPublic(), 0, null, 10L, cp, "00000");
             fail("Should throw CAOfflineException when trying to issue cert after PrivateKeyUsagePeriod ands.");
         } catch (CAOfflineException e) {
             // NOPMD: this is what we expect
@@ -719,36 +682,51 @@ public class X509CATest {
         Collection<String> result = CertTools.getAuthorityInformationAccess(xcrl);
         assertEquals("A list was returned without any values present.", 0, result.size());        
         // Issue a certificate with two different basic certificate extensions
-        EndEntityInformation user = new EndEntityInformation("username", "CN=User", 666, "rfc822Name=user@user.com,dnsName=foo.bar.com,directoryName=CN=Tomas,O=PrimeKey,C=SE", "user@user.com", new EndEntityType(EndEntityTypes.ENDUSER), 0, 0, EndEntityConstants.TOKEN_USERGEN, 0, null);
+        EndEntityInformation user = new EndEntityInformation("username", "CN=User", 666, "rfc822Name=user@user.com", "user@user.com", new EndEntityType(EndEntityTypes.ENDUSER), 0, 0, EndEntityConstants.TOKEN_USERGEN, 0, null);
         CertificateProfile cp = new CertificateProfile(CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER);
         // Configure some custom basic certificate extension
         // one with a good IA5String encoding
-        Properties props1 = new Properties();
-        props1.put("used", "true");
-        props1.put("encoding", "DERIA5STRING");
-        props1.put("dynamin", "false");
-        props1.put("value", "Hello World");
-        cceConfig.addCustomCertExtension(1, "2.16.840.1.113730.1.13", "NetscapeComment", "org.cesecore.certificates.certificate.certextensions.BasicCertificateExtension", false, props1);
-        
+        Properties prop = new Properties();
+        prop.put("id1.oid", "2.16.840.1.113730.1.13");
+        prop.put("id1.classpath", "org.cesecore.certificates.certificate.certextensions.BasicCertificateExtension");
+        prop.put("id1.displayname", "NetscapeComment");
+        prop.put("id1.used", "true");
+        prop.put("id1.translatable", "false");
+        prop.put("id1.critical", "false");
+        prop.put("id1.property.encoding", "DERIA5STRING");
+        prop.put("id1.property.dynamin", "false");
+        prop.put("id1.property.value", "Hello World");
         // one RAW with proper DER encoding
-        Properties props2 = new Properties();
-        props2.put("used", "true");
-        props2.put("encoding", "RAW");
-        props2.put("dynamin", "false");
-        props2.put("value", "301a300c060a2b060104018237140202300a06082b06010505070302");
-        cceConfig.addCustomCertExtension(2, "1.2.3.4", "RawProper", "org.cesecore.certificates.certificate.certextensions.BasicCertificateExtension", false, props2);
-        
+        prop.put("id2.oid", "1.2.3.4");
+        prop.put("id2.classpath", "org.cesecore.certificates.certificate.certextensions.BasicCertificateExtension");
+        prop.put("id2.displayname", "RawProper");
+        prop.put("id2.used", "true");
+        prop.put("id2.translatable", "false");
+        prop.put("id2.critical", "false");
+        prop.put("id2.property.encoding", "RAW");
+        prop.put("id2.property.dynamin", "false");
+        prop.put("id2.property.value", "301a300c060a2b060104018237140202300a06082b06010505070302");
         // one RAW with no DER encoding (actually invalid according to RFC5280)
-        Properties props3 = new Properties();
-        props3.put("used", "true");
-        props3.put("encoding", "RAW");
-        props3.put("dynamin", "false");
-        props3.put("value", "aabbccddeeff00");
-        cceConfig.addCustomCertExtension(3, "1.2.3.5", "RawNoDer", "org.cesecore.certificates.certificate.certextensions.BasicCertificateExtension", false, props3);
-        
-        assertEquals(cceConfig.getCustomCertificateExtension(1).getOID(), "2.16.840.1.113730.1.13");
-        assertEquals(cceConfig.getCustomCertificateExtension(2).getOID(), "1.2.3.4");
-        assertEquals(cceConfig.getCustomCertificateExtension(3).getOID(), "1.2.3.5");
+        prop.put("id3.oid", "1.2.3.5");
+        prop.put("id3.classpath", "org.cesecore.certificates.certificate.certextensions.BasicCertificateExtension");
+        prop.put("id3.displayname", "RawNoDer");
+        prop.put("id3.used", "true");
+        prop.put("id3.translatable", "false");
+        prop.put("id3.critical", "false");
+        prop.put("id3.property.encoding", "RAW");
+        prop.put("id3.property.dynamin", "false");
+        prop.put("id3.property.value", "aabbccddeeff00");
+        // Load the Custom extensions
+        Field certificateExtensionFactoryInstance = CertificateExtensionFactory.class.getDeclaredField("instance");
+        certificateExtensionFactoryInstance.setAccessible(true);
+        Method parseConfiguration = CertificateExtensionFactory.class.getDeclaredMethod("parseConfiguration", Properties.class);
+        parseConfiguration.setAccessible(true);
+        CertificateExtensionFactory instance = (CertificateExtensionFactory) parseConfiguration.invoke(null, prop);
+        certificateExtensionFactoryInstance.set(null, instance);
+        CertificateExtensionFactory fact = CertificateExtensionFactory.getInstance();
+        assertEquals(fact.getCertificateExtensions(1).getOID(), "2.16.840.1.113730.1.13");
+        assertEquals(fact.getCertificateExtensions(2).getOID(), "1.2.3.4");
+        assertEquals(fact.getCertificateExtensions(3).getOID(), "1.2.3.5");
         // Configure to use the custom extensions in the certificate profile
         List<Integer> list = new ArrayList<Integer>();
         list.add(1);
@@ -756,7 +734,7 @@ public class X509CATest {
         list.add(3);
         cp.setUsedCertificateExtensions(list);
         final KeyPair keypair = KeyTools.genKeys("512", "RSA");
-        X509Certificate cert = (X509Certificate)testCa.generateCertificate(cryptoToken, user, keypair.getPublic(), 0, null, 10L, cp, "00000", cceConfig);
+        X509Certificate cert = (X509Certificate)testCa.generateCertificate(cryptoToken, user, keypair.getPublic(), 0, null, 10L, cp, "00000");
         assertNotNull("A certificate should have been issued", cert);
         byte[] ext1 = cert.getExtensionValue("2.16.840.1.113730.1.13");
         // The Extension value is an Octet String, containing my value
@@ -815,7 +793,7 @@ public class X509CATest {
         final String subjectDN = "CN=foo subject,O=Bar,JurisdictionCountry=DE,JurisdictionState=Stockholm,JurisdictionLocality=Solna,C=SE";
         final EndEntityInformation subject = new EndEntityInformation("testPrintableString", subjectDN, testCa.getCAId(), null, null, new EndEntityType(EndEntityTypes.ENDUSER), 0, 0, EndEntityConstants.TOKEN_USERGEN, 0, null);
         final CertificateProfile certProfile = new CertificateProfile(CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER);
-        cert = testCa.generateCertificate(cryptoToken, subject, cert.getPublicKey(), KeyUsage.digitalSignature | KeyUsage.keyEncipherment, null, 30, certProfile, null, cceConfig);
+        cert = testCa.generateCertificate(cryptoToken, subject, cert.getPublicKey(), KeyUsage.digitalSignature | KeyUsage.keyEncipherment, null, 30, certProfile, null);
         assertTrue("Certificate CN was not UTF-8 encoded by default.", getValueFromDN(cert, X509ObjectIdentifiers.commonName) instanceof DERUTF8String);
         assertTrue("Certificate O was not UTF-8 encoded by default.", getValueFromDN(cert, X509ObjectIdentifiers.organization) instanceof DERUTF8String);
         assertTrue("Certificate JurisdictionState was not UTF-8 encoded.", getValueFromDN(cert, CeSecoreNameStyle.JURISDICTION_STATE) instanceof DERUTF8String);
@@ -825,7 +803,7 @@ public class X509CATest {
         
         // Now generate a new certificate with a PrintableString-encoded DN
         testCa.setUsePrintableStringSubjectDN(true);
-        cert = testCa.generateCertificate(cryptoToken, subject, cert.getPublicKey(), KeyUsage.digitalSignature | KeyUsage.keyEncipherment, null, 30, certProfile, null, cceConfig);
+        cert = testCa.generateCertificate(cryptoToken, subject, cert.getPublicKey(), KeyUsage.digitalSignature | KeyUsage.keyEncipherment, null, 30, certProfile, null);
         assertTrue("Certificate CN was not encoded as PrintableString.", getValueFromDN(cert, X509ObjectIdentifiers.commonName) instanceof DERPrintableString);
         assertTrue("Certificate O was not encoded as PrintableString.", getValueFromDN(cert, X509ObjectIdentifiers.organization) instanceof DERPrintableString);
         assertTrue("Certificate JurisdictionState was not encoded as PrintableString.", getValueFromDN(cert, CeSecoreNameStyle.JURISDICTION_STATE) instanceof DERPrintableString);

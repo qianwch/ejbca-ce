@@ -1,27 +1,11 @@
-/*************************************************************************
- *                                                                       *
- *  EJBCA Community: The OpenSource Certificate Authority                *
- *                                                                       *
- *  This software is free software; you can redistribute it and/or       *
- *  modify it under the terms of the GNU Lesser General Public           *
- *  License as published by the Free Software Foundation; either         *
- *  version 2.1 of the License, or any later version.                    *
- *                                                                       *
- *  See terms of license at gnu.org.                                     *
- *                                                                       *
- *************************************************************************/
-
 package org.ejbca.ui.cli.ca;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.security.cert.CertPathValidatorException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateParsingException;
-import java.util.ArrayList;
 import java.util.Collection;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.cesecore.CesecoreException;
 import org.cesecore.authorization.AuthorizationDeniedException;
@@ -34,7 +18,6 @@ import org.cesecore.certificates.ca.CaSessionRemote;
 import org.cesecore.certificates.certificate.request.X509ResponseMessage;
 import org.cesecore.keys.token.IllegalCryptoTokenException;
 import org.cesecore.roles.RoleExistsException;
-import org.cesecore.util.Base64;
 import org.cesecore.util.CertTools;
 import org.cesecore.util.CryptoProviderTools;
 import org.cesecore.util.EjbRemoteHelper;
@@ -61,14 +44,16 @@ public class CaImportCACertCommand extends BaseCaAdminCommand {
 
     {
         registerParameter(new Parameter(CA_NAME_KEY, "CA Name", MandatoryMode.MANDATORY, StandaloneMode.ALLOW, ParameterMode.ARGUMENT,
-                "Name of the affected CA. If the CA is present, it must be waiting for a certificate response from an external CA. " 
-                        + "If the CA is not present, a new CA will be added using the imported certificate chain."));
+                "If no caname is given, CRLs will be created for all the CAs where it is neccessary."));
         registerParameter(new Parameter(FILE_KEY, "File Name", MandatoryMode.MANDATORY, StandaloneMode.ALLOW, ParameterMode.ARGUMENT,
-                "A file containing a PEM encoded certificate. If the CA is waiting for a CSR, this certificate should be the response. "                        
-                        + "If the CA doesn't exist it will be imported using this certificate. "));
-        registerParameter(Parameter.createFlag(INIT_AUTH_KEY,  "This flag may be used when importing an external CA and will create a super administrator (full access) issued by that CA."));
-        registerParameter(new Parameter(SUPERADMIN_CN_KEY, "CN", MandatoryMode.OPTIONAL, StandaloneMode.FORBID, ParameterMode.ARGUMENT,
-                "Required when using " + INIT_AUTH_KEY + ". The Common Name (CN) for the created super administrator."));
+                "Use if you are importing an initial administration CA, and this will be the first CA in your system. "
+                        + "Only used during installation when there is no local AdminCA on the EJBCA instance, "
+                        + "but an external CA is used for administration."));
+        registerParameter(new Parameter(INIT_AUTH_KEY, "", MandatoryMode.OPTIONAL, StandaloneMode.FORBID, ParameterMode.FLAG,
+                "Use DER encoding. Default is PEM encoding."));
+        registerParameter(new Parameter(SUPERADMIN_CN_KEY, "CN", MandatoryMode.OPTIONAL, StandaloneMode.ALLOW, ParameterMode.ARGUMENT,
+                "Required when using " + INIT_AUTH_KEY + ", makes an initial super administrator using the common name SuperAdmin (select you CN) "
+                        + "when initializing the authorization module. Note only used together with -initauthorization when importing initial CA."));
     }
 
     @Override
@@ -81,27 +66,15 @@ public class CaImportCACertCommand extends BaseCaAdminCommand {
         String caName = parameters.get(CA_NAME_KEY);
         String pemFile = parameters.get(FILE_KEY);
     
-        boolean initAuth = parameters.containsKey(INIT_AUTH_KEY);
+        boolean initAuth = parameters.get(INIT_AUTH_KEY) != null;
         String superAdminCN = parameters.get(SUPERADMIN_CN_KEY);
-        if(initAuth && StringUtils.isEmpty(superAdminCN)) {
-            log.error("Error: " + INIT_AUTH_KEY + " flag was used, but super administrator Common Name was not defined with the " + SUPERADMIN_CN_KEY + " switch.");
-        }
         try {
             CryptoProviderTools.installBCProvider();
-            Collection<Certificate> certs;
-            try {
-                certs = CertTools.getCertsFromPEM(pemFile);
-            } catch (FileNotFoundException e) {
-                log.error("Error: " + pemFile + " was not a file, not found or could otherwise not be opened.");
-                return CommandResult.CLI_FAILURE;
-            } catch (CertificateParsingException e) {
-                log.error("Error: " + pemFile + " does not contain a certificate.");
-                return CommandResult.CLI_FAILURE;
+            Collection<Certificate> certs = CertTools.getCertsFromPEM(pemFile);
+            if (certs.size() != 1) {
+                log.error("PEM file must only contain one CA certificate, this PEM file contains " + certs.size() + ".");
+                return CommandResult.FUNCTIONAL_FAILURE;
             }
-            // We can't send the certs directly over EJB
-            final Collection<String> b64Certs = CertTools.certChainToBase64Chain(certs);
-
-            CAAdminSessionRemote caAdminSession = EjbRemoteHelper.INSTANCE.getRemoteSession(CAAdminSessionRemote.class);
             try {
                 // We need to check if the CA already exists to determine what to do:
                 // - If CA already exist, it might be a sub CA that waits for certificate from an external CA
@@ -129,11 +102,15 @@ public class CaImportCACertCommand extends BaseCaAdminCommand {
                     Integer caid = Integer.valueOf(subjectdn.hashCode());
                     initAuthorizationModule(getAuthenticationToken(), caid.intValue(), superAdminCN);
                 }
-                caAdminSession.importCACertificateBase64(getAuthenticationToken(), caName, b64Certs);
+                EjbRemoteHelper.INSTANCE.getRemoteSession(CAAdminSessionRemote.class).importCACertificate(getAuthenticationToken(), caName, certs);
                 log.info("Imported CA " + caName);
                 return CommandResult.SUCCESS;
             }
-        }  catch (CAExistsException e) {
+        } catch (CertificateException e) {
+            log.error(e.getMessage());
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        } catch (CAExistsException e) {
             log.error(e.getMessage());
         } catch (IllegalCryptoTokenException e) {
             log.error(e.getMessage());
@@ -144,8 +121,6 @@ public class CaImportCACertCommand extends BaseCaAdminCommand {
         } catch (RoleExistsException e) {
             log.error(e.getMessage());
         } catch (CertPathValidatorException e) {
-            log.error(e.getMessage());
-        } catch (CertificateException e) {
             log.error(e.getMessage());
         } catch (EjbcaException e) {
             log.error(e.getMessage());

@@ -14,7 +14,6 @@ package org.cesecore.certificates.ca;
 
 import java.io.Serializable;
 import java.security.cert.Certificate;
-import java.security.cert.CertificateParsingException;
 import java.util.Collection;
 import java.util.Date;
 
@@ -31,7 +30,7 @@ import org.cesecore.util.StringTools;
  */
 public abstract class CAInfo implements Serializable {
 
-    private static final long serialVersionUID = 2L;
+    private static final long serialVersionUID = -2239787217241985136L;
     public static final int CATYPE_X509 = 1;
     public static final int CATYPE_CVC = 2;
 
@@ -87,8 +86,7 @@ public abstract class CAInfo implements Serializable {
     protected int catype;
     /** A CAId or CAInfo.SELFSIGNED */
     protected int signedby;
-    protected Collection<String> certificatechain;
-    protected transient Collection<Certificate> certificatechainCached;
+    protected Collection<Certificate> certificatechain;
     protected CAToken catoken;
     protected String description;
     protected int revocationReason;
@@ -193,27 +191,11 @@ public abstract class CAInfo implements Serializable {
      * RootCA certificate in the last position and the CAs certificate in the first.
      */
     public Collection<Certificate> getCertificateChain() {
-        if (certificatechain == null) {
-            return null;
-        }
-        if (certificatechainCached == null) {
-            try {
-                certificatechainCached = CertTools.base64ChainToCertChain(certificatechain);
-            } catch (CertificateParsingException e) {
-                throw new IllegalStateException("Can not create certificate object from BASE64 in database", e);
-            }
-        }
-        return certificatechainCached;
+        return certificatechain;
     }
 
     public void setCertificateChain(Collection<Certificate> certificatechain) {
-        if (certificatechain != null) {
-            this.certificatechainCached = certificatechain;
-            this.certificatechain = CertTools.certChainToBase64Chain(certificatechain);
-        } else {
-            this.certificatechainCached = null;
-            this.certificatechain = null;
-        }
+        this.certificatechain = certificatechain;
     }
 
     public CAToken getCAToken() {

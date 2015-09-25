@@ -126,16 +126,6 @@ public interface CAAdminSession {
     ResponseMessage processRequest(AuthenticationToken admin, CAInfo cainfo, RequestMessage requestmessage) throws CAExistsException,
             CADoesntExistsException, AuthorizationDeniedException, CryptoTokenOfflineException;
 
-    /**
-     * Like importCACertificate, but takes BASE64-encoded certificates to avoid serialization of certificates,
-     * which does not work for e.g. Brainpool certificates.
-     * 
-     * @see CAAdminSession#importCACertificate
-     * @throws CertificateException If the certificates could not be parsed.
-     */
-    void importCACertificateBase64(AuthenticationToken admin, String caName, Collection<String> base64Certs)
-            throws AuthorizationDeniedException, CAExistsException, IllegalCryptoTokenException, CertificateException;
-
     /** Add an external CA's certificate as a CA */
     void importCACertificate(AuthenticationToken admin, String caname, Collection<Certificate> certificates)
             throws AuthorizationDeniedException, CAExistsException, IllegalCryptoTokenException;

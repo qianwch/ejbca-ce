@@ -47,7 +47,6 @@ import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.CertificateParsingException;
-import java.security.cert.PKIXCertPathChecker;
 import java.security.cert.PKIXCertPathValidatorResult;
 import java.security.cert.PKIXParameters;
 import java.security.cert.TrustAnchor;
@@ -233,9 +232,6 @@ public abstract class CertTools {
     /** extended key usage OID Intel AMT (out of band) network management */
     public static final String Intel_amt = "2.16.840.1.113741.1.2.3";
 
-    /** Object ID for CT (Certificate Transparency) specific extensions */
-    public static final String id_ct_redacted_domains = "1.3.6.1.4.1.11129.2.4.6";
-    
     private static final String[] EMAILIDS = { EMAIL, EMAIL1, EMAIL2, EMAIL3 };
 
     public static final String BEGIN_CERTIFICATE_REQUEST = "-----BEGIN CERTIFICATE REQUEST-----";
@@ -1233,31 +1229,6 @@ public abstract class CertTools {
         }
         return ret;
     }
-    
-    public static Collection<String> certChainToBase64Chain(final Collection<Certificate> certs) {
-        final Collection<String> b64Certs = new ArrayList<String>();
-        for (Certificate cert : certs) {
-            try {
-                String b64Cert = new String(Base64.encode(cert.getEncoded()));
-                b64Certs.add(b64Cert);
-            } catch (Exception e) {
-                throw new IllegalStateException(e);
-            }
-        }
-        return b64Certs;
-    }
-    
-    public static Collection<Certificate> base64ChainToCertChain(final Collection<String> b64Certs) throws CertificateParsingException {
-        final Collection<Certificate> certs = new ArrayList<Certificate>();
-        for (String b64Cert : b64Certs) {
-            Certificate cert = getCertfromByteArray(Base64.decode(b64Cert.getBytes()));
-            if (cert == null) {
-                throw new IllegalStateException("Can not create certificate object from: " + b64Cert);
-            }
-            certs.add(cert);
-        }
-        return certs;
-    }
 
     /**
      * Converts a regular array of certificates into an ArrayList, using the provided provided.
@@ -2198,10 +2169,11 @@ public abstract class CertTools {
      */
     public static String getAltNameStringFromExtension(Extension ext) {
         String altName = null;
-        // GeneralNames, the actual encoded name
-        GeneralNames names = getGeneralNamesFromExtension(ext);
-        if (names != null) {
+        // GeneralNames
+        ASN1Encodable gnames = ext.getParsedValue();
+        if (gnames != null) {
             try {
+                GeneralNames names = GeneralNames.getInstance(gnames);
                 GeneralName[] gns = names.getNames();
                 for (GeneralName gn : gns) {
                     int tag = gn.getTagNo();
@@ -2224,21 +2196,6 @@ public abstract class CertTools {
         return altName;
     }
 
-    /**
-     * Gets GeneralNames from an X509Extension
-     * 
-     * @param ext X509Extension with AlternativeNames
-     * @return GeneralNames with all Alternative Names
-     */
-    public static GeneralNames getGeneralNamesFromExtension(Extension ext) {
-        ASN1Encodable gnames = ext.getParsedValue();
-        if (gnames != null) {
-                GeneralNames names = GeneralNames.getInstance(gnames);
-                return names;
-        }
-        return null;
-    }
-    
     /**
      * SubjectAltName ::= GeneralNames
      * 
@@ -2551,9 +2508,7 @@ public abstract class CertTools {
             break;
         case 3: // SubjectAltName of type x400Address not supported
             break;
-        case 4:
-            final X500Name name = X500Name.getInstance(value);
-            ret = CertTools.DIRECTORYNAME + "=" + name.toString();
+        case 4: // SubjectAltName of type directoryName not supported
             break;
         case 5: // SubjectAltName of type ediPartyName not supported
             break;
@@ -2575,12 +2530,10 @@ public abstract class CertTools {
      * 
      * @param certificate cert to verify
      * @param caCertChain collection of X509Certificate
-     * @param date Date to verify at, or null to use current time.
-     * @param optional PKIXCertPathChecker implementations to use during cert path validation
      * @return true if verified OK
      * @throws Exception if verification failed
      */
-    public static boolean verify(Certificate certificate, Collection<Certificate> caCertChain, Date date, PKIXCertPathChecker...pkixCertPathCheckers) throws Exception {
+    public static boolean verify(Certificate certificate, Collection<Certificate> caCertChain) throws Exception {
         try {
             ArrayList<Certificate> certlist = new ArrayList<Certificate>();
             // Create CertPath
@@ -2595,11 +2548,7 @@ public abstract class CertTools {
             java.security.cert.TrustAnchor anchor = new java.security.cert.TrustAnchor(cac[0], null);
             // Set the PKIX parameters
             java.security.cert.PKIXParameters params = new java.security.cert.PKIXParameters(java.util.Collections.singleton(anchor));
-            for (final PKIXCertPathChecker pkixCertPathChecker : pkixCertPathCheckers) {
-                params.addCertPathChecker(pkixCertPathChecker);
-            }
             params.setRevocationEnabled(false);
-            params.setDate(date);
             java.security.cert.CertPathValidator cpv = java.security.cert.CertPathValidator.getInstance("PKIX", "BC");
             java.security.cert.PKIXCertPathValidatorResult result = (java.security.cert.PKIXCertPathValidatorResult) cpv.validate(cp, params);
             if (log.isDebugEnabled()) {
@@ -2612,19 +2561,7 @@ public abstract class CertTools {
         }
         return true;
     }
-
-    /**
-     * Check the certificate with CA certificate.
-     * 
-     * @param certificate cert to verify
-     * @param caCertChain collection of X509Certificate
-     * @return true if verified OK
-     * @throws Exception if verification failed
-     */
-    public static boolean verify(Certificate certificate, Collection<Certificate> caCertChain) throws Exception {
-        return verify(certificate, caCertChain, null);
-    }
-
+    
     /**
      * Check the certificate with a list of trusted certificates.
      * The trusted certificates list can either be end entity certificates, in this case, only this certificate by this issuer

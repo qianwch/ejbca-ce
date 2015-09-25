@@ -18,8 +18,7 @@
 if (WebConfiguration.isManualClassPathsEnabled()) {
 %>
         <h:selectOneMenu id="actionClassPathSelect" value="#{editService.customActionType.autoClassPath}"
-                         onchange="document.getElementById('edit:actionClassPathTextField').disabled = (this.value != &quot;&quot;); return true"
-                         disabled="#{not editService.hasEditRights}">
+                         onchange="document.getElementById('edit:actionClassPathTextField').disabled = (this.value != &quot;&quot;); return true">
             <f:selectItems value="#{editService.serviceConfigurationView.availableCustomActionItems}" />
             <f:selectItem itemValue="" itemLabel="#{web.text.MANUALCLASSPATH}" />
         </h:selectOneMenu>
@@ -41,7 +40,7 @@ if (WebConfiguration.isManualClassPathsEnabled()) {
 <%
 } else {
 %>
-        <h:selectOneMenu id="actionClassPathSelect" value="#{editService.customActionType.autoClassPath} disabled="#{not editService.hasEditRights}">
+        <h:selectOneMenu id="actionClassPathSelect" value="#{editService.customActionType.autoClassPath}">
             <f:selectItem itemValue="" itemLabel="#{web.text.PLEASE_SELECT}" />
             <f:selectItems value="#{editService.serviceConfigurationView.availableCustomActionItems}" />
             <f:selectItems value="#{editService.manualCustomItems.actions}" />
@@ -59,6 +58,6 @@ if (WebConfiguration.isManualClassPathsEnabled()) {
 		<h:outputText value="#{web.text.CUSTOMACTIONPROPERTIES}"/>
 	</h:panelGroup>
 	<h:panelGroup>
-		<h:inputTextarea id="actionPropsTextArea" value="#{editService.customActionType.propertyText}" rows="8" cols="45" disabled="#{not editService.hasEditRights}"/>
+		<h:inputTextarea id="actionPropsTextArea" value="#{editService.customActionType.propertyText}" rows="8" cols="45"/>
 	</h:panelGroup>
 

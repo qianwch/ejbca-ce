@@ -79,7 +79,12 @@ public class PublishQueueProcessWorker extends EmailSendingWorker {
                     for (int i = 0; i < ids.length; i++) {
                         int publisherId = Integer.valueOf(ids[i]);
                         // Get everything from the queue for this publisher id
-                        BasePublisher publisher = publisherSession.getPublisher(getAdmin(), publisherId);                  
+                        BasePublisher publisher;
+                        try {
+                            publisher = publisherSession.getPublisher(getAdmin(), publisherId);
+                        } catch (AuthorizationDeniedException e) {
+                            throw new ServiceExecutionFailedException(getAdmin() + " does not have access to publishers.", e);
+                        }
                         publisherQueueSession.plainFifoTryAlwaysLimit100EntriesOrderByTimeCreated(getAdmin(), publisherId, publisher);
                     }
                 } else {

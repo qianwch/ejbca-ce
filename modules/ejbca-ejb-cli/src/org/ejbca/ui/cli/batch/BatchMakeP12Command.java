@@ -106,19 +106,12 @@ public class BatchMakeP12Command extends EjbcaCliUserCommandBase {
 
     @Override
     public String getCommandDescription() {
-        return "Batch generate keys and certificates.";
+        return "Generate keys and certificates for all users with status NEW.";
     }
 
     @Override
     public String getFullHelpText() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(getCommandDescription() + "\n\n");
-        String indent = "    * ";
-        sb.append("For end entities to be batch generated, they must fulfill the following criteria:" + "\n");
-        sb.append(indent + "They must have status NEW, FAILED or KEYRECOVER."+ "\n");
-        sb.append(indent + "Cleartext password must be set."+ "\n");
-        sb.append(indent + "Token type must be JKS, P12 or PEM."+ "\n");
-        return sb.toString();
+        return getCommandDescription() + " Note also that all users must have cleartext passwords set, and token types must be non browser.";
     }
 
     @Override

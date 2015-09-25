@@ -77,9 +77,9 @@ public class CertificateProfileTest {
         assertEquals(0, policies.size());
         assertEquals(CertificateConstants.CERTTYPE_ENDENTITY, prof.getType());
         final int[] availablebitlen = prof.getAvailableBitLengths();
-        assertEquals(15, availablebitlen.length);
+        assertEquals(11, availablebitlen.length);
         assertEquals(0, availablebitlen[0]);
-        assertEquals(8192, availablebitlen[14]);
+        assertEquals(8192, availablebitlen[10]);
         assertEquals(0, prof.getMinimumAvailableBitLength());
         assertEquals(8192, prof.getMaximumAvailableBitLength());
         assertEquals(true, prof.getUseKeyUsage());
@@ -398,6 +398,37 @@ public class CertificateProfileTest {
     	assertTrue(l.contains(Extension.subjectDirectoryAttributes.getId()));
     	assertTrue(l.contains(CertTools.OID_MSTEMPLATE));    	
     } // test09CertificateExtensions
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void test07UpgradeExtendedKeyUsage() throws Exception {
+        CertificateProfile ep = new CertificateProfile(CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER);
+        assertEquals(CertificateProfile.LATEST_VERSION, ep.getLatestVersion(), 0);
+        ep.setVersion((float)31.0);
+        ArrayList<Integer> eku = new ArrayList<Integer>();
+        eku.add(Integer.valueOf(1));
+        eku.add(Integer.valueOf(2));
+        eku.add(Integer.valueOf(3));
+        ep.setExtendedKeyUsage(eku);
+        ArrayList<Object> ar = ep.getExtendedKeyUsageArray();
+        Object o = ar.get(0);
+        assertTrue((o instanceof Integer));
+        assertEquals(3, ar.size());
+
+        ArrayList<String> arstr = ep.getExtendedKeyUsageOids();
+        o = arstr.get(0);
+        assertTrue((o instanceof String));
+        assertEquals(3, arstr.size());
+
+        ep.upgrade();
+        ar = ep.getExtendedKeyUsageArray();
+        o = ar.get(0);
+        assertTrue((o instanceof String));
+        assertEquals(3, ar.size());
+        assertEquals("1.3.6.1.5.5.7.3.1", ar.get(0));
+        assertEquals("1.3.6.1.5.5.7.3.2", ar.get(1));
+        assertEquals("1.3.6.1.5.5.7.3.3", ar.get(2));
+    } // test10UpgradeExtendedKeyUsage
 
     @Test
     public void test08Clone() throws Exception {

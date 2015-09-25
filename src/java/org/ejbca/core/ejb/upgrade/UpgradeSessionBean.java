@@ -21,10 +21,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -70,7 +68,6 @@ import org.cesecore.certificates.ca.InvalidAlgorithmException;
 import org.cesecore.certificates.ca.X509CA;
 import org.cesecore.certificates.ca.extendedservices.ExtendedCAServiceInfo;
 import org.cesecore.certificates.ca.extendedservices.ExtendedCAServiceTypes;
-import org.cesecore.certificates.certificate.certextensions.AvailableCustomCertificateExtensionsConfiguration;
 import org.cesecore.certificates.certificateprofile.CertificatePolicy;
 import org.cesecore.certificates.certificateprofile.CertificateProfile;
 import org.cesecore.certificates.certificateprofile.CertificateProfileData;
@@ -79,7 +76,6 @@ import org.cesecore.configuration.GlobalConfigurationData;
 import org.cesecore.configuration.GlobalConfigurationSessionLocal;
 import org.cesecore.internal.InternalResources;
 import org.cesecore.jndi.JndiConstants;
-import org.cesecore.keybind.InternalKeyBindingRules;
 import org.cesecore.keys.token.CryptoToken;
 import org.cesecore.keys.token.CryptoTokenSessionLocal;
 import org.cesecore.roles.RoleData;
@@ -93,7 +89,6 @@ import org.ejbca.core.ejb.hardtoken.HardTokenData;
 import org.ejbca.core.ejb.hardtoken.HardTokenIssuerData;
 import org.ejbca.core.ejb.ra.raadmin.AdminPreferencesData;
 import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileData;
-import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.core.model.ca.caadmin.extendedcaservices.CmsCAService;
 import org.ejbca.core.model.ca.caadmin.extendedcaservices.HardTokenEncryptCAService;
 import org.ejbca.core.model.ca.caadmin.extendedcaservices.HardTokenEncryptCAServiceInfo;
@@ -197,14 +192,6 @@ public class UpgradeSessionBean implements UpgradeSessionLocal, UpgradeSessionRe
         	if (!postMigrateDatabase500(dbtype)) {
         		return false;
         	}
-        }
-        
-        if(oldVersion < 6211) {
-            try {
-                postMigrateDatabase6211();
-            } catch (UpgradeFailedException e) {
-                return false;
-            }
         }
 
         return true;
@@ -397,8 +384,6 @@ public class UpgradeSessionBean implements UpgradeSessionLocal, UpgradeSessionRe
     	//Upgrade database
     	migrateDatabase("/400_500/400_500-upgrade-"+dbtype+".sql");
     	
-        final AvailableCustomCertificateExtensionsConfiguration cceConfig = (AvailableCustomCertificateExtensionsConfiguration) 
-                globalConfigurationSession.getCachedConfiguration(AvailableCustomCertificateExtensionsConfiguration.CONFIGURATION_ID );
     	// fix CAs that don't have classpath for extended CA services
     	Collection<Integer> caids = caSession.getAllCaIds();
     	for (Integer caid : caids) {
@@ -470,7 +455,7 @@ public class UpgradeSessionBean implements UpgradeSessionLocal, UpgradeSessionRe
 					if (!extendedcaserviceinfos.isEmpty()) {
 						cainfo.setExtendedCAServiceInfos(extendedcaserviceinfos);
 						final CryptoToken cryptoToken = cryptoTokenSession.getCryptoToken(ca.getCAToken().getCryptoTokenId());
-						ca.updateCA(cryptoToken, cainfo, cceConfig);
+						ca.updateCA(cryptoToken, cainfo);
 					}
 					// Finally store the upgraded CA
 					caSession.editCA(admin, ca, true);
@@ -589,149 +574,6 @@ public class UpgradeSessionBean implements UpgradeSessionLocal, UpgradeSessionRe
         accessTreeUpdateSession.signalForAccessTreeUpdate();
         accessControlSession.forceCacheExpire();
 
-        return result;
-    }
-    
-    
-    /**
-     * Upgrade access rules such that every role that already has access to /system_functionality/edit_systemconfiguration 
-     * will also have access to the new access rule /system_functionality/edit_available_extended_key_usages
-     * 
-     * @return true if the upgrade was successful and false otherwise
-     */
-    private boolean addEKUAndCustomCertExtensionsAccessRulestoRoles() {
-        Collection<RoleData> roles = roleAccessSession.getAllRoles();
-        for (RoleData role : roles) {
-            final Map<Integer, AccessRuleData> rulemap = role.getAccessRules();
-            final Collection<AccessRuleData> rules = rulemap.values();
-            for (AccessRuleData rule : rules) {
-                if (StringUtils.equals(StandardRules.REGULAR_EDITSYSTEMCONFIGURATION.resource(), rule.getAccessRuleName()) && 
-                        rule.getInternalState().equals(AccessRuleState.RULE_ACCEPT)) {
-                    // Now we add a new rule
-                    final Collection<AccessRuleData> newrules = new ArrayList<AccessRuleData>();
-                    final AccessRuleData editAvailableEKURule = new AccessRuleData(role.getRoleName(), StandardRules.REGULAR_EDITAVAILABLEEKU.resource(), AccessRuleState.RULE_ACCEPT, false);
-                    final AccessRuleData editCustomCertExtensionsRule = new AccessRuleData(role.getRoleName(), StandardRules.REGULAR_EDITAVAILABLECUSTOMCERTEXTENSION.resource(), AccessRuleState.RULE_ACCEPT, false);
-                    newrules.add(editAvailableEKURule);
-                    newrules.add(editCustomCertExtensionsRule);
-                    try {
-                        addAccessRulesToRole(role, newrules);
-                        log.info("Added rule '" + editAvailableEKURule.toString() + "' to role '"+role.getRoleName()+"' since the role contained the '"+StandardRules.REGULAR_EDITSYSTEMCONFIGURATION+"' rule.");
-                    } catch (Exception e) {
-                        log.error("Not possible to add new access rule to role: "+role.getRoleName(), e);
-                    }                
-                }
-            }
-        }
-        
-        accessTreeUpdateSession.signalForAccessTreeUpdate();
-        accessControlSession.forceCacheExpire();
-        return true;
-        
-    }      
-    
-    /**
-     * This method adds read-only rules that were created for the new read-only admin in https://jira.primekey.se/browse/ECA-4344. It makes sure that any roles which previously
-     * had access to the affected resources retain read rights (in case those roles should be restricted as a result of this ticket). 
-     * 
-     * All access has been made more granular, so performing this step post-upgrade is safe. 
-     * 
-     * 
-     * The exact changes performed are documented in the UPGRADE document. 
-     * @throws UpgradeFailedException if upgrade fails. 
-     */
-    @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    private void addReadOnlyRules() throws UpgradeFailedException {
-        try {
-            // Any roles that had access to /ca_functionality/basic_functions/activate_ca or just /ca_functionality/ (+recursive) 
-            // should be given access to /ca_functionality/view_ca
-            Set<RoleData> viewCaRoles = new HashSet<RoleData>(roleMgmtSession.getAuthorizedRoles(AccessRulesConstants.REGULAR_ACTIVATECA, false));
-            viewCaRoles.addAll(roleMgmtSession.getAuthorizedRoles(StandardRules.CAFUNCTIONALITY.resource(), true));
-            for (RoleData role : viewCaRoles) {
-                AccessRuleData newRule = new AccessRuleData(role.getRoleName(), StandardRules.CAVIEW.resource(), AccessRuleState.RULE_ACCEPT, false);
-                if (!role.getAccessRules().containsValue(newRule)) {
-                    addAccessRulesToRole(role, Arrays.asList(newRule));
-                }
-            }
-            // Next, any roles with access to /ca_functionality/edit_certificate_profiles should have be given access to /ca_functionality/view_certificate_profiles
-            List<RoleData> certificateProfileRoles = roleMgmtSession.getAuthorizedRoles(StandardRules.CERTIFICATEPROFILEEDIT.resource(), false);
-            for (RoleData role : certificateProfileRoles) {
-                AccessRuleData newRule = new AccessRuleData(role.getRoleName(), StandardRules.CERTIFICATEPROFILEVIEW.resource(), AccessRuleState.RULE_ACCEPT, false);
-                if (!role.getAccessRules().containsValue(newRule)) {
-                addAccessRulesToRole(role,
-                        Arrays.asList(newRule));
-                }
-            }
-            
-            // Any roles with access to /ca_functionality/edit_publisher should be given /ca_functionality/view_publisher
-            List<RoleData> publisherRoles = roleMgmtSession.getAuthorizedRoles(AccessRulesConstants.REGULAR_EDITPUBLISHER, false);
-            for (RoleData role : publisherRoles) {
-                AccessRuleData newRule = new AccessRuleData(role.getRoleName(), AccessRulesConstants.REGULAR_VIEWPUBLISHER, AccessRuleState.RULE_ACCEPT, false);
-                if (!role.getAccessRules().containsValue(newRule)) {
-                addAccessRulesToRole(role,
-                        Arrays.asList(newRule));
-                }
-            }
-            // Any roles with access to /ra_functionality/edit_end_entity_profiles should be given /ra_functionality/view_end_entity_profiles
-            List<RoleData> endEntityProfileRoles = roleMgmtSession.getAuthorizedRoles(AccessRulesConstants.REGULAR_EDITENDENTITYPROFILES, false);
-            for (RoleData role : endEntityProfileRoles) {
-                AccessRuleData newRule = new AccessRuleData(role.getRoleName(), AccessRulesConstants.REGULAR_VIEWENDENTITYPROFILES, AccessRuleState.RULE_ACCEPT, false);
-                if (!role.getAccessRules().containsValue(newRule)) {
-                addAccessRulesToRole(role,
-                        Arrays.asList(newRule));
-                }
-            }
-            // Any roles with access to "/" should be given /services/edit, /services/view and /peer/view (+recursive)
-            List<RoleData> rootAccessRoles = roleMgmtSession.getAuthorizedRoles(StandardRules.ROLE_ROOT.resource(), false);
-            for (RoleData role : rootAccessRoles) {
-                ArrayList<AccessRuleData> accessRulesList = new ArrayList<AccessRuleData>();
-                AccessRuleData servicesEdit = new AccessRuleData(role.getRoleName(), AccessRulesConstants.SERVICES_EDIT, AccessRuleState.RULE_ACCEPT,
-                        false);
-                AccessRuleData servicesView = new AccessRuleData(role.getRoleName(), AccessRulesConstants.SERVICES_VIEW, AccessRuleState.RULE_ACCEPT,
-                        false);
-                if (!role.getAccessRules().containsValue(servicesEdit)) {
-                    accessRulesList.add(servicesEdit);
-                }
-                if (!role.getAccessRules().containsValue(servicesView)) {
-                    accessRulesList.add(servicesView);
-                }
-                addAccessRulesToRole(role, accessRulesList);
-            }           
-            // Any roles with access to /internalkeybinding should be given /internalkeybinding/view (+recursive)
-            List<RoleData> keybindingProfileRoles = roleMgmtSession.getAuthorizedRoles(InternalKeyBindingRules.BASE.resource(), false);
-            for (RoleData role : keybindingProfileRoles) {
-                AccessRuleData newRule = new AccessRuleData(role.getRoleName(), InternalKeyBindingRules.VIEW.resource(), AccessRuleState.RULE_ACCEPT, true);
-                if (!role.getAccessRules().containsValue(newRule)) {
-                addAccessRulesToRole(role,
-                        Arrays.asList(newRule));
-                }
-            }
-
-        } catch (RoleNotFoundException e) {
-            throw new UpgradeFailedException("Upgrade failed, for some reason retrieved role does not exist in database.", e);
-        }
-    }
-    
-    @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    private RoleData addAccessRulesToRole(final RoleData role,
-            final Collection<AccessRuleData> accessRules) throws RoleNotFoundException { 
-        
-        RoleData result = roleAccessSession.findRole(role.getPrimaryKey());
-        if (result == null) {
-            final String msg = INTERNAL_RESOURCES.getLocalizedMessage("authorization.errorrolenotexists", role.getRoleName());
-            throw new RoleNotFoundException(msg);
-        }
-        
-        AuthenticationToken admin = new AlwaysAllowLocalAuthenticationToken(new UsernamePrincipal("UpgradeSessionBean.AddNewAccessRulestoRoles"));
-        
-        try {
-            roleMgmtSession.addAccessRulesToRole(admin, result, accessRules);
-        } catch (AuthorizationDeniedException e) {
-            throw new IllegalStateException("Always allow token was denied access.", e);
-        }
-        logAccessRulesAdded(admin, role.getRoleName(), accessRules);
-        accessTreeUpdateSession.signalForAccessTreeUpdate();
-        accessControlSession.forceCacheExpire();
-        
         return result;
     }
     
@@ -860,19 +702,6 @@ public class UpgradeSessionBean implements UpgradeSessionLocal, UpgradeSessionRe
     	log.error("(this is not an error) Finished post upgrade from EJBCA 4.0.x to EJBCA 5.0.x with result: "+ret);
 	
         return ret;
-    }
-    
-    /**
-     * EJBCA 6.2.11 introduces new sun rules to System Configuration in regards to Custom OIDs and EKUs.
-     * 
-     * Access rules have also been added for read only rights to parts of the GUI. 
-     * @throws UpgradeFailedException if upgrade fails (rolls back)
-     */
-    private void postMigrateDatabase6211() throws UpgradeFailedException {   
-        // Next add access rules for the new audit role template, allowing easy restriction of resources where needed. 
-        addReadOnlyRules();
-        addEKUAndCustomCertExtensionsAccessRulestoRoles();
-        log.error("(This is not an error) Completed post upgrade procedure to 6.2.11");
     }
     
     /**

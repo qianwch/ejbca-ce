@@ -22,7 +22,6 @@ import javax.faces.application.Application;
 import javax.faces.context.FacesContext;
 
 import org.apache.commons.lang.StringUtils;
-import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.core.model.services.ServiceConfiguration;
 import org.ejbca.core.model.services.ServiceExistsException;
 import org.ejbca.core.model.util.EjbLocalHelper;
@@ -56,9 +55,9 @@ public class ListServicesManagedBean extends BaseManagedBean {
 
     public List<SortableSelectItem> getAvailableServices() {
         List<SortableSelectItem> availableServices = new ArrayList<SortableSelectItem>();
-        Collection<Integer> availableServicesIds = ejb.getServiceSession().getVisibleServiceIds();
+        Collection<Integer> availableServicesIds = ejb.getServiceSession().getAuthorizedVisibleServiceIds(getAdmin());
         for (Integer id : availableServicesIds) {
-            ServiceConfiguration serviceConfig = ejb.getServiceSession().getServiceConfiguration(id.intValue());
+            ServiceConfiguration serviceConfig = ejb.getServiceSession().getServiceConfiguration(getAdmin(), id.intValue());
             String serviceName = ejb.getServiceSession().getServiceName(id.intValue());
             String hidden = "";
             if (serviceConfig.isHidden()) {
@@ -165,13 +164,6 @@ public class ListServicesManagedBean extends BaseManagedBean {
 		this.newServiceName = newServiceName;
 	}
 
-	/** 
-	 * @return true if admin has access to /services/edit
-	 */
-	public boolean getHasEditRights() {
-	    return ejb.getAccessControlSession().isAuthorizedNoLogging(getAdmin(), AccessRulesConstants.SERVICES_EDIT);
-	}
-	
 	/**
 	 * returns true if the is a faulty service name.
 	 * @param newServiceName

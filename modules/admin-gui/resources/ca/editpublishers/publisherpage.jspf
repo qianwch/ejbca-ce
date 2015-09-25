@@ -1,5 +1,5 @@
 <%               
-  BasePublisher publisherdata = publisherhelper.getPublisherdata();
+  BasePublisher publisherdata = publisherhelper.publisherdata;
    
 
   Map authorizedcas = ejbcawebbean.getInformationMemory().getCANames();  
@@ -151,15 +151,15 @@ function checkallfields(){
 
 </script>
 <div align="center">
-  <h2><%= ejbcawebbean.getText(( publisherhelper.hasEditRights() ?  "EDITPUBLISHER" :  "VIEWPUBLISHER")   ) %></h2>
-  <h3><%= ejbcawebbean.getText("PUBLISHER")+ " : "%><c:out value="<%= publisherhelper.getPublisherName() %>"/></h3>
-<% if(publisherhelper.getConnectionmessage()){
-     publisherhelper.setConnectionmessage(false);
-     if(publisherhelper.isConnectionsuccessful()){
-        publisherhelper.setConnectionsuccessful(false);
+  <h2><%= ejbcawebbean.getText("EDITPUBLISHER") %></h2>
+  <h3><%= ejbcawebbean.getText("PUBLISHER")+ " : "%><c:out value="<%= publisherhelper.publishername %>"/></h3>
+<% if(publisherhelper.connectionmessage){
+     publisherhelper.connectionmessage = false;
+     if(publisherhelper.connectionsuccessful){
+        publisherhelper.connectionsuccessful = false;
         out.write("<h3>" + ejbcawebbean.getText("CONTESTEDSUCESSFULLY") +"</h3>");
      }else{
-       out.write("<h3>" + ejbcawebbean.getText("ERRORCONNECTINGTOPUB") + " : ");%> <c:out value="<%= publisherhelper.getConnectionerrormessage() %>"/></h3>
+       out.write("<h3>" + ejbcawebbean.getText("ERRORCONNECTINGTOPUB") + " : ");%> <c:out value="<%= publisherhelper.connectionerrormessage %>"/></h3>
      <%}
    } %>
 </div>
@@ -180,19 +180,18 @@ function checkallfields(){
         <strong><%= ejbcawebbean.getText("NAME") %></strong>
       </td>
       <td width="55%"> 
-        <strong><c:out value="<%= publisherhelper.getPublisherName() %>"/></strong>
+        <strong><c:out value="<%= publisherhelper.publishername %>"/></strong>
       </td>
     </tr>
     <form name="publishertype" method="post" action="<%=THIS_FILENAME %>">
       <input type="hidden" name='<%= EditPublisherJSPHelper.ACTION %>' value='<%=EditPublisherJSPHelper.ACTION_CHANGE_PUBLISHERTYPE %>'>
-      <input type="hidden" name='<%= EditPublisherJSPHelper.HIDDEN_PUBLISHERNAME %>' value='<c:out value="<%= publisherhelper.getPublisherName() %>"/>'>
+      <input type="hidden" name='<%= EditPublisherJSPHelper.HIDDEN_PUBLISHERNAME %>' value='<c:out value="<%= publisherhelper.publishername %>"/>'>
     <tr  id="Row<%=row++%2%>"> 
       <td width="45%"  align="right"> 
         <%= ejbcawebbean.getText("PUBLISHERTYPE") %>
       </td>
       <td width="55%">
-
-        <select name="<%=EditPublisherJSPHelper.SELECT_PUBLISHERTYPE%>" size="1" onchange='document.publishertype.submit()' <% if(publisherhelper.isReadOnly()) { out.write("disabled"); } %>>
+        <select name="<%=EditPublisherJSPHelper.SELECT_PUBLISHERTYPE%>" size="1" onchange='document.publishertype.submit()'>
            <%  int currenttype = publisherhelper.getPublisherType(); 
                for(int i=0; i<publishertypes.length;i++){ %>
            <option  value="<%= publishertypes[i] %>" 
@@ -208,23 +207,23 @@ function checkallfields(){
    
    <form name="editpublisher" method="post" action="<%=THIS_FILENAME %>">
     <input type="hidden" name='<%= EditPublisherJSPHelper.ACTION %>' value='<%=EditPublisherJSPHelper.ACTION_EDIT_PUBLISHER %>'>
-    <input type="hidden" name='<%= EditPublisherJSPHelper.HIDDEN_PUBLISHERNAME %>' value='<c:out value="<%= publisherhelper.getPublisherName() %>"/>'>
+    <input type="hidden" name='<%= EditPublisherJSPHelper.HIDDEN_PUBLISHERNAME %>' value='<c:out value="<%= publisherhelper.publishername %>"/>'>
     <input type="hidden" name='<%= EditPublisherJSPHelper.HIDDEN_PUBLISHERTYPE %>' value='<c:out value="<%= publisherhelper.getPublisherType() %>"/>'>
    <table class="edit-bottom" width="100%" border="0" cellspacing="3" cellpadding="3">
 
-    <% if(publisherhelper.getPublisherdata() instanceof LdapPublisher){%>
+    <% if(publisherhelper.publisherdata instanceof LdapPublisher){%>
          <%@ include file="ldappublisherpage.jspf" %> 
     <% }
-      if(publisherhelper.getPublisherdata() instanceof LdapSearchPublisher){%>
+      if(publisherhelper.publisherdata instanceof LdapSearchPublisher){%>
          <%@ include file="ldapsearchpublisherpage.jspf" %> 
     <% }
-      if(publisherhelper.getPublisherdata() instanceof ActiveDirectoryPublisher){%>
+      if(publisherhelper.publisherdata instanceof ActiveDirectoryPublisher){%>
          <%@ include file="adpublisherpage.jspf" %> 
     <% }
-       if(publisherhelper.getPublisherdata() instanceof ValidationAuthorityPublisher){%>
+       if(publisherhelper.publisherdata instanceof ValidationAuthorityPublisher){%>
          <%@ include file="vapublisherpage.jspf" %>
     <% }
-       if(publisherhelper.getPublisherdata() instanceof CustomPublisherContainer){%>
+       if(publisherhelper.publisherdata instanceof CustomPublisherContainer){%>
          <%@ include file="custompublisherpage.jspf" %> 
     <% } %>
     
@@ -267,7 +266,7 @@ function checkallfields(){
           <input type="checkbox" name="<%= EditPublisherJSPHelper.CHECKBOX_ONLYUSEQUEUE %>" value="<%=EditPublisherJSPHelper.CHECKBOX_VALUE %>" 
            <%  if(publisherdata.getOnlyUseQueue()) {
                  out.write(" CHECKED ");
-           } %> id="<%=EditPublisherJSPHelper.CHECKBOX_ONLYUSEQUEUE%>" <% if(publisherhelper.isReadOnly()) { out.write("disabled"); } %> />
+           } %> id="<%=EditPublisherJSPHelper.CHECKBOX_ONLYUSEQUEUE%>" />
           <label for="<%=EditPublisherJSPHelper.CHECKBOX_ONLYUSEQUEUE%>"><c:out value="<%= ejbcawebbean.getText(\"USE\") %>" /></label>
       </td>
     </tr>
@@ -281,7 +280,7 @@ function checkallfields(){
           <input type="checkbox" name="<%= EditPublisherJSPHelper.CHECKBOX_KEEPPUBLISHEDINQUEUE %>" value="<%=EditPublisherJSPHelper.CHECKBOX_VALUE %>" 
            <%  if(publisherdata.getKeepPublishedInQueue()) {
                  out.write(" CHECKED ");
-           } %> id="<%=EditPublisherJSPHelper.CHECKBOX_KEEPPUBLISHEDINQUEUE%>" <% if(publisherhelper.isReadOnly()) { out.write("disabled"); } %> />
+           } %> id="<%=EditPublisherJSPHelper.CHECKBOX_KEEPPUBLISHEDINQUEUE%>" />
           <label for="<%=EditPublisherJSPHelper.CHECKBOX_KEEPPUBLISHEDINQUEUE%>"><c:out value="<%= ejbcawebbean.getText(\"USE\") %>" /></label>
       </td>
     </tr>
@@ -295,7 +294,7 @@ function checkallfields(){
           <input type="checkbox" name="<%= EditPublisherJSPHelper.CHECKBOX_USEQUEUEFORCRLS %>" value="<%=EditPublisherJSPHelper.CHECKBOX_VALUE %>" 
            <%  if(publisherdata.getUseQueueForCRLs()) {
                  out.write(" CHECKED ");
-           } %> id="<%=EditPublisherJSPHelper.CHECKBOX_USEQUEUEFORCRLS%>" <% if(publisherhelper.isReadOnly()) { out.write("disabled"); } %> />
+           } %> id="<%=EditPublisherJSPHelper.CHECKBOX_USEQUEUEFORCRLS%>" />
           <label for="<%=EditPublisherJSPHelper.CHECKBOX_USEQUEUEFORCRLS%>"><c:out value="<%= ejbcawebbean.getText(\"USE\") %>" /></label>
       </td>
     </tr>
@@ -309,7 +308,7 @@ function checkallfields(){
           <input type="checkbox" name="<%= EditPublisherJSPHelper.CHECKBOX_USEQUEUEFORCERTIFICATES %>" value="<%=EditPublisherJSPHelper.CHECKBOX_VALUE %>" 
            <%  if(publisherdata.getUseQueueForCertificates()) {
                  out.write(" CHECKED ");
-           } %> id="<%=EditPublisherJSPHelper.CHECKBOX_USEQUEUEFORCERTIFICATES%>" <% if(publisherhelper.isReadOnly()) { out.write("disabled"); } %> />
+           } %> id="<%=EditPublisherJSPHelper.CHECKBOX_USEQUEUEFORCERTIFICATES%>" />
           <label for="<%=EditPublisherJSPHelper.CHECKBOX_USEQUEUEFORCERTIFICATES%>"><c:out value="<%= ejbcawebbean.getText(\"USE\") %>" /></label>
       </td>
     </tr>
@@ -330,9 +329,7 @@ function checkallfields(){
          <%= ejbcawebbean.getText("DESCRIPTION") %> 
       </td>
       <td width="55%">        
-        <textarea name="<%=EditPublisherJSPHelper.TEXTAREA_DESCRIPTION%>" cols="45" rows="2" <% if(publisherhelper.isReadOnly()) { out.write("disabled"); } %>>
-        	<c:out value="<%= publisherdata.getDescription() %>"/>
-        </textarea>
+        <textarea name="<%=EditPublisherJSPHelper.TEXTAREA_DESCRIPTION%>" cols="45" rows="2"><c:out value="<%= publisherdata.getDescription() %>"/></textarea>
       </td>
     </tr>
     
@@ -341,11 +338,9 @@ function checkallfields(){
     <tr  id="Row<%=row++%2%>"> 
       <td width="45%" valign="top">&nbsp;</td>
       <td width="55%" valign="top"> 
-       	<% if(!publisherhelper.isReadOnly()) { %>
-        	<input type="submit" name="<%= EditPublisherJSPHelper.BUTTON_TESTCONNECTION %>" onClick='return checkallfields()' value="<%= ejbcawebbean.getText("SAVEANDTESTCONNECTION") %>">
-        	<input type="submit" name="<%= EditPublisherJSPHelper.BUTTON_SAVE %>" onClick='return checkallfields()' value="<%= ejbcawebbean.getText("SAVE") %>">
-       		 &nbsp;&nbsp;&nbsp;
-         <% } %>
+        <input type="submit" name="<%= EditPublisherJSPHelper.BUTTON_TESTCONNECTION %>" onClick='return checkallfields()' value="<%= ejbcawebbean.getText("SAVEANDTESTCONNECTION") %>">
+        <input type="submit" name="<%= EditPublisherJSPHelper.BUTTON_SAVE %>" onClick='return checkallfields()' value="<%= ejbcawebbean.getText("SAVE") %>">
+        &nbsp;&nbsp;&nbsp;
         <input type="submit" name="<%= EditPublisherJSPHelper.BUTTON_CANCEL %>" value="<%= ejbcawebbean.getText("CANCEL") %>">
       </td>
     </tr>

@@ -22,6 +22,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -34,6 +35,7 @@ import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.asn1.x509.KeyPurposeId;
 import org.cesecore.certificates.certificate.CertificateConstants;
 import org.cesecore.certificates.util.DNFieldExtractor;
+import org.cesecore.config.ExtendedKeyUsageConfiguration;
 import org.cesecore.internal.InternalResources;
 import org.cesecore.internal.UpgradeableDataHashMap;
 import org.cesecore.util.CertTools;
@@ -128,7 +130,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
     public static final int ANYCA = -1;
 
     /** Constant holding the default available bit lengths for certificate profiles */
-    public static final int[] DEFAULTBITLENGTHS = { 0, 192, 224, 239, 256, 384, 512, 521, 1024, 1536, 2048, 3072, 4096, 6144, 8192 };
+    public static final int[] DEFAULTBITLENGTHS = { 0, 192, 239, 256, 384, 512, 1024, 1536, 2048, 4096, 8192 };
     public static final byte[] DEFAULT_CVC_RIGHTS_AT = { 0, 0, 0, 0, 0 };
 
     // Profile fields
@@ -1177,6 +1179,16 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
     public boolean getExtendedKeyUsageCritical() {
         return ((Boolean) data.get(EXTENDEDKEYUSAGECRITICAL)).booleanValue();
     }
+
+    /** Returns a List<String> of all extended key usage oids, as strings */
+    public static List<String> getAllExtendedKeyUsageOIDStrings() {
+        return ExtendedKeyUsageConfiguration.getExtendedKeyUsageOids();
+    }
+
+    /** Returns a Map<String, String> that maps oid string to displayable/translatable text strings */
+    public static Map<String, String> getAllExtendedKeyUsageTexts() {
+        return ExtendedKeyUsageConfiguration.getExtendedKeyUsageOidsAndNames();
+    }
     
     /**
      * Extended Key Usage is an arraylist of oid Strings. Usually oids comes from KeyPurposeId in BC. Keep the unchecked java stuff for now, since we
@@ -1200,10 +1212,39 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
      * Extended Key Usage is an arraylist of Strings with eku oids.
      */
     public ArrayList<String> getExtendedKeyUsageOids() {
-        return (ArrayList) data.get(EXTENDEDKEYUSAGE);
+        return getExtendedKeyUsageAsOIDStrings(false);
     }
     public void setExtendedKeyUsageOids(final ArrayList<String> extendedKeyUsageOids) {
         setExtendedKeyUsage(extendedKeyUsageOids);
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private ArrayList<String> getExtendedKeyUsageAsOIDStrings(boolean fromupgrade) {
+        ArrayList<String> returnval = new ArrayList<String>();
+        // Keep the unchecked java stuff for now, since we have the fallback conversion below
+        ArrayList eku = (ArrayList) data.get(EXTENDEDKEYUSAGE);
+        if ((eku != null) && (eku.size() > 0)) {
+            Object o = eku.get(0);
+            // This is a test for backwards compatibility for the older type of extended key usage
+            if (o instanceof String) {
+                // This is the new extended key usage in the profile, simply return the array with oids
+                returnval = eku;
+            } else {
+                Iterator<Integer> i = eku.iterator();
+                List<String> oids = getAllExtendedKeyUsageOIDStrings();
+                while (i.hasNext()) {
+                    // We fell through to this conversion from Integer to String, which we should not have to
+                    // if upgrade() had done it's job. This is an error!
+                    if (!fromupgrade) {
+                        log.warn("We're forced to convert between old extended key usage format and new. This is an error that we handle so it should work for now. It should be reported as we can not guarantee that it will work in the future. "
+                                + getVersion());
+                    }
+                    int index = (i.next()).intValue();
+                    returnval.add(oids.get(index));
+                }
+            }
+        }
+        return returnval;
     }
 
     public boolean getUseLdapDnOrder() {
@@ -1784,7 +1825,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
     }
 
     /**
-     * Function that looks up in the profile all certificate extensions that we should use if the value is that we should use it, the oid for this
+     * Function that looks up in the profile all certificate extensions that we should use if the value si that we should use it, the oid for this
      * extension is returned in the list
      * 
      * @return List of oid Strings for standard certificate extensions that should be used
@@ -2305,6 +2346,11 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
 
             if (data.get(ALLOWDNOVERRIDE) == null) {
                 setAllowDNOverride(false); // v31
+            }
+
+            if (Float.compare((float) 32.0, getVersion()) > 0) { // v32
+                // Extended key usage storage changed from ArrayList of Integers to an ArrayList of Strings.
+                setExtendedKeyUsage(getExtendedKeyUsageAsOIDStrings(true));
             }
 
             if (data.get(NUMOFREQAPPROVALS) == null) { // v 33

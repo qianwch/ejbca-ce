@@ -15,13 +15,11 @@ package org.ejbca.ui.cli.ra;
 
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
-import org.cesecore.certificates.certificate.CertificateDataWrapper;
 import org.cesecore.certificates.certificate.CertificateStoreSessionRemote;
 import org.cesecore.util.CertTools;
 import org.cesecore.util.EjbRemoteHelper;
@@ -69,14 +67,10 @@ public class GetEndEntityCertificateCommand extends BaseRaCommand {
     @Override
     public CommandResult execute(ParameterContainer parameters) {
             final String username = parameters.get(USERNAME_KEY);
-            final Collection<CertificateDataWrapper> wrappers = EjbRemoteHelper.INSTANCE.getRemoteSession(CertificateStoreSessionRemote.class).getCertificateDataByUsername(username);
-            if (wrappers != null) {
-                final Collection<Certificate> certs = new ArrayList<Certificate>();
-                for (CertificateDataWrapper wrapper : wrappers) {
-                    certs.add(wrapper.getCertificate());
-                }
+            final Collection<Certificate> data = EjbRemoteHelper.INSTANCE.getRemoteSession(CertificateStoreSessionRemote.class).findCertificatesByUsername(username);
+            if (data != null) {
             	try {
-                    getLogger().info(new String(CertTools.getPemFromCertificateChain(certs)));
+                    getLogger().info(new String(CertTools.getPemFromCertificateChain(data)));
                     return CommandResult.SUCCESS;
                 } catch (CertificateEncodingException e) {
                    throw new IllegalStateException("Newly retrieved certificate could not be parsed", e);

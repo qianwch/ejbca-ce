@@ -258,11 +258,6 @@
 		<include name="org/ejbca/core/model/authorization/DefaultRoles.java"/>
        	<include name="org/ejbca/core/model/ca/publisher/*Publisher.java"/>
        	<include name="org/ejbca/core/model/ca/publisher/*PublisherContainer.java"/>
-        <include name="org/ejbca/core/model/ra/raadmin/validators/*.java"/>
-        <include name="org/ejbca/core/model/ra/raadmin/validators/RegexFieldValidator.java"/>
-        <include name="org/ejbca/core/model/ra/raadmin/EndEntityFieldValidator.java"/>
-        <include name="org/ejbca/core/model/ra/raadmin/EndEntityFieldValidatorException.java"/>
-        <include name="org/ejbca/core/model/ra/raadmin/EndEntityValidationHelper.java"/>
 		<!-- Dependecies from EJB CLI, AdminWeb, PublicWeb -->
 		<include name="org/ejbca/core/model/hardtoken/profiles/*Profile.java"/>
 		<!-- Dependecies from EJB CLI, EJBCA WS -->
@@ -279,8 +274,6 @@
 		<include name="org/ejbca/core/ejb/config/CMPConfigurationCache.java"/>
 		<include name="org/ejbca/core/ejb/config/GlobalConfigurationCache.java"/>
 		<include name="org/ejbca/core/ejb/config/ScepConfigurationCache.java"/>
-        <include name="org/ejbca/core/ejb/config/AvailableExtendedKeyUsagesConfigurationCache.java"/>
-        <include name="org/ejbca/core/ejb/config/AvailableCustomCertificateExtensionsConfigurationCache.java"/>
 		<!-- Dependecies from EJB CLI and CTB -->
 		<include name="org/ejbca/util/CliTools.java"/>
 		<!-- Dependecies from EJB CLI and XMKS -->

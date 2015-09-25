@@ -44,7 +44,6 @@ import org.cesecore.certificates.ca.CAInfo;
 import org.cesecore.certificates.ca.CaSessionLocal;
 import org.cesecore.certificates.ca.SignRequestException;
 import org.cesecore.certificates.ca.SignRequestSignatureException;
-import org.cesecore.certificates.certificate.CertificateCreateException;
 import org.cesecore.certificates.certificate.IllegalKeyException;
 import org.cesecore.certificates.certificateprofile.CertificateProfile;
 import org.cesecore.certificates.certificateprofile.CertificateProfileSessionLocal;
@@ -498,15 +497,10 @@ public class RequestInstance {
                     throw new Exception("No known request type received.");
 				}
 			}
+		} catch (ObjectNotFoundException oe) {
+			iErrorMessage = intres.getLocalizedMessage("certreq.nosuchusername");
 		} catch (AuthStatusException ase) {
 			iErrorMessage = intres.getLocalizedMessage("certreq.wrongstatus");
-        } catch (ObjectNotFoundException oe) {
-            // Same error message for user not found and wrong password
-            iErrorMessage = intres.getLocalizedMessage("ra.wrongusernameorpassword");
-            // But debug log the real issue if needed
-            if (log.isDebugEnabled()) {
-                log.debug(intres.getLocalizedMessage("ra.errorentitynotexist", username));
-            }
 		} catch (AuthLoginException ale) {
 			iErrorMessage = intres.getLocalizedMessage("ra.wrongusernameorpassword");
 			log.info(iErrorMessage + " - username: " + username);
@@ -538,13 +532,6 @@ public class RequestInstance {
             iErrorMessage = intres.getLocalizedMessage("certreq.catokenoffline", ctoeMsg);
 		} catch (AuthorizationDeniedException e) {
             iErrorMessage = intres.getLocalizedMessage("certreq.authorizationdenied") + e.getLocalizedMessage();
-		}  catch(CertificateCreateException e) {
-		    if(e.getErrorCode().equals(ErrorCode.CERTIFICATE_WITH_THIS_SUBJECTDN_ALREADY_EXISTS_FOR_ANOTHER_USER)) {
-		        iErrorMessage = e.getLocalizedMessage();
-		    } else {
-		        debug.takeCareOfException(e);
-	            debug.printDebugInfo();
-		    }
 		} catch (Exception e) {
 			Throwable e1 = e.getCause();
 			if (e1 instanceof CryptoTokenOfflineException) {
@@ -555,30 +542,28 @@ public class RequestInstance {
 				return;				
 			} else {
 				if (e1 == null) { e1 = e; }
-                String iMsg = intres.getLocalizedMessage("certreq.errorgeneral", e1.getMessage());
-                if (log.isDebugEnabled()) {
-                    log.debug(iMsg, e);
-                }
+				String iMsg = intres.getLocalizedMessage("certreq.errorgeneral", e1.getMessage());
+				log.debug(iMsg, e);
 				iMsg = intres.getLocalizedMessage("certreq.parameters", e1.getMessage());
 				debug.print(iMsg + ":\n");
 				@SuppressWarnings("unchecked")
                 Set<String> paramNames = params.keySet();
-				for(String name : paramNames) {
+				Iterator<String> iter = paramNames.iterator();
+				while (iter.hasNext()) {
+					String name = iter.next();
 					String parameter = getParameter(name);
-                    if (!StringUtils.equals(name, "password")) {
-                        debug.print(HTMLTools.htmlescape(name) + ": '" + HTMLTools.htmlescape(parameter) + "'\n");
-                    } else {
-                        debug.print(HTMLTools.htmlescape(name) + ": <hidden>\n");
-                    }
+					if (!StringUtils.equals(name, "password")) {
+						debug.print(HTMLTools.htmlescape(name) + ": '" + HTMLTools.htmlescape(parameter) + "'\n");                	
+					} else {
+						debug.print(HTMLTools.htmlescape(name) + ": <hidden>\n");
+					}
 				}
 				debug.takeCareOfException(e);
 				debug.printDebugInfo();
 			}
 		}
 		if (iErrorMessage != null) {
-            if (log.isDebugEnabled()) {
-                log.debug(iErrorMessage);
-            }
+			log.debug(iErrorMessage);
 			debug.printMessage(iErrorMessage);
 			debug.printDebugInfo();
 			return;

@@ -72,8 +72,13 @@ public class CaEditPublisherCommand extends BaseCaAdminCommand {
         final String field = parameters.get(FIELD_KEY);
         final String value = parameters.get(VALUE_KEY);
 
-        BasePublisher pub = EjbRemoteHelper.INSTANCE.getRemoteSession(PublisherSessionRemote.class).getPublisher(getAuthenticationToken(), name);
-
+        BasePublisher pub;
+        try {
+            pub = EjbRemoteHelper.INSTANCE.getRemoteSession(PublisherSessionRemote.class).getPublisher(getAuthenticationToken(), name);
+        } catch (AuthorizationDeniedException e1) {
+            log.error("CLI User was not authorized to edit publishers.");
+            return CommandResult.AUTHORIZATION_FAILURE;
+        }
         if (pub == null) {
             log.info("Publisher '" + name + "' does not exist.");
             return CommandResult.FUNCTIONAL_FAILURE;

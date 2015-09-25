@@ -33,7 +33,6 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
-import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
@@ -107,7 +106,6 @@ import org.cesecore.certificates.certificate.CertificateConstants;
 import org.cesecore.certificates.certificate.CertificateDataWrapper;
 import org.cesecore.certificates.certificate.CertificateRevokeException;
 import org.cesecore.certificates.certificate.CertificateStoreSessionLocal;
-import org.cesecore.certificates.certificate.certextensions.AvailableCustomCertificateExtensionsConfiguration;
 import org.cesecore.certificates.certificate.request.CertificateResponseMessage;
 import org.cesecore.certificates.certificate.request.PKCS10RequestMessage;
 import org.cesecore.certificates.certificate.request.RequestMessage;
@@ -148,7 +146,6 @@ import org.cesecore.keys.util.KeyTools;
 import org.cesecore.roles.RoleData;
 import org.cesecore.roles.RoleExistsException;
 import org.cesecore.roles.RoleNotFoundException;
-import org.cesecore.roles.access.RoleAccessSessionLocal;
 import org.cesecore.roles.management.RoleManagementSessionLocal;
 import org.cesecore.util.Base64;
 import org.cesecore.util.CertTools;
@@ -230,8 +227,6 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
     private PublishingCrlSessionLocal publishingCrlSession;
     @EJB
     private RevocationSessionLocal revocationSession;
-    @EJB
-    private RoleAccessSessionLocal roleAccessSession;
     @EJB
     private RoleManagementSessionLocal roleManagementSession;
     @EJB
@@ -372,9 +367,6 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
             if (changed) {
                 certProfile.setAvailableCAs(availableCAs);
                 String name = certProfiles.get(certProfId);
-                if (log.isDebugEnabled()) {
-                    log.debug("Changing CA Ids in Certificate Profile "+name);
-                }
                 certificateProfileSession.changeCertificateProfile(authenticationToken, name, certProfile);
             }
         }
@@ -407,9 +399,6 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
             if (changed) {
                 endEntityProfile.setAvailableCAs(updated);
                 String name = endEntityProfiles.get(endEntityProfId);
-                if (log.isDebugEnabled()) {
-                    log.debug("Changing CA Ids in End Entity Profile "+name);
-                }
                 try {
                     endEntityProfileSession.changeEndEntityProfile(authenticationToken, name, endEntityProfile);
                 } catch (EndEntityProfileNotFoundException e) {
@@ -421,12 +410,10 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
         // Update End-Entities (only if it's possible to get the session bean)
         EndEntityManagementSessionLocal endEntityManagementSession = getEndEntityManagementSession();
         if (endEntityManagementSession != null) {
-            final Collection<EndEntityInformation> endEntities = endEntityManagementSession.findAllUsersByCaIdNoAuth(fromId);
+            final Collection<EndEntityInformation> endEntities = endEntityManagementSession.findAllUsersByCaId(authenticationToken, fromId);
             for (EndEntityInformation endEntityInfo : endEntities) {
+                endEntityInfo.setCAId(toId);
                 try {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Changing CA Id of End Entity "+endEntityInfo.getUsername());
-                    }
                     endEntityManagementSession.updateCAId(authenticationToken, endEntityInfo.getUsername(), toId);
                 } catch (NoSuchEndEntityException e) {
                     log.error("End entity "+endEntityInfo.getUsername()+" could no longer be found", e);
@@ -458,9 +445,6 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
             if (changed) {
                 dataSource.setApplicableCAs(applicableCAs);
                 String name = dataSources.get(dataSourceId);
-                if (log.isDebugEnabled()) {
-                    log.debug("Changing CA Ids in User Data Source "+name);
-                }
                 userDataSourceSession.changeUserDataSource(authenticationToken, name, dataSource);
             }
         }
@@ -486,9 +470,6 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
                     if (changed) {
                         workerProps.setProperty(BaseWorker.PROP_CAIDSTOCHECK, StringUtils.join(caIds, ';'));
                         serviceConf.setWorkerProperties(workerProps);
-                        if (log.isDebugEnabled()) {
-                            log.debug("Changing CA Ids in Service "+serviceName);
-                        }
                         serviceSession.changeService(authenticationToken, serviceName, serviceConf, false);
                     }
                 }
@@ -519,9 +500,6 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
                 
                 if (changed) {
                     keybind.setTrustedCertificateReferences(trustentries);
-                    if (log.isDebugEnabled()) {
-                        log.debug("Changing CA Ids in Internal Key Binding "+keybind.getName());
-                    }
                     try {
                         keyBindMgmtSession.persistInternalKeyBinding(authenticationToken, keybind);
                     } catch (InternalKeyBindingNameInUseException e) {
@@ -541,9 +519,6 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
                 changed = true;
             }
             if (changed) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Changing CA Ids in System Configuration");
-                }
                 globalConfigurationSession.saveConfiguration(authenticationToken, globalConfig);
             }
         }
@@ -561,20 +536,14 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
                 }
             }
             if (changed) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Changing CA Ids in CMP configuration");
-                }
                 globalConfigurationSession.saveConfiguration(authenticationToken, cmpConfig);
             }
         }
         
         // Update Roles
         final Random random = new Random(System.nanoTime()); 
-        final String toReplace = StandardRules.CAACCESS.resource()+String.valueOf(fromId);
-        final String toReplaceSlash = toReplace+"/";
-        for (RoleData role : roleAccessSession.getAllRoles()) {
+        for (RoleData role : roleManagementSession.getAllRolesAuthorizedToEdit(authenticationToken)) {
             final String roleName = role.getRoleName();
-            // Look for references from user's CAs
             final Map<Integer,AccessUserAspectData> users = new HashMap<Integer,AccessUserAspectData>(role.getAccessUsers());
             boolean changed = false;
             for (int id : new ArrayList<Integer>(users.keySet())) {
@@ -585,31 +554,16 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
                     changed = true;
                 }
             }
-            // Look for references from access rules
-            final Map<Integer,AccessRuleData> rules = new HashMap<Integer,AccessRuleData>(role.getAccessRules());
-            for (int id : new ArrayList<Integer>(rules.keySet())) {
-                AccessRuleData rule = rules.get(id);
-                final String accessRuleName = rule.getAccessRuleName();
-                
-                if (accessRuleName.equals(toReplace) || accessRuleName.startsWith(toReplaceSlash)) {
-                    final String newName = StandardRules.CAACCESS.resource() + String.valueOf(toId) + accessRuleName.substring(toReplace.length());
-                    final int state = rule.getState();
-                    rule = new AccessRuleData(roleName, newName, rule.getInternalState(), rule.getRecursive());
-                    rule.setState(state);
-                    rules.put(id, rule);
-                    changed = true;
-                }
-            }
             if (changed) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Changing CA Ids in Role "+roleName);
-                }
+                final Map<Integer,AccessRuleData> rules = role.getAccessRules(); // Contains no CAIds. Used as-is
+                
                 try {
                     // Rename old role so we can replace it without getting locked out
                     final String oldTempName = roleName + "_CAIdUpdateOld" + random.nextLong();
                     roleManagementSession.renameRole(authenticationToken, roleName, oldTempName);
                     
                     RoleData newRole = roleManagementSession.create(authenticationToken, roleName);
+                    // Rights are unchanged because they don't reference CAs
                     newRole = roleManagementSession.addAccessRulesToRole(authenticationToken, newRole, rules.values());
                     newRole = roleManagementSession.addSubjectsToRole(authenticationToken, newRole, users.values());
 
@@ -622,7 +576,6 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
             }
         }
         
-        log.debug("Done updating CA Ids");
         final String detailsMsg = intres.getLocalizedMessage("caadmin.updatedcaid", fromId, toId, toDN);
         auditSession.log(EventTypes.CA_EDITING, EventStatus.SUCCESS, ModuleTypes.CA, ServiceTypes.CORE, authenticationToken.toString(), String.valueOf(toId),
                     null, null, detailsMsg);
@@ -944,8 +897,6 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
         final String sequence = caToken.getKeySequence(); // get from CAtoken to make sure it is fresh
         final String aliasCertSign = caToken.getAliasFromPurpose(CATokenConstants.CAKEYPURPOSE_CERTSIGN);
         int caid = cainfo.getCAId();
-        final AvailableCustomCertificateExtensionsConfiguration cceConfig = (AvailableCustomCertificateExtensionsConfiguration) globalConfigurationSession.getCachedConfiguration(
-                AvailableCustomCertificateExtensionsConfiguration.CONFIGURATION_ID);
         if (cainfo.getSignedBy() == CAInfo.SELFSIGNED) {
             try {
                 // create selfsigned certificate
@@ -955,7 +906,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
                 }
                 EndEntityInformation cadata = makeEndEntityInformation(cainfo);
                 cacertificate = ca.generateCertificate(cryptoToken, cadata, cryptoToken.getPublicKey(aliasCertSign), -1, null,
-                        cainfo.getValidity(), certprofile, sequence, cceConfig);
+                        cainfo.getValidity(), certprofile, sequence);
                 if (log.isDebugEnabled()) {
                     log.debug("CAAdminSessionBean : " + CertTools.getSubjectDN(cacertificate));
                 }
@@ -992,7 +943,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
                 EndEntityInformation cadata = makeEndEntityInformation(cainfo);
                 CryptoToken signCryptoToken = cryptoTokenSession.getCryptoToken(signca.getCAToken().getCryptoTokenId());
                 Certificate cacertificate = signca.generateCertificate(signCryptoToken, cadata, cryptoToken.getPublicKey(aliasCertSign), -1,
-                        null, cainfo.getValidity(), certprofile, sequence, cceConfig);
+                        null, cainfo.getValidity(), certprofile, sequence);
                 // Build Certificate Chain
                 Collection<Certificate> rootcachain = signca.getCertificateChain();
                 certificatechain = new ArrayList<Certificate>();
@@ -1042,7 +993,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
         final int caid = cainfo.getCAId();
         // Check authorization
         if (!accessSession.isAuthorizedNoLogging(admin, StandardRules.ROLE_ROOT.resource())) {
-            String msg = intres.getLocalizedMessage("caadmin.notauthorizedtoeditca", admin.toString(), cainfo.getName());
+            String msg = intres.getLocalizedMessage("caadmin.notauthorizedtoeditca", cainfo.getName());
             Map<String, Object> details = new LinkedHashMap<String, Object>();
             details.put("msg", msg);
             auditSession.log(EventTypes.ACCESS_CONTROL, EventStatus.FAILURE, ModuleTypes.CA, ServiceTypes.CORE, admin.toString(),
@@ -1134,7 +1085,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
             log.trace(">makeRequest: " + caid + ", certChain=" + certChain + ", nextSignKeyAlias=" + nextSignKeyAlias);
         }
         byte[] returnval = null;
-        if (!accessSession.isAuthorizedNoLogging(authenticationToken, StandardRules.CARENEW.resource())) {
+        if (!accessSession.isAuthorizedNoLogging(authenticationToken, AccessRulesConstants.REGULAR_RENEWCA)) {
             final String detailsMsg = intres.getLocalizedMessage("caadmin.notauthorizedtocertreq", Integer.valueOf(caid));
             auditSession.log(EventTypes.ACCESS_CONTROL, EventStatus.FAILURE, ModuleTypes.CA, ServiceTypes.CORE, authenticationToken.toString(),
                     String.valueOf(caid), null, null, detailsMsg);
@@ -1289,7 +1240,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
         if (log.isTraceEnabled()) {
             log.trace(">receiveResponse: " + caid);
         }
-        if (!accessSession.isAuthorizedNoLogging(authenticationToken, StandardRules.CARENEW.resource())) {
+        if (!accessSession.isAuthorizedNoLogging(authenticationToken, AccessRulesConstants.REGULAR_RENEWCA)) {
             final String detailsMsg = intres.getLocalizedMessage("caadmin.notauthorizedtocertresp", Integer.valueOf(caid));
             auditSession.log(EventTypes.ACCESS_CONTROL, EventStatus.FAILURE, ModuleTypes.CA, ServiceTypes.CORE, authenticationToken.toString(),
                     String.valueOf(caid), null, null, detailsMsg);
@@ -1447,13 +1398,10 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
             // Set status to active, so we can sign certificates for the external services below.
             ca.setStatus(CAConstants.CA_ACTIVE);
 
-            final AvailableCustomCertificateExtensionsConfiguration cceConfig = (AvailableCustomCertificateExtensionsConfiguration) 
-                    globalConfigurationSession.getCachedConfiguration(AvailableCustomCertificateExtensionsConfiguration.CONFIGURATION_ID);
-            
             // activate External CA Services
             for (int type : ca.getExternalCAServiceTypes()) {
                 try {
-                    ca.initExtendedService(cryptoToken, type, ca, cceConfig);
+                    ca.initExtendedService(cryptoToken, type, ca);
                     final ExtendedCAServiceInfo info = ca.getExtendedCAServiceInfo(type);
                     if (info instanceof BaseSigningCAServiceInfo) {
                         // Publish the extended service certificate, but only for active services
@@ -1613,10 +1561,8 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
                         sequence = new String(ki);
                     }
                     final CryptoToken signCryptoToken = cryptoTokenSession.getCryptoToken(signca.getCAToken().getCryptoTokenId());
-                    final AvailableCustomCertificateExtensionsConfiguration cceConfig = (AvailableCustomCertificateExtensionsConfiguration)
-                            globalConfigurationSession.getCachedConfiguration(AvailableCustomCertificateExtensionsConfiguration.CONFIGURATION_ID);
                     cacertificate = signca.generateCertificate(signCryptoToken, cadata, publickey, -1, null, cainfo.getValidity(), certprofile,
-                            sequence, cceConfig);
+                            sequence);
                     // X509ResponseMessage works for both X509 CAs and CVC CAs, should really be called CertificateResponsMessage
                     returnval = new X509ResponseMessage();
                     returnval.setCertificate(cacertificate);
@@ -1706,17 +1652,6 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
         }
         return returnval;
     }
-    
-    @Override
-    public void importCACertificateBase64(AuthenticationToken authenticationToken, String caName, Collection<String> base64Certs)
-            throws AuthorizationDeniedException, CAExistsException, IllegalCryptoTokenException, CertificateException {
-        try {
-            final Collection<Certificate> certs = CertTools.base64ChainToCertChain(base64Certs);
-            importCACertificate(authenticationToken, caName, certs);
-        } catch (CertificateParsingException e) {
-            throw new IllegalStateException("Can not create certificate object from BASE64 encoded certificate.", e);
-        }
-    }
 
     @Override
     public void importCACertificate(AuthenticationToken admin, String caname, Collection<Certificate> certificates)
@@ -1785,8 +1720,8 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
     public void initExternalCAService(AuthenticationToken admin, int caid, ExtendedCAServiceInfo info) throws CADoesntExistsException,
             AuthorizationDeniedException, CAOfflineException {
         // check authorization
-        if (!accessSession.isAuthorizedNoLogging(admin, StandardRules.ROLE_ROOT.resource())) {        
-            String msg = intres.getLocalizedMessage("caadmin.notauthorizedtoeditca", admin.toString(), caSession.getCAInfoInternal(caid));
+        if (!accessSession.isAuthorizedNoLogging(admin, StandardRules.ROLE_ROOT.resource())) {
+            String msg = intres.getLocalizedMessage("caadmin.notauthorizedtoeditca", Integer.valueOf(caid));
             Map<String, Object> details = new LinkedHashMap<String, Object>();
             details.put("msg", msg);
             auditSession.log(EventTypes.ACCESS_CONTROL, EventStatus.FAILURE, ModuleTypes.CA, ServiceTypes.CORE, admin.toString(),
@@ -1859,7 +1794,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
         Collection<Certificate> cachain = null;
         Certificate cacertificate = null;
         // check authorization
-        if (!accessSession.isAuthorizedNoLogging(authenticationToken, StandardRules.CARENEW.resource())) {
+        if (!accessSession.isAuthorizedNoLogging(authenticationToken, AccessRulesConstants.REGULAR_RENEWCA)) {
             final String detailsMsg = intres.getLocalizedMessage("caadmin.notauthorizedtorenew", Integer.valueOf(caid));
             auditSession.log(EventTypes.ACCESS_CONTROL, EventStatus.FAILURE, ModuleTypes.CA, ServiceTypes.CORE, authenticationToken.toString(),
                     String.valueOf(caid), null, null, detailsMsg);
@@ -1898,16 +1833,13 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
             final CertificateProfile certprofile = certificateProfileSession.getCertificateProfile(ca.getCertificateProfileId());
             mergeCertificatePoliciesFromCAAndProfile(ca.getCAInfo(), certprofile);
 
-            final AvailableCustomCertificateExtensionsConfiguration cceConfig = (AvailableCustomCertificateExtensionsConfiguration) 
-                    globalConfigurationSession.getCachedConfiguration(AvailableCustomCertificateExtensionsConfiguration.CONFIGURATION_ID);
-            
             if (ca.getSignedBy() == CAInfo.SELFSIGNED) {
                 // create selfsigned certificate
                 EndEntityInformation cainfodata = makeEndEntityInformation(ca.getCAInfo());
                 // get from CAtoken to make sure it is fresh
                 String sequence = caToken.getKeySequence();
                 cacertificate = ca.generateCertificate(cryptoToken, cainfodata, caPublicKey, -1, customNotBefore, ca.getValidity(), certprofile,
-                        sequence, cceConfig);
+                        sequence);
                 // Build Certificate Chain
                 cachain = new ArrayList<Certificate>();
                 cachain.add(cacertificate);
@@ -1924,7 +1856,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
                     String sequence = caToken.getKeySequence(); // get from CAtoken to make sure it is fresh
                     CryptoToken signCryptoToken = cryptoTokenSession.getCryptoToken(signca.getCAToken().getCryptoTokenId());
                     cacertificate = signca.generateCertificate(signCryptoToken, cainfodata, caPublicKey, -1, customNotBefore, ca.getValidity(),
-                            certprofile, sequence, cceConfig);
+                            certprofile, sequence);
                     // Build Certificate Chain
                     Collection<Certificate> rootcachain = signca.getCertificateChain();
                     cachain = new ArrayList<Certificate>();
@@ -1937,7 +1869,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
             ca.setStatus(CAConstants.CA_ACTIVE);
             // Set the new certificate chain that we have created above
             ca.setCertificateChain(cachain);
-            ca.createOrRemoveLinkCertificate(cryptoToken, createLinkCertificate, certprofile, cceConfig);
+            ca.createOrRemoveLinkCertificate(cryptoToken, createLinkCertificate, certprofile);
             // We need to save all this, audit logging that the CA is changed
             caSession.editCA(authenticationToken, ca, true);
 
@@ -2735,7 +2667,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
     public void deactivateCAService(AuthenticationToken admin, int caid) throws AuthorizationDeniedException, CADoesntExistsException {
         // Authorize
         if (!accessSession.isAuthorizedNoLogging(admin, AccessRulesConstants.REGULAR_ACTIVATECA)) {
-            final String detailsMsg = intres.getLocalizedMessage("caadmin.notauthorizedtodeactivatetoken", caSession.getCAInfoInternal(caid).getName());
+            final String detailsMsg = intres.getLocalizedMessage("caadmin.notauthorizedtodeactivatetoken", Integer.valueOf(caid));
             auditSession.log(EventTypes.ACCESS_CONTROL, EventStatus.FAILURE, ModuleTypes.CA, ServiceTypes.CORE, admin.toString(),
                     String.valueOf(caid), null, null, detailsMsg);
             throw new AuthorizationDeniedException(detailsMsg);
@@ -3055,9 +2987,6 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
      */
     private void activateAndPublishExternalCAServices(AuthenticationToken admin, Collection<ExtendedCAServiceInfo> extendedCAServiceInfos, CA ca)
             throws AuthorizationDeniedException {
-        final AvailableCustomCertificateExtensionsConfiguration cceConfig = (AvailableCustomCertificateExtensionsConfiguration) 
-                globalConfigurationSession.getCachedConfiguration(AvailableCustomCertificateExtensionsConfiguration.CONFIGURATION_ID);
-        
         // activate External CA Services
         Iterator<ExtendedCAServiceInfo> iter = extendedCAServiceInfos.iterator();
         while (iter.hasNext()) {
@@ -3066,7 +2995,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
             if (info instanceof XKMSCAServiceInfo) {
                 try {
                     final CryptoToken cryptoToken = cryptoTokenSession.getCryptoToken(ca.getCAToken().getCryptoTokenId());
-                    ca.initExtendedService(cryptoToken, ExtendedCAServiceTypes.TYPE_XKMSEXTENDEDSERVICE, ca, cceConfig);
+                    ca.initExtendedService(cryptoToken, ExtendedCAServiceTypes.TYPE_XKMSEXTENDEDSERVICE, ca);
                     final List<Certificate> certPath = ((XKMSCAServiceInfo) ca.getExtendedCAServiceInfo(ExtendedCAServiceTypes.TYPE_XKMSEXTENDEDSERVICE)).getCertificatePath();
                     if (certPath != null) {
                         certificates.add(certPath.get(0));
@@ -3080,7 +3009,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
             if (info instanceof CmsCAServiceInfo) {
                 try {
                     final CryptoToken cryptoToken = cryptoTokenSession.getCryptoToken(ca.getCAToken().getCryptoTokenId());
-                    ca.initExtendedService(cryptoToken, ExtendedCAServiceTypes.TYPE_CMSEXTENDEDSERVICE, ca, cceConfig);
+                    ca.initExtendedService(cryptoToken, ExtendedCAServiceTypes.TYPE_CMSEXTENDEDSERVICE, ca);
                     final List<Certificate> certPath = ((CmsCAServiceInfo) ca.getExtendedCAServiceInfo(ExtendedCAServiceTypes.TYPE_CMSEXTENDEDSERVICE)).getCertificatePath();
                     if (certPath != null) {
                         certificates.add(certPath.get(0));

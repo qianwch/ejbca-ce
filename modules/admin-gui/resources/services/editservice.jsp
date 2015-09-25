@@ -12,7 +12,7 @@
 <jsp:useBean id="ejbcawebbean" scope="session" class="org.ejbca.ui.web.admin.configuration.EjbcaWebBean" />
 <jsp:setProperty name="ejbcawebbean" property="*" /> 
 <%   // Initialize environment
- GlobalConfiguration globalconfiguration = ejbcawebbean.initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, AccessRulesConstants.SERVICES_VIEW); 
+ GlobalConfiguration globalconfiguration = ejbcawebbean.initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.ROLE_ROOT.resource()); 
  EjbcaJSFHelper helpbean = EjbcaJSFHelper.getBean();
  helpbean.setEjbcaWebBean(ejbcawebbean);
 
@@ -24,7 +24,7 @@
 <head>
   <title><c:out value="<%= globalconfiguration.getEjbcaTitle() %>" /></title>
   <base href="<%= ejbcawebbean.getBaseUrl() %>" />
-  <link rel="stylesheet" type="text/css" href="<c:out value='<%=ejbcawebbean.getCssFile() %>' />" />
+  <link rel="stylesheet" type="text/css" href="<%= ejbcawebbean.getCssFile() %>" />
   <meta http-equiv="Content-Type" content="text/html; charset=<%= org.ejbca.config.WebConfiguration.getWebContentEncoding() %>" />
 </head>
 
@@ -32,9 +32,7 @@
 <f:view>
 <body id="service">
 
-<h2><h:outputText value="#{web.text.EDITSERVICE}" rendered="#{editService.hasEditRights}" /></h2>
-<h2><h:outputText value="#{web.text.VIEWSERVICE}" rendered="#{not editService.hasEditRights}" /></h2>
-
+<h2><%= ejbcawebbean.getText("EDITSERVICE") %></h2>
 
 <h3><%= ejbcawebbean.getText("SERVICE")+ " : " %><h:outputText value="#{editService.serviceName}" /></h3>
 
@@ -55,12 +53,11 @@
 	</h:panelGroup>
 	<h:panelGroup style="white-space: nowrap;">
 		<h:selectOneMenu value="#{editService.serviceConfigurationView.selectedWorker}" valueChangeListener="#{editService.changeWorker}"
-		                 onchange="document.getElementById('edit:updateButton').click();"
-		                 disabled="#{not editService.hasEditRights}">
+		                 onchange="document.getElementById('edit:updateButton').click();">
 			<f:selectItems value="#{editService.serviceConfigurationView.availableWorkers}"/>
 		</h:selectOneMenu>
 		<f:verbatim>&nbsp;&nbsp;&nbsp;</f:verbatim>
-		<h:commandButton id="updateButton" action="#{editService.update}" value="Update" disabled="#{not editService.hasEditRights}" />			
+		<h:commandButton id="updateButton" action="#{editService.update}" value="Update"  />			
 	</h:panelGroup>
   
      <jsp:include page="<%=workerPage %>"/>
@@ -76,7 +73,7 @@
 	</h:panelGroup>
 	<h:panelGroup>
 		<h:selectOneMenu value="#{editService.serviceConfigurationView.selectedInterval}" valueChangeListener="#{editService.changeInterval}" 
-		                 onchange="document.getElementById('edit:updateButton').click();" disabled="#{not editService.hasEditRights}">
+		                 onchange="document.getElementById('edit:updateButton').click();">
 			<f:selectItems value="#{editService.serviceConfigurationView.availableIntervals}"/>
 		</h:selectOneMenu>			
 	</h:panelGroup>
@@ -94,7 +91,7 @@
 	</h:panelGroup>
 	<h:panelGroup>
 		<h:selectOneMenu value="#{editService.serviceConfigurationView.selectedAction}" valueChangeListener="#{editService.changeAction}"
-		                 onchange="document.getElementById('edit:updateButton').click();" disabled="#{not editService.hasEditRights}">
+		                 onchange="document.getElementById('edit:updateButton').click();">
 			<f:selectItems value="#{editService.serviceConfigurationView.availableActions}"/>
 		</h:selectOneMenu>			
 	</h:panelGroup>
@@ -119,14 +116,14 @@
 		<f:verbatim><strong></f:verbatim><h:outputText value="#{web.text.ACTIVE}"/><f:verbatim></strong></f:verbatim>
 	</h:panelGroup>
 	<h:panelGroup>
-		<h:selectBooleanCheckbox id="activeCheckbox" value="#{editService.serviceConfigurationView.active}" disabled="#{not editService.hasEditRights}"/>
+		<h:selectBooleanCheckbox id="activeCheckbox" value="#{editService.serviceConfigurationView.active}"/>
 		<h:outputLabel for="activeCheckbox" value="#{web.text.ACTIVE}" />
 	</h:panelGroup>
 	<h:panelGroup>
 		<h:outputText value="#{web.text.PINTONODES}"/>
 	</h:panelGroup>
 	<h:panelGroup>
-		<h:selectManyListbox id="pinToNodesListbox" value="#{editService.serviceConfigurationView.pinToNodes}" disabled="#{not editService.hasEditRights}">
+		<h:selectManyListbox id="pinToNodesListbox" value="#{editService.serviceConfigurationView.pinToNodes}">
 			<f:selectItems value="#{editService.serviceConfigurationView.nodesInCluster}"/>
 		</h:selectManyListbox>
 	</h:panelGroup>
@@ -134,7 +131,7 @@
 		<h:outputText value="#{web.text.DESCRIPTION}"/>
 	</h:panelGroup>
 	<h:panelGroup>
-		<h:inputTextarea id="descriptionTextArea" value="#{editService.serviceConfigurationView.description}" rows="2" cols="45" disabled="#{not editService.hasEditRights}"/>
+		<h:inputTextarea id="descriptionTextArea" value="#{editService.serviceConfigurationView.description}" rows="2" cols="45"/>
 	</h:panelGroup>
 	
 	<%-- Form buttons --%>
@@ -161,8 +158,8 @@ function enableAll(){
     <h:messages styleClass="alert" layout="table"/>
   </div>
         </f:verbatim>
-		<h:commandButton id="saveButton" action="#{editService.save}" value="#{web.text.SAVE}" onclick="enableAll()" rendered="#{editService.hasEditRights}"/>		
-		<f:verbatim rendered="#{editService.hasEditRights}">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</f:verbatim>
+		<h:commandButton id="saveButton" action="#{editService.save}" value="#{web.text.SAVE}" onclick="enableAll()"/>		
+		<f:verbatim>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</f:verbatim>
 		<h:commandButton id="cancelButton" action="#{editService.cancel}" value="#{web.text.CANCEL}"/>		
 	</h:panelGroup>
 	

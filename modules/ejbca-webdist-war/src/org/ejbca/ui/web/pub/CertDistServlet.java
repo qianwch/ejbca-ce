@@ -272,15 +272,11 @@ public class CertDistServlet extends HttpServlet {
                     	certcert = (Certificate)certs[latestcertno];
                     }
                     if (certcert == null) {
-                        if (log.isDebugEnabled()) {
-                            log.debug("No certificate found for requested subject DN. '" + dn + "'.");
-                        }
+                        log.debug("No certificate found for requested subject DN. '"+dn+"'.");
                         res.sendError(HttpServletResponse.SC_NOT_FOUND, "No certificate found for requested subject DN.");
                     } else {
                         sendEndEntityCert(administrator, req, res, format, certcert);
-                        if (log.isDebugEnabled()) {
-                            log.debug("Sent latest certificate for '" + dn + "' to client at " + remoteAddr);
-                        }
+                        log.debug("Sent latest certificate for '"+dn+"' to client at " + remoteAddr);                    	
                     }
                 }
                 if (command.equalsIgnoreCase(COMMAND_LISTCERT)) {
@@ -488,7 +484,7 @@ public class CertDistServlet extends HttpServlet {
             res.setContentLength(cert.length);
             res.getOutputStream().write(cert);
         }
-    } 
+    } // doGet
 
 	private Certificate[] getCertificateChain(AuthenticationToken administrator,
 			int caid, String issuerdn) throws AuthorizationDeniedException {

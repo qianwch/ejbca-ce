@@ -18,14 +18,13 @@
 if (WebConfiguration.isManualClassPathsEnabled()) {
 %>
         <h:selectOneMenu id="workerClassPathSelect" value="#{editService.customWorkerType.autoClassPath}"
-                         onchange="document.getElementById('edit:workerClassPathTextField').disabled = (this.value != &quot;&quot;); return true"
-                         disabled="#{not editService.hasEditRights}">
+                         onchange="document.getElementById('edit:workerClassPathTextField').disabled = (this.value != &quot;&quot;); return true">
             <f:selectItems value="#{editService.serviceConfigurationView.availableCustomWorkerItems}" />
             <f:selectItem itemValue="" itemLabel="#{web.text.MANUALCLASSPATH}" />
         </h:selectOneMenu>
         
         <f:verbatim><br></f:verbatim>
-        <h:inputText id="workerClassPathTextField" value="#{editService.customWorkerType.manualClassPath}" size="45" disabled="#{not editService.hasEditRights}"/>
+        <h:inputText id="workerClassPathTextField" value="#{editService.customWorkerType.manualClassPath}" size="45" />
         
         <f:verbatim>
             <script type="text/javascript">
@@ -41,7 +40,7 @@ if (WebConfiguration.isManualClassPathsEnabled()) {
 <%
 } else {
 %>
-        <h:selectOneMenu id="workerClassPathSelect" value="#{editService.customWorkerType.autoClassPath}" disabled="#{not editService.hasEditRights}">
+        <h:selectOneMenu id="workerClassPathSelect" value="#{editService.customWorkerType.autoClassPath}">
             <f:selectItem itemValue="" itemLabel="#{web.text.PLEASE_SELECT}" />
             <f:selectItems value="#{editService.serviceConfigurationView.availableCustomWorkerItems}" />
             <f:selectItems value="#{editService.manualCustomItems.workers}" />
@@ -59,6 +58,6 @@ if (WebConfiguration.isManualClassPathsEnabled()) {
 		<h:outputText value="#{web.text.CUSTOMWORKERPROPERTIES}"/>
 	</h:panelGroup>
 	<h:panelGroup>
-		<h:inputTextarea id="workerPropsTextArea" value="#{editService.customWorkerType.propertyText}" rows="8" cols="45" disabled="#{not editService.hasEditRights}"/>
+		<h:inputTextarea id="workerPropsTextArea" value="#{editService.customWorkerType.propertyText}" rows="8" cols="45"/>
 	</h:panelGroup>
 

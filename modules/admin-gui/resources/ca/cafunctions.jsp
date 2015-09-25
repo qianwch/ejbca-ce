@@ -43,7 +43,7 @@ org.ejbca.util.HTMLTools
   final static String BUTTON_CREATEDELTACRL = "buttoncreatedeltacrl";
 %>
 <%   // Initialize environment
-  GlobalConfiguration globalconfiguration = ejbcawebbean.initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.CAVIEW.resource()); 
+  GlobalConfiguration globalconfiguration = ejbcawebbean.initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, AccessRulesConstants.REGULAR_CABASICFUNCTIONS); 
                                             cabean.initialize(ejbcawebbean); 
 
   final String THIS_FILENAME                = globalconfiguration.getCaPath() 
@@ -91,7 +91,7 @@ org.ejbca.util.HTMLTools
 <head>
   <title><c:out value="<%= globalconfiguration.getEjbcaTitle() %>" /></title>
   <base href="<%= ejbcawebbean.getBaseUrl() %>" />
-  <link rel="stylesheet" type="text/css" href="<c:out value='<%=ejbcawebbean.getCssFile() %>' />" />
+  <link rel="stylesheet" type="text/css" href="<%= ejbcawebbean.getCssFile() %>" />
   <script type="text/javascript" src="<%= globalconfiguration .getAdminWebPath() %>ejbcajslib.js"></script>
   <script type="text/javascript">
 <!--  

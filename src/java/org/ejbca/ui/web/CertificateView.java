@@ -29,6 +29,7 @@ import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.bouncycastle.asn1.x509.Extension;
@@ -36,13 +37,13 @@ import org.bouncycastle.util.encoders.Hex;
 import org.cesecore.certificates.certificate.CertificateData;
 import org.cesecore.certificates.certificate.CertificateDataWrapper;
 import org.cesecore.certificates.certificate.CertificateStatusHelper;
+import org.cesecore.certificates.certificateprofile.CertificateProfile;
 import org.cesecore.certificates.certificatetransparency.CertificateTransparency;
 import org.cesecore.certificates.certificatetransparency.CertificateTransparencyFactory;
 import org.cesecore.certificates.util.AlgorithmTools;
 import org.cesecore.certificates.util.DNFieldExtractor;
 import org.cesecore.certificates.util.cert.QCStatementExtension;
 import org.cesecore.certificates.util.cert.SubjectDirAttrExtension;
-import org.cesecore.config.AvailableExtendedKeyUsagesConfiguration;
 import org.cesecore.keys.util.KeyTools;
 import org.cesecore.util.CertTools;
 import org.cesecore.util.ValidityDate;
@@ -296,7 +297,7 @@ public class CertificateView implements Serializable {
     	return returnval;
     }
 
-    public String[] getExtendedKeyUsageAsTexts(AvailableExtendedKeyUsagesConfiguration ekuConfig){
+    public String[] getExtendedKeyUsageAsTexts(){
         if (certificate==null) {
             return new String[0];
         }
@@ -311,8 +312,9 @@ public class CertificateView implements Serializable {
             extendedkeyusage = new ArrayList<String>();
         }
         final String[] returnval = new String[extendedkeyusage.size()];
+        final Map<String,String> map = CertificateProfile.getAllExtendedKeyUsageTexts();
         for (int i=0; i<extendedkeyusage.size(); i++) {
-            returnval[i] = ekuConfig.getExtKeyUsageName(extendedkeyusage.get(i));
+            returnval[i] = (String)map.get(extendedkeyusage.get(i));
         }
         return returnval; 
     }

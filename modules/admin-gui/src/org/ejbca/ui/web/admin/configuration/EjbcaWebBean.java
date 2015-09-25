@@ -14,7 +14,6 @@
 package org.ejbca.ui.web.admin.configuration;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
@@ -36,7 +35,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.TimeZone;
 
@@ -44,7 +42,6 @@ import javax.ejb.EJBException;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.cesecore.audit.enums.EventStatus;
@@ -61,16 +58,9 @@ import org.cesecore.certificates.ca.CA;
 import org.cesecore.certificates.ca.CADoesntExistsException;
 import org.cesecore.certificates.ca.CaSessionLocal;
 import org.cesecore.certificates.certificate.CertificateStoreSessionLocal;
-import org.cesecore.certificates.certificate.certextensions.AvailableCustomCertificateExtensionsConfiguration;
-import org.cesecore.certificates.certificate.certextensions.CertificateExtension;
-import org.cesecore.certificates.certificate.certextensions.CertificateExtensionFactory;
-import org.cesecore.certificates.certificate.certextensions.CertificateExtentionConfigurationException;
 import org.cesecore.certificates.certificateprofile.CertificateProfileSessionLocal;
 import org.cesecore.certificates.util.DNFieldExtractor;
-import org.cesecore.config.AvailableExtendedKeyUsagesConfiguration;
-import org.cesecore.config.ConfigurationHolder;
 import org.cesecore.configuration.GlobalConfigurationSessionLocal;
-import org.cesecore.internal.InternalResources;
 import org.cesecore.keys.util.KeyTools;
 import org.cesecore.roles.access.RoleAccessSessionLocal;
 import org.cesecore.roles.management.RoleManagementSessionLocal;
@@ -107,7 +97,6 @@ public class EjbcaWebBean implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private static Logger log = Logger.getLogger(EjbcaWebBean.class);
-    private static final InternalResources intres = InternalResources.getInstance();
 
     // Public Constants.
     public static final int AUTHORIZED_RA_VIEW_RIGHTS = 0;
@@ -155,8 +144,6 @@ public class EjbcaWebBean implements Serializable {
     private GlobalConfiguration globalconfiguration;
     private CmpConfiguration cmpconfiguration = null;
     private CmpConfiguration cmpConfigForEdit = null;
-    private AvailableExtendedKeyUsagesConfiguration availableExtendedKeyUsagesConfig = null;
-    private AvailableCustomCertificateExtensionsConfiguration availableCustomCertExtensionsConfig = null;
     private ServletContext servletContext = null;
     private AuthorizationDataHandler authorizedatahandler;
     private WebLanguages adminsweblanguage;
@@ -184,12 +171,10 @@ public class EjbcaWebBean implements Serializable {
     private void commonInit() throws Exception {
         reloadGlobalConfiguration();
         reloadCMPConfiguration();
-        reloadAvailableExtendedKeyUsagesConfiguration();
-        reloadAvailableCustomCertExtensionsConfiguration();
         if (informationmemory == null) {
             informationmemory = new InformationMemory(administrator, caAdminSession, caSession, authorizationSession, complexAccessControlSession,
                     endEntityProfileSession, hardTokenSession, publisherSession, userDataSourceSession, certificateProfileSession,
-                    globalConfigurationSession, roleManagementSession, globalconfiguration, cmpconfiguration, availableExtendedKeyUsagesConfig, availableCustomCertExtensionsConfig);
+                    globalConfigurationSession, roleManagementSession, globalconfiguration, cmpconfiguration);
         }
         authorizedatahandler = new AuthorizationDataHandler(administrator, informationmemory, roleAccessSession, roleManagementSession,
                 authorizationSession);
@@ -275,12 +260,6 @@ public class EjbcaWebBean implements Serializable {
             initialized = true;
         }
 
-        // Read ExtendedKeyUsages from conf/extendedkeyusage.properties
-        fillExtendedKeyUsagesFromFile();
-
-        // Read CustomCertificateExtensions from /src/java/certextensions.properties
-        addAvailableCustomCertExtensionsFromFile();
-
         return globalconfiguration;
     }
     
@@ -331,7 +310,7 @@ public class EjbcaWebBean implements Serializable {
         return certificatefingerprint;
     }
 
-    /** Return the admins selected theme including its trailing '.css' */
+    /** Return the admins selected theme including it's trailing '.css' */
     public String getCssFile() {
         return globalconfiguration.getAdminWebPath() + globalconfiguration.getThemePath() + "/" + currentadminpreference.getTheme() + ".css";
     }
@@ -438,17 +417,6 @@ public class EjbcaWebBean implements Serializable {
             throw new AuthorizationDeniedException("Not authorized to " + Arrays.toString(resources));
         }
         return true;
-    }
-    
-    /**
-     * Checks if the admin have authorization to view the resource without performing any logging. Will simply return a boolean, 
-     * no other information 
-     * 
-     * 
-     * @return true if is authorized to resource, false if not
-     */
-    public boolean isAuthorizedNoLogSilent(String... resources) {
-        return authorizationSession.isAuthorizedNoLogging(administrator, resources);
     }
 
     /**
@@ -704,12 +672,6 @@ public class EjbcaWebBean implements Serializable {
         }
         
     }
-    
-    public void saveGlobalConfiguration(GlobalConfiguration gc) throws Exception {
-        globalConfigurationSession.saveConfiguration(administrator, gc);
-        informationmemory.systemConfigurationEdited(gc);
-        reloadGlobalConfiguration();
-    }
 
     public void saveGlobalConfiguration() throws Exception {
         globalConfigurationSession.saveConfiguration(administrator, globalconfiguration);
@@ -876,13 +838,13 @@ public class EjbcaWebBean implements Serializable {
         return StringTools.parseCertData(certdata);
     }
 
-    public String getCleanOption(String parameter, String[] validOptions) {
+    public String getCleanOption(String parameter, String[] validOptions) throws Exception {
         for (int i = 0; i < validOptions.length; i++) {
             if (parameter.equals(validOptions[i])) {
                 return parameter;
             }
         }
-        throw new IllegalArgumentException("Parameter " + parameter + " not found among valid options.");
+        throw new Exception("Trying to set an invalid option.");
     }
 
     public void clearClusterCache(boolean excludeActiveCryptoTokens) throws Exception {
@@ -961,6 +923,18 @@ public class EjbcaWebBean implements Serializable {
     public EjbLocalHelper getEjb() {
         return ejbLocalHelper;
     }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
     //**********************
@@ -1056,216 +1030,5 @@ public class EjbcaWebBean implements Serializable {
         return cps;
     }
     
-    //*************************************************
-    //      AvailableExtendedKeyUsagesConfigration
-    //*************************************************
-    
-    public AvailableExtendedKeyUsagesConfiguration getAvailableExtendedKeyUsagesConfiguration() {
-        if(availableExtendedKeyUsagesConfig == null) {
-            reloadAvailableExtendedKeyUsagesConfiguration();
-        }
-        return availableExtendedKeyUsagesConfig;
-    }
         
-    public void reloadAvailableExtendedKeyUsagesConfiguration() {
-        availableExtendedKeyUsagesConfig = (AvailableExtendedKeyUsagesConfiguration) 
-                globalConfigurationSession.getCachedConfiguration(AvailableExtendedKeyUsagesConfiguration.CONFIGURATION_ID);
-        if (informationmemory != null) {
-            informationmemory.availableExtendedKeyUsagesConfigEdited(availableExtendedKeyUsagesConfig);
-        }
-    }
-    
-    public void saveAvailableExtendedKeyUsagesConfiguration(AvailableExtendedKeyUsagesConfiguration ekuConfig) throws AuthorizationDeniedException {
-        globalConfigurationSession.saveConfiguration(administrator, ekuConfig);
-        availableExtendedKeyUsagesConfig = ekuConfig;
-        informationmemory.availableExtendedKeyUsagesConfigEdited(availableExtendedKeyUsagesConfig);
-    }
-    
-    private void fillExtendedKeyUsagesFromFile() {
-        // If the file has already been removed, no need to go further        
-        final URL url = ConfigurationHolder.class.getResource("/conf/extendedkeyusage.properties");
-        if(url == null) {
-            return;
-        }
-        
-        AvailableExtendedKeyUsagesConfiguration ekuConfig = getAvailableExtendedKeyUsagesConfiguration();
-        
-        // If the file has already been read once, don't read it again so as not to overwrite changes the 
-        // administrator might already have made.
-        if(ekuConfig.isConfigurationInitialized()) {
-            return;
-        }
-            
-        final Configuration conf = ConfigurationHolder.instance();
-        final String ekuname = "extendedkeyusage.name.";
-        final String ekuoid = "extendedkeyusage.oid.";
-        int j=0;
-        for (int i = 0; i < 255; i++) {
-            final String oid = conf.getString(ekuoid+i);
-            if (oid != null) {
-                String name = conf.getString(ekuname+i);
-                if (name != null) {
-                    // A null value in the properties file means that we should not use this value, so set it to null for real
-                    if (!name.equalsIgnoreCase("null")) {
-                        String readableName = getText(name);
-                        ekuConfig.addExtKeyUsage(oid, readableName);
-                        j++;
-                    }
-                } else {
-                    log.error("Found extended key usage oid "+oid+", but no name defined. Not adding to list of extended key usages.");
-                }
-            } 
-            // No eku with a certain number == continue trying next, we will try 0-255.
-        }
-        if(log.isDebugEnabled()) {
-            log.debug("Read " + j + " extended key usages from the configurations file");
-        }
-        
-        AlwaysAllowLocalAuthenticationToken alwaysAllowedAdmin = new AlwaysAllowLocalAuthenticationToken(new UsernamePrincipal("LoadingExtendedKeyUsages"));
-        try {
-            globalConfigurationSession.saveConfiguration(alwaysAllowedAdmin, ekuConfig);
-        } catch (AuthorizationDeniedException e) {
-            log.error("Recieved an AuthorizationDeniedException even though AlwaysAllowLocalAuthenticationToken is used. " + e.getLocalizedMessage());
-        }
-        availableExtendedKeyUsagesConfig = ekuConfig;
-        informationmemory.availableExtendedKeyUsagesConfigEdited(availableExtendedKeyUsagesConfig);
-    }
-    
-    //*****************************************************************
-    //       AvailableCustomCertificateExtensionsConfiguration
-    //*****************************************************************
-    
-    public AvailableCustomCertificateExtensionsConfiguration getAvailableCustomCertExtensionsConfiguration() {
-        if(availableCustomCertExtensionsConfig == null) {
-            reloadAvailableCustomCertExtensionsConfiguration();
-        }
-        return availableCustomCertExtensionsConfig;
-    }
-        
-    public void reloadAvailableCustomCertExtensionsConfiguration() {
-        availableCustomCertExtensionsConfig = (AvailableCustomCertificateExtensionsConfiguration) 
-                globalConfigurationSession.getCachedConfiguration(AvailableCustomCertificateExtensionsConfiguration.CONFIGURATION_ID);
-        if (informationmemory != null) {
-            informationmemory.availableCustomCertExtensionsConfigEdited(availableCustomCertExtensionsConfig);
-        }
-    }
-    
-    public void saveAvailableCustomCertExtensionsConfiguration(AvailableCustomCertificateExtensionsConfiguration cceConfig) throws AuthorizationDeniedException {
-        globalConfigurationSession.saveConfiguration(administrator, cceConfig);
-        availableCustomCertExtensionsConfig = cceConfig;
-        informationmemory.availableCustomCertExtensionsConfigEdited(availableCustomCertExtensionsConfig);
-    }
-    
-    public void addAvailableCustomCertExtensionsFromFile() {
-        
-        // If the file has already been removed, no need to go further
-        InputStream is = CertificateExtensionFactory.class.getResourceAsStream("/certextensions.properties");
-        if(is == null) {
-            return;
-        }
-        
-        AvailableCustomCertificateExtensionsConfiguration cceConfig = getAvailableCustomCertExtensionsConfiguration();
-        
-        // If the file has already been read once, don't read it again so as not to overwrite changes the 
-        // administrator might already have made.
-        if(cceConfig.isConfigurationInitialized()) {
-            return;
-        }
-        
-        try{
-            Properties props = new Properties();
-            try {
-                props.load(is);
-            } finally {
-                is.close();
-            }
-            
-            int count = 0;
-            for(int i=1;i<255;i++){
-                if(props.get("id" + i +".oid")!=null){
-                    if(log.isDebugEnabled()) {
-                        log.debug("found " + props.get("id" + i +".oid"));
-                    }
-                    CertificateExtension ce = getCertificateExtensionFromFile(i, props);
-                    cceConfig.addCustomCertExtension(ce.getId(), ce);
-                    count++;
-                }else{
-                    break;
-                }
-            }
-            if(log.isDebugEnabled()) {
-                log.debug("Nr of read Custom Certificate Extensions from file: " + count);
-            }
-        }catch(IOException e){
-            log.error(intres.getLocalizedMessage("certext.errorparsingproperty"),e);
-        } catch (CertificateExtentionConfigurationException e) {
-            log.error(e.getMessage(),e);
-        }
-        
-        AlwaysAllowLocalAuthenticationToken alwaysAllowedAdmin = new AlwaysAllowLocalAuthenticationToken(new UsernamePrincipal("LoadingCustomCertificateExtensions"));
-        try {
-            globalConfigurationSession.saveConfiguration(alwaysAllowedAdmin, cceConfig);
-        } catch (AuthorizationDeniedException e) {
-            log.error("Recieved an AuthorizationDeniedException even though AlwaysAllowLocalAuthenticationToken is used. " + e.getLocalizedMessage());
-        }
-        availableCustomCertExtensionsConfig = cceConfig;
-        informationmemory.availableCustomCertExtensionsConfigEdited(availableCustomCertExtensionsConfig);
-    }
-    
-    private CertificateExtension getCertificateExtensionFromFile(int id, Properties propertiesInFile) throws CertificateExtentionConfigurationException {
-        String PROPERTY_ID           = "id";
-        String PROPERTY_OID          = ".oid";
-        String PROPERTY_CLASSPATH    = ".classpath";
-        String PROPERTY_DISPLAYNAME  = ".displayname";
-        String PROPERTY_USED         = ".used";
-        String PROPERTY_TRANSLATABLE = ".translatable";
-        String PROPERTY_CRITICAL     = ".critical";
-        
-        try{
-            String oid = propertiesInFile.getProperty(PROPERTY_ID + id + PROPERTY_OID);
-            String classPath = propertiesInFile.getProperty(PROPERTY_ID + id + PROPERTY_CLASSPATH);
-            String displayName = propertiesInFile.getProperty(PROPERTY_ID + id + PROPERTY_DISPLAYNAME);
-            log.debug(PROPERTY_ID + id + PROPERTY_USED + ":" + propertiesInFile.getProperty(PROPERTY_ID + id + PROPERTY_USED));
-            boolean used = propertiesInFile.getProperty(PROPERTY_ID + id + PROPERTY_USED).trim().equalsIgnoreCase("TRUE");
-            boolean translatable = propertiesInFile.getProperty(PROPERTY_ID + id + PROPERTY_TRANSLATABLE).trim().equalsIgnoreCase("TRUE");
-            boolean critical = propertiesInFile.getProperty(PROPERTY_ID + id + PROPERTY_CRITICAL).trim().equalsIgnoreCase("TRUE");
-            log.debug(id + ", " + used + ", " +oid + ", " +critical+ ", " +translatable +  ", " + displayName);   
-            if(used){
-                if(oid != null && classPath != null && displayName != null){
-                    if(translatable) {
-                        displayName = getText(displayName);
-                    }
-                    
-                    Class<?> implClass = Class.forName(classPath);
-                    CertificateExtension certificateExtension = (CertificateExtension) implClass.newInstance();
-                    Properties extensionProperties = getExtensionProperties(id, propertiesInFile);
-                    certificateExtension.init(id, oid.trim(), displayName, critical, extensionProperties);
-                    return certificateExtension;
-
-                }else{
-                    throw new CertificateExtentionConfigurationException(intres.getLocalizedMessage("certext.certextmissconfigured",Integer.valueOf(id)));
-                }
-            }
-            
-        }catch(Exception e){
-            throw new CertificateExtentionConfigurationException(intres.getLocalizedMessage("certext.certextmissconfigured",Integer.valueOf(id)),e);
-        }
-        return null;
-    }
-    
-    private Properties getExtensionProperties(int id, Properties propertiesInFile) {
-        Properties extProps = new Properties();
-        Iterator<Object> keyIter = propertiesInFile.keySet().iterator();
-        String matchString = "id" + id + ".property."; 
-        while(keyIter.hasNext()){
-            String nextKey = (String) keyIter.next();
-            if(nextKey.startsWith(matchString)){
-                if(nextKey.length() > matchString.length()){
-                  extProps.put(nextKey.substring(matchString.length()), propertiesInFile.get(nextKey));               
-                }
-            }           
-        }
-        return extProps;
-    }
-    
 }

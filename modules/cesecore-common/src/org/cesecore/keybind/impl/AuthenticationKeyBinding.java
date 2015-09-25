@@ -19,7 +19,7 @@ import java.util.Arrays;
 
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.x509.KeyPurposeId;
-import org.cesecore.config.AvailableExtendedKeyUsagesConfiguration;
+import org.cesecore.config.ExtendedKeyUsageConfiguration;
 import org.cesecore.keybind.CertificateImportException;
 import org.cesecore.keybind.InternalKeyBindingBase;
 import org.cesecore.util.CertTools;
@@ -47,8 +47,8 @@ public class AuthenticationKeyBinding extends InternalKeyBindingBase {
     }
 
     @Override
-    public void assertCertificateCompatability(Certificate certificate, final AvailableExtendedKeyUsagesConfiguration ekuConfig) throws CertificateImportException {
-        if (!isClientSSLCertificate(certificate, ekuConfig)) {
+    public void assertCertificateCompatability(Certificate certificate) throws CertificateImportException {
+        if (!isClientSSLCertificate(certificate)) {
             throw new CertificateImportException("Not a vlid Client SSL authentication certificate.");
         }
     }
@@ -58,7 +58,7 @@ public class AuthenticationKeyBinding extends InternalKeyBindingBase {
         // Nothing to do   
     }
 
-    public static boolean isClientSSLCertificate(Certificate certificate, final AvailableExtendedKeyUsagesConfiguration ekuConfig) {
+    public static boolean isClientSSLCertificate(Certificate certificate) {
         if (certificate == null) {
             log.debug("No certificate provided.");
             return false;
@@ -82,7 +82,7 @@ public class AuthenticationKeyBinding extends InternalKeyBindingBase {
             }
             for (String extendedKeyUsage : x509Certificate.getExtendedKeyUsage()) {
                 log.debug("EKU: " + extendedKeyUsage + " (" +
-                        ekuConfig.getAllEKUOidsAndNames().get(extendedKeyUsage) + ")");
+                        ExtendedKeyUsageConfiguration.getExtendedKeyUsageOidsAndNames().get(extendedKeyUsage) + ")");
             }
             if (!x509Certificate.getExtendedKeyUsage().contains(KeyPurposeId.id_kp_clientAuth.getId())) {
                 log.debug("Extended Key Usage 1.3.6.1.5.5.7.3.2 (EKU_PKIX_CLIENTAUTH) is required.");

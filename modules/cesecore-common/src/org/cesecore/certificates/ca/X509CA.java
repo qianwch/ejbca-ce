@@ -113,7 +113,6 @@ import org.cesecore.certificates.ca.internal.CertificateValidity;
 import org.cesecore.certificates.ca.internal.SernoGeneratorRandom;
 import org.cesecore.certificates.certificate.CertificateConstants;
 import org.cesecore.certificates.certificate.CertificateCreateException;
-import org.cesecore.certificates.certificate.certextensions.AvailableCustomCertificateExtensionsConfiguration;
 import org.cesecore.certificates.certificate.certextensions.CertificateExtension;
 import org.cesecore.certificates.certificate.certextensions.CertificateExtensionException;
 import org.cesecore.certificates.certificate.certextensions.CertificateExtensionFactory;
@@ -444,8 +443,8 @@ public class X509CA extends CA implements Serializable {
         return o;
     }
 
-    public void updateCA(CryptoToken cryptoToken, CAInfo cainfo, final AvailableCustomCertificateExtensionsConfiguration cceConfig) throws InvalidAlgorithmException {
-        super.updateCA(cryptoToken, cainfo, cceConfig);
+    public void updateCA(CryptoToken cryptoToken, CAInfo cainfo) throws InvalidAlgorithmException {
+        super.updateCA(cryptoToken, cainfo);
         X509CAInfo info = (X509CAInfo) cainfo;
         setPolicies(info.getPolicies());
         setAuthorityInformationAccess(info.getAuthorityInformationAccess());
@@ -611,8 +610,7 @@ public class X509CA extends CA implements Serializable {
     }
 
     @Override
-    public void createOrRemoveLinkCertificate(final CryptoToken cryptoToken, final boolean createLinkCertificate, final CertificateProfile certProfile, 
-            final AvailableCustomCertificateExtensionsConfiguration cceConfig) throws CryptoTokenOfflineException {
+    public void createOrRemoveLinkCertificate(final CryptoToken cryptoToken, final boolean createLinkCertificate, final CertificateProfile certProfile) throws CryptoTokenOfflineException {
         byte[] ret = null;
         if (createLinkCertificate) {
             try {
@@ -631,7 +629,7 @@ public class X509CA extends CA implements Serializable {
                 // The sequence is ignored later, but we fetch the same previous for now to do this the same way as for CVC..
                 final String ignoredKeySequence = catoken.getProperties().getProperty(CATokenConstants.PREVIOUS_SEQUENCE_PROPERTY);
                 final Certificate retcert = generateCertificate(cadata, null, currentCaCert.getPublicKey(), -1, currentCaCert.getNotBefore(), currentCaCert.getNotAfter(),
-                        certProfile, null, ignoredKeySequence, previousCaPublicKey, previousCaPrivateKey, provider, null, cceConfig);
+                        certProfile, null, ignoredKeySequence, previousCaPublicKey, previousCaPrivateKey, provider, null);
                 log.info(intres.getLocalizedMessage("cvc.info.createlinkcert", cadata.getDN(), cadata.getDN()));
                 ret = retcert.getEncoded();
             } catch (CryptoTokenOfflineException e) {
@@ -646,8 +644,7 @@ public class X509CA extends CA implements Serializable {
     @Override
     public Certificate generateCertificate(CryptoToken cryptoToken, final EndEntityInformation subject, final RequestMessage request,
             final PublicKey publicKey, final int keyusage, final Date notBefore, final Date notAfter, final CertificateProfile certProfile,
-            final Extensions extensions, final String sequence, CertificateGenerationParams certGenParams, final AvailableCustomCertificateExtensionsConfiguration cceConfig)
-            throws CryptoTokenOfflineException, CAOfflineException, InvalidAlgorithmException,
+            final Extensions extensions, final String sequence, CertificateGenerationParams certGenParams) throws CryptoTokenOfflineException, CAOfflineException, InvalidAlgorithmException,
             IllegalValidityException, IllegalNameException, OperatorCreationException, CertificateCreateException, CertificateExtensionException, SignatureException {
         // Before we start, check if the CA is off-line, we don't have to waste time
         // one the stuff below of we are off-line. The line below will throw CryptoTokenOfflineException of CA is offline
@@ -656,7 +653,7 @@ public class X509CA extends CA implements Serializable {
         final PrivateKey caPrivateKey = cryptoToken.getPrivateKey(catoken.getAliasFromPurpose(CATokenConstants.CAKEYPURPOSE_CERTSIGN));
         final String provider = cryptoToken.getSignProviderName();
         return generateCertificate(subject, request, publicKey, keyusage, notBefore, notAfter, certProfile, extensions, sequence,
-                caPublicKey, caPrivateKey, provider, certGenParams, cceConfig);
+                caPublicKey, caPrivateKey, provider, certGenParams);
     }
 
     /**
@@ -674,8 +671,7 @@ public class X509CA extends CA implements Serializable {
      */
     private Certificate generateCertificate(final EndEntityInformation subject, final RequestMessage request, final PublicKey publicKey,
             final int keyusage, final Date notBefore, final Date notAfter, final CertificateProfile certProfile, final Extensions extensions,
-            final String sequence, final PublicKey caPublicKey, final PrivateKey caPrivateKey, final String provider, 
-            CertificateGenerationParams certGenParams, AvailableCustomCertificateExtensionsConfiguration cceConfig)
+            final String sequence, final PublicKey caPublicKey, final PrivateKey caPrivateKey, final String provider, CertificateGenerationParams certGenParams)
             throws CAOfflineException, InvalidAlgorithmException, IllegalValidityException, IllegalNameException, CertificateExtensionException,
              OperatorCreationException, CertificateCreateException, SignatureException {
 
@@ -931,7 +927,7 @@ public class X509CA extends CA implements Serializable {
         final Iterator<Integer> certExtIter = usedCertExt.iterator();
         while (certExtIter.hasNext()) {
             final Integer id = certExtIter.next();
-            final CertificateExtension certExt = cceConfig.getCustomCertificateExtension(id);
+            final CertificateExtension certExt = fact.getCertificateExtensions(id);
             if (certExt != null) {
                 // We don't want to try to add custom extensions with the same oid if we have already added them
                 // from the request, if AllowExtensionOverride is enabled.
@@ -964,7 +960,7 @@ public class X509CA extends CA implements Serializable {
                         eext = getSubjectAltNameExtensionForCTCert(extension).generate().getExtension(oid);
                         precertbuilder.addExtension(oid, eext.isCritical(), eext.getParsedValue()); // adding subjectAlternativeName extension to precertbuilder
                         
-                        eext = sanExts.getExtension(new ASN1ObjectIdentifier(CertTools.id_ct_redacted_domains));
+                        eext = sanExts.getExtension(new ASN1ObjectIdentifier("1.3.6.1.4.1.11129.2.4.6"));
                         if(eext != null) {
                             certbuilder.addExtension(eext.getExtnId(), eext.isCritical(), eext.getParsedValue()); // adding nrOfRedactedLabels extension to certbuilder
                         }
@@ -1150,40 +1146,36 @@ public class X509CA extends CA implements Serializable {
      * to a CTLog
      * @throws IOException
      */
-    protected ExtensionsGenerator getSubjectAltNameExtensionForCert(Extension subAltNameExt, boolean publishToCT) throws IOException {
-        GeneralNames names = CertTools.getGeneralNamesFromExtension(subAltNameExt);
-        GeneralName[] gns = names.getNames();
+    private ExtensionsGenerator getSubjectAltNameExtensionForCert(Extension subAltNameExt, boolean publishToCT) throws IOException {
+        String subAltName = CertTools.getAltNameStringFromExtension(subAltNameExt);
+        List<String> dnsValues = CertTools.getPartsFromDN(subAltName, CertTools.DNS);
+        int[] nrOfRecactedLables = new int[dnsValues.size()];
         boolean sanEdited = false;
-        ASN1EncodableVector nrOfRecactedLables = new ASN1EncodableVector();
-        for (int j = 0; j<gns.length; j++) {
-            GeneralName generalName = gns[j];
-            // Look for DNS name
-            if (generalName.getTagNo() == 2) {
-                final String str = CertTools.getGeneralNameString(2, generalName.getName());
-                if(StringUtils.contains(str, "(") && StringUtils.contains(str, ")") ) { // if it contains parts that should be redacted
-                    // Remove the parentheses from the SubjectAltName that will end up on the certificate
-                    String certBuilderDNSValue = StringUtils.remove(str, "dNSName=");
-                    certBuilderDNSValue = StringUtils.remove(certBuilderDNSValue, '(');
-                    certBuilderDNSValue = StringUtils.remove(certBuilderDNSValue, ')');
-                    // Replace the old value with the new
-                    gns[j] = new GeneralName(2, new DERIA5String(certBuilderDNSValue));
-                    sanEdited = true;
-                    if (publishToCT) {
-                        String redactedLable = StringUtils.substring(str, StringUtils.indexOf(str, "("), StringUtils.lastIndexOf(str, ")")+1); // tex. (top.secret).domain.se => redactedLable = (top.secret) aka. including the parentheses 
-                        nrOfRecactedLables.add(new ASN1Integer(StringUtils.countMatches(redactedLable, ".")+1));
-                    }
-                } else {
-                    nrOfRecactedLables.add(new ASN1Integer(0));
+        int i = 0;
+        for(String dns : dnsValues) {
+            if(StringUtils.contains(dns, "(") && StringUtils.contains(dns, ")") ) { // if it contains parts that should be redacted
+                // Remove the parentheses from the SubjectAltName that will end up on the certificate
+                String certBuilderDNSValue = StringUtils.remove(dns, '(');
+                certBuilderDNSValue = StringUtils.remove(certBuilderDNSValue, ')');
+                subAltName = StringUtils.replace(subAltName, dns, certBuilderDNSValue);
+                sanEdited = true;
+                if(publishToCT) {
+                    String redactedLable = StringUtils.substring(dns, StringUtils.indexOf(dns, "("), StringUtils.lastIndexOf(dns, ")")+1); // tex. (top.secret).domain.se => redactedLable = (top.secret) aka. including the parentheses
+                    nrOfRecactedLables[i] = StringUtils.countMatches(redactedLable, ".")+1;
                 }
             }
+            i++;
         }
         ExtensionsGenerator gen = new ExtensionsGenerator();
-        // Use the GeneralName from original altName in order to not re-encode anything 
-        gen.addExtension(Extension.subjectAlternativeName, subAltNameExt.isCritical(), new GeneralNames(gns));
-        // If there actually are redacted parts, add the extension containing the number of redacted labels to the certificate 
+        gen.addExtension(Extension.subjectAlternativeName, subAltNameExt.isCritical(), CertTools.getGeneralNamesFromAltName(subAltName));
+        // If there actually are redacted parts, add the extension containing the number of redacted lables to the certificate
         if(publishToCT && sanEdited) {
-            ASN1Encodable seq = new DERSequence(nrOfRecactedLables);
-            gen.addExtension(new ASN1ObjectIdentifier(CertTools.id_ct_redacted_domains), false, seq);
+            ASN1EncodableVector v = new ASN1EncodableVector();
+            for(int val : nrOfRecactedLables) {
+                v.add(new ASN1Integer(val));
+            }
+            ASN1Encodable seq = new DERSequence(v);
+            gen.addExtension(new ASN1ObjectIdentifier("1.3.6.1.4.1.11129.2.4.6"), false, seq);
         }
         
         return gen;

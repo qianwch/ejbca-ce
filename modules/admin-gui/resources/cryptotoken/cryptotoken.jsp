@@ -11,11 +11,11 @@
  *  See terms of license at gnu.org.                                     *
  *                                                                       *
  *************************************************************************/
+
  // Version: $Id$
 %>
 <%@ taglib uri="http://java.sun.com/jsf/html" prefix="h" %>
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f" %>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ page pageEncoding="UTF-8"%>
 <% response.setContentType("text/html; charset="+org.ejbca.config.WebConfiguration.getWebContentEncoding()); %>
 <%@page errorPage="/errorpage.jsp" import="
@@ -27,13 +27,13 @@ org.cesecore.authorization.control.CryptoTokenRules
 "%>
 
 <jsp:useBean id="ejbcawebbean" scope="session" class="org.ejbca.ui.web.admin.configuration.EjbcaWebBean" />
-<% GlobalConfiguration globalconfiguration = ejbcawebbean.initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, CryptoTokenRules.VIEW.resource()); %>
+<% GlobalConfiguration globalconfiguration = ejbcawebbean.initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, CryptoTokenRules.BASE.resource()); %>
 <html>
 <f:view>
 <head>
   <title><h:outputText value="#{web.ejbcaWebBean.globalConfiguration.ejbcaTitle}" /></title>
   <base href="<%= ejbcawebbean.getBaseUrl() %>" />
-  <link rel="stylesheet" type="text/css" href="<c:out value='<%=ejbcawebbean.getCssFile() %>' />" />
+  <link rel="stylesheet" type="text/css" href="<%= ejbcawebbean.getCssFile() %>" />
   <script src="<%= globalconfiguration.getAdminWebPath() %>ejbcajslib.js"></script>
 </head>
 <body>
@@ -48,7 +48,7 @@ org.cesecore.authorization.control.CryptoTokenRules
 			<h:outputLink rendered="#{cryptoTokenMBean.paramRef eq 'default'}" value="adminweb/cryptotoken/cryptotokens.jsf"><h:outputText value="#{web.text.CRYPTOTOKEN_NAV_BACK}"/></h:outputLink>
 			<h:outputLink rendered="#{cryptoTokenMBean.paramRef eq 'caactivation'}" value="adminweb/ca/caactivation.jsf"><h:outputText value="#{web.text.CRYPTOTOKEN_NAV_BACK_ACT}"/></h:outputLink>
 		</h:panelGroup>
-		<h:commandButton action="#{cryptoTokenMBean.toggleCurrentCryptoTokenEditMode}" value="#{web.text.CRYPTOTOKEN_NAV_EDIT}" rendered="#{(!cryptoTokenMBean.currentCryptoTokenEditMode) && cryptoTokenMBean.allowedToModify}"/>
+		<h:commandButton action="#{cryptoTokenMBean.toggleCurrentCryptoTokenEditMode}" value="#{web.text.CRYPTOTOKEN_NAV_EDIT}" rendered="#{!cryptoTokenMBean.currentCryptoTokenEditMode && cryptoTokenMBean.allowedToModify}"/>
 		<h:panelGroup id="placeholder1" rendered="#{cryptoTokenMBean.currentCryptoTokenEditMode || !cryptoTokenMBean.allowedToModify}"/>
 		<h:outputLabel for="currentCryptoTokenId" value="Id:" rendered="#{cryptoTokenMBean.currentCryptoTokenId != 0}"/>
 		<h:outputText id="currentCryptoTokenId" value="#{cryptoTokenMBean.currentCryptoTokenId}" rendered="#{cryptoTokenMBean.currentCryptoTokenId != 0}"/>
@@ -103,11 +103,10 @@ org.cesecore.authorization.control.CryptoTokenRules
 		<h:panelGroup id="currentCryptoTokenP11SlotLabelType" rendered="#{cryptoTokenMBean.currentCryptoToken.showP11CryptoToken}">
 			<h:panelGroup rendered="#{cryptoTokenMBean.currentCryptoTokenEditMode}">
 			<h:selectOneMenu value="#{cryptoTokenMBean.currentCryptoToken.p11SlotLabelType}"
-				onchange="document.getElementById('currentCryptoTokenForm:selectCryptoTokenP11SlotLabelTypeLabel').click();"
-				disabled="#{!cryptoTokenMBean.allowedToModify}">
+				onchange="document.getElementById('currentCryptoTokenForm:selectCryptoTokenP11SlotLabelTypeLabel').click();">
 				<f:selectItems value="#{cryptoTokenMBean.availableCryptoTokenP11SlotLabelTypes}"/>
 			</h:selectOneMenu>
-			<h:commandButton id="selectCryptoTokenP11SlotLabelTypeLabel" action="#{cryptoTokenMBean.selectCryptoTokenLabelType}" value="Update" disabled="#{!cryptoTokenMBean.allowedToModify}"/>
+			<h:commandButton id="selectCryptoTokenP11SlotLabelTypeLabel" action="#{cryptoTokenMBean.selectCryptoTokenLabelType}" value="Update"/>
 			<script>document.getElementById('currentCryptoTokenForm:selectCryptoTokenP11SlotLabelTypeLabel').style.display = 'none';</script>
 			</h:panelGroup>
 			<h:outputText value="#{cryptoTokenMBean.currentCryptoToken.p11SlotLabelTypeText}" rendered="#{!cryptoTokenMBean.currentCryptoTokenEditMode}"/>
@@ -117,10 +116,10 @@ org.cesecore.authorization.control.CryptoTokenRules
 			value="#{web.text.CRYPTOTOKEN_TYPE_P11} #{web.text.CRYPTOTOKEN_SLOT}:"/>
 		<h:panelGroup id="currentCryptoTokenP11Slot" rendered="#{cryptoTokenMBean.currentCryptoToken.showP11CryptoToken}">
 			<h:panelGroup rendered="#{cryptoTokenMBean.currentCryptoTokenEditMode}">
-				<h:selectOneMenu value="#{cryptoTokenMBean.currentCryptoToken.p11Slot}" rendered="#{cryptoTokenMBean.currentCryptoToken.slotOfTokenLabelType}" disabled="#{!cryptoTokenMBean.allowedToModify}">
+				<h:selectOneMenu value="#{cryptoTokenMBean.currentCryptoToken.p11Slot}" rendered="#{cryptoTokenMBean.currentCryptoToken.slotOfTokenLabelType}">
 					<f:selectItems value="#{cryptoTokenMBean.availableCryptoTokenP11SlotTokenLabels}"/>
 				</h:selectOneMenu>
-			    <h:inputText value="#{cryptoTokenMBean.currentCryptoToken.p11Slot}" rendered="#{!cryptoTokenMBean.currentCryptoToken.slotOfTokenLabelType}" disabled="#{!cryptoTokenMBean.allowedToModify}"/>
+			    <h:inputText value="#{cryptoTokenMBean.currentCryptoToken.p11Slot}" rendered="#{!cryptoTokenMBean.currentCryptoToken.slotOfTokenLabelType}"/>
 			</h:panelGroup>
 			<h:outputText value="#{cryptoTokenMBean.currentCryptoToken.p11Slot}" rendered="#{!cryptoTokenMBean.currentCryptoTokenEditMode}"/>
 		</h:panelGroup>
@@ -128,7 +127,7 @@ org.cesecore.authorization.control.CryptoTokenRules
 		<h:outputLabel id="currentCryptoTokenP11AttributeFileLabel" for="currentCryptoTokenP11AttributeFile" rendered="#{cryptoTokenMBean.currentCryptoToken.showP11CryptoToken}"
 			value="#{web.text.CRYPTOTOKEN_TYPE_P11} #{web.text.CRYPTOTOKEN_ATTRFILE}:"/>
 		<h:panelGroup id="currentCryptoTokenP11AttributeFile" rendered="#{cryptoTokenMBean.currentCryptoToken.showP11CryptoToken}">
-			<h:selectOneMenu value="#{cryptoTokenMBean.currentCryptoToken.p11AttributeFile}" rendered="#{cryptoTokenMBean.currentCryptoTokenEditMode}" disabled="#{!cryptoTokenMBean.allowedToModify}">
+			<h:selectOneMenu value="#{cryptoTokenMBean.currentCryptoToken.p11AttributeFile}" rendered="#{cryptoTokenMBean.currentCryptoTokenEditMode}">
 				<f:selectItems value="#{cryptoTokenMBean.availableCryptoTokenP11AttributeFiles}"/>
 			</h:selectOneMenu>
 			<h:outputText value="#{cryptoTokenMBean.currentCryptoToken.p11AttributeFileAlias}" rendered="#{!cryptoTokenMBean.currentCryptoTokenEditMode}"/>
@@ -146,7 +145,7 @@ org.cesecore.authorization.control.CryptoTokenRules
 	<h:dataTable value="#{cryptoTokenMBean.keyPairGuiList}" var="keyPairGuiInfo" rendered="#{!cryptoTokenMBean.keyPairGuiListEmpty}"
 		styleClass="grid" style="border-collapse: collapse; right: auto; left: auto">
 		<h:column>
-			<h:selectBooleanCheckbox value="#{keyPairGuiInfo.selected}" disabled="#{!cryptoTokenMBean.allowedToModify}"/>
+			<h:selectBooleanCheckbox value="#{keyPairGuiInfo.selected}"/>
 		</h:column>
 		<h:column>
    			<f:facet name="header"><h:outputText value="#{web.text.CRYPTOTOKEN_KPM_ALIAS}"/></f:facet>
@@ -191,7 +190,7 @@ org.cesecore.authorization.control.CryptoTokenRules
 		<h:selectOneMenu value="#{cryptoTokenMBean.newKeyPairSpec}" rendered="#{cryptoTokenMBean.allowedToKeyGeneration}">
 			<f:selectItems value="#{cryptoTokenMBean.availbleKeySpecs}"/>
 		</h:selectOneMenu>
-	    <h:commandButton value="#{web.text.CRYPTOTOKEN_KPM_GENNEW}" action="#{cryptoTokenMBean.generateNewKeyPair}" rendered="#{cryptoTokenMBean.allowedToModify}"/>
+	    <h:commandButton value="#{web.text.CRYPTOTOKEN_KPM_GENNEW}" action="#{cryptoTokenMBean.generateNewKeyPair}"/>
 	</h:panelGrid>
 	</h:form>
 	<%	// Include Footer 

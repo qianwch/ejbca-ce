@@ -49,6 +49,7 @@ import org.cesecore.authentication.tokens.AlwaysAllowLocalAuthenticationToken;
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authentication.tokens.UsernamePrincipal;
 import org.cesecore.authorization.control.AccessControlSessionLocal;
+import org.cesecore.authorization.control.StandardRules;
 import org.cesecore.certificates.ca.CaSessionLocal;
 import org.cesecore.certificates.certificate.CertificateStoreSessionLocal;
 import org.cesecore.certificates.certificateprofile.CertificateProfileSessionLocal;
@@ -78,7 +79,6 @@ import org.ejbca.core.ejb.ra.EndEntityManagementSessionLocal;
 import org.ejbca.core.ejb.ra.raadmin.AdminPreferenceSessionLocal;
 import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileSessionLocal;
 import org.ejbca.core.model.InternalEjbcaResources;
-import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.core.model.services.BaseWorker;
 import org.ejbca.core.model.services.IInterval;
 import org.ejbca.core.model.services.IWorker;
@@ -331,16 +331,22 @@ public class ServiceSessionBean implements ServiceSessionLocal, ServiceSessionRe
     }
 
     @Override
-    public Collection<Integer> getVisibleServiceIds() {
+    public Collection<Integer> getAuthorizedVisibleServiceIds(AuthenticationToken admin) {
         Collection<Integer> allVisibleServiceIds = new ArrayList<Integer>();
+        // If superadmin return all visible services
+        if (authorizationSession.isAuthorizedNoLogging(admin, StandardRules.ROLE_ROOT.resource())) {
             Collection<Integer> allServiceIds = getServiceIdToNameMap().keySet();
             for (int id : allServiceIds) {
                 // Remove hidden services here..
-                if (!getServiceConfiguration(id).isHidden()) {
+                if (!getServiceConfiguration(admin, id).isHidden()) {
                     allVisibleServiceIds.add(Integer.valueOf(id));
                 }
             }
-
+        } else {
+            if (log.isDebugEnabled()) {
+                log.debug("Authorization denied for admin " + admin + " for resouce " + StandardRules.ROLE_ROOT);
+            }
+        }
         return allVisibleServiceIds;
     }
 
@@ -846,7 +852,7 @@ public class ServiceSessionBean implements ServiceSessionLocal, ServiceSessionRe
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     @Override
-    public ServiceConfiguration getServiceConfiguration(int id) {
+    public ServiceConfiguration getServiceConfiguration(AuthenticationToken admin, int id) {
         if (log.isTraceEnabled()) {
             log.trace(">getServiceConfiguration: " + id);
         }
@@ -909,12 +915,19 @@ public class ServiceSessionBean implements ServiceSessionLocal, ServiceSessionRe
     }
     
     /**
-     * Method to check if an admin is authorized to edit a service. Allow access for /services/edit
+     * Method to check if an admin is authorized to edit a service The following checks are performed.
+     * 
+     * 1. Deny If the service is hidden and the admin is internal EJBCA 2. Allow If the admin is an super administrator 3. Deny all other
      * 
      * @return true if the administrator is authorized
      */
     private boolean isAuthorizedToEditService(AuthenticationToken admin) {
-       return authorizationSession.isAuthorizedNoLogging(admin, AccessRulesConstants.SERVICES_EDIT);            
+
+        if (authorizationSession.isAuthorizedNoLogging(admin, StandardRules.ROLE_ROOT.resource())) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

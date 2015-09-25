@@ -73,8 +73,6 @@ import org.cesecore.certificates.certificate.request.SimpleRequestMessage;
 import org.cesecore.certificates.certificate.request.X509ResponseMessage;
 import org.cesecore.certificates.endentity.EndEntityInformation;
 import org.cesecore.certificates.util.AlgorithmTools;
-import org.cesecore.config.AvailableExtendedKeyUsagesConfiguration;
-import org.cesecore.configuration.GlobalConfigurationSessionLocal;
 import org.cesecore.internal.InternalResources;
 import org.cesecore.jndi.JndiConstants;
 import org.cesecore.keys.token.CryptoToken;
@@ -110,8 +108,6 @@ public class InternalKeyBindingMgmtSessionBean implements InternalKeyBindingMgmt
     private InternalKeyBindingDataSessionLocal internalKeyBindingDataSession;
     @EJB
     private CertificateCreateSessionLocal certificateCreateSession;
-    @EJB
-    private GlobalConfigurationSessionLocal globalConfigurationSession;
 
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
@@ -865,8 +861,7 @@ public class InternalKeyBindingMgmtSessionBean implements InternalKeyBindingMgmt
             throw new CertificateImportException("Import of CA certificates is not allowed using this operation.");
         }
         // Check that this is an accepted type of certificate from the one who knows (the implementation)
-        internalKeyBinding.assertCertificateCompatability(certificate, 
-                (AvailableExtendedKeyUsagesConfiguration) globalConfigurationSession.getCachedConfiguration(AvailableExtendedKeyUsagesConfiguration.CONFIGURATION_ID));
+        internalKeyBinding.assertCertificateCompatability(certificate);
     }
 
     /** @return true if a certificate with the specified certificateId (fingerprint) already exists in the database */

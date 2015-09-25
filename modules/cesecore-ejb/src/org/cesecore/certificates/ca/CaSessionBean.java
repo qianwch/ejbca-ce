@@ -53,9 +53,7 @@ import org.cesecore.authorization.control.StandardRules;
 import org.cesecore.certificates.ca.catoken.CAToken;
 import org.cesecore.certificates.ca.internal.CACacheHelper;
 import org.cesecore.certificates.ca.internal.CaCache;
-import org.cesecore.certificates.certificate.certextensions.AvailableCustomCertificateExtensionsConfiguration;
 import org.cesecore.config.CesecoreConfiguration;
-import org.cesecore.configuration.GlobalConfigurationSessionLocal;
 import org.cesecore.internal.InternalResources;
 import org.cesecore.internal.UpgradeableDataHashMap;
 import org.cesecore.jndi.JndiConstants;
@@ -96,8 +94,6 @@ public class CaSessionBean implements CaSessionLocal, CaSessionRemote {
     private CryptoTokenSessionLocal cryptoTokenSession;
     @EJB
     private SecurityEventsLoggerSessionLocal logSession;
-    @EJB
-    private GlobalConfigurationSessionLocal globalConfigurationSession;
     
     private CaSessionLocal caSession;
 
@@ -167,9 +163,7 @@ public class CaSessionBean implements CaSessionLocal, CaSessionRemote {
                 assertAuthorizationAndTarget(admin, cainfo.getName(), cainfo.getSubjectDN(), newCryptoTokenId, ca);
                 @SuppressWarnings("unchecked")
                 final Map<Object, Object> orgmap = (Map<Object, Object>)ca.saveData();
-                AvailableCustomCertificateExtensionsConfiguration cceConfig = (AvailableCustomCertificateExtensionsConfiguration) 
-                        globalConfigurationSession.getCachedConfiguration(AvailableCustomCertificateExtensionsConfiguration.CONFIGURATION_ID);
-                ca.updateCA(cryptoTokenManagementSession.getCryptoToken(ca.getCAToken().getCryptoTokenId()), cainfo, cceConfig);
+                ca.updateCA(cryptoTokenManagementSession.getCryptoToken(ca.getCAToken().getCryptoTokenId()), cainfo);
                 // Audit log
                 @SuppressWarnings("unchecked")
                 final Map<Object, Object> newmap = (Map<Object, Object>)ca.saveData();             

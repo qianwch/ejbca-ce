@@ -20,8 +20,6 @@ import java.util.Map;
 
 import javax.naming.OperationNotSupportedException;
 
-import org.cesecore.config.AvailableExtendedKeyUsagesConfiguration;
-
 /**
  * Value object for remote invocation from JVMs where the implementation class is not available.
  * 
@@ -94,7 +92,7 @@ public class InternalKeyBindingInfo implements InternalKeyBinding {
     }
 
     @Override
-    public void assertCertificateCompatability(Certificate certificate, final AvailableExtendedKeyUsagesConfiguration ekuConfig) throws CertificateImportException {
+    public void assertCertificateCompatability(Certificate certificate) throws CertificateImportException {
         throw new RuntimeException(new OperationNotSupportedException());
     }
 

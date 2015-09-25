@@ -33,7 +33,6 @@ import org.cesecore.certificates.ca.CAInfo;
 import org.cesecore.certificates.certificate.CertificateConstants;
 import org.ejbca.config.GlobalConfiguration;
 import org.ejbca.core.model.SecConst;
-import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.core.model.services.IAction;
 import org.ejbca.core.model.services.IInterval;
 import org.ejbca.core.model.services.IWorker;
@@ -152,13 +151,6 @@ public class EditServiceManagedBean extends BaseManagedBean {
 	public CustomIntervalType getCustomIntervalType(){
 		return (CustomIntervalType) serviceConfigurationView.getServiceTypeManager().getServiceTypeByName(CustomIntervalType.NAME);
 	}
-	
-	/** 
-     * @return true if admin has access to /services/edit
-     */
-    public boolean getHasEditRights() {
-        return ejb.getAccessControlSession().isAuthorizedNoLogging(getAdmin(), AccessRulesConstants.SERVICES_EDIT);
-    }
 	
 	/** Help method used to edit data in the mail action type. */
 	public MailActionType getMailActionType(){

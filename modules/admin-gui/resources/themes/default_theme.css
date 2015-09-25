@@ -301,11 +301,6 @@ form table fieldset {
 	background-color: rgba(0,0,0,.02);
 }
 
-/* --- Forms: System Configurations titles */
-table .titles {
-    font-weight:bold;
-}
-
 /* --- Forms: Help */
 table .help {
 /*	display: none;		/* Hide all in-line help */
@@ -370,22 +365,14 @@ table.edit tr td {
 	width: 35%;
 	text-align: right;
 }
-.editColumnSystem1 {
-    width: 35%
-    text-align: left;
-}
 .editColumn2 {
 	width: 65%;
-}
-.fixedColumn1 {
-	width: 300;
 }
 /* Titles (and Sections) */
 table tr.section td,
 table tr.title td {
 	font-size: 1.25em;
 }
-
 /* DN & attributes */
 table tr td .dn {
 	white-space: pre-wrap;

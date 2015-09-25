@@ -112,7 +112,7 @@
      caid = Integer.parseInt(request.getParameter(CACERT_PARAMETER));
      if(request.getParameter(BUTTON_VIEW_NEWER) == null && request.getParameter(BUTTON_VIEW_OLDER) == null){
        try{  
-         ejbcawebbean.isAuthorized(StandardRules.CAVIEW.resource());
+         ejbcawebbean.isAuthorized(AccessRulesConstants.REGULAR_CABASICFUNCTIONS, StandardRules.CAACCESS.resource() + caid);
          rabean.loadCACertificates(cabean.getCACertificates(caid)); 
          numberofcertificates = rabean.getNumberOfCertificates();
          if(numberofcertificates > 0)
@@ -284,7 +284,7 @@
   <title><c:out value="<%= globalconfiguration.getEjbcaTitle() %>" /></title>
   <base href="<%= ejbcawebbean.getBaseUrl() %>" />
   <link rel="shortcut icon" href="<%=ejbcawebbean.getImagefileInfix("favicon.png")%>" type="image/png" />
-  <link rel="stylesheet" type="text/css" href="<c:out value='<%=ejbcawebbean.getCssFile() %>' />" />
+  <link rel="stylesheet" type="text/css" href="<%= ejbcawebbean.getCssFile() %>" />
   <script type="text/javascript" src="<%= globalconfiguration.getAdminWebPath() %>ejbcajslib.js"></script>
   <script type="text/javascript">
 <!--
@@ -535,11 +535,11 @@ function confirmrepublish(){
        </tr>
        <tr id="Row<%=(row++)%2%>">
 		 <td align="right" width="<%=columnwidth%>"><%= ejbcawebbean.getText("EXT_ABBR_EXTENDEDKEYUSAGE") %></td>
-		 <td><% String[] extendedkeyusage = certificatedata.getExtendedKeyUsageAsTexts(ejbcawebbean.getAvailableExtendedKeyUsagesConfiguration());
+		 <td><% String[] extendedkeyusage = certificatedata.getExtendedKeyUsageAsTexts();
 	                for(int i=0; i<extendedkeyusage.length; i++){
 	                  if(i>0)
 	                    out.write(", ");
-	                  out.write(extendedkeyusage[i]);
+	                  out.write( ejbcawebbean.getText(extendedkeyusage[i]));
 	                }                
 	                if(extendedkeyusage == null || extendedkeyusage.length == 0)
 	                  out.write(ejbcawebbean.getText("EKU_NONE"));                       

@@ -56,36 +56,37 @@ public abstract class AccessRulesConstants {
 
     public static final String ROLE_PUBLICWEBUSER                         = "/public_web_user";
     public static final String ROLE_ADMINISTRATOR                         = "/administrator";
+    public static final String REGULAR_CAFUNCTIONALTY                     = StandardRules.CAFUNCTIONALITY.resource();
     public static final String REGULAR_CABASICFUNCTIONS                   = StandardRules.CAFUNCTIONALITY.resource()+"/basic_functions";
-    public static final String REGULAR_ACTIVATECA                         = REGULAR_CABASICFUNCTIONS+"/activate_ca";     
+    public static final String REGULAR_ACTIVATECA                         = REGULAR_CABASICFUNCTIONS+"/activate_ca";    
+    public static final String REGULAR_RENEWCA                            = StandardRules.CAFUNCTIONALITY.resource()+"/renew_ca";    
     public static final String REGULAR_VIEWCERTIFICATE                    = StandardRules.CAFUNCTIONALITY.resource()+"/view_certificate";    
     public static final String REGULAR_APPROVECAACTION                    = StandardRules.CAFUNCTIONALITY.resource()+"/approve_caaction";
     public static final String REGULAR_CREATECRL                          = StandardRules.CREATECRL.resource();    
+    public static final String REGULAR_EDITCERTIFICATEPROFILES            = StandardRules.EDITCERTIFICATEPROFILE.resource();    
     public static final String REGULAR_CREATECERTIFICATE                  = StandardRules.CREATECERT.resource();
     public static final String REGULAR_STORECERTIFICATE                   = StandardRules.CAFUNCTIONALITY.resource()+"/store_certificate";    
-    public static final String REGULAR_EDITPUBLISHER                      = StandardRules.CAFUNCTIONALITY.resource()+"/edit_publisher";   
-    public static final String REGULAR_VIEWPUBLISHER                      = StandardRules.CAFUNCTIONALITY.resource()+"/view_publisher";    
+    public static final String REGULAR_EDITPUBLISHER                      = StandardRules.CAFUNCTIONALITY.resource()+"/edit_publisher";    
     public static final String REGULAR_RAFUNCTIONALITY                    = "/ra_functionality";
-    public static final String REGULAR_EDITENDENTITYPROFILES              = REGULAR_RAFUNCTIONALITY + "/edit_end_entity_profiles";
-    public static final String REGULAR_VIEWENDENTITYPROFILES              = REGULAR_RAFUNCTIONALITY + "/view_end_entity_profiles";
-    public static final String REGULAR_EDITUSERDATASOURCES                = REGULAR_RAFUNCTIONALITY + "/edit_user_data_sources";
-    public static final String REGULAR_APPROVEENDENTITY                   = REGULAR_RAFUNCTIONALITY + APPROVE_END_ENTITY;
+    public static final String REGULAR_EDITENDENTITYPROFILES              = "/ra_functionality/edit_end_entity_profiles";
+    public static final String REGULAR_EDITUSERDATASOURCES                = "/ra_functionality/edit_user_data_sources";
+    public static final String REGULAR_APPROVEENDENTITY                   = "/ra_functionality"+APPROVE_END_ENTITY;
     // REGULAR_REVOKEENDENTITY is used when revoking the certificate of a user
-    public static final String REGULAR_REVOKEENDENTITY                    = REGULAR_RAFUNCTIONALITY+REVOKE_END_ENTITY;    
+    public static final String REGULAR_REVOKEENDENTITY                    = "/ra_functionality"+REVOKE_END_ENTITY;    
     // The rules below seem to be for rights to certificates, and ae mostly used from WS for token certificates and CMP for token certificates
     // You can question if these are valid and right?
     // Some of them are unused if you check references here, but admin GUI contains directly the string /ra_functionality instead, just to make things hard
-    public static final String REGULAR_VIEWENDENTITY                      = REGULAR_RAFUNCTIONALITY+VIEW_END_ENTITY; // Unused, but exists as "raw" string
-    public static final String REGULAR_CREATEENDENTITY                    = REGULAR_RAFUNCTIONALITY+CREATE_END_ENTITY;
-    public static final String REGULAR_EDITENDENTITY                      = REGULAR_RAFUNCTIONALITY+EDIT_END_ENTITY ;
-    public static final String REGULAR_DELETEENDENTITY                    = REGULAR_RAFUNCTIONALITY+DELETE_END_ENTITY; // Unused, but exists as "raw" string
-    public static final String REGULAR_VIEWENDENTITYHISTORY               = REGULAR_RAFUNCTIONALITY+VIEW_END_ENTITY_HISTORY; // Unused, but exists as "raw" string
+    public static final String REGULAR_VIEWENDENTITY                      = "/ra_functionality"+VIEW_END_ENTITY; // Unused, but exists as "raw" string
+    public static final String REGULAR_CREATEENDENTITY                    = "/ra_functionality"+CREATE_END_ENTITY;
+    public static final String REGULAR_EDITENDENTITY                      = "/ra_functionality"+EDIT_END_ENTITY ;
+    public static final String REGULAR_DELETEENDENTITY                    = "/ra_functionality"+DELETE_END_ENTITY; // Unused, but exists as "raw" string
+    public static final String REGULAR_VIEWENDENTITYHISTORY               = "/ra_functionality"+VIEW_END_ENTITY_HISTORY; // Unused, but exists as "raw" string
 
     public static final String REGULAR_SYSTEMFUNCTIONALITY                = StandardRules.SYSTEMFUNCTIONALITY.resource(); // Unused but the "raw" string /system_functionality is present in admin GUI pages
 
-    public static final String REGULAR_VIEWHARDTOKENS                     = REGULAR_RAFUNCTIONALITY + HARDTOKEN_RIGHTS;
-    public static final String REGULAR_VIEWPUKS                           = REGULAR_RAFUNCTIONALITY + HARDTOKEN_PUKDATA_RIGHTS;
-    public static final String REGULAR_KEYRECOVERY                        = REGULAR_RAFUNCTIONALITY + KEYRECOVERY_RIGHTS;
+    public static final String REGULAR_VIEWHARDTOKENS                     = "/ra_functionality" + HARDTOKEN_RIGHTS;
+    public static final String REGULAR_VIEWPUKS                           = "/ra_functionality" + HARDTOKEN_PUKDATA_RIGHTS;
+    public static final String REGULAR_KEYRECOVERY                        = "/ra_functionality" + KEYRECOVERY_RIGHTS;
     	
     public static final String HARDTOKEN_HARDTOKENFUNCTIONALITY           = "/hardtoken_functionality";
     public static final String HARDTOKEN_EDITHARDTOKENISSUERS             = "/hardtoken_functionality/edit_hardtoken_issuers";
@@ -93,29 +94,20 @@ public abstract class AccessRulesConstants {
     public static final String HARDTOKEN_ISSUEHARDTOKENS                  = "/hardtoken_functionality/issue_hardtokens";
     public static final String HARDTOKEN_ISSUEHARDTOKENADMINISTRATORS     = "/hardtoken_functionality/issue_hardtoken_administrators";
     
-    // Rules for editing/viewing Service workers
-    public static final String SERVICES_BASE                              = "/services";
-    public static final String SERVICES_EDIT                              = SERVICES_BASE+"/edit";
-    public static final String SERVICES_VIEW                              = SERVICES_BASE+"/view";
-    
     // Standard Regular Access Rules
-    public static final String[] STANDARDREGULARACCESSRULES = {StandardRules.CAFUNCTIONALITY.resource(), 
+    public static final String[] STANDARDREGULARACCESSRULES = {REGULAR_CAFUNCTIONALTY, 
                                                            REGULAR_CABASICFUNCTIONS,
                                                            REGULAR_ACTIVATECA,
-                                                           StandardRules.CARENEW.resource(),
-                                                           StandardRules.CAVIEW.resource(),
+                                                           REGULAR_RENEWCA,
                                                            REGULAR_VIEWCERTIFICATE, 
                                                            REGULAR_CREATECRL,
-                                                           StandardRules.CERTIFICATEPROFILEEDIT.resource(),   
-                                                           StandardRules.CERTIFICATEPROFILEVIEW.resource(),
+                                                           REGULAR_EDITCERTIFICATEPROFILES,                                                           
                                                            REGULAR_CREATECERTIFICATE,
                                                            REGULAR_STORECERTIFICATE,
                                                            REGULAR_EDITPUBLISHER,
-                                                           REGULAR_VIEWPUBLISHER,
                                                            REGULAR_APPROVECAACTION,
                                                            REGULAR_RAFUNCTIONALITY, 
                                                            REGULAR_EDITENDENTITYPROFILES,
-                                                           REGULAR_VIEWENDENTITYPROFILES,
                                                            REGULAR_EDITUSERDATASOURCES,                                                           
                                                            REGULAR_VIEWENDENTITY,
                                                            REGULAR_CREATEENDENTITY, 
@@ -124,17 +116,13 @@ public abstract class AccessRulesConstants {
                                                            REGULAR_REVOKEENDENTITY,
                                                            REGULAR_VIEWENDENTITYHISTORY,
                                                            REGULAR_APPROVEENDENTITY,
-                                                           SERVICES_EDIT,
-                                                           SERVICES_VIEW,
                                                            AuditLogRules.LOG.resource(),
                                                            AuditLogRules.LOG_CUSTOM.resource(),  
                                                            AuditLogRules.VIEW.resource(),
                                                            AuditLogRules.CONFIGURE.resource(),
                                                            REGULAR_SYSTEMFUNCTIONALITY,
                                                            StandardRules.EDITROLES.resource(),
-                                                           StandardRules.REGULAR_EDITSYSTEMCONFIGURATION.resource(),
-                                                           StandardRules.REGULAR_EDITAVAILABLEEKU.resource(),
-                                                           StandardRules.REGULAR_EDITAVAILABLECUSTOMCERTEXTENSION.resource()};
+                                                           StandardRules.REGULAR_EDITSYSTEMCONFIGURATION.resource()};
                                                        
     // Role Access Rules
     public static final  String[] ROLEACCESSRULES = {ROLE_PUBLICWEBUSER, ROLE_ADMINISTRATOR, StandardRules.ROLE_ROOT.resource()};

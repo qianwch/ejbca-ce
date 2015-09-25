@@ -79,7 +79,6 @@ import org.bouncycastle.asn1.x509.CRLReason;
 import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.asn1.x509.Extensions;
 import org.bouncycastle.asn1.x509.ExtensionsGenerator;
-import org.bouncycastle.asn1.x509.KeyPurposeId;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
@@ -132,7 +131,6 @@ import org.cesecore.certificates.ocsp.logging.AuditLogger;
 import org.cesecore.certificates.ocsp.logging.PatternLogger;
 import org.cesecore.certificates.ocsp.logging.TransactionLogger;
 import org.cesecore.certificates.util.AlgorithmTools;
-import org.cesecore.config.AvailableExtendedKeyUsagesConfiguration;
 import org.cesecore.config.ConfigurationHolder;
 import org.cesecore.config.GlobalOcspConfiguration;
 import org.cesecore.config.OcspConfiguration;
@@ -163,7 +161,6 @@ import org.cesecore.util.CertTools;
 import org.cesecore.util.log.ProbableErrorHandler;
 import org.cesecore.util.log.SaferAppenderListener;
 import org.cesecore.util.log.SaferDailyRollingFileAppender;
-import org.cesecore.util.provider.EkuPKIXCertPathChecker;
 
 /**
  * This SSB generates OCSP responses. 
@@ -462,7 +459,7 @@ public class OcspResponseGeneratorSessionBean implements OcspResponseGeneratorSe
             caCertificateChain.add(currentLevelCertificate);
         }
         try {
-            CertTools.verify(leafCertificate, new ArrayList<Certificate>(caCertificateChain), new Date(), new EkuPKIXCertPathChecker(KeyPurposeId.id_kp_OCSPSigning.getId()));
+            CertTools.verify(leafCertificate, new ArrayList<Certificate>(caCertificateChain));
         } catch (Exception e) {
             // Apparently the built chain could not be used to validate the leaf certificate
             // this could happen if the CA keys were renewed, but the subject DN did not change
@@ -481,27 +478,27 @@ public class OcspResponseGeneratorSessionBean implements OcspResponseGeneratorSe
                     caCertificateChain.add((X509Certificate) current);
                 } else {
                     log.warn("Unable to build certificate chain for OCSP signing certificate with Subject DN '" +
-                            CertTools.getSubjectDN(leafCertificate) + "' and Issuer DN '" + CertTools.getIssuerDN(leafCertificate) +
+                            CertTools.getSubjectDN(leafCertificate) + "' and Issuer DN " + CertTools.getIssuerDN(leafCertificate) +
                             "'. CA certificate chain contains non-X509 certificates.");
                     return null;
                 }
             }
             if (caCertificateChain.isEmpty()) {
                 log.warn("Unable to build certificate chain for OCSP signing certificate with Subject DN '" +
-                        CertTools.getSubjectDN(leafCertificate) + "' and Issuer DN '" + CertTools.getIssuerDN(leafCertificate) +
+                        CertTools.getSubjectDN(leafCertificate) + "' and Issuer DN " + CertTools.getIssuerDN(leafCertificate) +
                         "''. CA certificate(s) are missing in the database.");
                 return null;
             }
             try {
-                CertTools.verify(leafCertificate, new ArrayList<Certificate>(caCertificateChain), new Date(), new EkuPKIXCertPathChecker(KeyPurposeId.id_kp_OCSPSigning.getId()));
+                CertTools.verify(leafCertificate, new ArrayList<Certificate>(caCertificateChain));
             } catch (Exception e2) {
                 log.warn("Unable to build certificate chain for OCSP signing certificate with Subject DN '" +
-                        CertTools.getSubjectDN(leafCertificate) + "' and Issuer DN '" + CertTools.getIssuerDN(leafCertificate) +
+                        CertTools.getSubjectDN(leafCertificate) + "' and Issuer DN " + CertTools.getIssuerDN(leafCertificate) +
                         "''. Found CA certificate(s) cannot be used for validation: " + e2.getMessage());
                 return null;
             }
             log.info("Recovered and managed to build a valid certificate chain for OCSP signing certificate with Subject DN '" +
-                    CertTools.getSubjectDN(leafCertificate) + "' and Issuer DN '" + CertTools.getIssuerDN(leafCertificate) +
+                    CertTools.getSubjectDN(leafCertificate) + "' and Issuer DN " + CertTools.getIssuerDN(leafCertificate) +
                     "'.");
         }
         return caCertificateChain;
@@ -653,12 +650,10 @@ public class OcspResponseGeneratorSessionBean implements OcspResponseGeneratorSe
             }
         } else {
             if (log.isDebugEnabled()) {
-                String requestor = CertTools.stringToBCDNString( ocspRequest.getRequestorName().getName().toString());
-                log.debug("Requestor name is: " + requestor);
+                log.debug("Requestor name is: " + ocspRequest.getRequestorName().toString());
             }
             if (transactionLogger.isEnabled()) {
-                String requestor = CertTools.stringToBCDNString( ocspRequest.getRequestorName().getName().toString());
-                transactionLogger.paramPut(TransactionLogger.REQ_NAME, requestor);
+                transactionLogger.paramPut(TransactionLogger.REQ_NAME, ocspRequest.getRequestorName().toString());
             }
         }
 
@@ -1168,9 +1163,6 @@ public class OcspResponseGeneratorSessionBean implements OcspResponseGeneratorSe
                     } else {
                         certificateStatusHolder = certificateStoreSession.getCertificateAndStatus(caCertificateSubjectDn, certId.getSerialNumber());
                         status = certificateStatusHolder.getCertificateStatus();
-                    }
-                    if (transactionLogger.isEnabled()) {
-                        transactionLogger.paramPut(TransactionLogger.CERT_PROFILE_ID, String.valueOf(status.certificateProfileId));
                     }
                     // If we have an OcspKeyBinding configured for this request, we override the default value
                     if (ocspSigningCacheEntry.isUsingSeparateOcspSigningCertificate()) {
@@ -1914,8 +1906,7 @@ public class OcspResponseGeneratorSessionBean implements OcspResponseGeneratorSe
             }
             // Extract the default signature algorithm
             final String signatureAlgorithm = getSigningAlgFromAlgSelection(OcspConfiguration.getSignatureAlgorithm(), chain[0].getPublicKey());
-            if (OcspKeyBinding.isOcspSigningCertificate(chain[0], 
-                    (AvailableExtendedKeyUsagesConfiguration) globalConfigurationSession.getCachedConfiguration(AvailableExtendedKeyUsagesConfiguration.CONFIGURATION_ID))) {
+            if (OcspKeyBinding.isOcspSigningCertificate(chain[0])) {
                 // Create the actual OcspKeyBinding
                 log.info("Alias " + keyPairAlias + " contains an OCSP certificate and will be converted to an OcspKeyBinding.");
                 int internalKeyBindingId = internalKeyBindingMgmtSession.createInternalKeyBinding(authenticationToken, OcspKeyBinding.IMPLEMENTATION_ALIAS,
@@ -1923,7 +1914,7 @@ public class OcspResponseGeneratorSessionBean implements OcspResponseGeneratorSe
                         getOcspKeyBindingDefaultProperties(), trustDefaults);
                 internalKeyBindingMgmtSession.importCertificateForInternalKeyBinding(authenticationToken, internalKeyBindingId, chain[0].getEncoded());
                 internalKeyBindingMgmtSession.setStatus(authenticationToken, internalKeyBindingId, InternalKeyBindingStatus.ACTIVE);
-            } else if (AuthenticationKeyBinding.isClientSSLCertificate(chain[0], (AvailableExtendedKeyUsagesConfiguration) globalConfigurationSession.getCachedConfiguration(AvailableExtendedKeyUsagesConfiguration.CONFIGURATION_ID))) {
+            } else if (AuthenticationKeyBinding.isClientSSLCertificate(chain[0])) {
                 log.info("Alias " + keyPairAlias + " contains an SSL client certificate and will be converted to an AuthenticationKeyBinding.");
                 // We are looking for an SSL cert, use this to create an AuthenticationKeyBinding
                 int internalKeyBindingId = internalKeyBindingMgmtSession.createInternalKeyBinding(authenticationToken, AuthenticationKeyBinding.IMPLEMENTATION_ALIAS,

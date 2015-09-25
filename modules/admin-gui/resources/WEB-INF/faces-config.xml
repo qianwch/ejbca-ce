@@ -83,21 +83,6 @@
     	<managed-bean-class>org.ejbca.ui.web.admin.configuration.ScepConfigMBean</managed-bean-class>
     	<managed-bean-scope>session</managed-bean-scope>
   </managed-bean>
-  <managed-bean>
-    	<managed-bean-name>systemConfigMBean</managed-bean-name>
-    	<managed-bean-class>org.ejbca.ui.web.admin.configuration.SystemConfigMBean</managed-bean-class>
-    	<managed-bean-scope>session</managed-bean-scope>
-  </managed-bean>
-  
-  <managed-bean>
-    	<managed-bean-name>customCertExtensionMBean</managed-bean-name>
-    	<managed-bean-class>org.ejbca.ui.web.admin.configuration.CustomCertExtensionMBean</managed-bean-class>
-    	<managed-bean-scope>session</managed-bean-scope>
-        <managed-property>
-            <property-name>systemConfigMBean</property-name>
-            <value>#{systemConfigMBean}</value>
-        </managed-property>
-  </managed-bean>
   
   <validator>
         <validator-id>legalCharsValidator</validator-id>
@@ -152,14 +137,6 @@
     <navigation-case>
       <from-outcome>done</from-outcome>
       <to-view-id>/ca/editcertificateprofiles/editcertificateprofiles.jsp</to-view-id>
-    </navigation-case>
-  </navigation-rule>
-
-  <navigation-rule>
-    <from-view-id>/sysconfig/systemconfiguration.jsp</from-view-id>
-    <navigation-case>
-      <from-outcome>edit</from-outcome>
-      <to-view-id>/sysconfig/customcertextension.jsp</to-view-id>
     </navigation-case>
   </navigation-rule>
   	

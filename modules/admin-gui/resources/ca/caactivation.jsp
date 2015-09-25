@@ -1,4 +1,3 @@
-<%@page import="org.cesecore.authorization.control.StandardRules"%>
 <%
 /*************************************************************************
  *                                                                       *
@@ -29,14 +28,14 @@ org.ejbca.core.model.authorization.AccessRulesConstants
 <jsp:useBean id="ejbcawebbean" scope="session" class="org.ejbca.ui.web.admin.configuration.EjbcaWebBean" />
 <jsp:setProperty name="ejbcawebbean" property="*" /> 
 <%  // Initialize environment
-	GlobalConfiguration globalconfiguration = ejbcawebbean.initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.CAVIEW.resource()); 
+	GlobalConfiguration globalconfiguration = ejbcawebbean.initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, AccessRulesConstants.REGULAR_ACTIVATECA); 
 	EjbcaJSFHelper.getBean().setEjbcaWebBean(ejbcawebbean);
 %>
 <html>
 <head>
   <title><c:out value="<%= globalconfiguration.getEjbcaTitle() %>" /></title>
   <base href="<%= ejbcawebbean.getBaseUrl() %>" />
-  <link rel="stylesheet" type="text/css" href="<c:out value='<%=ejbcawebbean.getCssFile() %>' />" />
+  <link rel="stylesheet" type="text/css" href="<%= ejbcawebbean.getCssFile() %>" />
   <meta http-equiv="Content-Type" content="text/html; charset=<%= org.ejbca.config.WebConfiguration.getWebContentEncoding() %>" />
 </head>
 
@@ -88,13 +87,13 @@ org.ejbca.core.model.authorization.AccessRulesConstants
 		</h:column>
 		<h:column>
    			<f:facet name="header"><h:panelGroup><h:outputText value="#{web.text.CA}"/><br/><h:outputText value="#{web.text.ACTIVATECAS_SACTION}"/></h:panelGroup></f:facet>
-			<h:selectBooleanCheckbox value="#{tokenAndCa.ca.newState}" disabled="#{tokenAndCa.ca.unableToChangeState or tokenAndCa.cryptoToken.stateChangeDisabled}"/>
+			<h:selectBooleanCheckbox value="#{tokenAndCa.ca.newState}" disabled="#{tokenAndCa.ca.unableToChangeState}"/>
 			<h:outputText value=" #{web.text.ACTIVATECAS_KEEPACT}" rendered="#{tokenAndCa.ca.active}"/>
 			<h:outputText value=" #{web.text.ACTIVATE}" rendered="#{!tokenAndCa.ca.active}"/>
 		</h:column>
 		<h:column>
    			<f:facet name="header"><h:panelGroup><h:outputText value="#{web.text.CA}"/><br/><h:outputText value="#{web.text.ACTIVATECAS_MONITORED}"/></h:panelGroup></f:facet>
-			<h:selectBooleanCheckbox value="#{tokenAndCa.ca.monitoredNewState}" disabled="#{!tokenAndCa.cryptoToken.existing or not cAActivationMBean.authorizedToBasicFunctions}"/>
+			<h:selectBooleanCheckbox value="#{tokenAndCa.ca.monitoredNewState}" disabled="#{!tokenAndCa.cryptoToken.existing}"/>
 			<h:outputText value="#{web.text.ACTIVATECAS_HCHECK}"/>
 		</h:column>
 		<f:facet name="footer">
@@ -104,7 +103,7 @@ org.ejbca.core.model.authorization.AccessRulesConstants
 	<h:panelGrid columns="3">
 		<h:outputLabel rendered="#{cAActivationMBean.activationCodeShown}" for="authCode" value="#{web.text.ACTIVATECAS_ACTCODE}:"/>
 		<h:inputSecret rendered="#{cAActivationMBean.activationCodeShown}" id="authCode" value="#{cAActivationMBean.authenticationCode}"/>
-		<h:commandButton action="#{cAActivationMBean.applyChanges}" value="#{web.text.APPLY}" disabled="#{not cAActivationMBean.authorizedToBasicFunctions }" />
+		<h:commandButton action="#{cAActivationMBean.applyChanges}" value="#{web.text.APPLY}"/>
 	</h:panelGrid>
 	</h:form>
  

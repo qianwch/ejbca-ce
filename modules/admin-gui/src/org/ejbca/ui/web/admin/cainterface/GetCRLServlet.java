@@ -26,7 +26,6 @@ import org.cesecore.certificates.crl.CrlStoreSessionLocal;
 import org.cesecore.util.CertTools;
 import org.cesecore.util.StringTools;
 import org.ejbca.core.model.InternalEjbcaResources;
-import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.ui.web.RequestHelper;
 import org.ejbca.ui.web.admin.configuration.EjbcaWebBean;
 import org.ejbca.ui.web.pub.ServletUtils;
@@ -81,7 +80,7 @@ public class GetCRLServlet extends HttpServlet {
         }
 
         try{
-          ejbcawebbean.initialize(req, AccessRulesConstants.REGULAR_VIEWCERTIFICATE);
+          ejbcawebbean.initialize(req, "/ca_functionality/basic_functions");
         } catch(Exception e){
            throw new java.io.IOException("Authorization Denied");
         }

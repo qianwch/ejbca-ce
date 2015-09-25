@@ -42,7 +42,6 @@ import org.cesecore.certificates.certificateprofile.CertificateProfileConstants;
 import org.cesecore.certificates.certificateprofile.CertificateProfileDoesNotExistException;
 import org.cesecore.certificates.certificateprofile.CertificateProfileExistsException;
 import org.cesecore.certificates.certificateprofile.CertificateProfileSessionLocal;
-import org.cesecore.certificates.certificateprofile.CertificateProfileSessionRemote;
 import org.ejbca.core.model.ca.publisher.BasePublisher;
 import org.ejbca.ui.web.admin.BaseManagedBean;
 
@@ -68,19 +67,16 @@ public class CertProfilesBean extends BaseManagedBean implements Serializable {
         private final String name;
         private final boolean fixed;
         private final boolean missingCa;
-        private final boolean authorized;
-        public CertificateProfileItem(final int id, final String name, final boolean fixed, final boolean missingCa, final boolean authorized) {
+        public CertificateProfileItem(final int id, final String name, final boolean fixed, final boolean missingCa) {
             this.id = id;
             this.name = name;
             this.fixed = fixed;
             this.missingCa = missingCa;
-            this.authorized = authorized;
         }
         public int getId() { return id; }
         public String getName() { return name; }
         public boolean isFixed() { return fixed; }
         public boolean isMissingCa() { return missingCa; }
-        public boolean isAuthorized() { return authorized; }
     }
     
     private Integer selectedCertProfileId = null;
@@ -112,47 +108,22 @@ public class CertProfilesBean extends BaseManagedBean implements Serializable {
             final List<CertificateProfileItem> items = new ArrayList<CertificateProfileItem>();
             final CertificateProfileSessionLocal certificateProfileSession = getEjbcaWebBean().getEjb().getCertificateProfileSession();
             final List<Integer> authorizedProfileIds = new ArrayList<Integer>();
-            final Map<Integer, CertificateProfile> allCertificateProfiles = certificateProfileSession.getAllCertificateProfiles();
-         
-            //Always include
-            authorizedProfileIds.addAll(certificateProfileSession.getAuthorizedCertificateProfileIds(getAdmin(), CertificateConstants.CERTTYPE_ENDENTITY));
-            if (isAuthorizedTo(StandardRules.ROLE_ROOT.resource())) {
-                //Only root users may use CA profiles
+            if (!isAuthorizedTo(StandardRules.ROLE_ROOT.resource())) {
+                authorizedProfileIds.addAll(certificateProfileSession.getAuthorizedCertificateProfileIds(getAdmin(), CertificateConstants.CERTTYPE_ENDENTITY));
+            } else if (getEjbcaWebBean().getGlobalConfiguration().getIssueHardwareTokens()) {
+                authorizedProfileIds.addAll(certificateProfileSession.getAuthorizedCertificateProfileIds(getAdmin(), 0)); // 0 = All
+            } else {
+                authorizedProfileIds.addAll(certificateProfileSession.getAuthorizedCertificateProfileIds(getAdmin(), CertificateConstants.CERTTYPE_ENDENTITY));
                 authorizedProfileIds.addAll(certificateProfileSession.getAuthorizedCertificateProfileIds(getAdmin(), CertificateConstants.CERTTYPE_ROOTCA));
                 authorizedProfileIds.addAll(certificateProfileSession.getAuthorizedCertificateProfileIds(getAdmin(), CertificateConstants.CERTTYPE_SUBCA));
             }
-            boolean usingHardwareTokens = getEjbcaWebBean().getGlobalConfiguration().getIssueHardwareTokens();
-            if (usingHardwareTokens) {
-                authorizedProfileIds.addAll(certificateProfileSession.getAuthorizedCertificateProfileIds(getAdmin(), CertificateConstants.CERTTYPE_HARDTOKEN)); 
-            } 
-            // Add fixed certificate profiles.
-            List<Integer> allCertificateProfileIds = new ArrayList<Integer>();
-            allCertificateProfileIds.add(Integer.valueOf(CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER));
-            allCertificateProfileIds.add(Integer.valueOf(CertificateProfileConstants.CERTPROFILE_FIXED_OCSPSIGNER));
-            allCertificateProfileIds.add(Integer.valueOf(CertificateProfileConstants.CERTPROFILE_FIXED_SERVER));
-            allCertificateProfileIds.add(Integer.valueOf(CertificateProfileConstants.CERTPROFILE_FIXED_SUBCA));
-            allCertificateProfileIds.add(Integer.valueOf(CertificateProfileConstants.CERTPROFILE_FIXED_ROOTCA));
-            if (usingHardwareTokens) {
-                allCertificateProfileIds.add(Integer.valueOf(CertificateProfileConstants.CERTPROFILE_FIXED_HARDTOKENAUTH));
-                allCertificateProfileIds.add(Integer.valueOf(CertificateProfileConstants.CERTPROFILE_FIXED_HARDTOKENAUTHENC));
-                allCertificateProfileIds.add(Integer.valueOf(CertificateProfileConstants.CERTPROFILE_FIXED_HARDTOKENENC));
-                allCertificateProfileIds.add(Integer.valueOf(CertificateProfileConstants.CERTPROFILE_FIXED_HARDTOKENSIGN));
-            }
-
-            allCertificateProfileIds.addAll(allCertificateProfiles.keySet());
             final List<Integer> profileIdsWithMissingCA = certificateProfileSession.getAuthorizedCertificateProfileWithMissingCAs(getAdmin());
-            final Map<Integer, String> idToNameMap = certificateProfileSession.getCertificateProfileIdToNameMap();  
-            for(Integer profileId : allCertificateProfileIds) {
-                CertificateProfile certificateProfile = allCertificateProfiles.get(profileId);
-                if (certificateProfile != null && !usingHardwareTokens && certificateProfile.getType() == CertificateConstants.CERTTYPE_HARDTOKEN) {
-                    continue;
-                }
+            final Map<Integer, String> idToNameMap = certificateProfileSession.getCertificateProfileIdToNameMap();
+            for (final Integer profileId : authorizedProfileIds) {
                 final boolean missingCa = profileIdsWithMissingCA.contains(profileId);
                 final boolean fixed = isCertProfileFixed(profileId);
                 final String name = idToNameMap.get(profileId);
-                final boolean isAuthorized = authorizedProfileIds.contains(profileId);
-                items.add(new CertificateProfileItem(profileId, name, fixed, missingCa, isAuthorized));
-
+                items.add(new CertificateProfileItem(profileId, name, fixed, missingCa));
             }
             // Sort list by name
             Collections.sort(items, new Comparator<CertificateProfileItem>() {
@@ -170,33 +141,15 @@ public class CertProfilesBean extends BaseManagedBean implements Serializable {
     private boolean isCertProfileFixed(final int profileId) {
         if (profileId <= CertificateProfileConstants.FIXED_CERTIFICATEPROFILE_BOUNDRY) {
             return true;
-        } else {
-            return false;
+        } else if (!isAuthorizedTo(StandardRules.ROLE_ROOT.resource())) {
+            final CertificateProfile certificateProfile = getEjbcaWebBean().getEjb().getCertificateProfileSession().getCertificateProfile(profileId);
+            return certificateProfile.isApplicableToAnyCA();
         }
+        return false;
     }
 
     public boolean isAuthorizedToEdit() {
-        return isAuthorizedTo(StandardRules.CERTIFICATEPROFILEEDIT.resource()) && isAuthorizedToSelectedCertificateProfile();
-    }
-    
-    public boolean isAuthorizedToOnlyView() {   
-        return isAuthorizedTo(StandardRules.CERTIFICATEPROFILEVIEW.resource()) && !isAuthorizedToEdit();
-    }
-    
-    private boolean isAuthorizedToSelectedCertificateProfile() {
-        CertificateProfileSessionLocal certificateProfileSession = getEjbcaWebBean().getEjb().getCertificateProfileSession();
-        Integer selectedProfileId = getSelectedCertProfileId();
-        if (selectedProfileId != null) {
-            CertificateProfile certificateProfile = certificateProfileSession.getCertificateProfile(selectedProfileId);
-            if(certificateProfile != null) {
-                return certificateProfileSession.getAuthorizedCertificateProfileIds(getAdmin(), certificateProfile.getType()).contains(selectedProfileId);
-            } else {
-                //Can happen if cache wasn't updated. 
-                return true;
-            }
-        } else {
-            return true;
-        }
+        return isAuthorizedTo(StandardRules.EDITCERTIFICATEPROFILE.resource());
     }
     
     public String actionEdit() {
@@ -283,7 +236,6 @@ public class CertProfilesBean extends BaseManagedBean implements Serializable {
         if (canDeleteCertProfile()) {
             try {
                 getEjbcaWebBean().getEjb().getCertificateProfileSession().removeCertificateProfile(getAdmin(), getSelectedCertProfileName());
-                getEjbcaWebBean().getEjb().getCertificateProfileSession().flushProfileCache();
                 getEjbcaWebBean().getInformationMemory().certificateProfilesEdited();
             } catch (AuthorizationDeniedException e) {
                 addNonTranslatedErrorMessage("Not authorized to remove certificate profile.");

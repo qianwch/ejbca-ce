@@ -37,7 +37,6 @@ import org.bouncycastle.asn1.x509.KeyPurposeId;
 import org.bouncycastle.jce.X509KeyUsage;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.cesecore.certificates.util.AlgorithmConstants;
-import org.cesecore.config.AvailableExtendedKeyUsagesConfiguration;
 import org.cesecore.keybind.CertificateImportException;
 import org.cesecore.keys.util.KeyTools;
 import org.cesecore.util.CertTools;
@@ -87,21 +86,20 @@ public class OcspKeyBindingTest {
 
     @Test
     public void testOcspSigningCertificateValidationPositives() throws IOException, InvalidAlgorithmParameterException, InvalidKeyException, NoSuchAlgorithmException, SignatureException, IllegalStateException, NoSuchProviderException, OperatorCreationException, CertificateException {
-        AvailableExtendedKeyUsagesConfiguration ekuConfig = new AvailableExtendedKeyUsagesConfiguration();
         assertTrue("KU=digitalSignature and EKU=id_kp_OCSPSigning should be treated as a valid OCSP singing certificate.",
-                OcspKeyBinding.isOcspSigningCertificate(getCertificate(X509KeyUsage.digitalSignature, ekuExtensionOnly), ekuConfig));
+                OcspKeyBinding.isOcspSigningCertificate(getCertificate(X509KeyUsage.digitalSignature, ekuExtensionOnly)));
         assertTrue("KU=digitalSignature and EKU=id_kp_OCSPSigning should be treated as a valid OCSP singing certificate.",
-                OcspKeyBinding.isOcspSigningCertificate(getCertificate(X509KeyUsage.digitalSignature + X509KeyUsage.cRLSign, ekuExtensionOnly), ekuConfig));
+                OcspKeyBinding.isOcspSigningCertificate(getCertificate(X509KeyUsage.digitalSignature + X509KeyUsage.cRLSign, ekuExtensionOnly)));
         assertTrue("KU=nonRepudiation and EKU=id_kp_OCSPSigning should be treated as a valid OCSP singing certificate.",
-                OcspKeyBinding.isOcspSigningCertificate(getCertificate(X509KeyUsage.nonRepudiation + X509KeyUsage.cRLSign, ekuExtensionOnly), ekuConfig));
+                OcspKeyBinding.isOcspSigningCertificate(getCertificate(X509KeyUsage.nonRepudiation + X509KeyUsage.cRLSign, ekuExtensionOnly)));
         assertTrue("KU=digitalSignature+nonRepudiation and EKU=id_kp_OCSPSigning should be treated as a valid OCSP singing certificate.",
-                OcspKeyBinding.isOcspSigningCertificate(getCertificate(X509KeyUsage.digitalSignature + X509KeyUsage.nonRepudiation, ekuExtensionOnly), ekuConfig));
+                OcspKeyBinding.isOcspSigningCertificate(getCertificate(X509KeyUsage.digitalSignature + X509KeyUsage.nonRepudiation, ekuExtensionOnly)));
     }
 
     @Test
     public void testOcspSigningCertificateAssertionPositives() throws IOException, InvalidAlgorithmParameterException, InvalidKeyException, NoSuchAlgorithmException, SignatureException, IllegalStateException, NoSuchProviderException, OperatorCreationException, CertificateException {
         try {
-            new OcspKeyBinding().assertCertificateCompatability(getCertificate(X509KeyUsage.digitalSignature, ekuExtensionOnly), new AvailableExtendedKeyUsagesConfiguration());
+            new OcspKeyBinding().assertCertificateCompatability(getCertificate(X509KeyUsage.digitalSignature, ekuExtensionOnly));
         } catch (CertificateImportException e) {
             fail("KU=digitalSignature and EKU=id_kp_OCSPSigning should be treated as a valid OCSP singing certificate.");
         }
@@ -109,19 +107,18 @@ public class OcspKeyBindingTest {
 
     @Test
     public void testOcspSigningCertificateValidationNegatives() throws IOException, InvalidAlgorithmParameterException, InvalidKeyException, NoSuchAlgorithmException, SignatureException, IllegalStateException, NoSuchProviderException, OperatorCreationException, CertificateException {
-        AvailableExtendedKeyUsagesConfiguration ekuConfig = new AvailableExtendedKeyUsagesConfiguration();
         assertFalse("KU!=digitalSignature|nonRepudiation and EKU=id_kp_OCSPSigning should be treated as an invalid OCSP singing certificate.",
-                OcspKeyBinding.isOcspSigningCertificate(getCertificate(X509KeyUsage.keyAgreement + X509KeyUsage.cRLSign, ekuExtensionOnly), ekuConfig));
+                OcspKeyBinding.isOcspSigningCertificate(getCertificate(X509KeyUsage.keyAgreement + X509KeyUsage.cRLSign, ekuExtensionOnly)));
         assertFalse("KU=digitalSignature and EKU!=id_kp_OCSPSigning should be treated as an invalid OCSP singing certificate.",
-                OcspKeyBinding.isOcspSigningCertificate(getCertificate(X509KeyUsage.digitalSignature, null), ekuConfig));
+                OcspKeyBinding.isOcspSigningCertificate(getCertificate(X509KeyUsage.digitalSignature, null)));
         assertFalse("KU=nonRepudiation and EKU!=id_kp_OCSPSigning should be treated as an invalid OCSP singing certificate.",
-                OcspKeyBinding.isOcspSigningCertificate(getCertificate(X509KeyUsage.nonRepudiation, null), ekuConfig));
+                OcspKeyBinding.isOcspSigningCertificate(getCertificate(X509KeyUsage.nonRepudiation, null)));
  }
 
     @Test
     public void testOcspSigningCertificateAssertionNegatives() throws IOException, InvalidAlgorithmParameterException, InvalidKeyException, NoSuchAlgorithmException, SignatureException, IllegalStateException, NoSuchProviderException, OperatorCreationException, CertificateException {
         try {
-            new OcspKeyBinding().assertCertificateCompatability(getCertificate(X509KeyUsage.cRLSign, null), new AvailableExtendedKeyUsagesConfiguration() );
+            new OcspKeyBinding().assertCertificateCompatability(getCertificate(X509KeyUsage.cRLSign, null));
             fail("KU=cRLSign and EKU!=id_kp_OCSPSigning should be treated as an invalid OCSP singing certificate.");
         } catch (CertificateImportException e) {
             // Expected outcome
