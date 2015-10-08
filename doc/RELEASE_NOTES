@@ -1,3 +1,12 @@
+EJBCA 6.3.2.4
+-----------
+This patch release fixe two bugs:
+* An issue in SCEP Client Certificate Renewal in regards to renewing a certificate with the same issuing date as its issuing certificate 
+* A change to the enforcement of Single Active Certificate Constraints, where certificates where revoked by subjectdn+issuer instead of by username
+
+Read the full Changelog for details.
+For upgrade instructions, please see UPGRADE.
+
 EJBCA 6.3.2.3
 -----------
 This patch release primarily fixes bugs and adds missing functionality with respect to Client Certificate Renewal via SCEP. 
