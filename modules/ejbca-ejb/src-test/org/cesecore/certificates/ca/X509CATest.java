@@ -867,7 +867,7 @@ public class X509CATest {
         final String subjectDN = "JurisdictionCountry=NL,JurisdictionState=State,JurisdictionLocality=Åmål,BusinessCategory=Private Organization,CN=evssltest6.test.lan,SN=1234567890,OU=XY,O=MyOrg B.V.,L=Åmål,ST=Norrland,C=SE"; 
         final EndEntityInformation subject = new EndEntityInformation("testPrintableString", subjectDN, testCa.getCAId(), null, null, new EndEntityType(EndEntityTypes.ENDUSER), 0, 0, EndEntityConstants.TOKEN_USERGEN, 0, null);
         final CertificateProfile certProfile = new CertificateProfile(CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER);
-        cert = testCa.generateCertificate(cryptoToken, subject, cert.getPublicKey(), KeyUsage.digitalSignature | KeyUsage.keyEncipherment, null, 30, certProfile, null, cceConfig);
+        cert = testCa.generateCertificate(cryptoToken, subject, cert.getPublicKey(), KeyUsage.digitalSignature | KeyUsage.keyEncipherment, null, 30, certProfile, null);
         princ = ((X509Certificate) cert).getSubjectX500Principal();
         name = X500Name.getInstance(princ.getEncoded());
         // The EV DN components do not have names in standard java/BC. This is standard order where EV fields are before CN and in other respects ldap order
@@ -877,7 +877,7 @@ public class X509CATest {
         final ArrayList<String> order = new ArrayList<String>(Arrays.asList("jurisdictioncountry", "jurisdictionstate", "jurisdictionlocality","businesscategory","serialnumber","c","dc","st","l","o","ou","t","surname","initials","givenname","gn","sn","name","cn","uid","dn","email","e","emailaddress","unstructuredname","unstructuredaddress","postalcode","postaladdress","telephonenumber","pseudonym","street"));
         certProfile.setCustomDnOrder(order);
         certProfile.setUseCustomDnOrder(true);
-        cert = testCa.generateCertificate(cryptoToken, subject, cert.getPublicKey(), KeyUsage.digitalSignature | KeyUsage.keyEncipherment, null, 30, certProfile, null, cceConfig);
+        cert = testCa.generateCertificate(cryptoToken, subject, cert.getPublicKey(), KeyUsage.digitalSignature | KeyUsage.keyEncipherment, null, 30, certProfile, null);
         princ = ((X509Certificate) cert).getSubjectX500Principal();
         name = X500Name.getInstance(princ.getEncoded());
         // The EV DN components do not have names in standard java/BC
