@@ -891,6 +891,17 @@
 			<h:outputLabel for="checkuseldapdnorder" value="#{web.text.USE}"/>
 		</h:panelGroup>
 
+		<h:outputLabel for="customdnordergroup" value="#{web.text.CERT_SUBJECTDN_CUSTOMORDER}"/>
+		<h:panelGroup id="customdnordergroup">
+			<h:selectBooleanCheckbox styleClass="checkBoxOverlay" value="#{certProfileBean.certificateProfile.useCustomDnOrder}" rendered="#{!web.legacyInternetExplorer}"/>
+			<h:commandButton id="checkusecustomdnorder" styleClass="checkBoxOverlay" action="#{certProfileBean.toggleUseCustomDnOrder}"
+				value="#{certProfileBean.certificateProfile.useCustomDnOrder?web.text.BOOL_TRUE:web.text.BOOL_FALSE}"/>
+			<h:outputLabel for="checkusecustomdnorder" value="#{web.text.USE}…" styleClass="checkBoxOverlay"/>
+			<h:outputText value="#{web.text.VALUE} "/>
+			<h:inputText id="textfieldcustomdnorder" size="20" maxlength="500" title="#{web.text.FORMAT_STRING}" value="#{certProfileBean.certificateProfile.customDnOrder}"
+				disabled="#{!certProfileBean.certificateProfile.useCustomDnOrder}" converter="org.ejbca.DnObjectArrayListConverter"/>
+			<h:outputText styleClass="help" value=" #{web.text.CERT_SUBJECTDN_CUSTOMORDER_HELP}"/>
+		</h:panelGroup>
 
 		<h:outputLabel for="cnpostfixgroup" value="#{web.text.CERT_SUBJECTDN_CNPOSTFIX}"/>
 		<h:panelGroup id="cnpostfixgroup">

@@ -134,6 +134,11 @@
         <converter-class>org.ejbca.ui.web.admin.audit.MapToStringConverter</converter-class>
   </converter>
 
+  <converter>
+        <converter-id>org.ejbca.DnObjectArrayListConverter</converter-id>
+        <converter-class>org.ejbca.ui.web.DnObjectArrayListConverter</converter-class>
+   </converter>
+ 
   <navigation-rule>
     <from-view-id>/approval/approveactionlist.jsp</from-view-id>
     <navigation-case>
