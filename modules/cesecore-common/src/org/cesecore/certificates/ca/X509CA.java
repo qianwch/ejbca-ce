@@ -821,6 +821,9 @@ public class X509CA extends CA implements Serializable {
         if (certProfile.getUseCustomDnOrder()) {
             final ArrayList<String> order = certProfile.getCustomDnOrder();
             if (order != null && order.size() > 0) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Using Custom DN order: "+order);
+                }
                 customDNOrder = order.toArray(new String[0]);
             }
         }
