@@ -1280,7 +1280,6 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
     }
 
     public void setCustomDnOrder(final ArrayList<String> dnOrder) {
-        log.error("Setting custom DN order: "+dnOrder);
         data.put(CUSTOMDNORDER, dnOrder);
     }
     
