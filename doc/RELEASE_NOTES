@@ -1,6 +1,16 @@
 EJBCA 6.3.2.4
 -----------
-This patch release fixe two bugs:
+This patch release fixes one bug and introduces a new feature:
+* A small bug where soft crypto tokens generated during CA creation had auto-activate set during cache reload, even if that property had been set false.
+* Custom order of DN in issued certificates can now be defined in Certificate Profiles
+
+Read the full Changelog for details.
+For upgrade instructions, please see UPGRADE.
+
+
+EJBCA 6.3.2.4
+-----------
+This patch release fixes two bugs:
 * An issue in SCEP Client Certificate Renewal in regards to renewing a certificate with the same issuing date as its issuing certificate 
 * A change to the enforcement of Single Active Certificate Constraints, where certificates where revoked by subjectdn+issuer instead of by username
 

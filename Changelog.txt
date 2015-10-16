@@ -1,3 +1,12 @@
+EJBCA 6.3.2.5, 2015-10-16
+---
+Bug
+    [ECA-4513] - Unchecking auto-activate does not persist for auto-generated crypto tokens using default password
+
+New Feature
+    [ECA-4508] - Ability to define custom order of DN in issued certificates
+
+
 EJBCA 6.3.2.4, 2015-10-08
 ---
 Bug
