@@ -1,4 +1,4 @@
-EJBCA 6.3.2.4
+EJBCA 6.3.2.5
 -----------
 This patch release fixes one bug and introduces a new feature:
 * A small bug where soft crypto tokens generated during CA creation had auto-activate set during cache reload, even if that property had been set false.
