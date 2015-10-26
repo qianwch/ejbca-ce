@@ -186,3 +186,7 @@ securityeventsaudit.exporter.1=org.cesecore.audit.impl.AuditExporterXml
 # before PKCS#11 is called.
 # Default: true (the mechanisms are disabled).
 #pkcs11.disableHashingSignMechanisms=false
+
+# Caching the references to PKCS#11 objects can make a big performance difference.
+# Default: true
+#cryptotoken.keystorecache=true

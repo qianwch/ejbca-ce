@@ -151,6 +151,7 @@ import org.cesecore.keybind.impl.AuthenticationKeyBinding;
 import org.cesecore.keybind.impl.OcspKeyBinding;
 import org.cesecore.keybind.impl.OcspKeyBinding.ResponderIdType;
 import org.cesecore.keys.token.BaseCryptoToken;
+import org.cesecore.keys.token.CachingKeyStoreWrapper;
 import org.cesecore.keys.token.CryptoToken;
 import org.cesecore.keys.token.CryptoTokenManagementSessionLocal;
 import org.cesecore.keys.token.CryptoTokenOfflineException;
@@ -1666,8 +1667,8 @@ public class OcspResponseGeneratorSessionBean implements OcspResponseGeneratorSe
                     // Use reflection to dig out the certificate objects for each alias so we can create an internal key binding for it
                     final Method m = BaseCryptoToken.class.getDeclaredMethod("getKeyStore");
                     m.setAccessible(true);
-                    final KeyStore keyStore = (KeyStore) m.invoke(cryptoTokenManagementSession.getCryptoToken(p11CryptoTokenId));
-                    createInternalKeyBindings(authenticationToken, p11CryptoTokenId, keyStore, trustDefaults);
+                    final CachingKeyStoreWrapper cachingKeyStoreWrapper = (CachingKeyStoreWrapper) m.invoke(cryptoTokenManagementSession.getCryptoToken(p11CryptoTokenId));
+                    createInternalKeyBindings(authenticationToken, p11CryptoTokenId, cachingKeyStoreWrapper.getKeyStore(), trustDefaults);
                 }
             } catch (Exception e) {
                 log.error("", e);
