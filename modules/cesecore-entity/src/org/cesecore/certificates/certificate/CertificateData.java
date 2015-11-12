@@ -272,7 +272,9 @@ public class CertificateData extends ProtectedData implements Serializable {
 
     /**
      * status of certificate, ex CertificateConstants.CERT_ACTIVE
-     * 
+     *       
+     * @see CertificateConstants#CERT_ACTIVE etc
+     *       
      * @return status
      */
     // @Column
@@ -534,7 +536,8 @@ public class CertificateData extends ProtectedData implements Serializable {
      * @param entityManager To be used if the cert is in the {@link Base64CertData} table.
      * @return The certificate
      */
-    private String getBase64Cert(EntityManager entityManager) {
+    @Transient
+    public String getBase64Cert(EntityManager entityManager) {
         if ( this.base64Cert!=null && this.base64Cert.length()>0 ) {
             return this.base64Cert; // the cert was in this table.
         }
@@ -878,6 +881,17 @@ public class CertificateData extends ProtectedData implements Serializable {
     }
 
     /** @return return the query results as a List. */
+    @SuppressWarnings("unchecked")
+    public static List<CertificateData> findByUsernameAndStatusAfterExpireDate(EntityManager entityManager, String username, int status, long afterExpireDate) {
+        final Query query = entityManager
+                .createQuery("SELECT a FROM CertificateData a WHERE a.username=:username AND a.status=:status AND a.expireDate>=:afterExpireDate ORDER BY a.expireDate DESC, a.serialNumber DESC");
+        query.setParameter("username", username);
+        query.setParameter("status", status);
+        query.setParameter("afterExpireDate", afterExpireDate);
+        return query.getResultList();
+    }
+
+    /** @return return the query results as a List. */
     // TODO: When only JPA is used, check if we can refactor this method to SELECT DISTINCT a.username FROM ...
     @SuppressWarnings("unchecked")
     public static Set<String> findUsernamesByIssuerDNAndSubjectKeyId(EntityManager entityManager, String issuerDN, String subjectKeyId) {
@@ -1126,7 +1140,7 @@ public class CertificateData extends ProtectedData implements Serializable {
         query.setParameter("issuerDN", issuerDN);
         return getCertificateList(query.getResultList(), entityManager);
     }
-
+    
     /** @return the CertificateInfo representation (all fields except the actual cert) or null if no such fingerprint exists. */
     public static CertificateInfo getCertificateInfo(EntityManager entityManager, String fingerprint) {
         CertificateInfo ret = null;

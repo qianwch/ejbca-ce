@@ -58,7 +58,7 @@ public interface PublisherSessionLocal extends PublisherSession {
      * @throws PublisherExistsException if publisher already exists.
      * @throws AuthorizationDeniedException required access rights are ca_functionality/edit_publisher
      */
-    void addPublisher(AuthenticationToken admin, String name, BasePublisher publisher) throws PublisherExistsException, AuthorizationDeniedException;
+    int addPublisher(AuthenticationToken admin, String name, BasePublisher publisher) throws PublisherExistsException, AuthorizationDeniedException;
 
     /**
      * Adds a publisher to the database. Used for importing and exporting

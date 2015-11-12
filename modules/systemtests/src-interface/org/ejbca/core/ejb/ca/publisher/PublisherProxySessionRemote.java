@@ -12,9 +12,6 @@
  *************************************************************************/
 package org.ejbca.core.ejb.ca.publisher;
 
-import java.security.cert.Certificate;
-import java.util.Collection;
-
 import javax.ejb.Remote;
 
 import org.cesecore.authentication.tokens.AuthenticationToken;
@@ -42,7 +39,7 @@ public interface PublisherProxySessionRemote {
      * @throws PublisherExistsException if publisher already exists.
      * @throws AuthorizationDeniedException required access rights are ca_functionality/edit_publisher
      */
-    void addPublisher(AuthenticationToken admin, String name, BasePublisher publisher) throws PublisherExistsException, AuthorizationDeniedException;
+    int addPublisher(AuthenticationToken admin, String name, BasePublisher publisher) throws PublisherExistsException, AuthorizationDeniedException;
      
     /**
      * Adds a publisher with the same content as the original.

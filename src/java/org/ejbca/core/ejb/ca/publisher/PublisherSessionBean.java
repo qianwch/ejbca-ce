@@ -323,14 +323,17 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
     }
 
     @Override
-    public void addPublisher(AuthenticationToken admin, String name, BasePublisher publisher) throws PublisherExistsException, AuthorizationDeniedException {
+    public int addPublisher(AuthenticationToken admin, String name, BasePublisher publisher) throws PublisherExistsException,
+            AuthorizationDeniedException {
         if (log.isTraceEnabled()) {
             log.trace(">addPublisher(name: " + name + ")");
         }
-        addPublisher(admin, findFreePublisherId(), name, publisher);
+        int id = findFreePublisherId();
+        addPublisher(admin, id, name, publisher);
         if (log.isTraceEnabled()) {
             log.trace("<addPublisher()");
         }
+        return id;
     }
 
     @Override
