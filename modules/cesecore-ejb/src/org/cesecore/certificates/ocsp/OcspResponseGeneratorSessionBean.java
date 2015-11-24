@@ -75,7 +75,6 @@ import org.bouncycastle.asn1.nist.NISTObjectIdentifiers;
 import org.bouncycastle.asn1.ocsp.OCSPObjectIdentifiers;
 import org.bouncycastle.asn1.ocsp.RevokedInfo;
 import org.bouncycastle.asn1.oiw.OIWObjectIdentifiers;
-import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.CRLReason;
 import org.bouncycastle.asn1.x509.Extension;
@@ -122,6 +121,7 @@ import org.cesecore.certificates.certificatetransparency.CertificateTransparency
 import org.cesecore.certificates.certificatetransparency.CertificateTransparencyFactory;
 import org.cesecore.certificates.ocsp.cache.OcspConfigurationCache;
 import org.cesecore.certificates.ocsp.cache.OcspExtensionsCache;
+import org.cesecore.certificates.ocsp.cache.OcspRequestSignerStatusCache;
 import org.cesecore.certificates.ocsp.cache.OcspSigningCache;
 import org.cesecore.certificates.ocsp.cache.OcspSigningCacheEntry;
 import org.cesecore.certificates.ocsp.exception.CryptoProviderException;
@@ -159,7 +159,6 @@ import org.cesecore.keys.token.PKCS11CryptoToken;
 import org.cesecore.keys.token.SoftCryptoToken;
 import org.cesecore.keys.token.p11.Pkcs11SlotLabelType;
 import org.cesecore.keys.util.KeyTools;
-import org.cesecore.util.CeSecoreNameStyle;
 import org.cesecore.util.CertTools;
 import org.cesecore.util.log.ProbableErrorHandler;
 import org.cesecore.util.log.SaferAppenderListener;
@@ -244,6 +243,12 @@ public class OcspResponseGeneratorSessionBean implements OcspResponseGeneratorSe
         if (ct != null) {
             ct.clearCaches();
         }
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void clearOcspRequestSignerRevocationStatusCache() {
+        OcspRequestSignerStatusCache.INSTANCE.flush();
     }
 
     @Override
@@ -702,9 +707,14 @@ public class OcspResponseGeneratorSessionBean implements OcspResponseGeneratorSe
             }
             if (enforceRequestSigning) {
                 // If it verifies OK, check if it is revoked
-                final CertificateStatus status = certificateStoreSession.getStatus(signercertIssuerName, signercertSerNo);
+                final String cacheLookupKey = OcspRequestSignerStatusCache.INSTANCE.createCacheLookupKey(signercertIssuerName, signercertSerNo);
+                CertificateStatus status = OcspRequestSignerStatusCache.INSTANCE.getCachedCertificateStatus(cacheLookupKey);
+                if (status==null) {
+                    status = certificateStoreSession.getStatus(signercertIssuerName, signercertSerNo);
+                    OcspRequestSignerStatusCache.INSTANCE.updateCachedCertificateStatus(cacheLookupKey, status);
+                }
                 /*
-                 * If rci == null it means the certificate does not exist in database, we then treat it as ok, because it may be so that only revoked
+                 * CertificateStatus.NOT_AVAILABLE means that the certificate does not exist in database. We treat this as ok, because it may be so that only revoked
                  * certificates is in the (external) OCSP database.
                  */
                 if (status.equals(CertificateStatus.REVOKED)) {
