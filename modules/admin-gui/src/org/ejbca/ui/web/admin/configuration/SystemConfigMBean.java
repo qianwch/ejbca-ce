@@ -951,6 +951,7 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
         return ret;
     }
     
+    
     public List<String> getAvailableTabs() {
         AccessControlSession accessControlSession = getEjbcaWebBean().getEjb().getAccessControlSession();
         final List<String> availableTabs = new ArrayList<String>();
@@ -958,16 +959,17 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
             availableTabs.add("Basic Configurations");
             availableTabs.add("Administrator Preferences");
         }
-        if (accessControlSession.isAuthorizedNoLogging(getAdmin(), StandardRules.REGULAR_EDITSYSTEMCONFIGURATION.resource())) {
-            availableTabs.add("Certificate Transparency Logs");
-        }
         if (accessControlSession.isAuthorizedNoLogging(getAdmin(), StandardRules.REGULAR_EDITAVAILABLEEKU.resource())) {
             availableTabs.add("Extended Key Usages");
+        }
+        if (accessControlSession.isAuthorizedNoLogging(getAdmin(), StandardRules.REGULAR_EDITSYSTEMCONFIGURATION.resource())) {
+            availableTabs.add("Certificate Transparency Logs");
         }
         if (accessControlSession.isAuthorizedNoLogging(getAdmin(), StandardRules.REGULAR_EDITAVAILABLECUSTOMCERTEXTENSION.resource())) {
             availableTabs.add("Custom Certificate Extensions");
         }
         return availableTabs;
     }
+    
     
 }
