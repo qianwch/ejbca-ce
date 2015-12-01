@@ -1,3 +1,12 @@
+EJBCA 6.2.11, 2015-12-01
+---
+Improvement
+	[ECA-4403] - Parallel CT log submission
+	[ECA-4404] - TLS session re-use for CT submission
+	[ECA-4605] - Backport CT improvements to 6.2
+	[ECA-4612] - Security Issue
+
+
 EJBCA 6.2.10, 2015-05-29
 ---
 Bug

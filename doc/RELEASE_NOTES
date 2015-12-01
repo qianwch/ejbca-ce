@@ -1,3 +1,15 @@
+EJBCA 6.2.11
+-----------
+This maintenance release contains 4 features, bug fixes and improvements.
+
+- Improvements:
+	* Apache commons-collections library has been upgraded to version 3.2.2
+	* CT Logs are now submitted in parallel 
+	* TLS sessions are reused for CT submissions, improving performance. 
+	
+Read the full Changelog for details.
+For upgrade instructions, please see UPGRADE.
+
 EJBCA 6.2.10
 -----------
 This maintenance release contains 32 features, bug fixes and improvements, below is a selection of the most noteworthy. This branch was 
