@@ -32,12 +32,17 @@ public enum StandardRules {
 	CREATECRL(CAFUNCTIONALITY.resource()+"/create_crl"),
 	SYSTEMFUNCTIONALITY("/system_functionality"),
 	EDITROLES(SYSTEMFUNCTIONALITY.resource()+"/edit_administrator_privileges"),
+	VIEWROLES(SYSTEMFUNCTIONALITY.resource()+"/view_administrator_privileges"),
 	RECOVERY("/recovery"),
 	BACKUP(RECOVERY.resource()+"/backup"),
 	RESTORE(RECOVERY.resource()+"/restore"),
-    REGULAR_EDITSYSTEMCONFIGURATION(SYSTEMFUNCTIONALITY.resource()+"/edit_systemconfiguration"),
-    REGULAR_EDITAVAILABLEEKU(SYSTEMFUNCTIONALITY.resource()+"/edit_available_extended_key_usages"),
-    REGULAR_EDITAVAILABLECUSTOMCERTEXTENSION(SYSTEMFUNCTIONALITY.resource()+"/edit_available_custom_certificate_extensions");
+    SYSTEMCONFIGURATION_EDIT(SYSTEMFUNCTIONALITY.resource()+"/edit_systemconfiguration"),
+    SYSTEMCONFIGURATION_VIEW(SYSTEMFUNCTIONALITY.resource()+"/view_systemconfiguration"),
+    EKUCONFIGURATION_EDIT(SYSTEMFUNCTIONALITY.resource()+"/edit_available_extended_key_usages"),
+    EKUCONFIGURATION_VIEW(SYSTEMFUNCTIONALITY.resource()+"/view_available_extended_key_usages"),
+    CUSTOMCERTEXTENSIONCONFIGURATION_EDIT(SYSTEMFUNCTIONALITY.resource()+"/edit_available_custom_certificate_extensions"),
+    CUSTOMCERTEXTENSIONCONFIGURATION_VIEW(SYSTEMFUNCTIONALITY.resource()+"/view_available_custom_certificate_extensions");
+
 
 	
 	private final String resource;

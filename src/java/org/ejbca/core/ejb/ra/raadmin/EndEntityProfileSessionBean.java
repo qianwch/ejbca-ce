@@ -286,8 +286,9 @@ public class EndEntityProfileSessionBean implements EndEntityProfileSessionLocal
         	for (final Entry<Integer, EndEntityProfile> entry : EndEntityProfileCache.INSTANCE.getProfileCache(entityManager).entrySet()) {
         		// Check if all profiles available CAs exists in authorizedcaids.
         		final String availableCasString = entry.getValue().getValue(EndEntityProfile.AVAILCAS, 0);
-        		if (availableCasString != null) {
-        			boolean authorizedToProfile = true;
+        		boolean authorizedToProfile = true;
+
+                if (availableCasString != null) {
         			for (final String caidString : availableCasString.split(EndEntityProfile.SPLITCHAR)) {
         			    final int caIdInt = Integer.parseInt(caidString);
         			    // with root rule access you can edit profiles with missing CA ids
@@ -304,8 +305,8 @@ public class EndEntityProfileSessionBean implements EndEntityProfileSessionLocal
                     }
         		}
         	}
-        } catch (Exception e) {
-            LOG.error(INTRES.getLocalizedMessage("ra.errorgetids"), e);
+        } catch (NumberFormatException e) {
+            throw new IllegalStateException("CA ID was store in an end entity profile as something other than a number.", e);
         }
         return returnval;
     }

@@ -22,6 +22,7 @@ import java.util.Set;
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.authorization.control.AccessControlSessionLocal;
+import org.cesecore.authorization.control.StandardRules;
 import org.cesecore.authorization.rules.AccessRuleData;
 import org.cesecore.authorization.rules.AccessRuleNotFoundException;
 import org.cesecore.authorization.user.AccessUserAspectData;
@@ -94,9 +95,9 @@ public class AuthorizationDataHandler implements Serializable {
      */
     public void addRole(String name) throws AuthorizationDeniedException, RoleExistsException {
         // Authorized to edit administrative privileges
-        if (!authorizationsession.isAuthorized(administrator, "/system_functionality/edit_administrator_privileges")) {
+        if (!authorizationsession.isAuthorized(administrator, StandardRules.EDITROLES.resource())) {
             final String msg = intres.getLocalizedMessage("authorization.notuathorizedtoresource",
-                    "/system_functionality/edit_administrator_privileges", null);
+                    StandardRules.EDITROLES.resource(), null);
             throw new AuthorizationDeniedException(msg);
         }
         roleManagementSession.create(administrator, name);
@@ -198,6 +199,16 @@ public class AuthorizationDataHandler implements Serializable {
     public Map<String, Set<String>> getAvailableAccessRules(final String endentityAccessRule) {
         return this.informationmemory.getAuthorizedAccessRules(endentityAccessRule);
     }
+    
+    /**
+     * Method returning all the available access rules authorized to administrator to manage.
+     * 
+     * @returns a map of sets of strings with available access rules, sorted by category
+     */
+    public Map<String, Set<String>> getRedactedAccessRules(final String endentityAccessRule) {
+        return this.informationmemory.getRedactedAccessRules(endentityAccessRule);
+    }
+
 
     /**
      * Method returning all the available access rules authorized to administrator to manage.

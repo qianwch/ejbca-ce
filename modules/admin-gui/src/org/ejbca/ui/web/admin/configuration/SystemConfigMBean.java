@@ -46,10 +46,17 @@ import org.cesecore.certificates.certificateprofile.CertificateProfileSessionLoc
 import org.cesecore.certificates.certificatetransparency.CTLogInfo;
 import org.cesecore.config.AvailableExtendedKeyUsagesConfiguration;
 import org.cesecore.keys.util.KeyTools;
-import org.cesecore.util.CertTools;
 import org.ejbca.config.GlobalConfiguration;
 import org.ejbca.core.model.ra.raadmin.AdminPreference;
 import org.ejbca.ui.web.admin.BaseManagedBean;
+
+/**
+ * 
+ * Backing bean for the various system configuration pages. 
+ * 
+ * @version $Id$
+ *
+ */
 
 public class SystemConfigMBean extends BaseManagedBean implements Serializable {
 
@@ -247,6 +254,7 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
     private int currentCTLogTimeout;
     private UploadedFile currentCTLogPublicKeyFile = null;
     private boolean excludeActiveCryptoTokensFromClearCaches = true;
+    private boolean customCertificateExtensionViewMode = false;
     
     private final CaSessionLocal caSession = getEjbcaWebBean().getEjb().getCaSession();
     private final AccessControlSessionLocal accessControlSession = getEjbcaWebBean().getEjb().getAccessControlSession();
@@ -286,14 +294,15 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
     public String getSelectedTab() {
         final String tabHttpParam = ((HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest()).getParameter("tab");
         // First, check if the user has requested a valid tab
-        if (tabHttpParam != null && getAvailableTabs().contains(tabHttpParam)) {
+        List<String> availableTabs = getAvailableTabs();
+        if (tabHttpParam != null && availableTabs.contains(tabHttpParam)) {
             // The requested tab is an existing tab. Flush caches so we reload the page content
             flushCache();
             selectedTab = tabHttpParam;
         }
         if (selectedTab == null) {
             // If no tab was requested, we use the first available tab as default
-            selectedTab = getAvailableTabs().get(0);
+            selectedTab = availableTabs.get(0);
         }
         return selectedTab;
     }
@@ -511,17 +520,27 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
                     .addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "No CTLog URL is set.", null));
             return;
         }
+        if (!currentCTLogURL.contains("://")) {
+            FacesContext.getCurrentInstance()
+                    .addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "CTLog URL must specify a protocol: http:// or https://", null));
+            return;
+        }
         if (currentCTLogPublicKeyFile == null) {
             FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Upload of CTLog public key file failed.", null));
+            return;
+        }
+        final int timeout = getCurrentCTLogTimeout();
+        if (timeout < 0) {
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Timeout value may not be negative.", null));
             return;
         }
         
         CTLogInfo ctlogToAdd = null;
         try {
             byte[] uploadedFileBytes = currentCTLogPublicKeyFile.getBytes();
-            byte[] keybytes = KeyTools.getBytesFromPEM(new String(uploadedFileBytes), CertTools.BEGIN_PUBLIC_KEY, CertTools.END_PUBLIC_KEY);
+            byte[] keybytes = KeyTools.getBytesFromPublicKeyFile(uploadedFileBytes);
             ctlogToAdd = new CTLogInfo(currentCTLogURL, keybytes);
-            ctlogToAdd.setTimeout(getCurrentCTLogTimeout());
+            ctlogToAdd.setTimeout(timeout);
         } catch (IOException e) {
             String msg = "Cannot parse the public key file " + getCurrentCTLogPublicKeyFile().getName() + ". " + e.getLocalizedMessage();
             log.info(msg);
@@ -533,6 +552,14 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
         }
 
         if(ctlogToAdd != null) {
+            for (CTLogInfo existing : currentConfig.getCtLogs()) {
+                if (StringUtils.equals(existing.getUrl(), ctlogToAdd.getUrl())) {
+                    FacesContext.getCurrentInstance()
+                        .addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "A CT Log with that URL already exists: " + existing.getUrl(), null));
+                    return;
+                }
+            }
+            
             List<CTLogInfo> ctlogs = currentConfig.getCtLogs(); 
             ctlogs.add(ctlogToAdd);
             currentConfig.setCtLogs(ctlogs);
@@ -842,7 +869,18 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
     
     public String actionEdit() {
         selectCurrentRowData();
+        customCertificateExtensionViewMode = false;
         return "edit";   // Outcome is defined in faces-config.xml
+    }
+    
+    public String actionView() {
+        selectCurrentRowData();
+        customCertificateExtensionViewMode = true;
+        return "view";   // Outcome is defined in faces-config.xml
+    }
+    
+    public boolean getCustomCertificateExtensionViewMode() {
+        return customCertificateExtensionViewMode;
     }
     
     private void selectCurrentRowData() {
@@ -886,9 +924,19 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
         return ret;
     }
     
+    /** @return true if admin may create new or modify System Configuration. */
+    public boolean isAllowedToEditSystemConfiguration() {
+        return accessControlSession.isAuthorizedNoLogging(getAdmin(), StandardRules.SYSTEMCONFIGURATION_EDIT.resource());
+    }
+    
+    /** @return true if admin may create new or modify existing Extended Key Usages. */
+    public boolean isAllowedToEditExtendedKeyUsages() {
+        return accessControlSession.isAuthorizedNoLogging(getAdmin(), StandardRules.EKUCONFIGURATION_EDIT.resource());
+    }
+    
     /** @return true if admin may create new or modify existing Custom Certificate Extensions. */
-    public boolean isAllowedToModify() {
-        return accessControlSession.isAuthorizedNoLogging(getAdmin(), StandardRules.REGULAR_EDITAVAILABLECUSTOMCERTEXTENSION.resource());
+    public boolean isAllowedToEditCustomCertificateExtension() {
+        return accessControlSession.isAuthorizedNoLogging(getAdmin(), StandardRules.CUSTOMCERTEXTENSIONCONFIGURATION_EDIT.resource());
     }
     
     // ------------------------------------------------
@@ -951,25 +999,23 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
         return ret;
     }
     
-    
     public List<String> getAvailableTabs() {
         AccessControlSession accessControlSession = getEjbcaWebBean().getEjb().getAccessControlSession();
         final List<String> availableTabs = new ArrayList<String>();
-        if (accessControlSession.isAuthorizedNoLogging(getAdmin(), StandardRules.REGULAR_EDITSYSTEMCONFIGURATION.resource())) {
+        if (accessControlSession.isAuthorizedNoLogging(getAdmin(), StandardRules.SYSTEMCONFIGURATION_VIEW.resource())) {
             availableTabs.add("Basic Configurations");
             availableTabs.add("Administrator Preferences");
         }
-        if (accessControlSession.isAuthorizedNoLogging(getAdmin(), StandardRules.REGULAR_EDITAVAILABLEEKU.resource())) {
+        if (accessControlSession.isAuthorizedNoLogging(getAdmin(), StandardRules.EKUCONFIGURATION_VIEW.resource())) {
             availableTabs.add("Extended Key Usages");
         }
-        if (accessControlSession.isAuthorizedNoLogging(getAdmin(), StandardRules.REGULAR_EDITSYSTEMCONFIGURATION.resource())) {
+        if (accessControlSession.isAuthorizedNoLogging(getAdmin(), StandardRules.SYSTEMCONFIGURATION_VIEW.resource())) {
             availableTabs.add("Certificate Transparency Logs");
         }
-        if (accessControlSession.isAuthorizedNoLogging(getAdmin(), StandardRules.REGULAR_EDITAVAILABLECUSTOMCERTEXTENSION.resource())) {
+        if (accessControlSession.isAuthorizedNoLogging(getAdmin(), StandardRules.CUSTOMCERTEXTENSIONCONFIGURATION_VIEW.resource())) {
             availableTabs.add("Custom Certificate Extensions");
         }
         return availableTabs;
     }
-    
     
 }

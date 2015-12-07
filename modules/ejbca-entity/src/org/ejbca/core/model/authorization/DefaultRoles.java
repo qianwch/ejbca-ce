@@ -43,8 +43,8 @@ public enum DefaultRoles {
             new AccessRuleTemplate(AccessRulesConstants.REGULAR_VIEWPUBLISHER, AccessRuleState.RULE_ACCEPT, false), 
             new AccessRuleTemplate(AuditLogRules.LOG.resource(), AccessRuleState.RULE_ACCEPT, true), 
             new AccessRuleTemplate(AccessRulesConstants.REGULAR_RAFUNCTIONALITY, AccessRuleState.RULE_ACCEPT, true), 
-            new AccessRuleTemplate(AccessRulesConstants.REGULAR_SYSTEMFUNCTIONALITY, AccessRuleState.RULE_ACCEPT, false), 
-            new AccessRuleTemplate(StandardRules.EDITROLES.resource(), AccessRuleState.RULE_ACCEPT, false), 
+            new AccessRuleTemplate(StandardRules.EDITROLES.resource(), AccessRuleState.RULE_ACCEPT, false),
+            new AccessRuleTemplate(StandardRules.VIEWROLES.resource(), AccessRuleState.RULE_ACCEPT, false), 
             new AccessRuleTemplate(AccessRulesConstants.ENDENTITYPROFILEBASE, AccessRuleState.RULE_ACCEPT, true), 
             new AccessRuleTemplate(AccessRulesConstants.REGULAR_VIEWENDENTITYPROFILES, AccessRuleState.RULE_ACCEPT, false),
             new AccessRuleTemplate(AccessRulesConstants.HARDTOKEN_EDITHARDTOKENISSUERS, AccessRuleState.RULE_ACCEPT, false), 
@@ -80,7 +80,12 @@ public enum DefaultRoles {
             new AccessRuleTemplate(AccessRulesConstants.REGULAR_VIEWPUBLISHER, AccessRuleState.RULE_ACCEPT, false),
             new AccessRuleTemplate(AccessRulesConstants.SERVICES_VIEW, AccessRuleState.RULE_ACCEPT, false),
             new AccessRuleTemplate(AccessRulesConstants.REGULAR_VIEWENDENTITYPROFILES, AccessRuleState.RULE_ACCEPT, false),
-            new AccessRuleTemplate(AccessRulesConstants.REGULAR_PEERCONNECTOR_VIEW, AccessRuleState.RULE_ACCEPT, true)
+            new AccessRuleTemplate(AccessRulesConstants.REGULAR_PEERCONNECTOR_VIEW, AccessRuleState.RULE_ACCEPT, true),
+            new AccessRuleTemplate(StandardRules.SYSTEMCONFIGURATION_VIEW.resource(), AccessRuleState.RULE_ACCEPT, false),
+            new AccessRuleTemplate(StandardRules.EKUCONFIGURATION_VIEW.resource(), AccessRuleState.RULE_ACCEPT, false),
+            new AccessRuleTemplate(StandardRules.CUSTOMCERTEXTENSIONCONFIGURATION_VIEW.resource(), AccessRuleState.RULE_ACCEPT, false),
+            new AccessRuleTemplate(StandardRules.VIEWROLES.resource(), AccessRuleState.RULE_ACCEPT, false),
+            new AccessRuleTemplate(AccessRulesConstants.REGULAR_VIEWENDENTITY, AccessRuleState.RULE_ACCEPT, false)
             ),
     HARDTOKENISSUER("HARDTOKENISSUER");
 
@@ -126,6 +131,19 @@ public enum DefaultRoles {
             combinedRules.put(template.getAccessRuleName(), template);
         }
         if (combinedRules.size() != rules.size()) {
+            ruleloop : for(AccessRuleTemplate combinedRule : combinedRules.values()) {
+                boolean found = false;
+                for(AccessRuleData rule : rules) {
+                    if(rule.getAccessRuleName().equals(combinedRule.getAccessRuleName())) {
+                        found = true;
+                        continue ruleloop;
+                    }
+                    
+                }
+                if(!found) {
+                    System.err.println("Unfound rule: " + combinedRule.getAccessRuleName());
+                }
+            }
             return false;
         } else {
             for (AccessRuleData rule : rules) {

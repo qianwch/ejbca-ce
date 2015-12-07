@@ -127,13 +127,19 @@ public abstract class AccessRulesConstants {
                                                            REGULAR_REVOKEENDENTITY,
                                                            REGULAR_VIEWENDENTITYHISTORY,
                                                            REGULAR_APPROVEENDENTITY,
-                                                           REGULAR_SYSTEMFUNCTIONALITY,
+                                                           StandardRules.SYSTEMFUNCTIONALITY.resource(),
                                                            SERVICES_EDIT,
                                                            SERVICES_VIEW,
                                                            StandardRules.EDITROLES.resource(),
-                                                           StandardRules.REGULAR_EDITSYSTEMCONFIGURATION.resource(),
-                                                           StandardRules.REGULAR_EDITAVAILABLEEKU.resource(),
-                                                           StandardRules.REGULAR_EDITAVAILABLECUSTOMCERTEXTENSION.resource()};
+                                                           StandardRules.VIEWROLES.resource(),
+                                                           StandardRules.SYSTEMCONFIGURATION_EDIT.resource(),
+                                                           StandardRules.SYSTEMCONFIGURATION_VIEW.resource(),
+                                                           StandardRules.EKUCONFIGURATION_EDIT.resource(),
+                                                           StandardRules.EKUCONFIGURATION_VIEW.resource(),
+                                                           StandardRules.CUSTOMCERTEXTENSIONCONFIGURATION_EDIT.resource(),
+                                                           StandardRules.CUSTOMCERTEXTENSIONCONFIGURATION_VIEW.resource()
+                                                           };
+                                                           
                                                        
     // Role Access Rules
     public static final  String[] ROLEACCESSRULES = {ROLE_PUBLICWEBUSER, ROLE_ADMINISTRATOR, StandardRules.ROLE_ROOT.resource()};

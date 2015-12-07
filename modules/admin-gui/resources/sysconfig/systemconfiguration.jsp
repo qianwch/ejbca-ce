@@ -25,18 +25,22 @@ org.ejbca.ui.web.admin.configuration.EjbcaWebBean,
 org.ejbca.config.GlobalConfiguration,
 org.ejbca.core.model.authorization.AccessRulesConstants,
 org.cesecore.authorization.control.StandardRules,
-org.cesecore.authorization.control.AccessControlSession
+org.cesecore.authorization.control.AccessControlSession,
+org.cesecore.authorization.AuthorizationDeniedException
 "%>
 <jsp:useBean id="ejbcawebbean" scope="session" class="org.ejbca.ui.web.admin.configuration.EjbcaWebBean" />
-<% 
-	AccessControlSession accessControlSession = ejbcawebbean.getEjb().getAccessControlSession();
+<%
+    AccessControlSession accessControlSession = ejbcawebbean.getEjb().getAccessControlSession();
 	GlobalConfiguration globalconfiguration = null;
-	if(accessControlSession.isAuthorized(ejbcawebbean.getAdminObject(), StandardRules.REGULAR_EDITSYSTEMCONFIGURATION.resource())) {
-		globalconfiguration = ejbcawebbean.initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.REGULAR_EDITSYSTEMCONFIGURATION.resource());
-	} else if(accessControlSession.isAuthorized(ejbcawebbean.getAdminObject(), StandardRules.REGULAR_EDITAVAILABLEEKU.resource())) {
-		globalconfiguration = ejbcawebbean.initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.REGULAR_EDITAVAILABLEEKU.resource());
-	} else if(accessControlSession.isAuthorized(ejbcawebbean.getAdminObject(), StandardRules.REGULAR_EDITAVAILABLECUSTOMCERTEXTENSION.resource())) {
-		globalconfiguration = ejbcawebbean.initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.REGULAR_EDITAVAILABLECUSTOMCERTEXTENSION.resource());
+	if(accessControlSession.isAuthorized(ejbcawebbean.getAdminObject(), StandardRules.SYSTEMCONFIGURATION_VIEW.resource())) {
+		globalconfiguration = ejbcawebbean.initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.SYSTEMCONFIGURATION_VIEW.resource());
+	} else if(accessControlSession.isAuthorized(ejbcawebbean.getAdminObject(), StandardRules.EKUCONFIGURATION_VIEW.resource())) {
+		globalconfiguration = ejbcawebbean.initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.EKUCONFIGURATION_VIEW.resource());
+	} else if(accessControlSession.isAuthorized(ejbcawebbean.getAdminObject(), StandardRules.CUSTOMCERTEXTENSIONCONFIGURATION_VIEW.resource())) {
+		globalconfiguration = ejbcawebbean.initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.CUSTOMCERTEXTENSIONCONFIGURATION_VIEW.resource());
+	}
+	if(globalconfiguration == null) {
+	    throw new AuthorizationDeniedException("Admin was not authorized to any existing configuraiton.");
 	}
 %>
 <html>
@@ -108,21 +112,23 @@ org.cesecore.authorization.control.AccessControlSession
 				<br/>
 				<h:outputText value="#{web.text.EJBCATITLE_HELP}" styleClass="help"/>
 			</h:panelGroup>
-			<h:inputText id="title" value="#{systemConfigMBean.currentConfig.title}" size="45" title="#{web.text.FORMAT_STRING}"/>
+			<h:inputText id="title" value="#{systemConfigMBean.currentConfig.title}" size="45" title="#{web.text.FORMAT_STRING}" disabled="#{!systemConfigMBean.allowedToEditSystemConfiguration}"/>
 		
 			<h:panelGroup>
 				<h:outputLabel for="headbanner" value="#{web.text.HEADBANNER}" styleClass="titles"/>
 				<br/>
 				<h:outputText value="#{web.text.HEADBANNER_HELP}" styleClass="help"/>
 			</h:panelGroup>
-			<h:inputText id="headbanner" value="#{systemConfigMBean.currentConfig.headBanner}" size="45" title="#{web.text.FORMAT_FILENAME}"/>
+			<h:inputText id="headbanner" value="#{systemConfigMBean.currentConfig.headBanner}" size="45" title="#{web.text.FORMAT_FILENAME}" 
+				disabled="#{!systemConfigMBean.allowedToEditSystemConfiguration}"/>
 		
 			<h:panelGroup>
 				<h:outputLabel for="footbanner" value="#{web.text.FOOTBANNER}" styleClass="titles"/>
 				<br/>
 				<h:outputText value="#{web.text.FOOTBANNER_HELP}" styleClass="help"/>
 			</h:panelGroup>
-			<h:inputText id="footbanner" value="#{systemConfigMBean.currentConfig.footBanner}" size="45" title="#{web.text.FORMAT_FILENAME}"/>
+			<h:inputText id="footbanner" value="#{systemConfigMBean.currentConfig.footBanner}" size="45" title="#{web.text.FORMAT_FILENAME}" 
+				disabled="#{!systemConfigMBean.allowedToEditSystemConfiguration}"/>
 		
 			<h:panelGroup>
 				<h:outputLabel for="enableeeplimit" value="#{web.text.ENABLEENDENTITYPROFILELIM}" styleClass="titles"/>
@@ -131,7 +137,8 @@ org.cesecore.authorization.control.AccessControlSession
 				<h:outputText value="#{web.text.ENABLEENDENTITYPROFILELIM_HELP}" styleClass="help"/>
 			</h:panelGroup>
 			<h:panelGroup>
-				<h:selectBooleanCheckbox id="enableeeplimit" value="#{systemConfigMBean.currentConfig.enableEndEntityProfileLimitations}"/>
+				<h:selectBooleanCheckbox id="enableeeplimit" value="#{systemConfigMBean.currentConfig.enableEndEntityProfileLimitations}"
+					disabled="#{!systemConfigMBean.allowedToEditSystemConfiguration}"/>
 				<h:outputLabel for="enableeeplimit" value="#{web.text.ACTIVATE}" />
 			</h:panelGroup>
 		
@@ -140,7 +147,8 @@ org.cesecore.authorization.control.AccessControlSession
 				<%= ejbcawebbean.getHelpReference("/adminguide.html#Key%20Recovery") %>
 			</h:panelGroup>
 			<h:panelGroup>
-				<h:selectBooleanCheckbox id="enablekeyrecovery" value="#{systemConfigMBean.currentConfig.enableKeyRecovery}"/>
+				<h:selectBooleanCheckbox id="enablekeyrecovery" value="#{systemConfigMBean.currentConfig.enableKeyRecovery}"
+					disabled="#{!systemConfigMBean.allowedToEditSystemConfiguration}"/>
 				<h:outputLabel for="enablekeyrecovery" value="#{web.text.ACTIVATE}" />
 			</h:panelGroup>
 		
@@ -150,7 +158,8 @@ org.cesecore.authorization.control.AccessControlSession
 				<h:outputText value="#{web.text.ISSUEHARDWARETOKENS_HELP}" styleClass="help"/>
 			</h:panelGroup>
 			<h:panelGroup>
-				<h:selectBooleanCheckbox id="issuehwtokens" value="#{systemConfigMBean.currentConfig.issueHardwareToken}"/>
+				<h:selectBooleanCheckbox id="issuehwtokens" value="#{systemConfigMBean.currentConfig.issueHardwareToken}"
+					disabled="#{!systemConfigMBean.allowedToEditSystemConfiguration}"/>
 				<h:outputLabel for="issuehwtokens" value="#{web.text.ACTIVATE}" />
 			</h:panelGroup>	
 
@@ -160,7 +169,7 @@ org.cesecore.authorization.control.AccessControlSession
 				<h:outputText value="#{web.text.HARDTOKENENCRYPTCA_HELP}" styleClass="help"/>
 			</h:panelGroup>
 			<h:panelGroup id="htdEncryptCa">
-				<h:selectOneMenu value="#{systemConfigMBean.currentConfig.hardTokenDataEncryptCA}">
+				<h:selectOneMenu value="#{systemConfigMBean.currentConfig.hardTokenDataEncryptCA}" disabled="#{!systemConfigMBean.allowedToEditSystemConfiguration}">
 					<f:selectItems value="#{systemConfigMBean.availableCAsAndNoEncryptionOption}"/>
 				</h:selectOneMenu>
 			</h:panelGroup>
@@ -171,7 +180,8 @@ org.cesecore.authorization.control.AccessControlSession
 				<h:outputText value="#{web.text.CERTIFICATECHAINROOTFIRST_HELP}" styleClass="help"/>
 			</h:panelGroup>
 			<h:panelGroup>
-				<h:selectBooleanCheckbox id="certChainOrder" value="#{systemConfigMBean.currentConfig.publicWebCertChainOrderRootFirst}"/>
+				<h:selectBooleanCheckbox id="certChainOrder" value="#{systemConfigMBean.currentConfig.publicWebCertChainOrderRootFirst}"
+					disabled="#{!systemConfigMBean.allowedToEditSystemConfiguration}"/>
 				<h:outputLabel for="certChainOrder" value="#{web.text.CERTIFICATECHAINROOTFIRST}" />
 			</h:panelGroup>
 		</h:panelGrid>
@@ -189,9 +199,11 @@ org.cesecore.authorization.control.AccessControlSession
 				<h:outputText value="#{web.text.USEAPPROVALNOTIFICATIONS_HELP}" styleClass="help"/>
 			</h:panelGroup>	
 			<h:panelGroup id="useApprovalNotifications">
-				<h:selectBooleanCheckbox styleClass="checkBoxOverlay" value="#{systemConfigMBean.currentConfig.useApprovalNotifications}" />
+				<h:selectBooleanCheckbox styleClass="checkBoxOverlay" value="#{systemConfigMBean.currentConfig.useApprovalNotifications}"
+					disabled="#{!systemConfigMBean.allowedToEditSystemConfiguration}" />
 				<h:commandButton id="toggleUseApprovalNotifications" styleClass="checkBoxOverlay" action="#{systemConfigMBean.toggleUseApprovalNotification}"
-					value="#{systemConfigMBean.currentConfig.useApprovalNotifications?web.text.BOOL_TRUE:web.text.BOOL_FALSE}"/>
+					value="#{systemConfigMBean.currentConfig.useApprovalNotifications?web.text.BOOL_TRUE:web.text.BOOL_FALSE}"
+					disabled="#{!systemConfigMBean.allowedToEditSystemConfiguration}"/>
 				<h:outputLabel for="toggleUseApprovalNotifications" value="#{web.text.USE}" styleClass="checkBoxOverlay"/>	
 			</h:panelGroup>
 		
@@ -200,14 +212,16 @@ org.cesecore.authorization.control.AccessControlSession
 				<br/>
 				<h:outputText value="#{web.text.EMAILADDRESSTOAPPROVING_HELP}" styleClass="help"/>
 			</h:panelGroup>	
-			<h:inputText id="emailToApprovalAdmin" disabled="#{!systemConfigMBean.currentConfig.useApprovalNotifications}" value="#{systemConfigMBean.currentConfig.approvalAdminEmail}" size="45" title="#{web.text.FORMAT_EMAILADDRESS}"/>
+			<h:inputText id="emailToApprovalAdmin" disabled="#{!systemConfigMBean.currentConfig.useApprovalNotifications || !systemConfigMBean.allowedToEditSystemConfiguration}" 
+				value="#{systemConfigMBean.currentConfig.approvalAdminEmail}" size="45" title="#{web.text.FORMAT_EMAILADDRESS}" />
 		
 			<h:panelGroup>
 				<h:outputLabel for="approvalNoteFromAddress" value="#{web.text.APPROVALNOTIFICATIONFROM}" styleClass="titles"/>
 				<br/>
 				<h:outputText value="#{web.text.APPROVALNOTIFICATIONFROM_HELP}" styleClass="help"/>
 			</h:panelGroup>
-			<h:inputText id="approvalNoteFromAddress" disabled="#{!systemConfigMBean.currentConfig.useApprovalNotifications}" value="#{systemConfigMBean.currentConfig.approvalNoteFromAddress}" size="45" title="#{web.text.FORMAT_EMAILADDRESS}"/>
+			<h:inputText id="approvalNoteFromAddress" disabled="#{!systemConfigMBean.currentConfig.useApprovalNotifications || !systemConfigMBean.allowedToEditSystemConfiguration}" value="#{systemConfigMBean.currentConfig.approvalNoteFromAddress}" 
+				size="45" title="#{web.text.FORMAT_EMAILADDRESS}"/>
 		</h:panelGrid>
 	
 	
@@ -226,9 +240,11 @@ org.cesecore.authorization.control.AccessControlSession
 				<h:outputText value="#{web.text.AUTOENROLLUSE_HELP}" styleClass="help"/>
 			</h:panelGroup>
 			<h:panelGroup id="useAutoEnrollment">
-				<h:selectBooleanCheckbox styleClass="checkBoxOverlay" value="#{systemConfigMBean.currentConfig.useAutoEnrollment}" />
+				<h:selectBooleanCheckbox styleClass="checkBoxOverlay" value="#{systemConfigMBean.currentConfig.useAutoEnrollment}" 
+					disabled="#{!systemConfigMBean.allowedToEditSystemConfiguration}"/>
 				<h:commandButton id="toggleUseAutoEnrollment" styleClass="checkBoxOverlay" action="#{systemConfigMBean.toggleUseAutoEnrollment}"
-					value="#{systemConfigMBean.currentConfig.useAutoEnrollment?web.text.BOOL_TRUE:web.text.BOOL_FALSE}"/>
+					value="#{systemConfigMBean.currentConfig.useAutoEnrollment?web.text.BOOL_TRUE:web.text.BOOL_FALSE}"
+					disabled="#{!systemConfigMBean.allowedToEditSystemConfiguration}"/>
 				<h:outputLabel for="toggleUseAutoEnrollment" value="#{web.text.USE}" styleClass="checkBoxOverlay"/>
 			</h:panelGroup>
 		
@@ -238,7 +254,8 @@ org.cesecore.authorization.control.AccessControlSession
 				<h:outputText value="#{web.text.AUTOENROLLCA_HELP}" styleClass="help"/>
 			</h:panelGroup>
 			<h:panelGroup id="autoEnrollCA">
-				<h:selectOneMenu disabled="#{!systemConfigMBean.currentConfig.useAutoEnrollment}" value="#{systemConfigMBean.currentConfig.autoEnrollmentCA}">
+				<h:selectOneMenu disabled="#{!systemConfigMBean.currentConfig.useAutoEnrollment || !systemConfigMBean.allowedToEditSystemConfiguration}" 
+					value="#{systemConfigMBean.currentConfig.autoEnrollmentCA}">
 					<f:selectItems value="#{systemConfigMBean.availableCAs}"/>
 				</h:selectOneMenu>
 			</h:panelGroup>
@@ -249,7 +266,7 @@ org.cesecore.authorization.control.AccessControlSession
 				<h:outputText value="#{web.text.AUTOENROLLSSLCONNECTION_HELP}" styleClass="help"/>
 			</h:panelGroup>
 			<h:panelGroup>
-				<h:selectBooleanCheckbox id="useSSLconnection" disabled="#{!systemConfigMBean.currentConfig.useAutoEnrollment}" value="#{systemConfigMBean.currentConfig.autoEnrollUseSSLConnection}"/>
+				<h:selectBooleanCheckbox id="useSSLconnection" disabled="#{!systemConfigMBean.currentConfig.useAutoEnrollment || !systemConfigMBean.allowedToEditSystemConfiguration}" value="#{systemConfigMBean.currentConfig.autoEnrollUseSSLConnection}"/>
 				<h:outputLabel for="useSSLconnection" value="#{web.text.USE}" />
 			</h:panelGroup>
 		
@@ -258,35 +275,40 @@ org.cesecore.authorization.control.AccessControlSession
 				<br/>
 				<h:outputText value="#{web.text.AUTOENROLLADSERVER_HELP}" styleClass="help"/>
 			</h:panelGroup>
-			<h:inputText id="dcserver" disabled="#{!systemConfigMBean.currentConfig.useAutoEnrollment}" value="#{systemConfigMBean.currentConfig.autoEnrollAdServer}" size="45" title="#{web.text.FORMAT_DOMAINNAME}"/>
+			<h:inputText id="dcserver" disabled="#{!systemConfigMBean.currentConfig.useAutoEnrollment || !systemConfigMBean.allowedToEditSystemConfiguration}" value="#{systemConfigMBean.currentConfig.autoEnrollAdServer}" size="45" 
+				title="#{web.text.FORMAT_DOMAINNAME}"/>
 		
 			<h:panelGroup>
 				<h:outputLabel for="dcport" value="#{web.text.AUTOENROLLADPORT}" styleClass="titles"/>
 				<br/>
 				<h:outputText value="#{web.text.AUTOENROLLADPORT_HELP}" styleClass="help"/>
 			</h:panelGroup>
-			<h:inputText id="dcport" disabled="#{!systemConfigMBean.currentConfig.useAutoEnrollment}" value="#{systemConfigMBean.currentConfig.autoEnrollAdServerPort}" size="5" title="#{web.text.FORMAT_INTEGER}"/>
+			<h:inputText id="dcport" disabled="#{!systemConfigMBean.currentConfig.useAutoEnrollment || !systemConfigMBean.allowedToEditSystemConfiguration}" value="#{systemConfigMBean.currentConfig.autoEnrollAdServerPort}" size="5" 
+				title="#{web.text.FORMAT_INTEGER}"/>
 		
 			<h:panelGroup>
 				<h:outputLabel for="dcdn" value="#{web.text.AUTOENROLLCONNECTIONDN}" styleClass="titles"/>
 				<br/>
 				<h:outputText value="#{web.text.AUTOENROLLCONNECTIONDN_HELP}" styleClass="help"/>
 			</h:panelGroup>
-			<h:inputText id="dcdn" disabled="#{!systemConfigMBean.currentConfig.useAutoEnrollment}" value="#{systemConfigMBean.currentConfig.autoEnrollConnectionDN}" size="45" title="#{web.text.FORMAT_DN}"/>
+			<h:inputText id="dcdn" disabled="#{!systemConfigMBean.currentConfig.useAutoEnrollment || !systemConfigMBean.allowedToEditSystemConfiguration}" value="#{systemConfigMBean.currentConfig.autoEnrollConnectionDN}" size="45"
+				 title="#{web.text.FORMAT_DN}"/>
 		
 			<h:panelGroup>
 				<h:outputLabel for="dcpwd" value="#{web.text.AUTOENROLLCONNECTIONPWD}" styleClass="titles"/>
 				<br/>
 				<h:outputText value="#{web.text.AUTOENROLLCONNECTIONPWD_HELP}" styleClass="help"/>
 			</h:panelGroup>
-			<h:inputText id="dcpwd" disabled="#{!systemConfigMBean.currentConfig.useAutoEnrollment}" value="#{systemConfigMBean.currentConfig.autoEnrollConnectionPassword}" size="20" title="#{web.text.FORMAT_STRING}"/>
+			<h:inputText id="dcpwd" disabled="#{!systemConfigMBean.currentConfig.useAutoEnrollment || !systemConfigMBean.allowedToEditSystemConfiguration}" value="#{systemConfigMBean.currentConfig.autoEnrollConnectionPassword}"
+				 size="20" title="#{web.text.FORMAT_STRING}"/>
 		
 			<h:panelGroup>
 				<h:outputLabel for="dcBaseUserDN" value="#{web.text.AUTOENROLLBASEDNUSER}" styleClass="titles"/>
 				<br/>
 				<h:outputText value="#{web.text.AUTOENROLLBASEDNUSER_HELP}" styleClass="help"/>			
 			</h:panelGroup>
-			<h:inputText id="dcBaseUserDN" disabled="#{!systemConfigMBean.currentConfig.useAutoEnrollment}" value="#{systemConfigMBean.currentConfig.autoEnrollUserBaseDN}" size="45" title="#{web.text.FORMAT_DN}"/>
+			<h:inputText id="dcBaseUserDN" disabled="#{!systemConfigMBean.currentConfig.useAutoEnrollment || !systemConfigMBean.allowedToEditSystemConfiguration}" value="#{systemConfigMBean.currentConfig.autoEnrollUserBaseDN}" 
+				size="45" title="#{web.text.FORMAT_DN}"/>
 		</h:panelGrid>
 	
 	
@@ -302,13 +324,14 @@ org.cesecore.authorization.control.AccessControlSession
 					<h:column>
 						<h:outputText value="#{nodeEntry}"/>
 						<f:facet name="footer">
-							<h:inputText value="#{systemConfigMBean.currentNode}" size="20" maxlength="4096" title="#{web.text.FORMAT_DOMAINNAME}"/>
+							<h:inputText value="#{systemConfigMBean.currentNode}" size="20" maxlength="4096" title="#{web.text.FORMAT_DOMAINNAME}"
+								rendered="#{systemConfigMBean.allowedToEditSystemConfiguration}"/>
 						</f:facet>
 					</h:column>
 					<h:column>
-						<h:commandButton value="#{web.text.REMOVE}" action="#{systemConfigMBean.removeNode}"/>
+						<h:commandButton value="#{web.text.REMOVE}" action="#{systemConfigMBean.removeNode}" rendered="#{systemConfigMBean.allowedToEditSystemConfiguration}"/>
 						<f:facet name="footer">
-							<h:commandButton value="#{web.text.ADD}" action="#{systemConfigMBean.addNode}"/>
+							<h:commandButton value="#{web.text.ADD}" action="#{systemConfigMBean.addNode}" rendered="#{systemConfigMBean.allowedToEditSystemConfiguration}"/>
 						</f:facet>
 					</h:column>
 				</h:dataTable>
@@ -332,11 +355,11 @@ org.cesecore.authorization.control.AccessControlSession
 				<h:outputText value="#{web.text.CLEARALLCACHES_HELP2}" styleClass="help"/>			
 			</h:panelGroup>
 			<h:panelGroup id="clearAllCaches">
-				<h:selectBooleanCheckbox id="excludetokens" value="#{systemConfigMBean.excludeActiveCryptoTokensFromClearCaches}"/>
+				<h:selectBooleanCheckbox id="excludetokens" value="#{systemConfigMBean.excludeActiveCryptoTokensFromClearCaches}" disabled="#{!systemConfigMBean.allowedToEditSystemConfiguration}"/>
 				<h:outputLabel for="excludetokens" value="#{web.text.CLEARALLCACHES_EXCLUDE_CRYPTOTOKEN_CACHE}" />
 				<br/>
 				<br/>
-				<h:commandButton value="#{web.text.CLEARALLCACHES}" action="#{systemConfigMBean.clearAllCaches}" />
+				<h:commandButton value="#{web.text.CLEARALLCACHES}" action="#{systemConfigMBean.clearAllCaches}" disabled="#{!systemConfigMBean.allowedToEditSystemConfiguration}"/>
 			</h:panelGroup>
 		</h:panelGrid>
 	
@@ -354,7 +377,7 @@ org.cesecore.authorization.control.AccessControlSession
 				<h:outputText value="#{web.text.ENABLECLIACCESS_HELP}" styleClass="help"/>
 			</h:panelGroup>
 			<h:panelGroup>
-				<h:selectBooleanCheckbox id="enableCommandLine" value="#{systemConfigMBean.currentConfig.enableCommandLine}"/>
+				<h:selectBooleanCheckbox id="enableCommandLine" value="#{systemConfigMBean.currentConfig.enableCommandLine}" disabled="#{!systemConfigMBean.allowedToEditSystemConfiguration}"/>
 				<h:outputLabel for="enableCommandLine" value="#{web.text.ACTIVATE}" />
 			</h:panelGroup>
 		
@@ -365,7 +388,8 @@ org.cesecore.authorization.control.AccessControlSession
 				<h:outputText value="#{web.text.ENABLECLIDEFAULTUSERHELPER}" styleClass="help"/>
 			</h:panelGroup>
 			<h:panelGroup>
-				<h:selectBooleanCheckbox id="enableCommandLineDefUser" value="#{systemConfigMBean.currentConfig.enableCommandLineDefaultUser}"/>
+				<h:selectBooleanCheckbox id="enableCommandLineDefUser" value="#{systemConfigMBean.currentConfig.enableCommandLineDefaultUser}" 
+					disabled="#{!systemConfigMBean.allowedToEditSystemConfiguration}"/>
 				<h:outputLabel for="enableCommandLineDefUser" value="#{web.text.ACTIVATE}" />
 			</h:panelGroup>	
 		</h:panelGrid>
@@ -375,8 +399,8 @@ org.cesecore.authorization.control.AccessControlSession
 				&nbsp;
 			</h:panelGroup>
 			<h:panelGroup>
-				<h:commandButton value="#{web.text.SAVE}" action="#{systemConfigMBean.saveCurrentConfig}" />
-				<h:commandButton value="#{web.text.CANCEL}" action="#{systemConfigMBean.flushCache}" />
+				<h:commandButton value="#{web.text.SAVE}" action="#{systemConfigMBean.saveCurrentConfig}" rendered="#{systemConfigMBean.allowedToEditSystemConfiguration}"/>
+				<h:commandButton value="#{web.text.CANCEL}" action="#{systemConfigMBean.flushCache}"rendered="#{systemConfigMBean.allowedToEditSystemConfiguration}" />
 			</h:panelGroup>
 		</h:panelGrid>
 	</h:form>
@@ -391,10 +415,10 @@ org.cesecore.authorization.control.AccessControlSession
 			<h:panelGroup>
 				<h:outputLabel for="preferedLanguage" value="#{web.text.PREFEREDLANGUAGE}" styleClass="titles"/>
 				<br/>
-				<h:outputText value="#{web.text.PREFEREDLANGUAGE_HELP}" styleClass="help"/>
+				<h:outputText value="#{web.text.PREFEREDLANGUAGE_HELP}" styleClass="help" />
 			</h:panelGroup>
 			<h:panelGroup id="preferedLanguage">
-				<h:selectOneMenu value="#{systemConfigMBean.currentConfig.preferedLanguage}">
+				<h:selectOneMenu value="#{systemConfigMBean.currentConfig.preferedLanguage}" disabled="#{!systemConfigMBean.allowedToEditSystemConfiguration}">
 					<f:selectItems value="#{systemConfigMBean.availableLanguages}"/>
 				</h:selectOneMenu>
 			</h:panelGroup>
@@ -405,7 +429,7 @@ org.cesecore.authorization.control.AccessControlSession
 				<h:outputText value="#{web.text.SECONDARYLANGUAGE_HELP}" styleClass="help"/>
 			</h:panelGroup>
 			<h:panelGroup id="secondaryLanguage">
-				<h:selectOneMenu value="#{systemConfigMBean.currentConfig.secondaryLanguage}">
+				<h:selectOneMenu value="#{systemConfigMBean.currentConfig.secondaryLanguage}" disabled="#{!systemConfigMBean.allowedToEditSystemConfiguration}">
 					<f:selectItems value="#{systemConfigMBean.availableLanguages}"/>
 				</h:selectOneMenu>
 			</h:panelGroup>
@@ -416,7 +440,7 @@ org.cesecore.authorization.control.AccessControlSession
 				<h:outputText value="#{web.text.THEME_HELP}" styleClass="help"/>
 			</h:panelGroup>
 			<h:panelGroup id="theme">
-				<h:selectOneMenu value="#{systemConfigMBean.currentConfig.theme}">
+				<h:selectOneMenu value="#{systemConfigMBean.currentConfig.theme}" disabled="#{!systemConfigMBean.allowedToEditSystemConfiguration}">
 					<f:selectItems value="#{systemConfigMBean.availableThemes}"/>
 				</h:selectOneMenu>
 			</h:panelGroup>
@@ -427,7 +451,7 @@ org.cesecore.authorization.control.AccessControlSession
 				<h:outputText value="#{web.text.NUMBEROFRECORDSPERPAGE_HELP}" styleClass="help"/>
 			</h:panelGroup>
 			<h:panelGroup id="entriesPerPage">
-				<h:selectOneMenu value="#{systemConfigMBean.currentConfig.entriesPerPage}" styleClass="number">
+				<h:selectOneMenu value="#{systemConfigMBean.currentConfig.entriesPerPage}" styleClass="number" disabled="#{!systemConfigMBean.allowedToEditSystemConfiguration}">
 					<f:selectItems value="#{systemConfigMBean.possibleEntriesPerPage}"/>
 				</h:selectOneMenu>
 			</h:panelGroup>
@@ -438,8 +462,8 @@ org.cesecore.authorization.control.AccessControlSession
 				&nbsp;
 			</h:panelGroup>
 			<h:panelGroup>
-				<h:commandButton value="#{web.text.SAVE}" action="#{systemConfigMBean.saveCurrentAdminPreferences}" />
-				<h:commandButton value="#{web.text.CANCEL}" action="#{systemConfigMBean.flushCache}" />
+				<h:commandButton value="#{web.text.SAVE}" action="#{systemConfigMBean.saveCurrentAdminPreferences}" rendered="#{systemConfigMBean.allowedToEditSystemConfiguration}"/>
+				<h:commandButton value="#{web.text.CANCEL}" action="#{systemConfigMBean.flushCache}" rendered="#{systemConfigMBean.allowedToEditSystemConfiguration}" />
 			</h:panelGroup>
 		</h:panelGrid>
 	</h:form>
@@ -449,7 +473,9 @@ org.cesecore.authorization.control.AccessControlSession
 	
 	<h:form id="extkeyusageform" enctype="multipart/form-data" rendered="#{systemConfigMBean.selectedTab eq 'Extended Key Usages'}">
 		<h:panelGroup>
-			<h4><h:outputText value="#{web.text.EKU_EDIT_EKU_TITLE}"/>
+			<h4>
+			<h:outputText value="#{web.text.EKU_EDIT_EKU_TITLE}" rendered="#{systemConfigMBean.allowedToEditExtendedKeyUsages}"/>
+			<h:outputText value="#{web.text.EKU_VIEW_EKU_TITLE}" rendered="#{!systemConfigMBean.allowedToEditExtendedKeyUsages}"/>
 			<%= ejbcawebbean.getHelpReference("/adminguide.html#Extended%20Key%20Usages") %></h4>
 			</br>
 		</h:panelGroup>
@@ -460,23 +486,24 @@ org.cesecore.authorization.control.AccessControlSession
    				<f:facet name="header"><h:outputText value="#{web.text.OID}"/></f:facet>
 				<h:outputText value="#{eku.oid}" title="#{eku.oid}"/>
 				<f:facet name="footer">
-					<h:inputText id="currentOid" value="#{systemConfigMBean.currentEKUOid}" size="25" title="#{web.text.FORMAT_OID}"/>
+					<h:inputText id="currentOid" value="#{systemConfigMBean.currentEKUOid}" size="25" title="#{web.text.FORMAT_OID}" rendered="#{systemConfigMBean.allowedToEditExtendedKeyUsages}"/>
 				</f:facet>
 			</h:column>
 			<h:column>
    				<f:facet name="header"><h:outputText value="#{web.text.LABEL}"/></f:facet>
 				<h:outputText value="#{web.text[eku.name]}"/>
 				<f:facet name="footer">
-					<h:inputText id="currentReadableName" value="#{systemConfigMBean.currentEKUReadableName}" size="35" title="#{web.text.FORMAT_STRING}"/>
+					<h:inputText id="currentReadableName" value="#{systemConfigMBean.currentEKUReadableName}" size="35" title="#{web.text.FORMAT_STRING}" 
+						rendered="#{systemConfigMBean.allowedToEditExtendedKeyUsages}"/>
 				</f:facet>
 			</h:column>
 			<h:column>
    				<f:facet name="header">
    					<h:outputText value="#{web.text.ACTION}"/>
    				</f:facet>
-				<h:commandButton action="#{systemConfigMBean.removeEKU}"	value="#{web.text.REMOVE}" title="#{web.text.REMOVE}"/>
+				<h:commandButton action="#{systemConfigMBean.removeEKU}" value="#{web.text.REMOVE}" title="#{web.text.REMOVE}" rendered="#{systemConfigMBean.allowedToEditExtendedKeyUsages}"/>
 				<f:facet name="footer">
-					<h:commandButton  value="#{web.text.ADD}" action="#{systemConfigMBean.addEKU}" />
+					<h:commandButton  value="#{web.text.ADD}" action="#{systemConfigMBean.addEKU}" rendered="#{systemConfigMBean.allowedToEditExtendedKeyUsages}"/>
 				</f:facet>
 			</h:column>
 		</h:dataTable>
@@ -545,7 +572,9 @@ org.cesecore.authorization.control.AccessControlSession
 	
 	<h:form id="customcertextensionsform" enctype="multipart/form-data" rendered="#{systemConfigMBean.selectedTab eq 'Custom Certificate Extensions'}">
 		<h:panelGroup>
-			<h4><h:outputText value="#{web.text.CUSTOMCERTEXTENSION_EDIT_CCE_TITLE}"/>
+			<h4>
+			<h:outputText value="#{web.text.CUSTOMCERTEXTENSION_EDIT_CCE_TITLE}" rendered="#{systemConfigMBean.allowedToEditCustomCertificateExtension}"/>
+			<h:outputText value="#{web.text.CUSTOMCERTEXTENSION_VIEW_CCE_TITLE}" rendered="#{!systemConfigMBean.allowedToEditCustomCertificateExtension}"/>
 			<%= ejbcawebbean.getHelpReference("/adminguide.html#Custom%20Certificate%20Extensions") %></h4>
 			</br>
 		</h:panelGroup>
@@ -561,14 +590,16 @@ org.cesecore.authorization.control.AccessControlSession
    				<f:facet name="header"><h:outputText value="#{web.text.OID}"/></f:facet>
 				<h:outputText value="#{extension.oid}" title="#{extension.oid}"/>
 				<f:facet name="footer">
-					<h:inputText id="newCEOID" value="#{systemConfigMBean.newOID}" size="25" title="#{web.text.FORMAT_OID}"/>
+					<h:inputText id="newCEOID" value="#{systemConfigMBean.newOID}" size="25" title="#{web.text.FORMAT_OID}"
+						disabled="#{!systemConfigMBean.allowedToEditCustomCertificateExtension}"/>
 				</f:facet>
 			</h:column>
 			<h:column>
    				<f:facet name="header"><h:outputText value="#{web.text.LABEL}"/></f:facet>
 				<h:outputText value="#{extension.displayName}"/>
 				<f:facet name="footer">
-					<h:inputText id="newCELabel" value="#{systemConfigMBean.newDisplayName}" size="35" title="#{web.text.FORMAT_STRING}"/>
+					<h:inputText id="newCELabel" value="#{systemConfigMBean.newDisplayName}" size="35" title="#{web.text.FORMAT_STRING}"
+						disabled="#{!systemConfigMBean.allowedToEditCustomCertificateExtension}"/>
 				</f:facet>
 			</h:column>
 			
@@ -587,13 +618,14 @@ org.cesecore.authorization.control.AccessControlSession
 			<h:column>
 				<f:facet name="header"><h:outputText value="#{web.text.ACTION}"/></f:facet>
 				<h:panelGroup>
+					<h:commandButton value="#{web.text.VIEW}" action="#{systemConfigMBean.actionView}"  />
 					<h:commandButton value="#{web.text.EDIT}" action="#{systemConfigMBean.actionEdit}"  
-								rendered="#{systemConfigMBean.allowedToModify}"/>
+								rendered="#{systemConfigMBean.allowedToEditCustomCertificateExtension}"/>
 					<h:commandButton value="#{web.text.REMOVE}" action="#{systemConfigMBean.removeCustomCertExtension}"
-								rendered="#{systemConfigMBean.allowedToModify}" onclick="return confirm('#{web.text.CUSTOMCERTEXTENSION_CONF_DELETE}')"/>
+								rendered="#{systemConfigMBean.allowedToEditCustomCertificateExtension}" onclick="return confirm('#{web.text.CUSTOMCERTEXTENSION_CONF_DELETE}')"/>
 				</h:panelGroup>
 				<f:facet name="footer">
-					<h:commandButton value="#{web.text.ADD}" action="#{systemConfigMBean.addCustomCertExtension}" />					 			   
+					<h:commandButton value="#{web.text.ADD}" action="#{systemConfigMBean.addCustomCertExtension}" rendered="#{systemConfigMBean.allowedToEditCustomCertificateExtension}"/>					 			   
 				</f:facet>
 			</h:column>
 		</h:dataTable>

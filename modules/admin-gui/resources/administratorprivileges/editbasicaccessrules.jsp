@@ -30,7 +30,7 @@
 <jsp:useBean id="ejbcawebbean" scope="session" class="org.ejbca.ui.web.admin.configuration.EjbcaWebBean" />
  
 <%
-	GlobalConfiguration globalconfiguration = ejbcawebbean.initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.EDITROLES.resource()); 
+	GlobalConfiguration globalconfiguration = ejbcawebbean.initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.VIEWROLES.resource()); 
 %>
  
 <html>
@@ -135,6 +135,10 @@ function roleupdated() {
 		selectcas.disabled = false;
 		selectendentityprofiles.disabled = false;
 		selectAll(selectendentityrules, true, false);
+		selectSome(selectendentityrules, [
+		                      			'<%=BasicAccessRuleSet.ENDENTITY_VIEW %>',
+		                      			'<%=BasicAccessRuleSet.ENDENTITY_VIEWHISTORY %>',
+		                      		], true);
 		selectSome(selectinternalkeybindingrules, [
 		    '<%= InternalKeyBindingRules.VIEW.resource() %>'
 			], true);
@@ -160,14 +164,16 @@ function checkallfields() {
 
 <div align="center">
 
-	<h2><h:outputText value="#{web.text.EDITACCESSRULES}" /> <%= ejbcawebbean.getHelpReference("/userguide.html#Pre-defined%20Role%20Templates") %></h2>
+	<h2>
+		<h:outputText value="#{web.text.EDITACCESSRULES}" rendered="#{rolesManagedBean.authorizedToEdit}"/> 
+		<h:outputText value="#{web.text.VIEWACCESSRULES}" rendered="#{!rolesManagedBean.authorizedToEdit}" /> 		
+		<%= ejbcawebbean.getHelpReference("/userguide.html#Pre-defined%20Role%20Templates") %>
+	</h2>
 	<h3><h:outputText value="#{web.text.ADMINROLE} : #{rolesManagedBean.currentRole}" /></h3>
-
-	<h:outputText value="#{web.text.AUTHORIZATIONDENIED}" rendered="#{!rolesManagedBean.authorizedToRole}"/>
 
 </div>
 	
-	<h:panelGroup rendered="#{rolesManagedBean.authorizedToRole}">
+	<h:panelGroup>
 	<div><h:outputText styleClass="alert" value="#{web.text.ADVANCEDMODEREQUIRED}" rendered="#{rolesManagedBean.basicRuleSet.forceAdvanced}" /></div>
 	<h:messages layout="table" errorClass="alert"/>
   
@@ -192,7 +198,8 @@ function checkallfields() {
 		<h:panelGroup style="display: block; text-align: right;">
 			<h:outputLink value="#{web.ejbcaWebBean.globalConfiguration.authorizationPath}/editadminentities.jsf?currentRole=#{rolesManagedBean.currentRole}"
 				title="#{web.text.EDITADMINS}" rendered="#{not empty rolesManagedBean.currentRole}">
-				<h:outputText value="#{web.text.EDITADMINS}"/>
+				<h:outputText value="#{web.text.EDITADMINS}" rendered="#{rolesManagedBean.authorizedToEdit}"/>
+				<h:outputText value="#{web.text.VIEWADMINS}" rendered="#{!rolesManagedBean.authorizedToEdit}"/>
 			</h:outputLink>
 		</h:panelGroup>
 
@@ -207,32 +214,33 @@ function checkallfields() {
 		</h:panelGroup>
 
 		<h:outputText value="#{web.text.ROLETEMPLATE}"/>
-		<h:selectOneMenu id="selectrole" value="#{rolesManagedBean.currentRoleTemplate}" onchange='roleupdated()'>
-			<f:selectItems value="#{rolesManagedBean.availableRoles}" />
+		<h:selectOneMenu id="selectrole" value="#{rolesManagedBean.currentRoleTemplate}" onchange='roleupdated()' rendered="#{rolesManagedBean.authorizedToEdit}">
+			<f:selectItems value="#{rolesManagedBean.availableRoles}"/>
 		</h:selectOneMenu> 
+		<h:outputText value="#{rolesManagedBean.currentRoleTemplate}" rendered="#{!rolesManagedBean.authorizedToEdit}"/>
 		
 		<h:outputText value="#{web.text.AUTHORIZEDCAS}"/>
-		<h:selectManyListbox id="selectcas" value="#{rolesManagedBean.currentCAs}" size="8">
+		<h:selectManyListbox id="selectcas" value="#{rolesManagedBean.currentCAs}" size="8" disabled="#{!rolesManagedBean.authorizedToEdit}">
 			<f:selectItems value="#{rolesManagedBean.availableCasAndAll}" />
 		</h:selectManyListbox> 
 
 		<h:outputText value="#{web.text.ENDENTITYRULES}"/>
-		<h:selectManyListbox id="selectendentityrules" value="#{rolesManagedBean.currentEndEntityRules}" size="10">
+		<h:selectManyListbox id="selectendentityrules" value="#{rolesManagedBean.currentEndEntityRules}" size="10" disabled="#{!rolesManagedBean.authorizedToEdit}">
 			<f:selectItems value="#{rolesManagedBean.availableEndEntityRules}" />
 		</h:selectManyListbox> 
  
 		<h:outputText value="#{web.text.ENDENTITYPROFILES}"/>
-		<h:selectManyListbox id="selectendentityprofiles" value="#{rolesManagedBean.currentEndEntityProfiles}" size="8">
+		<h:selectManyListbox id="selectendentityprofiles" value="#{rolesManagedBean.currentEndEntityProfiles}" size="8" disabled="#{!rolesManagedBean.authorizedToEdit}">
 			<f:selectItems value="#{rolesManagedBean.availableEndEntityProfiles}" />
 		</h:selectManyListbox> 
 
 		<h:outputText value="#{web.text.INTERNALKEYBINDINGRULES}"/>
-		<h:selectManyListbox id="selectinternalkeybindingrules" value="#{rolesManagedBean.currentInternalKeyBindingRules}" size="6">
+		<h:selectManyListbox id="selectinternalkeybindingrules" value="#{rolesManagedBean.currentInternalKeyBindingRules}" size="6" disabled="#{!rolesManagedBean.authorizedToEdit}">
 			<f:selectItems value="#{rolesManagedBean.availableInternalKeyBindingRules}" />
 		</h:selectManyListbox> 
 
 		<h:outputText value="#{web.text.OTHERRULES}"/>
-		<h:selectManyListbox id="selectother" value="#{rolesManagedBean.currentOtherRules}" size="3">
+		<h:selectManyListbox id="selectother" value="#{rolesManagedBean.currentOtherRules}" size="3" disabled="#{!rolesManagedBean.authorizedToEdit}">
 			<f:selectItems value="#{rolesManagedBean.availableOtherRules}" />
 		</h:selectManyListbox> 
 
@@ -243,8 +251,8 @@ function checkallfields() {
 			&nbsp;
 		</h:panelGroup>
 		<h:panelGroup>
-			<h:commandButton action="#{rolesManagedBean.saveAccessRules}" onclick="return checkallfields();" value="#{web.text.SAVE}"/>
-			<h:commandButton action="cancel" value="#{web.text.RESTORE}"/>
+			<h:commandButton action="#{rolesManagedBean.saveAccessRules}" onclick="return checkallfields();" value="#{web.text.SAVE}" rendered="#{rolesManagedBean.authorizedToEdit}"/>
+			<h:commandButton action="cancel" value="#{web.text.RESTORE}" rendered="#{rolesManagedBean.authorizedToEdit}"/>
 		</h:panelGroup>
 	</h:panelGrid>
 	</h:form>

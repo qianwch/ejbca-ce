@@ -32,6 +32,7 @@ import javax.faces.model.SelectItem;
 import org.apache.log4j.Logger;
 import org.cesecore.authentication.tokens.X509CertificateAuthenticationToken;
 import org.cesecore.authorization.AuthorizationDeniedException;
+import org.cesecore.authorization.control.AccessControlSessionLocal;
 import org.cesecore.authorization.control.CryptoTokenRules;
 import org.cesecore.authorization.control.StandardRules;
 import org.cesecore.authorization.rules.AccessRuleData;
@@ -40,11 +41,13 @@ import org.cesecore.authorization.user.AccessMatchType;
 import org.cesecore.authorization.user.AccessUserAspectData;
 import org.cesecore.authorization.user.matchvalues.AccessMatchValue;
 import org.cesecore.authorization.user.matchvalues.AccessMatchValueReverseLookupRegistry;
+import org.cesecore.certificates.ca.CaSessionLocal;
 import org.cesecore.keybind.InternalKeyBindingRules;
 import org.cesecore.keys.token.CryptoTokenInfo;
 import org.cesecore.roles.RoleData;
 import org.cesecore.roles.RoleExistsException;
 import org.cesecore.roles.RoleNotFoundException;
+import org.cesecore.roles.access.RoleAccessSessionLocal;
 import org.ejbca.config.GlobalConfiguration;
 import org.ejbca.core.model.authorization.AccessRuleTemplate;
 import org.ejbca.core.model.authorization.AccessRulesConstants;
@@ -79,6 +82,7 @@ public class RolesManagedBean extends BaseManagedBean {
     
     
     private String currentRoleName = null;
+    private RoleData currentRole = null;
     private String matchCaId = null;
     
     private HtmlSelectOneMenu matchWithMenu;
@@ -91,7 +95,7 @@ public class RolesManagedBean extends BaseManagedBean {
 
     private String newRoleName = "new";
 
-    private Map<String, List<AccessRuleData>> accessRulesViewCache = null;
+    private Map<String, List<AccessRuleData>> allRulesViewCache = null;
     
     // Simple from backing
     public String getNewRoleName() {
@@ -101,11 +105,52 @@ public class RolesManagedBean extends BaseManagedBean {
     public void setNewRoleName(String newRoleName) {
         this.newRoleName = newRoleName;
     }
+    
+    /**
+     * 
+     * @param rule
+     * @param isRecursive
+     * @return true if the currently edited role has access to a rule. 
+     */
+    public boolean hasAccessToRule(String rule, boolean isRecursive) {
+        if(currentRole == null) {
+            return false;
+        } else {
+            return currentRole.hasAccessToRule(rule, isRecursive);
+        }
+    }
 
-    /** @return a List of authorized roles */
+    /**
+     * 
+     * @param rule
+     * @param isRecursive
+     * @return true if the current admin is authorized to a rule
+     */
+    public boolean isAuthorizedToRule(String rule, boolean isRecursive) {
+        AccessControlSessionLocal accessControlSession = ejbLocalHelper.getAccessControlSession();
+        return accessControlSession.isAuthorizedNoLogging(getAdmin(), isRecursive, rule);
+    }
+    
+    /** @return a List of all roles, excepting ones that refer to CA's which the current role doesn't have access to. */
     public List<RoleData> getRoles() {
         List<RoleData> roles = new ArrayList<RoleData>();
-        roles.addAll(getAuthorizationDataHandler().getRoles());
+        RoleAccessSessionLocal roleAccessSession = getEjbcaWebBean().getEjb().getRoleAccessSession();
+        CaSessionLocal caSession = getEjbcaWebBean().getEjb().getCaSession();
+        roleLoop: for(RoleData role : roleAccessSession.getAllRoles()) {
+            // Firstly, make sure that authentication token authorized for all access user aspects in role, by checking against the CA that produced them.
+            for (AccessUserAspectData accessUserAspect : role.getAccessUsers().values()) {
+                if (!caSession.authorizedToCA(getAdmin(), accessUserAspect.getCaId())) {
+                    continue roleLoop;
+                }
+            }
+            // Secondly, walk through all CAs and make sure that there are no differences. 
+            for (Integer caId : caSession.getAllCaIds()) {
+                if(!caSession.authorizedToCANoLogging(getAdmin(), caId) && role.hasAccessToRule(StandardRules.CAACCESS.resource() + caId)) {
+                    continue roleLoop;
+                }
+            }
+            roles.add(role);
+        }
         Collections.sort(roles);
         return roles;
     }
@@ -539,7 +584,7 @@ public class RolesManagedBean extends BaseManagedBean {
                 } else {
                     //Examine if we're trying to submit two rules which aren't the exact same.
                     if (!rule.equals(rulesToReplaceWith.get(rule.getPrimaryKey()))) {
-                        throw new Error("RolesManagedBean tried to save two overlapping rules (" + rule.getAccessRuleName()
+                        throw new IllegalStateException("RolesManagedBean tried to save two overlapping rules (" + rule.getAccessRuleName()
                                 + ") with different values.");
                     }
                 }
@@ -558,41 +603,34 @@ public class RolesManagedBean extends BaseManagedBean {
                 globalConfiguration.getIssueHardwareTokens(), globalConfiguration.getEnableKeyRecovery());
     }
 
-    //
-    // Advanced access rules (mostly used by editadvancedaccessrules.jsp)
-    //
 
-
-    /** @return a cached list of all the available access rules holding the current state */
+    /** @return a cached list of all the available access rules */
     private Map<String, List<AccessRuleData>> getAccessRules() {
-    	if (log.isTraceEnabled()) {
-    		log.trace(">getAccessRules");
-    	}
-        if (accessRulesViewCache == null) {
-            RoleData role = getCurrentRoleObject();
-            Map<String, Set<String>> allAvailableRules = getAuthorizationDataHandler().getAvailableAccessRules(AccessRulesConstants.CREATE_END_ENTITY);
-            accessRulesViewCache = getCategorizedRuleSet(role, allAvailableRules);
+        log.trace(">getAccessRules");
+        if (allRulesViewCache == null) {
+            RoleData role = getCurrentRoleObject();      
+            Map<String, Set<String>> redactedRules = getAuthorizationDataHandler()
+                    .getRedactedAccessRules(AccessRulesConstants.CREATE_END_ENTITY);
+            allRulesViewCache = getCategorizedRuleSet(role, redactedRules);   
         }
-    	if (log.isTraceEnabled()) {
-    		log.trace("<getAccessRules");
-    	}
-        return accessRulesViewCache;
+        log.trace("<getAccessRules");
+        return allRulesViewCache;
     }
 
     /**
      *  Takes a role and a set of rules, returning map (sorted by category) of all rules, with set states for those rules contained in the role
      * 
      * @param role a Role
-     * @param allRules a list of all rules
+     * @param redactedRules a list of all rules, barring unauthorized CAs, CPs, EEPs, CryptoTokens 
      * @return the sought map
      */
-    private Map<String, List<AccessRuleData>> getCategorizedRuleSet(RoleData role, Map<String, Set<String>> allRules) {
+    private Map<String, List<AccessRuleData>> getCategorizedRuleSet(RoleData role, Map<String, Set<String>> redactedRules) {
         Map<String, List<AccessRuleData>> result = new LinkedHashMap<String, List<AccessRuleData>>();
         Map<Integer, AccessRuleData> knownRules = role.getAccessRules();
-        if (allRules != null) {
-            for (String category : allRules.keySet()) {
+        if (redactedRules != null) {
+            for (String category : redactedRules.keySet()) {
                 List<AccessRuleData> subset = new ArrayList<AccessRuleData>();
-                for (String rule : allRules.get(category)) {
+                for (String rule : redactedRules.get(category)) {
                     Integer key = AccessRuleData.generatePrimaryKey(role.getRoleName(), rule);
                     if (!knownRules.containsKey(key)) {
                         // Access rule can not be found, create a new AccessRuleData that we can return
@@ -637,7 +675,7 @@ public class RolesManagedBean extends BaseManagedBean {
         if (resource.startsWith(AccessRulesConstants.ENDENTITYPROFILEPREFIX)) {
             if (resource.lastIndexOf('/') < AccessRulesConstants.ENDENTITYPROFILEPREFIX.length()) {
                 return AccessRulesConstants.ENDENTITYPROFILEPREFIX 
-                		+ profileMap.get(Integer.parseInt(resource.substring(AccessRulesConstants.ENDENTITYPROFILEPREFIX.length())));
+                        + profileMap.get(Integer.parseInt(resource.substring(AccessRulesConstants.ENDENTITYPROFILEPREFIX.length())));
             } else {
                 String tmpString = resource.substring(AccessRulesConstants.ENDENTITYPROFILEPREFIX.length());
                 return AccessRulesConstants.ENDENTITYPROFILEPREFIX
@@ -714,14 +752,14 @@ public class RolesManagedBean extends BaseManagedBean {
         } catch (AuthorizationDeniedException e) {
             addErrorMessage("AUTHORIZATIONDENIED");
         }
-        accessRulesViewCache = null; // We want this to be re-read
+        allRulesViewCache = null; // We want this to be re-read
         basicAccessRuleSetEncoderCache = null; // We want this to be re-read
         getEjbcaWebBean().getInformationMemory().administrativePriviledgesEdited();
     }
 
     /** Invalidates local cache */
     public void restoreAdvancedAccessRules() {
-        accessRulesViewCache = null; // We want this to be re-read
+        allRulesViewCache = null; // We want this to be re-read
     }
 
     //
@@ -752,18 +790,16 @@ public class RolesManagedBean extends BaseManagedBean {
     /** Setter for current role used were applicable. */
     public void setCurrentRole(String currentRoleName) {
         this.currentRoleName = currentRoleName;
+        this.currentRole = ejbLocalHelper.getRoleAccessSession().findRole(currentRoleName);
     }
+
+
 
     /** @return true if logged on administrator is allowed to edit current role */
-    public boolean isAuthorizedToRole() {
-        for (RoleData role : getAuthorizationDataHandler().getRoles()) {
-            if (role.getRoleName().equals(getCurrentRole())) {
-                return true;
-            }
-        }
-        return false;
+    public boolean isAuthorizedToEdit() {
+        return ejbLocalHelper.getAccessControlSession().isAuthorizedNoLogging(getAdmin(), StandardRules.EDITROLES.resource());
     }
-
+    
     //
     // Helper functions
     //
@@ -794,22 +830,22 @@ public class RolesManagedBean extends BaseManagedBean {
 
     /* Useful for debugging and development..
     private void dumpAllParameters() {
-    	Map m = FacesContext.getCurrentInstance().getExternalContext().getRequestMap();
-    	Iterator i1 = m.keySet().iterator();
-    	String x = "";
-    	while (i1.hasNext()) {
-    		String key = (String) i1.next();
-    		x +=  key + "=" + m.get(key) + " ";
-    	}
-    	log.info("RequestMap: " + x);
-    	Map m2 = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();
-    	Iterator i2 = m2.keySet().iterator();
-    	x = "";
-    	while (i2.hasNext()) {
-    		String key = (String) i2.next();
-    		x +=  key + "=" + m2.get(key) + " ";
-    	}
-    	log.info("RequestParameterMap: " + x);
+        Map m = FacesContext.getCurrentInstance().getExternalContext().getRequestMap();
+        Iterator i1 = m.keySet().iterator();
+        String x = "";
+        while (i1.hasNext()) {
+            String key = (String) i1.next();
+            x +=  key + "=" + m.get(key) + " ";
+        }
+        log.info("RequestMap: " + x);
+        Map m2 = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();
+        Iterator i2 = m2.keySet().iterator();
+        x = "";
+        while (i2.hasNext()) {
+            String key = (String) i2.next();
+            x +=  key + "=" + m2.get(key) + " ";
+        }
+        log.info("RequestParameterMap: " + x);
     }
     */
 }
