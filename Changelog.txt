@@ -1,3 +1,22 @@
+EJBCA 6.2.8.2, 2015-12-23
+---
+Bug
+	ECA-4381] - OCSP TransactionLogger prints SERIALNUMBER instead of SN for REQ_NAME 
+
+Improvement
+	[ECA-4393] - Reduce number of errors from the OCSP signing cache about expired CAs
+	[ECA-4401] - Can not read private key with alias containing åäö from keystore
+	[ECA-4481] - Cache revocation status of request signers in OCSP responder
+	[ECA-4482] - Make new transaction log variable for ISSUER_NAME and REQ_NAME in original order
+
+New Feature
+	[ECA-4319] - Include information in key binding CSR when creating from CLI 
+
+EJBCA 6.2.8.1, 2015-03-13
+---
+Bug
+	[ECA-4156] - Regression: BaseCryptoToken has lost caching of keys since EJBCA4
+
 EJBCA 6.2.8, 2015-03-05
 ---
 Bug

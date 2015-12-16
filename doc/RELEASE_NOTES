@@ -1,3 +1,14 @@
+EJBCA 6.2.8.2
+-----------
+This maintenance release contains 6 bug fixes, features and improvements.
+
+Read the full Changelog for details.
+
+
+EJBCA 6.2.8.1
+-----------
+This patch release fixed a performance issue in crypto tokens. It contained one bug fix. 
+
 EJBCA 6.2.8
 -----------
 The goal of this release has primarily been optimization of our OCSP responder, fixing usability issues, tightening up security and heavy GUI testing. We've 
