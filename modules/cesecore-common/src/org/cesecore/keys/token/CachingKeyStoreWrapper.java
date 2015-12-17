@@ -14,6 +14,7 @@ package org.cesecore.keys.token;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.security.Key;
 import java.security.KeyStore;
 import java.security.KeyStore.Entry;
@@ -91,7 +92,7 @@ public class CachingKeyStoreWrapper {
                         keyStoreMapEntry.certificateChain = new Certificate[] { certificate };
                     }
                 }
-                keyStoreCache.put(alias, keyStoreMapEntry);
+                this.keyStoreCache.put(fixBadUTF8(alias), keyStoreMapEntry);
             }
         }
     }
@@ -152,6 +153,10 @@ public class CachingKeyStoreWrapper {
 
     /** @see java.security.KeyStore#setKeyEntry(String, Key, char[], Certificate[]) */
     public void setKeyEntry(final String alias, final Key key, final char[] password, final Certificate[] chain) throws KeyStoreException {
+        // Removal of old key is only needed for sun-p11 with none ASCII chars in the alias.
+        // But it makes no harm to always do it and it should be fast.
+        // If not done the entry will not be stored correctly in the p11 KeyStore.
+        this.keyStore.deleteEntry(makeBadUTF8(alias));
         keyStore.setKeyEntry(alias, key, password, chain);
         if (cachingEnabled) {
             final KeyStoreMapEntry keyStoreMapEntry = new KeyStoreMapEntry();
@@ -171,9 +176,58 @@ public class CachingKeyStoreWrapper {
         }
     }
 
+    private static boolean isSunP11( final KeyStore keyStore ) {
+        return keyStore.getProvider().getName().indexOf("SunPKCS11")==0;
+    }
+
+    /**
+     * The Sun p11 implementation of the {@link KeyStore} returns aliases that
+     * are badly encoded. This method fix this encoding.
+     * @param orig a badly encoded alias.
+     * @return a correct encoded alias.
+     */
+    private String fixBadUTF8(final String orig) {
+        if ( !isSunP11(this.keyStore) ) {
+            return orig;
+        }
+        try {
+            final byte bvIn[] = orig.getBytes("UTF-16BE");
+            final byte bvOut[] = new byte[bvIn.length/2];
+            for ( int i=1; i<bvIn.length; i += 2) {
+                bvOut[i/2] = (byte)(bvIn[i]&0xff);
+            }
+            return new String(bvOut, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new IllegalStateException("UTF-16BE and UTF-8 must be implemented for all JREs.");
+        }
+    }
+
+    /**
+     * When deleting a key in the sun p11 implementation of {@link KeyStore} the
+     * alias {@link String} must be altered due to an implementation bug.
+     * @param orig the alias
+     * @return modified alias to suit the sun p11.
+     */
+    private String makeBadUTF8(final String orig) {
+        if ( !isSunP11(this.keyStore) ) {
+            return orig;
+        }
+        try {
+            final byte bvIn[] = orig.getBytes("UTF-8");
+            final byte bvOut[] = new byte[bvIn.length*2];
+            for ( int i=0; i<bvIn.length; i += 1) {
+                bvOut[i*2] = 0;
+                bvOut[i*2+1] = (byte)(bvIn[i]&0xff);
+            }
+            return new String(bvOut, "UTF-16BE");
+        } catch (UnsupportedEncodingException e) {
+            throw new IllegalStateException("UTF-16BE and UTF-8 must be implemented for all JREs.");
+        }
+    }
+
     /** @see java.security.KeyStore#deleteEntry(String) */
     public void deleteEntry(final String alias) throws KeyStoreException {
-        keyStore.deleteEntry(alias);
+        this.keyStore.deleteEntry(makeBadUTF8(alias));
         if (cachingEnabled) {
             updateLock.lock();
             try {
