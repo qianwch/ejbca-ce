@@ -1,4 +1,4 @@
-EJBCA 6.2.8.2, 2015-12-23
+EJBCA 6.2.8.2, 2015-12-18
 ---
 Bug
 	ECA-4381] - OCSP TransactionLogger prints SERIALNUMBER instead of SN for REQ_NAME 
