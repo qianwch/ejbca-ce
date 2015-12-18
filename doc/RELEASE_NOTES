@@ -4,7 +4,6 @@ This maintenance release contains 6 bug fixes, features and improvements.
 
 Read the full Changelog for details.
 
-
 EJBCA 6.2.8.1
 -----------
 This patch release fixed a performance issue in crypto tokens. It contained one bug fix. 
