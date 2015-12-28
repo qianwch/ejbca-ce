@@ -45,7 +45,6 @@ import org.cesecore.roles.management.RoleManagementSessionLocal;
 import org.ejbca.config.CmpConfiguration;
 import org.ejbca.config.EjbcaConfiguration;
 import org.ejbca.config.GlobalConfiguration;
-import org.ejbca.core.ejb.authorization.ComplexAccessControlSession;
 import org.ejbca.core.ejb.authorization.ComplexAccessControlSessionLocal;
 import org.ejbca.core.ejb.ca.caadmin.CAAdminSession;
 import org.ejbca.core.ejb.ca.publisher.PublisherSessionLocal;
@@ -79,7 +78,7 @@ public class InformationMemory implements Serializable {
     private PublisherSessionLocal publishersession;
     private UserDataSourceSession userdatasourcesession = null;
     private CertificateProfileSession certificateProfileSession;
-    private ComplexAccessControlSession complexAccessControlSession;
+    private ComplexAccessControlSessionLocal complexAccessControlSession;
     private RoleManagementSession roleManagementSession;
 
     // Memory variables.
@@ -403,7 +402,7 @@ public class InformationMemory implements Serializable {
     }
 
     /** 
-     * @return a map containing the administrator's authorized available accessr ules, sorted by category
+     * @return a map containing the administrator's authorized available access rules, sorted by category
      */
 
     public Map<String, Set<String>> getAuthorizedAccessRules(final String endentityAccessRule) {
