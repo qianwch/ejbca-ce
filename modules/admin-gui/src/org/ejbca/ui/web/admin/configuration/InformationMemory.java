@@ -27,9 +27,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import org.cesecore.authentication.tokens.AuthenticationToken;
-import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.authorization.control.AccessControlSessionLocal;
-import org.cesecore.certificates.ca.CA;
 import org.cesecore.certificates.ca.CAConstants;
 import org.cesecore.certificates.ca.CADoesntExistsException;
 import org.cesecore.certificates.ca.CAInfo;
@@ -220,20 +218,16 @@ public class InformationMemory implements Serializable {
     }
 
     /**
-     * Returns a CA names as a treemap of name (String) -> id (Integer). Also includes external CAs
-     * @throws AuthorizationDeniedException 
+     * Returns authorized external CA names as a treemap of name (String) -> id (Integer).
      * @throws CADoesntExistsException 
      */
-    public TreeMap<String, Integer> getExternalCAs() throws CADoesntExistsException, AuthorizationDeniedException {
-        TreeMap<String, Integer> allcas = this.caauthorization.getAllCANames();
+    public TreeMap<String, Integer> getExternalCAs() throws CADoesntExistsException {
         TreeMap<String, Integer> externalcas = new TreeMap<String, Integer>();
-        Iterator<String> itr = allcas.keySet().iterator();
-        while(itr.hasNext()) {
-            String caname = (String) itr.next();
-            CA ca = casession.getCA(administrator, caname);
-            if (ca.getStatus() == CAConstants.CA_EXTERNAL) {
-                externalcas.put(caname, allcas.get(caname));
-            }
+        for (Integer caId : caauthorization.getAuthorizedCAIds()) {
+            CAInfo caInfo = casession.getCAInfoInternal(caId);
+            if (caInfo.getStatus() == CAConstants.CA_EXTERNAL) {
+                externalcas.put(caInfo.getName(), caId);
+            }          
         }
         return externalcas;
     }
