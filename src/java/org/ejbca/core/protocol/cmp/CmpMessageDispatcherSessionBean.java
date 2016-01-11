@@ -108,31 +108,31 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
 		this.cmpConfiguration = (CmpConfiguration) this.globalConfigSession.getCachedConfiguration(CmpConfiguration.CMP_CONFIGURATION_ID);
 	}
 
-	/** The message may have been received by any transport protocol, and is passed here in it's binary ASN.1 form.
-	 * 
-	 * @param message der encoded CMP message as a byte array
-	 * @return IResponseMessage containing the CMP response message or null if there is no message to send back or some internal error has occurred
-	 * @throws IOException 
-	 */
+    @Override
 	@TransactionAttribute(TransactionAttributeType.REQUIRED)
-	public ResponseMessage dispatch(final AuthenticationToken admin, final byte[] ba, String confAlias) throws IOException {
+	public ResponseMessage dispatch(final AuthenticationToken admin, final byte[] ba, String confAlias) throws IOException, NoSuchAliasException  {
+        // Length limit of this byte array must be handled by calling servlet
 		//ASN1Primitive derObject = new LimitLengthASN1Reader(new ByteArrayInputStream(ba), ba.length).readObject();
 	    final ASN1Primitive derObject = getDERObject(ba);
 		return dispatch(admin, derObject, false, confAlias);
 	}
 
-	/** The message may have been received by any transport protocol, and is passed here in it's binary ASN.1 form.
-	 * 
-	 * @param message der encoded CMP message
-	 * @return IResponseMessage containing the CMP response message or null if there is no message to send back or some internal error has occurred
-	 */
-	private ResponseMessage dispatch(final AuthenticationToken admin, final ASN1Primitive derObject, final boolean authenticated, String confAlias) {
+    /** The message may have been received by any transport protocol, and is passed here in it's binary ASN.1 form.
+     * 
+     * @param derObject der encoded CMP message
+     * @param authenticated
+     * @param confAlias the cmp alias we want to use for this request
+     * @return IResponseMessage containing the CMP response message or null if there is no message to send back or some internal error has occurred
+     * @throws NoSuchAliasException if the confAlias does not exist among configured cmp aliases
+     */
+	private ResponseMessage dispatch(final AuthenticationToken admin, final ASN1Primitive derObject, final boolean authenticated, String confAlias) throws NoSuchAliasException {
 	    
         this.cmpConfiguration = (CmpConfiguration) this.globalConfigSession.getCachedConfiguration(CmpConfiguration.CMP_CONFIGURATION_ID);
 
 	    if(!cmpConfiguration.aliasExists(confAlias)) {
-	        log.info("There is no CMP alias: " + confAlias);
-	        return CmpMessageHelper.createUnprotectedErrorMessage(null, ResponseStatus.FAILURE, FailInfo.INCORRECT_DATA, "Wrong URL. CMP alias '" + confAlias + "' does not exist");
+            final String msg = intres.getLocalizedMessage("cmp.nosuchalias", confAlias);
+            log.info(msg);
+            throw new NoSuchAliasException(msg);
 	    }
 	    
 		final PKIMessage req;

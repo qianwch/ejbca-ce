@@ -1335,6 +1335,14 @@ The proxy is a stand alone module that runs on another machine than the CA itsel
 </p><p>
 See EJBCA_HOME/modules/cmpProxy/resources/README for information how to build and use the proxy.
 </p>
+<subsubsection name="Backends">
+<p>The CMP Proxy can use different connection backends to the CA. The most usable are:
+</p>
+<ul>
+<li>Direct HTTP connection. The CMP proxy creates a new HTTP connection to the CA, and return the response to the client, through the client connection, after receiving the response from the CA.</li>
+<li><a href="externalra.html#CMP%20Proxy%20using%20External%20RA">External RA connection</a>. The CMP proxy creates an external RA msg in an external RA database, which the CA polls. When the CA stores a return message in the external RA database, this is picked up by the CMP proxy and returned to the client.</li>
+</ul>
+</subsubsection>
 </subsection>
 
 <subsection name="CMP Response Message">
@@ -1362,14 +1370,21 @@ signed using RSA with SHA1.
 The 'signature' type of response protection can be used regardless of what authentication module was used to authenticate the CMP request.
 </p>
 </subsubsection>
-<subsection name="Backends">
-<p>The CMP Proxy can use different connection backends to the CA. The most usable are:
-</p>
-<ul>
-<li>Direct HTTP connection. The CMP proxy creates a new HTTP connection to the CA, and return the response to the client, through the client connection, after receiving the response from the CA.</li>
-<li><a href="externalra.html#CMP%20Proxy%20using%20External%20RA">External RA connection</a>. The CMP proxy creates an external RA msg in an external RA database, which the CA polls. When the CA stores a return message in the external RA database, this is picked up by the CMP proxy and returned to the client.</li>
-</ul>
 </subsection>
+<subsection name="CMP error messages">
+<p>When an error occurs during CMP processing some different CMP error messages, or HTTP error codes can occur. Depending on at which stage the error is encountered and its type, different error messages are returned.
+Below is a non-exhaustive list of CMP error codes (don't use as definite guide, do you own testing).</p>
+<ul>
+<li>Submitting a request with a URL that does not match an existing CMP alias: HTTP 404 (not found)</li>
+<li>Trying to revoke a certificate that was already revoked: a signed CMP certRevoked error message</li>
+<li>Submitting a CMP RA message not authorized: a signed CMP notAuthorized error message</li>
+<li>Trying to revoke a non existing certificate: a signed CMP badCertId error message</li>
+<li>Trying to issue a certificate from a non existing CA: an unsigned CMP wrongAuthority error message</li>
+<li>Submitting a CMP request with bad POP: an unsigned CMP badPOP error message</li>
+<li>Submitting a CMP client mode enrollment request with wrong user/enrollment code: an unsigned CMP notAuthorized error message</li>
+<li>Internal processing error due to invalid configuration such as missing profiles: an unsigned CMP badRequest error message</li>
+<li>Other internal errors: an unsigned CMP error message with various error codes</li>
+</ul>
 </subsection>
 
 </section>
