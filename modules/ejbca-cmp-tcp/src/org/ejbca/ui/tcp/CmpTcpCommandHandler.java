@@ -24,7 +24,6 @@ import org.cesecore.authentication.tokens.UsernamePrincipal;
 import org.cesecore.certificates.certificate.request.ResponseMessage;
 import org.ejbca.core.model.InternalEjbcaResources;
 import org.ejbca.core.model.util.EjbLocalHelper;
-import org.ejbca.core.protocol.cmp.NoSuchAliasException;
 import org.quickserver.net.server.ClientBinaryHandler;
 import org.quickserver.net.server.ClientEventHandler;
 import org.quickserver.net.server.ClientHandler;
@@ -83,11 +82,7 @@ public class CmpTcpCommandHandler implements ClientEventHandler, ClientBinaryHan
 				LOG.error( INTRES.getLocalizedMessage("cmp.errornoasn1"), e );
 				handler.closeConnection();
 				return;
-            } catch (NoSuchAliasException e) {
-                LOG.error(e.getMessage(), e );
-                handler.closeConnection();
-                return;
-            }
+			}
 			if (LOG.isDebugEnabled()) {
 				LOG.debug("Sending back CMP response to client.");
 			}

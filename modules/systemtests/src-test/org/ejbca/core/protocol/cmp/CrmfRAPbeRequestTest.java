@@ -490,7 +490,7 @@ public class CrmfRAPbeRequestTest extends CmpTestCase {
             resp = sendCmpHttp(ba, 200, ALIAS);
             checkCmpResponseGeneral(resp, cainfo.getSubjectDN(), new X500Name(userdata.getDN()), newCACert, nonce, transid, false, PBEPASSWORD, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
             checkCmpFailMessage(resp, "The request is already awaiting approval.", CmpPKIBodyConstants.REVOCATIONRESPONSE, 0,
-                    ResponseStatus.FAILURE.getValue(), PKIFailureInfo.badRequest);
+                    ResponseStatus.FAILURE.getValue(), PKIFailureInfo.incorrectData);
             reason = checkRevokeStatus(cainfo.getSubjectDN(), cert.getSerialNumber());
             assertEquals(reason, RevokedCertInfo.NOT_REVOKED);
             // Approve revocation and verify success
@@ -512,7 +512,8 @@ public class CrmfRAPbeRequestTest extends CmpTestCase {
             ba = bao.toByteArray();
             resp = sendCmpHttp(ba, 200, ALIAS);
             checkCmpResponseGeneral(resp, cainfo.getSubjectDN(), new X500Name(userdata.getDN()), newCACert, nonce, transid, false, PBEPASSWORD, PKCSObjectIdentifiers.sha1WithRSAEncryption.getId());
-            checkCmpFailMessage(resp, "Already revoked.", CmpPKIBodyConstants.REVOCATIONRESPONSE, 0, ResponseStatus.FAILURE.getValue(), PKIFailureInfo.certRevoked);
+            checkCmpFailMessage(resp, "Already revoked.", CmpPKIBodyConstants.REVOCATIONRESPONSE, 0, ResponseStatus.FAILURE.getValue(), 
+                                                                    PKIFailureInfo.incorrectData);
         } finally {
             // Delete user
             this.endEntityManagementSession.deleteUser(ADMIN, username);

@@ -232,7 +232,7 @@ public class RevocationMessageHandler extends BaseCmpMessageHandler implements I
 		        failText = errMsg; 
 		        LOG.info(failText);
 		    } catch (AlreadyRevokedException e) {
-                failInfo = FailInfo.CERT_REVOKED;
+		        failInfo = FailInfo.BAD_REQUEST;
 		        final String errMsg = INTRES.getLocalizedMessage("cmp.erroralreadyrevoked");
 		        failText = errMsg; 
 		        // This is already info logged in endEntityManagementSession.revokeCert
