@@ -40,16 +40,16 @@ import org.cesecore.certificates.util.AlgorithmConstants;
 import org.cesecore.keys.util.KeyTools;
 import org.cesecore.util.Base64;
 import org.cesecore.util.CertTools;
+import org.cesecore.util.CryptoProviderTools;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
- * Was doing some unit testing when I realized that these run without a running
- * database and should be unit tests instead.
+ * This is a system test, due to it being OS dependent.
  * 
  * 
- * @author mikek
  * @version $Id$
  * 
  */
@@ -85,6 +85,11 @@ public class GeneralPurposeCustomPublisherTest {
     private String invalidOption;
     private String commandFailsafe;
 
+    @BeforeClass
+    public static void beforeClass() {
+        CryptoProviderTools.installBCProviderIfNotAvailable();
+    }
+    
     @Before
     public void setUp() {
     	admin = new AlwaysAllowLocalAuthenticationToken(new UsernamePrincipal("GenPurpCustomePublisherTest"));
