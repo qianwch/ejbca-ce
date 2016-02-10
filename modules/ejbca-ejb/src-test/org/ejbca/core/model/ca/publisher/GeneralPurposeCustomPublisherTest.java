@@ -21,12 +21,25 @@ import static org.junit.Assert.fail;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.SignatureException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.Properties;
 
+import org.bouncycastle.operator.OperatorCreationException;
 import org.cesecore.authentication.tokens.AlwaysAllowLocalAuthenticationToken;
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authentication.tokens.UsernamePrincipal;
+import org.cesecore.certificates.certificate.CertificateConstants;
+import org.cesecore.certificates.util.AlgorithmConstants;
+import org.cesecore.keys.util.KeyTools;
 import org.cesecore.util.Base64;
+import org.cesecore.util.CertTools;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -126,6 +139,29 @@ public class GeneralPurposeCustomPublisherTest {
 
     }
 
+    /**
+     * Tests storing a certificate using arguments passed to the command. 
+     */
+    @Test
+    public void testStoreCertificateWithArguments()
+            throws InvalidAlgorithmParameterException, OperatorCreationException, CertificateException, PublisherException, InvalidKeyException,
+            NoSuchAlgorithmException, SignatureException, IllegalStateException, NoSuchProviderException, IOException {
+        Properties props = new Properties();
+        // Test function by calling a command that is available on most platforms
+        boolean ret = false;
+        props.setProperty(GeneralPurposeCustomPublisher.certExternalCommandPropertyName, commandFailsafe);
+        gpcPublisher.init(props);
+        KeyPair keys = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
+        String certificateDn = "CN=Foo Bar, OU=Xyz Abc";
+        X509Certificate cert = CertTools.genSelfCert(certificateDn, 10L, "1.1.1.1", keys.getPrivate(), keys.getPublic(), "SHA256WithRSA", true);
+
+        ret = gpcPublisher.storeCertificate(admin, cert, "foo", "foo123", certificateDn, "foo", CertificateConstants.CERT_ACTIVE,
+                CertificateConstants.CERTTYPE_ENDENTITY, 0, 0, null, 0, 0, null);
+
+        assertTrue("Store Certificate with GeneralPurposeCustomPublisher failed.", ret);
+
+    }
+    
     @Test
     public void testStoreCRLwithDeltaCrl() {
         Properties props = new Properties();
