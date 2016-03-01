@@ -1,3 +1,8 @@
+EJBCA 6.5.0.1, 2016-03-01
+---
+Bug
+    [ECA-4862] - CmpMessageHelper.createUnprotectedErrorMessage throws an NPE if a nonce is not included in the CMP message
+
 EJBCA 6.5.0, 2016-02-29
 ---
 Bug

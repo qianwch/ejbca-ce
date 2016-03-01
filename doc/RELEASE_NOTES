@@ -1,3 +1,8 @@
+EJBCA 6.5.0.1
+-----------
+
+Patch release for https://jira.primekey.se/browse/ECA-4862
+
 EJBCA 6.5.0
 -----------
 Primekey Solutions is very pleased to release EJBCA 6.5.0 into the wild. This release has primarily focused on tuning up the UI and responding 
