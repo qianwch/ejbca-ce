@@ -19,6 +19,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
@@ -28,9 +29,14 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Random;
 
+import javax.ejb.ObjectNotFoundException;
+import javax.ejb.RemoveException;
+
 import org.apache.log4j.Logger;
+import org.cesecore.CesecoreException;
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authentication.tokens.UsernamePrincipal;
+import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.authorization.control.StandardRules;
 import org.cesecore.authorization.rules.AccessRuleData;
 import org.cesecore.authorization.rules.AccessRuleState;
@@ -51,22 +57,27 @@ import org.cesecore.keys.token.CryptoTokenManagementSessionRemote;
 import org.cesecore.keys.util.KeyTools;
 import org.cesecore.mock.authentication.tokens.TestAlwaysAllowLocalAuthenticationToken;
 import org.cesecore.roles.RoleData;
+import org.cesecore.roles.RoleNotFoundException;
 import org.cesecore.roles.access.RoleAccessSessionRemote;
 import org.cesecore.roles.management.RoleManagementSessionRemote;
 import org.cesecore.util.CertTools;
 import org.cesecore.util.CryptoProviderTools;
 import org.cesecore.util.EjbRemoteHelper;
+import org.ejbca.core.EjbcaException;
 import org.ejbca.core.ejb.ca.CaTestCase;
 import org.ejbca.core.ejb.ca.auth.EndEntityAuthenticationSessionRemote;
 import org.ejbca.core.ejb.ca.sign.SignSessionRemote;
-import org.ejbca.core.ejb.ra.CertificateRequestSessionRemote;
 import org.ejbca.core.ejb.ra.EndEntityAccessSessionRemote;
 import org.ejbca.core.ejb.ra.EndEntityManagementSessionRemote;
 import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileSessionRemote;
 import org.ejbca.core.model.SecConst;
+import org.ejbca.core.model.approval.ApprovalException;
+import org.ejbca.core.model.approval.WaitingForApprovalException;
 import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.core.model.keyrecovery.KeyRecoveryInformation;
+import org.ejbca.core.model.ra.NotFoundException;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfile;
+import org.ejbca.core.model.ra.raadmin.UserDoesntFullfillEndEntityProfile;
 import org.ejbca.core.model.util.GenerateToken;
 import org.junit.After;
 import org.junit.Before;
@@ -253,6 +264,62 @@ public class KeyRecoveryTest extends CaTestCase {
             endEntityManagementSession.deleteUser(internalAdmin, user);
             log.trace("<test04RemoveKeyPairAndEntity()");
         }
+    }
+    
+    /**
+     * Tests the authorization rights required to mark an end entity for key recovery. Proper rights should be:
+     * 
+     * /ra_functionality/keyrecovery
+     * /endentityprofilesrules/<x>/keyrecovery
+     * /ca/<y>
+     * 
+     * where <x> is the EEP for the end entity, and <y> is the CA ID for the issuing CA. 
+     */
+    @Test
+    public void testAuthorizationForKeyRecovery()
+            throws ApprovalException, WaitingForApprovalException, AuthorizationDeniedException, NotFoundException, RemoveException {
+        X509Certificate cert1 = null;
+        String fp1 = null;
+        KeyPair keypair1 = null;
+        try {
+            if (!endEntityManagementSession.existsUser(user)) {
+                try {
+                    keypair1 = KeyTools.genKeys("512", AlgorithmConstants.KEYALGORITHM_RSA);
+                    endEntityManagementSession.addUser(internalAdmin, user, "foo123", "CN=TESTKEYREC" + new Random().nextLong(),
+                            "rfc822name=" + TEST_EMAIL, TEST_EMAIL, false, SecConst.EMPTY_ENDENTITYPROFILE,
+                            CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER, EndEntityTypes.ENDUSER.toEndEntityType(), SecConst.TOKEN_SOFT_P12,
+                            0, getTestCAId());
+                    cert1 = (X509Certificate) signSession.createCertificate(internalAdmin, user, "foo123", keypair1.getPublic());
+                    fp1 = CertTools.getFingerprintAsString(cert1);
+                    Collection<AccessRuleData> accessRules = new ArrayList<AccessRuleData>();
+                    accessRules.add(new AccessRuleData(KEYRECOVERY_ROLE, StandardRules.CAACCESS.resource() + CertTools.getIssuerDN(cert1).hashCode(),
+                            AccessRuleState.RULE_ACCEPT, false));
+                    roleManagementSession.addAccessRulesToRole(internalAdmin, roleAccessSession.findRole(KEYRECOVERY_ROLE), accessRules);
+                } catch (InvalidAlgorithmParameterException  | AuthorizationDeniedException
+                        | UserDoesntFullfillEndEntityProfile | EjbcaException | ObjectNotFoundException | RoleNotFoundException | CesecoreException e) {
+                    throw new IllegalStateException("Exception generating keys/cert", e);
+                }
+            }
+            if (!keyRecoverySession.addKeyRecoveryData(internalAdmin, cert1, user, keypair1)) {
+                throw new IllegalStateException("Key recovery data already exists in database.");
+            }
+            if (!keyRecoverySession.existsKeys(cert1)) {
+                throw new IllegalStateException("Couldn't save key's in database");
+            }
+            if (keyRecoverySession.isUserMarked(user)) {
+                throw new IllegalStateException("User should not be marked for recovery in database");
+
+            }
+            try {
+                endEntityManagementSession.prepareForKeyRecovery(admin, user, SecConst.EMPTY_ENDENTITYPROFILE, cert1);
+            } catch (AuthorizationDeniedException e) {
+                fail("Key recovery could not be performed due to incorrect authorization checks.");
+            }
+        } finally {
+            internalCertStoreSession.removeCertificate(fp1);
+            endEntityManagementSession.deleteUser(internalAdmin, user);
+        }
+
     }
     
     /**
