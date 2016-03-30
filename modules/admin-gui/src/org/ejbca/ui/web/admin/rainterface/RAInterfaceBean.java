@@ -174,14 +174,26 @@ public class RAInterfaceBean implements Serializable {
     	log.trace("<initialize()");
     }
     
-    /** Adds a user to the database, the string array must be in format defined in class UserView. */
-    public void addUser(UserView userdata) throws EndEntityExistsException, CADoesntExistsException, AuthorizationDeniedException, UserDoesntFullfillEndEntityProfile, WaitingForApprovalException, EjbcaException {
+    /** Adds a user to the database, the string array must be in format defined in class UserView. 
+     * @throws EjbcaException 
+     * @throws WaitingForApprovalException 
+     * @throws UserDoesntFullfillEndEntityProfile 
+     * @throws AuthorizationDeniedException 
+     * @throws CADoesntExistsException 
+     * @throws EndEntityExistsException */
+    public void addUser(UserView userdata) throws EndEntityExistsException, CADoesntExistsException, AuthorizationDeniedException,
+            UserDoesntFullfillEndEntityProfile, WaitingForApprovalException, EjbcaException {
         log.trace(">addUser()");
         if (userdata.getEndEntityProfileId() != 0) {
             EndEntityInformation uservo = new EndEntityInformation(userdata.getUsername(), userdata.getSubjectDN(), userdata.getCAId(), userdata.getSubjectAltName(), 
         		userdata.getEmail(), EndEntityConstants.STATUS_NEW, userdata.getType(), userdata.getEndEntityProfileId(), userdata.getCertificateProfileId(),
         		null,null, userdata.getTokenType(), userdata.getHardTokenIssuerId(), null);
-            uservo.setPassword(userdata.getPassword());
+            EndEntityProfile endEntityProfile = getEndEntityProfile(userdata.getEndEntityProfileId());
+            if(StringUtils.isEmpty(userdata.getPassword()) && endEntityProfile.isPasswordPreDefined()) {
+                uservo.setPassword(endEntityProfile.getPredefinedPassword());
+            } else {
+                uservo.setPassword(userdata.getPassword());
+            }
             uservo.setExtendedinformation(userdata.getExtendedInformation());
             uservo.setCardNumber(userdata.getCardNumber());
             endEntityManagementSession.addUser(administrator, uservo, userdata.getClearTextPassword());
