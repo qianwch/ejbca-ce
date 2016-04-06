@@ -28,17 +28,20 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
+import org.cesecore.certificates.certificateprofile.CertificatePolicy;
 import org.junit.Test;
 
 /**
@@ -109,6 +112,7 @@ public class SecureXMLDecoderTest {
         root.put("testfloat", 12.3);
         root.put("testnull", null);
         root.put("testutf8string", "Test ÅÄÖ \u4f60\u597d");
+        root.put("teststrangechars", "\0001\0002fooString");
         root.put("testchar1", '<');
         root.put("testchar2", '\\');
         root.put("testchar3", 'å');
@@ -139,6 +143,17 @@ public class SecureXMLDecoderTest {
                 return o1.hashCode() - o2.hashCode();
             }
         });
+        root.put("testdate", new Date(1457949109000L));
+        root.put("testproperties0", new Properties());
+        final Properties props1 = new Properties();
+        props1.put("test.something", "value");
+        root.put("testproperties1", props1);
+        final Properties propsDefaults = new Properties();
+        propsDefaults.put("test.something1", "default1");
+        propsDefaults.put("test.something2", "default2");
+        final Properties props2 = new Properties(propsDefaults);
+        props2.put("test.something1", "override");
+        root.put("testproperties2", props2);
         treeMap.put("aaa", 1);
         treeMap.put("bbb", 2);
         treeMap.put("ccc", 3);
@@ -150,8 +165,13 @@ public class SecureXMLDecoderTest {
         final Map<String,Long> nested = new HashMap<>();
         nested.put("testlong", Long.valueOf(Long.MAX_VALUE));
         list.add(nested);
-        
         root.put("testlist", list);
+        
+        final Map<Object,Object> propmap = new HashMap<>();
+        root.put("b64getmap", new Base64GetHashMap(propmap));
+        root.put("b64putmap", new Base64PutHashMap(propmap));
+        
+        root.put("certpolicy", new CertificatePolicy("1.2.3.4", "Finders keepers!", "http://example.com/policy"));
         
         // Base64PutHashMap
         
