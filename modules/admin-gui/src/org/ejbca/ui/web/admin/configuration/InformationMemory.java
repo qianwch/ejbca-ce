@@ -260,13 +260,6 @@ public class InformationMemory implements Serializable {
         return globalconfiguration;
     }
     
-    /**
-     * returns the CMP configuration (CMPConfiguration)
-     */
-    public CmpConfiguration getCMPConfiguration() {
-        return cmpconfiguration;
-    }
-    
     public AvailableExtendedKeyUsagesConfiguration getAvailableExtendedKeyUsagesConfiguration() {
         return availableExtendedKeyUsagesConfiguration;
     }
@@ -559,9 +552,6 @@ public class InformationMemory implements Serializable {
         authorizedaccessrules = null;
     }
     
-    public void setCmpConfiguration(CmpConfiguration cmpconfig) {
-        this.cmpconfiguration = cmpconfig;
-    }
     
     public void availableExtendedKeyUsagesConfigEdited(AvailableExtendedKeyUsagesConfiguration ekuConfig) {
         this.availableExtendedKeyUsagesConfiguration = ekuConfig;

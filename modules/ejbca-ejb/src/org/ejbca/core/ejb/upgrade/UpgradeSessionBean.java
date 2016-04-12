@@ -93,6 +93,7 @@ import org.cesecore.roles.RoleNotFoundException;
 import org.cesecore.roles.access.RoleAccessSessionLocal;
 import org.cesecore.roles.management.RoleManagementSessionLocal;
 import org.cesecore.util.JBossUnmarshaller;
+import org.ejbca.config.CmpConfiguration;
 import org.ejbca.config.DatabaseConfiguration;
 import org.ejbca.config.GlobalConfiguration;
 import org.ejbca.config.InternalConfiguration;
@@ -104,6 +105,7 @@ import org.ejbca.core.ejb.hardtoken.HardTokenData;
 import org.ejbca.core.ejb.hardtoken.HardTokenIssuerData;
 import org.ejbca.core.ejb.ra.raadmin.AdminPreferencesData;
 import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileData;
+import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileSessionLocal;
 import org.ejbca.core.model.authorization.AccessRuleTemplate;
 import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.core.model.authorization.DefaultRoles;
@@ -114,6 +116,7 @@ import org.ejbca.core.model.ca.caadmin.extendedcaservices.KeyRecoveryCAService;
 import org.ejbca.core.model.ca.caadmin.extendedcaservices.KeyRecoveryCAServiceInfo;
 import org.ejbca.core.model.ca.publisher.BasePublisher;
 import org.ejbca.core.model.ca.publisher.upgrade.BasePublisherConverter;
+import org.ejbca.core.model.ra.raadmin.EndEntityProfileNotFoundException;
 import org.ejbca.util.JDBCUtil;
 import org.ejbca.util.SqlExecutor;
 
@@ -154,9 +157,13 @@ public class UpgradeSessionBean implements UpgradeSessionLocal, UpgradeSessionRe
     @EJB
     private CryptoTokenSessionLocal cryptoTokenSession;
     @EJB
+    private EndEntityProfileSessionLocal endEntityProfileSession;
+    @EJB
     private EnterpriseEditionEjbBridgeSessionLocal enterpriseEditionEjbBridgeSession;
     @EJB
     private GlobalConfigurationSessionLocal globalConfigurationSession;
+    @EJB
+    private OcspResponseGeneratorSessionLocal ocspResponseGeneratorSession;
     @EJB
     private PublisherSessionLocal publisherSession;
     @EJB
@@ -165,8 +172,7 @@ public class UpgradeSessionBean implements UpgradeSessionLocal, UpgradeSessionRe
     private RoleManagementSessionLocal roleMgmtSession;
     @EJB
     private SecurityEventsLoggerSessionLocal securityEventsLogger;
-    @EJB
-    private OcspResponseGeneratorSessionLocal ocspResponseGeneratorSession;
+
 
     private UpgradeSessionLocal upgradeSession;
 
@@ -349,6 +355,14 @@ public class UpgradeSessionBean implements UpgradeSessionLocal, UpgradeSessionRe
                 return false;
             }
             setLastUpgradedToVersion("6.4.2");
+        }
+        if (isLesserThan(oldVersion, "6.5.1")) {
+            try {
+                upgradeSession.migrateDatabase651();
+            } catch (UpgradeFailedException e) {
+                return false;
+            }
+            setLastUpgradedToVersion("6.5.1");
         }
         setLastUpgradedToVersion(InternalConfiguration.getAppVersionNumber());
         return true;
@@ -1145,6 +1159,7 @@ public class UpgradeSessionBean implements UpgradeSessionLocal, UpgradeSessionRe
      * 
      * @throws UpgradeFailedException if upgrade fails (rolls back)
      */
+    @SuppressWarnings("deprecation")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @Override
     public void migrateDatabase624() throws UpgradeFailedException {
@@ -1195,6 +1210,44 @@ public class UpgradeSessionBean implements UpgradeSessionLocal, UpgradeSessionRe
     public void migrateDatabase642() throws UpgradeFailedException {
         addReadOnlyRules642();
         log.error("(This is not an error) Completed upgrade procedure to 6.4.2");
+    }
+    
+    /**
+     * EJBCA 6.5.1:
+     * 
+     * This upgrade only affects CMP aliases:
+     * 1.   End entity profiles will be referred to by ID instead of by name. In consideration of 100% uptime requirements, the value 
+     *      ra.endentityprofile is replaced by ra.endentityprofileid, allowing legacy configurations to keep using the old value.  
+     * 
+     * @throws UpgradeFailedException if upgrade fails (rolls back)
+     */
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @Override
+    public void migrateDatabase651() throws UpgradeFailedException {
+        CmpConfiguration cmpConfiguration = (CmpConfiguration) globalConfigurationSession.getCachedConfiguration(CmpConfiguration.CMP_CONFIGURATION_ID);
+        for(final String cmpAlias : cmpConfiguration.getAliasList()) {
+            // Avoid aliases that may already have been upgraded
+            if(StringUtils.isEmpty(cmpConfiguration.getRAEEProfile(cmpAlias))) {
+                @SuppressWarnings("deprecation")
+                String endEntityProfileName = cmpConfiguration.getValue(cmpAlias + "." + CmpConfiguration.CONFIG_RA_ENDENTITYPROFILE, cmpAlias);         
+                if (!StringUtils.isEmpty(endEntityProfileName)) {
+                    try {
+                        cmpConfiguration.setRAEEProfile(cmpAlias,
+                                Integer.toString(endEntityProfileSession.getEndEntityProfileId(endEntityProfileName)));
+                    } catch (EndEntityProfileNotFoundException e) {
+                        //Fail gracefully if a CMP alias already is in an error state
+                        log.error("CMP alias " + cmpAlias + " could not be upgraded. It refers by name to End Entity Profile " + endEntityProfileName
+                                + ", which does not appear to exist. Please review this profile after upgrade.");
+                    }
+                }            
+            }
+        }
+        try {
+            globalConfigurationSession.saveConfiguration(authenticationToken, cmpConfiguration);
+        } catch (AuthorizationDeniedException e) {
+            log.error("Always allow token was denied authoriation to global configuration table.", e);
+        }
+        log.error("(This is not an error) Completed upgrade procedure to 6.5.1");
     }
     
     /**
