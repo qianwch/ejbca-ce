@@ -81,6 +81,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -134,7 +135,7 @@ public class CrmfRARequestTest extends CmpTestCase {
         this.cmpConfiguration.setRAMode(cmpAlias, true);
         this.cmpConfiguration.setAllowRAVerifyPOPO(cmpAlias, true);
         this.cmpConfiguration.setResponseProtection(cmpAlias, "signature");
-        this.cmpConfiguration.setRAEEProfile(cmpAlias, EEP_DN_OVERRIDE_NAME);
+        this.cmpConfiguration.setRAEEProfile(cmpAlias, String.valueOf(eepDnOverrideId));
         this.cmpConfiguration.setRACertProfile(cmpAlias, CP_DN_OVERRIDE_NAME);
         this.cmpConfiguration.setRACAName(cmpAlias, "TestCA");
         this.cmpConfiguration.setRANameGenScheme(cmpAlias, "DN");
@@ -339,7 +340,9 @@ public class CrmfRARequestTest extends CmpTestCase {
 
     }
 
-    @Test
+    // TODO Setting KeyId as the RA end entity profile is no longer supported, however, it will be supported later in a different format 
+    // specifically for the Unid users/customers. This test should be modified then
+    @Ignore
     public void test03UseKeyID() throws Exception {
 
         GlobalConfiguration gc = (GlobalConfiguration) this.globalConfSession.getCachedConfiguration(GlobalConfiguration.GLOBAL_CONFIGURATION_ID);

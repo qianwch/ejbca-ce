@@ -88,6 +88,7 @@ import org.ejbca.util.query.Query;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -151,7 +152,7 @@ public class CrmfRAPbeRequestTest extends CmpTestCase {
         this.cmpConfiguration.setAllowRAVerifyPOPO(ALIAS, true);
         this.cmpConfiguration.setResponseProtection(ALIAS, "pbe");
         this.cmpConfiguration.setRACertProfile(ALIAS, CP_DN_OVERRIDE_NAME);
-        this.cmpConfiguration.setRAEEProfile(ALIAS, EEP_DN_OVERRIDE_NAME);
+        this.cmpConfiguration.setRAEEProfile(ALIAS, String.valueOf(eepDnOverrideId));
         this.cmpConfiguration.setRACAName(ALIAS, this.testx509ca.getName());
         this.cmpConfiguration.setAuthenticationModule(ALIAS, CmpConfiguration.AUTHMODULE_REG_TOKEN_PWD + ";" + CmpConfiguration.AUTHMODULE_HMAC);
         this.cmpConfiguration.setAuthenticationParameters(ALIAS, "-;" + PBEPASSWORD);
@@ -292,7 +293,9 @@ public class CrmfRAPbeRequestTest extends CmpTestCase {
      * KeyId means that the certificate profile used to issue the certificate is the same as the KeyId sent in the request.
      * ProfileDefault means that the certificate profile used is taken from the default certificate profile in the end entity profile.
      */
-    @Test
+    // TODO Setting KeyId as the RA end entity profile is no longer supported, however, it will be supported later in a different format 
+    // specifically for the Unid users/customers. This test should be modified then
+    @Ignore
     public void test02KeyIdProfiles() throws Exception {
         final String keyId = "CmpTestKeyIdProfileName";
         final String keyIdDefault = "CmpTestKeyIdProfileNameDefault";

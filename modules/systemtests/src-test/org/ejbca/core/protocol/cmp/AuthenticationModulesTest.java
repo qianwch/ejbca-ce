@@ -137,6 +137,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
@@ -199,7 +200,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
         this.caSession.addCA(ADMIN, this.testx509ca);
 
         this.cmpConfiguration.addAlias(ALIAS);
-        this.cmpConfiguration.setRAEEProfile(ALIAS, EEP_DN_OVERRIDE_NAME);
+        this.cmpConfiguration.setRAEEProfile(ALIAS, String.valueOf(eepDnOverrideId));
         this.cmpConfiguration.setRACertProfile(ALIAS, CP_DN_OVERRIDE_NAME);
         this.cmpConfiguration.setRACAName(ALIAS, "TestCA");
         this.cmpConfiguration.setExtractUsernameComponent(ALIAS, "CN");
@@ -1389,17 +1390,8 @@ public class AuthenticationModulesTest extends CmpTestCase {
     public void test22EECAuthWithSHA256AndECDSA() throws Exception {
         log.trace(">test22EECAuthWithSHA256AndECDSA()");
 
-        //-------------- Set the necessary configurations
-        this.cmpConfiguration.setRAEEProfile(ALIAS, "ECDSAEEP");
-        this.cmpConfiguration.setRACertProfile(ALIAS, "ECDSACP");
-        this.cmpConfiguration.setCMPDefaultCA(ALIAS, "CmpECDSATestCA");
-        this.cmpConfiguration.setRACAName(ALIAS, "CmpECDSATestCA");
-        this.cmpConfiguration.setRAMode(ALIAS, true);
-        this.cmpConfiguration.setRANameGenScheme(ALIAS, "DN");
-        this.cmpConfiguration.setRANameGenParams(ALIAS, "CN");
-        this.cmpConfiguration.setAuthenticationModule(ALIAS, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE);
-        this.cmpConfiguration.setAuthenticationParameters(ALIAS, "CmpECDSATestCA");
-        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration);
+        //---------------------- Create the test CA
+        // Create catoken
 
         removeTestCA("CmpECDSATestCA");
         try {
@@ -1409,10 +1401,7 @@ public class AuthenticationModulesTest extends CmpTestCase {
             CryptoTokenTestUtils.removeCryptoToken(ADMIN, cryptoTokenId);
         } catch (Exception e) {/* do nothing */
         }
-
-        //---------------------- Create the test CA
-        // Create catoken
-
+        
         String ecdsaCADN = "CN=CmpECDSATestCA";
         String keyspec = "prime256v1";
 
@@ -1473,6 +1462,18 @@ public class AuthenticationModulesTest extends CmpTestCase {
         }
         int eepId = this.endEntityProfileSession.getEndEntityProfileId("ECDSAEEP");
 
+        //-------------- Set the necessary configurations
+        this.cmpConfiguration.setRAEEProfile(ALIAS, String.valueOf(eepId));
+        this.cmpConfiguration.setRACertProfile(ALIAS, "ECDSACP");
+        this.cmpConfiguration.setCMPDefaultCA(ALIAS, "CmpECDSATestCA");
+        this.cmpConfiguration.setRACAName(ALIAS, "CmpECDSATestCA");
+        this.cmpConfiguration.setRAMode(ALIAS, true);
+        this.cmpConfiguration.setRANameGenScheme(ALIAS, "DN");
+        this.cmpConfiguration.setRANameGenParams(ALIAS, "CN");
+        this.cmpConfiguration.setAuthenticationModule(ALIAS, CmpConfiguration.AUTHMODULE_ENDENTITY_CERTIFICATE);
+        this.cmpConfiguration.setAuthenticationParameters(ALIAS, "CmpECDSATestCA");
+        this.globalConfigurationSession.saveConfiguration(ADMIN, this.cmpConfiguration);
+        
         //---------------- Send a CMP initialization request
         AuthenticationToken admToken = null;
         final String testAdminDN = "CN=cmptestadmin,C=SE";
@@ -1647,7 +1648,9 @@ public class AuthenticationModulesTest extends CmpTestCase {
      * 
      * @throws Exception
      */
-    @Test
+    // TODO Setting KeyId as the RA end entity profile is no longer supported, however, it will be supported later in a different format 
+    // specifically for the Unid users/customers. This test should be modified then
+    @Ignore
     public void test24HMACUnacceptedKeyId() throws Exception {
 
         this.cmpConfiguration.setRAMode(ALIAS, true);
