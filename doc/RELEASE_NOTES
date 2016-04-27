@@ -1,3 +1,8 @@
+EJBCA 6.5.1.1
+-----------
+This is a patch release on 6.5.1 primarily concerning a bug in CMP which was introduced in 6.5.1. See https://jira.primekey.se/browse/ECA-5022 for 
+more information.
+
 EJBCA 6.5.1
 -----------
 Spring is in the air, and we here at PrimeKey are busy working on a very exciting new feature to be released with EJBCA 6.6.0 in Q3 of 2016. 
