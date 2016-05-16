@@ -1,3 +1,8 @@
+EJBCA 6.5.2.1, 2016-05-16
+---
+Bug
+    [ECA-5085] - Regression: ca editca fails on an NPE if --fields parameter is missed. 
+
 EJBCA 6.5.2, 2016-05-13
 ---
 Bug
