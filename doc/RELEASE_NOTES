@@ -1,3 +1,8 @@
+EJBCA 6.5.2.1
+-----------
+
+This patch release fixes one minor regression in the CLI. 
+
 EJBCA 6.5.2
 -----------
 Winter is coming they say, but in the PrimeKey offices in Stockholm it seems to be a far way away. While we're busy toiling away at our new feature
