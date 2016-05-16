@@ -29,6 +29,12 @@ All database upgrades require CREATE and ALTER TABLE privileges besides the regu
 INSERT and DELETE. The SQL executed by database upgrades code is available in
 "src/upgrade/<oldversion>_<newversion>/<oldversion>_<newversion>-upgrade-<database>.sql".
 
+From EJBCA 6.5.1 to EJBCA 6.5.3
+-------------------------------
+
+6.5.3 involves a minor change to the CLI command "ca editca". The "-listFields" and "-getValue" flags have been removed, and have been replaced with
+the "ca listcafields" and "ca getcafield" commands instead. 
+
 From EJBCA 6.5.0 to EJBCA 6.5.1
 -------------------------------
 
