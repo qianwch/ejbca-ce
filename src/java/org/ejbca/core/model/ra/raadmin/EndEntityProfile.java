@@ -167,7 +167,6 @@ public class EndEntityProfile extends UpgradeableDataHashMap implements Serializ
     	dataConstantsUsedInEmpty.remove(DnComponents.OTHERNAME);
     	dataConstantsUsedInEmpty.remove(DnComponents.X400ADDRESS);
     	dataConstantsUsedInEmpty.remove(DnComponents.EDIPARTNAME);
-    	dataConstantsUsedInEmpty.remove(DnComponents.REGISTEREDID);
     }
 
     // Type of data constants.
@@ -1612,8 +1611,7 @@ public class EndEntityProfile extends UpgradeableDataHashMap implements Serializ
     	boolean ret = true;
         if (field.equals(DnComponents.OTHERNAME) 
         		|| field.equals(DnComponents.X400ADDRESS) 
-        		|| field.equals(DnComponents.EDIPARTNAME) 
-        		|| field.equals(DnComponents.REGISTEREDID)) {
+        		|| field.equals(DnComponents.EDIPARTNAME)) {
     		log.info("isFieldImplemented got call for non-implemented field: "+field);
         	ret = false;
         }
