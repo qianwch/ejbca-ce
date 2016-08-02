@@ -50,6 +50,11 @@ from EJBCA home directory:
 NOTE: If you are using External RA, please note that the name of the scep.properties file has been changed to 
 scepra.properties 
 
+From EJBCA 6.2.6.x to EJBCA 6.2.6.x
+-----------------------------------
+There are no database upgrades to perform within the 6.2.6.x series, just make sure your changed configuration in conf/*.properties is
+transferred, and deploy the new version (copy a new ejbca.ear is all that is needed) with 'ant deployear'.
+
 From EJBCA 6.2.x to EJBCA 6.2.4
 -------------------------------
 The configuration from for the OCSP default responder has been moved from ocsp.properties into the global configuration, into a new cache with ID=OCSP. 
