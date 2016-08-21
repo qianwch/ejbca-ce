@@ -33,6 +33,7 @@ import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.ra.UserNotificationParamGen;
 import org.ejbca.core.model.services.ServiceExecutionFailedException;
 import org.ejbca.core.model.services.actions.MailActionInfo;
+import org.ejbca.core.model.services.workers.EmailSendingWorker.EmailCertData;
 
 /**
  * Makes queries about which certificates that is about to expire in a given number of days and creates a 
@@ -147,8 +148,10 @@ public class CertificateExpirationNotifierWorker extends EmailSendingWorker {
                                 } else {
                                     // Populate end user message
                                     log.debug("Adding to email queue for user: " + userData.getEmail());
-                                    String message = new UserNotificationParamGen(userData, cert).interpolate(getEndUserMessage());
-                                    MailActionInfo mailActionInfo = new MailActionInfo(userData.getEmail(), getEndUserSubject(), message);
+                                    final UserNotificationParamGen userNotificationParamGen = new UserNotificationParamGen(userData, cert);
+                                    final String message = userNotificationParamGen.interpolate(getEndUserMessage());
+                                    final String subject = userNotificationParamGen.interpolate(getEndUserSubject());
+                                    final MailActionInfo mailActionInfo = new MailActionInfo(userData.getEmail(), subject, message);
                                     userEmailQueue.add(new EmailCertData(fingerprint, mailActionInfo));
                                 }
                             }
@@ -164,8 +167,10 @@ public class CertificateExpirationNotifierWorker extends EmailSendingWorker {
                             }
                             // Populate admin message
                             log.debug("Adding to email queue for admin");
-                            String message = new UserNotificationParamGen(userData, cert).interpolate(getAdminMessage());
-                            MailActionInfo mailActionInfo = new MailActionInfo(null, getAdminSubject(), message);
+                            final UserNotificationParamGen userNotificationParamGen = new UserNotificationParamGen(userData, cert);
+                            final String message = userNotificationParamGen.interpolate(getAdminMessage());
+                            final String subject = userNotificationParamGen.interpolate(getAdminSubject());
+                            final MailActionInfo mailActionInfo = new MailActionInfo(null, subject, message);
                             adminEmailQueue.add(new EmailCertData(fingerprint, mailActionInfo));
                         }
                         if (!isSendToEndUsers() && !isSendToAdmins()) {
