@@ -183,6 +183,7 @@ public abstract class CertTools {
     public static final String URI2 = "uniformResourceId";
     public static final String IPADDR = "iPAddress";
     public static final String DIRECTORYNAME = "directoryName";
+    public static final String REGISTEREDID = "registeredID";
 
     /** Kerberos altName for smart card logon */
     public static final String KRB5PRINCIPAL = "krb5principal";
@@ -2382,6 +2383,10 @@ public abstract class CertTools {
                 case 7:
                     result += append + CertTools.IPADDR + "=" + (String) value;
                     break;
+                case 8:
+                    // OID names are returned as Strings according to the JDK X509Certificate javadoc
+                    result += append + CertTools.REGISTEREDID+ "=" + (String)value;
+                    break;
                 default: // SubjectAltName of unknown type
                     break;
                 }
@@ -2444,7 +2449,10 @@ public abstract class CertTools {
                 log.error("Cannot parse/encode ip address, ignoring: " + addr);
             }
         }
-
+        for (final String oid : CertTools.getPartsFromDN(altName, CertTools.REGISTEREDID)) {
+            vec.add(new GeneralName(GeneralName.registeredID, oid));
+        }
+        
         // UPN is an OtherName see method getUpn... for asn.1 definition
         for (final String upn : CertTools.getPartsFromDN(altName, CertTools.UPN)) {
             final ASN1EncodableVector v = new ASN1EncodableVector();
@@ -2612,6 +2620,11 @@ public abstract class CertTools {
             ASN1OctetString oct = ASN1OctetString.getInstance(value);
             ret = CertTools.IPADDR + "=" + StringTools.ipOctetsToString(oct.getOctets());
             break;
+        case 8:
+            // BC GeneralName stores the actual object value, which is an OID
+            ASN1ObjectIdentifier oid = ASN1ObjectIdentifier.getInstance(value);
+            ret = CertTools.REGISTEREDID+ "=" + oid.getId();
+            break;            
         default: // SubjectAltName of unknown type
             break;
         }
