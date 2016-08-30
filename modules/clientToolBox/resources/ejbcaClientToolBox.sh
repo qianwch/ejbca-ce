@@ -8,20 +8,32 @@ if [ -z ${TOOLBOX_HOME} ] ; then
 	TOOLBOX_HOME=`echo $(dirname ${0})`
 fi
 
-# Check that JAVA_HOME is set
-if [ "x${JAVA_HOME}" = "x" ]; then
+if [ -z ${JAVA_HOME} ]; then
 	javaCmd="java"
-	JAVA_HOME=$(dirname $(dirname $(readlink -f $(which ${javaCmd}))))
 else
-    javaCmd=${JAVA_HOME}/bin/java
+	javaCmd=${JAVA_HOME}/bin/java
 fi
 
-if [ "x${JAVA_EXT}" = "x" ] ; then
-	JAVA_EXT="${JAVA_HOME}/lib/ext:/usr/java/packages/lib/ext:${TOOLBOX_HOME}/ext"
+
+if [ -z ${JAVA_EXT} ] ; then
+	#assume that the java executable (not symlink) is in the $JAVA_HOME/jre/bin directory.
+	jreHome=$(dirname $(dirname $(readlink -f $(which ${javaCmd}))))
+
+	if [ ! -d ${jreHome}/lib/ext ] ; then
+		#wrong in previous assumption. New assumption $JAVA_HOME/bin
+		jreHome=${jreHome}/jre
+	fi
+
+	if [ ! -d ${jreHome}/lib/ext ] ; then
+		echo "Can not find the ext directory"
+		exit
+	fi
+
+	JAVA_EXT="${jreHome}/lib/ext:/usr/java/packages/lib/ext:${TOOLBOX_HOME}/ext"
 fi
 
 JAVA_OPT="${JAVA_OPT} -Djava.ext.dirs=${JAVA_EXT}"
 
 # Finally run java
-set -x
+#set -x
 ${javaCmd} ${JAVA_OPT} -jar $TOOLBOX_HOME/clientToolBox.jar "${@}"
