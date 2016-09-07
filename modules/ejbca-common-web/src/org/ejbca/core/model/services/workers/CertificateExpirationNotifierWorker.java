@@ -33,7 +33,6 @@ import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.ra.UserNotificationParamGen;
 import org.ejbca.core.model.services.ServiceExecutionFailedException;
 import org.ejbca.core.model.services.actions.MailActionInfo;
-import org.ejbca.core.model.services.workers.EmailSendingWorker.EmailCertData;
 
 /**
  * Makes queries about which certificates that is about to expire in a given number of days and creates a 
