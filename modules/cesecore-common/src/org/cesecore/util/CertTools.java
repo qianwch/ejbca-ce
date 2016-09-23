@@ -2555,11 +2555,11 @@ public abstract class CertTools {
                     if (krb5Principal != null) {
                         ret = CertTools.KRB5PRINCIPAL + "=" + krb5Principal;
                     } else {
-                        final String xmpAddr = getUTF8StringFromSequence(seq, CertTools.XMPPADDR);
+                        final String xmpAddr = getUTF8StringFromSequence(seq, CertTools.XMPPADDR_OBJECTID);
                         if (xmpAddr != null) {
                             ret = CertTools.XMPPADDR + "=" + xmpAddr;
                         } else {
-                            final String srvName = getIA5StringFromSequence(seq, CertTools.SRVNAME);
+                            final String srvName = getIA5StringFromSequence(seq, CertTools.SRVNAME_OBJECTID);
                             if (srvName != null) {
                                 ret = CertTools.SRVNAME + "=" + srvName;
                             }
