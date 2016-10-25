@@ -1,3 +1,24 @@
+EJBCA 6.5.4
+-----------
+An autumn patch release to the so far stable EJBCA 6.5 branch, EJBCA 6.5.4 adds a few fixes to issues that showed up in production, as well as two 
+new features and a couple of improvements.
+All in all, this release contains 10 bug fixes and improvements.
+
+Features: 
+- Add support for RegisteredID in subject alternative name
+- Add the ability to use variables in email subject for email expiration service
+
+ICAO CSCA:
+- Issuer altName was not set when creating a new Root CA
+
+OCSP: 
+- Change behavior when CA certificates are revoked to only regard revocation reasons *Compromise as CA private key compromise in VA
+
+Bugs:
+- CMP revocation requests failed CA authorization if issuer CA has X.500 ordering
+- clientToolbox did not start when using PKCS#11 and there was no JAVA_HOME set
+- Verification of database integrity protection did not work for custom certificate extensions
+
 EJBCA 6.5.3
 -----------
 Just in time for Midsummer in Sweden, what's better on a holiday than deploying a new version of EJBCA? This release of EJBCA 6.5.3 adds a couple of 
