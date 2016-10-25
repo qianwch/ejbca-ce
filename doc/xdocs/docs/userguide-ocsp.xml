@@ -92,7 +92,7 @@ of the value of 'ocsp.includecertchain'</li>
 <p>
 When the first entry in the CA certificate chain matching an OCSP request is revoked with one of the reason codes
 "keyCompromise", "cACompromise", "aACompromise" or "unspecified", the status of the requested certificate will be
-returned as revoked with reason "cACompromise"
+returned as revoked with reason "cACompromise". This is in accordance with RFC6960, section 2.7.
 </p>
 <p>
 This means that you can instantly block the use of leaf certificates by revoking the issuer of these certificates using
