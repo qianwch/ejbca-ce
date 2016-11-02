@@ -1750,7 +1750,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
         }
         // Add CA
         caSession.addCA(admin, ca);
-        // Publish CA certificates.
+        // Persist ("Publish") the CA certificates to the local CertificateData database.
         publishCACertificate(admin, certificates, null, ca.getSubjectDN());
     }
 
@@ -1828,6 +1828,8 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
         ca.setCertificateChain(certificates);
         // Update CA in database
         caSession.editCA(authenticationToken, ca, true);
+        // Persist ("Publish") the CA certificates to the local CertificateData database.
+        publishCACertificate(authenticationToken, certificates, null, ca.getSubjectDN());
     }
 
     @Override
