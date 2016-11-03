@@ -157,6 +157,7 @@ java.security.InvalidAlgorithmParameterException
   static final String CHECKBOX_AUTHORITYKEYIDENTIFIERCRITICAL     = "checkboxauthoritykeyidentifiercritical";
   static final String CHECKBOX_USECRLNUMBER                       = "checkboxusecrlnumber";
   static final String CHECKBOX_CRLNUMBERCRITICAL                  = "checkboxcrlnumbercritical";
+  static final String CHECKBOX_KEEPEXPIREDONCRL                   = "checkboxkeepexpiredoncrl";
   static final String CHECKBOX_FINISHUSER                         = "checkboxfinishuser";
   static final String CHECKBOX_DOENFORCEUNIQUEPUBLICKEYS          = "isdoenforceuniquepublickeys";
   static final String CHECKBOX_DOENFORCEUNIQUEDN                  = "isdoenforceuniquedn";
@@ -366,6 +367,7 @@ java.security.InvalidAlgorithmParameterException
                 final String availablePublisherValues = requestMap.get(SELECT_AVAILABLECRLPUBLISHERS);//request.getParameterValues(SELECT_AVAILABLECRLPUBLISHERS);
                 final boolean usecrlnumber = CHECKBOX_VALUE.equals(requestMap.get(CHECKBOX_USECRLNUMBER));
                 final boolean crlnumbercritical = CHECKBOX_VALUE.equals(requestMap.get(CHECKBOX_CRLNUMBERCRITICAL));
+                final boolean keepexpiredoncrl = CHECKBOX_VALUE.equals(requestMap.get(CHECKBOX_KEEPEXPIREDONCRL));
                 final String defaultcrldistpoint = requestMap.get(TEXTFIELD_DEFAULTCRLDISTPOINT);
                 final String defaultcrlissuer = requestMap.get(TEXTFIELD_DEFAULTCRLISSUER);
                 final String defaultocsplocator  = requestMap.get(TEXTFIELD_DEFAULTOCSPLOCATOR);
@@ -402,7 +404,7 @@ java.security.InvalidAlgorithmParameterException
                		 authorityInformationAccess, nameConstraintsPermitted, nameConstraintsExcluded,
                		 caDefinedFreshestCrl, useutf8policytext, useprintablestringsubjectdn, useldapdnorder,
                		 usecrldistpointoncrl, crldistpointoncrlcritical, includeInHealthCheck, serviceOcspActive,
-               		 serviceCmsActive, sharedCmpRaSecret, buttonCreateCa, buttonMakeRequest,
+               		 serviceCmsActive, sharedCmpRaSecret, keepexpiredoncrl, buttonCreateCa, buttonMakeRequest,
                		 cryptoTokenIdString, keyAliasCertSignKey, keyAliasCrlSignKey, keyAliasDefaultKey,
                		 keyAliasHardTokenEncryptKey, keyAliasKeyEncryptKey, keyAliasKeyTestKey,
                		 fileBuffer);
@@ -546,6 +548,7 @@ java.security.InvalidAlgorithmParameterException
                 final boolean authoritykeyidentifiercritical = CHECKBOX_VALUE.equals(requestMap.get(CHECKBOX_AUTHORITYKEYIDENTIFIERCRITICAL));
                 final boolean usecrlnumber = CHECKBOX_VALUE.equals(requestMap.get(CHECKBOX_USECRLNUMBER));
                 final boolean crlnumbercritical = CHECKBOX_VALUE.equals(requestMap.get(CHECKBOX_CRLNUMBERCRITICAL));
+                final boolean keepexpiredoncrl = CHECKBOX_VALUE.equals(requestMap.get(CHECKBOX_KEEPEXPIREDONCRL));
                 final String defaultcrldistpoint = requestMap.get(TEXTFIELD_DEFAULTCRLDISTPOINT);
                 final String defaultcrlissuer = requestMap.get(TEXTFIELD_DEFAULTCRLISSUER);
                 final String defaultocsplocator  = requestMap.get(TEXTFIELD_DEFAULTOCSPLOCATOR);
@@ -593,7 +596,7 @@ java.security.InvalidAlgorithmParameterException
             		crlnumbercritical, defaultcrldistpoint, defaultcrlissuer, defaultocsplocator, authorityInformationAccess,
             		nameConstraintsPermitted, nameConstraintsExcluded,
             		caDefinedFreshestCrl, useutf8policytext, useprintablestringsubjectdn, useldapdnorder, usecrldistpointoncrl,
-            		crldistpointoncrlcritical, includeInHealthCheck, serviceOcspActive, serviceCmsActive, sharedCmpRaSecret
+            		crldistpointoncrlcritical, includeInHealthCheck, serviceOcspActive, serviceCmsActive, sharedCmpRaSecret, keepexpiredoncrl
             		);
                 
                 if (cadatahandler.getCAInfo(caid).getCAInfo().getStatus() == CAConstants.CA_UNINITIALIZED) {

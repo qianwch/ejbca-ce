@@ -111,7 +111,8 @@ public class X509CAInfo extends CAInfo{
              false, // useCertReqHistory
              true, // useUserStorage
              true, // useCertificateStorage
-             null // cmpRaAuthSecret
+             null, // cmpRaAuthSecret
+             false // keepExpiredCertsOnCRL
         );
     }
     
@@ -131,7 +132,7 @@ public class X509CAInfo extends CAInfo{
     		final boolean useUTF8PolicyText, final Collection<Integer> approvalSettings, final int approvalProfile, final boolean usePrintableStringSubjectDN, 
     		final boolean useLdapDnOrder, final boolean useCrlDistributionPointOnCrl, final boolean crlDistributionPointOnCrlCritical, final boolean includeInHealthCheck,
     		final boolean _doEnforceUniquePublicKeys, final boolean _doEnforceUniqueDistinguishedName, final boolean _doEnforceUniqueSubjectDNSerialnumber,
-    		final boolean _useCertReqHistory, final boolean _useUserStorage, final boolean _useCertificateStorage, final String _cmpRaAuthSecret) {
+    		final boolean _useCertReqHistory, final boolean _useUserStorage, final boolean _useCertificateStorage, final String _cmpRaAuthSecret, final boolean keepExpiredCertsOnCRL) {
         this.subjectdn = CertTools.stringToBCDNString(StringTools.strip(subjectdn));
         this.caid = CertTools.stringToBCDNString(this.subjectdn).hashCode();
         this.name = name;
@@ -194,6 +195,7 @@ public class X509CAInfo extends CAInfo{
         this.useUserStorage = _useUserStorage;
         this.useCertificateStorage = _useCertificateStorage;
         setCmpRaAuthSecret(_cmpRaAuthSecret);
+        this.keepExpiredCertsOnCRL = keepExpiredCertsOnCRL;
         this.authorityInformationAccess = authorityInformationAccess;
         this.nameConstraintsPermitted = nameConstraintsPermitted;
         this.nameConstraintsExcluded = nameConstraintsExcluded;
@@ -209,7 +211,7 @@ public class X509CAInfo extends CAInfo{
     		final boolean useUTF8PolicyText, final Collection<Integer> approvalSettings, final int approvalProfile, final boolean usePrintableStringSubjectDN, 
     		final boolean useLdapDnOrder, final boolean useCrlDistributionPointOnCrl, final boolean crlDistributionPointOnCrlCritical, final boolean includeInHealthCheck,
     		final boolean _doEnforceUniquePublicKeys, final boolean _doEnforceUniqueDistinguishedName, final boolean _doEnforceUniqueSubjectDNSerialnumber, final boolean _useCertReqHistory, 
-    		final boolean _useUserStorage, final boolean _useCertificateStorage, final String _cmpRaAuthSecret) {        
+    		final boolean _useUserStorage, final boolean _useCertificateStorage, final String _cmpRaAuthSecret, final boolean keepExpiredCertsOnCRL) {        
         this.caid = caid;
         this.encodedValidity = encodedValidity;
         this.catoken = catoken;
@@ -244,6 +246,7 @@ public class X509CAInfo extends CAInfo{
         this.useUserStorage = _useUserStorage;
         this.useCertificateStorage = _useCertificateStorage;
         setCmpRaAuthSecret(_cmpRaAuthSecret);
+        this.keepExpiredCertsOnCRL = keepExpiredCertsOnCRL;
         this.authorityInformationAccess = authorityInformationAccess;
         this.nameConstraintsPermitted = nameConstraintsPermitted;
         this.nameConstraintsExcluded = nameConstraintsExcluded;
