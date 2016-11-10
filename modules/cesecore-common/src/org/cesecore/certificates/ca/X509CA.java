@@ -252,12 +252,8 @@ public class X509CA extends CA implements Serializable {
                 }
             }
         }
-
-        String encodedValidity = getEncodedValidity();
-        if (StringUtils.isBlank(encodedValidity)) {
-            encodedValidity = ValidityDate.getStringBeforeVersion661(getValidity());
-        }
-        final CAInfo info = new X509CAInfo(subjectDN, name, status, updateTime, getSubjectAltName(), getCertificateProfileId(), encodedValidity,
+        
+        final CAInfo info = new X509CAInfo(subjectDN, name, status, updateTime, getSubjectAltName(), getCertificateProfileId(), getEncodedValidity(),
                 getExpireTime(), getCAType(), getSignedBy(), getCertificateChain(), getCAToken(), getDescription(),
                 getRevocationReason(), getRevocationDate(), getPolicies(), getCRLPeriod(), getCRLIssueInterval(), getCRLOverlapTime(),
                 getDeltaCRLPeriod(), getCRLPublishers(), getUseAuthorityKeyIdentifier(), getAuthorityKeyIdentifierCritical(), getUseCRLNumber(),
@@ -1780,8 +1776,7 @@ public class X509CA extends CA implements Serializable {
                     data.put(CERTIFICATE_AIA_DEFAULT_CA_ISSUER_URI, new ArrayList<String>());
                 }
             }
-            // v22.
-            // 'encodedValidity' MUST set to "" (Empty String) here. The initialization is done during post-upgrade of EJBCA 6.6.1.
+            // v22, 'encodedValidity' is derived by the former long value!
             if(null == data.get(ENCODED_VALIDITY)) {
                 setEncodedValidity(StringUtils.EMPTY);
             }
