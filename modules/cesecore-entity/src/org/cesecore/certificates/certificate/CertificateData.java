@@ -881,7 +881,7 @@ public class CertificateData extends ProtectedData implements Serializable {
 
     /** @return return the query results as a List. */
     public static List<CertificateData> findBySerialNumber(EntityManager entityManager, String serialNumber) {
-        final TypedQuery<CertificateData> query = entityManager.createQuery("SELECT a FROM CertificateData a WHERE a.serialNumber=:serialNumber, CertificateData.class", CertificateData.class);
+        final TypedQuery<CertificateData> query = entityManager.createQuery("SELECT a FROM CertificateData a WHERE a.serialNumber=:serialNumber", CertificateData.class);
         query.setParameter("serialNumber", serialNumber);
         return query.getResultList();
     }
