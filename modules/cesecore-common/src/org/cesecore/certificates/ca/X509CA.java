@@ -32,7 +32,6 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -151,7 +150,6 @@ import org.cesecore.util.CertTools;
 import org.cesecore.util.PrintableStringNameStyle;
 import org.cesecore.util.SimpleTime;
 import org.cesecore.util.StringTools;
-import org.cesecore.util.ValidityDate;
 
 /**
  * X509CA is a implementation of a CA and holds data specific for Certificate and CRL generation according to the X509 standard.
@@ -1721,7 +1719,6 @@ public class X509CA extends CA implements Serializable {
             }
             // v17->v18 is only an upgrade in order to upgrade CA token
             // v18->v19
-            // ANJAKOBS: Could this be a CRITICAL bug for the next upgrade?
             Object o = data.get(CRLPERIOD);
             if (o instanceof Integer) {
                 setCRLPeriod(((Integer) o).longValue() * SimpleTime.MILLISECONDS_PER_HOUR); // h to ms
@@ -1749,13 +1746,13 @@ public class X509CA extends CA implements Serializable {
                 // Remove any data if it exists
                 data.remove(EXTENDEDCASERVICE+2);                
             }
-            if(data.get(NAMECHANGED) == null) {
+            if (data.get(NAMECHANGED) == null) {
                 setNameChanged(false);
             }
             // v21, AIA: Copy CA issuer URI to separated AIA field.
             // This is a feature for EJBCA 6.7.0, but merge order made it go in before v44
             // so we need to add the value here in order to be upgrade safe 
-            if(data.get(CERTIFICATE_AIA_DEFAULT_CA_ISSUER_URI) == null) {
+            if (data.get(CERTIFICATE_AIA_DEFAULT_CA_ISSUER_URI) == null) {
                 if (null != getAuthorityInformationAccess()) {
                     data.put(CERTIFICATE_AIA_DEFAULT_CA_ISSUER_URI, getAuthorityInformationAccess());
                 } else {
@@ -1763,7 +1760,7 @@ public class X509CA extends CA implements Serializable {
                 }
             }
             // v22, 'encodedValidity' is derived by the former long value!
-            if(null == data.get(ENCODED_VALIDITY)) {
+            if (null == data.get(ENCODED_VALIDITY)  && null != data.get(VALIDITY)) {
                 setEncodedValidity(StringUtils.EMPTY);
             }
         }
