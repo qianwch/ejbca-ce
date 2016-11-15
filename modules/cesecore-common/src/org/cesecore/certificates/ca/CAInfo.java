@@ -279,7 +279,6 @@ public abstract class CAInfo implements Serializable {
     }
 
     public void setCRLPeriod(long crlperiod) {
-        System.out.println("CAInfo setCRLPeriod: " + crlperiod);
         this.crlperiod = crlperiod;
     }
 
