@@ -61,9 +61,8 @@ public final class TimeUnitFormat {
             if (index++ > 0) {
                 builder.append(OR);
             }
-            for (char c : unit.toCharArray()) {
-                builder.append(OPENING_BRAKET).append(Character.toLowerCase(c)).append(CLOSING_BRAKET);
-            }
+            // allows the characters passed in as units. the regexp is compiled with Pattern.CASE_INSENSITIVE below.
+            builder.append(Pattern.quote(unit));
         }
         builder.append(PATTERN_SUFFIX);
         pattern = Pattern.compile(builder.toString(), Pattern.CASE_INSENSITIVE);
