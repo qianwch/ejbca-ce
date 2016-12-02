@@ -1,5 +1,10 @@
+EJBCA 6.5.2.2
+-------------
+
+This patch release fixes a bug when there are failing CT (Certificate Transparency) log submissions.
+
 EJBCA 6.5.2.1
------------
+-------------
 
 This patch release fixes one minor regression in the CLI. 
 

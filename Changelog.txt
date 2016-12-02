@@ -1,3 +1,8 @@
+EJBCA 6.5.2.2, 2016-12-02
+---
+Bug
+    [ECA-5549] - CT Log submission can fail in certain circumstances when it shouldn't.
+
 EJBCA 6.5.2.1, 2016-05-16
 ---
 Bug
