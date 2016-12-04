@@ -1,3 +1,16 @@
+EJBCA 6.6.2, 2016-12-04
+-----------
+This release of EJBCA fixes one single issue to improve stability of submissions for Certificate Transparency logs. 
+This feature is only related to issuance of publicly trusted TLS certificates.
+ 
+Bugfixes:
+- CT Log submission could fail in certain circumstances when it should not
+
+EJBCA 6.6.1, 2016-12-04
+---
+Bug
+    [ECA-5549] - CT Log submission can fail in certain circumstances when it shouldn't
+
 EJBCA 6.6.1, 2016-11-23
 ---
 Master Ticket
