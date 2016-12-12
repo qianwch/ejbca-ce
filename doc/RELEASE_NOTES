@@ -1,3 +1,8 @@
+EJBCA 6.6.2.1
+-----------
+
+This patch release fixes the issue of EJBCA workers not having access to ApprovalProfileSession, leading to NPE's in certain cases.
+
 EJBCA 6.6.2
 -----------
 This release of EJBCA fixes one single issue to improve stability of submissions for Certificate Transparency logs. 
