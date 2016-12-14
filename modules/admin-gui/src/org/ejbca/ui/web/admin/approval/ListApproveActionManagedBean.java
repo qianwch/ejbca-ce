@@ -116,7 +116,7 @@ public class ListApproveActionManagedBean extends BaseManagedBean {
 		try {
             RAAuthorization raAuthorization = new RAAuthorization(EjbcaJSFHelper.getBean().getAdmin(), ejbLocalHelper.getGlobalConfigurationSession(),
             		ejbLocalHelper.getAccessControlSession(), ejbLocalHelper.getComplexAccessControlSession(), ejbLocalHelper.getCaSession(), 
-            		ejbLocalHelper.getEndEntityProfileSession(), ejbLocalHelper.getApprovalProfileSession());
+            		ejbLocalHelper.getEndEntityProfileSession());
 			result = ejbLocalHelper.getApprovalSession().query(EjbcaJSFHelper.getBean().getAdmin(), query, 0, QUERY_MAX_NUM_ROWS, 
 			        raAuthorization.getCAAuthorizationString(), raAuthorization.getEndEntityProfileAuthorizationString(AccessRulesConstants.APPROVE_END_ENTITY));
 			if(result.size() == QUERY_MAX_NUM_ROWS){

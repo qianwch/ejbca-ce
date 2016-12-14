@@ -2036,7 +2036,7 @@ public class EndEntityManagementSessionBean implements EndEntityManagementSessio
         RAAuthorization raauthorization = null;
         if (caauthorizationstring == null || endentityprofilestring == null) {
             raauthorization = new RAAuthorization(admin, globalConfigurationSession, authorizationSession, complexAccessControlSession, caSession,
-                    endEntityProfileSession, approvalProfileSession);
+                    endEntityProfileSession);
             caauthstring = raauthorization.getCAAuthorizationString();
             if (globalconfiguration.getEnableEndEntityProfileLimitations()) {
                 endentityauth = raauthorization.getEndEntityProfileAuthorizationString(true, endentityAccessRule);

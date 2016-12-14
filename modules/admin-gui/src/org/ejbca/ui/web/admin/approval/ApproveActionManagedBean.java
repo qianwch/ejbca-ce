@@ -299,8 +299,7 @@ public class ApproveActionManagedBean extends BaseManagedBean {
     	List<ApprovalDataVO> result;
     	try {
     		RAAuthorization raAuthorization = new RAAuthorization(EjbcaJSFHelper.getBean().getAdmin(), globalConfigurationSession,
-    				accessControlSession, complexAccessControlSession, caSession, endEntityProfileSession, 
-    				approvalProfileSession);
+    				accessControlSession, complexAccessControlSession, caSession, endEntityProfileSession);
     		result = approvalSession.query( EjbcaJSFHelper.getBean().getAdmin(), query, 0, 1, raAuthorization.getCAAuthorizationString(), 
     		        raAuthorization.getEndEntityProfileAuthorizationString(AccessRulesConstants.APPROVE_END_ENTITY));
     		if (result.size() > 0) {

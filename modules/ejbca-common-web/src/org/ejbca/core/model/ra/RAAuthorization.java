@@ -28,7 +28,6 @@ import org.cesecore.authorization.control.AccessControlSessionLocal;
 import org.cesecore.certificates.ca.CaSession;
 import org.cesecore.configuration.GlobalConfigurationSession;
 import org.ejbca.config.GlobalConfiguration;
-import org.ejbca.core.ejb.approval.ApprovalProfileSession;
 import org.ejbca.core.ejb.authorization.ComplexAccessControlSession;
 import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileSession;
 import org.ejbca.core.model.approval.ApprovalDataVO;
@@ -46,26 +45,22 @@ public class RAAuthorization implements Serializable {
     private String authendentityprofilestring = null;
     private TreeMap<String, Integer> authprofilenames = null;
 	private List<Integer> authprofileswithmissingcas = null;
-	private String authApprovalProfilesString = null;
     private AuthenticationToken admin;
     private AccessControlSessionLocal authorizationsession;
     private ComplexAccessControlSession complexAccessControlSession;
     private GlobalConfigurationSession globalConfigurationSession;
     private CaSession caSession;
     private EndEntityProfileSession endEntityProfileSession;
-    private ApprovalProfileSession approvalProfileSession;
     
     /** Creates a new instance of RAAuthorization. */
     public RAAuthorization(AuthenticationToken admin, GlobalConfigurationSession globalConfigurationSession, AccessControlSessionLocal authorizationsession, 
-                    ComplexAccessControlSession complexAccessControlSession, CaSession caSession, EndEntityProfileSession endEntityProfileSession, 
-                    ApprovalProfileSession approvalProfileSession) {
+                    ComplexAccessControlSession complexAccessControlSession, CaSession caSession, EndEntityProfileSession endEntityProfileSession) {
     	this.admin = admin;
     	this.globalConfigurationSession = globalConfigurationSession;
     	this.authorizationsession = authorizationsession;
     	this.caSession = caSession;
     	this.endEntityProfileSession = endEntityProfileSession;
     	this.complexAccessControlSession = complexAccessControlSession;
-    	this.approvalProfileSession = approvalProfileSession;
     }
 
     /**

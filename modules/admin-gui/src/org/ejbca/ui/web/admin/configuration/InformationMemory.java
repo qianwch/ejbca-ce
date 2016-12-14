@@ -127,7 +127,7 @@ public class InformationMemory implements Serializable {
         this.availableCustomCertExtensionsConfiguration = cceConfig;
         this.certificateProfileSession = certificateProfileSession;
         this.raauthorization = new RAAuthorization(administrator, globalConfigurationSession, authorizationsession, complexAccessControlSession,
-                caSession, endEntityProfileSession, approvalProfileSession);
+                caSession, endEntityProfileSession);
         this.caauthorization = new CAAuthorization(administrator, caSession, certificateProfileSession);
         this.hardtokenauthorization = new HardTokenAuthorization(administrator, hardtokensession, authorizationsession, roleManagementSession);
         this.complexAccessControlSession = complexAccessControlSession;
