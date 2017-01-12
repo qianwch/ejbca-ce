@@ -477,7 +477,7 @@ public final class StringTools {
      * @return a deobfuscated string, or the original if it does not start with OBF:
      */
     public static String deobfuscateIf(final String s) {
-        if (s.startsWith("OBF:")) {
+        if (s != null && s.startsWith("OBF:")) {
             return deobfuscate(s);
         }
         return s;
@@ -490,7 +490,7 @@ public final class StringTools {
      */
     public static String deobfuscate(final String in) {
         String s = in;
-        if (s.startsWith("OBF:")) {
+        if (s != null && s.startsWith("OBF:")) {
             s = s.substring(4);
         }
         if (StringUtils.isEmpty(s)) {
