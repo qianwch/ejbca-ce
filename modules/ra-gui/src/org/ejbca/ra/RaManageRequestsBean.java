@@ -70,14 +70,12 @@ public class RaManageRequestsBean implements Serializable {
     
     private enum ViewTab { NEEDS_APPROVAL, PENDING_APPROVAL, PROCESSED, CUSTOM_SEARCH };
     private ViewTab viewTab;
-    private boolean customSearchingWaiting;
-    private boolean customSearchingPending;
-    private boolean customSearchingProcessed;
-    private boolean customSearchingExpired;
+    private boolean customSearchingWaiting = true;
+    private boolean customSearchingProcessed = true;
+    private boolean customSearchingExpired = true;
     private String customSearchStartDate;
     private String customSearchEndDate;
     private String customSearchExpiresDays;
-    private boolean customSearchIncludeOtherAdmins;
     
     private enum SortBy { ID, REQUEST_DATE, CA, TYPE, DISPLAY_NAME, REQUESTER_NAME, STATUS };
     private SortBy sortBy = SortBy.REQUEST_DATE;
@@ -166,18 +164,16 @@ public class RaManageRequestsBean implements Serializable {
                     cal.setTime(new Date());
                     cal.add(Calendar.DAY_OF_MONTH, Integer.parseInt(customSearchExpiresDays.trim()));
                     searchRequest.setExpiresBefore(cal.getTime());
-                    if (!customSearchingWaiting && !customSearchingPending) {
-                        // This combination makes no sense, so show unfinished requests also
-                        customSearchingWaiting = true;
-                        customSearchingPending = true;
-                        customSearchIncludeOtherAdmins = true;
-                    }
+                    // Only requests in waiting state can expire
+                    customSearchingWaiting = true;
+                    customSearchingProcessed = false;
+                    customSearchingExpired = false;
                 }
                 searchRequest.setSearchingWaitingForMe(customSearchingWaiting);
-                searchRequest.setSearchingPending(customSearchingPending);
+                searchRequest.setSearchingPending(customSearchingWaiting); // those are also waiting
                 searchRequest.setSearchingHistorical(customSearchingProcessed);
                 searchRequest.setSearchingExpired(customSearchingExpired);
-                searchRequest.setIncludeOtherAdmins(customSearchIncludeOtherAdmins);
+                searchRequest.setIncludeOtherAdmins(true);
             } catch (ParseException e) {
                 // Text field is validated by f:validateRegex, so shouldn't happen
                 throw new IllegalStateException("Invalid date value", e);
@@ -205,8 +201,6 @@ public class RaManageRequestsBean implements Serializable {
     
     public boolean isCustomSearchingWaiting() { return customSearchingWaiting; }
     public void setCustomSearchingWaiting(final boolean customSearchingWaiting) { this.customSearchingWaiting = customSearchingWaiting; }
-    public boolean isCustomSearchingPending() { return customSearchingPending; }
-    public void setCustomSearchingPending(final boolean customSearchingPending) { this.customSearchingPending = customSearchingPending; }
     public boolean isCustomSearchingProcessed() { return customSearchingProcessed; }
     public void setCustomSearchingProcessed(final boolean customSearchingProcessed) { this.customSearchingProcessed = customSearchingProcessed; }
     public boolean isCustomSearchingExpired() { return customSearchingExpired; }
@@ -217,24 +211,6 @@ public class RaManageRequestsBean implements Serializable {
     public void setCustomSearchEndDate(final String endDate) { this.customSearchEndDate = StringUtils.trim(endDate); }
     public String getCustomSearchExpiresDays() { return customSearchExpiresDays; }
     public void setCustomSearchExpiresDays(final String customSearchExpiresDays) { this.customSearchExpiresDays = StringUtils.trim(customSearchExpiresDays); }
-    public boolean getCustomSearchIncludeOtherAdmins() { return customSearchIncludeOtherAdmins; }
-    public void setCustomSearchIncludeOtherAdmins(final boolean customSearchIncludeOtherAdmins) { this.customSearchIncludeOtherAdmins = customSearchIncludeOtherAdmins; }
-    
-    public String getCustomSearchWaitingCheckboxLabel() {
-        return raLocaleBean.getMessage(customSearchIncludeOtherAdmins ? "manage_requests_page_search_waiting_for_first" : "manage_requests_page_search_waiting");
-    }
-    
-    public String getCustomSearchWaitingCheckboxTitle() {
-        return customSearchIncludeOtherAdmins ? "" : raLocaleBean.getMessage("manage_requests_page_search_waiting_explanation");
-    }
-    
-    public String getCustomSearchPendingCheckboxLabel() {
-        return raLocaleBean.getMessage(customSearchIncludeOtherAdmins ? "manage_requests_page_search_in_progress" : "manage_requests_page_search_pending");
-    }
-    
-    public String getCustomSearchPendingCheckboxTitle() {
-        return customSearchIncludeOtherAdmins ? "" : raLocaleBean.getMessage("manage_requests_page_search_pending_explanation");
-    }
     
     public List<ApprovalRequestGUIInfo> getFilteredResults() {
         getViewedTab(); // make sure we have all data
