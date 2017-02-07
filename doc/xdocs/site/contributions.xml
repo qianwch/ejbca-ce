@@ -108,9 +108,6 @@ What you need to know to develop EJBCA
     <li>Databases</li>
 </ul>
 </ul>
-    <p>
-    The <a href="http://wiki.ejbca.org/developers">EJBCA Wiki</a> have more information you need to get started with EJBCA development.
-    </p>
 </subsection>
 <subsection name="Using SVN">
 <p>
