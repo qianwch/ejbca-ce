@@ -1,6 +1,6 @@
 EJBCA 6.6.3, 2016-12-22
 ---
-Bug
+Bug 
     [ECA-5527] - PeerRaMasterServiceBean delays shutdown
     [ECA-5554] - View certificate throws StringIndexOutOfBoundsException when certificate cannot be read
     [ECA-5568] - Incorrect column type used in Oracle upgrade script
