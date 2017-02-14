@@ -321,7 +321,6 @@ public class EditPublisherJSPHelper {
                                             } else {
                                                 sb.append(customPublisherProperty.getName()).append('=').append("true").append('\n');
                                             }
-                                            sb.append(customPublisherProperty.getName()).append('=').append(customValue).append('\n');
                                         } else {
                                             if (customValue!=null) {
                                                 sb.append(customPublisherProperty.getName()).append('=').append(customValue).append('\n');
