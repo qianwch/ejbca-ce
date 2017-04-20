@@ -1,7 +1,7 @@
 EJBCA 6.5.0.6
 -----------
 
-Miscellenious fixes for end entity searches and to the audit log in regards to searching for apostrophes and accented characters.
+Miscellaneous fixes for end entity searches and to the audit log in regards to searching for apostrophes and accented characters.
 
 Please note that the ability to search for contents in the 'Details' column of the audit log has been removed, due to not returning complete results
 for log rows containing accented characters. 
