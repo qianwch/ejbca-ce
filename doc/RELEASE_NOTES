@@ -1,3 +1,24 @@
+EJBCA 6.5.0.6
+-----------
+
+Miscellenious fixes for end entity searches and to the audit log in regards to searching for apostrophes and accented characters. 
+
+EJBCA 6.5.0.5
+-----------
+
+Patch release for https://jira.primekey.se/browse/ECA-5764, https://jira.primekey.se/browse/ECA-5767, https://jira.primekey.se/browse/ECA-5784
+and https://jira.primekey.se/browse/ECA-5798
+
+EJBCA 6.5.0.4
+-----------
+
+Some fixes for deployment to WildFly 10, and for upgrade of the Community edition. 
+
+EJBCA 6.5.0.3
+----------- 
+
+Patch release for https://jira.primekey.se/browse/ECA-4955 and https://jira.primekey.se/browse/ECA-4931
+
 EJBCA 6.5.0.2
 -----------
 
