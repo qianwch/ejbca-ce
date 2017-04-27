@@ -1,3 +1,8 @@
+EJBCA 6.7.0.1
+-----------
+
+This is a patch release for https://jira.primekey.se/browse/ECA-5853
+
 EJBCA 6.7.0
 -----------
 We are pleased to release EJBCA 6.7.0. This release adds official support for MS Autoenrollment, implemented as an enrollment Proxy/Gateway, which is
