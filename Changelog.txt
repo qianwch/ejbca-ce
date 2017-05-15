@@ -1,3 +1,36 @@
+EJBCA 6.5.0.6, 2017-04-21
+---
+Bug
+    [ECA-5829] - Advanced Search End Entities page in CA UI doesn't parse apostrophes
+    [ECA-5830] - Details column in Audit log shows only encoded base64 if text contains accent characters (ë, è, ê, etc)
+    [ECA-5831] - Non-ASCII characters in audit log export are incorrectly encoded as XML entities
+    [ECA-5834] - Search for on audit log using 'contains' on 'Details' column can't parse apostrophes
+
+Improvement
+    [ECA-5832] - Decode B64 encoding in Audit Log XML export
+    [ECA-5838] - Remove possibility to search in details column of Audit Logs
+
+EJBCA 6.5.0.5, 2017-04-06
+---
+Bug
+ 	[ECA-5767] - Soft CA Token key alias set to wrong value in upgrade from 4.0
+    [ECA-5764] - Backport: Key alias in CMS CA service was changed so it can not be read after upgrade 
+    [ECA-5784] - Legacy script based autoenrolment should not remove end entity profile
+    [ECA-5798] - Backport clientToolBox fix to EJBCA Community
+    
+EJBCA 6.5.0.4, 2017-02-10
+---
+Bug
+    [ECA-4872] - System configuration page broken in WildFly 10
+    [ECA-4945] - Edit admin entities broken in WildFly 10
+    [ECA-5687] - EJBCA 6.5.0 Community post-upgrade does not fail gracefully
+
+EJBCA 6.5.0.3, 2016-03-23
+---
+Bug
+    [ECA-4931] - Minor security issue
+    [ECA-4955] - CMP Proxy swallows underlying error message when verifying certificate path
+
 EJBCA 6.5.0.2, 2016-03-01
 ---
 Bug
