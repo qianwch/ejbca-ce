@@ -1,3 +1,13 @@
+EJBCA 6.2.7.2, 2016-02-10
+---
+Bug
+	[ECA-4765] - GeneralPurposeCustomPublisher doesn't surround command arguments with quotes.
+
+EJBCA 6.2.7.1, 2015-01-18
+---
+New Feature
+	[ECA-4052] - Allow override of EJBCA's subject DN ordering in web service call for issuing certificate
+
 EJBCA 6.2.7, 2015-01-14
 ---
 Bug
