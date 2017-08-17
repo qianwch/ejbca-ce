@@ -350,7 +350,7 @@ org.cesecore.certificates.ca.ApprovalRequestType
                 final String description = requestMap.get(TEXTFIELD_DESCRIPTION);
                 String validityString = requestMap.get(TEXTFIELD_VALIDITY);
                 
-                Map<ApprovalRequestType, Integer> approvals = new HashMap<ApprovalRequestType, Integer>();
+                Map<ApprovalRequestType, Integer> approvals = new LinkedHashMap<ApprovalRequestType, Integer>();
                 for(ApprovalRequestType approvalRequestType : ApprovalRequestType.values()) {
                     String approvalProfile = requestMap.get(SELECT_APPROVALPROFILE + "_" + approvalRequestType.getIntegerValue());
                     if(approvalProfile != null && !approvalProfile.equals("-1")) {
@@ -588,7 +588,7 @@ org.cesecore.certificates.ca.ApprovalRequestType
                     signedByString = String.valueOf(cainfo.getSignedBy());
                 }	
                 
-                Map<ApprovalRequestType, Integer> approvals = new HashMap<ApprovalRequestType, Integer>();
+                Map<ApprovalRequestType, Integer> approvals = new LinkedHashMap<ApprovalRequestType, Integer>();
                 for(ApprovalRequestType approvalRequestType : ApprovalRequestType.values()) {
                     String approvalProfile = requestMap.get(SELECT_APPROVALPROFILE + "_" + approvalRequestType.getIntegerValue());
                     if(approvalProfile != null) {
