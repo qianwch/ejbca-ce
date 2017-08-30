@@ -1,3 +1,9 @@
+EJBCA 6.9.0.2, 2017-08-30
+---
+
+Bug
+    [ECA-6088] - Create tables scripts all refer to the PublicKeyBlacklistData instead of BlacklistData 
+
 EJBCA 6.9.0.1, 2017-08-29
 ---
 
