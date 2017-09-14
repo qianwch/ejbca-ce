@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -282,21 +281,18 @@ public final class ConfigurationHolder {
     }
     
     /**
-     * In a list of properties named "something.NAME.xxx.yyy", returns all
+     * Given the prefix "something", in a list of properties named "something.NAME.xxx.yyy", returns all
      * unique names (the NAME part only) in sorted order.
      */
     public static List<String> getPrefixedPropertyNames(String prefix) {
-        prefix = prefix + ".";
         Set<String> algs = new HashSet<String>();
-        Properties props = ConfigurationHolder.getAsProperties();
-        for (Entry<Object,Object> entry : props.entrySet()) {
-            final String key = (String)entry.getKey();
-            if (key.startsWith(prefix)) {
-                int dot = key.indexOf(".", prefix.length());
-                algs.add(key.substring(prefix.length(), dot));
-            }
+        // Just get the keys from configuration that starts with prefix, we assume below that it has a . following the prefix
+        Iterator<String> iterator = config.getKeys(prefix);
+        while (iterator.hasNext()) {
+            final String key = iterator.next();
+            final int dot = key.indexOf(".", prefix.length()+1); // +1 to skip the . directly following prefix
+            algs.add(key.substring(prefix.length()+1, dot));
         }
-        
         ArrayList<String> list = new ArrayList<String>(algs);
         Collections.sort(list);
         return list;
