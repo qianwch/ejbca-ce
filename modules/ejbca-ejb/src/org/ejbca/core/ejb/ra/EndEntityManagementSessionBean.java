@@ -1056,109 +1056,6 @@ public class EndEntityManagementSessionBean implements EndEntityManagementSessio
             new ApprovalOveradableClassName("se.primeKey.cardPersonalization.ra.connection.ejbca.EjbcaConnection", null) };
 
     @Override
-    public void resetRemainingLoginAttempts(String username) throws FinderException {
-        if (log.isTraceEnabled()) {
-            log.trace(">resetRamainingLoginAttempts(" + username + ")");
-        }
-        int resetValue = -1;
-        final UserData data1 = UserData.findByUsername(entityManager, username);
-        if (data1 != null) {
-            final int caid = data1.getCaId();
-            final ExtendedInformation ei = data1.getExtendedInformation();
-            if (ei != null) {
-                if (resetRemainingLoginAttemptsInternal(ei, username, caid)) {
-                    data1.setTimeModified(new Date().getTime());
-                    data1.setExtendedInformation(ei);
-                }
-            }
-        } else {
-            log.info(intres.getLocalizedMessage("ra.errorentitynotexist", username));
-            // This exception message is used to not leak information to the user
-            String msg = intres.getLocalizedMessage("ra.wrongusernameorpassword");
-            log.info(msg);
-            throw new FinderException(msg);
-        }
-        if (log.isTraceEnabled()) {
-            log.trace("<resetRamainingLoginAttempts(" + username + "): " + resetValue);
-        }
-    }
-
-    /**
-     * Assumes authorization has already been checked.. Modifies the ExtendedInformation object to reset the remaining login attempts.
-     * @return true if any change was made, false otherwise
-     */
-    private boolean resetRemainingLoginAttemptsInternal(final ExtendedInformation ei, final String username,
-            final int caid) {
-        if (log.isTraceEnabled()) {
-            log.trace(">resetRemainingLoginAttemptsInternal");
-        }
-        final boolean ret;
-        final int resetValue = ei.getMaxLoginAttempts();
-        if (resetValue != -1 || ei.getRemainingLoginAttempts() != -1) {
-            ei.setRemainingLoginAttempts(resetValue);
-            final String msg = intres.getLocalizedMessage("ra.resettedloginattemptscounter", username, resetValue);
-            log.info(msg);
-            ret = true;
-        } else {
-            ret = false;
-        }
-        if (log.isTraceEnabled()) {
-            log.trace("<resetRamainingLoginAttemptsInternal: " + resetValue+", "+ret);
-        }
-        return ret;
-    }
-
-    @Override
-    public void decRemainingLoginAttempts(String username) throws NoSuchEndEntityException {
-        if (log.isTraceEnabled()) {
-            log.trace(">decRemainingLoginAttempts(" + username + ")");
-        }
-        int counter = Integer.MAX_VALUE;
-        UserData data1 = UserData.findByUsername(entityManager, username);
-        if (data1 != null) {
-            final int caid = data1.getCaId();
-            final ExtendedInformation ei = data1.getExtendedInformation();
-            if (ei != null) {
-                counter = ei.getRemainingLoginAttempts();
-                // If we get to 0 we must set status to generated
-                if (counter == 0) {
-                    // if it isn't already
-                    if (data1.getStatus() != EndEntityConstants.STATUS_GENERATED) {
-                        data1.setStatus(EndEntityConstants.STATUS_GENERATED);
-                        data1.setTimeModified(new Date().getTime());
-                        if (resetRemainingLoginAttemptsInternal(ei, username, caid)) {
-                            final String msg = intres.getLocalizedMessage("ra.decreasedloginattemptscounter", username, counter);
-                            log.info(msg);
-                            data1.setExtendedInformation(ei);
-                        }
-                    }
-                } else if (counter != -1) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Found a remaining login counter with value " + counter);
-                    }
-                    ei.setRemainingLoginAttempts(--counter);
-                    data1.setExtendedInformation(ei);
-                    String msg = intres.getLocalizedMessage("ra.decreasedloginattemptscounter", username, counter);
-                    log.info(msg);
-                } else {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Found a remaining login counter with value UNLIMITED, not decreased in db.");
-                    }
-                    counter = Integer.MAX_VALUE;
-                }
-            }
-        } else {
-            log.info(intres.getLocalizedMessage("ra.errorentitynotexist", username));
-            // This exception message is used to not leak information to the user
-            String msg = intres.getLocalizedMessage("ra.wrongusernameorpassword");
-            throw new NoSuchEndEntityException(msg);
-        }
-        if (log.isTraceEnabled()) {
-            log.trace("<decRemainingLoginAttempts(" + username + "): " + counter);
-        }
-    }
-
-    @Override
     public int decRequestCounter(String username) throws NoSuchEndEntityException, ApprovalException,
             WaitingForApprovalException {
         if (log.isTraceEnabled()) {
@@ -1363,7 +1260,7 @@ public class EndEntityManagementSessionBean implements EndEntityManagementSessio
                 // re-set the allowed request counter to the default values
                 final boolean counterChanged = resetRequestCounter(admin, false, ei, username, endEntityProfileId);
                 // Reset remaining login counter
-                final boolean resetChanged = resetRemainingLoginAttemptsInternal(ei, username, caid);
+                final boolean resetChanged = UserData.resetRemainingLoginAttemptsInternal(ei, username);
                 if (counterChanged || resetChanged) {
                     // TimeModified is set finally below, since this method sets status as well
                     // data1.setTimeModified(new Date().getTime());

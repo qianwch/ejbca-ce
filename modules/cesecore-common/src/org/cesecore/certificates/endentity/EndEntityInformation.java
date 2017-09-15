@@ -316,7 +316,7 @@ public class EndEntityInformation implements Serializable {
      * Help Method used to create an ExtendedInformation from String representation.
      * Used when creating an ExtendedInformation from queries.
      */
-    public static ExtendedInformation getExtendedInformation(final String extendedinfostring) {
+    public static ExtendedInformation getExtendedInformationFromStringData(final String extendedinfostring) {
         ExtendedInformation returnval = null;
         if (extendedinfostring != null && !extendedinfostring.isEmpty() ) {
             try (final java.beans.XMLDecoder decoder = new java.beans.XMLDecoder(new ByteArrayInputStream(extendedinfostring.getBytes(StandardCharsets.UTF_8)));) {            	

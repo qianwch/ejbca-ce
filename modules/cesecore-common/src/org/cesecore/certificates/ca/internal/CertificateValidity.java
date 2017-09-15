@@ -397,15 +397,16 @@ public class CertificateValidity {
      */
     private static final Boolean isRelativeTime(final String encodedValidity) {
         try {
-            ValidityDate.parseAsIso8601(encodedValidity);
-            return Boolean.FALSE;
-        } catch(ParseException e) {
-            // NOOP
-        }
-        try {
+            // Try the most likely setting first, for fail-fast
             SimpleTime.parseMillies(encodedValidity);
             return Boolean.TRUE;
         } catch(NumberFormatException nfe) {
+            // NOOP
+        }
+        try {
+            ValidityDate.parseAsIso8601(encodedValidity);
+            return Boolean.FALSE;
+        } catch(ParseException e) {
             return null;
         }
     }
