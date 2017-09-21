@@ -41,6 +41,12 @@
 		<br></br>
 		<h:outputText styleClass="help" value="#{web.text.CAA_VALIDATOR_DNSSEC_HELP}"/>
 	</h:panelGroup>
+	<h:outputLabel for="ignoreTld" value="#{web.text.CAA_VALIDATOR_IGNORE_TLD}" styleClass="subItem" />
+    <h:panelGroup>
+        <h:inputText id="ignoreTld" value="#{validatorBean.validator.tldIgnoreString}" disabled="#{validatorsBean.viewOnly}" />
+        <br></br>
+        <h:outputText styleClass="help" value="#{web.text.CAA_VALIDATOR_TLD_IGNORE_HELP}"/>
+    </h:panelGroup>
 	<h:outputLabel for="timeoutLimit" value="#{web.text.CAA_VALIDATOR_RETRY_DELAY}" styleClass="subItem" />
 	<h:panelGroup>
 		<h:inputText id="timeoutLimit" value="#{validatorBean.validator.dnsRetryDelay}" disabled="#{validatorsBean.viewOnly}" />
