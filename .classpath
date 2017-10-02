@@ -149,6 +149,7 @@
 	<classpathentry kind="lib" path="src/appserver/jboss/jboss7"/>
 	<classpathentry kind="lib" path="lib/ct/ctlog-jdk7-git20161207.jar"/>
 	<classpathentry kind="lib" path="lib/ct/protobuf-java-3.1.0.jar"/>
+	<classpathentry kind="lib" path="lib/ct/guava-18.0.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.web.container"/>
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.module.container"/>
 	<classpathentry kind="lib" path="lib/json-smart-1.3.1.jar"/>
