@@ -153,7 +153,7 @@ public class EndEntityAuthenticationSessionBean implements EndEntityAuthenticati
      * @return true if the value was decremented or the status was changed, false if not
      * @throws NoSuchEndEntityException if the entity does not exist
      */
-    private boolean decRemainingLoginAttempts(UserData user, ExtendedInformation ei) throws NoSuchEndEntityException {
+    public static boolean decRemainingLoginAttempts(UserData user, ExtendedInformation ei) throws NoSuchEndEntityException {
         if (log.isTraceEnabled()) {
             log.trace(">decRemainingLoginAttempts(" + user.getUsername()+ ")");
         }
