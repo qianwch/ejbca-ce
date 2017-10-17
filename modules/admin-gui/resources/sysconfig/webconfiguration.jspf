@@ -392,6 +392,10 @@ function checkuseautoenroll(){
             <b><c:out value="<%= ejbcawebbean.getText(\"CTLOGCONFIGURATION_URL\") %>" /> <code><c:out value="<%= ctlog.getUrl() %>" /></code></b><br />
             <c:out value="<%= ejbcawebbean.getText(\"CTLOGCONFIGURATION_PUBLICKEY\") %>" /> <code><c:out value="<%= ctlog.getLogKeyIdString() %>" /></code><br />
             <label><c:out value="<%= ejbcawebbean.getText(\"CTLOGCONFIGURATION_TIMEOUT\") %>" /> <input type="text" name="<%=TEXTFIELD_CTLOG_TIMEOUT%><c:out value="<%= ctlog.getLogId() %>" />" size="8" value="<c:out value="<%= ctlog.getTimeout() %>" />" title="<c:out value="<%= ejbcawebbean.getText(\"MILLISECONDS\") %>" />" /></label><br />
+            <%if (ctlog.isMandatory()) {%>
+                <c:out value="<%= ejbcawebbean.getText(\"CT_MANDATORY\") %>" />
+                <br />
+            <%}%>
             <label><input type="checkbox" name="<%=CHECKBOX_CTLOG_REMOVE%>" value="<c:out value="<%= ctlog.getLogId() %>" />" />&nbsp;<c:out value="<%= ejbcawebbean.getText(\"REMOVE\") %>" /></label><br />
             <br />
             </div><%
@@ -404,6 +408,7 @@ function checkuseautoenroll(){
         <label><c:out value="<%= ejbcawebbean.getText(\"CTLOGCONFIGURATION_URL\") %>" /> <input type="text" name="<%=TEXTFIELD_CTLOG_URL%>" size="20" /></label><br />
         <label><c:out value="<%= ejbcawebbean.getText(\"CTLOGCONFIGURATION_PUBLICKEYFILE\") %>" /> <input type="file" name="<%=FILE_CTLOG_PUBLICKEY%>" /></label><br />
         <label><c:out value="<%= ejbcawebbean.getText(\"CTLOGCONFIGURATION_TIMEOUT\") %>" /> <input type="text" name="<%=TEXTFIELD_CTLOG_TIMEOUT%>" size="8" value="5000" <c:out value="<%= ejbcawebbean.getText(\"MILLISECONDS\") %>" /> /></label><br />
+        <label><input type="checkbox" name="<%=CHECKBOX_CTLOG_MANDATORY%>" value="<c:out value="<%= ejbcawebbean.getText(\"CT_MANDATORY\") %>" />" />&nbsp;<c:out value="<%= ejbcawebbean.getText(\"CT_MANDATORY\") %>" /></label><br />
         
         <input type="submit" name="<%=BUTTON_CTLOG_UPDATE%>" value="<c:out value="<%= ejbcawebbean.getText(\"CTLOGCONFIGURATION_UPDATE\") %>" />" /><br />
         </div>

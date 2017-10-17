@@ -9,7 +9,7 @@
  *                                                                       *
  *  See terms of license at gnu.org.                                     *
  *                                                                       *
- *************************************************************************/  
+ *************************************************************************/
 package org.cesecore.certificates.certificatetransparency;
 
 import java.io.Serializable;
@@ -22,38 +22,40 @@ import org.cesecore.keys.util.KeyTools;
 
 /**
  * Represents a Certificate Transparency log
- * 
+ *
  * @version $Id$
  */
 public final class CTLogInfo implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    
+
     private final int logId;
     private final byte[] publicKeyBytes;
     private final String url; // base URL, without "add-chain" or "add-pre-chain"
     private int timeout = 5000; // milliseconds
-    
+    private final boolean isMandatory;
+
     private transient PublicKey publicKey;
-    
+
     /**
      * Creates a CT log info object, but does not parse the public key yet
      * (so it can be created from static blocks etc.)
-     * 
+     *
      * @param url  Base URL to the log. The CT log library will automatically append
      *        the strings "add-chain" or "add-pre-chain" depending on whether
      *        EJBCA is submitting a pre-certificate or a regular certificate.
      * @param publicKeyBytes  The ASN1 encoded public key of the log.
      */
-    public CTLogInfo(final String url, final byte[] publicKeyBytes) {
+    public CTLogInfo(final String url, final byte[] publicKeyBytes, final boolean isMandatory) {
         this.logId = url.hashCode();
         this.url = url;
         if (publicKeyBytes == null) {
             throw new IllegalArgumentException("publicKeyBytes is null");
         }
         this.publicKeyBytes = publicKeyBytes.clone();
+        this.isMandatory = isMandatory;
     }
-    
+
     private void ensureParsed() {
         if (publicKey == null) {
             publicKey = KeyTools.getPublicKeyFromBytes(publicKeyBytes);
@@ -72,7 +74,7 @@ public final class CTLogInfo implements Serializable {
         ensureParsed();
         return publicKey;
     }
-    
+
     /** @return Log Key ID as specified by the RFC, in human-readable format */
     public String getLogKeyIdString() {
         try {
@@ -91,13 +93,21 @@ public final class CTLogInfo implements Serializable {
     public String getUrl() {
         return url;
     }
-    
+
     public int getTimeout() {
         return timeout;
     }
-    
+
     public void setTimeout(final int timeout) {
         this.timeout = timeout;
     }
 
+    /**
+     * Determine whether this certificate transparency log belongs to the group of certificate
+     * transparency logs to which it is mandatory to publish.
+     * @return true if this is a mandatory log, or false otherwise
+     */
+    public boolean isMandatory() {
+        return isMandatory;
+    }
 }

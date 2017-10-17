@@ -697,6 +697,10 @@
 		<h:outputLabel rendered="#{certProfileBean.ctEnabled}" for="textfieldctmaxscts" value="#{web.text.EXT_CT_MAXSCTS}" styleClass="subItem"/>
 		<h:inputText rendered="#{certProfileBean.ctEnabled}" id="textfieldctmaxscts" value="#{certProfileBean.certificateProfile.CTMaxSCTs}" size="8" maxlength="255" title="#{web.text.FORMAT_INTEGER}"
 			disabled="#{!certProfileBean.certificateProfile.useCertificateTransparencyInCerts && !certProfileBean.certificateProfile.useCertificateTransparencyInOCSP}"/>
+			
+	    <h:outputLabel rendered="#{certProfileBean.ctEnabled}" for="textfieldctmandatoryscts" value="#{web.text.EXT_CT_MANDATORYSCTS}" styleClass="subItem"/>
+        <h:inputText rendered="#{certProfileBean.ctEnabled}" id="textfieldctmandatoryscts" value="#{certProfileBean.certificateProfile.CTMandatorySCTs}" size="8" maxlength="255" title="#{web.text.FORMAT_INTEGER}"
+            disabled="#{!certProfileBean.certificateProfile.useCertificateTransparencyInCerts && !certProfileBean.certificateProfile.useCertificateTransparencyInOCSP}"/>
 
 		<h:outputLabel rendered="#{certProfileBean.ctEnabled}" for="textfieldctmaxretries" value="#{web.text.EXT_CT_MAXRETRIES}" styleClass="subItem"/>
 		<h:inputText rendered="#{certProfileBean.ctEnabled}" id="textfieldctmaxretries" value="#{certProfileBean.certificateProfile.CTMaxRetries}" size="8" maxlength="255" title="#{web.text.FORMAT_INTEGER}"

@@ -56,6 +56,7 @@
   static final String FILE_CTLOG_PUBLICKEY                   = "filectlogpublickey";
   static final String TEXTFIELD_CTLOG_TIMEOUT                = "textfieldctlogtimeout";
   static final String CHECKBOX_CTLOG_REMOVE                  = "checkboxctlogremove";
+  static final String CHECKBOX_CTLOG_MANDATORY               = "checkboxctlogmandatory";
   static final String BUTTON_CTLOG_UPDATE                    = "buttonctlogupdate";
   
 
@@ -238,12 +239,13 @@
         // Check for log to add
         String url = params.getParameter(TEXTFIELD_CTLOG_URL);
         final byte[] file = files.get(FILE_CTLOG_PUBLICKEY);
+        final boolean isMandatory = params.contains(CHECKBOX_CTLOG_MANDATORY);
         if (file != null && !url.isEmpty()) {
             byte[] asn1bytes = KeyTools.getBytesFromPublicKeyFile(file);
             if (!url.endsWith("/")) {
                 url = url+"/";
             }
-            final CTLogInfo loginfo = new CTLogInfo(url, asn1bytes);
+            final CTLogInfo loginfo = new CTLogInfo(url, asn1bytes, isMandatory);
             if (loginfo.getLogPublicKey() == null) {
                 throw new ParameterException(ejbcawebbean.getText("CTLOGINVALIDPUBLICKEY"));
             }

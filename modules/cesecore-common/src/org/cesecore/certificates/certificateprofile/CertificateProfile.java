@@ -42,7 +42,7 @@ import org.cesecore.util.CertTools;
 
 /**
  * CertificateProfile is a basic class used to customize a certificate configuration or be inherited by fixed certificate profiles.
- * 
+ *
  * @version $Id$
  */
 public class CertificateProfile extends UpgradeableDataHashMap implements Serializable, Cloneable {
@@ -78,10 +78,10 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
 
     /**
      * Determines if a de-serialized file is compatible with this class.
-     * 
+     *
      * Maintainers must change this value if and only if the new version of this class is not compatible with old versions. See Sun docs for <a
      * href=http://java.sun.com/products/jdk/1.1/docs/guide /serialization/spec/version.doc.html> details. </a>
-     * 
+     *
      */
     private static final long serialVersionUID = -8069608639716545206L;
 
@@ -107,7 +107,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
     public static final int CVC_ACCESS_SIGN = 16;
     public static final int CVC_ACCESS_QUALSIGN = 32;
     public static final int CVC_ACCESS_SIGN_AND_QUALSIGN = 48;
-    
+
     /**
      * CVC terminal types. Controls which set of roles and access rights are available.
      */
@@ -116,7 +116,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
     public static final int CVC_TERMTYPE_AT = 1;
     /** Signature terminal */
     public static final int CVC_TERMTYPE_ST = 2;
-    
+
     /** Accreditation Body DV for signature terminals. ABs accredits CSPs */
     public static final int CVC_SIGNTERM_DV_AB = 0;
     /** Certification Service Provider DV for signature terminals */
@@ -245,6 +245,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
     protected static final String CTMINSCTS = "ctminscts";
     protected static final String CTMAXSCTS = "ctmaxscts";
     protected static final String CTMAXRETRIES = "ctmaxretries";
+    protected static final String CTMANDATORYSCTS = "ctmandatoryscts";
 
     /**
      * OID for creating Smartcard Number Certificate Extension SEIS Cardnumber Extension according to SS 614330/31
@@ -289,18 +290,18 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
      * that is the same as an End User certificateProfile, except that there are _no_ key usages. this means that a certificate
      * issued with a default profile should not be usable for anything. Should be used for testing and where you want to create your own
      * CertificateProfile for specific purposes.
-     * 
+     *
      */
     public CertificateProfile() {
         setCommonDefaults();
     }
-    
+
     /**
      * Creates a new instance of CertificateProfile
-     * 
+     *
      * These settings are general for all sub-profiles, only differing values are overridden in the sub-profiles. If changing any present value here
      * you must therefore go through all sub-profiles and add an override there. I.e. only add new values here, don't change any present settings.
-     * 
+     *
      * @param type
      *            one of CertificateProfileConstants.CERTPROFILE_FIXED_XX, for example CertificateConstants.CERTPROFILE_NO_PROFILE, CERTPROFILE_NO_ENDUSER, etc
      */
@@ -330,7 +331,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
 
         setUseSubjectAlternativeName(true);
         setSubjectAlternativeNameCritical(false);
-        
+
         setUseIssuerAlternativeName(true);
         setIssuerAlternativeNameCritical(false);
 
@@ -359,7 +360,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
         setUseExtendedKeyUsage(false);
         setExtendedKeyUsage(new ArrayList<String>());
         setExtendedKeyUsageCritical(false);
-        
+
         setUseDocumentTypeList(false);
         setDocumentTypeListCritical(false);
         setDocumentTypeList(new ArrayList<String>());
@@ -420,7 +421,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
         setNumOfReqApprovals(1);
         List<Integer> emptyList = Collections.emptyList();
         setApprovalSettings(emptyList);
-        
+
      // PrivateKeyUsagePeriod extension
         setUsePrivateKeyUsagePeriodNotBefore(false);
         setUsePrivateKeyUsagePeriodNotAfter(false);
@@ -575,7 +576,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
     /**
      * If validity override is allowed, a certificate can have a shorter validity than the one specefied in the certificate profile, but never longer.
      * A certificate created with validity override can hava a starting point in the future.
-     * 
+     *
      * @return true if validity override is allowed
      */
     public boolean getAllowValidityOverride() {
@@ -627,7 +628,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
 
     /**
      * If override is allowed the serial number could be specified.
-     * 
+     *
      * @return true if allowed
      */
     public boolean getAllowCertSerialNumberOverride() {
@@ -718,7 +719,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
     public void setUseSubjectAlternativeName(boolean usesubjectalternativename) {
         data.put(USESUBJECTALTERNATIVENAME, Boolean.valueOf(usesubjectalternativename));
     }
-    
+
     public boolean getStoreCertificateData() {
         //Lazy upgrade for profiles created prior to EJBCA 6.2.10
         Boolean value = (Boolean) data.get(STORECERTIFICATEDATA);
@@ -730,7 +731,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
             return value.booleanValue();
         }
     }
-    
+
     public void setStoreCertificateData(boolean storeCertificateData) {
         data.put(STORECERTIFICATEDATA, Boolean.valueOf(storeCertificateData));
     }
@@ -742,7 +743,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
     public void setSubjectAlternativeNameCritical(boolean subjectalternativenamecritical) {
         data.put(SUBJECTALTERNATIVENAMECRITICAL, Boolean.valueOf(subjectalternativenamecritical));
     }
-    
+
     public boolean getUseIssuerAlternativeName() {
         return ((Boolean) data.get(USEISSUERALTERNATIVENAME)).booleanValue();
     }
@@ -865,7 +866,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
     public void setUseCertificatePolicies(boolean usecertificatepolicies) {
         data.put(USECERTIFICATEPOLICIES, Boolean.valueOf(usecertificatepolicies));
     }
-    
+
     public boolean getUseCertificateStorage() {
         //Lazy upgrade for profiles created prior to EJBCA 6.2.10
         Boolean value = (Boolean) data.get(USECERTIFICATESTORAGE);
@@ -877,7 +878,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
             return value.booleanValue();
         }
     }
-    
+
     public void setUseCertificateStorage(boolean useCertificateStorage) {
         data.put(USECERTIFICATESTORAGE, Boolean.valueOf(useCertificateStorage));
     }
@@ -912,7 +913,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
                     l = new ArrayList<CertificatePolicy>();
                     for (int i = 0; i < oldl.size(); i++) {
                         try {
-                            org.ejbca.core.model.ca.certificateprofiles.CertificatePolicy oldPol = (org.ejbca.core.model.ca.certificateprofiles.CertificatePolicy)oldl.get(i);                            
+                            org.ejbca.core.model.ca.certificateprofiles.CertificatePolicy oldPol = (org.ejbca.core.model.ca.certificateprofiles.CertificatePolicy)oldl.get(i);
                             CertificatePolicy newPol = new CertificatePolicy(oldPol.getPolicyID(), oldPol.getQualifierId(), oldPol.getQualifier());
                             if (log.isTraceEnabled()) {
                                 log.trace("Adding converted policy");
@@ -920,12 +921,12 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
                             l.add(newPol);
                         } catch (ClassCastException e2) {
                             // This was already a new class, there are mixed policies here...
-                            CertificatePolicy newPol = (CertificatePolicy)oldl.get(i);                            
+                            CertificatePolicy newPol = (CertificatePolicy)oldl.get(i);
                             if (log.isTraceEnabled()) {
                                 log.trace("Adding non-converted policy");
                             }
                             l.add(newPol);
-                        }                        
+                        }
                     }
                 }
             }
@@ -956,14 +957,14 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
         }
     }
 
-    /** Type is used when setting BasicConstraints, i.e. to determine if it is a CA or an end entity 
+    /** Type is used when setting BasicConstraints, i.e. to determine if it is a CA or an end entity
      * @see CertificateConstants.CERTTYPE_ROOTCA etc
      */
     public int getType() {
         return ((Integer) data.get(TYPE)).intValue();
     }
 
-    /** Type is used when setting BasicConstraints, i.e. to determine if it is a CA or an end entity 
+    /** Type is used when setting BasicConstraints, i.e. to determine if it is a CA or an end entity
      * @see CertificateConstants.CERTTYPE_ROOTCA etc
      */
     public void setType(int type) {
@@ -988,7 +989,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
         int[] returnval = new int[availablebitlengths.size()];
 
         for (int i = 0; i < availablebitlengths.size(); i++) {
-            returnval[i] = ((Integer) availablebitlengths.get(i)).intValue();
+            returnval[i] = availablebitlengths.get(i).intValue();
         }
 
         return returnval;
@@ -1011,9 +1012,9 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
                 minimumavailablebitlength = availablebitlengths.get(i);
             }
         }
-        data.put(AVAILABLEBITLENGTHS, availablebitlengths);        
+        data.put(AVAILABLEBITLENGTHS, availablebitlengths);
         data.put(MINIMUMAVAILABLEBITLENGTH, Integer.valueOf(minimumavailablebitlength));
-        data.put(MAXIMUMAVAILABLEBITLENGTH, Integer.valueOf(maximumavailablebitlength));        
+        data.put(MAXIMUMAVAILABLEBITLENGTH, Integer.valueOf(maximumavailablebitlength));
     }
 
     public void setAvailableBitLengths(int[] availablebitlengths) {
@@ -1036,7 +1037,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
     /**
      * Returns the chosen algorithm to be used for signing the certificates or null if it is to be inherited from the CA (i.e., it is the same as the
      * algorithm used to sign the CA certificate).
-     * 
+     *
      * @see org.cesecore.certificates.util.core.model.AlgorithmConstants.AVAILABLE_SIGALGS
      * @return JCE identifier for the signature algorithm or null if it is to be inherited from the CA (i.e., it is the same as the algorithm used to
      *         sign the CA certificate).
@@ -1049,7 +1050,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
     /**
      * Sets the algorithm to be used for signing the certificates. A null value means that the signature algorithm is to be inherited from the CA
      * (i.e., it is the same as the algorithm used to sign the CA certificate).
-     * 
+     *
      * @param signAlg
      *            JCE identifier for the signature algorithm or null if it is to be inherited from the CA (i.e., it is the same as the algorithm used
      *            to sign the CA certificate).
@@ -1118,15 +1119,15 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
     public void setUseDocumentTypeList(boolean use) {
         data.put(USEDOCUMENTTYPELIST, Boolean.valueOf(use));
     }
-    
+
     public boolean getUseDocumentTypeList() {
         return ((Boolean) data.get(USEDOCUMENTTYPELIST)).booleanValue();
     }
-    
+
     public void setDocumentTypeListCritical(boolean critical) {
         data.put(DOCUMENTTYPELISTCRITICAL, Boolean.valueOf(critical));
     }
-    
+
     public boolean getDocumentTypeListCritical() {
         return ((Boolean) data.get(DOCUMENTTYPELISTCRITICAL)).booleanValue();
     }
@@ -1134,11 +1135,11 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
     public void setDocumentTypeList(ArrayList<String> docTypes) {
         data.put(DOCUMENTTYPELIST, docTypes);
     }
-    
+
     public ArrayList<String> getDocumentTypeList() {
         return (ArrayList<String>) data.get(DOCUMENTTYPELIST);
     }
-    
+
     public void setUseExtendedKeyUsage(boolean use) {
         data.put(USEEXTENDEDKEYUSAGE, Boolean.valueOf(use));
     }
@@ -1164,7 +1165,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
     public static Map<String, String> getAllExtendedKeyUsageTexts() {
         return ExtendedKeyUsageConfiguration.getExtendedKeyUsageOidsAndNames();
     }
-    
+
     /**
      * Extended Key Usage is an arraylist of oid Strings. Usually oids comes from KeyPurposeId in BC. Keep the unchecked java stuff for now, since we
      * have the fallback conversion below in getExtendedKeyUsageAsOIDStrings
@@ -1286,7 +1287,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
 
     /**
      * Returns a List of Integer (DNFieldExtractor constants) indicating which subject dn fields that should be used in certificate.
-     * 
+     *
      */
     @SuppressWarnings("unchecked")
     public List<Integer> getSubjectDNSubSet() {
@@ -1295,9 +1296,9 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
 
     /**
      * Should contain a collection of Integer (DNFieldExtractor constants) indicating which subject dn fields that should be used in certificate.
-     * 
+     *
      * Will come in as a list of string from the GUI, because JSP doesn't always care about type safety.
-     * 
+     *
      */
     public void setSubjectDNSubSet(List<String> subjectdns) {
         List<Integer> convertedList = new ArrayList<Integer>();
@@ -1307,10 +1308,10 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
         data.put(SUBJECTDNSUBSET, convertedList);
 
     }
-    
+
     /**
      * Method taking a full user dn and returns a DN only containing the DN fields specified in the subjectdn sub set array.
-     * 
+     *
      * @param dn
      * @return a subset of original DN
      */
@@ -1330,7 +1331,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
 
     /**
      * Returns a List of Integer (DNFieldExtractor constants) indicating which subject altnames fields that should be used in certificate.
-     * 
+     *
      */
     @SuppressWarnings("unchecked")
     public List<Integer> getSubjectAltNameSubSet() {
@@ -1339,7 +1340,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
 
     /**
      * Sets a List of Integer (DNFieldExtractor constants) indicating which subject altnames fields that should be used in certificate.
-     * 
+     *
      */
     public void setSubjectAltNameSubSet(List<Integer> subjectaltnames) {
         data.put(SUBJECTALTNAMESUBSET, subjectaltnames);
@@ -1348,7 +1349,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
 
     /**
      * Method taking a full user dn and returns a AltName only containing the AltName fields specified in the subjectaltname sub set array.
-     * 
+     *
      * @param dn
      * @return a subset of original DN
      */
@@ -1359,7 +1360,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
 
     /**
      * Help method converting a full DN or Subject Alt Name to one usng only specified fields
-     * 
+     *
      * @param extractor
      * @param usefields
      * @return
@@ -1389,7 +1390,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
 
     /**
      * Returns a List of caids (Integer), indicating which CAs the profile should be applicable to.
-     * 
+     *
      * If it contains the constant ANYCA then the profile is applicable to all CAs
      */
     @SuppressWarnings("unchecked")
@@ -1399,7 +1400,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
 
     /**
      * Saves the CertificateProfile's list of CAs the cert profile is applicable to.
-     * 
+     *
      * @param availablecas
      *            a List of caids (Integer)
      */
@@ -1428,7 +1429,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
 
     /**
      * Saves the CertificateProfile's list of publishers that certificates created with this profile should be published to.
-     * 
+     *
      * @param publishers
      *            a List<Integer> of publisher Ids
      */
@@ -1686,7 +1687,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
             data.put(QCCUSTOMSTRINGTEXT, qccustomstringtext);
         }
     }
-    
+
     public boolean getUseNameConstraints() {
         Boolean b = (Boolean) data.get(USENAMECONSTRAINTS);
         return b != null && b.booleanValue();
@@ -1695,7 +1696,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
     public void setUseNameConstraints(boolean use) {
         data.put(USENAMECONSTRAINTS, Boolean.valueOf(use));
     }
-    
+
     public boolean getNameConstraintsCritical() {
         Boolean b = (Boolean) data.get(NAMECONSTRAINTSCRITICAL);
         return b != null && b.booleanValue();
@@ -1712,10 +1713,10 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
     public void setUseSubjectDirAttributes(boolean use) {
         data.put(USESUBJECTDIRATTRIBUTES, Boolean.valueOf(use));
     }
-    
+
     /**
      * Returns which type of terminals are used in this ca/certificate hierarchy.
-     * The values correspond to the id-roles-1/2/3 OIDs. 
+     * The values correspond to the id-roles-1/2/3 OIDs.
      */
     public int getCVCTerminalType() {
         if (data.get(CVCTERMINALTYPE) == null) {
@@ -1738,7 +1739,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
     public void setCVCAccessRights(int access) {
         data.put(CVCACCESSRIGHTS, Integer.valueOf(access));
     }
-    
+
     /**
      * Used for bitmasks that don't fit in an int.
      * E.g. the 5-byte bitmask for Authentication Terminals
@@ -1760,7 +1761,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
             data.put(CVCLONGACCESSRIGHTS, new ArrayList<Byte>(Arrays.asList(ArrayUtils.toObject(access))));
         }
     }
-    
+
     public int getCVCSignTermDVType() {
         if (data.get(CVCSIGNTERMDVTYPE) == null) {
             return CertificateProfile.CVC_SIGNTERM_DV_CSP;
@@ -1775,7 +1776,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
     /**
      * Method returning a list of (Integers) of ids of used CUSTOM certificate extensions. I.e. those custom certificate extensions selected for this
      * profile. Never null.
-     * 
+     *
      * Autoupgradable method
      */
     @SuppressWarnings("unchecked")
@@ -1788,7 +1789,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
 
     /**
      * Method setting a list of used certificate extensions a list of Integers containing CertificateExtension Id is expected
-     * 
+     *
      * @param usedCertificateExtensions
      */
     public void setUsedCertificateExtensions(List<Integer> usedCertificateExtensions) {
@@ -1802,7 +1803,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
     /**
      * Function that looks up in the profile all certificate extensions that we should use if the value si that we should use it, the oid for this
      * extension is returned in the list
-     * 
+     *
      * @return List of oid Strings for standard certificate extensions that should be used
      */
     public List<String> getUsedStandardCertificateExtensions() {
@@ -1826,7 +1827,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
 
     /**
      * Returns a List of Integers (CAInfo.REQ_APPROVAL_ constants) of which action that requires approvals, default none
-     * 
+     *
      * Never null
      */
     @SuppressWarnings("unchecked")
@@ -1857,7 +1858,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
 
     /**
      * Returns true if the action requires approvals.
-     * 
+     *
      * @param action
      *            , on of the CAInfo.REQ_APPROVAL_ constants
      */
@@ -1878,21 +1879,21 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
     }
 
     /**
-     * Sets if the PrivateKeyUsagePeriod extension should be used and with 
+     * Sets if the PrivateKeyUsagePeriod extension should be used and with
      * the notBefore component.
-     * Setting this to true means that there will be an PrivateKeyUsagePeriod 
+     * Setting this to true means that there will be an PrivateKeyUsagePeriod
      * extension and that it also at least will contain an notBefore component.
      * Setting this to false means that the extension will not contain an
-     * notBefore component. In that case if there will be an extension depends 
+     * notBefore component. In that case if there will be an extension depends
      * on if {@link #isUsePrivateKeyUsagePeriodNotAfter()} is true.
-     * 
+     *
      * @param use True if the notBefore component should be used.
      */
     public void setUsePrivateKeyUsagePeriodNotBefore(final boolean use) {
             data.put(USEPRIVKEYUSAGEPERIODNOTBEFORE, use);
             data.put(USEPRIVKEYUSAGEPERIOD, use || isUsePrivateKeyUsagePeriodNotAfter());
     }
-    
+
     /**
      * @return If the PrivateKeyUsagePeriod extension should be used and with the notAfter component.
      */
@@ -1902,34 +1903,34 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
         }
         return ((Boolean) data.get(USEPRIVKEYUSAGEPERIODNOTAFTER)).booleanValue();
     }
-    
+
     /**
-     * Sets if the PrivateKeyUsagePeriod extension should be used and with 
+     * Sets if the PrivateKeyUsagePeriod extension should be used and with
      * the notAfter component.
-     * Setting this to true means that there will be an PrivateKeyUsagePeriod 
+     * Setting this to true means that there will be an PrivateKeyUsagePeriod
      * extension and that it also at least will contain an notAfter component.
      * Setting this to false means that the extension will not contain an
-     * notAfter component. In that case if there will be an extension depends 
+     * notAfter component. In that case if there will be an extension depends
      * on if {@link #isUsePrivateKeyUsagePeriodNotBefore()} is true.
-     * 
+     *
      * @param use True if the notAfter component should be used.
      */
     public void setUsePrivateKeyUsagePeriodNotAfter(final boolean use) {
             data.put(USEPRIVKEYUSAGEPERIODNOTAFTER, use);
             data.put(USEPRIVKEYUSAGEPERIOD, use || isUsePrivateKeyUsagePeriodNotBefore());
     }
-    
+
     /**
-     * @return How long (in seconds) after the certificate's notBefore date the 
+     * @return How long (in seconds) after the certificate's notBefore date the
      * PrivateKeyUsagePeriod's notBefore date should be.
      */
     public long getPrivateKeyUsagePeriodStartOffset() {
             return ((Long) data.get(PRIVKEYUSAGEPERIODSTARTOFFSET)).longValue();
     }
-    
+
     /**
      * Sets how long (in seconds) after the certificate's notBefore date the PrivateKeyUsagePeriod's notBefore date should be.
-     * 
+     *
      * @param start Offset from certificate issuance.
      */
     public void setPrivateKeyUsagePeriodStartOffset(final long start) {
@@ -1945,13 +1946,13 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
 
     /**
      * Sets the private key usage period (private key validity) length (in seconds).
-     * 
+     *
      * @param validity The length.
      */
     public void setPrivateKeyUsagePeriodLength(final long validity) {
         data.put(PRIVKEYUSAGEPERIODLENGTH, validity);
     }
-    
+
     /**
      * Whether Certificate Transparency (CT) should be used when generating new certificates. CT is specified in RFC 6962
      */
@@ -1961,11 +1962,11 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
         }
         return ((Boolean)data.get(USECERTIFICATETRANSPARENCYINCERTS)).booleanValue();
     }
-    
+
     public void setUseCertificateTransparencyInCerts(boolean use) {
         data.put(USECERTIFICATETRANSPARENCYINCERTS, use);
     }
-    
+
     /**
      * Whether Certificate Transparency (CT) should be used in OCSP responses. CT is specified in RFC 6962
      */
@@ -1975,11 +1976,11 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
         }
         return ((Boolean)data.get(USECERTIFICATETRANSPARENCYINOCSP)).booleanValue();
     }
-    
+
     public void setUseCertificateTransparencyInOCSP(boolean use) {
         data.put(USECERTIFICATETRANSPARENCYINOCSP, use);
     }
-    
+
     /**
      * Gets the IDs of the CT logs that are activated in this profile.
      */
@@ -1988,17 +1989,17 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
         if (data.get(CTLOGS) == null) {
             return new LinkedHashSet<Integer>();
         }
-        
+
         return (Set<Integer>)data.get(CTLOGS);
     }
-    
+
     public void setEnabledCTLogs(Set<Integer> logIds) {
         data.put(CTLOGS, logIds);
     }
-    
+
     /**
      * Number of CT logs to require an SCT from, or it will be considered an error.
-     * If zero, CT is completely optional and ignored if no log servers can be contacted. 
+     * If zero, CT is completely optional and ignored if no log servers can be contacted.
      */
     public int getCTMinSCTs() {
         if (data.get(CTMINSCTS) == null) {
@@ -2006,11 +2007,11 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
         }
         return (Integer)data.get(CTMINSCTS);
     }
-    
+
     public void setCTMinSCTs(int minSCTs) {
         data.put(CTMINSCTS, minSCTs);
     }
-    
+
     /**
      * After the maximum number of SCTs have been received EJBCA
      * will stop contacting log servers.
@@ -2021,11 +2022,35 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
         }
         return (Integer)data.get(CTMAXSCTS);
     }
-    
+
     public void setCTMaxSCTs(int maxSCTs) {
         data.put(CTMAXSCTS, maxSCTs);
     }
-    
+
+    /**
+     * Get a number indicating the number of CT logs marked as "mandatory"
+     * for which retrieval of SCTs is a requirement for successful issuance.
+     * <p>
+     * The default setting is zero mandatory logs, i.e. this option will be disabled.
+     * </p>
+     * @return the number of mandatory CT logs we have to publish to
+     */
+    public int getCTMandatorySCTs() {
+        if (data.get(CTMANDATORYSCTS) == null) {
+            return 0; // setting is OFF
+        }
+        return (Integer) data.get(CTMANDATORYSCTS);
+    }
+
+    /**
+     * Set a number indicating the number of CT logs marked as "mandatory"
+     * for which retrieval of SCTs is a requirement for successful issuance.
+     * @param mandatorySCTs The number of mandatory CT logs enforced by this certificate profile
+     */
+    public void setCTMandatorySCTs(final int mandatorySCTs) {
+        data.put(CTMANDATORYSCTS, mandatorySCTs);
+    }
+
     /** Number of times to retry connecting to a Certificate Transparency log */
     public int getCTMaxRetries() {
         if (data.get(CTMAXRETRIES) == null) {
@@ -2033,11 +2058,12 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
         }
         return (Integer)data.get(CTMAXRETRIES);
     }
-    
+
     public void setCTMaxRetries(int numRetries) {
         data.put(CTMAXRETRIES, numRetries);
     }
-    
+
+    @Override
     public CertificateProfile clone() throws CloneNotSupportedException {
         final CertificateProfile clone = new CertificateProfile(0);
         // We need to make a deep copy of the hashmap here
@@ -2054,6 +2080,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
     }
 
     /** Implementation of UpgradableDataHashMap function getLatestVersion */
+    @Override
     public float getLatestVersion() {
         return LATEST_VERSION;
     }
@@ -2068,6 +2095,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
     /**
      * Implementation of UpgradableDataHashMap function upgrade.
      */
+    @Override
     public void upgrade() {
         if (log.isTraceEnabled()) {
             log.trace(">upgrade: " + getLatestVersion() + ", " + getVersion());
@@ -2306,7 +2334,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
             if(data.get(DOCUMENTTYPELIST) == null) { // v 37
             	setDocumentTypeList(new ArrayList<String>());
             }
-            
+
             data.put(VERSION, new Float(LATEST_VERSION));
         }
         log.trace("<upgrade");
