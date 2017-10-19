@@ -151,11 +151,17 @@ public class CertProfileBean extends BaseManagedBean implements Serializable {
                     prof.getCTMinSCTs() > prof.getCTMaxSCTs()) {
                     addErrorMessage("INCORRECTMINMAXSCTS");
                     success = false;
-                } else if (countNumberOfMandatoryLogsAvailable(prof.getEnabledCTLogs()) < prof.getCTMandatorySCTs()) {
+                } else if (countNumberOfMandatoryLogsAvailable(prof.getEnabledCTLogs()) < prof.getCTMaxMandatorySCTs()) {
                     addErrorMessage("INCORRECTNUMBEROFMANDATORYSCTS");
                     success = false;
-                } else if (prof.getCTMandatorySCTs() > prof.getCTMinSCTs()) {
+                } else if (prof.getCTMinMandatorySCTs() > prof.getCTMinSCTs()) {
                     addErrorMessage("INCORRECTMINMANDANDATORYSCTS");
+                    success = false;
+                } else if (prof.getCTMaxMandatorySCTs() > prof.getCTMaxSCTs()) {
+                    addErrorMessage("INCORRECTMAXMANDANDATORYSCTS");
+                    success = false;
+                } else if (prof.getCTMinMandatorySCTs() > prof.getCTMaxMandatorySCTs()) {
+                    addErrorMessage("INCORRECTMINMAXMANDATORYSCTS");
                     success = false;
                 }
             }
