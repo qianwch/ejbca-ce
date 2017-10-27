@@ -1,3 +1,7 @@
+EJBCA 6.5.5.1
+-----------
+This release patches an issue where an expired signing certificate for the default responder would cause startup of the CA to fail. 
+
 EJBCA 6.5.5
 -----------
 EJBCA 6.5.5 is a patch release fixing one bug and making one improvement. These fixes mostly facilitates OCSP operations under certain circumstances.

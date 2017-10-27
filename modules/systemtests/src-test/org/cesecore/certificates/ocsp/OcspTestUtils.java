@@ -19,6 +19,7 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -26,13 +27,19 @@ import org.cesecore.CesecoreException;
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.certificates.ca.CADoesntExistsException;
+import org.cesecore.certificates.ca.CAOfflineException;
 import org.cesecore.certificates.ca.CaSessionRemote;
+import org.cesecore.certificates.ca.IllegalNameException;
+import org.cesecore.certificates.ca.IllegalValidityException;
 import org.cesecore.certificates.ca.InvalidAlgorithmException;
+import org.cesecore.certificates.ca.SignRequestSignatureException;
 import org.cesecore.certificates.ca.X509CA;
 import org.cesecore.certificates.certificate.CertificateCreateException;
 import org.cesecore.certificates.certificate.CertificateCreateSessionRemote;
+import org.cesecore.certificates.certificate.CertificateRevokeException;
 import org.cesecore.certificates.certificate.IllegalKeyException;
 import org.cesecore.certificates.certificate.certextensions.CertificateExtensionException;
+import org.cesecore.certificates.certificate.exception.CertificateSerialNumberException;
 import org.cesecore.certificates.certificate.exception.CustomCertificateSerialNumberException;
 import org.cesecore.certificates.certificate.request.RequestMessage;
 import org.cesecore.certificates.certificate.request.SimpleRequestMessage;
@@ -154,15 +161,27 @@ public class OcspTestUtils {
         return oldValue;
     }
 
-    public static X509Certificate createOcspSigningCertificate(AuthenticationToken authenticationToken, String username, String signerDN, int internalKeyBindingId, int caId)
-            throws CustomCertificateSerialNumberException, IllegalKeyException, CADoesntExistsException, CertificateCreateException, AuthorizationDeniedException, CesecoreException, CertificateExtensionException {
-        return createOcspSigningCertificate(authenticationToken, username, signerDN, internalKeyBindingId, caId, CertificateProfileConstants.CERTPROFILE_FIXED_OCSPSIGNER);
+    public static X509Certificate createOcspSigningCertificate(AuthenticationToken authenticationToken, String username, String signerDN,
+            int internalKeyBindingId, int caId) throws CustomCertificateSerialNumberException, IllegalKeyException, CADoesntExistsException,
+            CertificateCreateException, AuthorizationDeniedException, CesecoreException, CertificateExtensionException {
+        return createOcspSigningCertificate(authenticationToken, username, signerDN, internalKeyBindingId, caId,
+                CertificateProfileConstants.CERTPROFILE_FIXED_OCSPSIGNER);
     }
 
-    public static X509Certificate createOcspSigningCertificate(AuthenticationToken authenticationToken, String username, String signerDN, int internalKeyBindingId, int caId,
-            int certificateProfileId) 
-            throws AuthorizationDeniedException, CustomCertificateSerialNumberException, IllegalKeyException, CADoesntExistsException, 
-            CertificateCreateException, CesecoreException, CertificateExtensionException {
+    public static X509Certificate createOcspSigningCertificate(AuthenticationToken authenticationToken, String username, String signerDN,
+            int internalKeyBindingId, int caId, int certificateProfileId) throws AuthorizationDeniedException, CustomCertificateSerialNumberException,
+            IllegalKeyException, CADoesntExistsException, CertificateCreateException, CertificateExtensionException, CryptoTokenOfflineException,
+            SignRequestSignatureException, IllegalNameException, CertificateRevokeException, CertificateSerialNumberException,
+            IllegalValidityException, CAOfflineException, InvalidAlgorithmException {
+        return createOcspSigningCertificate(authenticationToken, username, signerDN, internalKeyBindingId, caId, certificateProfileId, null);
+        
+    }
+    
+    public static X509Certificate createOcspSigningCertificate(AuthenticationToken authenticationToken, String username, String signerDN,
+            int internalKeyBindingId, int caId, int certificateProfileId, Date expirationTime) throws AuthorizationDeniedException, CustomCertificateSerialNumberException,
+            IllegalKeyException, CADoesntExistsException, CertificateCreateException, CertificateExtensionException, CryptoTokenOfflineException,
+            SignRequestSignatureException, IllegalNameException, CertificateRevokeException, CertificateSerialNumberException,
+            IllegalValidityException, CAOfflineException, InvalidAlgorithmException {
         CertificateCreateSessionRemote certificateCreateSession = EjbRemoteHelper.INSTANCE.getRemoteSession(CertificateCreateSessionRemote.class);
         SignSessionRemote signSession = EjbRemoteHelper.INSTANCE.getRemoteSession(SignSessionRemote.class);
         InternalKeyBindingMgmtSessionRemote internalKeyBindingMgmtSession = EjbRemoteHelper.INSTANCE
@@ -176,7 +195,7 @@ public class OcspTestUtils {
                 EndEntityTypes.ENDUSER.toEndEntityType(), 1, certificateProfileId,
                 EndEntityConstants.TOKEN_USERGEN, 0, null);
         user.setPassword("foo123");
-        RequestMessage req = new SimpleRequestMessage(publicKey, user.getUsername(), user.getPassword());
+        RequestMessage req = new SimpleRequestMessage(publicKey, user.getUsername(), user.getPassword(), expirationTime);
         X509Certificate ocspSigningCertificate = (X509Certificate) (((X509ResponseMessage) certificateCreateSession.createCertificate(
                 authenticationToken, user, req, X509ResponseMessage.class, signSession.fetchCertGenParams())).getCertificate());
         return ocspSigningCertificate;

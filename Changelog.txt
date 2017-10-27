@@ -1,3 +1,9 @@
+EJBCA 6.5.5.1, 2017-10-27
+---
+Bug
+    [ECA-6231] - OCSP Responder may crash the VA's default responder signing certificate has expired. 
+
+
 EJBCA 6.5.5, 2016-11-30
 ---
 Bug
