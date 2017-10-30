@@ -2005,7 +2005,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
      */
     public int getCtMinTotalScts() {
         if (data.get(CT_MIN_TOTAL_SCTS) == null) {
-            return 0;
+            return 0; // setting is OFF
         }
         return (Integer) data.get(CT_MIN_TOTAL_SCTS);
     }
@@ -2031,7 +2031,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
      */
     public int getCtMaxNonMandatoryScts() {
         if (data.get(CT_MAX_NON_MANDATORY_SCTS) == null) {
-            return 1;
+            return getCtMinTotalScts();
         }
         return (Integer) data.get(CT_MAX_NON_MANDATORY_SCTS);
     }
@@ -2068,7 +2068,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
      */
     public int getCtMaxMandatoryScts() {
         if (data.get(CT_MAX_MANDATORY_SCTS) == null) {
-            return 1;
+            return getCtMinTotalScts();
         }
         return (Integer) data.get(CT_MAX_MANDATORY_SCTS);
     }
