@@ -690,20 +690,24 @@
 			<f:selectItems value="#{certProfileBean.enabledCTLogsAvailable}"/>
 		</h:selectManyListbox>
 
-		<h:outputLabel rendered="#{certProfileBean.ctEnabled}" for="textfieldctminscts" value="#{web.text.EXT_CT_MINSCTS}" styleClass="subItem"/>
-		<h:inputText rendered="#{certProfileBean.ctEnabled}" id="textfieldctminscts" value="#{certProfileBean.certificateProfile.CTMinSCTs}" size="8" maxlength="255" title="#{web.text.FORMAT_INTEGER}"
+		<h:outputLabel rendered="#{certProfileBean.ctEnabled}" for="textfieldCtMinNonMandatoryScts" value="#{web.text.EXT_CT_MIN_NONMANDATORY_SCTS}" styleClass="subItem"/>
+		<h:inputText rendered="#{certProfileBean.ctEnabled}" id="textfieldCtMinNonMandatoryScts" value="#{certProfileBean.certificateProfile.ctMinNonMandatoryScts}" size="8" maxlength="255" title="#{web.text.FORMAT_INTEGER}"
 			disabled="#{!certProfileBean.certificateProfile.useCertificateTransparencyInCerts && !certProfileBean.certificateProfile.useCertificateTransparencyInOCSP}"/>
 
-		<h:outputLabel rendered="#{certProfileBean.ctEnabled}" for="textfieldctmaxscts" value="#{web.text.EXT_CT_MAXSCTS}" styleClass="subItem"/>
-		<h:inputText rendered="#{certProfileBean.ctEnabled}" id="textfieldctmaxscts" value="#{certProfileBean.certificateProfile.CTMaxSCTs}" size="8" maxlength="255" title="#{web.text.FORMAT_INTEGER}"
+		<h:outputLabel rendered="#{certProfileBean.ctEnabled}" for="textfieldCtMaxNonMandatoryScts" value="#{web.text.EXT_CT_MAX_NONMANDATORY_SCTS}" styleClass="subItem"/>
+		<h:inputText rendered="#{certProfileBean.ctEnabled}" id="textfieldCtMaxNonMandatoryScts" value="#{certProfileBean.certificateProfile.ctMaxNonMandatoryScts}" size="8" maxlength="255" title="#{web.text.FORMAT_INTEGER}"
 			disabled="#{!certProfileBean.certificateProfile.useCertificateTransparencyInCerts && !certProfileBean.certificateProfile.useCertificateTransparencyInOCSP}"/>
 			
 	    <h:outputLabel rendered="#{certProfileBean.ctEnabled}" for="textfieldCtMinMandatoryScts" value="#{web.text.EXT_CT_MANDATORYMINSCTS}" styleClass="subItem"/>
-        <h:inputText rendered="#{certProfileBean.ctEnabled}" id="textfieldCtMinMandatoryScts" value="#{certProfileBean.certificateProfile.CTMinMandatorySCTs}" size="8" maxlength="255" title="#{web.text.FORMAT_INTEGER}"
+        <h:inputText rendered="#{certProfileBean.ctEnabled}" id="textfieldCtMinMandatoryScts" value="#{certProfileBean.certificateProfile.ctMinMandatoryScts}" size="8" maxlength="255" title="#{web.text.FORMAT_INTEGER}"
             disabled="#{!certProfileBean.certificateProfile.useCertificateTransparencyInCerts && !certProfileBean.certificateProfile.useCertificateTransparencyInOCSP}"/>
         
         <h:outputLabel rendered="#{certProfileBean.ctEnabled}" for="textfieldCtMaxMandatoryScts" value="#{web.text.EXT_CT_MANDATORYMAXSCTS}" styleClass="subItem"/>
-        <h:inputText rendered="#{certProfileBean.ctEnabled}" id="textfieldCtMaxMandatoryScts" value="#{certProfileBean.certificateProfile.CTMaxMandatorySCTs}" size="8" maxlength="255" title="#{web.text.FORMAT_INTEGER}"
+        <h:inputText rendered="#{certProfileBean.ctEnabled}" id="textfieldCtMaxMandatoryScts" value="#{certProfileBean.certificateProfile.ctMaxMandatoryScts}" size="8" maxlength="255" title="#{web.text.FORMAT_INTEGER}"
+            disabled="#{!certProfileBean.certificateProfile.useCertificateTransparencyInCerts && !certProfileBean.certificateProfile.useCertificateTransparencyInOCSP}"/>
+            
+        <h:outputLabel rendered="#{certProfileBean.ctEnabled}" for="textfieldCtMinTotalScts" value="#{web.text.EXT_CT_MIN_TOTAL_SCTS}" styleClass="subItem"/>
+        <h:inputText rendered="#{certProfileBean.ctEnabled}" id="textfieldCtMinTotalScts" value="#{certProfileBean.certificateProfile.ctMinTotalScts}" size="8" maxlength="255" title="#{web.text.FORMAT_INTEGER}"
             disabled="#{!certProfileBean.certificateProfile.useCertificateTransparencyInCerts && !certProfileBean.certificateProfile.useCertificateTransparencyInOCSP}"/>
 
 		<h:outputLabel rendered="#{certProfileBean.ctEnabled}" for="textfieldctmaxretries" value="#{web.text.EXT_CT_MAXRETRIES}" styleClass="subItem"/>

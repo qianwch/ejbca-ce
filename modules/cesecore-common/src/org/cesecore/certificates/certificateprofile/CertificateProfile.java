@@ -242,11 +242,12 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
     protected static final String USECERTIFICATETRANSPARENCYINCERTS = "usecertificatetransparencyincerts";
     protected static final String USECERTIFICATETRANSPARENCYINOCSP  = "usecertificatetransparencyinocsp";
     protected static final String CTLOGS = "ctlogs";
-    protected static final String CTMINSCTS = "ctminscts";
-    protected static final String CTMAXSCTS = "ctmaxscts";
+    protected static final String CT_MIN_TOTAL_SCTS = "ctminscts"; // This key is the same as in previous versions
+    protected static final String CT_MIN_NON_MANDATORY_SCTS = "ctminnonmandatoryscts";
+    protected static final String CT_MAX_NON_MANDATORY_SCTS = "ctmaxnonmandatoryscts";
+    protected static final String CT_MIN_MANDATORY_SCTS = "ctminmandatoryscts";
+    protected static final String CT_MAX_MANDATORY_SCTS = "ctmaxmandatoryscts";
     protected static final String CTMAXRETRIES = "ctmaxretries";
-    protected static final String CTMINMANDATORYSCTS = "ctminmandatoryscts";
-    protected static final String CTMAXMANDATORYSCTS = "ctmaxmandatoryscts";
 
     /**
      * OID for creating Smartcard Number Certificate Extension SEIS Cardnumber Extension according to SS 614330/31
@@ -2002,54 +2003,60 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
      * Number of CT logs to require an SCT from, or it will be considered an error.
      * If zero, CT is completely optional and ignored if no log servers can be contacted.
      */
-    public int getCTMinSCTs() {
-        if (data.get(CTMINSCTS) == null) {
-            return 1;
+    public int getCtMinTotalScts() {
+        if (data.get(CT_MIN_TOTAL_SCTS) == null) {
+            return 0;
         }
-        return (Integer)data.get(CTMINSCTS);
+        return (Integer) data.get(CT_MIN_TOTAL_SCTS);
     }
 
-    public void setCTMinSCTs(int minSCTs) {
-        data.put(CTMINSCTS, minSCTs);
+    public void setCtMinTotalScts(int minSCTs) {
+        data.put(CT_MIN_TOTAL_SCTS, minSCTs);
+    }
+
+    public void setCtMinNonMandatoryScts(int minSCTs) {
+        data.put(CT_MIN_NON_MANDATORY_SCTS, minSCTs);
+    }
+
+    public int getCtMinNonMandatoryScts() {
+        if (data.get(CT_MIN_NON_MANDATORY_SCTS) == null) {
+            return 0;
+        }
+        return (Integer) data.get(CT_MIN_NON_MANDATORY_SCTS);
     }
 
     /**
      * After the maximum number of SCTs have been received EJBCA
      * will stop contacting log servers.
      */
-    public int getCTMaxSCTs() {
-        if (data.get(CTMAXSCTS) == null) {
+    public int getCtMaxNonMandatoryScts() {
+        if (data.get(CT_MAX_NON_MANDATORY_SCTS) == null) {
             return 1;
         }
-        return (Integer)data.get(CTMAXSCTS);
+        return (Integer) data.get(CT_MAX_NON_MANDATORY_SCTS);
     }
 
-    public void setCTMaxSCTs(int maxSCTs) {
-        data.put(CTMAXSCTS, maxSCTs);
+    public void setCtMaxNonMandatoryScts(int maxSCTs) {
+        data.put(CT_MAX_NON_MANDATORY_SCTS, maxSCTs);
     }
 
     /**
-     * Get a number indicating the number of CT logs marked as "mandatory"
-     * for which retrieval of SCTs is a requirement for successful issuance.
+     * Get the number of mandatory SCTs.
      * <p>
      * The default setting is zero mandatory logs, i.e. this option will be disabled.
      * </p>
      * @return the number of mandatory CT logs we have to publish to
      */
-    public int getCTMinMandatorySCTs() {
-        if (data.get(CTMINMANDATORYSCTS) == null) {
+    public int getCtMinMandatoryScts() {
+        if (data.get(CT_MIN_MANDATORY_SCTS) == null) {
             return 0; // setting is OFF
         }
-        return (Integer) data.get(CTMINMANDATORYSCTS);
+        return (Integer) data.get(CT_MIN_MANDATORY_SCTS);
     }
 
-    /**
-     * Set a number indicating the number of CT logs marked as "mandatory"
-     * for which retrieval of SCTs is a requirement for successful issuance.
-     * @param mandatorySCTs The number of mandatory CT logs enforced by this certificate profile
-     */
-    public void setCTMinMandatorySCTs(final int minMandatorySCTs) {
-        data.put(CTMINMANDATORYSCTS, minMandatorySCTs);
+    /** @param mandatorySCTs The number of mandatory CT logs enforced by this certificate profile */
+    public void setCtMinMandatoryScts(final int minMandatorySCTs) {
+        data.put(CT_MIN_MANDATORY_SCTS, minMandatorySCTs);
     }
 
     /**
@@ -2059,19 +2066,19 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
      * </p>
      * @return the maximum number of mandatory CT logs for which we will attempt to publish
      */
-    public int getCTMaxMandatorySCTs() {
-        if (data.get(CTMAXMANDATORYSCTS) == null) {
-            return getCTMinMandatorySCTs();
+    public int getCtMaxMandatoryScts() {
+        if (data.get(CT_MAX_MANDATORY_SCTS) == null) {
+            return 1;
         }
-        return (Integer) data.get(CTMAXMANDATORYSCTS);
+        return (Integer) data.get(CT_MAX_MANDATORY_SCTS);
     }
 
     /**
      * Set the maximum number of mandatory logs to publish to.
      * @param the maximum number of mandatory logs
      */
-    public void setCTMaxMandatorySCTs(final int maxMandatorySCTs) {
-        data.put(CTMAXMANDATORYSCTS, maxMandatorySCTs);
+    public void setCtMaxMandatoryScts(final int maxMandatorySCTs) {
+        data.put(CT_MAX_MANDATORY_SCTS, maxMandatorySCTs);
     }
 
     /** Number of times to retry connecting to a Certificate Transparency log */

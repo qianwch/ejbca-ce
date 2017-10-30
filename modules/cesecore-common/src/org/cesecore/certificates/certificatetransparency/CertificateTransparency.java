@@ -58,17 +58,19 @@ public interface CertificateTransparency {
     /**
      * Tries to add a certificate to CT logs and obtain SCTs (Signed Certificate Timestamps).
      *
-     * @param chain Certificate chain including any CT signer and the leaf pre-certificate
-     * @param logs The logs to connect to.
-     * @param minSCTs The number of SCTs required
-     * @param maxSCTs The maximum number of SCTs
-     * @param maxRetries Maximum number of retries
-     * @param minMandatorySCTs The number of mandatory SCTs required
-     * @return A "SCT List" structure, for inclusion in e.g. the CT certificate extension
-     * @throws CTLogException If too many servers are down to satisfy the certificate profile.
+     * @param chain certificate chain including any CT signer and the leaf pre-certificate
+     * @param logs the logs to connect to.
+     * @param minMandatorySCTs the minimum number of mandatory SCTs required
+     * @param maxMandatorySCTs the maximum number of mandatory SCTs required
+     * @param minNonMandatorySCTs the minimum number of non-mandatory SCTs required
+     * @param maxNonMandatorySCTs the maximum number of non-mandatory SCTs required
+     * @param minTotalScts the required minimum number of SCTs in total
+     * @param maxRetries maximum number of retries
+     * @return an "SCT List" structure, for inclusion in e.g. the CT certificate extension
+     * @throws CTLogException if too many servers are down to satisfy the certificate profile.
      */
-    byte[] fetchSCTList(List<Certificate> chain, Collection<CTLogInfo> ctlogs, int minMandatorySCTs, int maxMandatorySCTs, int minSCTs, int maxSCTs,
-            int maxRetries)
+    byte[] fetchSCTList(List<Certificate> chain, Collection<CTLogInfo> ctlogs, int minMandatorySCTs, int maxMandatorySCTs, int minNonMandatorySCTs,
+            int maxNonMandatorySCTs, int minTotalScts, int maxRetries)
             throws CTLogException;
 
     /**
