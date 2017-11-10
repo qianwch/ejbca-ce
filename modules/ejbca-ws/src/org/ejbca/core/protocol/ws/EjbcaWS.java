@@ -108,7 +108,6 @@ import org.cesecore.certificates.crl.CrlStoreSessionLocal;
 import org.cesecore.certificates.crl.RevokedCertInfo;
 import org.cesecore.certificates.endentity.EndEntityConstants;
 import org.cesecore.certificates.endentity.EndEntityInformation;
-import org.cesecore.certificates.endentity.ExtendedInformation;
 import org.cesecore.configuration.GlobalConfigurationSessionLocal;
 import org.cesecore.internal.UpgradeableDataHashMap;
 import org.cesecore.keybind.CertificateImportException;
@@ -188,7 +187,6 @@ import org.ejbca.core.protocol.ws.logger.TransactionLogger;
 import org.ejbca.core.protocol.ws.logger.TransactionTags;
 import org.ejbca.core.protocol.ws.objects.Certificate;
 import org.ejbca.core.protocol.ws.objects.CertificateResponse;
-import org.ejbca.core.protocol.ws.objects.ExtendedInformationWS;
 import org.ejbca.core.protocol.ws.objects.HardTokenDataWS;
 import org.ejbca.core.protocol.ws.objects.KeyStore;
 import org.ejbca.core.protocol.ws.objects.NameAndId;
@@ -2707,7 +2705,6 @@ public class EjbcaWS implements IEjbcaWS {
 	        setUserDataVOWS(userdata);
 	    	final AuthenticationToken admin = getAdmin(false);
 	    	logAdminName(admin,logger);
-            enrichUserDataWithRawSubjectDn(userdata);
 	        return new CertificateResponse(responseType, raMasterApiProxyBean.createCertificateWS(admin, userdata, requestData, requestType,
 	                hardTokenSN, responseType));
 	    } catch( AuthorizationDeniedException t ) {
@@ -2746,16 +2743,6 @@ public class EjbcaWS implements IEjbcaWS {
         }
 	}
 
-    /** Add the raw subject DN as requested (used if we allow override from request End Entity Information) */
-    private void enrichUserDataWithRawSubjectDn(final UserDataVOWS userdata) {
-        if (userdata.getExtendedInformation()==null) {
-            userdata.setExtendedInformation(new ArrayList<ExtendedInformationWS>());
-        }
-        // It could/should B64 encoded to avoid XML baddies, ExtendedInformation.getRawSubjectDn does encoding, if the string is encoded
-        final String value = StringTools.putBase64String(userdata.getSubjectDN());
-        userdata.getExtendedInformation().add(new ExtendedInformationWS(ExtendedInformation.RAWSUBJECTDN, value));
-    }
-
     @SuppressWarnings("deprecation")
     @Override
 	public KeyStore softTokenRequest(UserDataVOWS userdata, String hardTokenSN, String keyspec, String keyalg)
@@ -2768,7 +2755,6 @@ public class EjbcaWS implements IEjbcaWS {
 	        userdata.setClearPwd(true);
 	    	final AuthenticationToken admin = getAdmin(false);
 	    	logAdminName(admin,logger);
-            enrichUserDataWithRawSubjectDn(userdata);
 	        final EndEntityInformation endEntityInformation = ejbcaWSHelperSession.convertUserDataVOWS(admin, userdata);
 	        final boolean createJKS = userdata.getTokenType().equals(UserDataVOWS.TOKEN_TYPE_JKS);
 	        final byte[] encodedKeyStore = certificateRequestSession.processSoftTokenReq(admin, endEntityInformation, hardTokenSN, keyspec, keyalg, createJKS);
