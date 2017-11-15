@@ -366,7 +366,7 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
     // Public Methods
 
     /**
-     * Creates a new instance of CertificateProfile. The default contructor creates a basic CertificateProfile
+     * Creates a new instance of CertificateProfile. The default constructor creates a basic CertificateProfile
      * that is the same as an End User certificateProfile, except that there are _no_ key usages. this means that a certificate
      * issued with a default profile should not be usable for anything. Should be used for testing and where you want to create your own
      * CertificateProfile for specific purposes.
@@ -468,7 +468,6 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
 
         setUseLdapDnOrder(true);
         setUseCustomDnOrder(false);
-        setUseCustomDnOrderWithLdap(true);
 
         setUseMicrosoftTemplate(false);
         setMicrosoftTemplate("");
@@ -1540,6 +1539,10 @@ public class CertificateProfile extends UpgradeableDataHashMap implements Serial
         Object o = data.get(USECUSTOMDNORDERLDAP);
         if (o != null) {
             ret = ((Boolean) o).booleanValue();
+        } else if (getCustomDnOrder().isEmpty()) {
+            // We have not set a value for this checkbox, and we have no custom DN order defined
+            // in this case we default to false (new usage)
+            ret = false;
         }
         return ret;
     }
