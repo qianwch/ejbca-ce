@@ -429,6 +429,7 @@ public class UpgradeSessionBean implements UpgradeSessionLocal, UpgradeSessionRe
 								log.info("Updating extended CA service of type "+type+" with implementation class "+KeyRecoveryCAService.class.getName());
 								break;
 							default:
+                                log.info("Found an extended CA service of type "+type+" that we can not upgrade");
 								break;
 							}
 						} else {
@@ -448,6 +449,7 @@ public class UpgradeSessionBean implements UpgradeSessionLocal, UpgradeSessionRe
 								ca.setExtendedCAService(krservice);
 								break;
 							default:
+                                log.info("Found an extended CA service of type "+type+" that we can not create");
 								break;
 							}
 						}
