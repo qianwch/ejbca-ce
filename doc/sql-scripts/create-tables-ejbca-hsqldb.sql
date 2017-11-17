@@ -265,7 +265,7 @@ CREATE TABLE KeyRecoveryData (
     rowProtection VARCHAR,
     rowVersion INTEGER NOT NULL,
     username VARCHAR(256),
-    cryptoTokenId INTEGER NOT NULL,
+    cryptoTokenId INTEGER DEFAULT 0 NOT NULL,
     keyAlias VARCHAR(256),
     publicKeyId VARCHAR(256),
     PRIMARY KEY (certSN,
