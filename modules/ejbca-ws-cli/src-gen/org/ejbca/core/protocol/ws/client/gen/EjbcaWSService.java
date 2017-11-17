@@ -42,24 +42,12 @@ public class EjbcaWSService
         super(__getWsdlLocation(), EJBCAWSSERVICE_QNAME);
     }
 
-    public EjbcaWSService(WebServiceFeature... features) {
-        super(__getWsdlLocation(), EJBCAWSSERVICE_QNAME, features);
-    }
-
     public EjbcaWSService(URL wsdlLocation) {
         super(wsdlLocation, EJBCAWSSERVICE_QNAME);
     }
 
-    public EjbcaWSService(URL wsdlLocation, WebServiceFeature... features) {
-        super(wsdlLocation, EJBCAWSSERVICE_QNAME, features);
-    }
-
     public EjbcaWSService(URL wsdlLocation, QName serviceName) {
         super(wsdlLocation, serviceName);
-    }
-
-    public EjbcaWSService(URL wsdlLocation, QName serviceName, WebServiceFeature... features) {
-        super(wsdlLocation, serviceName, features);
     }
 
     /**

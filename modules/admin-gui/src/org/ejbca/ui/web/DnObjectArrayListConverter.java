@@ -20,7 +20,6 @@ import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
 import javax.faces.convert.Converter;
 import javax.faces.convert.ConverterException;
-import javax.faces.convert.FacesConverter;
 
 import org.cesecore.certificates.util.DnComponents;
 
@@ -33,7 +32,6 @@ import org.cesecore.certificates.util.DnComponents;
  *  
  * @version $Id$
  */
-@FacesConverter(value="org.ejbca.DnObjectArrayListConverter")
 public class DnObjectArrayListConverter implements Converter {
     @Override
     public Object getAsObject(final FacesContext context, final UIComponent component, final String values) {
