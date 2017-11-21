@@ -32,7 +32,6 @@ import org.apache.log4j.Logger;
 import org.cesecore.audit.enums.EventStatus;
 import org.cesecore.audit.log.SecurityEventsLoggerSessionLocal;
 import org.cesecore.authentication.tokens.AuthenticationToken;
-import org.cesecore.authentication.tokens.PublicAccessAuthenticationToken;
 import org.cesecore.authentication.tokens.X509CertificateAuthenticationToken;
 import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.authorization.AuthorizationSessionLocal;
@@ -315,10 +314,10 @@ public class AdminPreferenceSessionBean implements AdminPreferenceSessionLocal, 
     @Override
     public Integer getCurrentRaStyleId(AuthenticationToken admin) {
 
-	if (admin instanceof PublicAccessAuthenticationToken) {
+	if (!(admin instanceof X509CertificateAuthenticationToken)) {
 	    return null;
 	}
-	
+
         String certificatefingerprint = CertTools.getFingerprintAsString(((X509CertificateAuthenticationToken) admin).getCertificate());
 
         AdminPreference adminPreference = getAdminPreference(certificatefingerprint);
@@ -350,7 +349,7 @@ public class AdminPreferenceSessionBean implements AdminPreferenceSessionLocal, 
     @Override
     public Locale getCurrentRaLocale(AuthenticationToken admin) {
 
-	if (admin instanceof PublicAccessAuthenticationToken) {
+	if (!(admin instanceof X509CertificateAuthenticationToken)) {
 	    return null;
 	}
 	
