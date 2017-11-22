@@ -999,7 +999,7 @@
 
 		<%-- Enabled CT logs selection --%>
 		<h:outputLabel rendered="#{certProfileBean.ctEnabled}" for="selectctlabels" value="#{web.text.EXT_CT_ENABLEDLABELS}" styleClass="subItem"/>
-		<h:selectManyListbox rendered="#{certProfileBean.ctEnabled}" id="selectctlabels" value="#{certProfileBean.enabledCTLabels}"
+		<h:selectManyListbox rendered="#{certProfileBean.ctEnabled}" id="selectctlabels" value="#{certProfileBean.enabledCtLabels}"
 			size="#{certProfileBean.distinctCTLabelsAvailableSize}" style="min-width: 280px;" disabled="#{certProfilesBean.viewOnly}">
 			<f:selectItems value="#{certProfileBean.distinctCtLabelsAvailable}"/>
 		</h:selectManyListbox>
