@@ -68,7 +68,11 @@ public final class CTLogInfo implements Serializable {
             throw new IllegalArgumentException("publicKeyBytes is null");
         }
         this.publicKeyBytes = publicKeyBytes.clone();
-        this.label = label;
+        if (label != null && label.isEmpty()) {
+            this.label = "Unlabeled";
+        } else {
+            this.label = label;
+        }
         this.timeout = timeout;
     }
 
