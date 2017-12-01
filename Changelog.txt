@@ -1,6 +1,19 @@
 EJBCA 6.3.2.5, 2015-10-16
 ---
 Bug
+    [ECA-6198] - Upgrading KeyRecoveryData (with rows) past EJBCA 6.1.0 will fail
+    [ECA-6340] - Backport - EJBCA 6.x should handle legacy access match types from EJBCA 3.x
+    [ECA-6341] - Upgrade of extended services from version before EJBCA 5 doesn't work correctly
+    [ECA-6342] - Get EJBCA 6.3..x to build and run with JBoss 5
+    [ECA-6343] - AccessUserAspectData must handle null matchValues after upgrade
+    [ECA-6360] - X509AuthenticationToken match should ignore null values
+
+Improvement
+    [ECA-6338] - Backport - CA Token Properties upgrade should debug log and be case insensitive
+
+EJBCA 6.3.2.5, 2015-10-16
+---
+Bug
     [ECA-4513] - Unchecking auto-activate does not persist for auto-generated crypto tokens using default password
 
 New Feature

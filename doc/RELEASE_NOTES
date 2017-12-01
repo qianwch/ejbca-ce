@@ -1,3 +1,14 @@
+EJBCA 6.3.2.6
+-----------
+
+This release is meant purely as an intermediate release when upgrading from earlier versions of EJBCA. It exists due to the fact that direct upgrades 
+from EJBCA prior to version 5.0.12 were invalidated in EJBCA 6.8.0, requiring an intermediate upgrade. Additionally, EJBCA 6.3 is the last EJBCA 
+version that supports JDK6, so it's a good spot to change JDKs and application servers.
+
+Additionally, it also fixes several upgrade bugs which have been encountered with users upgrading from EJBCA 3.9. Since this release is being 
+released in parallel with EJBCA 6.10.1, skipping this release and upgrading to a release prior to 6.10.1 won't guarantee that those bugs won't
+be encountered. 
+
 EJBCA 6.3.2.5
 -----------
 This patch release fixes one bug and introduces a new feature:
