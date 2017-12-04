@@ -5230,7 +5230,7 @@ bin/ejbca.sh ca updatepublickeyblacklist --command remove --mode fingerprint --d
 		such validator has been implemented, the CAA Validator.</p>
 		<subsubsection name="CAA Validator">
 			<p>
-			The Certificate Authority Authentication (CAA) validator is based on <a href="https://tools.ietf.org/html/rfc6844">RFC 6844</a> and the 
+			The Certificate Authority Authorization (CAA) validator is based on <a href="https://tools.ietf.org/html/rfc6844">RFC 6844</a> and the 
 			CA/B-Forum <a href="https://cabforum.org/wp-content/uploads/CA-Browser-Forum-BR-1.4.5.pdf">guidelines</a>. These specify that for complying 
 			CAs issuing certificates containing DNSName values in the subjectAltName extension, the CA must perform a lookup check to the DNS(s) of 
 			all specified names and check that the CAA records allow issuance for the given issuer. </p> 
