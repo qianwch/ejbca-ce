@@ -44,6 +44,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.SimpleTimeZone;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -128,6 +130,7 @@ import org.cesecore.certificates.certificate.request.RequestMessage;
 import org.cesecore.certificates.certificateprofile.CertificatePolicy;
 import org.cesecore.certificates.certificateprofile.CertificateProfile;
 import org.cesecore.certificates.certificatetransparency.CTLogException;
+import org.cesecore.certificates.certificatetransparency.CTSubmissionConfigParams;
 import org.cesecore.certificates.certificatetransparency.CertificateTransparency;
 import org.cesecore.certificates.certificatetransparency.CertificateTransparencyFactory;
 import org.cesecore.certificates.crl.RevokedCertInfo;
@@ -689,7 +692,7 @@ public class X509CA extends CA implements Serializable {
     }
 
     /**
-     * @see CA#createRequest(CryptoToken, Collection, String, Certificate, int, CertificateProfile)
+     * @see CA#createRequest(CryptoToken, Collection, String, Certificate, int, CertificateProfile, AvailableCustomCertificateExtensionsConfiguration)
      */
     @Override
     public byte[] createRequest(final CryptoToken cryptoToken, final Collection<ASN1Encodable> attributes, final String signAlg, final Certificate cacert,
@@ -1200,9 +1203,7 @@ public class X509CA extends CA implements Serializable {
 
             // Add Certificate Transparency extension. It needs to access the certbuilder and
             // the CA key so it has to be processed here inside X509CA.
-             if (ct != null && certProfile.isUseCertificateTransparencyInCerts() &&
-                certGenParams.getConfiguredCTLogs() != null &&
-                certGenParams.getCTAuditLogCallback() != null) {
+             if (ct != null && certProfile.isUseCertificateTransparencyInCerts() && certGenParams != null) {
                 
                 // Create pre-certificate
                 // A critical extension is added to prevent this cert from being used
@@ -1219,22 +1220,30 @@ public class X509CA extends CA implements Serializable {
                 final X509CertificateHolder certHolder = precertbuilder.build(signer);
                 final X509Certificate cert = CertTools.getCertfromByteArray(certHolder.getEncoded(), X509Certificate.class);
 
-                // Get certificate chain
-                final List<Certificate> chain = new ArrayList<>();
-                chain.add(cert);
-                chain.addAll(getCertificateChain());
+                if (certGenParams.getCTSubmissionConfigParams() == null) {
+                    log.debug("Not logging to CT. CT submission configuration parameters was null.");
+                } else if (MapUtils.isEmpty(certGenParams.getCTSubmissionConfigParams().getConfiguredCTLogs())) {
+                    log.debug("Not logging to CT. There are no CT logs configured in System Configuration.");
+                } else if (certGenParams.getCTAuditLogCallback() != null) {
+                    log.debug("Not logging to CT. No CT audit logging callback was passed to X509CA.");
+                } else {
+                    // Get certificate chain
+                    final List<Certificate> chain = new ArrayList<>();
+                    chain.add(cert);
+                    chain.addAll(getCertificateChain());
 
-                // Submit to logs and get signed timestamps
-                byte[] sctlist = null;
-                try {
-                    sctlist = ct.fetchSCTList(chain, certProfile, certGenParams.getConfiguredCTLogs());
-                }  finally {
-                    // Notify that pre-cert has been successfully or unsuccessfully submitted so it can be audit logged.
-                    certGenParams.getCTAuditLogCallback().logPreCertSubmission(this, subject, cert, sctlist != null);
-                }
-                if (sctlist != null) { // can be null if the CTLog has been deleted from the configuration
-                    ASN1ObjectIdentifier sctOid = new ASN1ObjectIdentifier(CertificateTransparency.SCTLIST_OID);
-                    certbuilder.addExtension(sctOid, false, new DEROctetString(sctlist));
+                    // Submit to logs and get signed timestamps
+                    byte[] sctlist = null;
+                    try {
+                        sctlist = ct.fetchSCTList(chain, certProfile, certGenParams.getCTSubmissionConfigParams());
+                    }  finally {
+                        // Notify that pre-cert has been successfully or unsuccessfully submitted so it can be audit logged.
+                        certGenParams.getCTAuditLogCallback().logPreCertSubmission(this, subject, cert, sctlist != null);
+                    }
+                    if (sctlist != null) { // can be null if the CTLog has been deleted from the configuration
+                        ASN1ObjectIdentifier sctOid = new ASN1ObjectIdentifier(CertificateTransparency.SCTLIST_OID);
+                        certbuilder.addExtension(sctOid, false, new DEROctetString(sctlist));
+                    }
                 }
             } else {
                 if (log.isDebugEnabled()) {
@@ -1247,13 +1256,9 @@ public class X509CA extends CA implements Serializable {
                         }
                         if (certGenParams == null) {
                             cause += "Certificate generation parameters was null.";
-                        } else if (certGenParams.getCTAuditLogCallback() == null) {
-                            cause += "No CT audit logging callback was passed to X509CA.";
-                        } else if (certGenParams.getConfiguredCTLogs() == null) {
-                            cause += "There are no CT logs configured in System Configuration.";
                         }
                     }
-                    log.debug("Not logging to CT. "+cause);                    
+                    log.debug("Not logging to CT. "+cause);
                 }
             }
         } catch (CertificateException e) {
