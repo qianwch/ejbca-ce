@@ -1,3 +1,7 @@
+EJBCA 6.10.1.1 
+-----------
+Patch release for ECA-6426, in which the database version was set incorrectly for fresh installations. 
+
 EJBCA 6.10.1 
 -----------
 
