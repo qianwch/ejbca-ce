@@ -262,7 +262,10 @@ public class ApprovalProfileMBean extends BaseManagedBean implements Serializabl
      * @return an empty string to keep the scope.
      */
     public String addField(int partitionId) {
+        final Integer currentStep = steps.getRowData().getIdentifier();
+
         saveTemporary();
+
         ApprovalProfile updatedApprovalProfile = getApprovalProfile();
         DynamicUiProperty<? extends Serializable> property;
         String fieldLabel = this.fieldLabel.get(partitionId);
@@ -288,11 +291,11 @@ public class ApprovalProfileMBean extends BaseManagedBean implements Serializabl
             return "";
         }
 
-        if (updatedApprovalProfile.getStep(steps.getRowData().getIdentifier()).getPartition(partitionId).getProperty(fieldLabel) != null) {
+        if (updatedApprovalProfile.getStep(currentStep).getPartition(partitionId).getProperty(fieldLabel) != null) {
             addErrorMessage("APPROVAL_PROFILE_FIELD_EXISTS");
             return "";
         } else {
-            updatedApprovalProfile.addPropertyToPartition(steps.getRowData().getIdentifier(), partitionId, property);
+            updatedApprovalProfile.addPropertyToPartition(currentStep, partitionId, property);
             steps = createStepListFromProfile(updatedApprovalProfile);
             this.fieldLabel = new HashMap<>();
             fieldToAdd = new HashMap<>();
@@ -309,8 +312,9 @@ public class ApprovalProfileMBean extends BaseManagedBean implements Serializabl
      * @return an empty string to keep the scope.
      */
     public String addRowToRadioButton(int partitionId, String label) {
-        ApprovalProfile updatedApprovalProfile = getApprovalProfile();
-        List<ApprovalPartitionProfileGuiObject> guiPartitions = steps.getRowData().getPartitionGuiObjects();
+        final Integer currentStep = steps.getRowData().getIdentifier();
+        final ApprovalProfile updatedApprovalProfile = getApprovalProfile();
+        final List<ApprovalPartitionProfileGuiObject> guiPartitions = steps.getRowData().getPartitionGuiObjects();
         for (ApprovalPartitionProfileGuiObject approvalPartitionProfileGuiObject : guiPartitions) {
             //find the right partition
             if (approvalPartitionProfileGuiObject.getPartitionId() == partitionId) {
@@ -329,7 +333,7 @@ public class ApprovalProfileMBean extends BaseManagedBean implements Serializabl
                 possibleValues.add(newRadio);
                 radioButtonProperty.setPossibleValues(possibleValues);
                 saveTemporary();
-                updatedApprovalProfile.addPropertyToPartition(steps.getRowData().getIdentifier(), partitionId, radioButtonProperty);
+                updatedApprovalProfile.addPropertyToPartition(currentStep, partitionId, radioButtonProperty);
                 steps = createStepListFromProfile(updatedApprovalProfile);
                 break;
             }
@@ -345,9 +349,10 @@ public class ApprovalProfileMBean extends BaseManagedBean implements Serializabl
      * @return an empty string to keep the scope.
      */
     public String removeRowFromRadioButton(int partitionId, String encodedRadioButton) {
-        ApprovalProfile updatedApprovalProfile = getApprovalProfile();
-        RadioButton radioButton = (RadioButton) DynamicUiProperty.getAsObject(encodedRadioButton);
-        List<ApprovalPartitionProfileGuiObject> guiPartitions = steps.getRowData().getPartitionGuiObjects();
+        final Integer currentStep = steps.getRowData().getIdentifier();
+        final ApprovalProfile updatedApprovalProfile = getApprovalProfile();
+        final RadioButton radioButton = (RadioButton) DynamicUiProperty.getAsObject(encodedRadioButton);
+        final List<ApprovalPartitionProfileGuiObject> guiPartitions = steps.getRowData().getPartitionGuiObjects();
         for(ApprovalPartitionProfileGuiObject approvalPartitionProfileGuiObject : guiPartitions) {
             //find the right partition
             if(approvalPartitionProfileGuiObject.getPartitionId() == partitionId) {
@@ -365,7 +370,7 @@ public class ApprovalProfileMBean extends BaseManagedBean implements Serializabl
                 }
                 radioButtonProperty.setPossibleValues(prunedValues);
                 saveTemporary();
-                updatedApprovalProfile.addPropertyToPartition(steps.getRowData().getIdentifier(), partitionId, radioButtonProperty);
+                updatedApprovalProfile.addPropertyToPartition(currentStep, partitionId, radioButtonProperty);
                 steps = createStepListFromProfile(updatedApprovalProfile);
                 break;
             }
@@ -374,9 +379,10 @@ public class ApprovalProfileMBean extends BaseManagedBean implements Serializabl
     }
 
     public String removeField(int partitionId, String propertyName) {
+        final Integer currentStep = steps.getRowData().getIdentifier();
         saveTemporary();
         ApprovalProfile updatedApprovalProfile = getApprovalProfile();
-        updatedApprovalProfile.removePropertyFromPartition(steps.getRowData().getIdentifier(), partitionId, propertyName);
+        updatedApprovalProfile.removePropertyFromPartition(currentStep, partitionId, propertyName);
         steps = createStepListFromProfile(updatedApprovalProfile);
         return "";
     }
@@ -388,32 +394,39 @@ public class ApprovalProfileMBean extends BaseManagedBean implements Serializabl
     }
 
     public void moveStepDown() {
+        final Integer currentStep = steps.getRowData().getIdentifier();
+        final Integer nextStep = steps.getRowData().getNextStep();
         saveTemporary();
-        getApprovalProfile().switchStepOrder(steps.getRowData().getIdentifier(), steps.getRowData().getNextStep());
+        getApprovalProfile().switchStepOrder(currentStep, nextStep);
         steps = null;
     }
 
     public void moveStepUp() {
+        final Integer currentStep = steps.getRowData().getIdentifier();
+        final Integer previousStep = steps.getRowData().getPreviousStep();
         saveTemporary();
-        getApprovalProfile().switchStepOrder(steps.getRowData().getPreviousStep(), steps.getRowData().getIdentifier());
+        getApprovalProfile().switchStepOrder(previousStep, currentStep);
         steps = null;
     }
 
     public void deleteStep() {
+        final Integer currentStep = steps.getRowData().getIdentifier();
         saveTemporary();
-        getApprovalProfile().deleteStep(steps.getRowData().getIdentifier());
+        getApprovalProfile().deleteStep(currentStep);
         steps = null;
     }
 
     public void addPartition() {
+        final Integer currentStep = steps.getRowData().getIdentifier();
         saveTemporary();
-        getApprovalProfile().addPartition(steps.getRowData().getIdentifier());
+        getApprovalProfile().addPartition(currentStep);
         steps = null;
     }
 
     public void deletePartition(int partitionId) {
+        final Integer currentStep = steps.getRowData().getIdentifier();
         saveTemporary();
-        getApprovalProfile().deletePartition(steps.getRowData().getIdentifier(), partitionId);
+        getApprovalProfile().deletePartition(currentStep, partitionId);
         steps = null;
     }
 
@@ -560,9 +573,10 @@ public class ApprovalProfileMBean extends BaseManagedBean implements Serializabl
     }
 
     public void addNotification(final int partitionIdentifier) {
+        final Integer currentStep = steps.getRowData().getIdentifier();
         saveTemporary();
         final ApprovalProfile approvalProfile = getApprovalProfile();
-        final ApprovalStep approvalStep = approvalProfile.getStep(steps.getRowData().getIdentifier());
+        final ApprovalStep approvalStep = approvalProfile.getStep(currentStep);
         final ApprovalPartition approvalPartition = approvalStep.getPartition(partitionIdentifier);
         // Configure some nice defaults
         final GlobalConfiguration globalConfiguration = (GlobalConfiguration) globalConfigurationSession.getCachedConfiguration(GlobalConfiguration.GLOBAL_CONFIGURATION_ID);
@@ -580,9 +594,10 @@ public class ApprovalProfileMBean extends BaseManagedBean implements Serializabl
     }
 
     public void removeNotification(final int partitionIdentifier) {
+        final Integer currentStep = steps.getRowData().getIdentifier();
         saveTemporary();
         final ApprovalProfile approvalProfile = getApprovalProfile();
-        final ApprovalStep approvalStep = approvalProfile.getStep(steps.getRowData().getIdentifier());
+        final ApprovalStep approvalStep = approvalProfile.getStep(currentStep);
         final ApprovalPartition approvalPartition = approvalStep.getPartition(partitionIdentifier);
         approvalProfile.removeNotificationProperties(approvalPartition);
         steps = null;
@@ -598,9 +613,10 @@ public class ApprovalProfileMBean extends BaseManagedBean implements Serializabl
     }
 
     public void addUserNotification(final int partitionIdentifier) {
+        final Integer currentStep = steps.getRowData().getIdentifier();
         saveTemporary();
         final ApprovalProfile approvalProfile = getApprovalProfile();
-        final ApprovalStep approvalStep = approvalProfile.getStep(steps.getRowData().getIdentifier());
+        final ApprovalStep approvalStep = approvalProfile.getStep(currentStep);
         final ApprovalPartition approvalPartition = approvalStep.getPartition(partitionIdentifier);
         // Configure some nice defaults
         final GlobalConfiguration globalConfiguration = (GlobalConfiguration) globalConfigurationSession.getCachedConfiguration(GlobalConfiguration.GLOBAL_CONFIGURATION_ID);
@@ -616,21 +632,22 @@ public class ApprovalProfileMBean extends BaseManagedBean implements Serializabl
     }
 
     public void removeUserNotification(final int partitionIdentifier) {
+        final Integer currentStep = steps.getRowData().getIdentifier();
         saveTemporary();
         final ApprovalProfile approvalProfile = getApprovalProfile();
-        final ApprovalStep approvalStep = approvalProfile.getStep(steps.getRowData().getIdentifier());
+        final ApprovalStep approvalStep = approvalProfile.getStep(currentStep);
         final ApprovalPartition approvalPartition = approvalStep.getPartition(partitionIdentifier);
         approvalProfile.removeUserNotificationProperties(approvalPartition);
         steps = null;
     }
-    
+
     /**
      * Updates the encoded values of propertyClone if
-     * there has been a change in the role members of the 
-     * any of the roles which were selected in the list box 
+     * there has been a change in the role members of the
+     * any of the roles which were selected in the list box
      * before the change.
      * Uses property identifier as a base for comparison.
-     * 
+     *
      * @param propertyClone updated property
      * @param property current property
      */
