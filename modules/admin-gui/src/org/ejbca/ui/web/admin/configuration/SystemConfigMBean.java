@@ -1056,7 +1056,7 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
         }
         return globalCustomCssConfiguration;
     }
-
+    
     public void actionImportRaStyle() {
         // Basic checks
         if (raCssFile == null && raLogoFile == null) {
@@ -1067,6 +1067,11 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
             addErrorMessage("STYLENONAME");
             return;
         }
+        if (raStyleNameExists(archiveName)) {
+            addErrorMessage("STYLEEXISTS", archiveName);
+            return;
+        }
+
         try {
             // Authorazation check
             if (!isAllowedToEditSystemConfiguration()) {
@@ -1106,6 +1111,16 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
         }
     }
 
+    private boolean raStyleNameExists(String name) {
+        LinkedHashMap<Integer, RaStyleInfo> storedRaStyles = globalCustomCssConfiguration.getRaStyleInfo();
+        for (Map.Entry<Integer, RaStyleInfo> raStyle : storedRaStyles.entrySet()) {
+            if (raStyle.getValue().getArchiveName().equals(name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
     private void importLogoFromImageFile() throws IOException {
         String contentType = raLogoFile.getContentType();
         if (!contentType.equals("image/jpeg") && !contentType.equals("image/png")) {
@@ -1180,7 +1195,6 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
 
     public void removeRaStyleInfo() {
         final RaStyleInfo styleToRemove = raStyleInfos.getRowData();
-        // TODO Check if used by any CA / Namespace / Role or whatever we decide to apply it to
         List<RaStyleInfo> raCssInfosList = getRaStyleInfosList();
         raCssInfosList.remove(styleToRemove);
         setRaStyleInfosList(raCssInfosList);
