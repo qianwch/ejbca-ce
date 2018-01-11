@@ -452,9 +452,9 @@ public class ApproveActionManagedBean extends BaseManagedBean {
             List<ApprovalPartitionProfileGuiObject> authorizedPartitions = new ArrayList<>();
             partitionsAuthorizedToApprove = new HashSet<>();
             //Make sure we're not reading stale data
-            ApprovalProfile approvalProfile = approvalProfileSession.getApprovalProfile(approvalDataVOView.getApprovalProfile().getProfileId());
-            ApprovalStep approvalStep = approvalProfile.getStep(getCurrentStep().getStepIdentifier());
+            final ApprovalProfile approvalProfile = approvalProfileSession.getApprovalProfile(approvalDataVOView.getApprovalProfile().getProfileId());
             if (getCurrentStep() != null) {
+                final ApprovalStep approvalStep = approvalProfile.getStep(getCurrentStep().getStepIdentifier());
                 for (Integer approvalPartitionId : getCurrentStep().getPartitions().keySet()) {
                     ApprovalPartition approvalPartition = approvalStep.getPartition(approvalPartitionId);
                     try {
