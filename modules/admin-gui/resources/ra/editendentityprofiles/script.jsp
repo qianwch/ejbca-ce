@@ -38,13 +38,14 @@ function checkNonModifiableEmptyEmail() {
 }
 
 function checkValidationRegExpNotEmpty(regExpFieldIndex) {
-    var checkbox = eval("document.editprofile.<%= CHECKBOX_VALIDATION_SUBJECTDN %>" + regExpFieldIndex);
-    var editbox = eval("document.editprofile.<%= TEXTFIELD_VALIDATION_SUBJECTDN %>" + regExpFieldIndex);
-    if (checkbox.checked && editbox.value === "") {
+	var checkbox = eval("document.editprofile.<%= CHECKBOX_VALIDATION_SUBJECTDN %>" + regExpFieldIndex);
+	var editbox = eval("document.editprofile.<%= TEXTFIELD_VALIDATION_SUBJECTDN %>" + regExpFieldIndex);
+	
+    if (typeof checkbox !== 'undefined' && checkbox.checked && editbox.value === "") {
         return 1;
-    } else {
-        return 0;
-    }
+	} else {
+		return 0;
+	}
 }
 
 function checkDefaultAmongAvailable() {
