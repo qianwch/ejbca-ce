@@ -48,6 +48,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.math.NumberUtils;
 import org.apache.log4j.Logger;
 import org.bouncycastle.util.encoders.Hex;
 import org.cesecore.audit.enums.EventStatus;
@@ -1187,7 +1188,7 @@ public class EjbcaWebBean implements Serializable {
      * The returned map will contain an additional "KeyID" entry which allows the end user to specify the end entity
      * in the CMP request.
      * @param endentityAccessRule the access rule used for authorization
-     * @return a map {end entity name} => {end entity id} with authorized end entities
+     * @return a map {end entity profile name} => {end entity profile id} with authorized end entituy profiles
      */
     public Map<String, String> getAuthorizedEEProfileNamesAndIds(final String endentityAccessRule) {
         final TreeMap<String, String> authorizedEEProfileNamesAndIds = new TreeMap<>(
@@ -1240,9 +1241,9 @@ public class EjbcaWebBean implements Serializable {
      * Retrieve a list of certificate profile ids based on an end entity profile id. The returned list may contain
      * an additional "KeyID" option which allows the end user to specify the certificate profile in the CMP request.
      * @param endEntityProfileId the end entity profile id for which we want to fetch certificate profiles
-     * @return a sorted list of certificate profile ids
+     * @return a sorted list of certificate profile names
      */
-    public Collection<String> getAvailableCertProfilessOfEEProfile(final String endEntityProfileId) {
+    public Collection<String> getAvailableCertProfilesOfEEProfile(final String endEntityProfileId) {
         if (StringUtils.equals(endEntityProfileId, CmpConfiguration.PROFILE_USE_KEYID)) {
             final List<Integer> allCertificateProfileIds = certificateProfileSession.getAuthorizedCertificateProfileIds(administrator, 0);
             final List<String> allCertificateProfiles = new ArrayList<>(allCertificateProfileIds.size());
@@ -1264,8 +1265,40 @@ public class EjbcaWebBean implements Serializable {
         return addKeyIdAndSort(certificateProfiles);
     }
 
-    public Collection<String> getCertificateProfilesNoKeyId(final String endEntityProfileId) {
-        final Collection<String> certificateProfiles = getAvailableCertProfilessOfEEProfile(endEntityProfileId);
+    private Collection<String> getAvailableCertProfileIDsOfEEProfileNoKeyID(final String endEntityProfileId) {
+        if (StringUtils.equals(endEntityProfileId, CmpConfiguration.PROFILE_USE_KEYID)) {
+            final List<Integer> allCertificateProfileIds = certificateProfileSession.getAuthorizedCertificateProfileIds(administrator, 0);
+            final List<String> allCertificateProfiles = new ArrayList<>(allCertificateProfileIds.size());
+            for (final int id : allCertificateProfileIds) {
+                allCertificateProfiles.add(certificateProfileSession.getCertificateProfileName(id));
+            }
+            return allCertificateProfiles;
+        }
+        final EndEntityProfile profile = endEntityProfileSession.getEndEntityProfile(Integer.valueOf(endEntityProfileId));
+        if (profile == null) {
+            return Collections.emptyList();
+        }
+        final Collection<String> certificateProfileIds = profile.getAvailableCertificateProfileIds();
+        return certificateProfileIds;
+    }
+
+    /**
+     * Retrieve a mapping between certificate profiles names and IDs available in the end entity profile. To be displayed in the GUI.
+     * @param endEntityProfileId the the end entity profile in which we want to find certificate profiles
+     * @return a map (TreeMap so it's sorted by key) {certificate profile name, certificate profile id} with authorized certificate profiles
+     */
+    public Map<String, String> getCertificateProfilesNoKeyId(final String endEntityProfileId) {
+        final Map<Integer, String> map = certificateProfileSession.getCertificateProfileIdToNameMap();
+        final TreeMap<String, String> certificateProfiles = new TreeMap<>();
+        final Collection<String> ids = getAvailableCertProfileIDsOfEEProfileNoKeyID(endEntityProfileId);
+        for (String idstr : ids) {
+            certificateProfiles.put(map.get(Integer.valueOf(idstr)), idstr);
+        }
+        return certificateProfiles;
+    }
+
+    public Collection<String> getCertificateProfileIDsNoKeyId(final String endEntityProfileId) {
+        final Collection<String> certificateProfiles = getAvailableCertProfilesOfEEProfile(endEntityProfileId);
         certificateProfiles.remove(CmpConfiguration.PROFILE_USE_KEYID);
         return certificateProfiles;
     }
@@ -1409,7 +1442,7 @@ public class EjbcaWebBean implements Serializable {
     }
 
     /**
-     *
+     * Removes EST aliases where the administrator does not have permissions to CA set as defaultCA
      * Note that this method modifies the parameter, which is has to due to the design of UpgradableHashMap.
      *
      * @param estConfiguration the full CMP configuration
@@ -1418,45 +1451,36 @@ public class EjbcaWebBean implements Serializable {
     private EstConfiguration clearEstConfigurationFromUnauthorizedAliases(final EstConfiguration estConfiguration) {
         //Copy the configuration, because modifying parameters is nasty
         EstConfiguration returnValue = new EstConfiguration(estConfiguration);
-        //Build a lookup map due to the fact that default CA is stored as a SubjectDNs
-        Map<String, String> subjectDnToCaNameMap = new HashMap<String, String>();
-        for(int caId : caSession.getAllCaIds()) {
-            try {
-                CAInfo caInfo = caSession.getCAInfoInternal(caId);
-                subjectDnToCaNameMap.put(caInfo.getSubjectDN(), caInfo.getName());
-            } catch (CADoesntExistsException e) {
-                throw new IllegalStateException("Newly retrieved CA not found.", e);
-            }
-
-        }
         //Exclude all aliases which refer to CAs that current admin doesn't have access to
         aliasloop: for (String alias : new ArrayList<>(estConfiguration.getAliasList())) {
-            //Collect CA names
-            Set<String> caNames = new HashSet<>();
-            String defaultCaSubjectDn = estConfiguration.getDefaultCA(alias);
-            if (!StringUtils.isEmpty(defaultCaSubjectDn)) {
-                caNames.add(subjectDnToCaNameMap.get(defaultCaSubjectDn));
-            }
-
-            TreeMap<String, Integer> caNameToIdMap = getInformationMemory().getAllCANames();
-            for (String caName : caNames) {
-                if(caName != null) { //CA might have been removed
-                    Integer caId = caNameToIdMap.get(caName);
-                    if (caId != null) {
-                        if (!caSession.authorizedToCANoLogging(administrator, caId)) {
-                            if (log.isDebugEnabled()) {
-                                log.debug("EST alias " + alias + " hidden because admin lacks access to CA rule: " + StandardRules.CAACCESS.resource()
-                                        + caNameToIdMap.get(caName));
-                            }
-                            returnValue.removeAlias(alias);
-                            //Our work here is done, skip to the next alias.
-                            continue aliasloop;
-                        }
+            Integer caId = 0;
+            // To be backward compatible with EJBCA 6.11, where this was stored as the name instead of ID, we make it possible to use both. See ECA-6556
+            String defaultCAIDStr = estConfiguration.getDefaultCAID(alias);
+            if (NumberUtils.isNumber(defaultCAIDStr)) {
+                caId = Integer.valueOf(defaultCAIDStr);
+            } else {
+                // We have a caName, and want the Id
+                CAInfo cainfo;
+                try {
+                    cainfo = caSession.getCAInfoInternal(-1, defaultCAIDStr, true);
+                    caId = cainfo.getCAId();                    
+                } catch (CADoesntExistsException e) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("CA with name '"+defaultCAIDStr+"' does not exist, allowing everyone to view EST alias '"+alias+"'.");
                     }
                 }
             }
+            if (caId != 0) {
+                if (!caSession.authorizedToCANoLogging(administrator, caId)) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("EST alias " + alias + " hidden because admin lacks access to CA rule: " + StandardRules.CAACCESS.resource() + caId);
+                    }
+                    returnValue.removeAlias(alias);
+                    //Our work here is done, skip to the next alias.
+                    continue aliasloop;
+                }
+            }
         }
-
         return returnValue;
     }
 
