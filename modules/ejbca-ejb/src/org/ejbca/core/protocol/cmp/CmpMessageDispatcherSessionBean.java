@@ -112,11 +112,11 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
     /**
      * The message may have been received by any transport protocol, and is passed here in it's binary ASN.1 form.
      *
-     * @param authenticationToken
-     * @param pkiMessage DER encoded CMP message received from the client
-     * @param pkiHeader DER encoded PKI header of the original CMP message received from the client
-     * @param cmpConfigurationAlias the CMP alias we want to use for this request
-    * @param levelOfNesting
+     * @param authenticationToken the authentication token.
+     * @param pkiMessage DER encoded CMP message received from the client.
+     * @param pkiHeader DER encoded PKI header of the original CMP message received from the client.
+     * @param cmpConfigurationAlias the CMP alias we want to use for this request.
+    *  @param levelOfNesting the level of nesting depth.
      * @return A response message containing the CMP response message or null if there is no message to send back or some internal error has occurred
      */
     private ResponseMessage dispatch(final AuthenticationToken authenticationToken, final PKIMessage pkiMessage, final PKIHeader pkiHeader,
@@ -154,7 +154,6 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
                 cmpMessage = new CrmfRequestMessage(pkiMessage, cmpConfiguration.getCMPDefaultCA(cmpConfigurationAlias),
                         cmpConfiguration.getAllowRAVerifyPOPO(cmpConfigurationAlias),
                         cmpConfiguration.getExtractUsernameComponent(cmpConfigurationAlias));
-                addCaPubsCertificates(authenticationToken, cmpConfiguration, cmpConfigurationAlias, (CrmfRequestMessage) cmpMessage);
                 break;
             case PKIBody.TYPE_KEY_UPDATE_REQ:                    
                 // 7: Key Update request (kur, Key Update Request)
@@ -162,7 +161,6 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
                 cmpMessage = new CrmfRequestMessage(pkiMessage, cmpConfiguration.getCMPDefaultCA(cmpConfigurationAlias),
                         cmpConfiguration.getAllowRAVerifyPOPO(cmpConfigurationAlias),
                         cmpConfiguration.getExtractUsernameComponent(cmpConfigurationAlias));
-                addCaPubsCertificates(authenticationToken, cmpConfiguration, cmpConfigurationAlias, (CrmfRequestMessage) cmpMessage);
                 break;
             case PKIBody.TYPE_CONFIRM:
                 // 19: PKI confirm (pkiconf, Confirmation)
@@ -206,6 +204,9 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
                 log.info("Received an unknown message type, tagno=" + tagno);
                 break;
             }
+            
+            addAdditionalCaPubsCertificates(authenticationToken, cmpConfiguration, cmpConfigurationAlias, cmpMessage);
+            
             if (handler == null || cmpMessage == null) {
                 if (unknownMessageType > -1) {
                     final String eMsg = intres.getLocalizedMessage("cmp.errortypenohandle", Integer.valueOf(unknownMessageType));
@@ -229,36 +230,53 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
         }
     }
     
-    private void addCaPubsCertificates(final AuthenticationToken admin, final CmpConfiguration cmpConfiguration, final String cmpConfigurationAlias, final CrmfRequestMessage message) {
-        if (!cmpConfiguration.getRAMode(cmpConfigurationAlias) && cmpConfiguration.getVendorMode(cmpConfigurationAlias)) {
-            final String casToAdd = cmpConfiguration.getResponseCaPubsCA(cmpConfigurationAlias);
+    /**
+     * Adds the list of additional CA certificates to the user certificates signing CA certificate to be 
+     * returned with the CMP response 'CertRepMessage.caPubs' field.
+     * 
+     * @param admin the authentication token.
+     * @param cmpConfiguration the CMP configuration list.
+     * @param alias the CMP configuration alias.
+     * @param message the request message.
+     */
+    private void addAdditionalCaPubsCertificates(final AuthenticationToken admin, final CmpConfiguration cmpConfiguration, final String alias, 
+            final BaseCmpMessage message) {
+        if (message != null) {
+            final String casToAdd = cmpConfiguration.getResponseCaPubsCA(alias);
             if (log.isDebugEnabled()) {
                 log.debug("Add CA certificates of CAs '" + casToAdd + "' to the CMP response message caPubs field.");
             }
-            message.setCaPubsCerts(getCaCertificates(admin, casToAdd));
+            message.setAdditionalCaCertificates(getCaCertificates(admin, casToAdd));
         }
     }
     
+    /**
+     * Gets the CA certificates by the semicolon separated string of CA names.
+     * 
+     * @param admin the authentication token.
+     * @param caListString the semicolon separated string of CA IDs
+     * @return the list of CA certificates in the order, the CA IDs were given.
+     */
     private List<Certificate> getCaCertificates(final AuthenticationToken admin, final String caListString) {
         final List<Certificate> result = new ArrayList<Certificate>();
         CAInfo cainfo = null;
         Certificate cacert;
         if (StringUtils.isNotBlank(caListString)) {
+            int caId;
             for(String ca : StringUtils.split(caListString, ";")) {
+                caId = Integer.parseInt(ca);
                 if(log.isDebugEnabled()) {
-                    log.debug("Get CA by name?: " + ca);
+                    log.debug("Get CA by ID: " + caId);
                 }
                 try {
-                    cainfo = caSession.getCAInfo(admin, ca.trim());
+                    cainfo = caSession.getCAInfo(admin, caId);
                     if (cainfo != null && CollectionUtils.isNotEmpty(cainfo.getCertificateChain())) {
                         cacert = (X509Certificate) cainfo.getCertificateChain().get(0);
                         if (!result.contains(cacert)) {
                             result.add((X509Certificate) cacert);
                         }
-                    } else {
-                        if (log.isDebugEnabled()) {
-                            log.debug("Cannot find caPubs CA: " + ca);
-                        }
+                    } else { // Should never happen.
+                        log.info("Cannot find CA: " + ca); 
                     }
                 } catch (AuthorizationDeniedException e) {
                     if(log.isDebugEnabled()) {
