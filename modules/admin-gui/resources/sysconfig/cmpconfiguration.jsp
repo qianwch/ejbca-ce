@@ -406,10 +406,32 @@
     			            value = request.getParameter(CHECKBOX_OMITVERIFICATIONINECC);
     			            cmpConfigClone.setOmitVerificationsInECC(alias, (value != null));
     			            
-    		       		
-    			            
     			   			// ------------------- BUTTONS -------------------------
     			            
+    			   			if(request.getParameter(BUTTON_ADDRESPONSECAPUBSCA) != null) {
+		        					value = request.getParameter(LIST_RESPONSECAPUBSCA);
+		        					final String cas = cmpConfigClone.getResponseCaPubsCA(alias);
+		           					List<String> list = new ArrayList<String>();
+		           					if (StringUtils.isNotBlank(cas)) {
+			           					list = (List<String>) new ArrayList<String>(Arrays.asList( cas.split(";")));
+		           					}
+		           					if (!list.contains(value)) {
+		           						list.add(value);
+		           					}
+		           					cmpConfigClone.setResponseCaPubsCA(alias, StringUtils.join(list, ";"));
+				        	}
+    			   			
+    			   			if(request.getParameter(BUTTON_REMOVERESPONSECAPUBSCA) != null) {
+				           			value = request.getParameter(LIST_RESPONSECAPUBSCA);
+				           			final String cas = cmpConfigClone.getResponseCaPubsCA(alias);
+				           			if (StringUtils.isNotBlank(cas)) {
+				           					final List<String> list = new ArrayList<String>((List<String>) Arrays.asList( cas.split(";")));
+				           					if (list.remove(value)) {
+				           							cmpConfigClone.setResponseCaPubsCA(alias, StringUtils.join(list, ";"));
+				           					}
+				           			}
+	    			        }
+    			   			
     			   			if(request.getParameter(CHECKBOX_CMP_VENDORMODE) != null) {
     			   				
 		    			        	if(request.getParameter(BUTTON_ADDVENDORCA) != null) {
@@ -424,19 +446,6 @@
 				           					}
 				           					cmpConfigClone.setVendorCA(alias, StringUtils.join(list, ";"));
 		    			        	}
-		    			   			
-		    			        	if(request.getParameter(BUTTON_ADDRESPONSECAPUBSCA) != null) {
-				        					value = request.getParameter(LIST_RESPONSECAPUBSCA);
-				        					final String cas = cmpConfigClone.getResponseCaPubsCA(alias);
-				           					List<String> list = new ArrayList<String>();
-				           					if (StringUtils.isNotBlank(cas)) {
-					           					list = (List<String>) new ArrayList<String>(Arrays.asList( cas.split(";")));
-				           					}
-				           					if (!list.contains(value)) {
-				           						list.add(value);
-				           					}
-				           					cmpConfigClone.setResponseCaPubsCA(alias, StringUtils.join(list, ";"));
-						        	}
 		    			            
 		    			        	if(request.getParameter(BUTTON_REMOVEVENDORCA) != null) {
 			    			        		value = request.getParameter(LIST_VENDORCA);
@@ -445,17 +454,6 @@
 						           					final List<String> list = new ArrayList<String>((List<String>) Arrays.asList( cas.split(";")));
 						           					if (list.remove(value)) {
 						           							cmpConfigClone.setVendorCA(alias, StringUtils.join(list, ";"));
-						           					}
-						           			}
-			    			        }
-		    			        	
-		    			        	if(request.getParameter(BUTTON_REMOVERESPONSECAPUBSCA) != null) {
-						           			value = request.getParameter(LIST_RESPONSECAPUBSCA);
-						           			final String cas = cmpConfigClone.getResponseCaPubsCA(alias);
-						           			if (StringUtils.isNotBlank(cas)) {
-						           					final List<String> list = new ArrayList<String>((List<String>) Arrays.asList( cas.split(";")));
-						           					if (list.remove(value)) {
-						           							cmpConfigClone.setResponseCaPubsCA(alias, StringUtils.join(list, ";"));
 						           					}
 						           			}
 			    			        }
