@@ -26,9 +26,8 @@ function enableFormItems() {
     document.cmpconfiguration.<%= LIST_VENDORCA %>.disabled = (!use_vendormode || !authorizedToEdit);
     document.cmpconfiguration.<%= BUTTON_ADDVENDORCA %>.disabled = (!use_vendormode || !authorizedToEdit);
     document.cmpconfiguration.<%= BUTTON_REMOVEVENDORCA %>.disabled = (!use_vendormode || !authorizedToEdit);
-    document.cmpconfiguration.<%= LIST_RESPONSECAPUBSCA %>.disabled = (!authorizedToEdit);
-    document.cmpconfiguration.<%= BUTTON_ADDRESPONSECAPUBSCA %>.disabled = (!authorizedToEdit);
-    document.cmpconfiguration.<%= BUTTON_REMOVERESPONSECAPUBSCA %>.disabled = (!authorizedToEdit);
+    document.cmpconfiguration.<%= TEXTFIELD_CMP_RANAMEGENPREFIX %>.disabled = (!use_vendormode || !authorizedToEdit);
+    document.cmpconfiguration.<%= TEXTFIELD_CMP_RANAMEGENPOSTFIX %>.disabled = (!use_vendormode || !authorizedToEdit);
 <% } else { %>
     // ----- RA Mode -----
     // CMP Authentication Module
@@ -114,11 +113,6 @@ function checkallfields() {
         <a href="<%=THIS_FILENAME %>"><c:out value="<%= ejbcawebbean.getText(\"CMPBACKTOALIASES\") %>" /></a>
       </td>
     </tr>
-
-
-
-
-        
 
     
     <!-- ---------------------- CMP Operational mode ----------------------------- -->
