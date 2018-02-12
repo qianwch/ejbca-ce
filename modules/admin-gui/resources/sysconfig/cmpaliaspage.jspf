@@ -26,8 +26,8 @@ function enableFormItems() {
     document.cmpconfiguration.<%= LIST_VENDORCA %>.disabled = (!use_vendormode || !authorizedToEdit);
     document.cmpconfiguration.<%= BUTTON_ADDVENDORCA %>.disabled = (!use_vendormode || !authorizedToEdit);
     document.cmpconfiguration.<%= BUTTON_REMOVEVENDORCA %>.disabled = (!use_vendormode || !authorizedToEdit);
-    document.cmpconfiguration.<%= TEXTFIELD_CMP_RANAMEGENPREFIX %>.disabled = (!use_vendormode || !authorizedToEdit);
-    document.cmpconfiguration.<%= TEXTFIELD_CMP_RANAMEGENPOSTFIX %>.disabled = (!use_vendormode || !authorizedToEdit);
+    document.cmpconfiguration.<%= TEXTFIELD_CMP_RANAMEGENPREFIX %>.disabled = (!authorizedToEdit);
+    document.cmpconfiguration.<%= TEXTFIELD_CMP_RANAMEGENPOSTFIX %>.disabled = (!authorizedToEdit);
 <% } else { %>
     // ----- RA Mode -----
     // CMP Authentication Module
