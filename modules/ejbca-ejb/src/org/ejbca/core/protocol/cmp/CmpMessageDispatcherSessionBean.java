@@ -34,6 +34,7 @@ import org.bouncycastle.asn1.cmp.PKIMessages;
 import org.bouncycastle.asn1.util.ASN1Dump;
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authorization.AuthorizationDeniedException;
+import org.cesecore.certificates.ca.CADoesntExistsException;
 import org.cesecore.certificates.ca.CAInfo;
 import org.cesecore.certificates.ca.CaSessionLocal;
 import org.cesecore.certificates.certificate.request.FailInfo;
@@ -292,7 +293,7 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
                 try {
                     cainfo = caSession.getCAInfo(admin, caId);
                     if (cainfo != null && CollectionUtils.isNotEmpty(cainfo.getCertificateChain())) {
-                        cacert = (X509Certificate) cainfo.getCertificateChain().get(0);
+                        cacert = (X509Certificate) cainfo.getCertificateChain().iterator().next();
                         if (!result.contains(cacert)) {
                             result.add((X509Certificate) cacert);
                         }
@@ -303,6 +304,8 @@ public class CmpMessageDispatcherSessionBean implements CmpMessageDispatcherSess
                     if(log.isDebugEnabled()) {
                         log.debug(e.getMessage());
                     }
+                } catch (CADoesntExistsException e) { // should never happen here.
+                    log.info(e.getMessage());
                 }
             }
         }
