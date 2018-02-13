@@ -442,23 +442,19 @@ public class ApproveActionManagedBean extends BaseManagedBean {
     }
     
     /**
-    *
-    * @return all partitions that the current admin has view access to
-    */
+     * 
+     * @return all partitions that the current admin has view access to
+     */
     public ListDataModel<ApprovalPartitionProfileGuiObject> getApprovalPartitions() {
         if (partitionsAuthorizedToView == null) {
             List<ApprovalPartitionProfileGuiObject> authorizedPartitions = new ArrayList<>();
             partitionsAuthorizedToApprove = new HashSet<>();
-            //Make sure we're not reading stale data
-            ApprovalProfile approvalProfile = approvalProfileSession.getApprovalProfile(approvalDataVOView.getApprovalProfile().getProfileId());
-            ApprovalStep approvalStep = approvalProfile.getStep(getCurrentStep().getStepIdentifier());
             if (getCurrentStep() != null) {
-                for (Integer approvalPartitionId : getCurrentStep().getPartitions().keySet()) {
-                    ApprovalPartition approvalPartition = approvalStep.getPartition(approvalPartitionId);
+                for (ApprovalPartition approvalPartition : getCurrentStep().getPartitions().values()) {
                     try {
                         if (approvalDataVOView.getApprovalProfile().canViewPartition(getAdmin(), approvalPartition)) {
-                            authorizedPartitions.add(
-                                    new ApprovalPartitionProfileGuiObject(approvalDataVOView.getApprovalProfile().getApprovalProfileTypeIdentifier(),
+                            authorizedPartitions
+                                    .add(new ApprovalPartitionProfileGuiObject(approvalDataVOView.getApprovalProfile().getApprovalProfileTypeIdentifier(),
                                             approvalPartition.getPartitionIdentifier(), getPartitionProperties(approvalPartition)));
                         }
                         if (approvalDataVOView.getApprovalProfile().canApprovePartition(getAdmin(), approvalPartition)) {
