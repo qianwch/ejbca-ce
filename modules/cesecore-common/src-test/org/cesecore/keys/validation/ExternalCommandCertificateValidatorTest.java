@@ -13,10 +13,20 @@
 
 package org.cesecore.keys.validation;
 
+import java.io.File;
+import java.security.KeyPair;
+import java.security.cert.X509Certificate;
 import java.util.LinkedHashMap;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.SystemUtils;
+import org.apache.log4j.Logger;
+import org.cesecore.certificates.util.AlgorithmConstants;
 import org.cesecore.internal.UpgradeableDataHashMap;
-import org.cesecore.util.ExternalProcessException;
+import org.cesecore.keys.util.KeyTools;
+import org.cesecore.util.CertTools;
+import org.cesecore.util.CryptoProviderTools;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -29,53 +39,98 @@ import org.junit.Test;
  */
 public class ExternalCommandCertificateValidatorTest {
 
-    @Test(expected = ExternalProcessException.class)
+    /** Class logger. */
+    private static final Logger log = Logger.getLogger(ExternalCommandCertificateValidatorTest.class);
+
+    @Before
+    public void setUp() throws Exception {
+        log.trace(">setUp()");
+        CryptoProviderTools.installBCProvider();
+        log.trace("<setUp()");
+    }
+
+    @Test
     public void testDisabledWhitelist() throws Exception {
         final ExternalCommandCertificateValidator validator = new ExternalCommandCertificateValidator();
         final LinkedHashMap<Object, Object> data = new LinkedHashMap<>();
-        data.put(ExternalCommandCertificateValidator.EXTERNAL_COMMAND, "/foo/allowed");
+        final String path = getFilePathFromClasspath("external_process_tools_with_write_to_disk_exit_code_0");
+        // Check validation of an external call with x.509 RSA public key while IssuancePhase#CERTIFICATE_VALIDATION phase.
+        data.put(ExternalCommandCertificateValidator.EXTERNAL_COMMAND, path);
         data.put(UpgradeableDataHashMap.VERSION, 1f);
         validator.setDataMap(data);
-        validator.validate(null, null, ExternalScriptsWhitelist.permitAll());
+        validator.validate(null, createCert("C=Test,O=Test,OU=Test,CN=testDisabledWhitelist"), ExternalScriptsWhitelist.permitAll());
     }
 
-    @Test(expected = ExternalProcessException.class)
+    @Test
     public void testAllowedCommand() throws Exception {
         final ExternalCommandCertificateValidator validator = new ExternalCommandCertificateValidator();
         final LinkedHashMap<Object, Object> data = new LinkedHashMap<>();
-        data.put(ExternalCommandCertificateValidator.EXTERNAL_COMMAND, "/foo/allowed");
+        final String path = getFilePathFromClasspath("external_process_tools_with_write_to_disk_exit_code_0");
+        data.put(ExternalCommandCertificateValidator.EXTERNAL_COMMAND, path);
         data.put(UpgradeableDataHashMap.VERSION, 1f);
         validator.setDataMap(data);
-        validator.validate(null, null, new ExternalScriptsWhitelist("/foo/allowed"));
+        validator.validate(null, createCert("C=Test,O=Test,OU=Test,CN=testAllowedCommand"), new ExternalScriptsWhitelist(path));
     }
 
-    @Test(expected = ExternalProcessException.class)
+    @Test
     public void testAllowedCommandWithParameters() throws Exception {
         final ExternalCommandCertificateValidator validator = new ExternalCommandCertificateValidator();
+        final String path = getFilePathFromClasspath("external_process_tools_with_write_to_disk_exit_code_0");
         final LinkedHashMap<Object, Object> data = new LinkedHashMap<>();
-        data.put(ExternalCommandCertificateValidator.EXTERNAL_COMMAND, "/foo/allowed %cert%");
+        data.put(ExternalCommandCertificateValidator.EXTERNAL_COMMAND, path + " param1 param2");
         data.put(UpgradeableDataHashMap.VERSION, 1f);
         validator.setDataMap(data);
-        validator.validate(null, null, new ExternalScriptsWhitelist("/foo/allowed"));
+        validator.validate(null, createCert("C=Test,O=Test,OU=Test,CN=testAllowedCommandWithParameters"), new ExternalScriptsWhitelist(path));
     }
 
     @Test(expected = ValidatorNotApplicableException.class)
     public void testForbiddenCommand() throws Exception {
         final ExternalCommandCertificateValidator validator = new ExternalCommandCertificateValidator();
+        final String path = getFilePathFromClasspath("external_process_tools_with_write_to_disk_exit_code_0");
         final LinkedHashMap<Object, Object> data = new LinkedHashMap<>();
-        data.put(ExternalCommandCertificateValidator.EXTERNAL_COMMAND, "/foo/forbidden");
+        data.put(ExternalCommandCertificateValidator.EXTERNAL_COMMAND, path + "/foo/forbidden");
         data.put(UpgradeableDataHashMap.VERSION, 1f);
         validator.setDataMap(data);
-        validator.validate(null, null, new ExternalScriptsWhitelist("/foo/allowed"));
+        validator.validate(null, null, new ExternalScriptsWhitelist(path));
     }
 
     @Test(expected = ValidatorNotApplicableException.class)
     public void testForbiddenCommandWithParameters() throws Exception {
         final ExternalCommandCertificateValidator validator = new ExternalCommandCertificateValidator();
+        final String path = getFilePathFromClasspath("external_process_tools_with_write_to_disk_exit_code_0");
         final LinkedHashMap<Object, Object> data = new LinkedHashMap<>();
-        data.put(ExternalCommandCertificateValidator.EXTERNAL_COMMAND, "/foo/forbidden %cert%");
+        data.put(ExternalCommandCertificateValidator.EXTERNAL_COMMAND, path + "/foo/forbidden param1 param2");
         data.put(UpgradeableDataHashMap.VERSION, 1f);
         validator.setDataMap(data);
-        validator.validate(null, null, new ExternalScriptsWhitelist("/foo/allowed"));
+        validator.validate(null, null, new ExternalScriptsWhitelist(path));
+    }
+
+    /**
+     * Gets the platform dependent full path of the file in the class path.
+     *
+     * @param classpath the class path (or filename -> put inside resources directory).
+     * @return the full path.
+     */
+    // Code duplication.
+    private final String getFilePathFromClasspath(final String classpath) {
+        final String fileSuffix = SystemUtils.IS_OS_WINDOWS ? ".bat" : ".sh";
+        final String subFolder = SystemUtils.IS_OS_WINDOWS ? "windows" : "unix";
+        final String path = "platform/" + subFolder + "/" + classpath + fileSuffix;
+        if (this.getClass().getClassLoader().getResource(path) == null) {
+            throw new RuntimeException("Add modules/systemtests/resources to classpath.");
+        }
+        final String result = new File(this.getClass().getClassLoader().getResource(path).getFile()).getPath();
+        if (log.isDebugEnabled()) {
+            log.debug("Get file path by class path: " + classpath + " - " + result);
+        }
+        return SystemUtils.IS_OS_WINDOWS ? result.replaceFirst("/", StringUtils.EMPTY) : result;
+    }
+
+    private final X509Certificate createCert(final String cn) throws Exception {
+        KeyPair keyPair = KeyTools.genKeys("2048", AlgorithmConstants.KEYALGORITHM_RSA);
+        X509Certificate certificate = CertTools.genSelfCert(
+                cn, 365, null,
+                keyPair.getPrivate(), keyPair.getPublic(), AlgorithmConstants.SIGALG_SHA256_WITH_RSA, true);
+        return certificate;
     }
 }
