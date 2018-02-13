@@ -1,4 +1,4 @@
-EJBCA 6.10.0.3, 2018-02-13
+EJBCA 6.10.0.4, 2018-02-13
 ---
 Bug
     [ECA-6622] - CAA Issuance fails for domains where both issue and issuewild records exist in a certain order

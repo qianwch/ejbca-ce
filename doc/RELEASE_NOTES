@@ -1,4 +1,4 @@
-EJBCA 6.10.0.3
+EJBCA 6.10.0.4
 -----------
 
 This patch release fixes a corner case in CAA issuance. 
