@@ -1,3 +1,9 @@
+EJBCA 6.10.0.3
+-----------
+
+This patch release fixes a corner case in CAA issuance. 
+
+
 EJBCA 6.10.0.1
 -----------
 
