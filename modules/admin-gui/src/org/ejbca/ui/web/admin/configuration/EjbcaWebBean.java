@@ -64,6 +64,7 @@ import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.authorization.AuthorizationSessionLocal;
 import org.cesecore.authorization.control.StandardRules;
 import org.cesecore.certificates.ca.CA;
+import org.cesecore.certificates.ca.CAConstants;
 import org.cesecore.certificates.ca.CADoesntExistsException;
 import org.cesecore.certificates.ca.CAInfo;
 import org.cesecore.certificates.ca.CaSessionLocal;
@@ -79,7 +80,6 @@ import org.cesecore.util.CertTools;
 import org.cesecore.util.StringTools;
 import org.cesecore.util.ValidityDate;
 import org.ejbca.config.CmpConfiguration;
-import org.ejbca.config.EjbcaConfiguration;
 import org.ejbca.config.EstConfiguration;
 import org.ejbca.config.GlobalConfiguration;
 import org.ejbca.config.WebConfiguration;
@@ -755,6 +755,29 @@ public class EjbcaWebBean implements Serializable {
         return this.informationmemory.getAuthorizedCAIds();
     }
 
+    public TreeMap<String,Integer> getCANames() {
+    	return (TreeMap<String, Integer>) informationmemory.getCANames();
+    }
+
+    public TreeMap<String,Integer> getExternalCANames() {
+        TreeMap<String,Integer> ret = new TreeMap<>();
+        for (CAInfo caInfo : caSession.getAuthorizedCaInfos(administrator)) {
+            if (caInfo.getStatus() == CAConstants.CA_EXTERNAL) {
+                ret.put(caInfo.getName(), caInfo.getCAId());
+            }
+        }
+        return ret;
+    }
+
+    public TreeMap<String,Integer> getActiveCANames() {
+        TreeMap<String, Integer> ret = new TreeMap<>();
+        Map<Integer, String> idtonamemap = this.caSession.getActiveCAIdToNameMap(administrator);
+        for (Integer id : idtonamemap.keySet()) {
+            ret.put(idtonamemap.get(id), id);
+        }
+        return ret;
+    }
+
     /** @return authorized CA Ids sorted by CA name alphabetically*/
     public Collection<Integer> getAuthorizedCAIdsByName() {
         return this.informationmemory.getAuthorizedCAIdsByName();
@@ -1312,13 +1335,33 @@ public class EjbcaWebBean implements Serializable {
         Collections.sort(entries);
         return entries;
     }
+    
+    public TreeMap<String, Integer> getCAOptions() {
+        return getCANames();
+    }
 
-    public TreeMap<String, Integer> getVendorCAOptions() {
-        if(EjbcaConfiguration.getIsInProductionMode()) {
-            return informationmemory.getExternalCAs();
-        } else {
-            return (TreeMap<String, Integer>) informationmemory.getCANames();
+    /**
+     * Gets the list of CA names by the list of CA IDs.
+     * @param idString the semicolon separated list of CA IDs.
+     * @return the list of CA names as semicolon separated String.
+     * @throws NumberFormatException if a CA ID could not be parsed.
+     * @throws AuthorizationDeniedException if authorization was denied.
+     */
+    public String getCaNamesString(final String idString) throws NumberFormatException, AuthorizationDeniedException {
+        final TreeMap<String, Integer> availableCas = getCAOptions();
+        final List<String> result = new ArrayList<String>();
+        if (StringUtils.isNotBlank(idString)) {
+            for (String id : idString.split(";")) {
+                if (availableCas.containsValue(Integer.valueOf(id))) {
+                    for (Entry<String,Integer> entry : availableCas.entrySet()) {
+                        if (entry.getValue() != null && entry.getValue().equals( Integer.valueOf(id))) {
+                            result.add(entry.getKey());
+                        }
+                    }
+                }
+            }
         }
+        return StringUtils.join(result, ";");
     }
 
     //**********************
