@@ -406,7 +406,7 @@ public class EndEntityCertificateAuthenticationModule implements ICMPAuthenticat
             
             // Check if this certificate belongs to the user
             if ( (username != null) && (extraCertUsername != null) ) {
-                if (!cmpConfiguration.getRAMode(this.confAlias) && cmpConfiguration.getVendorMode(this.confAlias)) {
+                if (cmpConfiguration.getVendorMode(this.confAlias)) {
                     String fix = cmpConfiguration.getRANameGenPrefix(this.confAlias);
                     if (StringUtils.isNotBlank(fix)) {
                         log.info("Preceded RA name prefix '" + fix + "' to username '" + username + "' in CMP vendor mode.");
