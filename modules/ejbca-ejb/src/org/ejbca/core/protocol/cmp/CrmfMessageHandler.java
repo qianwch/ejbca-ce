@@ -661,14 +661,32 @@ public class CrmfMessageHandler extends BaseCmpMessageHandler implements ICmpMes
         return endEntityInformation;
 	}
 	
-	private String getUsernameByDnComponent(String dn) {
+    /**
+     * Gets the username by the DN component specified in the CMP configuration 'extract username component' 
+     * and adds the RA name generation prefix and postfix.
+     * 
+     * @param dn the DN.
+     * @return the username with RA name generation prefix and postfix.
+     */
+    private String getUsernameByDnComponent(String dn) {
         final String usernameComp = this.cmpConfiguration.getExtractUsernameComponent(this.confAlias);
         if (LOG.isDebugEnabled()) {
             LOG.debug("extractUsernameComponent: "+usernameComp);
         }
         if(StringUtils.isNotEmpty(usernameComp)) {
-            return CertTools.getPartFromDN(dn,usernameComp);
-        }
+            String username = CertTools.getPartFromDN(dn,usernameComp);
+            String fix = cmpConfiguration.getRANameGenPrefix(this.confAlias);
+            if (StringUtils.isNotBlank(fix)) {
+                LOG.info("Preceded RA name prefix '" + fix + "' to username '" + username + "' in CMP vendor mode.");
+                username = fix + username;
+            }
+            fix = cmpConfiguration.getRANameGenPostfix(this.confAlias);
+            if (StringUtils.isNotBlank( cmpConfiguration.getRANameGenPostfix(this.confAlias))) {
+                LOG.info("Attached RA name postfix '" + fix + "' to username '" + username + "' in CMP vendor mode.");
+                username += fix;
+            }
+            return username;
+        }    
         return null;
-	}
+    }
 }
