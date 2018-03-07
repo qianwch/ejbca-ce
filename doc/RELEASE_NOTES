@@ -1,3 +1,9 @@
+EJBCA 6.11.1.1
+-----------
+
+This patch release fixes a reported bug related to SAN fields appearing in different orders in pre-certificates vs final certificates when submitting
+to CT logs, leading in an incorrect signature on the pre-certificate. 
+
 EJBCA 6.11.1
 -----------
 
