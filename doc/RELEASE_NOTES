@@ -1,5 +1,12 @@
+EJBCA 6.10.1.3
+-----------
+
+This patch release fixes a reported bug related to SAN fields appearing in different orders in pre-certificates vs final certificates when submitting
+to CT logs, leading in an incorrect signature on the pre-certificate. 
+
 EJBCA 6.10.1.2 
 -----------
+
 Patch release with some last minute fixes before the release of Appliance 2.7.2. Found issues include:
 	* A couple of minor regressions in relation to handling Approval Profiles in the CA and RA GUIs
 	* Improved re-authentication checks in the CA and RA GUIs
