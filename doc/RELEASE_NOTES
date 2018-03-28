@@ -1,3 +1,14 @@
+EJBCA 6.10.1.5
+-----------
+
+This patch release backports some small issues and functionality to the trunk that we wanted to make available on short notice. Of those that might 
+be of interest:
+
+    * 	The same Certificate Transparency log may now appear under several labels. Only one SCT will be extracted from it though, even if all labels 
+  		are involved during issuance. 
+  	*	A bugfix to the "shotgun approach" if CT issuance, where optimizing for performance did not always result in the correct log distribution.
+  	*	It's now possible to proxy revocation calls to the WS interface through the RA
+
 EJBCA 6.10.1.4
 -----------
 

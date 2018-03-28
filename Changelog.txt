@@ -1,3 +1,17 @@
+EJBCA 6.10.1.5, 2018-03-28
+---
+
+Bug
+    [ECA-6699] - CT label requirements (e.g. Google / non-Google) are sometimes not satisfied
+    [ECA-6702] - WS through Peer RA does not work without a local Role on the RA (Backport)
+    [ECA-6704] - New role can not be created if RA-login-role belongs to Namespace (Backport)
+
+New Feature
+    [ECA-6703] - Certificate revocation using EJBCA WebService API through External (Peer) RA (Backport)
+
+Improvement
+    [ECA-6697] - Allow for the same CT log appear in multiple CT log groups
+
 EJBCA 6.10.1.4, 2018-03-08
 ---
 
