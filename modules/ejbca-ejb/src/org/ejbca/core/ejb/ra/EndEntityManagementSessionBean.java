@@ -1998,22 +1998,6 @@ public class EndEntityManagementSessionBean implements EndEntityManagementSessio
         return returnval;
     }
 
-    /**
-     * 
-     * Help function used to retrieve user information. A query parameter of null indicates all users. If caauthorizationstring or
-     * endentityprofilestring are null then the method will retrieve the information itself.
-     * 
-     * 
-     * @param admin
-     * @param query
-     * @param withlimit
-     * @param caauthorizationstr
-     * @param endentityprofilestr
-     * @param numberofrows the number of rows to fetch, use 0 for the value defined in GlobalConfiguration 
-     * @param endentityAccessRule
-     * @return
-     * @throws IllegalQueryException
-     */
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     @Override
     public Collection<EndEntityInformation> query(final AuthenticationToken admin, final Query query, final String caauthorizationstr,
@@ -2035,7 +2019,7 @@ public class EndEntityManagementSessionBean implements EndEntityManagementSessio
 
         String sqlquery = "";
         if (query != null) {
-            sqlquery = sqlquery + query.getQueryString();
+            sqlquery += query.getQueryString();
         }
 
         final GlobalConfiguration globalconfiguration = getGlobalConfiguration();
@@ -2052,21 +2036,21 @@ public class EndEntityManagementSessionBean implements EndEntityManagementSessio
                 endentityauth = "";
             }
         }
-
-        if (!caauthstring.trim().equals("") && query != null) {
-            sqlquery = sqlquery + " AND " + caauthstring;
-        } else {
-            sqlquery = sqlquery + caauthstring;
-        }
-
+        if (!StringUtils.isBlank(caauthstring)) {
+            if (StringUtils.isBlank(sqlquery)) {
+                sqlquery += caauthstring;
+            } else {
+                sqlquery = "(" + sqlquery + ") AND " + caauthstring;
+            }
+        } 
         if (globalconfiguration.getEnableEndEntityProfileLimitations()) {
-            if (endentityauth == null || endentityauth.trim().equals("")) {
+            if (endentityauth == null || StringUtils.isBlank(endentityauth)) {
                 authorizedtoanyprofile = false;
             } else {
-                if (caauthstring.trim().equals("") && query == null) {
-                    sqlquery = sqlquery + endentityauth;
+                if (StringUtils.isEmpty(sqlquery)) {
+                    sqlquery += endentityauth;
                 } else {
-                    sqlquery = sqlquery + " AND " + endentityauth;
+                    sqlquery = "(" + sqlquery + ") AND " + endentityauth;
                 }
             }
         }
@@ -2079,7 +2063,7 @@ public class EndEntityManagementSessionBean implements EndEntityManagementSessio
             final javax.persistence.Query dbQuery = entityManager.createQuery("SELECT a FROM UserData a WHERE " + sqlquery);
             if (fetchsize > 0) {
                 dbQuery.setMaxResults(fetchsize);
-            }           
+            }
             @SuppressWarnings("unchecked")
             final List<UserData> userDataList = dbQuery.getResultList();
             for (UserData userData : userDataList) {

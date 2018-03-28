@@ -42,7 +42,6 @@ import org.ejbca.core.model.authorization.AccessRulesConstants;
 public class RAAuthorization implements Serializable {
     
     private static final long serialVersionUID = -3195162814492440326L;
-    private String authcastring = null;
     private String authendentityprofilestring = null;
     private TreeMap<String, Integer> authprofilenames = null;
 	private List<Integer> authprofileswithmissingcas = null;
@@ -73,22 +72,26 @@ public class RAAuthorization implements Serializable {
      *
      * @return a string of administrators CA privileges that should be used in the where clause of SQL queries.
      */
-    public String getCAAuthorizationString() {      
-      if(authcastring==null){
-        authcastring = "";   
-        for(Integer caId : caSession.getAuthorizedCaIds(admin)) {
-          if(authcastring.equals("")) {
-            authcastring = " cAId = " + caId.toString();   
-          } else {    
-            authcastring = authcastring + " OR cAId = " + caId.toString();
-          }
+    public String getCAAuthorizationString() {
+        String authcastring = "";
+        final List<Integer> authorizedCaIds = caSession.getAuthorizedCaIds(admin);
+        if (authorizedCaIds.isEmpty()) {
+            // Setup a condition that can never be true if there are no authorized CAs
+            authcastring = "(0=1)";
+        } else {
+            for (final Integer caId : caSession.getAuthorizedCaIds(admin)) {
+                if (authcastring.equals("")) {
+                    authcastring = " cAId = " + caId.toString();
+                } else {
+                    authcastring = authcastring + " OR cAId = " + caId.toString();
+                }
+            }
+            if (!authcastring.isEmpty()) {
+                authcastring = "( " + authcastring + " )";
+            }
         }
-        if(!authcastring.equals("")) {
-          authcastring = "( " + authcastring + " )"; 
-        }
-      }
-      return authcastring;
-    } 
+        return authcastring;
+    }
     
     /**
      * @return a string of end entity profile privileges that should be used in the where clause of SQL queries, or null if no authorized end entity profiles exist.
@@ -177,7 +180,6 @@ public class RAAuthorization implements Serializable {
 	}
     
     public void clear(){
-      authcastring=null;
       authendentityprofilestring=null;
       authprofilenames = null;
 	  authprofileswithmissingcas = null;

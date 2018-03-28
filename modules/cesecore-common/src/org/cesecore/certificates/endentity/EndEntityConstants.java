@@ -23,7 +23,16 @@ import java.util.List;
  * @version $Id$
  */
 public final class EndEntityConstants {
-	
+    /**
+     * The id of a non-existing end entity profile.
+     */
+    public static final int NO_END_ENTITY_PROFILE = 0;
+    /**
+     * The id for the built-in EMPTY end entity profile.
+     */
+    public static final int EMPTY_END_ENTITY_PROFILE = 1;
+    public static final String EMPTY_ENDENTITYPROFILENAME = "EMPTY";
+    
     //
     // User status codes
     //
