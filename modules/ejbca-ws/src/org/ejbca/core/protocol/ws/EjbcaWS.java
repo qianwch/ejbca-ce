@@ -1357,12 +1357,11 @@ public class EjbcaWS implements IEjbcaWS {
 		try {
 			final AuthenticationToken admin = getAdmin();
 			logAdminName(admin,logger);
-			final int caid = CertTools.stringToBCDNString(issuerDN).hashCode();
-			caSession.verifyExistenceOfCA(caid);
 			final BigInteger serno = new BigInteger(certificateSN, 16);
 			// Revoke or unrevoke, will throw appropriate exceptions if parameters are wrong, such as trying to unrevoke a certificate
 			// that was permanently revoked
-			endEntityManagementSession.revokeCert(admin, serno, date, issuerDN, reason, true);
+            // The method over RA Master API will also check if the CA (issuer DN) is something we handle and throw a CADoesntExistsException if not
+            raMasterApiProxyBean.revokeCert(admin, serno, date, issuerDN, reason, true);
 		} catch (NoSuchEndEntityException e) {
 			throw new NotFoundException(e.getMessage());
 		} catch (RuntimeException e) {	// EJBException, ClassCastException, ...
