@@ -1,3 +1,9 @@
+EJBCA 6.11.1.3, 2018-04-03
+---
+
+Improvement
+    [ECA-6724] - Allow for the same CT log appear in multiple CT log groups (Backport)
+
 EJBCA 6.11.1.2, 2018-03-28
 ---
 
@@ -8,9 +14,6 @@ Bug
 
 New Feature
     [ECA-6703] - Certificate revocation using EJBCA WebService API through External (Peer) RA (Backport)
-
-Improvement
-    [ECA-6697] - Allow for the same CT log appear in multiple CT log groups
 
 EJBCA 6.11.1.1, 2018-03-07
 ---
