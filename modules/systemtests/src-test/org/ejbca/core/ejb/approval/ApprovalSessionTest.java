@@ -779,7 +779,7 @@ public class ApprovalSessionTest extends CaTestCase {
         }
     }
 
-    //@Test
+    @Test
     public void testExpiredQuery() throws Exception {
         log.trace(">testExpiredQuery");
         final long originalValidity = approvalProfile.getRequestExpirationPeriod();
