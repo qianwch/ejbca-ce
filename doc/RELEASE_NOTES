@@ -1,8 +1,14 @@
+EJBCA 6.11.1.4
+-----------
+
+Modified the behavior of ApprovalSession.getRemainingNumberOfApprovals to return the code -1 (as per the spec) instead of -2. Also changed behavior
+to not throw exceptions for approved but since then expired requests.
+
 EJBCA 6.11.1.3
 -----------
 
-    * 	The same Certificate Transparency log may now appear under several labels. Only one SCT will be extracted from it though, even if all labels 
-  		are involved during issuance. 
+The same Certificate Transparency log may now appear under several labels. Only one SCT will be extracted from it though, even if all labels 
+are involved during issuance. 
 
 EJBCA 6.11.1.2
 -----------
