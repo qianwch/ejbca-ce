@@ -327,7 +327,7 @@ function getPasswordAndSubmit(formname) {
 	  <% // Display createcrl if admin is authorized
       if(createcrlrights){ %>
 		<br />
-		<form class="hidden" name='createcrl' method=GET action='<%=THIS_FILENAME %>'>
+		<form class="hidden" name='createcrl' method=POST action='<%=THIS_FILENAME %>'>
             <input type="hidden" name="<csrf:tokenname/>" value="<csrf:tokenvalue/>"/>
 			<input type='hidden' name='<%=HIDDEN_NUMBEROFCAS %>' value='<%=canames.keySet().size()%>'> 
 			<input type='hidden' name='<%=HIDDEN_CAID + number %>' value='<c:out value="<%= caid %>" />'> 
