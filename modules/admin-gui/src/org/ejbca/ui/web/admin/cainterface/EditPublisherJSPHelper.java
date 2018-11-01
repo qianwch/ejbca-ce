@@ -935,7 +935,7 @@ public class EditPublisherJSPHelper {
                 if (StringUtils.isNotEmpty(name)) {
                     publisherNames.add(name);
                 } else if (log.isDebugEnabled()) {
-                    log.debug("No name found for publisher with id " + publisherId);
+                    log.info("No name found for publisher with id " + publisherId);
                 }
             }
             Collections.sort(publisherNames);
