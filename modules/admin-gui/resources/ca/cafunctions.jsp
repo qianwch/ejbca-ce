@@ -166,7 +166,8 @@ function getPasswordAndSubmit(formname) {
   	 
   		 <h2><%= ejbcawebbean.getText("IMPORTCRL_TITLE") %></h2>  	 
   	 
-  		 <form name="recievefile" action="<%= THIS_FILENAME %>?${csrf_tokenname}=${csrf_tokenvalue}" method="post" enctype='multipart/form-data' >
+  		 <form name="recievefile" action="<%= THIS_FILENAME %>" method="post" enctype='multipart/form-data' >
+            <input type="hidden" name="<csrf:tokenname/>" value="<csrf:tokenvalue/>"/>
   	 		<input type="hidden" name='action' value='<%=ACTION_IMPORT_CRL %>'>
 			<table class="action" width="70%" border="0" cellspacing="3" cellpadding="3">
 				<tr> 
