@@ -22,6 +22,7 @@ import java.util.List;
  * 
  * @version $Id$
  */
+
 public class CustomPublisherProperty implements Serializable {
 
     private static final long serialVersionUID = 1L;
