@@ -172,7 +172,8 @@ org.cesecore.authorization.control.CryptoTokenRules
 		<h:panelGroup/>
 		<h:panelGroup styleClass="margin-top">
 			<h:commandButton action="#{cryptoTokenMBean.cancelCurrentCryptoToken}" value="#{web.text.CRYPTOTOKEN_CANCEL}" rendered="#{cryptoTokenMBean.currentCryptoTokenEditMode && cryptoTokenMBean.currentCryptoTokenId != 0}"/>
-			<h:commandButton action="#{cryptoTokenMBean.saveCurrentCryptoToken}" value="#{web.text.CRYPTOTOKEN_SAVE}" rendered="#{cryptoTokenMBean.currentCryptoTokenEditMode}"/>
+			<h:commandButton action="#{cryptoTokenMBean.saveCurrentCryptoTokenWithCheck}" value="#{web.text.CRYPTOTOKEN_SAVE}" rendered="#{cryptoTokenMBean.currentCryptoTokenEditMode and !cryptoTokenMBean.p11SlotUsed}"/>
+            <h:commandButton action="#{cryptoTokenMBean.saveCurrentCryptoToken}" value="#{web.text.CRYPTOTOKEN_SAVE_CONFIRM}" rendered="#{cryptoTokenMBean.currentCryptoTokenEditMode and cryptoTokenMBean.p11SlotUsed}"/>
 		</h:panelGroup>
 	</h:panelGrid>
 	</h:form>
