@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.cesecore</groupId>
+    <artifactId>cesecore</artifactId>
+    <version>1.0</version>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>../cesecore-common</module>
+        <module>../cesecore-entity</module>
+    </modules>
+
+    <properties>
+
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- JDK -->
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+
+        <!-- Dependencies version INTERNAL -->
+        <cert-cvc.version>1.4.9</cert-cvc.version>
+
+        <!-- Dependencies version EXTERNAL -->
+        <!-- lib.jee.classpath -->
+        <javaee-api.version>6.0</javaee-api.version>
+        <!-- lib.jpa.classpath -->
+        <antlr.version>2.7.7</antlr.version>
+        <dom4j.version>1.6.1</dom4j.version>
+        <hibernate-commons-annotations.version>4.0.1.Final</hibernate-commons-annotations.version>
+        <hibernate-entitymanager.version>4.1.1.Final</hibernate-entitymanager.version>
+        <hibernate-jpa-2.0-api.version>1.0.1.Final</hibernate-jpa-2.0-api.version>
+        <hibernate-validator.version>4.1.0.Final</hibernate-validator.version>
+        <javassist.version>3.15.0-GA</javassist.version>
+        <jboss-logging.version>3.1.0.GA</jboss-logging.version>
+        <jboss-transaction-api_1.1_spec.version>1.0.0.Final</jboss-transaction-api_1.1_spec.version>
+        <!-- lib.bouncycastle.classpath -->
+        <bouncycastle.version>1.60</bouncycastle.version>
+        <!-- lib.log4j.classpath -->
+        <log4j.version>1.2.17</log4j.version>
+        <!-- lib.commons-logging.classpath -->
+        <commons-logging.version>1.2</commons-logging.version>
+        <!-- lib.commons-lang.classpath -->
+        <commons-lang.version>2.6</commons-lang.version>
+        <!-- lib.commons-codec.classpath -->
+        <commons-codec.version>1.10</commons-codec.version>
+        <!-- lib.commons-config.classpath -->
+        <commons-configuration.version>1.6</commons-configuration.version>
+        <!-- lib.commons-collections.classpath -->
+        <commons-collections.version>3.2.2</commons-collections.version>
+        <!-- lib.commons-io.classpath -->
+        <commons-io.version>2.5</commons-io.version>
+
+        <!-- Plugin Versions -->
+        <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
+        <build-helper-maven-plugin.version>3.0.0</build-helper-maven-plugin.version>
+    </properties>
+
+    <build>
+        <pluginManagement>
+            <!-- Define plugins and their versions for children -->
+            <plugins>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <version>${build-helper-maven-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven-compiler-plugin.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+</project>
