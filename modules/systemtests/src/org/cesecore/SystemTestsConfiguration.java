@@ -12,6 +12,7 @@
  *************************************************************************/
 package org.cesecore;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -27,13 +28,25 @@ import org.cesecore.keys.token.p11.Pkcs11SlotLabelType;
  */
 public abstract class SystemTestsConfiguration {
 
-    public static final String PKCS11_LIBRARY = "pkcs11.library";
-    public static final String PKCS11_SLOT_PIN = "pkcs11.slotpin";
-    public static final String PKCS11_SECURITY_PROVIDER = "pkcs11.provider";
-    public static final String PKCS11_SLOT_TYPE = "pkcs11.slottype"; 
-    public static final String PKCS11_SLOT_VALUE = "pkcs11.slottypevalue"; 
+    private static final String PKCS11_LIBRARY = "pkcs11.library";
+    private static final String PKCS11_SLOT_PIN = "pkcs11.slotpin";
+    private static final String PKCS11_SECURITY_PROVIDER = "pkcs11.provider";
+    private static final String PKCS11_SLOT_TYPE = "pkcs11.slottype"; 
+    private static final String PKCS11_SLOT_VALUE = "pkcs11.slottypevalue";
 
-    
+    private static final String[] COMMON_PKCS11_PATHS = {
+        "/etc/utimaco/libcs2_pkcs11.so", // Utimaco (Linux)
+        "C:/Program Files/Utimaco/SafeGuard CryptoServer/Lib/cs2_pkcs11.dll", // Utimaco (Windows)
+        "/usr/lunasa/lib/libCryptoki2_64.so", // LunaSA (Linux 64-bit)
+        "/usr/lunasa/lib/libCryptoki2.so", // LunaSA (Linux 32-bit)
+        "/opt/PTK/lib/libcryptoki.so", // ProtectServer (Linux). This symlink is set by safeNet-install.sh->"5 Set the default cryptoki and/or hsm link". Use it instead of symlinking manually.
+        "/opt/ETcpsdk/lib/linux-x86_64/libcryptoki.so", // ProtectServer (Linux 64-bit)
+        "/opt/ETcpsdk/lib/linux-i386/libcryptoki.so", // ProtectServer (Linux 32-bit)
+        "C:/Program Files/SafeNet/ProtectToolkit C SDK/bin/sw/cryptoki.dll", // ProtectServer (Windows)
+        "/usr/lib/softhsm/libsofthsm2.so", // SoftHSM 2 (Linux)
+        "/usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so", // SoftHSM 2 (Linux multiarch, 64-bit)
+    };
+
     private static final Logger log = Logger.getLogger(SystemTestsConfiguration.class);
     private static final String PROPERTYFILE = "/systemtests.properties";
     private static Properties properties = null;
@@ -73,8 +86,9 @@ public abstract class SystemTestsConfiguration {
     public static String getRemotePortHttps(final String defaultValue) {
         return getProperties().getProperty("target.port.https", defaultValue);
     }
-    
-    public static String getPkcs11Library(String defaultValue) {
+
+    /** Use {@link #getHsmLibrary} instead, which has auto-detection. */
+    private static String getPkcs11LibraryInternal(String defaultValue) {
         return getProperties().getProperty(PKCS11_LIBRARY, defaultValue);
     }
     
@@ -92,5 +106,49 @@ public abstract class SystemTestsConfiguration {
     
     public static String getPkcs11SlotValue(String defaultValue) {
         return getProperties().getProperty(PKCS11_SLOT_VALUE, defaultValue);
+    }
+    
+    /**
+     * Returns the PKCS#11 library to use in system tests. It looks for the one in systemtests.properties,
+     * and if that is not configured, it looks in some common locations. 
+     * @param defaultValue The value to return if no HSM library is available.
+     * @return PKCS#11 library, or defaultValue if not available.
+     */
+    public static String getPkcs11Library(final String defaultValue) {
+        final String hsmlib = getPkcs11LibraryInternal(guessPkcs11Library());
+        if (hsmlib == null) {
+            return defaultValue;
+        }
+        if (!(new File(hsmlib).exists())) {
+            log.error("HSM library " + hsmlib + " defined, but does not exist.");
+            return defaultValue;
+        }
+
+        return hsmlib;
+    }
+
+    /**
+     * Returns the PKCS#11 library to use in system tests. It looks for the one in systemtests.properties,
+     * and if that is not configured, it looks in some common locations.
+     * <p>
+     * This method used to be in CryptoTokenTestUtils, where it was called getHSMLibrary
+     * @return PKCS#11 library, or null if not available.
+     */
+    public static String getPkcs11Library() {
+        return getPkcs11Library(null);
+    }
+
+    /**
+     * Searches for common PKCS#11 libraries, returning the first one found.
+     * @return File system path to HSM library, or null if none was found.
+     */
+    private static String guessPkcs11Library() {
+        for (final String path : COMMON_PKCS11_PATHS) {
+            final File libraryFile = new File(path);
+            if (libraryFile.exists()) {
+                return libraryFile.getAbsolutePath();
+            }
+        }
+        return null;
     }
 }
