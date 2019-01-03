@@ -32,6 +32,7 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.log4j.Logger;
 import org.cesecore.config.ConfigurationHolder;
 import org.junit.Test;
@@ -535,5 +536,31 @@ public class StringToolsTest {
         assertTrue(StringTools.isLesserThan("6.0.1", "6.3.0"));
         assertTrue(StringTools.isLesserThan("6.0", "6.0.1"));
         assertTrue(StringTools.isLesserThan("6.13.0.14", "6.14.0"));
+    }
+
+    @Test
+    public void normalizeNewLines() {
+        assertEquals("normalizeNewLines with null.", null, StringTools.normalizeNewlines(null));
+        assertEquals("normalizeNewLines with empty string.", "", StringTools.normalizeNewlines(""));
+        assertEquals("normalizeNewLines with Windows line separator.", "\n", StringTools.normalizeNewlines("\r\n"));
+        assertEquals("normalizeNewLines with Mac line separator.", "\n", StringTools.normalizeNewlines("\r"));
+        assertEquals(StringEscapeUtils.escapeJava("\n\nA"), StringEscapeUtils.escapeJava(StringTools.normalizeNewlines("\r\r\nA")));
+        assertEquals(StringEscapeUtils.escapeJava("\nA\nB\n\n"), StringEscapeUtils.escapeJava(StringTools.normalizeNewlines("\rA\nB\n\n")));
+        assertEquals(StringEscapeUtils.escapeJava(" \n A \n B \n C"), StringEscapeUtils.escapeJava(StringTools.normalizeNewlines(" \n A \r\n B \r C")));
+    }
+
+    @Test
+    public void normalizeSystemLineSeparator() {
+        // Separate test to catch system dependent problems
+        assertEquals("normalizeNewLines with system line separator.", "A\nB", StringTools.normalizeNewlines("A" + System.lineSeparator() + "B"));
+    }
+
+    @Test
+    public void splitByNewLines() {
+        assertNotNull(StringTools.splitByNewlines(""));
+        assertNotNull(StringTools.splitByNewlines("\n"));
+        assertEquals(1, StringTools.splitByNewlines("Test").length);
+        assertEquals(2, StringTools.splitByNewlines("Test\r\nABC").length);
+    }
     }
 }
