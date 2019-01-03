@@ -562,5 +562,4 @@ public class StringToolsTest {
         assertEquals(1, StringTools.splitByNewlines("Test").length);
         assertEquals(2, StringTools.splitByNewlines("Test\r\nABC").length);
     }
-    }
 }
