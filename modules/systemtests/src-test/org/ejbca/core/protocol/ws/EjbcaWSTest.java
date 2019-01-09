@@ -735,7 +735,7 @@ public class EjbcaWSTest extends CommonEjbcaWS {
     @Test
     public void test19RevocationApprovals() throws Exception {
         log.trace(">test19RevocationApprovals");
-        final String APPROVINGADMINNAME = "superadmin";
+        final String APPROVINGADMINNAME = TEST_ADMIN_USERNAME;
         final String TOKENSERIALNUMBER = "42424242";
         final String TOKENUSERNAME = "WSTESTTOKENUSER3";
         final String ERRORNOTSENTFORAPPROVAL = "The request was never sent for approval.";
