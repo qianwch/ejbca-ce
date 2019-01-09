@@ -49,14 +49,14 @@ public abstract class ClientToolBox {
     public static void main(String[] args) {
         // each new tool must be added to the array
         final ClientToolBox toolBox[] = {
-        		new HealthCheckTest(),
-        		new HSMKeyTool(),
-        		new Ocsp(),
-        		new EjbcaWsRaCli(),
-        		new CvcWsRaCli(),
-        		new CMPTest(),
-        		new CMPKeyUpdateStressTest(),
-        		new SCEPTest(),
+                new HealthCheckTest(),
+                new HSMKeyTool(),
+                new Ocsp(),
+                new EjbcaWsRaCli(),
+                new CvcWsRaCli(),
+                new CMPTest(),
+                new CMPKeyUpdateStressTest(),
+                new SCEPTest(),
                 new OCSPActivate(),
                 new DBManager(),
                 new PasswordGenerator(),
