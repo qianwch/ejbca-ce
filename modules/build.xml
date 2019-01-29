@@ -15,8 +15,8 @@
     <!-- =================================================================== -->
     <!-- OpenClover 4.2 stuff                                                    -->
     <!-- =================================================================== -->
+    <property name="clover.jar" location="${ejbca.home}/lib/ext/openclover-ant/clover.jar"/>
     <target name="declare-task-clover" unless="clover.enabled">
-        <property name="clover.jar" location="${ejbca.home}/lib/ext/openclover-ant/clover.jar"/>
         <taskdef resource="cloverlib.xml" classpath="${clover.jar}" onerror="ignore"/>
     </target>
     <property name="clover.out.dir" location="${ejbca.home}/reports/clover"/>
