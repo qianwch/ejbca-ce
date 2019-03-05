@@ -134,6 +134,7 @@ org.ejbca.ui.web.ParameterException
   static final String TEXTFIELD_CRLOVERLAPTIME        = "textfieldcrloverlaptime";
   static final String TEXTFIELD_DELTACRLPERIOD        = "textfielddeltacrlperiod";
   static final String TEXTFIELD_DESCRIPTION           = "textfielddescription";
+  static final String TEXTFIELD_OCTETSIZE             = "textfieldoctetsize";
   static final String TEXTFIELD_VALIDITY              = "textfieldvalidity";
   static final String TEXTFIELD_POLICYID              = "textfieldpolicyid";
   static final String TEXTFIELD_DEFAULTCRLDISTPOINT   = "textfielddefaultcrldistpoint";
@@ -232,6 +233,7 @@ org.ejbca.ui.web.ParameterException
       final boolean useNoConflictCertificateData = CHECKBOX_VALUE.equals(requestMap.get(CHECKBOX_USEAPPENDONLYTABLE));
       final String signedByString = requestMap.get(SELECT_SIGNEDBY);
       final String description = requestMap.get(TEXTFIELD_DESCRIPTION);
+      final String caSerialNumberOctetSizeString = requestMap.get(TEXTFIELD_OCTETSIZE);
       String validityString = requestMap.get(TEXTFIELD_VALIDITY);
       
       Map<ApprovalRequestType, Integer> approvals = new LinkedHashMap<ApprovalRequestType, Integer>();
@@ -291,7 +293,7 @@ org.ejbca.ui.web.ParameterException
       final boolean illegaldnoraltname = cabean.actionCreateCaMakeRequest(caname, signatureAlgorithmParam,
           signkeyspec, keySequenceFormatParam, keySequence,
           catype, subjectdn, certificateProfileIdString, defaultCertificateProfileIdString, 
-          useNoConflictCertificateData, signedByString, description, validityString,
+          useNoConflictCertificateData, signedByString, description, caSerialNumberOctetSizeString, validityString,
           approvals, finishUser, isDoEnforceUniquePublicKeys,
           isDoEnforceUniqueDistinguishedName,
           isDoEnforceUniqueSubjectDNSerialnumber, useCertReqHistory, useUserStorage, useCertificateStorage, acceptRevocationsNonExistingEntry,
@@ -565,6 +567,7 @@ org.ejbca.ui.web.ParameterException
                 final String keySequenceFormatParam = requestMap.get(SELECT_KEY_SEQUENCE_FORMAT);
                 final String keySequence = requestMap.get(TEXTFIELD_KEYSEQUENCE);
                 final String description = requestMap.get(TEXTFIELD_DESCRIPTION);
+                final String octetSize = requestMap.get(TEXTFIELD_OCTETSIZE);
                 String validityString = requestMap.get(TEXTFIELD_VALIDITY);
                 final long crlperiod = SimpleTime.getInstance(requestMap.get(TEXTFIELD_CRLPERIOD), "0"+SimpleTime.TYPE_MINUTES).getLong();
                 final long crlIssueInterval = SimpleTime.getInstance(requestMap.get(TEXTFIELD_CRLISSUEINTERVAL), "0"+SimpleTime.TYPE_MINUTES).getLong();
@@ -624,7 +627,7 @@ org.ejbca.ui.web.ParameterException
                     }
                 }
                 final CAInfo cainfo = cabean.createCaInfo(caid, caname, subjectdn, catype,
-            		keySequenceFormatParam, keySequence, signedByString, description, validityString,
+            		keySequenceFormatParam, keySequence, signedByString, description, octetSize, validityString,
             		crlperiod, crlIssueInterval, crlOverlapTime, deltacrlperiod, finishUser,
             		isDoEnforceUniquePublicKeys, isDoEnforceUniqueDistinguishedName, isDoEnforceUniqueSubjectDNSerialnumber,
             		useCertReqHistory, useUserStorage, useCertificateStorage, checkboxAcceptRevocationsNonExistingEntry,
