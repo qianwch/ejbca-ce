@@ -1239,7 +1239,7 @@ function pageLoad() {
 
     <tr id="Row<%=row++%2%>"> 
       <td width="50%"  align="right"> 
-        <strong><%= ejbcawebbean.getText("SERIALNUMBER_OCTET_SIZE") %></strong> <%= ejbcawebbean.getHelpReference("/Certificate_Profile_Fields.html#Ca_Serial_Number_Octet_Size") %>
+        <%= ejbcawebbean.getText("SERIALNUMBER_OCTET_SIZE") %> <%= ejbcawebbean.getHelpReference("/Certificate_Profile_Fields.html#Ca_Serial_Number_Octet_Size") %>
       </td>
       <td width="50%"> 
         <% if(isexternal){ %>

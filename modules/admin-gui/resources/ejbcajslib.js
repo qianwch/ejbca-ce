@@ -293,19 +293,20 @@ function checkfieldforhexadecimalnumbers(thetextfield , alerttext){
   }
 }
 
-function checkfieldfornumbers(thetextfield, alerttext){
+function checkfieldfornumbers(thetextfield, alerttext) {
 	  // remove all spaces
 	  field = eval(thetextfield);
-	  var text = new String(field.value);  
+	  var text = new String(field.value);
+	  
 	  re = /[^0-9 ]/g;
-	  if(re.exec(text)){
+	  if(text.length === 0 || re.exec(text) || text < 4 || text > 20) {
 	    alert(alerttext);
 	    return false;
 	  }
 	  else{
 	    return true;
 	  }
-	}
+}
 
 function checkfieldforlegalresourcechars(thetextfield , alerttext){
   field = eval(thetextfield);
