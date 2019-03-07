@@ -369,6 +369,9 @@ function checkallfields(){
       illegalfields++;
       if(jumpTo == '') { jumpTo = '<%=TEXTFIELD_DELTACRLPERIOD%>'; }
     }
+    if(!checkfieldfornumbers("document.ca.<%=TEXTFIELD_OCTETSIZE%>","<%= ejbcawebbean.getText("INVALIDOCTETSIZE") %>"))
+        illegalfields++;
+    
     <% if(editca && globalconfiguration.getEnableIcaoCANameChange() ){%>
 	    var caNameChange     =  document.ca.<%=CHECKBOX_CANAMECHANGE%>;
 	    if(caNameChange.checked && !checkfieldforcompletednchars("document.ca.<%=TEXTFIELD_NEWSUBJECTDN%>","<%= ejbcawebbean.getText("ONLYCHARACTERS") + " " + ejbcawebbean.getText("CERT_SUBJECTDN") %>"))
@@ -1233,6 +1236,20 @@ function pageLoad() {
       </td>
     </tr>
 
+    <tr id="Row<%=row++%2%>"> 
+      <td width="50%"  align="right"> 
+        <%= ejbcawebbean.getText("SERIALNUMBER_OCTET_SIZE") %> <%= ejbcawebbean.getHelpReference("/Certificate_Profile_Fields.html#Ca_Serial_Number_Octet_Size") %>
+      </td>
+      <td width="50%"> 
+        <% if(isexternal){ %>
+              <c:out value="<%= x509cainfo.getCaSerialNumberOctetSize() %>"/>
+         <% }else{ %>
+         <input type="text" name="<%=TEXTFIELD_OCTETSIZE%>" size="5" maxlength="2"
+             <% if (editca) {%>value="<c:out value="<%= x509cainfo.getCaSerialNumberOctetSize() %>"/>"<%}%> <%= (hasEditRights ? "" : "disabled") %> >
+       <% } %>
+      </td>
+    </tr>
+    
     <%
     String nameConstraintsPermittedString = !editca ? "" : NameConstraint.formatNameConstraintsList(x509cainfo.getNameConstraintsPermitted());
     String nameConstraintsExcludedString = !editca ? "" : NameConstraint.formatNameConstraintsList(x509cainfo.getNameConstraintsExcluded());

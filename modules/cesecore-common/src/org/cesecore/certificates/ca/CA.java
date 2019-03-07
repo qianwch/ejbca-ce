@@ -115,6 +115,7 @@ public abstract class CA extends UpgradeableDataHashMap implements Serializable 
     protected static final String EXTENDEDCASERVICES = "extendedcaservices";
     protected static final String EXTENDEDCASERVICE = "extendedcaservice";
     protected static final String USENOCONFLICTCERTIFICATEDATA = "usenoconflictcertificatedata";
+    protected static final String SERIALNUMBEROCTETSIZE = "serialnumberoctetsize";
 
     /**
      * @deprecated since 6.8.0, replaced by the approvals Action:ApprovalProfile mapping
