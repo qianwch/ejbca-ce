@@ -954,13 +954,11 @@ public class X509CA extends CA implements Serializable {
                 if (ei != null && ei.certificateSerialNumber()!=null) {
                     serno = ei.certificateSerialNumber();
                 } else {
-                    SernoGenerator instance = SernoGeneratorRandom.instance();
-                    instance.setSernoOctetSize(getSerialNumberOctetSize());
+                    SernoGenerator instance = SernoGeneratorRandom.instance(getSerialNumberOctetSize());
                     serno = instance.getSerno();
                 }
             } else {
-                SernoGenerator instance = SernoGeneratorRandom.instance();
-                instance.setSernoOctetSize(getSerialNumberOctetSize());
+                SernoGenerator instance = SernoGeneratorRandom.instance(getSerialNumberOctetSize());
                 serno = instance.getSerno();
                 
                 if ((ei != null) && (ei.certificateSerialNumber() != null)) {
