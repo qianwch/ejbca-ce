@@ -207,6 +207,7 @@
 			<batchtest fork="yes" todir="${reports.dir}">
 				<fileset dir="${build-test.dir}" includes="${test-subprocess.include-pattern}" excludes="${test-subprocess.exclude-pattern}"/>
 			</batchtest>
+			<jvmarg line="${tests.jvmargs}"/>
 		</junit>
 	</target>
 
@@ -227,6 +228,7 @@
 	                <fileset dir="${build-test.dir}" includes="**/*UnitTest.class">
 	                </fileset>
 	            </batchtest>
+	        	<jvmarg line="${tests.jvmargs}"/>
 	            <jvmarg value="${remoteDebugJvmArgs}"/>
 	        </junit>
 	        <antcall target="showtime"/>

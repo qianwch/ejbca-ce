@@ -80,6 +80,7 @@
 			<batchtest fork="yes" todir="${reports.dir}">
                 <fileset dir="${build-test.dir}" includes="**/EcaQa*.class"/>
             </batchtest>
+			<jvmarg line="${tests.jvmargs}"/>
 		</junit>
     </target>
 	
@@ -96,6 +97,7 @@
 					<include name="**/${test.runone}.class" />
 				</fileset>
 			</batchtest>
+			<jvmarg line="${tests.jvmargs}"/>
 		</junit>
 		<antcall target="clean"/>
 	</target>

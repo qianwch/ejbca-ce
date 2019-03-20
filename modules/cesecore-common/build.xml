@@ -106,6 +106,7 @@
 				<fileset dir="${build-test.dir}" includes="**/*Test.class">
 				</fileset>
 			</batchtest>
+			<jvmarg line="${tests.jvmargs}"/>
 		</junit>
 		<antcall target="showtime"/>
 	</target>
