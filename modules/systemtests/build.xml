@@ -18,7 +18,7 @@
 	<property name="src.interface.dir" location="${this.dir}/src-interface"/>
 
 	<!-- Include endorsed jars from Glassfish -->
-	<condition property="tests.jvmargs" value="-Djava.endorsed.dirs=${appserver.home}/modules/endorsed" else="">
+	<condition property="tests.jvmargs.endorsed" value="-Djava.endorsed.dirs=${appserver.home}/modules/endorsed" else="">
 		<equals arg1="${appserver.subtype}" arg2="glassfish3"/>
 	</condition>
 
@@ -283,6 +283,7 @@
 			<sysproperty key="tcpCmpProxyIP" value="${tcpCmpProxyIP}"/>
 			<sysproperty key="tcpCmpProxyPort" value="${tcpCmpProxyPort}"/>
 			<jvmarg line="${tests.jvmargs}"/>
+			<jvmarg line="${tests.jvmargs.endorsed}"/>
 			<jvmarg value="${remoteDebugJvmArgs}"/>
 			<formatter type="xml" />
 			<batchtest fork="yes" todir="${reports.dir}">
@@ -325,6 +326,7 @@
 				<pathelement path="${clover.jar}"/>
 			</classpath>
 			<jvmarg line="${tests.jvmargs}"/>
+			<jvmarg line="${tests.jvmargs.endorsed}"/>
 			<formatter type="xml" />
 			<batchtest fork="yes" todir="${reports.dir}">
 				<fileset dir="${build.test.dir}" includes="org/ejbca/core/ejb/ca/caadmin/CAsTest.class"/>
@@ -414,6 +416,7 @@
 				<pathelement path="${clover.jar}"/>
 			</classpath>
 			<jvmarg line="${tests.jvmargs}"/>
+			<jvmarg line="${tests.jvmargs.endorsed}"/>
 			<formatter type="xml" />
 			<batchtest fork="yes" todir="${reports.dir}">
 				<fileset dir="${build.test.dir}">
@@ -447,6 +450,7 @@
 				<pathelement path="${clover.jar}"/>
 			</classpath>
 			<jvmarg line="${tests.jvmargs}"/>
+			<jvmarg line="${tests.jvmargs.endorsed}"/>
 			<formatter type="xml" />
 			<batchtest fork="yes" todir="${reports.dir}" unless="cmptcplistener.notrunning">
 				<fileset dir="${build.test.dir}">
@@ -511,6 +515,7 @@
 				<pathelement path="${clover.jar}"/>
 			</classpath>
 			<jvmarg line="${tests.jvmargs}"/>
+			<jvmarg line="${tests.jvmargs.endorsed}"/>
 			<jvmarg line="-Dvertest.report=${reports.dir}/ejbca.ear.xml -Dvertest.expectedErrors=0 -Dvertest.expectedFailures=3 -Dvertest.expectedWarnings=0"/>
 			<formatter type="xml" />
 			<batchtest fork="yes" todir="${reports.dir}" if="isglassfish">
