@@ -12,6 +12,8 @@
  *************************************************************************/
 package org.cesecore.certificates.ca.internal;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -119,8 +121,13 @@ public class SernoGeneratorRandom implements SernoGenerator {
                 // If defaultstrong is specified and we use >=JDK8 try the getInstanceStrong to get a guaranteed strong random number generator.
                 // Note that this may give you a generator that takes >30 seconds to create a single random number. 
                 // On JDK8/Linux this gives you a NativePRNGBlocking, while SecureRandom.getInstance() gives a NativePRNG.
-                random = SecureRandom.getInstanceStrong();
-                log.info("Using SecureRandom.getInstanceStrong() with " + random.getAlgorithm() + " for serialNumber RNG algorithm.");
+                try {
+                    final Method methodGetInstanceStrong = SecureRandom.class.getDeclaredMethod("getInstanceStrong");
+                    random = (SecureRandom) methodGetInstanceStrong.invoke(null);
+                    log.info("Using SecureRandom.getInstanceStrong() with " + random.getAlgorithm() + " for serialNumber RNG algorithm.");
+                } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+                    throw new IllegalStateException("SecureRandom.getInstanceStrong() is not available or failed invocation. (This method was added in Java 8.)");
+                }
             } else if (!StringUtils.isEmpty(algorithm) && StringUtils.equalsIgnoreCase(algorithm, "default")) {
                 // We entered "default" so let's use a good default SecureRandom this should be good enough for just about everyone (on Linux at least)
                 // On Linux the default Java implementation uses the (secure) /dev/(u)random, but on windows something else
