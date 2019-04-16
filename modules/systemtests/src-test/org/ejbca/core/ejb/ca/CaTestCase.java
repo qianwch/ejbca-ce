@@ -12,6 +12,8 @@
  *************************************************************************/
 package org.ejbca.core.ejb.ca;
 
+import static org.junit.Assert.assertEquals;
+
 import java.math.BigInteger;
 import java.security.Principal;
 import java.security.cert.Certificate;
@@ -300,6 +302,7 @@ public abstract class CaTestCase extends RoleUsingTestCase {
             log.error("CA certificate not available in database!!");
             return false;
         }
+        assertEquals("Test CA was not active after creation.", CAConstants.CA_ACTIVE, info.getStatus());
         log.trace("<createTestCA: " + info.getCAId());
         return true;
     }
@@ -377,6 +380,7 @@ public abstract class CaTestCase extends RoleUsingTestCase {
             cryptoTokenId = ca.getCAToken().getCryptoTokenId();
             caSession.removeCA(internalAdmin, ca.getCAId());
             internalCertificateStoreSession.removeCertificatesBySubject(ca.getSubjectDN());
+            internalCertificateStoreSession.removeCRLs(internalAdmin, ca.getSubjectDN());
         }
         log.debug("Deleting CryptoToken with id " + cryptoTokenId + " last used by CA " + caName);
         cryptoTokenManagementSession.deleteCryptoToken(internalAdmin, cryptoTokenId);
