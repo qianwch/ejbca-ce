@@ -34,6 +34,7 @@ import javax.persistence.Transient;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.cesecore.certificates.crl.RevokedCertInfo;
+import org.cesecore.dbprotection.DatabaseProtectionException;
 import org.cesecore.dbprotection.ProtectionStringBuilder;
 import org.cesecore.keys.util.KeyTools;
 import org.cesecore.util.Base64;
@@ -743,13 +744,13 @@ public class CertificateData extends BaseCertificateData implements Serializable
     @PrePersist
     @PreUpdate
     @Override
-    protected void protectData() {
+    protected void protectData() throws DatabaseProtectionException {
         super.protectData();
     }
 
     @PostLoad
     @Override
-    protected void verifyData() {
+    protected void verifyData() throws DatabaseProtectionException {
         super.verifyData();
     }
 
