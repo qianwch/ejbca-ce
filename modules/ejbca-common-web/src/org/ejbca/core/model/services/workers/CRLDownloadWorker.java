@@ -57,6 +57,11 @@ public class CRLDownloadWorker extends BaseWorker {
     public static final int DEFAULT_MAX_DOWNLOAD_SIZE = 1*1024*1024;
 
     @Override
+    public void canWorkerRun(Map<Class<?>, Object> ejbs) throws ServiceExecutionFailedException {
+        //This service worker has no other error states than misconfiguration, so can technically always run.       
+    }
+    
+    @Override
     public void work(Map<Class<?>, Object> ejbs) throws ServiceExecutionFailedException {
         // Get references to all EJB's that will be used
         final CaSessionLocal caSession = (CaSessionLocal) ejbs.get(CaSessionLocal.class);
@@ -167,8 +172,13 @@ public class CRLDownloadWorker extends BaseWorker {
             } catch (CRLException e) {
                 log.warn("Unable to decode downloaded CRL for '" + caInfo.getSubjectDN() + "'.");
                 return null;
+            } catch (AuthorizationDeniedException e) {
+                log.error("Internal authentication token was deneied access to importing CRLs or revoking certificates.", e);
+                return null;
             }
         }
         return newCrl;
     }
+
+
 }

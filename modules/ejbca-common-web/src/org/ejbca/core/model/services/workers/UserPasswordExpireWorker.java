@@ -42,6 +42,12 @@ public class UserPasswordExpireWorker extends EmailSendingWorker {
 
     private static final Logger log = Logger.getLogger(UserPasswordExpireWorker.class);
 
+    @Override
+    public void canWorkerRun(Map<Class<?>, Object> ejbs) throws ServiceExecutionFailedException {
+        // TODO Implement
+        
+    }
+    
     /**
      * Worker that makes a query to the Certificate Store about expiring
      * certificates.
@@ -104,5 +110,7 @@ public class UserPasswordExpireWorker extends EmailSendingWorker {
 	protected void updateStatus(String pk, int status) {
 		// Do nothing
 	}
+
+ 
 
 }
