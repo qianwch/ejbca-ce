@@ -64,6 +64,7 @@ import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.core.model.ca.publisher.ActiveDirectoryPublisher;
 import org.ejbca.core.model.ca.publisher.BasePublisher;
 import org.ejbca.core.model.ca.publisher.CustomPublisherContainer;
+import org.ejbca.core.model.ca.publisher.FatalPublisherConnectionException;
 import org.ejbca.core.model.ca.publisher.GeneralPurposeCustomPublisher;
 import org.ejbca.core.model.ca.publisher.LdapPublisher;
 import org.ejbca.core.model.ca.publisher.LdapSearchPublisher;
@@ -333,7 +334,7 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
                 getPublisher(pdl).testConnection();
                 String msg = intres.getLocalizedMessage("publisher.testedpublisher", name);
                 log.info(msg);
-            } catch (PublisherConnectionException pe) {
+            } catch (PublisherConnectionException | FatalPublisherConnectionException pe) {
                 String msg = intres.getLocalizedMessage("publisher.errortestpublisher", name);
                 log.info(msg);
                 throw new PublisherConnectionException(pe.getMessage());
@@ -714,7 +715,7 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
             String name = pdl.getName();
             try {
                 getPublisher(pdl).testConnection();
-            } catch (PublisherConnectionException pe) {
+            } catch (PublisherConnectionException | FatalPublisherConnectionException pe) {
                 String msg = intres.getLocalizedMessage("publisher.errortestpublisher", name);
                 log.info(msg);
                 stringBuilder.append(msg);
