@@ -517,7 +517,7 @@ public class ServiceSessionBean implements ServiceSessionLocal, ServiceSessionRe
                     }
                     if (System.currentTimeMillis() - startOfTimeOut > serviceInterval * 1000) {
                         log.warn("Service '" + serviceName + "' took longer than it's configured service interval ("+serviceInterval+")."
-                                + " This can trigger simultaenous service executions on several nodes in a cluster."
+                                + " This can trigger simultanious service execution on several nodes in a cluster."
                                 + " Increase interval or lower each invocations work load.");
                     }
                 }
