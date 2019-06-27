@@ -118,9 +118,9 @@
             </condition>
 
             <!-- Add new service definitions. -->
-            <jboss:adm arg='/socket-binding-group=standard-sockets/remote-destination-outbound-socket-binding=ejbca-mail-smtp:add(port="${mail.smtp.port}", host="${mail.smtp.host}")' failonerror="false"/>
-            <jboss:adm arg='/subsystem=mail/mail-session="${mail.jndi-name}":add(jndi-name="${mail.jndi-name}",from="${mail.from}")' failonerror="false"/>
-            <jboss:adm arg='/subsystem=mail/mail-session="${mail.jndi-name}"/server=smtp:add(${jboss7.ejbca-mail-smtp.params})' failonerror="false"/>
+            <jboss:adm arg='/socket-binding-group=standard-sockets/remote-destination-outbound-socket-binding=ejbca-mail-smtp:add(port="${mail.smtp.port}", host="${mail.smtp.host}")' />
+            <jboss:adm arg='/subsystem=mail/mail-session="${mail.jndi-name}":add(jndi-name="${mail.jndi-name}",from="${mail.from}")' />
+            <jboss:adm arg='/subsystem=mail/mail-session="${mail.jndi-name}"/server=smtp:add(${jboss7.ejbca-mail-smtp.params})' />
             <jboss:admsilent arg=":reload" />
             <!-- We must wait a few seconds, or some race conditions could happen. The problem is that :reload is a non-blocking operation, and JBoss CLI is not very stable... -->
     	    <jboss:jbosswaitready/>
@@ -226,23 +226,23 @@
         <echo message="Setting-up web configuration for JBoss 7 (ejbca must be deployed)." />
         <jboss:admsilent arg="undeploy ejbca.ear --keep-content" failonerror="false" />
         <antcall target="jee:web-configureJBoss7Cleanup" />
-        <jboss:adm arg='/interface=http:add(inet-address="${httpsserver.bindaddress.pubhttp}")' failonerror="false"/>
-        <jboss:adm arg='/interface=httpspub:add(inet-address="${httpsserver.bindaddress.pubhttps}")' failonerror="false"/>
-        <jboss:adm arg='/interface=httpspriv:add(inet-address="${httpsserver.bindaddress.privhttps}")' failonerror="false"/>
-        <jboss:adm arg='/socket-binding-group=standard-sockets/socket-binding=http:add(port="${httpserver.pubhttp}",interface="http")' failonerror="false" />
-        <jboss:adm arg="/subsystem=web/connector=http:add(protocol=HTTP/1.1, scheme=http, socket-binding=http)" failonerror="false"/>
-        <jboss:adm arg='/subsystem=web/connector=http:write-attribute(name=redirect-port, value="${httpserver.privhttps}")' failonerror="false"/>
+        <jboss:adm arg='/interface=http:add(inet-address="${httpsserver.bindaddress.pubhttp}")' />
+        <jboss:adm arg='/interface=httpspub:add(inet-address="${httpsserver.bindaddress.pubhttps}")' />
+        <jboss:adm arg='/interface=httpspriv:add(inet-address="${httpsserver.bindaddress.privhttps}")' />
+        <jboss:adm arg='/socket-binding-group=standard-sockets/socket-binding=http:add(port="${httpserver.pubhttp}",interface="http")' />
+        <jboss:adm arg="/subsystem=web/connector=http:add(protocol=HTTP/1.1, scheme=http, socket-binding=http)" />
+        <jboss:adm arg='/subsystem=web/connector=http:write-attribute(name=redirect-port, value="${httpserver.privhttps}")' />
     	<!-- Make sure JBoss handles encoded backslashes. -->
     	<jboss:adm arg='/system-property=org.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH:add(value=true)' failonerror="false" />
     	<jboss:adm arg='/system-property=org.apache.catalina.connector.CoyoteAdapter.ALLOW_BACKSLASH:add(value=true)' failonerror="false" />
         <!--  Configure URI encoding to to be able to use UTF-8 in URLs, for downloading certificate and CRLs. -->
-        <jboss:adm arg='/system-property=org.apache.catalina.connector.URI_ENCODING:add(value="${web.contentencoding}")' failonerror="false"/>
-        <jboss:adm arg="/system-property=org.apache.catalina.connector.USE_BODY_ENCODING_FOR_QUERY_STRING:add(value=true)" failonerror="false"/>
+        <jboss:adm arg='/system-property=org.apache.catalina.connector.URI_ENCODING:add(value="${web.contentencoding}")' />
+        <jboss:adm arg="/system-property=org.apache.catalina.connector.USE_BODY_ENCODING_FOR_QUERY_STRING:add(value=true)" />
     	<!-- Ability to have very large forms, for example advanced access rules with many many rules -->
-        <jboss:adm arg="/system-property=org.apache.tomcat.util.http.Parameters.MAX_COUNT:add(value=2048)" failonerror="false"/>
+        <jboss:adm arg="/system-property=org.apache.tomcat.util.http.Parameters.MAX_COUNT:add(value=2048)" />
         <!--  Configure WSDL web-host rewriting to use the request host. Needed for webservices to work correctly when requiring client certificate. -->
-        <jboss:adm arg="/subsystem=webservices:write-attribute(name=wsdl-host, value=jbossws.undefined.host)" failonerror="false"/>
-        <jboss:adm arg="/subsystem=webservices:write-attribute(name=modify-wsdl-address, value=true)" failonerror="false"/>
+        <jboss:adm arg="/subsystem=webservices:write-attribute(name=wsdl-host, value=jbossws.undefined.host)" />
+        <jboss:adm arg="/subsystem=webservices:write-attribute(name=modify-wsdl-address, value=true)" />
 		<jboss:jbosswaitready/>
         <jboss:adm arg=":reload" />
 		<jboss:jbosswaitready/>
@@ -254,20 +254,20 @@
         <echo message="Setting-up SSL web configuration for JBoss 7." />
         <jboss:admsilent arg="undeploy ejbca.ear --keep-content" failonerror="false" />
         <!-- Set-up the private port which requires client certificate -->
-        <jboss:adm arg='/socket-binding-group=standard-sockets/socket-binding=httpspriv:add(port="${httpserver.privhttps}",interface="httpspriv")' failonerror="false"/>
-        <jboss:adm arg="/subsystem=web/connector=httpspriv:add(protocol=HTTP/1.1, scheme=https, socket-binding=httpspriv, secure=true)" failonerror="false"/>
-        <jboss:adm arg='/subsystem=web/connector=httpspriv/ssl=configuration:add(key-alias="${httpsserver.hostname}")' failonerror="false"/>
-        <jboss:adm arg='/subsystem=web/connector=httpspriv/ssl=configuration:write-attribute(name=password, value="${httpsserver.password}")' failonerror="false"/>
-        <jboss:adm arg='/subsystem=web/connector=httpspriv/ssl=configuration:write-attribute(name=certificate-key-file, value="${jboss.server.home.dir}/${keystore.file}")' failonerror="false"/>
-        <jboss:adm arg="/subsystem=web/connector=httpspriv/ssl=configuration:write-attribute(name=verify-client, value=true)" failonerror="false"/>
-        <jboss:adm arg='/subsystem=web/connector=httpspriv/ssl=configuration:write-attribute(name=ca-certificate-password, value="${java.trustpassword}")' failonerror="false"/>
-        <jboss:adm arg='/subsystem=web/connector=httpspriv/ssl=configuration:write-attribute(name=ca-certificate-file, value="${jboss.server.home.dir}/${truststore.file}")' failonerror="false"/>
+        <jboss:adm arg='/socket-binding-group=standard-sockets/socket-binding=httpspriv:add(port="${httpserver.privhttps}",interface="httpspriv")' />
+        <jboss:adm arg="/subsystem=web/connector=httpspriv:add(protocol=HTTP/1.1, scheme=https, socket-binding=httpspriv, secure=true)" />
+        <jboss:adm arg='/subsystem=web/connector=httpspriv/ssl=configuration:add(key-alias="${httpsserver.hostname}")' />
+        <jboss:adm arg='/subsystem=web/connector=httpspriv/ssl=configuration:write-attribute(name=password, value="${httpsserver.password}")' />
+        <jboss:adm arg='/subsystem=web/connector=httpspriv/ssl=configuration:write-attribute(name=certificate-key-file, value="${jboss.server.home.dir}/${keystore.file}")' />
+        <jboss:adm arg="/subsystem=web/connector=httpspriv/ssl=configuration:write-attribute(name=verify-client, value=true)" />
+        <jboss:adm arg='/subsystem=web/connector=httpspriv/ssl=configuration:write-attribute(name=ca-certificate-password, value="${java.trustpassword}")' />
+        <jboss:adm arg='/subsystem=web/connector=httpspriv/ssl=configuration:write-attribute(name=ca-certificate-file, value="${jboss.server.home.dir}/${truststore.file}")' />
         <!-- Set-up the public SSL port which doesn't require the client certificate. -->
-        <jboss:adm arg='/socket-binding-group=standard-sockets/socket-binding=httpspub:add(port="${httpserver.pubhttps}",interface="httpspub")' failonerror="false"/>
-        <jboss:adm arg="/subsystem=web/connector=httpspub:add(protocol=HTTP/1.1, scheme=https, socket-binding=httpspub, secure=true)" failonerror="false"/>
-        <jboss:adm arg='/subsystem=web/connector=httpspub/ssl=configuration:add(key-alias="${httpsserver.hostname}")' failonerror="false"/>
-        <jboss:adm arg='/subsystem=web/connector=httpspub/ssl=configuration:write-attribute(name=password, value="${httpsserver.password}")' failonerror="false"/>
-        <jboss:adm arg='/subsystem=web/connector=httpspub/ssl=configuration:write-attribute(name=certificate-key-file, value="${jboss.server.home.dir}/${keystore.file}")' failonerror="false"/>
+        <jboss:adm arg='/socket-binding-group=standard-sockets/socket-binding=httpspub:add(port="${httpserver.pubhttps}",interface="httpspub")' />
+        <jboss:adm arg="/subsystem=web/connector=httpspub:add(protocol=HTTP/1.1, scheme=https, socket-binding=httpspub, secure=true)" />
+        <jboss:adm arg='/subsystem=web/connector=httpspub/ssl=configuration:add(key-alias="${httpsserver.hostname}")' />
+        <jboss:adm arg='/subsystem=web/connector=httpspub/ssl=configuration:write-attribute(name=password, value="${httpsserver.password}")' />
+        <jboss:adm arg='/subsystem=web/connector=httpspub/ssl=configuration:write-attribute(name=certificate-key-file, value="${jboss.server.home.dir}/${keystore.file}")' />
 		<jboss:jbosswaitready/>
         <jboss:adm arg=":reload" />
 		<jboss:jbosswaitready/>
