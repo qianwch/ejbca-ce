@@ -106,6 +106,4 @@ public class UsernameGeneratorParams {
 		}
 		this.mode = modeList.indexOf(mode);
 	}
-	
-
 }
