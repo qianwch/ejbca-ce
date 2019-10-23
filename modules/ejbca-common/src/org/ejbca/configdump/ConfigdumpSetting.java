@@ -31,7 +31,7 @@ import org.apache.commons.lang.StringUtils;
  * Data class containing settings for configuration dump.
  * Probably better to use a builder pattern here.
  * 
- * @version $Id: ConfigdumpSetting.java 33686 2019-10-22 14:01:54Z undulf $
+ * @version $Id$
  *
  */
 public class ConfigdumpSetting implements Serializable {
