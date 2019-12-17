@@ -57,9 +57,8 @@ import org.bouncycastle.util.encoders.Hex;
 import org.cesecore.audit.enums.EventStatus;
 import org.cesecore.audit.log.SecurityEventsLoggerSessionLocal;
 import org.cesecore.authentication.AuthenticationFailedException;
-import org.cesecore.authentication.tokens.AlwaysAllowLocalAuthenticationToken;
 import org.cesecore.authentication.tokens.AuthenticationToken;
-import org.cesecore.authentication.tokens.PublicWebPrincipal;
+import org.cesecore.authentication.tokens.PublicAccessAuthenticationToken;
 import org.cesecore.authentication.tokens.X509CertificateAuthenticationToken;
 import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.authorization.AuthorizationSessionLocal;
@@ -321,7 +320,7 @@ public class EjbcaWebBean implements Serializable {
         if (!errorpage_initialized) {
             if (administrator == null) {
                 final String remoteAddr = request.getRemoteAddr();
-                administrator = new AlwaysAllowLocalAuthenticationToken(new PublicWebPrincipal(remoteAddr));
+                administrator = new PublicAccessAuthenticationToken(remoteAddr, true);
             }
             commonInit();
             // Set ServletContext for reading language files from resources
