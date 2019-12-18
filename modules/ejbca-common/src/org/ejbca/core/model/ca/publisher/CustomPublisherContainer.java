@@ -54,21 +54,30 @@ public class CustomPublisherContainer extends BasePublisher {
     public static final String CLASSPATH = "classpath";
     protected static final String PROPERTYDATA = "propertydata";
 		
-    public CustomPublisherContainer(){
+    public CustomPublisherContainer() {
     	super();
     	data.put(TYPE, Integer.valueOf(PublisherConst.TYPE_CUSTOMPUBLISHERCONTAINER));
     	setClassPath("");
-    	setPropertyData("");
+    	try {
+            setPropertyData("");
+        } catch (PublisherException e) {
+            throw new IllegalStateException();
+        }
     }
     
     /**
      * Copy constructor taking a BasePublisher returning a CustomPublisherContainer based on its values. 
+     * @throws PublisherException 
      */
-    public CustomPublisherContainer(BasePublisher basePublisher){
+    public CustomPublisherContainer(BasePublisher basePublisher) {
         super(basePublisher);
         data.put(TYPE, Integer.valueOf(PublisherConst.TYPE_CUSTOMPUBLISHERCONTAINER));
         setClassPath("");
-        setPropertyData("");
+        try {
+            setPropertyData("");
+        } catch (PublisherException e) {
+            throw new IllegalStateException();
+        }
     }
     
     // Public Methods    
@@ -96,7 +105,7 @@ public class CustomPublisherContainer extends BasePublisher {
 	/**
 	 *  Sets the propertydata used to configure this custom publisher.
 	 */   
-	public void setPropertyData(String propertydata){
+	public void setPropertyData(String propertydata) throws PublisherException {
 	    if(isCustomUiRenderingSupported()) {
             CustomPublisherUiSupport publisher = (CustomPublisherUiSupport) getCustomPublisher();
 	        //Check if any fields are passwords, and encrypt those
@@ -109,27 +118,29 @@ public class CustomPublisherContainer extends BasePublisher {
 	        StringBuilder encryptedProperties = new StringBuilder();
 	        for(Object key : properties.keySet()) {
 	            String value;
-	            if(publisher.getPropertyType((String)key) == CustomPublisherProperty.UI_TEXTINPUT_PASSWORD) {
-	                //Property is of a type that shouldn't be written in clear text to disk. Encrypt!
-	                try {
+	            int propertyType = publisher.getPropertyType((String)key);
+                if (propertyType == CustomPublisherProperty.UI_TEXTINPUT_PASSWORD) {
+                    //Property is of a type that shouldn't be written in clear text to disk. Encrypt!
+                    try {
                         value = StringTools.pbeEncryptStringWithSha256Aes192(properties.getProperty((String) key));
                     } catch (InvalidKeySpecException e) {
                         throw new IllegalStateException("Could not encrypt private key password!", e);
                     }
-	            } else {
-	                value = properties.getProperty((String) key);
-	            }
+                } else if ((propertyType == CustomPublisherProperty.UI_TEXTINPUT) && "dataSource".equals((String) key)) {
+                    value = properties.getProperty((String) key);
+                    validateDataSource(value);
+                } else {
+                    value = properties.getProperty((String) key);
+                }
 	            encryptedProperties.append(key + "=" + value + "\n");
 	        }
 	        data.put(PROPERTYDATA, encryptedProperties.toString());  
 	    } else {
 	        data.put(PROPERTYDATA, propertydata);  
 	    }
-
-		
 	}
-	
-	public boolean isCustomAccessRulesSupported() {
+
+    public boolean isCustomAccessRulesSupported() {
 	    return getCustomPublisher() instanceof CustomPublisherAccessRulesSupport;
 	}
 	
@@ -188,7 +199,7 @@ public class CustomPublisherContainer extends BasePublisher {
 		return properties;
 	}
     
-    public void setProperties(final Properties properties) {
+    public void setProperties(final Properties properties) throws PublisherException {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {
             properties.store(baos, null);
@@ -275,6 +286,7 @@ public class CustomPublisherContainer extends BasePublisher {
 	}
 		
 	/** 
+	 * @throws PublisherException 
 	 * @see org.ejbca.core.model.ca.publisher.BasePublisher#clone()
 	 */
 	@Override
