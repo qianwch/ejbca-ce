@@ -25,8 +25,6 @@ import org.cesecore.certificates.certificate.Base64CertData;
 import org.cesecore.certificates.certificate.CertificateData;
 import org.cesecore.certificates.endentity.ExtendedInformation;
 import org.cesecore.internal.UpgradeableDataHashMap;
-import org.ejbca.core.EjbcaException;
-
 
 
 /**
