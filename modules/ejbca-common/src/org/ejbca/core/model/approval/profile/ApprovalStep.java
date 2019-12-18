@@ -15,14 +15,15 @@ package org.ejbca.core.model.approval.profile;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 
 import org.cesecore.util.Base64;
+import org.cesecore.util.LookAheadObjectInputStream;
 import org.cesecore.util.ProfileID;
 import org.cesecore.util.ui.DynamicUiProperty;
 
@@ -68,16 +69,15 @@ public class ApprovalStep implements Serializable {
     }
 
     /**
-     * Create an approval step from an encoded string
+     * Create an approval step from a base64 encoded string representing
+     * a serialized {@link ApprovalStep}.
      *
-     * @param encodedStep an approval step that has been encoded as a string
+     * @param encodedStep a serialized approval step encoded as a string.
      */
     public ApprovalStep(final String encodedStep) {
-        byte[] bytes = Base64.decode(encodedStep.getBytes());
-        try {
-            final ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes));
+        try (final LookAheadObjectInputStream ois = new LookAheadObjectInputStream(new ByteArrayInputStream(encodedStep.getBytes()))) {
+            ois.setAcceptedClasses(Collections.singleton(ApprovalStep.class));
             final ApprovalStep step = (ApprovalStep) ois.readObject();
-            ois.close();
             this.id = step.getStepIdentifier();
             this.nextStep = step.getNextStep();
             this.previousStep = step.getPreviousStep();
@@ -85,7 +85,6 @@ public class ApprovalStep implements Serializable {
         } catch (IOException | ClassNotFoundException e) {
             throw new IllegalArgumentException("Could not decode encoded ApprovalStep", e);
         }
-
     }
 
     public String getEncoded() {
