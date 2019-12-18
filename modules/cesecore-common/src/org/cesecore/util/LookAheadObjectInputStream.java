@@ -17,9 +17,13 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectStreamClass;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+
+import org.apache.log4j.Logger;
 
 /** Can be used instead of ObjectInputStream to safely deserialize(readObject) unverified serialized java object. 
  * 
@@ -37,12 +41,16 @@ import java.util.Set;
  */
 public class LookAheadObjectInputStream extends ObjectInputStream {
 
+    private static final Logger log = Logger.getLogger(LookAheadObjectInputStream.class);
     private Set<Class<? extends Serializable>> acceptedClasses = null;
     
     private boolean enabledSubclassing = false;
+    private boolean enabledInterfaceImplementations = false;
     private int maxObjects = 1;
     private boolean enabledMaxObjects = true;
     private int objCount = 0;
+    private List<String> allowedSubclassingPackagePrefixes = Arrays.asList();
+    private List<String> allowedInterfaceImplementationsPackagePrefixes = Arrays.asList();
 
     public LookAheadObjectInputStream(InputStream inputStream) throws IOException {
         super(inputStream);
@@ -66,12 +74,35 @@ public class LookAheadObjectInputStream extends ObjectInputStream {
     }
 
     /**
-     * @param enabledSubclassing
+     * @param enabled
      *      True if class should be accepted if it extends super class directly or indirectly
      *      that is listed in accepted class names, false otherwise.
+     * @param packagePrefixes
+     *      An array of class name prefixes that are allowed to be sub-classed like "org.ejbca".
      */
-    public void setEnabledSubclassing(boolean enabledSubclassing) {
-        this.enabledSubclassing = enabledSubclassing;
+    public void setEnabledSubclassing(boolean enabled, String...packagePrefixes) {
+        this.enabledSubclassing = enabled;
+        this.allowedSubclassingPackagePrefixes = Arrays.asList(packagePrefixes);
+    }
+
+    /**
+     * @return true if class should be accepted if it implements an interface directly or indirectly
+     *          that is listed in accepted class names, false otherwise.
+     */
+    public boolean isEnabledInterfaceImplementations() {
+        return enabledInterfaceImplementations;
+    }
+
+    /**
+     * @param enabled
+     *      True if class should be accepted if it extends super class directly or indirectly
+     *      that is listed in accepted class names, false otherwise.
+     * @param packagePrefixes
+     *      An array of class name prefixes that implementations must comply to if set like "org.ejbca".
+     */
+    public void setEnabledInterfaceImplementations(boolean enabled, String...packagePrefixes) {
+        this.enabledInterfaceImplementations = enabled;
+        this.allowedInterfaceImplementationsPackagePrefixes = Arrays.asList(packagePrefixes);
     }
 
     /**
@@ -149,12 +180,51 @@ public class LookAheadObjectInputStream extends ObjectInputStream {
             if (acceptedClasses.contains(resolvedClassType)) {
                 return resolvedClass;
             } else if (enabledSubclassing) {
-                Class<?> superclass = resolvedClassType.getSuperclass();
-                while (superclass != null) {
-                    if (acceptedClasses.contains(superclass)) {
-                        return resolvedClass;
+                final String resolvedClassName = resolvedClassType.getName();
+                if (log.isTraceEnabled()) {
+                    log.trace("resolvedClassName: " + resolvedClassName);
+                }
+                boolean allowedPrefixFound = false;
+                for (final String allowedPrefix : allowedSubclassingPackagePrefixes) {
+                    if (resolvedClassName.startsWith(allowedPrefix + ".")) {
+                        allowedPrefixFound = true;
+                        break;
                     }
-                    superclass = superclass.getSuperclass();
+                }
+                if (allowedSubclassingPackagePrefixes.isEmpty() || allowedPrefixFound) {
+                    Class<?> superclass = resolvedClassType.getSuperclass();
+                    while (superclass != null) {
+                        if (acceptedClasses.contains(superclass)) {
+                            return resolvedClass;
+                        }
+                        superclass = superclass.getSuperclass();
+                    }
+                }
+            } else if (enabledInterfaceImplementations) {
+                final String resolvedClassName = resolvedClassType.getName();
+                if (log.isTraceEnabled()) {
+                    log.trace("resolvedClassName: " + resolvedClassName);
+                }
+                boolean allowedPrefixFound = false;
+                for (final String allowedPrefix : allowedInterfaceImplementationsPackagePrefixes) {
+                    if (resolvedClassName.startsWith(allowedPrefix + ".")) {
+                        allowedPrefixFound = true;
+                        break;
+                    }
+                }
+                if (allowedInterfaceImplementationsPackagePrefixes.isEmpty() || allowedPrefixFound) {
+                    Class<?> superclass = resolvedClassType;
+                    while (superclass != null) {
+                        if (log.isTraceEnabled()) {
+                            log.trace(superclass.getName() + " implements " +Arrays.toString(superclass.getInterfaces()));
+                        }
+                        for (final Class<?> implementedInterface : superclass.getInterfaces()) {
+                            if (acceptedClasses.contains(implementedInterface)) {
+                                return resolvedClass;
+                            }
+                        }
+                        superclass = superclass.getSuperclass();
+                    }
                 }
             }
         }
