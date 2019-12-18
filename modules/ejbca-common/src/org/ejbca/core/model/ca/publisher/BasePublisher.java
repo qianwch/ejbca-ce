@@ -16,13 +16,15 @@ package org.ejbca.core.model.ca.publisher;
 import java.io.Serializable;
 import java.security.cert.Certificate;
 import java.util.LinkedHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import org.apache.commons.lang.StringUtils;
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.certificates.certificate.Base64CertData;
 import org.cesecore.certificates.certificate.CertificateData;
 import org.cesecore.certificates.endentity.ExtendedInformation;
 import org.cesecore.internal.UpgradeableDataHashMap;
-
 
 
 /**
@@ -253,6 +255,20 @@ public abstract class BasePublisher extends UpgradeableDataHashMap implements Se
     	// Performing upgrade routines
     }
     
-	
-
+    /**
+     * Utility method used for validating the data source field in va publishers.
+     * 
+     * @param dataSource
+     * @throws PublisherException 
+     */
+    public void validateDataSource(final String dataSource) throws PublisherException {
+        if (StringUtils.isNotBlank(dataSource)) {
+            final Pattern dataSourcePattern = Pattern.compile("^(java):/.*$");
+            final Matcher dataSrouceMatcher = dataSourcePattern.matcher(dataSource);
+            if (dataSrouceMatcher.find()) {
+                return;
+            }
+        }
+        throw new PublisherException("Invalid data source!");
+    }
 }

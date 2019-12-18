@@ -50,6 +50,7 @@ import org.ejbca.core.model.ca.publisher.PublisherConnectionException;
 import org.ejbca.core.model.ca.publisher.PublisherConst;
 import org.ejbca.core.model.ca.publisher.PublisherDoesntExistsException;
 import org.ejbca.core.model.ca.publisher.PublisherExistsException;
+import org.ejbca.core.model.ca.publisher.PublisherException;
 import org.ejbca.ui.web.RequestHelper;
 import org.ejbca.ui.web.admin.configuration.EjbcaWebBean;
 
@@ -355,12 +356,22 @@ public class EditPublisherJSPHelper {
                                             }
                                         }
                                     }
-                                    custompublisherdata.setPropertyData(sb.toString());
+									try {
+										custompublisherdata.setPropertyData(sb.toString());
+									} catch (PublisherException e) {
+										setPublisherEditFailed(true);
+										setPublisherEditMessage(e.getMessage());
+									}
                                 } else {
                                     value = request.getParameter(TEXTAREA_CUSTOMPROPERTIES);
                                     if(value != null){
                                         value = value.trim();
-                                        custompublisherdata.setPropertyData(value);
+    									try {
+    										custompublisherdata.setPropertyData(value);
+    									} catch (PublisherException e) {
+    										setPublisherEditFailed(true);
+    										setPublisherEditMessage(e.getMessage());
+    									}
                                     }
                                 }
                             }
