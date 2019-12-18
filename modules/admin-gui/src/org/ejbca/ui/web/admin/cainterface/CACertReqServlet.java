@@ -19,12 +19,12 @@ import java.security.cert.X509Certificate;
 
 import javax.ejb.EJB;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authorization.control.StandardRules;
 import org.cesecore.certificates.certificate.request.PKCS10RequestMessage;
 import org.cesecore.certificates.certificate.request.RequestMessageUtils;
@@ -41,8 +41,7 @@ import org.ejbca.cvc.CertificateParser;
 import org.ejbca.cvc.HolderReferenceField;
 import org.ejbca.cvc.exception.ParseException;
 import org.ejbca.ui.web.RequestHelper;
-import org.ejbca.ui.web.admin.configuration.EjbcaWebBeanImpl;
-import org.ejbca.ui.web.jsf.configuration.EjbcaWebBean;
+import org.ejbca.ui.web.admin.cainterface.exception.AdminWebAuthenticationException;
 import org.ejbca.ui.web.pub.ServletUtils;
 
 /**
@@ -59,7 +58,7 @@ import org.ejbca.ui.web.pub.ServletUtils;
  *
  * @version $Id$
  */
-public class CACertReqServlet extends HttpServlet {
+public class CACertReqServlet extends BaseAdminServlet {
 
 	private static final long serialVersionUID = 1L;
 	private static final Logger log = Logger.getLogger(CACertReqServlet.class);
@@ -89,18 +88,12 @@ public class CACertReqServlet extends HttpServlet {
     @Override
     public void doGet(HttpServletRequest req,  HttpServletResponse res) throws java.io.IOException, ServletException {
         log.trace(">doGet()");
-
-        // Check if authorized
-        EjbcaWebBean ejbcawebbean = (EjbcaWebBean) req.getSession().getAttribute("ejbcawebbean");
-        if ( ejbcawebbean == null ){
-          try {
-            ejbcawebbean = (EjbcaWebBean) java.beans.Beans.instantiate(Thread.currentThread().getContextClassLoader(), EjbcaWebBeanImpl.class.getName());
-           } catch (ClassNotFoundException exc) {
-               throw new ServletException(exc.getMessage());
-           } catch (Exception exc) {
-               throw new ServletException (" Cannot create bean of class "+EjbcaWebBeanImpl.class.getName(), exc);
-           }
-           req.getSession().setAttribute("ejbcawebbean", ejbcawebbean);
+        final AuthenticationToken admin;
+        try {
+            admin = authenticateAdmin(req, res, StandardRules.ROLE_ROOT.resource());
+        } catch (AdminWebAuthenticationException authExc) {
+            res.sendError(HttpServletResponse.SC_FORBIDDEN, authExc.getMessage());
+            return;
         }
 
 		// Check if authorized
@@ -116,15 +109,8 @@ public class CACertReqServlet extends HttpServlet {
 		   req.getSession().setAttribute("cabean", cabean);
 		}
 
-
-        try{
-          ejbcawebbean.initialize(req, StandardRules.ROLE_ROOT.resource());          
-        } catch(Exception e){
-           throw new java.io.IOException("Authorization Denied");
-        }
-
 		try{
-		  cabean.initialize(ejbcawebbean);
+		  cabean.initialize(getEjbcaWebBean(req));
 		} catch(Exception e){
 		   throw new java.io.IOException("Error initializing CACertReqServlet");
 		}        
@@ -236,7 +222,7 @@ public class CACertReqServlet extends HttpServlet {
 		if (command.equalsIgnoreCase(COMMAND_CERTPKCS7)) {
 			 try {
 			     X509Certificate cert = (X509Certificate) cabean.getProcessedCertificate();		
-		        byte[] pkcs7 = signSession.createPKCS7(ejbcawebbean.getAdminObject(), cert, true);							 	
+		        byte[] pkcs7 = signSession.createPKCS7(admin, cert, true);							 	
 			    byte[] b64cert = Base64.encode(pkcs7);	
 			    RequestHelper.sendNewB64Cert(b64cert, res, RequestHelper.BEGIN_PKCS7_WITH_NL, RequestHelper.END_PKCS7_WITH_NL);																		 					
 			 } catch (Exception e) {

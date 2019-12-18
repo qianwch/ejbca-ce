@@ -18,38 +18,37 @@ import java.security.PublicKey;
 import javax.ejb.EJB;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.log4j.Logger;
-import org.cesecore.authentication.tokens.AlwaysAllowLocalAuthenticationToken;
 import org.cesecore.authentication.tokens.AuthenticationToken;
-import org.cesecore.authentication.tokens.UsernamePrincipal;
 import org.cesecore.authorization.AuthorizationDeniedException;
+import org.cesecore.authorization.control.CryptoTokenRules;
+import org.cesecore.authorization.control.StandardRules;
 import org.cesecore.keys.token.CryptoTokenManagementSessionLocal;
 import org.cesecore.keys.token.CryptoTokenOfflineException;
 import org.cesecore.keys.util.KeyTools;
 import org.cesecore.util.CryptoProviderTools;
 import org.cesecore.util.StringTools;
+import org.ejbca.core.model.authorization.AccessRulesConstants;
+import org.ejbca.ui.web.admin.cainterface.BaseAdminServlet;
+import org.ejbca.ui.web.admin.cainterface.exception.AdminWebAuthenticationException;
 
 /**
  * Servlet for download of CryptoToken related files, such as the the public key as PEM for a key pair.
  * 
  * @version $Id$
  */
-public class CryptoTokenDownloadServlet extends HttpServlet {
+public class CryptoTokenDownloadServlet extends BaseAdminServlet {
 
     private static final long serialVersionUID = 1L;
     private static final Logger log = Logger.getLogger(CryptoTokenDownloadServlet.class);
-    //private static final InternalEjbcaResources intres = InternalEjbcaResources.getInstance();
-    private static final AuthenticationToken alwaysAllowAuthenticationToken = new AlwaysAllowLocalAuthenticationToken(new UsernamePrincipal("CryptoTokenDownloadServlet"));
 
     @EJB
     private CryptoTokenManagementSessionLocal cryptoTokenManagementSession;
 
-    // org.cesecore.keys.util.KeyTools.getAsPem(PublicKey)
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
@@ -66,6 +65,13 @@ public class CryptoTokenDownloadServlet extends HttpServlet {
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
         log.trace(">doGet()");
+        final AuthenticationToken admin;
+        try {
+            admin = authenticateAdmin(request, response, CryptoTokenRules.VIEW.resource());
+        } catch (AdminWebAuthenticationException authExc) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, authExc.getMessage());
+            return;
+        }
         final String cryptoTokenIdParam = request.getParameter("cryptoTokenId");
         if (!NumberUtils.isNumber(cryptoTokenIdParam)) {
             if (log.isDebugEnabled()) {
@@ -76,7 +82,7 @@ public class CryptoTokenDownloadServlet extends HttpServlet {
             final int cryptoTokenId = Integer.parseInt(cryptoTokenIdParam);
             final String aliasParam = request.getParameter("alias");
             try {
-                final PublicKey publicKey = cryptoTokenManagementSession.getPublicKey(alwaysAllowAuthenticationToken, cryptoTokenId, aliasParam).getPublicKey();
+                final PublicKey publicKey = cryptoTokenManagementSession.getPublicKey(admin, cryptoTokenId, aliasParam).getPublicKey();
                 response.setContentType("application/octet-stream");
                 response.setHeader("Content-disposition", " attachment; filename=\"" + StringTools.stripFilename(aliasParam + ".pem") + "\"");
                 response.getOutputStream().write(KeyTools.getAsPem(publicKey).getBytes());

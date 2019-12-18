@@ -17,7 +17,6 @@ import java.io.IOException;
 
 import javax.ejb.EJB;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -30,8 +29,7 @@ import org.cesecore.util.StringTools;
 import org.ejbca.core.model.InternalEjbcaResources;
 import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.ui.web.RequestHelper;
-import org.ejbca.ui.web.admin.configuration.EjbcaWebBeanImpl;
-import org.ejbca.ui.web.jsf.configuration.EjbcaWebBean;
+import org.ejbca.ui.web.admin.cainterface.exception.AdminWebAuthenticationException;
 import org.ejbca.ui.web.pub.ServletUtils;
 
 /**
@@ -45,7 +43,7 @@ import org.ejbca.ui.web.pub.ServletUtils;
  *
  * @version $Id$
  */
-public class GetCRLServlet extends HttpServlet {
+public class GetCRLServlet extends BaseAdminServlet {
 
 	private static final long serialVersionUID = 1L;
 	private static final Logger log = Logger.getLogger(GetCRLServlet.class);
@@ -71,33 +69,12 @@ public class GetCRLServlet extends HttpServlet {
     @Override
     public void doGet(final HttpServletRequest req,  final HttpServletResponse res) throws IOException, ServletException {
         log.trace(">doGet()");
-
-        // Check if authorized
-        EjbcaWebBean ejbcawebbean = (EjbcaWebBean) req.getSession().getAttribute("ejbcawebbean");
-        if ( ejbcawebbean == null ){
-          try {
-            ejbcawebbean = (EjbcaWebBean) java.beans.Beans.instantiate(Thread.currentThread().getContextClassLoader(), EjbcaWebBeanImpl.class.getName());
-           } catch (ClassNotFoundException exc) {
-               throw new ServletException(exc.getMessage(), exc);
-           }catch (Exception exc) {
-               throw new ServletException (" Cannot create bean of class "+ EjbcaWebBeanImpl.class.getName(), exc);
-           }
-           req.getSession().setAttribute("ejbcawebbean", ejbcawebbean);
-        }
-
         try {
-            ejbcawebbean.initialize(req, AccessRulesConstants.REGULAR_VIEWCERTIFICATE);
-        } catch (Exception e) {
-            final String fullMsg = "Access denied to " + AccessRulesConstants.REGULAR_VIEWCERTIFICATE + " for client " + req.getRemoteAddr();
-            if (log.isDebugEnabled()) {
-                log.warn(fullMsg, e);
-            } else {
-                log.warn(fullMsg);
-            }
-            res.sendError(HttpServletResponse.SC_FORBIDDEN, "Authorization denied");
+            authenticateAdmin(req, res, AccessRulesConstants.REGULAR_VIEWCERTIFICATE);
+        } catch (AdminWebAuthenticationException authExc) {
+            res.sendError(HttpServletResponse.SC_FORBIDDEN, authExc.getMessage());
             return;
         }
-
         RequestHelper.setDefaultCharacterEncoding(req);
         String issuerDn = req.getParameter(ISSUER_PROPERTY);
         if (issuerDn == null) {
