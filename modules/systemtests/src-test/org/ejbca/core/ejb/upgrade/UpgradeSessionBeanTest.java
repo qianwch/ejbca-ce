@@ -96,6 +96,7 @@ import org.ejbca.core.model.approval.profile.ApprovalProfile;
 import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.core.model.ca.publisher.CustomPublisherContainer;
 import org.ejbca.core.model.ca.publisher.GeneralPurposeCustomPublisher;
+import org.ejbca.core.model.ca.publisher.PublisherException;
 import org.ejbca.core.model.ca.publisher.PublisherExistsException;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfile;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfileExistsException;
@@ -1035,7 +1036,7 @@ public class UpgradeSessionBeanTest {
     }
     
     @Test
-    public void testExternalScriptsSetting() throws AuthorizationDeniedException, PublisherExistsException {
+    public void testExternalScriptsSetting() throws AuthorizationDeniedException, PublisherExistsException, PublisherException {
         GlobalConfiguration gc = (GlobalConfiguration) globalConfigSession.getCachedConfiguration(GlobalConfiguration.GLOBAL_CONFIGURATION_ID);
         boolean savedEnableExternalScripts = gc.getEnableExternalScripts();
         gc.setEnableExternalScripts(true);
