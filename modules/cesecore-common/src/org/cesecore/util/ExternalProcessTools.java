@@ -283,6 +283,8 @@ public final class ExternalProcessTools {
                 throw new ExternalProcessException(msg);
             }
         }
+        // Delete temp file on JVM exit. 
+        file.deleteOnExit();
         return file;
     }
     
