@@ -187,7 +187,7 @@ public class DynamicUiProperty<T extends Serializable> implements Serializable, 
         }  
         this.possibleValues = null;
         this.type = type;
-        if (File.class.getName().equals(getType().getName())) {
+        if (File.class.getName().equals(getType().getName()) || byte[].class.getName().equals(getType().getName())) {
             setRenderingHint(RENDER_FILE_CHOOSER);
         }
     }
@@ -937,6 +937,10 @@ public class DynamicUiProperty<T extends Serializable> implements Serializable, 
         return File.class.getName().equals(getType().getName());
     }
 
+    public boolean isByteArrayType() {
+        return byte[].class.getName().equals(getType().getName());
+    }
+    
     /**
      * Returns true if a check box should be rendered.
      * @return true or false.

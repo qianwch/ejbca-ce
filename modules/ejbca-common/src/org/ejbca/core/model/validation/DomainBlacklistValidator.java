@@ -147,15 +147,6 @@ public class DomainBlacklistValidator extends ValidatorBase implements DnsNameVa
         }
     }
 
-    /** Replaces the existing domain blacklist with the uploaded one. Takes a File object. */
-    private void changeBlacklist(final File file) {
-        try {
-            final byte[] bytes = FileUtils.readFileToByteArray(file);
-            changeBlacklist(bytes);
-        } catch (IOException e) {
-            throw new IllegalStateException("Unable to parse domain black list.", e);
-        }
-    }
 
     /** Replaces the existing domain blacklist with the uploaded one. Takes a byte array. */
     public void changeBlacklist(final byte[] bytes) {
@@ -275,16 +266,12 @@ public class DomainBlacklistValidator extends ValidatorBase implements DnsNameVa
                 final Map<String, Object> rawData = super.getRawData();
                 // Parse file data
                 final DynamicUiProperty<?> uploadUiProperty = getProperties().get(BLACKLIST_UPLOAD_KEY);
-                final File uploadedFile = (File) uploadUiProperty.getValue();
+                final byte[] uploadedFile = (byte[]) uploadUiProperty.getValue();
                 if (uploadedFile != null) {
-                    try {
-                        if (log.isDebugEnabled()) {
-                            log.debug("Parsing uploaded file: " + uploadedFile.getName());
-                        }
-                        changeBlacklist(uploadedFile);
-                    } finally {
-                        uploadedFile.delete();
+                    if (log.isDebugEnabled()) {
+                        log.debug("Parsing uploaded file: " + uploadedFile);
                     }
+                    changeBlacklist(uploadedFile);
                 } else {
                     log.debug("No new blacklist file was uploaded.");
                 }
