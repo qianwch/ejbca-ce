@@ -173,8 +173,7 @@ public class LookAheadObjectInputStream extends ObjectInputStream {
     protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
         Class<?> resolvedClass = super.resolveClass(desc); //can be an array
         Class<?> resolvedClassType = resolvedClass.isArray() ? resolvedClass.getComponentType() : resolvedClass;
-        if (resolvedClassType.equals(String.class) || resolvedClassType.isPrimitive() || Boolean.class.isAssignableFrom(resolvedClassType)
-                || Number.class.isAssignableFrom(resolvedClassType) || Character.class.isAssignableFrom(resolvedClassType)) {
+        if (isClassAlwaysWhiteListed(resolvedClassType)) {
             return resolvedClass;
         } else if (acceptedClasses != null && !acceptedClasses.isEmpty()) {
             if (acceptedClasses.contains(resolvedClassType)) {
@@ -229,6 +228,12 @@ public class LookAheadObjectInputStream extends ObjectInputStream {
             }
         }
         throw new SecurityException("Unauthorized deserialization attempt for type: " + desc);
+    }
+    
+    public static boolean isClassAlwaysWhiteListed(final Class<?> c) {
+        final Class<?> classType = c.isArray() ? c.getComponentType() : c;
+        return classType.equals(String.class) || classType.isPrimitive() || Boolean.class.isAssignableFrom(classType) ||
+                Number.class.isAssignableFrom(classType) || Character.class.isAssignableFrom(classType);
     }
 
     /**
