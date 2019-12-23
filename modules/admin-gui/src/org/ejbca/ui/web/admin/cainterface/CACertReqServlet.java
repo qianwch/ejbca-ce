@@ -96,7 +96,6 @@ public class CACertReqServlet extends BaseAdminServlet {
             return;
         }
 
-		// Check if authorized
         CAInterfaceBean cabean = (CAInterfaceBean) req.getSession().getAttribute("cabean");
 		if ( cabean == null ){
 		  try {
