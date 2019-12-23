@@ -17,7 +17,6 @@ import java.io.IOException;
 
 import javax.ejb.EJB;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -28,7 +27,7 @@ import org.cesecore.util.StringTools;
 import org.ejbca.core.model.InternalEjbcaResources;
 import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.ui.web.RequestHelper;
-import org.ejbca.ui.web.admin.configuration.EjbcaWebBean;
+import org.ejbca.ui.web.admin.cainterface.exception.AdminWebAuthenticationException;
 import org.ejbca.ui.web.pub.ServletUtils;
 
 /**
@@ -42,7 +41,7 @@ import org.ejbca.ui.web.pub.ServletUtils;
  *
  * @version $Id$
  */
-public class GetCRLServlet extends HttpServlet {
+public class GetCRLServlet extends BaseAdminServlet {
 
 	private static final long serialVersionUID = 1L;
 	private static final Logger log = Logger.getLogger(GetCRLServlet.class);
@@ -67,27 +66,12 @@ public class GetCRLServlet extends HttpServlet {
     @Override
     public void doGet(HttpServletRequest req,  HttpServletResponse res) throws java.io.IOException, ServletException {
         log.trace(">doGet()");
-
-        // Check if authorized
-        EjbcaWebBean ejbcawebbean= (org.ejbca.ui.web.admin.configuration.EjbcaWebBean)
-                                   req.getSession().getAttribute("ejbcawebbean");
-        if ( ejbcawebbean == null ){
-          try {
-            ejbcawebbean = (org.ejbca.ui.web.admin.configuration.EjbcaWebBean) java.beans.Beans.instantiate(Thread.currentThread().getContextClassLoader(), org.ejbca.ui.web.admin.configuration.EjbcaWebBean.class.getName());
-           } catch (ClassNotFoundException exc) {
-               throw new ServletException(exc.getMessage());
-           }catch (Exception exc) {
-               throw new ServletException (" Cannot create bean of class "+ org.ejbca.ui.web.admin.configuration.EjbcaWebBean.class.getName(), exc);
-           }
-           req.getSession().setAttribute("ejbcawebbean", ejbcawebbean);
+        try {
+            authenticateAdmin(req, res, AccessRulesConstants.REGULAR_VIEWCERTIFICATE);
+        } catch (AdminWebAuthenticationException authExc) {
+            res.sendError(HttpServletResponse.SC_FORBIDDEN, authExc.getMessage());
+            return;
         }
-
-        try{
-          ejbcawebbean.initialize(req, AccessRulesConstants.REGULAR_VIEWCERTIFICATE);
-        } catch(Exception e){
-           throw new java.io.IOException("Authorization Denied");
-        }
-
         RequestHelper.setDefaultCharacterEncoding(req);
         String issuerdn = null; 
         if(req.getParameter(ISSUER_PROPERTY) != null){
