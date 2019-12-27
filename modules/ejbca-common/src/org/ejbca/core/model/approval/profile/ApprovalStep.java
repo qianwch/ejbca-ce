@@ -18,7 +18,8 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -26,6 +27,8 @@ import org.cesecore.util.Base64;
 import org.cesecore.util.LookAheadObjectInputStream;
 import org.cesecore.util.ProfileID;
 import org.cesecore.util.ui.DynamicUiProperty;
+import org.cesecore.util.ui.DynamicUiPropertyCallback;
+import org.cesecore.util.ui.DynamicUiPropertyValidator;
 
 /**
  * This class represents an approval step, to sum of which is a collective series of events, in serial order, which must occur for an approval
@@ -75,8 +78,12 @@ public class ApprovalStep implements Serializable {
      * @param encodedStep a serialized approval step encoded as a string.
      */
     public ApprovalStep(final String encodedStep) {
-        try (final LookAheadObjectInputStream ois = new LookAheadObjectInputStream(new ByteArrayInputStream(encodedStep.getBytes()))) {
-            ois.setAcceptedClasses(Collections.singleton(ApprovalStep.class));
+        final byte[] bytes = Base64.decode(encodedStep.getBytes());
+        try (final LookAheadObjectInputStream ois = new LookAheadObjectInputStream(new ByteArrayInputStream(bytes))) {
+            ois.setMaxObjects(10_000);
+            ois.setAcceptedClasses(Arrays.asList(ApprovalStep.class, ApprovalPartition.class, LinkedHashMap.class, HashMap.class,
+                    DynamicUiProperty.class, DynamicUiPropertyCallback.class, Enum.class, ArrayList.class, DynamicUiPropertyValidator.class));
+            ois.setEnabledInterfaceImplementations(true, "org.cesecore.util.ui");
             final ApprovalStep step = (ApprovalStep) ois.readObject();
             this.id = step.getStepIdentifier();
             this.nextStep = step.getNextStep();
