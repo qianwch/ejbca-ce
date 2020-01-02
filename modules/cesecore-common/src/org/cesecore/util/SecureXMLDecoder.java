@@ -251,9 +251,9 @@ public class SecureXMLDecoder implements AutoCloseable {
             break;
         case "class":
             try {
-                //Only allow classes from our own hierarchy 
-                String className = readText();
-                if(!(className.startsWith("org.ejbca.") || className.startsWith("org.cesecore."))) {
+                // Only allow classes from our own hierarchy 
+                final String className = readText();
+                if (!(className.startsWith("org.ejbca.") || className.startsWith("org.cesecore.") || className.startsWith("org.signserver."))) {
                     throw new IOException("Unauthorized class was decoded from XML: " + className);
                 }
                 value = Class.forName(className);
