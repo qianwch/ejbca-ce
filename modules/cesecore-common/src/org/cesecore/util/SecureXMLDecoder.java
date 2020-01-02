@@ -366,12 +366,15 @@ public class SecureXMLDecoder implements AutoCloseable {
             case "java.lang.Enum":
                 parser.getName();
                 String enumType = readString();
-                if (!enumType.startsWith("org.cesecore.") && !enumType.startsWith("org.ejbca.")) {
+                if (!enumType.startsWith("org.cesecore.") && !enumType.startsWith("org.ejbca.") && !enumType.startsWith("org.signserver.")) {
                     throw new IOException(errorMessage("Instantation of enum type \"" + enumType + "\" not allowed"));
                 }
                 parser.nextTag();
                 parser.getName();
                 String valueName = readString();
+                if (valueName.endsWith("INSTANCE")) {
+                    throw new IOException(errorMessage("Not allowed to use singleton \"" + valueName + "\" from enum type \"" + enumType + "\""));
+                }
                 try {
                     Enum<?> enumValue = Enum.valueOf(Class.forName(enumType).asSubclass(Enum.class), valueName);
                     value = enumValue;
