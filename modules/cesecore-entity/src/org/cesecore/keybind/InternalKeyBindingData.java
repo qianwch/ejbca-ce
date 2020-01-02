@@ -202,8 +202,10 @@ public class InternalKeyBindingData extends ProtectedData implements Serializabl
         final LinkedHashMap<?, ?> a = new Base64PutHashMap();
         a.putAll((LinkedHashMap)dataMap);
         final java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
-        try (XMLEncoder encoder = new XMLEncoder(baos)) {
-            encoder.writeObject(a);
+        try {
+            try (XMLEncoder encoder = new XMLEncoder(baos)) {
+                encoder.writeObject(a);
+            }
             final String data = baos.toString("UTF8");
             setRawData(data);
         } catch (UnsupportedEncodingException e) {

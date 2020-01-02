@@ -43,6 +43,7 @@ import org.cesecore.certificates.certificateprofile.CertificatePolicy;
 import org.cesecore.certificates.certificateprofile.PKIDisclosureStatement;
 import org.cesecore.certificates.endentity.EndEntityInformation;
 import org.cesecore.certificates.endentity.ExtendedInformation;
+import org.cesecore.keybind.InternalKeyBindingTrustEntry;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -328,6 +329,9 @@ public class SecureXMLDecoder implements AutoCloseable {
                 break;
             case "org.cesecore.certificates.endentity.ExtendedInformation":
                 value = parseObject(new ExtendedInformation());
+                break;
+            case "org.cesecore.keybind.InternalKeyBindingTrustEntry":
+                value = parseObject(new InternalKeyBindingTrustEntry());
                 break;
             case "org.ejbca.core.model.ra.raadmin.UserNotification":
             case "org.ejbca.core.protocol.acme.logic.AcmeAuthorizationImpl":
