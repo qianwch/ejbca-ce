@@ -30,6 +30,7 @@
 		<path refid="lib.commons-io.classpath"/>
 		<path refid="lib.easymock.classpath"/>
 		<path refid="lib.commons-codec.classpath"/>
+		<path refid="lib.xmlpull.classpath"/>
 	</path>
 
 	<target name="jar" depends="cesecore-entity, with.clover">

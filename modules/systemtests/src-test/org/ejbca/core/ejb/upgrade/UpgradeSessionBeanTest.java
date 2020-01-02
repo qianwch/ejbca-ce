@@ -144,6 +144,10 @@ public class UpgradeSessionBeanTest {
     @BeforeClass
     public static void beforeClass() {
         CryptoProviderTools.installBCProviderIfNotAvailable();
+        // Clean up from previous aborted tests
+        CaTestUtils.removeCa(alwaysAllowtoken, "NoActions", "NoActions");
+        CaTestUtils.removeCa(alwaysAllowtoken, "TwoApprovals", "TwoApprovals");
+        CaTestUtils.removeCa(alwaysAllowtoken, "ThreeApprovals", "ThreeApprovals");
     }
     
     @Before
@@ -303,7 +307,7 @@ public class UpgradeSessionBeanTest {
        //This CA should not be assigned an approval profile on account of lacking approvals
        List<Integer> approvalRequirements = new ArrayList<>();
        approvalRequirements.add(ApprovalRequestType.ACTIVATECA.getIntegerValue());
-      
+
        //This CA should not be assigned an approval profile on account of lacking any actions
        X509CA noActionsCa =  CaTestUtils.createTestX509CA("CN=NoActions", "foo123".toCharArray(), false);
        noActionsCa.setNumOfRequiredApprovals(2);
@@ -717,6 +721,7 @@ public class UpgradeSessionBeanTest {
         //This Certificate profile should not be assigned an approval profile on account of lacking any actions
         CertificateProfile noApprovals = new CertificateProfile(CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER);
         final String noApprovalsName = "noApprovals";
+        certificateProfileSession.removeCertificateProfile(alwaysAllowtoken, noApprovalsName); // clean up from previous aborted tests
         certificateProfileSession.addCertificateProfile(alwaysAllowtoken, noApprovalsName, noApprovals);
 
         ApprovalProfile requireTwoApprovals = new AccumulativeApprovalProfile("testUpgradeTo680Approvals");
@@ -729,6 +734,7 @@ public class UpgradeSessionBeanTest {
         List<Integer> approvalSettings = new ArrayList<>(Arrays.asList(ApprovalRequestType.ACTIVATECA.getIntegerValue(), ApprovalRequestType.KEYRECOVER.getIntegerValue()));
         withApprovals.setApprovalSettings(approvalSettings);
         final String withApprovalsName = "withApprovals";
+        certificateProfileSession.removeCertificateProfile(alwaysAllowtoken, withApprovalsName);
         certificateProfileSession.addCertificateProfile(alwaysAllowtoken, withApprovalsName, withApprovals);
 
         GlobalUpgradeConfiguration guc = (GlobalUpgradeConfiguration) globalConfigSession.getCachedConfiguration(GlobalUpgradeConfiguration.CONFIGURATION_ID);

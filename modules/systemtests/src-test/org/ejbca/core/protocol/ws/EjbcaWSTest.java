@@ -125,6 +125,7 @@ import org.cesecore.util.CertTools;
 import org.cesecore.util.EJBTools;
 import org.cesecore.util.EjbRemoteHelper;
 import org.cesecore.util.FileTools;
+import org.cesecore.util.SecureXMLDecoder;
 import org.cesecore.util.ValidityDate;
 import org.ejbca.config.GlobalConfiguration;
 import org.ejbca.core.EjbcaException;
@@ -1763,10 +1764,11 @@ public class EjbcaWSTest extends CommonEjbcaWS {
         int profileid = certificateProfileSession.getCertificateProfileId(profilename);
 
         try {
-            byte[] profilebytes = ejbcaraws.getProfile(profileid, "cp");
-            java.beans.XMLDecoder decoder = new java.beans.XMLDecoder(new java.io.ByteArrayInputStream(profilebytes));
-            final Map<?, ?> h = (Map<?, ?>) decoder.readObject();
-            decoder.close();
+            final byte[] profilebytes = ejbcaraws.getProfile(profileid, "cp");
+            final Map<?, ?> h;
+            try (SecureXMLDecoder decoder = new SecureXMLDecoder(new java.io.ByteArrayInputStream(profilebytes))) {
+                h = (Map<?, ?>) decoder.readObject();
+            }
 
             // Check that the default data are different from the data in the profile we want to retrieve
             profile = new CertificateProfile();
@@ -1802,9 +1804,10 @@ public class EjbcaWSTest extends CommonEjbcaWS {
         int profileid = endEntityProfileSession.getEndEntityProfileId(profilename);
         try {
             byte[] profilebytes = ejbcaraws.getProfile(profileid, "eep");
-            java.beans.XMLDecoder decoder = new java.beans.XMLDecoder(new java.io.ByteArrayInputStream(profilebytes));
-            final Map<?, ?> h = (Map<?, ?>)decoder.readObject();
-            decoder.close();
+            final Map<?, ?> h;
+            try (SecureXMLDecoder decoder = new SecureXMLDecoder(new java.io.ByteArrayInputStream(profilebytes))) {
+                h = (Map<?, ?>)decoder.readObject();
+            }
 
             // Check that the default data are different from the data in the profile we want to retrieve
             profile = new EndEntityProfile();

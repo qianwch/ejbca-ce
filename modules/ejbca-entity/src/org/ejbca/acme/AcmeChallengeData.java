@@ -9,10 +9,10 @@
  *************************************************************************/
 package org.ejbca.acme;
 
-import java.beans.XMLDecoder;
 import java.beans.XMLEncoder;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
@@ -25,10 +25,12 @@ import javax.persistence.PreUpdate;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
+import org.apache.log4j.Logger;
 import org.cesecore.dbprotection.ProtectedData;
 import org.cesecore.dbprotection.ProtectionStringBuilder;
 import org.cesecore.util.Base64GetHashMap;
 import org.cesecore.util.Base64PutHashMap;
+import org.cesecore.util.SecureXMLDecoder;
 
 /**
  *
@@ -39,6 +41,7 @@ import org.cesecore.util.Base64PutHashMap;
 public class AcmeChallengeData extends ProtectedData implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    private static final Logger log = Logger.getLogger(AcmeChallengeData.class);
 
     private String challengeId;
     private String authorizationId;
@@ -86,9 +89,15 @@ public class AcmeChallengeData extends ProtectedData implements Serializable {
     @Transient
     @SuppressWarnings("unchecked")
     public LinkedHashMap<Object,Object> getDataMap() {
-        try (final XMLDecoder decoder = new XMLDecoder(new ByteArrayInputStream(getRawData().getBytes(StandardCharsets.UTF_8)));) {
+        try (final SecureXMLDecoder decoder = new SecureXMLDecoder(new ByteArrayInputStream(getRawData().getBytes(StandardCharsets.UTF_8)));) {
             // Handle Base64 encoded string values
             return new Base64GetHashMap((Map<?,?>)decoder.readObject());
+        } catch (IOException e) {
+            final String msg = "Failed to parse AcmeChallengeData data map in database: " + e.getMessage();
+            if (log.isDebugEnabled()) {
+                log.debug(msg + ". Data:\n" + getRawData());
+            }
+            throw new IllegalStateException(msg, e);
         }
     }
 

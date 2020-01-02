@@ -13,9 +13,9 @@
 
 package org.ejbca.core.ejb.ca.publisher;
 
-import java.beans.XMLDecoder;
 import java.io.ByteArrayInputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -54,6 +54,7 @@ import org.cesecore.jndi.JndiConstants;
 import org.cesecore.util.Base64GetHashMap;
 import org.cesecore.util.CertTools;
 import org.cesecore.util.ProfileID;
+import org.cesecore.util.SecureXMLDecoder;
 import org.ejbca.config.GlobalConfiguration;
 import org.ejbca.core.ejb.audit.enums.EjbcaEventTypes;
 import org.ejbca.core.ejb.audit.enums.EjbcaModuleTypes;
@@ -133,9 +134,9 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
         final int revocationReason = certificateData.getRevocationReason();
         final String username = certificateData.getUsername();
         boolean returnval = true;
-        final List<BasePublisher> publishersToTryDirect = new ArrayList<BasePublisher>();
-        final List<BasePublisher> publishersToQueuePending = new ArrayList<BasePublisher>();
-        final List<BasePublisher> publishersToQueueSuccess = new ArrayList<BasePublisher>();
+        final List<BasePublisher> publishersToTryDirect = new ArrayList<>();
+        final List<BasePublisher> publishersToQueuePending = new ArrayList<>();
+        final List<BasePublisher> publishersToQueueSuccess = new ArrayList<>();
         for (final Integer id : publisherids) {
             BasePublisher publ = getPublisherInternal(id, null, true);
             if (publ != null) {
@@ -174,7 +175,7 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
             final String name = getPublisherName(id);
             if (!(publisherResult instanceof PublisherException)) {
                 final String msg = intres.getLocalizedMessage("publisher.store", certificateData.getSubjectDnNeverNull(), name);
-                final Map<String, Object> details = new LinkedHashMap<String, Object>();
+                final Map<String, Object> details = new LinkedHashMap<>();
                 details.put("msg", msg);
                 auditSession.log(EjbcaEventTypes.PUBLISHER_STORE_CERTIFICATE, EventStatus.SUCCESS, EjbcaModuleTypes.PUBLISHER,
                         EjbcaServiceTypes.EJBCA, admin.toString(), null, certSerno, username, details);
@@ -183,7 +184,7 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
                 }
             } else {
                 final String msg = intres.getLocalizedMessage("publisher.errorstore", name, fingerprint);
-                final Map<String, Object> details = new LinkedHashMap<String, Object>();
+                final Map<String, Object> details = new LinkedHashMap<>();
                 details.put("msg", msg);
                 details.put("error", ((PublisherException) publisherResult).getMessage());
                 auditSession.log(EjbcaEventTypes.PUBLISHER_STORE_CERTIFICATE, EventStatus.FAILURE, EjbcaModuleTypes.PUBLISHER,
@@ -266,13 +267,13 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
                             }
                         }
                         final String msg = intres.getLocalizedMessage("publisher.store", "CRL", name);
-                        final Map<String, Object> details = new LinkedHashMap<String, Object>();
+                        final Map<String, Object> details = new LinkedHashMap<>();
                         details.put("msg", msg);
                         auditSession.log(EjbcaEventTypes.PUBLISHER_STORE_CRL, EventStatus.SUCCESS, EjbcaModuleTypes.PUBLISHER,
                                 EjbcaServiceTypes.EJBCA, admin.toString(), null, null, null, details);
                     } catch (PublisherException pe) {
                         final String msg = intres.getLocalizedMessage("publisher.errorstore", name, "CRL");
-                        final Map<String, Object> details = new LinkedHashMap<String, Object>();
+                        final Map<String, Object> details = new LinkedHashMap<>();
                         details.put("msg", msg);
                         details.put("error", pe.getMessage());
                         auditSession.log(EjbcaEventTypes.PUBLISHER_STORE_CRL, EventStatus.FAILURE, EjbcaModuleTypes.PUBLISHER,
@@ -361,7 +362,7 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
         }
         addPublisherInternal(admin, id, name, publisher);
         final String msg = intres.getLocalizedMessage("publisher.addedpublisher", name);
-        final Map<String, Object> details = new LinkedHashMap<String, Object>();
+        final Map<String, Object> details = new LinkedHashMap<>();
         details.put("msg", msg);
         auditSession.log(EjbcaEventTypes.PUBLISHER_CREATION, EventStatus.SUCCESS, EjbcaModuleTypes.PUBLISHER, EjbcaServiceTypes.EJBCA,
                 admin.toString(), null, null, null, details);
@@ -414,7 +415,7 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
             // Since loading a Publisher is quite complex, we simple purge the cache here
             PublisherCache.INSTANCE.removeEntry(htp.getId());
             final String msg = intres.getLocalizedMessage("publisher.changedpublisher", name);
-            final Map<String, Object> details = new LinkedHashMap<String, Object>();
+            final Map<String, Object> details = new LinkedHashMap<>();
             details.put("msg", msg);
             for (Map.Entry<Object, Object> entry : diff.entrySet()) {
                 // Strip passwords from log
@@ -451,7 +452,7 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
             publisherdata = (BasePublisher) getPublisher(htp).clone();
             addPublisherInternal(admin, findFreePublisherId(), newname, publisherdata);
             final String msg = intres.getLocalizedMessage("publisher.clonedpublisher", newname, oldname);
-            final Map<String, Object> details = new LinkedHashMap<String, Object>();
+            final Map<String, Object> details = new LinkedHashMap<>();
             details.put("msg", msg);
             auditSession.log(EjbcaEventTypes.PUBLISHER_CREATION, EventStatus.SUCCESS, EjbcaModuleTypes.PUBLISHER, EjbcaServiceTypes.EJBCA,
                     admin.toString(), null, null, null, details);
@@ -561,7 +562,7 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
         }
         if (success) {
             String msg = intres.getLocalizedMessage("publisher.renamedpublisher", oldname, newname);
-            final Map<String, Object> details = new LinkedHashMap<String, Object>();
+            final Map<String, Object> details = new LinkedHashMap<>();
             details.put("msg", msg);
             auditSession.log(EjbcaEventTypes.PUBLISHER_RENAME, EventStatus.SUCCESS, EjbcaModuleTypes.PUBLISHER, EjbcaServiceTypes.EJBCA,
                     admin.toString(), null, null, null, details);
@@ -587,7 +588,7 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
 
     @Override
     public Map<Integer, BasePublisher> getAllPublishers() {
-        final Map<Integer, BasePublisher> returnval = new HashMap<Integer, BasePublisher>();
+        final Map<Integer, BasePublisher> returnval = new HashMap<>();
         final boolean enabled = ((GlobalConfiguration)  globalConfigurationSession.getCachedConfiguration(GlobalConfiguration.GLOBAL_CONFIGURATION_ID)).getEnableExternalScripts();
         BasePublisher publisher = null;
         for (PublisherData publisherData : PublisherData.findAll(entityManager)) {
@@ -602,7 +603,7 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     @Override
     public HashMap<Integer, String> getPublisherIdToNameMap() {
-        final HashMap<Integer, String> returnval = new HashMap<Integer, String>();
+        final HashMap<Integer, String> returnval = new HashMap<>();
         final boolean enabled = ((GlobalConfiguration)  globalConfigurationSession.getCachedConfiguration(GlobalConfiguration.GLOBAL_CONFIGURATION_ID)).getEnableExternalScripts();
         BasePublisher publisher = null;
         for (PublisherData publisherData : PublisherData.findAll(entityManager)) {
@@ -616,7 +617,7 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
 
     @Override
     public HashMap<String, Integer> getPublisherNameToIdMap() {
-        final HashMap<String, Integer> returnval = new HashMap<String, Integer>();
+        final HashMap<String, Integer> returnval = new HashMap<>();
         final boolean enabled = ((GlobalConfiguration)  globalConfigurationSession.getCachedConfiguration(GlobalConfiguration.GLOBAL_CONFIGURATION_ID)).getEnableExternalScripts();
         BasePublisher publisher;
         for (PublisherData publisherData : PublisherData.findAll(entityManager)) {
@@ -783,19 +784,25 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
         }
         return returnval;
     }
+    
+    private HashMap<?, ?> parseDataMapFromPublisher(final PublisherData publisherData) {
+        final String data = publisherData.getData();
+        try (SecureXMLDecoder decoder = new SecureXMLDecoder(new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8)))) {
+            return (HashMap<?, ?>) decoder.readObject();
+        } catch (IOException e) {
+            final String msg = "Failed to parse PublisherData data map in database: " + e.getMessage();
+            if (log.isDebugEnabled()) {
+                log.debug(msg + ". Data:\n" + data);
+            }
+            throw new IllegalStateException(msg, e);
+        }
+    }
 
     /** @return the publisher data and updates it if necessary. */
-    private BasePublisher getPublisher(PublisherData pData) {
+    private BasePublisher getPublisher(final PublisherData pData) {
         BasePublisher publisher = pData.getCachedPublisher();
         if (publisher == null) {
-            XMLDecoder decoder;
-            try {
-                decoder = new XMLDecoder(new ByteArrayInputStream(pData.getData().getBytes("UTF8")));
-            } catch (UnsupportedEncodingException e) {
-                throw new EJBException(e);
-            }
-            HashMap<?, ?> h = (HashMap<?, ?>) decoder.readObject();
-            decoder.close();
+            HashMap<?, ?> h = parseDataMapFromPublisher(pData);
             // Handle Base64 encoded string values
             HashMap<?, ?> data = new Base64GetHashMap(h);
 
@@ -853,14 +860,7 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
         for (PublisherData publisherData : PublisherData.findAll(entityManager)) {
             // Extract the data payload instead of the BasePublisher since the original BasePublisher implementation might no longer
             // be on the classpath
-            XMLDecoder decoder;
-            try {
-                decoder = new XMLDecoder(new ByteArrayInputStream(publisherData.getData().getBytes("UTF8")));
-            } catch (UnsupportedEncodingException e) {
-                throw new IllegalStateException(e);
-            }
-            HashMap<?, ?> h = (HashMap<?, ?>) decoder.readObject();
-            decoder.close();
+            HashMap<?, ?> h = parseDataMapFromPublisher(publisherData);
             // Handle Base64 encoded string values
             @SuppressWarnings("unchecked")
             HashMap<Object, Object> data = new Base64GetHashMap(h);
@@ -880,14 +880,7 @@ public class PublisherSessionBean implements PublisherSessionLocal, PublisherSes
         for (PublisherData publisherData : PublisherData.findAll(entityManager)) {
             // Extract the data payload instead of the BasePublisher since the original BasePublisher implementation might no longer
             // be on the classpath
-            XMLDecoder decoder;
-            try {
-                decoder = new XMLDecoder(new ByteArrayInputStream(publisherData.getData().getBytes("UTF8")));
-            } catch (UnsupportedEncodingException e) {
-                throw new IllegalStateException(e);
-            }
-            HashMap<?, ?> h = (HashMap<?, ?>) decoder.readObject();
-            decoder.close();
+            HashMap<?, ?> h = parseDataMapFromPublisher(publisherData);
             // Handle Base64 encoded string values
             @SuppressWarnings("unchecked")
             HashMap<Object, Object> data = new Base64GetHashMap(h);
