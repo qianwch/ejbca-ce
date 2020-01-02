@@ -307,10 +307,10 @@ public class UserDataVO implements Serializable {
             HashMap a = new Base64PutHashMap();
             a.putAll((HashMap)extendedinformation.saveData());
             java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
-    		try (XMLEncoder encoder = new XMLEncoder(baos)) {
-        		encoder.writeObject(a);
-        		ret = baos.toString("UTF8");
-    		}
+    	    try (XMLEncoder encoder = new XMLEncoder(baos)) {
+                encoder.writeObject(a);
+    	    }
+            ret = baos.toString("UTF8");
     	}
     	return ret;
     }
