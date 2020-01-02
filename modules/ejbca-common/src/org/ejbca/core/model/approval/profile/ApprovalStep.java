@@ -20,9 +20,13 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 
+import org.cesecore.authorization.user.AccessMatchType;
+import org.cesecore.authorization.user.AccessUserAspectData;
+import org.cesecore.roles.RoleInformation;
 import org.cesecore.util.Base64;
 import org.cesecore.util.LookAheadObjectInputStream;
 import org.cesecore.util.ProfileID;
@@ -39,6 +43,7 @@ import org.cesecore.util.ui.DynamicUiPropertyValidator;
  * @version $Id$
  *
  */
+@SuppressWarnings("deprecation")
 public class ApprovalStep implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -82,7 +87,8 @@ public class ApprovalStep implements Serializable {
         try (final LookAheadObjectInputStream ois = new LookAheadObjectInputStream(new ByteArrayInputStream(bytes))) {
             ois.setMaxObjects(10_000);
             ois.setAcceptedClasses(Arrays.asList(ApprovalStep.class, ApprovalPartition.class, LinkedHashMap.class, HashMap.class,
-                    DynamicUiProperty.class, DynamicUiPropertyCallback.class, Enum.class, ArrayList.class, DynamicUiPropertyValidator.class));
+                    DynamicUiProperty.class, DynamicUiPropertyCallback.class, Enum.class, ArrayList.class, DynamicUiPropertyValidator.class,
+                    RoleInformation.class, HashSet.class, AccessUserAspectData.class, AccessMatchType.class));
             ois.setEnabledInterfaceImplementations(true, "org.cesecore.util.ui");
             final ApprovalStep step = (ApprovalStep) ois.readObject();
             this.id = step.getStepIdentifier();
