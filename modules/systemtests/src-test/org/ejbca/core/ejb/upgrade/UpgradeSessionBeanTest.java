@@ -135,14 +135,14 @@ public class UpgradeSessionBeanTest {
     private CryptoTokenManagementSessionRemote cryptoTokenManagementSession = EjbRemoteHelper.INSTANCE.getRemoteSession(CryptoTokenManagementSessionRemote.class);
 
 
-    private AuthenticationToken alwaysAllowtoken = new TestAlwaysAllowLocalAuthenticationToken("UpgradeSessionBeanTest");
+    private static AuthenticationToken alwaysAllowtoken = new TestAlwaysAllowLocalAuthenticationToken("UpgradeSessionBeanTest");
     
     private AvailableCustomCertificateExtensionsConfiguration cceConfigBackup;
     private GlobalUpgradeConfiguration gucBackup;
     private GlobalConfiguration gcBackup;
     
     @BeforeClass
-    public static void beforeClass() {
+    public static void beforeClass() throws AuthorizationDeniedException {
         CryptoProviderTools.installBCProviderIfNotAvailable();
         // Clean up from previous aborted tests
         CaTestUtils.removeCa(alwaysAllowtoken, "NoActions", "NoActions");
