@@ -33,7 +33,9 @@ import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import javax.faces.context.FacesContext;
 import javax.faces.event.AjaxBehaviorEvent;
+import javax.faces.event.ComponentSystemEvent;
 import javax.faces.model.SelectItem;
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.log4j.Logger;
@@ -313,6 +315,16 @@ public class AccessRulesBean extends BaseManagedBean implements Serializable {
         reinitSelection();
     }
 
+    public void initialize(ComponentSystemEvent event) throws Exception {
+        // Invoke on initial request only
+        if (!FacesContext.getCurrentInstance().isPostback()) {
+            final HttpServletRequest req = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
+            getEjbcaWebBean().initialize(req, AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.VIEWROLES.resource());
+        } else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.VIEWROLES.resource())) {
+            throw new AuthorizationDeniedException("You are not authorized to view this page.");
+        }
+    }
+    
     /** Perform POST-REDIRECT-GET when this method is invoked from a non-AJAX context. */
     private void nonAjaxPostRedirectGet() {
         String requestParams = "?roleId=" + role.getRoleId();

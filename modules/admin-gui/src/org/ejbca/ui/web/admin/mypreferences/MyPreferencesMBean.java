@@ -23,6 +23,7 @@ import javax.faces.event.ComponentSystemEvent;
 import javax.faces.model.SelectItem;
 import javax.servlet.http.HttpServletRequest;
 
+import org.cesecore.authorization.AuthorizationDeniedException;
 import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.core.model.ra.raadmin.AdminPreference;
 import org.ejbca.ui.web.admin.BaseManagedBean;
@@ -58,6 +59,8 @@ public class MyPreferencesMBean extends BaseManagedBean implements Serializable 
             initAvailableLanguages();
             initThemes();
             initPossibleEntriesPerPage();
+        } else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.ROLE_ADMINISTRATOR)) {
+            throw new AuthorizationDeniedException("You are not authorized to view this page.");
         }
     }
 

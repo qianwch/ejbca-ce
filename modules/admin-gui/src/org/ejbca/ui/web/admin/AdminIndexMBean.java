@@ -28,6 +28,7 @@ import javax.faces.event.ComponentSystemEvent;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
+import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.certificates.ca.CAConstants;
 import org.cesecore.certificates.ca.CAInfo;
 import org.cesecore.certificates.ca.CaSessionLocal;
@@ -88,6 +89,8 @@ public class AdminIndexMBean extends BaseManagedBean implements Serializable {
         if (!FacesContext.getCurrentInstance().isPostback()) {
             final HttpServletRequest req = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
             getEjbcaWebBean().initialize(req, AccessRulesConstants.ROLE_ADMINISTRATOR);
+        } else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.ROLE_ADMINISTRATOR)) {
+            throw new AuthorizationDeniedException("You are not authorized to view this page.");
         }
     }
 
@@ -146,5 +149,9 @@ public class AdminIndexMBean extends BaseManagedBean implements Serializable {
     
     public String getPublisherQueueInspectionLink(final String publisherName) {
         return "ca/inspectpublisherqueue.xhtml?publisherId=" + publisherSession.getPublisher(publisherName).getPublisherId();
+    }
+    
+    public boolean isAuthorizedToViewPublishers() {
+        return getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.REGULAR_VIEWPUBLISHER);
     }
 }

@@ -27,8 +27,10 @@ import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import javax.faces.context.FacesContext;
+import javax.faces.event.ComponentSystemEvent;
 import javax.faces.model.ListDataModel;
 import javax.faces.model.SelectItem;
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
@@ -49,6 +51,7 @@ import org.cesecore.roles.member.RoleMember;
 import org.cesecore.roles.member.RoleMemberDataSessionLocal;
 import org.cesecore.roles.member.RoleMemberSessionLocal;
 import org.cesecore.util.StringTools;
+import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.ui.web.admin.BaseManagedBean;
 
 /**
@@ -92,6 +95,16 @@ public class RoleMembersBean extends BaseManagedBean implements Serializable {
     private void postConstruct() {
         // Read HTTP param "roleId" that should be interpreted as an integer
         roleIdParam = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap().get("roleId");
+    }
+    
+    public void initialize(ComponentSystemEvent event) throws Exception {
+        // Invoke on initial request only
+        if (!FacesContext.getCurrentInstance().isPostback()) {
+            final HttpServletRequest req = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
+            getEjbcaWebBean().initialize(req, AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.VIEWROLES.resource());
+        } else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.VIEWROLES.resource())) {
+            throw new AuthorizationDeniedException("You are not authorized to view this page.");
+        }
     }
     
     /** Redirect back to this page with the correct roleId for non-ajax requests */

@@ -149,6 +149,8 @@ public class ApproveActionManagedBean extends BaseManagedBean {
             if (!approveendentity && !approvecaaction) {
                 throw new AuthorizationDeniedException("Not authorized to view approval pages");
             }
+        } else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.ROLE_ADMINISTRATOR)) {
+            throw new AuthorizationDeniedException("You are not authorized to view this page.");
         }
     }
 

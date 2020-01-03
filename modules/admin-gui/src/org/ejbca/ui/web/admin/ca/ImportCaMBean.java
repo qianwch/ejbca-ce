@@ -33,6 +33,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.myfaces.custom.fileupload.UploadedFile;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.authorization.control.StandardRules;
 import org.ejbca.core.ejb.ca.caadmin.CAAdminSessionLocal;
 import org.ejbca.core.model.authorization.AccessRulesConstants;
@@ -67,6 +68,8 @@ public class ImportCaMBean extends BaseManagedBean implements Serializable {
         if (!FacesContext.getCurrentInstance().isPostback()) {
             final HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
             getEjbcaWebBean().initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.CAVIEW.resource());
+        } else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.CAVIEW.resource())) {
+            throw new AuthorizationDeniedException("You are not authorized to view this page.");
         }
     }
 

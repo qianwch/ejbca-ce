@@ -85,6 +85,8 @@ public class ListApproveActionManagedBean extends BaseManagedBean {
                 throw new AuthorizationDeniedException("Not authorized to view approval pages");
             }
             entriesPerPage = getEjbcaWebBean().getEntriesPerPage();
+        } else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.ROLE_ADMINISTRATOR)) {
+            throw new AuthorizationDeniedException("You are not authorized to view this page.");
         }
     }
 	

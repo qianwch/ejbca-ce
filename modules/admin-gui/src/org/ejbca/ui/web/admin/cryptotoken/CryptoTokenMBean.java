@@ -94,6 +94,8 @@ public class CryptoTokenMBean extends BaseManagedBean implements Serializable {
         if (!FacesContext.getCurrentInstance().isPostback()) {
             final HttpServletRequest req = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
             getEjbcaWebBean().initialize(req, AccessRulesConstants.ROLE_ADMINISTRATOR, CryptoTokenRules.VIEW.resource());
+        } else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.ROLE_ADMINISTRATOR, CryptoTokenRules.VIEW.resource())) {
+            throw new AuthorizationDeniedException("You are not authorized to view this page.");
         }
     }
 

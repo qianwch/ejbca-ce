@@ -249,6 +249,8 @@ public class ScepConfigMBean extends BaseManagedBean implements Serializable {
         if (!FacesContext.getCurrentInstance().isPostback()) {
             final HttpServletRequest request = (HttpServletRequest)FacesContext.getCurrentInstance().getExternalContext().getRequest();
             getEjbcaWebBean().initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.SYSTEMCONFIGURATION_VIEW.resource());
+        } else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.SYSTEMCONFIGURATION_VIEW.resource())) {
+            throw new AuthorizationDeniedException("You are not authorized to view this page.");
         }
     }
     

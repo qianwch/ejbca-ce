@@ -89,6 +89,8 @@ public class CAFunctionsMBean extends BaseManagedBean implements Serializable {
 
             final TreeMap<String, Integer> externalCANames = getEjbcaWebBean().getExternalCANames();
             extCaNameList = new ArrayList<String>(externalCANames.keySet());
+        } else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.CAVIEW.resource())) {
+            throw new AuthorizationDeniedException("You are not authorized to view this page.");
         }
     }
 

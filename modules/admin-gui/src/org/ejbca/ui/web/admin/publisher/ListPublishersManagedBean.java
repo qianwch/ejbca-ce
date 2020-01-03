@@ -62,6 +62,8 @@ public class ListPublishersManagedBean extends BaseManagedBean implements Serial
         if (!FacesContext.getCurrentInstance().isPostback()) {
             final HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
             getEjbcaWebBean().initialize(request, AccessRulesConstants.REGULAR_VIEWPUBLISHER);
+        }  else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.REGULAR_VIEWPUBLISHER)) {
+            throw new AuthorizationDeniedException("You are not authorized to view this page.");
         }
     }
     

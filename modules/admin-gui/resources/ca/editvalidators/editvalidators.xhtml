@@ -23,6 +23,9 @@
      -->
     </ui:remove>
     <f:view>
+    <f:metadata>
+		<f:event type="preRenderView" listener="#{validatorsBean.initialize}"/>
+	</f:metadata>
     <ui:composition template="/WEB-INF/include/template.xhtml">
         <ui:define name="content">
             <h1>

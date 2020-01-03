@@ -30,6 +30,7 @@
             <f:metadata>
                 <f:viewParam name="publisherId"
                     value="#{inspectPublisherQueue.publisherId}" />
+            	<f:event type="preRenderView" listener="#{inspectPublisherQueue.initialize}"/>
             </f:metadata>
             <h1>
                 <h:outputText

@@ -24,8 +24,11 @@ import javax.ejb.EJB;
 import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
+import javax.faces.context.FacesContext;
+import javax.faces.event.ComponentSystemEvent;
 import javax.faces.model.ListDataModel;
 import javax.faces.model.SelectItem;
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang.StringUtils;
 import org.cesecore.authorization.AuthorizationDeniedException;
@@ -37,6 +40,7 @@ import org.cesecore.roles.Role;
 import org.cesecore.roles.RoleExistsException;
 import org.cesecore.roles.management.RoleSessionLocal;
 import org.ejbca.config.GlobalCustomCssConfiguration;
+import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.ui.web.admin.BaseManagedBean;
 
 /**
@@ -75,6 +79,16 @@ public class RolesBean extends BaseManagedBean implements Serializable {
         editReset();
     }
 
+    public void initialize(ComponentSystemEvent event) throws Exception {
+        // Invoke on initial request only
+        if (!FacesContext.getCurrentInstance().isPostback()) {
+            final HttpServletRequest req = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
+            getEjbcaWebBean().initialize(req, AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.VIEWROLES.resource());
+        } else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.VIEWROLES.resource())) {
+            throw new AuthorizationDeniedException("You are not authorized to view this page.");
+        }
+    }
+    
     /** @return true when admin is authorized to view roles */
     public boolean isAuthorizedToViewRoles() {
         return authorizationSession.isAuthorizedNoLogging(getAdmin(), StandardRules.VIEWROLES.resource());

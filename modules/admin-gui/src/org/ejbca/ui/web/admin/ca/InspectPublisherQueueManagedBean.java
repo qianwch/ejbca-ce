@@ -23,9 +23,12 @@ import java.util.stream.Collectors;
 import javax.ejb.EJB;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
+import javax.faces.context.FacesContext;
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
+import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.certificates.ca.CaSessionLocal;
 import org.cesecore.certificates.certificate.CertificateDataSessionLocal;
 import org.cesecore.certificates.certificate.CertificateInfo;
@@ -66,6 +69,16 @@ public class InspectPublisherQueueManagedBean extends BaseManagedBean {
     private String publisherId;
     private boolean isLastPage;
 
+    public void initialize() throws Exception {
+        // To check access 
+        if (!FacesContext.getCurrentInstance().isPostback()) {
+            final HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
+            getEjbcaWebBean().initialize(request, AccessRulesConstants.REGULAR_VIEWPUBLISHER);
+        } else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.REGULAR_VIEWPUBLISHER)) {
+            throw new AuthorizationDeniedException("You are not authorized to view this page.");
+        }
+    }
+    
     /**
      * A publisher queue item, displayed as a row in the GUI.
      */

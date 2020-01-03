@@ -80,6 +80,8 @@ public class ViewCAInfoMBean extends BaseManagedBean implements Serializable {
             } catch (final AuthorizationDeniedException e) {
                 addErrorMessage("NOTAUTHORIZEDTOVIEWCA");
             }
+        } else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.ROLE_ADMINISTRATOR)) {
+            throw new AuthorizationDeniedException("You are not authorized to view this page.");
         }
     }
 

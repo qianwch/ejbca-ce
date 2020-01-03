@@ -21,11 +21,15 @@ import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
+import javax.faces.context.FacesContext;
 import javax.faces.event.AjaxBehaviorEvent;
+import javax.faces.event.ComponentSystemEvent;
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.spi.LoggingEvent;
 import org.apache.log4j.spi.ThrowableInformation;
+import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.authorization.AuthorizationSessionLocal;
 import org.cesecore.util.ValidityDate;
 import org.ejbca.core.ejb.upgrade.UpgradeSessionLocal;
@@ -85,6 +89,17 @@ public class UpgradeBean extends BaseManagedBean implements Serializable {
     private void postConstruct() {
     }
 
+    public void initialize(ComponentSystemEvent event) throws Exception {
+        // Invoke on initial request only
+        if (!FacesContext.getCurrentInstance().isPostback()) {
+            final HttpServletRequest req = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
+            getEjbcaWebBean().initialize(req, "/system_functionality/edit_systemconfiguration");
+        } else if (!getEjbcaWebBean().isAuthorizedNoLogSilent("/system_functionality/edit_systemconfiguration")) {
+            throw new AuthorizationDeniedException("You are not authorized to view this page.");
+        }
+    }
+    
+    
     /** @see UpgradeSessionLocal#isPostUpgradeNeeded() */
     public boolean isPostUpgradeRequired() {
         return upgradeSession.isPostUpgradeNeeded();

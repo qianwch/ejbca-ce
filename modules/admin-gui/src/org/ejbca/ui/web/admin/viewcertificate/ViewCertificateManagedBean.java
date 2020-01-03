@@ -115,6 +115,8 @@ public class ViewCertificateManagedBean extends BaseManagedBean implements Seria
         // Invoke on initial request only
         if (!FacesContext.getCurrentInstance().isPostback()) {
             initialize();
+        } else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.ROLE_ADMINISTRATOR)) {
+            throw new AuthorizationDeniedException("You are not authorized to view this page.");
         }
     }
     
