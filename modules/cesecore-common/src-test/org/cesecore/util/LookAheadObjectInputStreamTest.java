@@ -501,13 +501,33 @@ public class LookAheadObjectInputStreamTest {
      * Test deserializing interface implementations
      */
     @Test
-    public void testDeserializingInterfaceImplementationAllowed() throws Exception {
+    public void testDeserializingInterfaceImplementationAllowed1() throws Exception {
         log.trace(">" + Thread.currentThread().getStackTrace()[1].getMethodName());
         final byte[] serializedData = getEncoded(new BadDog("regular String"));
         try (final LookAheadObjectInputStream laois = new LookAheadObjectInputStream(new ByteArrayInputStream(serializedData))) {
             laois.setAcceptedClasses(new HashSet<Class<? extends Serializable>>(Arrays.asList(AnimalInterface.class)));
             laois.setEnabledMaxObjects(false);
             laois.setEnabledSubclassing(false);
+            laois.setEnabledInterfaceImplementations(true);
+            assertEquals("regular String", ((BadDog) laois.readObject()).getValue());
+        } catch (Exception e) {
+            log.trace(e.getMessage(), e);
+            fail("Unexpected exception: " + e.getMessage());
+        }
+        log.trace("<" + Thread.currentThread().getStackTrace()[1].getMethodName());
+    }
+
+    /**
+     * Test deserializing interface implementations (when also subclassing is enabled)
+     */
+    @Test
+    public void testDeserializingInterfaceImplementationAllowed2() throws Exception {
+        log.trace(">" + Thread.currentThread().getStackTrace()[1].getMethodName());
+        final byte[] serializedData = getEncoded(new BadDog("regular String"));
+        try (final LookAheadObjectInputStream laois = new LookAheadObjectInputStream(new ByteArrayInputStream(serializedData))) {
+            laois.setAcceptedClasses(new HashSet<Class<? extends Serializable>>(Arrays.asList(AnimalInterface.class)));
+            laois.setEnabledMaxObjects(false);
+            laois.setEnabledSubclassing(true);
             laois.setEnabledInterfaceImplementations(true);
             assertEquals("regular String", ((BadDog) laois.readObject()).getValue());
         } catch (Exception e) {

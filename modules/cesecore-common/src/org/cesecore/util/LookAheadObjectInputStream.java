@@ -178,7 +178,8 @@ public class LookAheadObjectInputStream extends ObjectInputStream {
         } else if (acceptedClasses != null && !acceptedClasses.isEmpty()) {
             if (acceptedClasses.contains(resolvedClassType)) {
                 return resolvedClass;
-            } else if (enabledSubclassing) {
+            }
+            if (enabledSubclassing) {
                 final String resolvedClassName = resolvedClassType.getName();
                 if (log.isTraceEnabled()) {
                     log.trace("resolvedClassName: " + resolvedClassName);
@@ -199,7 +200,8 @@ public class LookAheadObjectInputStream extends ObjectInputStream {
                         superclass = superclass.getSuperclass();
                     }
                 }
-            } else if (enabledInterfaceImplementations) {
+            }
+            if (enabledInterfaceImplementations) {
                 final String resolvedClassName = resolvedClassType.getName();
                 if (log.isTraceEnabled()) {
                     log.trace("resolvedClassName: " + resolvedClassName);
