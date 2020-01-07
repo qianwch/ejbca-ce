@@ -22,14 +22,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
 import java.io.StreamCorruptedException;
 import java.math.BigInteger;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -38,6 +37,7 @@ import org.bouncycastle.cert.ocsp.OCSPRespBuilder;
 import org.cesecore.util.CertTools;
 import org.cesecore.util.CryptoProviderTools;
 import org.cesecore.util.FileTools;
+import org.cesecore.util.LookAheadObjectInputStream;
 import org.ejbca.core.protocol.ocsp.OCSPUnidClient;
 import org.ejbca.core.protocol.ocsp.extension.unid.OCSPUnidResponse;
 import org.ejbca.util.PerformanceTest;
@@ -101,13 +101,15 @@ public class Ocsp extends ClientToolBox {
                     InputStream is = new BufferedInputStream(new FileInputStream(fileName));
                     is.mark(1);
                     try {
-                        ObjectInput oi = null;
+                        LookAheadObjectInputStream oi = null;
                         while (true) {
                             for (int i = 100; oi == null && i > 0; i--) {
                                 is.reset();
                                 try {
                                     is.mark(i);
-                                    oi = new ObjectInputStream(is);
+                                    oi = new LookAheadObjectInputStream(is);
+                                    oi.setAcceptedClasses(Arrays.asList(BigInteger.class));
+                                    oi.setEnabledMaxObjects(false);
                                 } catch (StreamCorruptedException e) {
                                     is.reset();
                                     is.read();
