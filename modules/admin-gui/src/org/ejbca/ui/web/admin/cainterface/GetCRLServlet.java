@@ -27,9 +27,7 @@ import org.cesecore.certificates.crl.CrlStoreSessionLocal;
 import org.cesecore.util.CertTools;
 import org.cesecore.util.StringTools;
 import org.ejbca.core.model.InternalEjbcaResources;
-import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.ui.web.RequestHelper;
-import org.ejbca.ui.web.admin.cainterface.exception.AdminWebAuthenticationException;
 import org.ejbca.ui.web.pub.ServletUtils;
 
 /**
@@ -69,12 +67,8 @@ public class GetCRLServlet extends BaseAdminServlet {
     @Override
     public void doGet(final HttpServletRequest req,  final HttpServletResponse res) throws IOException, ServletException {
         log.trace(">doGet()");
-        try {
-            authenticateAdmin(req, res, AccessRulesConstants.REGULAR_VIEWCERTIFICATE);
-        } catch (AdminWebAuthenticationException authExc) {
-            res.sendError(HttpServletResponse.SC_FORBIDDEN, authExc.getMessage());
-            return;
-        }
+        // TODO Redundant
+        getAuthenticationToken(req);
         RequestHelper.setDefaultCharacterEncoding(req);
         String issuerDn = req.getParameter(ISSUER_PROPERTY);
         if (issuerDn == null) {
@@ -109,7 +103,7 @@ public class GetCRLServlet extends BaseAdminServlet {
             final StringBuilder sb = new StringBuilder();
             sb.append(getBaseFileName(issuerDn));
             if (crlPartitionIndex != CertificateConstants.NO_CRL_PARTITION) {
-                sb.append("_partition" + crlPartitionIndex);
+                sb.append("_partition").append(crlPartitionIndex);
             }
             if (deltaCrl) {
                 sb.append("_delta");
@@ -128,7 +122,6 @@ public class GetCRLServlet extends BaseAdminServlet {
             final String errMsg = intres.getLocalizedMessage(deltaCrl ? "certreq.errorsenddeltacrl" : "certreq.errorsendcrl", remoteAddr, e.getMessage());
             log.error(errMsg, e);
             res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, errMsg);
-            return;
         }
     }
 

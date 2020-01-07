@@ -25,16 +25,12 @@ import org.apache.commons.lang.math.NumberUtils;
 import org.apache.log4j.Logger;
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authorization.AuthorizationDeniedException;
-import org.cesecore.authorization.control.CryptoTokenRules;
-import org.cesecore.authorization.control.StandardRules;
 import org.cesecore.keys.token.CryptoTokenManagementSessionLocal;
 import org.cesecore.keys.token.CryptoTokenOfflineException;
 import org.cesecore.keys.util.KeyTools;
 import org.cesecore.util.CryptoProviderTools;
 import org.cesecore.util.StringTools;
-import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.ui.web.admin.cainterface.BaseAdminServlet;
-import org.ejbca.ui.web.admin.cainterface.exception.AdminWebAuthenticationException;
 
 /**
  * Servlet for download of CryptoToken related files, such as the the public key as PEM for a key pair.
@@ -58,20 +54,16 @@ public class CryptoTokenDownloadServlet extends BaseAdminServlet {
     /** Handles HTTP POST the same way HTTP GET is handled. */
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+        log.trace(">doPost()");
         doGet(request, response);
+        log.trace("<doPost()");
     }
 
     /** Handles HTTP GET */
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
         log.trace(">doGet()");
-        final AuthenticationToken admin;
-        try {
-            admin = authenticateAdmin(request, response, CryptoTokenRules.VIEW.resource());
-        } catch (AdminWebAuthenticationException authExc) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, authExc.getMessage());
-            return;
-        }
+        final AuthenticationToken admin = getAuthenticationToken(request);
         final String cryptoTokenIdParam = request.getParameter("cryptoTokenId");
         if (!NumberUtils.isNumber(cryptoTokenIdParam)) {
             if (log.isDebugEnabled()) {
@@ -87,9 +79,7 @@ public class CryptoTokenDownloadServlet extends BaseAdminServlet {
                 response.setHeader("Content-disposition", " attachment; filename=\"" + StringTools.stripFilename(aliasParam + ".pem") + "\"");
                 response.getOutputStream().write(KeyTools.getAsPem(publicKey).getBytes());
                 response.flushBuffer();
-            } catch (CryptoTokenOfflineException e) {
-                throw new ServletException(e);
-            } catch (AuthorizationDeniedException e) {
+            } catch (CryptoTokenOfflineException | AuthorizationDeniedException e) {
                 throw new ServletException(e);
             }            
         }

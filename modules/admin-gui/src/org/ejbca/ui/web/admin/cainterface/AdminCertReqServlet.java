@@ -14,7 +14,6 @@
 package org.ejbca.ui.web.admin.cainterface;
 
 import java.io.IOException;
-import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
@@ -45,10 +44,8 @@ import org.ejbca.core.ejb.ca.sign.SignSessionLocal;
 import org.ejbca.core.ejb.ra.EndEntityManagementSessionLocal;
 import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileSessionLocal;
 import org.ejbca.core.model.SecConst;
-import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfileNotFoundException;
 import org.ejbca.ui.web.RequestHelper;
-import org.ejbca.ui.web.admin.cainterface.exception.AdminWebAuthenticationException;
 import org.ejbca.ui.web.admin.rainterface.RAInterfaceBean;
 import org.ejbca.ui.web.admin.rainterface.UserView;
 
@@ -163,14 +160,8 @@ public class AdminCertReqServlet extends BaseAdminServlet {
      */
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-        final AuthenticationToken admin;
-        try {
-            admin = authenticateAdmin(request, response, AccessRulesConstants.REGULAR_CREATEENDENTITY);
-        } catch (AdminWebAuthenticationException authExc) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, authExc.getMessage());
-            return;
-        }
-
+        log.trace(">doPost()");
+        final AuthenticationToken admin = getAuthenticationToken(request);
         RequestHelper.setDefaultCharacterEncoding(request);
 
         byte[] buffer = pkcs10Bytes(request.getParameter("pkcs10req"));
@@ -203,13 +194,11 @@ public class AdminCertReqServlet extends BaseAdminServlet {
         newuser.setKeyRecoverable(false);
 
         String email = CertTools.getPartFromDN(dn, "E"); // BC says VeriSign
-        if (email == null) {
-            email = CertTools.getPartFromDN(dn, "EMAILADDRESS");
-        } else {
+        if (email != null) {
             newuser.setEmail(email);
         }
 
-        String tmp = null;
+        String tmp;
         int eProfileId = EndEntityConstants.EMPTY_END_ENTITY_PROFILE;
         if ((tmp = request.getParameter("entityprofile")) != null) {
             int reqId;
@@ -233,9 +222,8 @@ public class AdminCertReqServlet extends BaseAdminServlet {
         newuser.setCertificateProfileId(cProfileId);
 
         int caid = 0;
-        if ((tmp = request.getParameter("ca")) != null) {
-            // TODO: get requested CA to sign with
-        }
+        // TODO: get requested CA to sign with
+        // if ((tmp = request.getParameter("ca")) != null) {
         newuser.setCAId(caid);
 
         String password = request.getParameter("password");
@@ -258,29 +246,14 @@ public class AdminCertReqServlet extends BaseAdminServlet {
             ResponseMessage resp = signSession.createCertificate(admin, p10, X509ResponseMessage.class, null);
             X509Certificate cert = CertTools.getCertfromByteArray(resp.getResponseMessage(), X509Certificate.class);
             pkcs7 = signSession.createPKCS7(admin, cert, true);
-        } catch (EjbcaException e) {
-            // EJBCA did not accept any of all parameters in the request.
-            throw new ServletException(e);
-        } catch (CertificateEncodingException e) {
-            // Error in cert
-            throw new ServletException(e);
-        } catch (CertificateException e) {
-            // Error in cert
-            throw new ServletException(e);
-        } catch (CesecoreException e) {
-            // EJBCA did not accept any of all parameters in the request.
-            throw new ServletException(e);
-        } catch (AuthorizationDeniedException e) {
-            // Weird authorization error.
-            throw new ServletException(e);
-        } catch (CertificateExtensionException e) {
+        } catch (EjbcaException | CertificateException | CertificateExtensionException | CesecoreException | AuthorizationDeniedException e) {
             throw new ServletException(e);
         }
         if (log.isDebugEnabled()) {
             log.debug("Created certificate (PKCS7) for " + username);
         }
         sendNewB64Cert(Base64.encode(pkcs7), response);
-
+        log.trace("<doPost()");
     }
 
     @Override
@@ -309,7 +282,7 @@ public class AdminCertReqServlet extends BaseAdminServlet {
     /**
      *
      */
-    private final static byte[] pkcs10Bytes(String pkcs10) {
+    private static byte[] pkcs10Bytes(String pkcs10) {
         byte[] bytes = null;
         if (pkcs10 != null) {
             byte[] reqBytes = pkcs10.getBytes();
@@ -336,7 +309,7 @@ public class AdminCertReqServlet extends BaseAdminServlet {
     /**
      *
      */
-    private final String checkUsername(String username) throws ServletException {
+    private String checkUsername(String username) throws ServletException {
         if (username != null) {
             username = username.trim();
         }

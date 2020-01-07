@@ -24,11 +24,9 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 import org.cesecore.util.CertTools;
-import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.core.model.ra.NotFoundException;
 import org.ejbca.ui.web.CertificateView;
 import org.ejbca.ui.web.RequestHelper;
-import org.ejbca.ui.web.admin.cainterface.exception.AdminWebAuthenticationException;
 import org.ejbca.ui.web.admin.rainterface.RAInterfaceBean;
 import org.ejbca.ui.web.pub.ServletUtils;
 
@@ -69,12 +67,8 @@ public class EndEntityCertServlet extends BaseAdminServlet {
     @Override
     public void doGet(HttpServletRequest req,  HttpServletResponse res) throws IOException, ServletException {
         log.trace(">doGet()");
-        try {
-            authenticateAdmin(req, res, AccessRulesConstants.REGULAR_VIEWCERTIFICATE);
-        } catch (AdminWebAuthenticationException authExc) {
-            res.sendError(HttpServletResponse.SC_FORBIDDEN, authExc.getMessage());
-            return;
-        }
+        // TODO Redundant
+        getAuthenticationToken(req);
         RequestHelper.setDefaultCharacterEncoding(req);
         String issuerdn = req.getParameter(ISSUER_PROPERTY);        
         String certificatesn = req.getParameter(CERTIFICATESN_PROPERTY);

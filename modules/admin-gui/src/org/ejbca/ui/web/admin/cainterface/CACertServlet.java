@@ -26,14 +26,11 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
-import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.util.CertTools;
 import org.cesecore.util.StringTools;
 import org.ejbca.core.ejb.ca.sign.SignSessionLocal;
-import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.cvc.CardVerifiableCertificate;
 import org.ejbca.ui.web.RequestHelper;
-import org.ejbca.ui.web.admin.cainterface.exception.AdminWebAuthenticationException;
 import org.ejbca.ui.web.pub.ServletUtils;
 
 /**
@@ -84,12 +81,8 @@ public class CACertServlet extends BaseAdminServlet {
     @Override
     public void doGet(HttpServletRequest req,  HttpServletResponse res) throws java.io.IOException, ServletException {
         log.trace(">doGet()");
-        try {
-            authenticateAdmin(req, res, AccessRulesConstants.REGULAR_VIEWCERTIFICATE);
-        } catch (AdminWebAuthenticationException authExc) {
-            res.sendError(HttpServletResponse.SC_FORBIDDEN, authExc.getMessage());
-            return;
-        }
+        // TODO Redundant
+        getAuthenticationToken(req);
         RequestHelper.setDefaultCharacterEncoding(req);
 
         // HttpServetRequets.getParameter URLDecodes the value for you
@@ -149,7 +142,7 @@ public class CACertServlet extends BaseAdminServlet {
                     res.getOutputStream().write(out.getBytes());
                     log.debug("Sent CA cert to client, len="+out.length()+".");
                 } else if (command.equalsIgnoreCase(COMMAND_JKSTRUSTSTORE)) {
-                    String jksPassword = req.getParameter(JKSPASSWORD_PROPERTY).trim();
+                    final String jksPassword = (req.getParameter(JKSPASSWORD_PROPERTY) != null ? req.getParameter(JKSPASSWORD_PROPERTY).trim() : null );
                     int passwordRequiredLength = 6;
                     if ( jksPassword != null && jksPassword.length() >= passwordRequiredLength ) {
                     	KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
@@ -162,21 +155,17 @@ public class CACertServlet extends BaseAdminServlet {
                         res.setContentType("text/plain");
                         res.getOutputStream().println(COMMAND_JKSTRUSTSTORE + " requires " + JKSPASSWORD_PROPERTY +
                         		" with a minimum of " + passwordRequiredLength+ " chars to be set");
-                        return;
                     }
                 } else {
                     res.setContentType("text/plain");
                     res.getOutputStream().println("Commands="+COMMAND_NSCACERT+" || "+COMMAND_IECACERT+" || "+COMMAND_CACERT+" || "+COMMAND_JKSTRUSTSTORE);
-                    return;
                 }
             } catch (Exception e) {
                 log.error("Error getting CA certificates: ", e);
                 res.sendError(HttpServletResponse.SC_NOT_FOUND, "Error getting CA certificates.");
-                return;
             }
         } else {
             res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Bad Request format");
-            return;
         }
     } // doGet
 }

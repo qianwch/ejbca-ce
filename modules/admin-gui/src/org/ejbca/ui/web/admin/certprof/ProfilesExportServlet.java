@@ -19,8 +19,8 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -42,16 +42,12 @@ import org.cesecore.certificates.certificateprofile.CertificateProfile;
 import org.cesecore.certificates.certificateprofile.CertificateProfileConstants;
 import org.cesecore.certificates.certificateprofile.CertificateProfileSessionLocal;
 import org.cesecore.certificates.endentity.EndEntityConstants;
-import org.cesecore.configuration.GlobalConfigurationSessionLocal;
 import org.cesecore.internal.UpgradeableDataHashMap;
-import org.cesecore.keys.validation.KeyValidatorSessionLocal;
 import org.cesecore.util.StringTools;
-import org.ejbca.core.ejb.authentication.web.WebAuthenticationProviderSessionLocal;
 import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileSessionLocal;
 import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfile;
 import org.ejbca.ui.web.admin.cainterface.BaseAdminServlet;
-import org.ejbca.ui.web.admin.cainterface.exception.AdminWebAuthenticationException;
 
 /**
  * Servlet used to export certificate profiles and end entity profiles in a downloadable zip file.<br>
@@ -77,12 +73,6 @@ public class ProfilesExportServlet extends BaseAdminServlet {
     private CertificateProfileSessionLocal certificateProfileSession;
     @EJB
     private EndEntityProfileSessionLocal endEntityProfileSession;
-    @EJB
-    private KeyValidatorSessionLocal keyValidatorSession;
-    @EJB
-    private GlobalConfigurationSessionLocal globalConfigurationSession;
-    @EJB
-    private WebAuthenticationProviderSessionLocal authenticationSession;
 
     @Override
     public void init(ServletConfig config) throws ServletException {
@@ -99,14 +89,7 @@ public class ProfilesExportServlet extends BaseAdminServlet {
     @Override
     public void doGet(HttpServletRequest request,  HttpServletResponse response) throws IOException, ServletException {
         log.trace(">doGet()");
-        final AuthenticationToken admin;
-        try {
-            admin = authenticateAdmin(request, response, AccessRulesConstants.ROLE_ADMINISTRATOR);
-        } catch (AdminWebAuthenticationException authExc) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, authExc.getMessage());
-            return;
-        }
-
+        final AuthenticationToken admin = getAuthenticationToken(request);
         final String profileId = request.getParameter("profileId");
         final String type = request.getParameter("profileType");
         final boolean exportCertificateProfiles = StringUtils.equalsIgnoreCase(type, "cp");
@@ -179,7 +162,7 @@ public class ProfilesExportServlet extends BaseAdminServlet {
             if(profileId == null) {
                 endentityprofids = endEntityProfileSession.getAuthorizedEndEntityProfileIds(admin, AccessRulesConstants.VIEW_END_ENTITY);
             } else {
-                endentityprofids = Arrays.asList(Integer.valueOf(profileId));
+                endentityprofids = Collections.singletonList(Integer.valueOf(profileId));
             }
             totalprofiles = endentityprofids.size();
             log.info("Exporting non-fixed end entity profiles");

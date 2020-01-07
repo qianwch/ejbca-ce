@@ -10,13 +10,11 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 import org.cesecore.authentication.tokens.AuthenticationToken;
-import org.cesecore.authorization.control.StandardRules;
 import org.cesecore.certificates.ca.CAInfo;
 import org.cesecore.certificates.ca.CaSessionLocal;
 import org.cesecore.util.StringTools;
 import org.ejbca.core.ejb.ca.caadmin.CAAdminSessionLocal;
 import org.ejbca.ui.web.RequestHelper;
-import org.ejbca.ui.web.admin.cainterface.exception.AdminWebAuthenticationException;
 import org.ejbca.ui.web.pub.ServletUtils;
 
 /**
@@ -68,25 +66,18 @@ public class CAExportServlet extends BaseAdminServlet {
 	@Override
     public void doGet(HttpServletRequest req,  HttpServletResponse res) throws IOException, ServletException {
 	    log.trace(">doGet()");
-	    final AuthenticationToken admin;
-        try {
-            admin = authenticateAdmin(req, res, StandardRules.ROLE_ROOT.resource());
-        } catch (AdminWebAuthenticationException authExc) {
-            res.sendError(HttpServletResponse.SC_FORBIDDEN, authExc.getMessage());
-            return;
-        }
+	    final AuthenticationToken admin = getAuthenticationToken(req);
 	    RequestHelper.setDefaultCharacterEncoding(req);
 	    String caname = req.getParameter(HIDDEN_CANAME);
 	    String capassword = req.getParameter(TEXTFIELD_EXPORTCA_PASSWORD);
 	    log.info("Got request from "+req.getRemoteAddr()+" to export "+caname);
   		try{
-    		byte[] keystorebytes = null;
         	CAInfo cainfo = caSession.getCAInfo(admin, caname);
         	String ext = "p12"; // Default for X.509 CAs
         	if (cainfo.getCAType() == CAInfo.CATYPE_CVC) {
         		ext = "pkcs8";
         	}
-			keystorebytes = caAdminSession.exportCAKeyStore(admin, caname, capassword, capassword, "SignatureKeyAlias", "EncryptionKeyAlias");
+			byte[] keystorebytes = caAdminSession.exportCAKeyStore(admin, caname, capassword, capassword, "SignatureKeyAlias", "EncryptionKeyAlias");
             ServletUtils.removeCacheHeaders(res);	// We must remove cache headers for IE
         	res.setContentType("application/octet-stream");
         	res.setContentLength(keystorebytes.length);

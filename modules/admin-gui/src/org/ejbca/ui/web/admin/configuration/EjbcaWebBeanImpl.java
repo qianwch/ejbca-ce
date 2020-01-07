@@ -110,6 +110,7 @@ import org.ejbca.util.HTMLTools;
  * The main bean for the web interface, it contains all basic functions.
  * <p>
  * Do not add page specific code here, use a ManagedBean for that.
+ * </p>
  *
  * @version $Id$
  */
@@ -178,7 +179,8 @@ public class EjbcaWebBeanImpl implements EjbcaWebBean {
         reloadAvailableCustomCertExtensionsConfiguration();
     }
 
-    private X509Certificate getClientX509Certificate(final HttpServletRequest httpServletRequest) {
+    @Override
+    public X509Certificate getClientX509Certificate(final HttpServletRequest httpServletRequest) {
         final X509Certificate[] certificates = (X509Certificate[]) httpServletRequest.getAttribute("javax.servlet.request.X509Certificate");
         return certificates == null || certificates.length==0 ? null : certificates[0];
     }

@@ -13,26 +13,18 @@
 package org.ejbca.ui.web.admin.cainterface;
 
 import java.beans.Beans;
-import java.io.IOException;
-import java.security.cert.X509Certificate;
-import java.util.HashSet;
-import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.apache.log4j.Logger;
-import org.cesecore.authentication.tokens.AuthenticationSubject;
 import org.cesecore.authentication.tokens.AuthenticationToken;
-import org.cesecore.util.CertTools;
 import org.cesecore.util.CryptoProviderTools;
 import org.ejbca.core.ejb.authentication.web.WebAuthenticationProviderSessionLocal;
-import org.ejbca.ui.web.admin.cainterface.exception.AdminWebAuthenticationException;
 import org.ejbca.ui.web.admin.configuration.EjbcaWebBeanImpl;
 import org.ejbca.ui.web.admin.rainterface.RAInterfaceBean;
 import org.ejbca.ui.web.jsf.configuration.EjbcaWebBean;
@@ -65,46 +57,9 @@ public abstract class BaseAdminServlet extends HttpServlet {
     }
     
     /**
-     * Authenticates the client using it's X.509 certificate.
-     * @param request Servlet request
-     * @param response Servlet response
-     * @return AuthenticationToken from {@link AuthenticationSessionLocal}. Never null.
-     * @throws IOException
-     * @throws ServletException
-     */
-    protected AuthenticationToken authenticateAdmin(HttpServletRequest request, HttpServletResponse response, final String... accessResources) throws AdminWebAuthenticationException, ServletException {
-        // Check if authorized
-        EjbcaWebBean ejbcawebbean = getEjbcaWebBean(request);
-        try {
-            ejbcawebbean.initialize(request, accessResources);
-        } catch (Exception e) {
-            log.info("Could not initialize for client " + request.getRemoteAddr());
-            log.debug("Client initialization failed", e);
-            throw new AdminWebAuthenticationException("Authorization Denied");
-        }
-
-        X509Certificate[] certs = (X509Certificate[]) request.getAttribute("javax.servlet.request.X509Certificate");
-        if (certs == null) {
-            log.info("Client " + request.getRemoteAddr() + " was denied. No client certificate sent.");
-            throw new AdminWebAuthenticationException("This servlet requires certificate authentication!");
-        }
-
-        final Set<X509Certificate> credentials = new HashSet<>();
-        credentials.add(certs[0]);
-        AuthenticationSubject subject = new AuthenticationSubject(null, credentials);
-        AuthenticationToken admin = authenticationSession.authenticate(subject);
-        if (admin == null) {
-            final String message = "Authorization denied for certificate: " + CertTools.getSubjectDN(certs[0]);
-            log.info("Client " + request.getRemoteAddr() + " was denied. " + message);
-            throw new AdminWebAuthenticationException(message);
-        }
-        return admin;
-    }
-    
-    /**
      * Gets the RAInterfaceBean object, or creates and initializes a new RAInterfaceBean if not already created.
      */
-    protected final RAInterfaceBean getRaBean(HttpServletRequest req) throws ServletException {
+    final RAInterfaceBean getRaBean(HttpServletRequest req) throws ServletException {
         HttpSession session = req.getSession();
         RAInterfaceBean rabean = (RAInterfaceBean) session.getAttribute("rabean");
         if (rabean == null) {
@@ -145,5 +100,13 @@ public abstract class BaseAdminServlet extends HttpServlet {
         }
         return ejbcawebbean;
     }
-    
+
+    protected AuthenticationToken getAuthenticationToken(final HttpServletRequest httpServletRequest) throws ServletException {
+        final Object authenticationTokenAttribute = httpServletRequest.getAttribute("authenticationtoken");
+        if(authenticationTokenAttribute == null) {
+            throw new ServletException("Cannot get AuthenticationToken");
+        }
+        return (AuthenticationToken) authenticationTokenAttribute;
+    }
+
 }
