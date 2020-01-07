@@ -261,4 +261,9 @@ public class MultiGroupPublisher extends BasePublisher {
         log.trace("<upgrade");
     }
 
+    @Override
+    public void validateDataSource(String dataSource) throws PublisherException {
+        // Method not applicable for this publisher type!
+    }
+
 }

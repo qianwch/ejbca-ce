@@ -24,10 +24,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.certificates.certificate.Base64CertData;
@@ -315,6 +318,18 @@ public class CustomPublisherContainer extends BasePublisher {
     @Override
     public boolean willPublishCertificate(int status, int revocationReason) {
         return getCustomPublisher().willPublishCertificate(status, revocationReason);
-    }	
+    }
+
+    @Override
+    public void validateDataSource(String dataSource) throws PublisherException {
+        if (StringUtils.isNotBlank(dataSource)) {
+            final Pattern dataSourcePattern = Pattern.compile("^(java):/.*$");
+            final Matcher dataSrouceMatcher = dataSourcePattern.matcher(dataSource);
+            if (dataSrouceMatcher.find()) {
+                return;
+            }
+        }
+        throw new PublisherException("Invalid data source!");
+    }
 
 }
