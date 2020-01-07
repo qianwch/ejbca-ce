@@ -31,6 +31,7 @@ import org.cesecore.certificates.certificate.CertificateStoreSessionLocal;
 import org.cesecore.certificates.certificate.HashID;
 import org.ejbca.config.VAConfiguration;
 import org.ejbca.core.model.util.EjbLocalHelper;
+import org.ejbca.util.HTMLTools;
 
 /**
  * Base class for servlets (CRL or Certificate) implementing rfc4378
@@ -242,7 +243,7 @@ public abstract class StoreServletBase extends HttpServlet {
 	
 	private void printInfo(X509Certificate certs[], String indent, PrintWriter pw, String url) {
 		for ( int i=0; i<certs.length; i++ ) {
-			printInfo(certs[i], indent, pw, url);
+			printInfo(certs[i], indent, pw, HTMLTools.htmlescape(url));
 			pw.println();
 			final X509Certificate issuedCerts[] = this.certCache.findLatestByIssuerDN(HashID.getFromSubjectDN(certs[i]));
 			if ( issuedCerts==null || issuedCerts.length<1 ) {
