@@ -59,7 +59,7 @@ public class LookAheadObjectInputStream extends ObjectInputStream {
 
     /**
      * @return set of accepted classes etc. Classes that are allowed to be read from this ObjectInputStream. This set can be modified with:
-     *  @see LookAheadObjectInputStream#setAcceptedClassNames(Set<Class<?>> acceptedClassNames)
+     * @see LookAheadObjectInputStream#setAcceptedClasses
      */
     public Collection<Class<? extends Serializable>> getAcceptedClasses() {
         return acceptedClasses;
@@ -112,7 +112,7 @@ public class LookAheadObjectInputStream extends ObjectInputStream {
      * @param acceptedClasses
      *      Collection of class names that will be accepted for deserializing readObject. Default: null
      */
-    public void setAcceptedClasses(final HashSet<Class<? extends Serializable>> acceptedClasses) {
+    public void setAcceptedClasses(final Set<Class<? extends Serializable>> acceptedClasses) {
         this.acceptedClasses = acceptedClasses;
     }
 
@@ -126,7 +126,7 @@ public class LookAheadObjectInputStream extends ObjectInputStream {
      *      Collection of class names that will be accepted for deserializing readObject. Default: null
      */
     public void setAcceptedClasses(final Collection<Class<? extends Serializable>> acceptedClasses) {
-        this.acceptedClasses = new HashSet<Class<? extends Serializable>>(acceptedClasses);
+        this.acceptedClasses = new HashSet<>(acceptedClasses);
     }
 
     /**
