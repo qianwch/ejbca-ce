@@ -186,7 +186,9 @@ public class LegacyValidationAuthorityPublisher extends CustomPublisherUiBase im
         return true;
     }
 
-
-    
+    @Override
+    public void validateDataSource(String dataSource) throws PublisherException {
+        super.validateDataSource(dataSource);
+    }
 }
 
