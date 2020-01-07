@@ -457,7 +457,7 @@ public class PublishingCrlSessionBean implements PublishingCrlSessionLocal, Publ
                     }
                     //Make sure new compressed collection is created if revokedCertificatesBeforeLastCANameChange need to be added!
                     Collection<RevokedCertInfo> revokedCertificatesAfterLastCANameChange = revokedCertificates;
-                    revokedCertificates = new CompressedCollection<>();
+                    revokedCertificates = new CompressedCollection<>(RevokedCertInfo.class);
                     if(!revokedCertificatesBeforeLastCANameChange.isEmpty()){
                         revokedCertificates.addAll(revokedCertificatesBeforeLastCANameChange);
                     }
@@ -614,7 +614,7 @@ public class PublishingCrlSessionBean implements PublishingCrlSessionLocal, Publ
                     }
                     //Make sure new compressed collection is created if revokedCertificatesBeforeLastCANameChange need to be added!
                     Collection<RevokedCertInfo> revokedCertificatesAfterLastCANameChange = revcertinfos;
-                    revcertinfos = new CompressedCollection<>();
+                    revcertinfos = new CompressedCollection<>(RevokedCertInfo.class);
                     if(!revokedCertificatesBeforeLastCANameChange.isEmpty()){
                         revcertinfos.addAll(revokedCertificatesBeforeLastCANameChange);
                     }
@@ -625,7 +625,7 @@ public class PublishingCrlSessionBean implements PublishingCrlSessionLocal, Publ
                     log.debug("Found "+revcertinfos.size()+" revoked certificates.");
                 }
                 // Go through them and create a CRL, i.e. add to cert list to be included in CRL
-                certs = new CompressedCollection<>();
+                certs = new CompressedCollection<>(RevokedCertInfo.class);
                 for (final RevokedCertInfo ci : revcertinfos) {
                     if (ci.getRevocationDate() == null) {
                         ci.setRevocationDate(new Date());
