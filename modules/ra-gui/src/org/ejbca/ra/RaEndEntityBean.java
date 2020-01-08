@@ -28,6 +28,7 @@ import javax.faces.model.SelectItem;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.certificates.ca.CADoesntExistsException;
 import org.cesecore.certificates.ca.CAInfo;
@@ -35,7 +36,6 @@ import org.cesecore.certificates.ca.IllegalNameException;
 import org.cesecore.certificates.certificate.exception.CertificateSerialNumberException;
 import org.cesecore.certificates.endentity.EndEntityConstants;
 import org.cesecore.certificates.endentity.EndEntityInformation;
-import org.ejbca.core.ejb.ra.EndEntityManagementSessionLocal;
 import org.ejbca.core.ejb.ra.NoSuchEndEntityException;
 import org.ejbca.core.model.approval.ApprovalException;
 import org.ejbca.core.model.approval.WaitingForApprovalException;
@@ -59,11 +59,14 @@ public class RaEndEntityBean implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    private static final Logger log = Logger.getLogger(RaEndEntityBean.class);
+
     @EJB
     private RaMasterApiProxyBeanLocal raMasterApiProxyBean;
 
-    @EJB
-    private EndEntityManagementSessionLocal endEntityManagementSessionBean;
+    @ManagedProperty(value="#{raAccessBean}")
+    private RaAccessBean raAccessBean;
+    public void setRaAccessBean(final RaAccessBean raAccessBean) { this.raAccessBean = raAccessBean; }
 
     @ManagedProperty(value="#{raAuthenticationBean}")
     private RaAuthenticationBean raAuthenticationBean;
@@ -87,6 +90,7 @@ public class RaEndEntityBean implements Serializable {
     private String enrollmentCode = "";
     private String enrollmentCodeConfirm = "";
     private boolean clearCsrChecked = false;
+    private boolean authorized = false;
     
     
     private final Callbacks raEndEntityDetailsCallbacks = new RaEndEntityDetails.Callbacks() {
@@ -105,6 +109,11 @@ public class RaEndEntityBean implements Serializable {
 
     @PostConstruct
     public void postConstruct() {
+        if (!raAccessBean.isAuthorizedToSearchEndEntities()) {
+            log.debug("Not authorized to view end entities");
+            return;
+        }
+        authorized = true;
         username = ((HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest()).getParameter("ee");
         // Check if edit mode is set as a parameter
         String editParameter = ((HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest()).getParameter("edit");
@@ -134,6 +143,10 @@ public class RaEndEntityBean implements Serializable {
         selectableTokenTypes = null;
         selectedStatus = -1;
         clearCsrChecked = false;
+    }
+    
+    public boolean isAuthorized() {
+        return authorized;
     }
 
     public String getUsername() { return username; }
