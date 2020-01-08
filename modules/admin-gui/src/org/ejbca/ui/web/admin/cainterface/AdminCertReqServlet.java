@@ -46,6 +46,7 @@ import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileSessionLocal;
 import org.ejbca.core.model.SecConst;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfileNotFoundException;
 import org.ejbca.ui.web.RequestHelper;
+import org.ejbca.ui.web.admin.bean.SessionBeans;
 import org.ejbca.ui.web.admin.rainterface.RAInterfaceBean;
 import org.ejbca.ui.web.admin.rainterface.UserView;
 
@@ -169,8 +170,7 @@ public class AdminCertReqServlet extends BaseAdminServlet {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid request, missing 'pkcs10req'!");
             return;
         }
-
-        RAInterfaceBean rabean = getRaBean(request);
+        final RAInterfaceBean raBean = SessionBeans.getRaBean(request);
 
         // Decompose the PKCS#10 request, and create the user.
         PKCS10RequestMessage p10 = new PKCS10RequestMessage(buffer);
@@ -234,7 +234,7 @@ public class AdminCertReqServlet extends BaseAdminServlet {
         newuser.setClearTextPassword(false);
 
         try {
-            rabean.addUser(newuser);
+            raBean.addUser(newuser);
         } catch (Exception e) {
             throw new ServletException("Error adding user: " + e.toString(), e);
         }

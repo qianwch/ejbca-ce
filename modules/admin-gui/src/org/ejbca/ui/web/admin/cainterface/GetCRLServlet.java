@@ -67,8 +67,6 @@ public class GetCRLServlet extends BaseAdminServlet {
     @Override
     public void doGet(final HttpServletRequest req,  final HttpServletResponse res) throws IOException, ServletException {
         log.trace(">doGet()");
-        // TODO Redundant
-        getAuthenticationToken(req);
         RequestHelper.setDefaultCharacterEncoding(req);
         String issuerDn = req.getParameter(ISSUER_PROPERTY);
         if (issuerDn == null) {

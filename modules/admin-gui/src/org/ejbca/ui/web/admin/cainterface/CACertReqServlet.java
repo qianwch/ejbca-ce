@@ -40,6 +40,7 @@ import org.ejbca.cvc.CertificateParser;
 import org.ejbca.cvc.HolderReferenceField;
 import org.ejbca.cvc.exception.ParseException;
 import org.ejbca.ui.web.RequestHelper;
+import org.ejbca.ui.web.admin.bean.SessionBeans;
 import org.ejbca.ui.web.pub.ServletUtils;
 
 /**
@@ -87,24 +88,7 @@ public class CACertReqServlet extends BaseAdminServlet {
     public void doGet(HttpServletRequest req,  HttpServletResponse res) throws java.io.IOException, ServletException {
         log.trace(">doGet()");
         final AuthenticationToken admin = getAuthenticationToken(req);
-
-        CAInterfaceBean cabean = (CAInterfaceBean) req.getSession().getAttribute("cabean");
-		if ( cabean == null ){
-		  try {
-			cabean = (CAInterfaceBean) java.beans.Beans.instantiate(Thread.currentThread().getContextClassLoader(), CAInterfaceBean.class.getName());
-		   } catch (ClassNotFoundException exc) {
-			   throw new ServletException(exc.getMessage());
-		   }catch (Exception exc) {
-			   throw new ServletException (" Cannot create bean of class "+CAInterfaceBean.class.getName(), exc);
-		   }
-		   req.getSession().setAttribute("cabean", cabean);
-		}
-
-		try{
-		  cabean.initialize(getEjbcaWebBean(req));
-		} catch(Exception e){
-		   throw new java.io.IOException("Error initializing CACertReqServlet");
-		}        
+        final CAInterfaceBean caBean = SessionBeans.getCaBean(req);
 
         // Keep this for logging.
         String remoteAddr = req.getRemoteAddr();
@@ -116,7 +100,7 @@ public class CACertReqServlet extends BaseAdminServlet {
         }
         if (command.equalsIgnoreCase(COMMAND_CERTREQ)) {
             try {
-            	byte[] request = cabean.getRequestData();
+            	byte[] request = caBean.getRequestData();
                 String filename = null;
                 CVCertificate cvccert = null;
                 boolean isx509cert = false;
@@ -195,7 +179,7 @@ public class CACertReqServlet extends BaseAdminServlet {
         }
 		if (command.equalsIgnoreCase(COMMAND_CERT)) {
 			 try {
-			 	Certificate cert = cabean.getProcessedCertificate();
+			 	Certificate cert = caBean.getProcessedCertificate();
             	if (!StringUtils.equals(format, "binary")) {
     				byte[] b64cert = Base64.encode(cert.getEncoded());	
     				RequestHelper.sendNewB64Cert(b64cert, res, CertTools.BEGIN_CERTIFICATE_WITH_NL, CertTools.END_CERTIFICATE_WITH_NL);
@@ -211,7 +195,7 @@ public class CACertReqServlet extends BaseAdminServlet {
 		 }
 		if (command.equalsIgnoreCase(COMMAND_CERTPKCS7)) {
 			 try {
-			     X509Certificate cert = (X509Certificate) cabean.getProcessedCertificate();		
+			     X509Certificate cert = (X509Certificate) caBean.getProcessedCertificate();
 		        byte[] pkcs7 = signSession.createPKCS7(admin, cert, true);							 	
 			    byte[] b64cert = Base64.encode(pkcs7);	
 			    RequestHelper.sendNewB64Cert(b64cert, res, RequestHelper.BEGIN_PKCS7_WITH_NL, RequestHelper.END_PKCS7_WITH_NL);																		 					

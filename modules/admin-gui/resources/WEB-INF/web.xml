@@ -127,11 +127,11 @@
 	</filter-mapping>
 
     <filter>
-        <filter-name>ServletAuthenticationFilter</filter-name>
-        <filter-class>org.ejbca.ui.web.admin.filter.ServletAuthenticationFilter</filter-class>
+        <filter-name>AuthenticationFilter</filter-name>
+        <filter-class>org.ejbca.ui.web.admin.filter.AuthenticationFilter</filter-class>
     </filter>
     <!--
-        Check binding in org.ejbca.ui.web.admin.filter.ServletAuthenticationFilter:
+        Check binding of URI and AccessResources in org.ejbca.ui.web.admin.filter.AuthenticationFilter
         /ca/certreq
         /ca/editcas/cacertreq
         /ca/cacert
@@ -142,15 +142,9 @@
         /cryptotoken/cryptoTokenDownloads
     -->
     <filter-mapping>
-        <filter-name>ServletAuthenticationFilter</filter-name>
+        <filter-name>AuthenticationFilter</filter-name>
         <url-pattern>/ca/*</url-pattern>
-    </filter-mapping>
-    <filter-mapping>
-        <filter-name>ServletAuthenticationFilter</filter-name>
         <url-pattern>/profilesexport</url-pattern>
-    </filter-mapping>
-    <filter-mapping>
-        <filter-name>ServletAuthenticationFilter</filter-name>
         <url-pattern>/cryptotoken/*</url-pattern>
     </filter-mapping>
 

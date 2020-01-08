@@ -19,7 +19,7 @@ import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
-import javax.servlet.http.HttpSession;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
 
@@ -35,7 +35,7 @@ import org.ejbca.config.WebConfiguration;
 import org.ejbca.core.ejb.audit.enums.EjbcaEventTypes;
 import org.ejbca.core.ejb.audit.enums.EjbcaModuleTypes;
 import org.ejbca.core.ejb.audit.enums.EjbcaServiceTypes;
-import org.ejbca.ui.web.admin.configuration.EjbcaWebBeanImpl;
+import org.ejbca.ui.web.admin.bean.SessionBeans;
 import org.ejbca.ui.web.jsf.configuration.EjbcaWebBean;
 
 /**
@@ -82,16 +82,23 @@ public class CaHttpSessionListener implements HttpSessionListener {
 
     @Override
     public void sessionDestroyed(HttpSessionEvent httpSessionEvent) {
-        final EjbcaWebBean ejbcaWebBean = getEjbcaWebBean(httpSessionEvent.getSession());
-        final Map<String, Object> logDetails = new LinkedHashMap<>();
-        if (ejbcaWebBean == null) {
-            // Since this method is invoked right before the session is actually terminated,
-            // this should never happen. If it does, audit logging will fail but with a log error.
+        EjbcaWebBean ejbcaWebBean;
+        try {
+            ejbcaWebBean = SessionBeans.getEjbcaWebBean(httpSessionEvent.getSession());
+            if (ejbcaWebBean == null) {
+                // Since this method is invoked right before the session is actually terminated,
+                // this should never happen. If it does, audit logging will fail but with a log error.
+                return;
+            }
+        }
+        catch (ServletException e) {
+            log.debug("Cannot create EjbcaWebBean", e);
             return;
         }
-        
+
+        final Map<String, Object> logDetails = new LinkedHashMap<>();
         final AuthenticationToken admin = ejbcaWebBean.getAdminObject();
-        final Certificate x509Certificate= getCertificate(admin);
+        final Certificate x509Certificate = getCertificate(admin);
         final String caID;
         final String serialNr;
         if (x509Certificate != null) {
@@ -115,23 +122,9 @@ public class CaHttpSessionListener implements HttpSessionListener {
     }
     
     private Certificate getCertificate(final AuthenticationToken admin) {
-        if (admin instanceof X509CertificateAuthenticationToken) {
+        if (admin != null && admin instanceof X509CertificateAuthenticationToken) {
             return ((X509CertificateAuthenticationToken)admin).getCertificate();
         }
         return null;
-    }
-    
-    private final EjbcaWebBean getEjbcaWebBean(HttpSession session) {
-        EjbcaWebBean ejbcawebbean = (EjbcaWebBean) session.getAttribute("ejbcawebbean");
-        if (ejbcawebbean == null) {
-            try {
-                ejbcawebbean = (EjbcaWebBean) java.beans.Beans.instantiate(Thread.currentThread().getContextClassLoader(),
-                        EjbcaWebBeanImpl.class.getName());
-            } catch (Exception e) {
-                log.error("Failed to audit log ended session with Id" + session.getId() + "\n" + e.getMessage());
-            }
-            session.setAttribute("ejbcawebbean", ejbcawebbean);
-        }
-        return ejbcawebbean;
     }
 }

@@ -18,14 +18,13 @@ import java.io.Serializable;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import javax.faces.context.FacesContext;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 
 import org.cesecore.authorization.AuthorizationDeniedException;
 import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.ui.web.RequestHelper;
 import org.ejbca.ui.web.admin.BaseManagedBean;
-
+import org.ejbca.ui.web.admin.bean.SessionBeans;
 
 /**
  * JSF backing bean for CA info popup view.
@@ -39,9 +38,8 @@ public class ViewCAInfoMBean extends BaseManagedBean implements Serializable {
 		 
 	private static final long serialVersionUID = 109073226626366410L;
 
-    public static final String CA_PARAMETER = "caid";
-    
-    private CAInterfaceBean caBean;
+    private static final String CA_PARAMETER = "caid";
+
     private int caId = 0;
 	private CAInfoView caInfo = null;
     
@@ -49,7 +47,7 @@ public class ViewCAInfoMBean extends BaseManagedBean implements Serializable {
     /**
      * Method that initializes the bean.
      *
-     * @throws Exception 
+     * @throws Exception general exception.
      */
     public void initialize() throws Exception {
         // Invoke on initial request only
@@ -57,13 +55,11 @@ public class ViewCAInfoMBean extends BaseManagedBean implements Serializable {
             
             try {
                 final HttpServletRequest request = (HttpServletRequest)FacesContext.getCurrentInstance().getExternalContext().getRequest();
-                
-                RequestHelper.setDefaultCharacterEncoding(request);
-                
                 getEjbcaWebBean().initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR);
-                
-                initCaBean(request);
-                
+                final CAInterfaceBean caBean = SessionBeans.getCaBean(request);
+                RequestHelper.setDefaultCharacterEncoding(request);
+
+
                 final String caIdParameter = request.getParameter(CA_PARAMETER);
                 if (caIdParameter != null) {
                     try {
@@ -82,25 +78,6 @@ public class ViewCAInfoMBean extends BaseManagedBean implements Serializable {
             }
         } else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.ROLE_ADMINISTRATOR)) {
             throw new AuthorizationDeniedException("You are not authorized to view this page.");
-        }
-    }
-
-    private void initCaBean(final HttpServletRequest request) throws Exception {
-        caBean = (CAInterfaceBean) request.getSession().getAttribute("caBean");
-        if ( caBean == null ) {
-            try {
-                caBean = (CAInterfaceBean) java.beans.Beans.instantiate(Thread.currentThread().getContextClassLoader(), CAInterfaceBean.class.getName());
-            } catch (final ClassNotFoundException exc) {
-                throw new ServletException(exc.getMessage());
-            }catch (final Exception exc) {
-                throw new ServletException (" Cannot create bean of class "+CAInterfaceBean.class.getName(), exc);
-            }
-            request.getSession().setAttribute("cabean", caBean);
-        }
-        try{
-            caBean.initialize(getEjbcaWebBean());
-        } catch(final Exception e){
-            throw new java.io.IOException("Error initializing AdminIndexMBean");
         }
     }
 

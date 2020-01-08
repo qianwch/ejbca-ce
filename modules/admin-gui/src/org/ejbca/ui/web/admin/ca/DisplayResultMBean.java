@@ -30,6 +30,7 @@ import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.ui.web.admin.BaseManagedBean;
 import org.ejbca.ui.web.admin.cainterface.CAInterfaceBean;
 
+import static org.ejbca.ui.web.admin.attribute.AttributeMapping.SESSION;
 
 /**
  * 
@@ -87,7 +88,7 @@ public class DisplayResultMBean extends BaseManagedBean implements Serializable 
         
         filemode = (Integer) requestMap.get("filemode");
         caName = (String) requestMap.get("caname");
-        caBean = (CAInterfaceBean) requestMap.get("cabean");
+        caBean = (CAInterfaceBean) requestMap.get(SESSION.CA_INTERFACE_BEAN);
         filePath = getEjbcaWebBean().getBaseUrl() + globalconfiguration.getCaPath();
 
         if (filemode == EditCaUtil.CERTGENMODE) {

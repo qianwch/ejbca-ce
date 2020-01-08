@@ -12,7 +12,6 @@
  *************************************************************************/
 package org.ejbca.ui.web.admin.viewcertificate;
 
-import java.beans.Beans;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
@@ -25,9 +24,7 @@ import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ComponentSystemEvent;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 
 import org.apache.commons.lang.StringUtils;
 import org.cesecore.authorization.AuthorizationDeniedException;
@@ -40,6 +37,7 @@ import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.ui.web.CertificateView;
 import org.ejbca.ui.web.RequestHelper;
 import org.ejbca.ui.web.admin.BaseManagedBean;
+import org.ejbca.ui.web.admin.bean.SessionBeans;
 import org.ejbca.ui.web.admin.cainterface.CAInterfaceBean;
 import org.ejbca.ui.web.admin.rainterface.RAInterfaceBean;
 import org.ejbca.ui.web.jsf.configuration.EjbcaWebBean;
@@ -54,9 +52,6 @@ import org.ejbca.ui.web.jsf.configuration.EjbcaWebBean;
 @ManagedBean(name="viewCertificateMBean")
 public class ViewCertificateManagedBean extends BaseManagedBean implements Serializable {
 
-    private static final String CA_BEAN_ATTRIBUTE = "caBean";
-    private static final String RA_BEAN_ATTRIBUTE = "rabean";
-    
     private static final long serialVersionUID = 1L;
     
     private static final String CA_ID_PARAMETER            = "caid";
@@ -130,10 +125,9 @@ public class ViewCertificateManagedBean extends BaseManagedBean implements Seria
         final HttpServletRequest request = (HttpServletRequest)FacesContext.getCurrentInstance().getExternalContext().getRequest();
         
         ejbcaBean = getEjbcaWebBean();
-        initCaBean(request);
-        initRaBean(request);
-        
-        final GlobalConfiguration globalconfiguration = ejbcaBean.initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR); 
+        final GlobalConfiguration globalconfiguration = ejbcaBean.initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR);
+        caBean = SessionBeans.getCaBean(request);
+        raBean = SessionBeans.getRaBean(request);
         
         final String caIdParameter = request.getParameter(CA_ID_PARAMETER);
         if (caIdParameter != null) {
@@ -260,11 +254,10 @@ public class ViewCertificateManagedBean extends BaseManagedBean implements Seria
     private String composeExtendedKeyUsage() {
         final List<String> texts = new ArrayList<>();
         final AvailableExtendedKeyUsagesConfiguration configuration = ejbcaBean.getAvailableExtendedKeyUsagesConfiguration();
-        final String[] extendedkeyusage = certificateData.getExtendedKeyUsageAsTexts(configuration);
-        for (int i=0; i<extendedkeyusage.length; i++) {
-          texts.add(ejbcaBean.getText(extendedkeyusage[i]));
-        }                
-        
+        final String[] extendedKeyUsageAsTexts = certificateData.getExtendedKeyUsageAsTexts(configuration);
+        for (String extendedKeyUsageAsText : extendedKeyUsageAsTexts) {
+            texts.add(ejbcaBean.getText(extendedKeyUsageAsText));
+        }
         return (texts.isEmpty()) ? ejbcaBean.getText("EKU_NONE") : StringUtils.join(texts, ',');
     }
     
@@ -309,50 +302,8 @@ public class ViewCertificateManagedBean extends BaseManagedBean implements Seria
         }
         return publicKeyValue;
     }
-    
 
-    private void initCaBean(final HttpServletRequest request) throws Exception {
-        caBean = (CAInterfaceBean) request.getSession().getAttribute(CA_BEAN_ATTRIBUTE);
-        if ( caBean == null ) {
-            try {
-                caBean = (CAInterfaceBean) java.beans.Beans.instantiate(Thread.currentThread().getContextClassLoader(), CAInterfaceBean.class.getName());
-            } catch (final ClassNotFoundException exc) {
-                throw new ServletException(exc.getMessage());
-            }catch (final Exception exc) {
-                throw new ServletException (" Cannot create bean of class "+CAInterfaceBean.class.getName(), exc);
-            }
-            request.getSession().setAttribute(CA_BEAN_ATTRIBUTE, caBean);
-        }
-        try{
-            caBean.initialize(ejbcaBean);
-        } catch(final Exception e){
-            throw new java.io.IOException("Error initializing AdminIndexMBean");
-        }
-    }
-    
-    private void initRaBean(final HttpServletRequest request) throws ServletException {
-        final HttpSession session = request.getSession();
-        RAInterfaceBean raBean = (RAInterfaceBean) session.getAttribute(RA_BEAN_ATTRIBUTE);
-        if (raBean == null) {
-            try {
-                raBean = (RAInterfaceBean) Beans.instantiate(Thread.currentThread().getContextClassLoader(),
-                        org.ejbca.ui.web.admin.rainterface.RAInterfaceBean.class.getName());
-            } catch (final ClassNotFoundException e) {
-                throw new ServletException(e);
-            } catch (final Exception e) {
-                throw new ServletException("Unable to instantiate RAInterfaceBean", e);
-            }
-            try {
-                raBean.initialize(request, ejbcaBean);
-            } catch (final Exception e) {
-                throw new ServletException("Cannot initialize RAInterfaceBean", e);
-            }
-            session.setAttribute(RA_BEAN_ATTRIBUTE, raBean);
-        }
-        this.raBean = raBean;
-    }
-
-    private void parseRequest(final HttpServletRequest request) throws AuthorizationDeniedException, CADoesntExistsException, UnsupportedEncodingException {
+    private void parseRequest(final HttpServletRequest request) throws AuthorizationDeniedException, UnsupportedEncodingException {
 
         if (request.getParameter(USER_PARAMETER) != null) {
             noparameter = false;
@@ -514,7 +465,7 @@ public class ViewCertificateManagedBean extends BaseManagedBean implements Seria
         return !cacerts &&  keyRecoveryPossible && useKeyRecovery;
     }
 
-    public boolean isRepublishPossible() throws AuthorizationDeniedException, Exception {
+    public boolean isRepublishPossible() throws Exception {
         return !cacerts &&  raBean.userExist(certificateData.getUsername()) && raBean.isAuthorizedToEditUser(certificateData.getUsername());
     }
     
@@ -618,7 +569,7 @@ public class ViewCertificateManagedBean extends BaseManagedBean implements Seria
                 raBean.loadCertificates(certificateData.getSerialNumberBigInt(), certificateData.getIssuerDNUnEscaped());
             }
         } catch (final AuthorizationDeniedException e) {
-
+            // ignore
         }
         numberOfCertificates = raBean.getNumberOfCertificates();
         certificateData = raBean.getCertificate(currentIndex);
@@ -634,7 +585,7 @@ public class ViewCertificateManagedBean extends BaseManagedBean implements Seria
                 raBean.loadCertificates(certificateData.getSerialNumberBigInt(), certificateData.getIssuerDNUnEscaped());
             }
         } catch (final AuthorizationDeniedException e) {
-
+            // ignore
         }
         numberOfCertificates = raBean.getNumberOfCertificates();
     }
@@ -660,7 +611,7 @@ public class ViewCertificateManagedBean extends BaseManagedBean implements Seria
                 raBean.loadCertificates(certificateData.getSerialNumberBigInt(), certificateData.getIssuerDNUnEscaped());
             }
         } catch (final AuthorizationDeniedException e) {
-            
+            // ignore
         }
         numberOfCertificates = raBean.getNumberOfCertificates();
         certificateData = raBean.getCertificate(currentIndex);
@@ -687,7 +638,7 @@ public class ViewCertificateManagedBean extends BaseManagedBean implements Seria
                 raBean.loadCertificates(certificateData.getSerialNumberBigInt(), certificateData.getIssuerDNUnEscaped());
             }
         } catch (final AuthorizationDeniedException e) {
-
+            // ignore
         }
 
         numberOfCertificates = raBean.getNumberOfCertificates();

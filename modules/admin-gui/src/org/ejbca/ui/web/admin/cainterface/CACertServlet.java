@@ -81,8 +81,6 @@ public class CACertServlet extends BaseAdminServlet {
     @Override
     public void doGet(HttpServletRequest req,  HttpServletResponse res) throws java.io.IOException, ServletException {
         log.trace(">doGet()");
-        // TODO Redundant
-        getAuthenticationToken(req);
         RequestHelper.setDefaultCharacterEncoding(req);
 
         // HttpServetRequets.getParameter URLDecodes the value for you

@@ -27,6 +27,7 @@ import org.cesecore.util.CertTools;
 import org.ejbca.core.model.ra.NotFoundException;
 import org.ejbca.ui.web.CertificateView;
 import org.ejbca.ui.web.RequestHelper;
+import org.ejbca.ui.web.admin.bean.SessionBeans;
 import org.ejbca.ui.web.admin.rainterface.RAInterfaceBean;
 import org.ejbca.ui.web.pub.ServletUtils;
 
@@ -67,8 +68,6 @@ public class EndEntityCertServlet extends BaseAdminServlet {
     @Override
     public void doGet(HttpServletRequest req,  HttpServletResponse res) throws IOException, ServletException {
         log.trace(">doGet()");
-        // TODO Redundant
-        getAuthenticationToken(req);
         RequestHelper.setDefaultCharacterEncoding(req);
         String issuerdn = req.getParameter(ISSUER_PROPERTY);        
         String certificatesn = req.getParameter(CERTIFICATESN_PROPERTY);
@@ -88,7 +87,7 @@ public class EndEntityCertServlet extends BaseAdminServlet {
         	// Fetch the certificate and at the same time check that the user is authorized to it.
         	
         	try {
-        	    final RAInterfaceBean raBean = getRaBean(req);
+        	    final RAInterfaceBean raBean = SessionBeans.getRaBean(req);
 				raBean.loadCertificates(certsn, issuerdn);
 				CertificateView certview = raBean.getCertificate(0);
 				if (certview == null) {
@@ -119,17 +118,14 @@ public class EndEntityCertServlet extends BaseAdminServlet {
 				} else {
 					res.setContentType("text/plain");
 					res.getOutputStream().println("Commands="+COMMAND_NSCERT+" || "+COMMAND_IECERT+" || "+COMMAND_CERT);
-					return;
 				}
             } catch (Exception e) {
                 log.info("Error getting certificates: ", e);
                 res.sendError(HttpServletResponse.SC_NOT_FOUND, "Error getting certificates.");
-                return;
             }
         } else {
             res.setContentType("text/plain");
             res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Bad Request format");
-            return;
         }
     } // doGet
 }
