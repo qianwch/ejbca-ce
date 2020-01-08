@@ -16,10 +16,14 @@ package org.cesecore.configuration;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 
 import javax.persistence.Entity;
 import javax.persistence.PostLoad;
@@ -29,10 +33,15 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 
 import org.apache.log4j.Logger;
+import org.cesecore.certificates.certificatetransparency.CTLogInfo;
+import org.cesecore.certificates.certificatetransparency.GoogleCtPolicy;
 import org.cesecore.dbprotection.ProtectedData;
 import org.cesecore.dbprotection.ProtectionStringBuilder;
+import org.cesecore.keybind.impl.OcspKeyBinding;
+import org.cesecore.util.Base64GetHashMap;
 import org.cesecore.util.CertTools;
 import org.cesecore.util.JBossUnmarshaller;
+import org.cesecore.util.LookAheadObjectInputStream;
 
 /**
  * Entity Bean for database persisted configurations
@@ -45,6 +54,8 @@ public class GlobalConfigurationData extends ProtectedData implements Serializab
 
 	private static final long serialVersionUID = 1L;
 	private static final Logger log = Logger.getLogger(GlobalConfigurationData.class);
+	private static final HashSet<Class<? extends Serializable>> acceptedClassesHashSet = new HashSet<Class<? extends Serializable>>(Arrays.asList(LinkedHashMap.class, Base64GetHashMap.class, GoogleCtPolicy.class, 
+	        OcspKeyBinding.ResponderIdType.class, CTLogInfo.class, LinkedHashSet.class, HashSet.class, HashMap.class, ArrayList.class, java.lang.Enum.class));
 
 	/** Unique ID defined by respective configuration object, such as 
 	 * @link GlobalCesecoreConfiguration#CESECORE_CONFIGURATION_ID 
@@ -86,15 +97,18 @@ public class GlobalConfigurationData extends ProtectedData implements Serializab
 	 */
 	@Transient
 	public Serializable getObjectUnsafe() {
-	    try (final ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(getDataUnsafe()));) {
-	        return (Serializable) ois.readObject();
-	    } catch (IOException e) {
-	        log.error("Failed to load Global Configuration as byte[].", e);
+	    try (final LookAheadObjectInputStream laois = new LookAheadObjectInputStream(new ByteArrayInputStream(getDataUnsafe()));) {
+            laois.setEnabledMaxObjects(false);
+            laois.setAcceptedClasses(acceptedClassesHashSet);
+            return (Serializable) laois.readObject();
+        } catch (IOException e) {
+            log.error("Failed to load Global Configuration as byte[].", e);
         } catch (ClassNotFoundException e) {
             throw new IllegalStateException(e);
         }
-	    return null;
+        return null;
 	}
+	
 	public void setObjectUnsafe(Serializable data) {
         try (final ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 final ObjectOutputStream oos = new ObjectOutputStream(baos);) {
