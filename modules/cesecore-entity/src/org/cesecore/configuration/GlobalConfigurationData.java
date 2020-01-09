@@ -33,8 +33,11 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 
 import org.apache.log4j.Logger;
+import org.cesecore.certificates.certificate.certextensions.BasicCertificateExtension;
+import org.cesecore.certificates.certificate.certextensions.CertificateExtension;
 import org.cesecore.certificates.certificatetransparency.CTLogInfo;
 import org.cesecore.certificates.certificatetransparency.GoogleCtPolicy;
+import org.cesecore.config.RaStyleInfo;
 import org.cesecore.dbprotection.ProtectedData;
 import org.cesecore.dbprotection.ProtectionStringBuilder;
 import org.cesecore.keybind.impl.OcspKeyBinding;
@@ -54,8 +57,9 @@ public class GlobalConfigurationData extends ProtectedData implements Serializab
 
 	private static final long serialVersionUID = 1L;
 	private static final Logger log = Logger.getLogger(GlobalConfigurationData.class);
-	private static final HashSet<Class<? extends Serializable>> acceptedClassesHashSet = new HashSet<Class<? extends Serializable>>(Arrays.asList(LinkedHashMap.class, Base64GetHashMap.class, GoogleCtPolicy.class, 
-	        OcspKeyBinding.ResponderIdType.class, CTLogInfo.class, LinkedHashSet.class, HashSet.class, HashMap.class, ArrayList.class, java.lang.Enum.class));
+	private static final HashSet<Class<? extends Serializable>> acceptedClassesHashSet = new HashSet<Class<? extends Serializable>>(Arrays.asList(LinkedHashMap.class, Base64GetHashMap.class, 
+            GoogleCtPolicy.class, OcspKeyBinding.ResponderIdType.class, CTLogInfo.class, LinkedHashSet.class, HashSet.class, HashMap.class, BasicCertificateExtension.class, CertificateExtension.class, 
+            ArrayList.class, java.lang.Enum.class, java.util.Properties.class, java.util.Hashtable.class, RaStyleInfo.class));
 
 	/** Unique ID defined by respective configuration object, such as 
 	 * @link GlobalCesecoreConfiguration#CESECORE_CONFIGURATION_ID 
