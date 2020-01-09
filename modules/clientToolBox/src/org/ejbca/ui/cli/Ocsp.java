@@ -18,7 +18,6 @@ import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -28,7 +27,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -74,12 +73,12 @@ public class Ocsp extends ClientToolBox {
         private class SerialNrs {
             final private List<BigInteger> vSerialNrs;
 
-            SerialNrs(String fileName) throws FileNotFoundException, IOException, ClassNotFoundException {
+            SerialNrs(String fileName) throws IOException, ClassNotFoundException {
                 List<BigInteger> vSerialNrsTmp;
                 // Try to parse it as pure text-file with one dec-encoded certificate serialnumber on each line, like the one you would get with
                 // echo "select serialNumber from CertificateData where issuerDN like 'CN=ManagementCA%';" | mysql -u ejbca -p ejbca | grep -v serialNumber > ../sns.txt
                 try {
-                    vSerialNrsTmp = new ArrayList<BigInteger>();
+                    vSerialNrsTmp = new ArrayList<>();
                     BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new DataInputStream(new FileInputStream(fileName))));
                     String nextLine;
                     while ((nextLine = bufferedReader.readLine()) != null) {
@@ -97,7 +96,7 @@ public class Ocsp extends ClientToolBox {
                 } catch (Exception e1) {
                     // Fall back to the format used by EJBCA WS RA CLI stress test
                     System.out.println("Parsing as textfile failed (" + e1.getMessage() + "). Trying to use it as a file with Java Objects.");
-                    vSerialNrsTmp = new ArrayList<BigInteger>();
+                    vSerialNrsTmp = new ArrayList<>();
                     InputStream is = new BufferedInputStream(new FileInputStream(fileName));
                     is.mark(1);
                     try {
@@ -108,7 +107,7 @@ public class Ocsp extends ClientToolBox {
                                 try {
                                     is.mark(i);
                                     oi = new LookAheadObjectInputStream(is);
-                                    oi.setAcceptedClasses(Arrays.asList(BigInteger.class));
+                                    oi.setAcceptedClasses(Collections.singletonList(BigInteger.class));
                                     oi.setEnabledMaxObjects(false);
                                 } catch (StreamCorruptedException e) {
                                     is.reset();
