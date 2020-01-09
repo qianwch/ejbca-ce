@@ -26,6 +26,7 @@ import java.util.List;
 
 import org.cesecore.authorization.user.AccessMatchType;
 import org.cesecore.authorization.user.AccessUserAspectData;
+import org.cesecore.roles.RoleData;
 import org.cesecore.roles.RoleInformation;
 import org.cesecore.util.Base64;
 import org.cesecore.util.LookAheadObjectInputStream;
@@ -33,6 +34,9 @@ import org.cesecore.util.ProfileID;
 import org.cesecore.util.ui.DynamicUiProperty;
 import org.cesecore.util.ui.DynamicUiPropertyCallback;
 import org.cesecore.util.ui.DynamicUiPropertyValidator;
+import org.cesecore.util.ui.MultiLineString;
+import org.cesecore.util.ui.RadioButton;
+import org.cesecore.util.ui.UrlString;
 
 /**
  * This class represents an approval step, to sum of which is a collective series of events, in serial order, which must occur for an approval
@@ -85,10 +89,11 @@ public class ApprovalStep implements Serializable {
     public ApprovalStep(final String encodedStep) {
         final byte[] bytes = Base64.decode(encodedStep.getBytes());
         try (final LookAheadObjectInputStream ois = new LookAheadObjectInputStream(new ByteArrayInputStream(bytes))) {
-            ois.setMaxObjects(10_000);
+            ois.setEnabledMaxObjects(false);
             ois.setAcceptedClasses(Arrays.asList(ApprovalStep.class, ApprovalPartition.class, LinkedHashMap.class, HashMap.class,
                     DynamicUiProperty.class, DynamicUiPropertyCallback.class, Enum.class, ArrayList.class, DynamicUiPropertyValidator.class,
-                    RoleInformation.class, HashSet.class, AccessUserAspectData.class, AccessMatchType.class));
+                    RoleInformation.class, HashSet.class, AccessUserAspectData.class, AccessMatchType.class, RoleData.class, RadioButton.class, MultiLineString.class, 
+                    UrlString.class));
             ois.setEnabledInterfaceImplementations(true, "org.cesecore.util.ui");
             final ApprovalStep step = (ApprovalStep) ois.readObject();
             this.id = step.getStepIdentifier();

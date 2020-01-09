@@ -729,7 +729,7 @@ public class ApproveActionManagedBean extends BaseManagedBean {
          List<Integer> currentIds = new ArrayList<>();
 
          for (final String value : property.getEncodedValues()) {
-             RoleInformation roleInfo = (RoleInformation) DynamicUiProperty.getAsObject(value);
+             RoleInformation roleInfo = DynamicUiProperty.getAsObject(value, RoleInformation.class);
              currentIds.add(roleInfo.getIdentifier());
          }
 

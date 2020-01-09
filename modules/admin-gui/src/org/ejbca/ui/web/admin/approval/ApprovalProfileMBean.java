@@ -372,7 +372,7 @@ public class ApprovalProfileMBean extends BaseManagedBean implements Serializabl
     public String removeRowFromRadioButton(int partitionId, String encodedRadioButton) {
         final Integer currentStep = steps.getRowData().getIdentifier();
         final ApprovalProfile updatedApprovalProfile = getApprovalProfile();
-        final RadioButton radioButton = (RadioButton) DynamicUiProperty.getAsObject(encodedRadioButton);
+        final RadioButton radioButton = DynamicUiProperty.getAsObject(encodedRadioButton, RadioButton.class);
         final List<ApprovalPartitionProfileGuiObject> guiPartitions = steps.getRowData().getPartitionGuiObjects();
         for(ApprovalPartitionProfileGuiObject approvalPartitionProfileGuiObject : guiPartitions) {
             //find the right partition
@@ -704,7 +704,7 @@ public class ApprovalProfileMBean extends BaseManagedBean implements Serializabl
         List<Integer> currentIds = new ArrayList<>();
 
         for (final String value : property.getEncodedValues()) {
-            RoleInformation roleInfo = (RoleInformation)DynamicUiProperty.getAsObject(value);
+            RoleInformation roleInfo = DynamicUiProperty.getAsObject(value, RoleInformation.class);
             currentIds.add(roleInfo.getIdentifier());
         }
 
