@@ -12,7 +12,8 @@
  *************************************************************************/
 package org.cesecore.util;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -28,6 +29,9 @@ import java.util.Collection;
 import java.util.HashSet;
 
 import org.apache.log4j.Logger;
+import org.cesecore.authentication.tokens.AlwaysAllowLocalAuthenticationToken;
+import org.cesecore.authentication.tokens.AuthenticationToken;
+import org.cesecore.authentication.tokens.UsernamePrincipal;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -553,6 +557,23 @@ public class LookAheadObjectInputStreamTest {
         } catch (SecurityException e) {
             //Good
             log.info("Succuessfully prevented deserialization of non-whitelisted class: " + e.getMessage());
+        } catch (Exception e) {
+            log.trace(e.getMessage(), e);
+            fail("Unexpected exception: " + e.getMessage());
+        }
+        log.trace("<" + Thread.currentThread().getStackTrace()[1].getMethodName());
+    }
+    
+    /** Test commonly serialized class combo */
+    @Test
+    public void testAuthenticationToken() throws Exception {
+        log.trace(">" + Thread.currentThread().getStackTrace()[1].getMethodName());
+        final byte[] serializedData = getEncoded(new AlwaysAllowLocalAuthenticationToken(new UsernamePrincipal("test")));
+        try (final LookAheadObjectInputStream laois = new LookAheadObjectInputStream(new ByteArrayInputStream(serializedData))) {
+            laois.setAcceptedClasses(Arrays.asList(AuthenticationToken.class, HashSet.class, UsernamePrincipal.class));
+            laois.setEnabledMaxObjects(false);
+            laois.setEnabledSubclassing(true, "org.cesecore");
+            assertEquals("test", ((AlwaysAllowLocalAuthenticationToken) laois.readObject()).getPrincipals().iterator().next().getName());
         } catch (Exception e) {
             log.trace(e.getMessage(), e);
             fail("Unexpected exception: " + e.getMessage());
