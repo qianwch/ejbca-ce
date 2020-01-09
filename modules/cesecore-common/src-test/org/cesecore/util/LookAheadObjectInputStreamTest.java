@@ -97,8 +97,9 @@ public class LookAheadObjectInputStreamTest {
     }
 
     private static class BadDog implements AnimalInterface {
-        private static final long serialVersionUID = 6L;
+        private static final long serialVersionUID = 7L;
         public Object object;
+        public GoodClass1 goodClass1 = new GoodClass1(123);
 
         public BadDog(final Object object) {
             this.object = object;
