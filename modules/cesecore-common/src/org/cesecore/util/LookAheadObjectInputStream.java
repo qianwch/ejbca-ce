@@ -239,6 +239,7 @@ public class LookAheadObjectInputStream extends ObjectInputStream {
         final Set<Class<? extends Serializable>> newAcceptedClassesDynamically = new HashSet<>();
         newAcceptedClassesDynamically.add((Class<? extends Serializable>) resolvedClassType);
         newAcceptedClassesDynamically.addAll(getRequiredClassesToSerialize(resolvedClassType));
+        newAcceptedClassesDynamically.removeAll(acceptedClasses);
         if (log.isTraceEnabled()) {
             log.trace("Dynamically white-listed these classes for deserialization: " + Arrays.toString(newAcceptedClassesDynamically.toArray()));
         }
