@@ -17,6 +17,8 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectStreamClass;
 import java.io.Serializable;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -43,6 +45,7 @@ public class LookAheadObjectInputStream extends ObjectInputStream {
 
     private static final Logger log = Logger.getLogger(LookAheadObjectInputStream.class);
     private Set<Class<? extends Serializable>> acceptedClasses = null;
+    private Set<Class<? extends Serializable>> acceptedClassesDynamically = null;
     
     private boolean enabledSubclassing = false;
     private boolean enabledInterfaceImplementations = false;
@@ -114,6 +117,7 @@ public class LookAheadObjectInputStream extends ObjectInputStream {
      */
     public void setAcceptedClasses(final Set<Class<? extends Serializable>> acceptedClasses) {
         this.acceptedClasses = acceptedClasses;
+        this.acceptedClassesDynamically = null;
     }
 
     /**
@@ -179,6 +183,9 @@ public class LookAheadObjectInputStream extends ObjectInputStream {
             if (acceptedClasses.contains(resolvedClassType)) {
                 return resolvedClass;
             }
+            if (acceptedClassesDynamically!=null && acceptedClassesDynamically.contains(resolvedClassType)) {
+                return resolvedClass;
+            }
             if (enabledSubclassing) {
                 final String resolvedClassName = resolvedClassType.getName();
                 if (log.isTraceEnabled()) {
@@ -195,6 +202,7 @@ public class LookAheadObjectInputStream extends ObjectInputStream {
                     Class<?> superclass = resolvedClassType.getSuperclass();
                     while (superclass != null) {
                         if (acceptedClasses.contains(superclass)) {
+                            whitelistImplementation(resolvedClassType);
                             return resolvedClass;
                         }
                         superclass = superclass.getSuperclass();
@@ -221,6 +229,7 @@ public class LookAheadObjectInputStream extends ObjectInputStream {
                         }
                         for (final Class<?> implementedInterface : superclass.getInterfaces()) {
                             if (acceptedClasses.contains(implementedInterface)) {
+                                whitelistImplementation(resolvedClassType);
                                 return resolvedClass;
                             }
                         }
@@ -236,6 +245,37 @@ public class LookAheadObjectInputStream extends ObjectInputStream {
         final Class<?> classType = c.isArray() ? c.getComponentType() : c;
         return classType.equals(String.class) || classType.isPrimitive() || Boolean.class.isAssignableFrom(classType) ||
                 Number.class.isAssignableFrom(classType) || Character.class.isAssignableFrom(classType);
+    }
+    
+    /** Add the provided class and all its dependencies needed for deserialization to this instance's accept class white list. */
+    @SuppressWarnings("unchecked")
+    private void whitelistImplementation(final Class<?> resolvedClassType) {
+        final Set<Class<? extends Serializable>> newAcceptedClassesDynamically = new HashSet<>();
+        newAcceptedClassesDynamically.add((Class<? extends Serializable>) resolvedClassType);
+        newAcceptedClassesDynamically.addAll(getRequiredClassesToSerialize(resolvedClassType));
+        if (log.isTraceEnabled()) {
+            log.trace("Dynamically white-listed these classes for deserialization: " + Arrays.toString(newAcceptedClassesDynamically.toArray()));
+        }
+        if (acceptedClassesDynamically==null) {
+            acceptedClassesDynamically = new HashSet<>();
+        }
+        acceptedClassesDynamically.addAll(newAcceptedClassesDynamically);
+    }
+
+    /** @return a Set of all classes declared as non-transient, non-static field in the class and its superclasses if such is defined */
+    @SuppressWarnings("unchecked")
+    public static Set<Class<? extends Serializable>> getRequiredClassesToSerialize(final Class<?> clazz) throws NoClassDefFoundError {
+        final Set<Class<? extends Serializable>> acceptedClasses = new HashSet<>();
+        for (final Field field : clazz.getDeclaredFields()) {
+            if (!Modifier.isStatic(field.getModifiers()) && !Modifier.isTransient(field.getModifiers())) {
+                acceptedClasses.add((Class<? extends Serializable>) field.getType());
+            }
+        }
+        final Class<?> superClass = clazz.getSuperclass();
+        if (superClass!=null) {
+            acceptedClasses.addAll(getRequiredClassesToSerialize(superClass));
+        }
+        return acceptedClasses;
     }
 
     /**
