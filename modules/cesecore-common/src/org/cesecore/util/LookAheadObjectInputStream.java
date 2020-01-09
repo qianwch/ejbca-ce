@@ -131,6 +131,7 @@ public class LookAheadObjectInputStream extends ObjectInputStream {
      */
     public void setAcceptedClasses(final Collection<Class<? extends Serializable>> acceptedClasses) {
         this.acceptedClasses = new HashSet<>(acceptedClasses);
+        this.acceptedClassesDynamically = null;
     }
 
     /**
