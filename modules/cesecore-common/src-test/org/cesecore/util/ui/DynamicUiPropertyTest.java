@@ -58,6 +58,7 @@ public class DynamicUiPropertyTest {
     public void testSetValue() throws PropertyValidationException {
         final RoleData anybody = new RoleData(new Role(null, "anybody"));
         DynamicUiProperty<RoleData> property = new DynamicUiProperty<>();
+        property.setType(RoleData.class);
         property.setValue(anybody);
         checkPropertyState(property, "setValue(something)");
         assertEquals(anybody, property.getValue());
