@@ -239,7 +239,9 @@ public class LookAheadObjectInputStream extends ObjectInputStream {
                 }
             }
         }
-        throw new SecurityException("Unauthorized deserialization attempt for type: " + desc);
+        final String msg = "Prevented unauthorized deserialization attempt for type '" + resolvedClassType.getName() + "': " + desc;
+        log.info(msg);
+        throw new SecurityException(msg);
     }
     
     public static boolean isClassAlwaysWhiteListed(final Class<?> c) {
