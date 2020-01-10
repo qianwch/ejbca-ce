@@ -21,13 +21,15 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Serializable;
 import java.io.StreamCorruptedException;
 import java.math.BigInteger;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -107,7 +109,7 @@ public class Ocsp extends ClientToolBox {
                                 try {
                                     is.mark(i);
                                     oi = new LookAheadObjectInputStream(is);
-                                    oi.setAcceptedClasses(Collections.singletonList(BigInteger.class));
+                                    oi.setAcceptedClasses(new HashSet<Class<? extends Serializable>>(Arrays.asList(Serializable.class)));
                                     oi.setEnabledMaxObjects(false);
                                 } catch (StreamCorruptedException e) {
                                     is.reset();

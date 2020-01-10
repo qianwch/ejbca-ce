@@ -51,6 +51,7 @@
     </path>
 	
     <target name="clean" description="Clean up this module">
+		<delete dir="${build-test.dir}" />
 		<delete dir="${build.dir}" />
     	<delete file="${mod.admin-gui.war}" />
     </target>
