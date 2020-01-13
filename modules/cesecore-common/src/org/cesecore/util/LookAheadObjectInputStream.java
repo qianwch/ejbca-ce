@@ -216,7 +216,7 @@ public class LookAheadObjectInputStream extends ObjectInputStream {
                         if (log.isTraceEnabled()) {
                             log.trace(superclass.getName() + " implements " +Arrays.toString(superclass.getInterfaces()));
                         }
-                        if (Arrays.asList(superclass.getInterfaces()).stream().anyMatch(implementedInterface -> acceptedClasses.contains(implementedInterface))) {
+                        if (Arrays.stream(superclass.getInterfaces()).anyMatch(implementedInterface -> acceptedClasses.contains(implementedInterface))) {
                             whitelistImplementation(resolvedClassType);
                             return resolvedClass;
                         }
