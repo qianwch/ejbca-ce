@@ -506,7 +506,7 @@ public class LookAheadObjectInputStreamTest {
      * Test deserializing interface implementations
      */
     @Test
-    public void testDeserializingInterfaceImplementationAllowed1() throws Exception {
+    public void testDeserializingInterfaceImplementationAllowedWithoutSubclassing() throws Exception {
         log.trace(">" + Thread.currentThread().getStackTrace()[1].getMethodName());
         final byte[] serializedData = getEncoded(new BadDog("regular String"));
         try (final LookAheadObjectInputStream laois = new LookAheadObjectInputStream(new ByteArrayInputStream(serializedData))) {
@@ -526,7 +526,7 @@ public class LookAheadObjectInputStreamTest {
      * Test deserializing interface implementations (when also subclassing is enabled)
      */
     @Test
-    public void testDeserializingInterfaceImplementationAllowed2() throws Exception {
+    public void testDeserializingInterfaceImplementationAllowedWithSubclassing() throws Exception {
         log.trace(">" + Thread.currentThread().getStackTrace()[1].getMethodName());
         final byte[] serializedData = getEncoded(new BadDog("regular String"));
         try (final LookAheadObjectInputStream laois = new LookAheadObjectInputStream(new ByteArrayInputStream(serializedData))) {
