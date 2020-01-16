@@ -127,16 +127,8 @@ public class ApprovalProfileMBean extends BaseManagedBean implements Serializabl
     @ManagedProperty(value = "#{approvalProfilesMBean}")
     private ApprovalProfilesMBean approvalProfilesMBean;
     
-    // Authentication check and audit log page access request
-    public void initialize(ComponentSystemEvent event) throws Exception {
-        // Invoke on initial request only
-        if (!FacesContext.getCurrentInstance().isPostback()) {
-            final HttpServletRequest request = (HttpServletRequest)FacesContext.getCurrentInstance().getExternalContext().getRequest();
-            getEjbcaWebBean().initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.APPROVALPROFILEVIEW.resource());
-            RequestHelper.setDefaultCharacterEncoding(request);
-        } else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.APPROVALPROFILEVIEW.resource())) {
-            throw new AuthorizationDeniedException("You are not authorized to view this page.");
-        }
+    public ApprovalProfileMBean() {
+        super(AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.APPROVALPROFILEVIEW.resource());
     }
     
     private int currentApprovalProfileId = -1;

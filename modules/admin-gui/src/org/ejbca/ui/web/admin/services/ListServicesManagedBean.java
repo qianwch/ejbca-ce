@@ -22,10 +22,8 @@ import javax.faces.application.Application;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.SessionScoped;
 import javax.faces.context.FacesContext;
-import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang.StringUtils;
-import org.cesecore.authorization.AuthorizationDeniedException;
 import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.core.model.services.ServiceConfiguration;
 import org.ejbca.core.model.services.ServiceExistsException;
@@ -50,18 +48,10 @@ public class ListServicesManagedBean extends BaseManagedBean {
 	private String selectedServiceName;
 	private String newServiceName = "";
 
-	public ListServicesManagedBean() { }
+	public ListServicesManagedBean() { 
+	    super(AccessRulesConstants.ROLE_ADMINISTRATOR, AccessRulesConstants.SERVICES_VIEW);
+	}
 	
-    public void initAccess() throws Exception {
-        // To check access 
-        if (!FacesContext.getCurrentInstance().isPostback()) {
-            final HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
-            getEjbcaWebBean().initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, AccessRulesConstants.SERVICES_VIEW);
-        } else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.ROLE_ADMINISTRATOR, AccessRulesConstants.SERVICES_VIEW)) {
-            throw new AuthorizationDeniedException("You are not authorized to view this page.");
-        }
-    }
-
 	public String getSelectedServiceName() {
 		return selectedServiceName;
 	}

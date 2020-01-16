@@ -78,15 +78,9 @@ public class RolesBean extends BaseManagedBean implements Serializable {
         reloadRolesAndNameSpaces();
         editReset();
     }
-
-    public void initialize(ComponentSystemEvent event) throws Exception {
-        // Invoke on initial request only
-        if (!FacesContext.getCurrentInstance().isPostback()) {
-            final HttpServletRequest req = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
-            getEjbcaWebBean().initialize(req, AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.VIEWROLES.resource());
-        } else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.VIEWROLES.resource())) {
-            throw new AuthorizationDeniedException("You are not authorized to view this page.");
-        }
+    
+    public RolesBean() {
+        super(AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.VIEWROLES.resource());
     }
     
     /** @return true when admin is authorized to view roles */

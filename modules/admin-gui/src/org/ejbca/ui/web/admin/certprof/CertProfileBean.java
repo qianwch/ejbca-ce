@@ -61,6 +61,7 @@ import org.cesecore.util.StringTools;
 import org.cesecore.util.ValidityDate;
 import org.ejbca.config.GlobalConfiguration;
 import org.ejbca.core.ejb.approval.ApprovalProfileSession;
+import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.cvc.AccessRightAuthTerm;
 import org.ejbca.ui.web.admin.BaseManagedBean;
 import org.ejbca.ui.web.jsf.configuration.EjbcaJSFHelper;
@@ -92,6 +93,10 @@ public class CertProfileBean extends BaseManagedBean implements Serializable {
     private ListDataModel<PKIDisclosureStatement> pdsListModel = null;
     private List<ApprovalRequestItem> approvalRequestItems = null;
 
+    public CertProfileBean( ) {
+        super(AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.CERTIFICATEPROFILEVIEW.resource());
+    }
+    
     /** Since this MBean is session scoped we need to reset all the values when needed. */
     private void reset() {
         currentCertProfileId = -1;

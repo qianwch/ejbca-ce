@@ -23,14 +23,12 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
-import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.authorization.control.StandardRules;
 import org.ejbca.config.GlobalConfiguration;
 import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.ui.web.admin.BaseManagedBean;
+import org.ejbca.ui.web.admin.attribute.AttributeMapping.SESSION;
 import org.ejbca.ui.web.admin.cainterface.CAInterfaceBean;
-
-import static org.ejbca.ui.web.admin.attribute.AttributeMapping.SESSION;
 
 /**
  * 
@@ -62,16 +60,9 @@ public class DisplayResultMBean extends BaseManagedBean implements Serializable 
     private String pkcs7link = StringUtils.EMPTY;
     private String caName;
     
-    public void initAccess() throws Exception {
-        // To check access 
-        if (!FacesContext.getCurrentInstance().isPostback()) {
-            final HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
-            getEjbcaWebBean().initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.CAVIEW.resource());
-        } else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.CAVIEW.resource())) {
-            throw new AuthorizationDeniedException("You are not authorized to view this page.");
-        }
-    }  
-    
+    public DisplayResultMBean() {
+        super(AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.CAVIEW.resource());
+    }
     
     @PostConstruct
     public void init() {

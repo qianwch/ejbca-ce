@@ -315,14 +315,8 @@ public class AccessRulesBean extends BaseManagedBean implements Serializable {
         reinitSelection();
     }
 
-    public void initialize(ComponentSystemEvent event) throws Exception {
-        // Invoke on initial request only
-        if (!FacesContext.getCurrentInstance().isPostback()) {
-            final HttpServletRequest req = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
-            getEjbcaWebBean().initialize(req, AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.VIEWROLES.resource());
-        } else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.VIEWROLES.resource())) {
-            throw new AuthorizationDeniedException("You are not authorized to view this page.");
-        }
+    public AccessRulesBean() {
+        super(AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.VIEWROLES.resource());
     }
     
     /** Perform POST-REDIRECT-GET when this method is invoked from a non-AJAX context. */

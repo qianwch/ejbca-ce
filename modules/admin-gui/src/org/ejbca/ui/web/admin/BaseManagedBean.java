@@ -13,7 +13,6 @@
 
 package org.ejbca.ui.web.admin;
 
-import java.beans.Beans;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Field;
@@ -22,26 +21,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
 import javax.faces.application.FacesMessage;
 import javax.faces.application.FacesMessage.Severity;
 import javax.faces.context.FacesContext;
 import javax.faces.context.Flash;
 import javax.faces.context.PartialViewContext;
 import javax.faces.model.SelectItem;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.cesecore.authentication.tokens.AuthenticationToken;
-import org.ejbca.ui.web.admin.cainterface.CAInterfaceBean;
-import org.ejbca.ui.web.admin.rainterface.RAInterfaceBean;
+import org.cesecore.authorization.AuthorizationDeniedException;
 import org.ejbca.ui.web.jsf.configuration.EjbcaJSFHelper;
 import org.ejbca.ui.web.jsf.configuration.EjbcaWebBean;
 import org.ejbca.util.SelectItemComparator;
-
-import static org.ejbca.ui.web.admin.attribute.AttributeMapping.SESSION;
 
 /**
  * Base EJBCA JSF Managed Bean, all managed beans of EJBCA should inherit this class
@@ -55,6 +50,31 @@ public abstract class BaseManagedBean implements Serializable {
 
     private static final Map<String, Map<String, Object>> publicConstantCache = new ConcurrentHashMap<>();
 
+    // Reference to AccessRulesConstants.* and StandardRules.*
+    private final String[] accessRulesConstantString;
+
+    /**
+     * Initializes authorization assuming authorization required to following resources.
+     * @param resources Reference to AccessRulesConstants.* and StandardRules.*
+     */
+    public BaseManagedBean(final String... resources) {
+        this.accessRulesConstantString = resources;
+    }
+    
+    /**
+     * Invoked on preRenderView
+     * @throws Exception 
+     */
+    public void authorizedResources() throws Exception {
+        // Invoke on initial request only
+        if (!FacesContext.getCurrentInstance().isPostback()) {
+            final HttpServletRequest request = (HttpServletRequest)FacesContext.getCurrentInstance().getExternalContext().getRequest();
+            getEjbcaWebBean().initialize(request, accessRulesConstantString);
+        } else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(accessRulesConstantString)) {
+            throw new AuthorizationDeniedException("You are not authorized to view this page.");
+        }
+    }
+    
     protected EjbcaWebBean getEjbcaWebBean() {
         return EjbcaJSFHelper.getBean().getEjbcaWebBean();
     }

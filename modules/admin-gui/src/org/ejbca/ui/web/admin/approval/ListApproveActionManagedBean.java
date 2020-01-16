@@ -72,25 +72,14 @@ public class ListApproveActionManagedBean extends BaseManagedBean {
     private int startIndex = 0;
     private int entriesPerPage;
 
-    // Authentication check and audit log page access request
-    public void initialize(ComponentSystemEvent event) throws Exception {
-        // Invoke on initial request only
-        if (!FacesContext.getCurrentInstance().isPostback()) {
-            final HttpServletRequest request = (HttpServletRequest)FacesContext.getCurrentInstance().getExternalContext().getRequest();
-            final boolean approveendentity = getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.REGULAR_APPROVEENDENTITY);
-            final boolean approvecaaction = getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.REGULAR_APPROVECAACTION);
-            
-            getEjbcaWebBean().initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR);
-            if (!approveendentity && !approvecaaction) {
-                throw new AuthorizationDeniedException("Not authorized to view approval pages");
-            }
-            entriesPerPage = getEjbcaWebBean().getEntriesPerPage();
-        } else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.ROLE_ADMINISTRATOR)) {
-            throw new AuthorizationDeniedException("You are not authorized to view this page.");
+	public ListApproveActionManagedBean() throws AuthorizationDeniedException {
+	    super(AccessRulesConstants.ROLE_ADMINISTRATOR);
+        final boolean approveendentity = getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.REGULAR_APPROVEENDENTITY);
+        final boolean approvecaaction = getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.REGULAR_APPROVECAACTION);
+        if (!approveendentity && !approvecaaction) {
+            throw new AuthorizationDeniedException("Not authorized to view approval pages");
         }
-    }
-	
-	public ListApproveActionManagedBean() {		      			 			 	 	
+        entriesPerPage = getEjbcaWebBean().getEntriesPerPage();
 		setSelectedStatus("" + ApprovalDataVO.STATUS_WAITINGFORAPPROVAL);
 		setSelectedTimeSpan(TIME_30MIN);
 		list();

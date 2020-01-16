@@ -265,16 +265,11 @@ public class EditCAsMBean extends BaseManagedBean implements Serializable {
         this.fileRecieveFileMakeRequest = fileRecieveFileMakeRequest;
     }
     
-    public void initAccess() throws Exception {
-        // To check access 
-        if (!FacesContext.getCurrentInstance().isPostback()) {
-            final HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
-            getEjbcaWebBean().initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.CAVIEW.resource());
-        } else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.CAVIEW.resource())) {
-            throw new AuthorizationDeniedException("You are not authorized to view this page.");
-        }
+    public EditCAsMBean() {
+        super(AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.CAVIEW.resource());
+        globalconfiguration = getEjbcaWebBean().getGlobalConfiguration();
     }
-       
+    
     @PostConstruct
     public void initialize() throws Exception {
         EditCaUtil.navigateToManageCaPageIfNotPostBack();
@@ -282,12 +277,6 @@ public class EditCAsMBean extends BaseManagedBean implements Serializable {
         final HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
         caBean = SessionBeans.getCaBean(request);
 
-        try {
-            globalconfiguration = getEjbcaWebBean().initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.CAVIEW.resource());
-        } catch (final Exception e) {
-            log.error("Error while initializing the global configuration!", e);
-            throw new FacesException("Error while initializing the global configuration!", e);
-        }
         cadatahandler = caBean.getCADataHandler();
         caidtonamemap = caSession.getCAIdToNameMap();
 

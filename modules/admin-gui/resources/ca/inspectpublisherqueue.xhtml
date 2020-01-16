@@ -26,11 +26,11 @@
 
 <body>
     <ui:composition template="/WEB-INF/include/template.xhtml">
+        <ui:param name="resourceBean" value="#{inspectPublisherQueue}" />
         <ui:define name="content">
             <f:metadata>
                 <f:viewParam name="publisherId"
                     value="#{inspectPublisherQueue.publisherId}" />
-            	<f:event type="preRenderView" listener="#{inspectPublisherQueue.initialize}"/>
             </f:metadata>
             <h1>
                 <h:outputText

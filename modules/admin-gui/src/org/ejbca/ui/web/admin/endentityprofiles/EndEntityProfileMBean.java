@@ -104,6 +104,10 @@ public class EndEntityProfileMBean extends BaseManagedBean implements Serializab
 
     private Part templateFileUpload;
 
+    public EndEntityProfileMBean() {
+        super(AccessRulesConstants.REGULAR_VIEWENDENTITYPROFILES);
+    }
+    
     public class NameComponentGuiWrapper implements Serializable {
         private static final long serialVersionUID = 1L;
 
@@ -256,12 +260,6 @@ public class EndEntityProfileMBean extends BaseManagedBean implements Serializab
 
     @PostConstruct
     private void postConstruct() {
-        final HttpServletRequest req = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
-        try {
-            ejbcaWebBean.initialize(req, AccessRulesConstants.REGULAR_VIEWENDENTITYPROFILES);
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
         if (profiledata == null) {
             final String profileIdParam = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap().get(PARAMETER_PROFILE_ID);
             if (!NumberUtils.isNumber(profileIdParam)) {

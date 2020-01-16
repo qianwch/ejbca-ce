@@ -20,8 +20,6 @@ import java.util.List;
 import javax.ejb.EJB;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.SessionScoped;
-import javax.faces.context.FacesContext;
-import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -57,14 +55,8 @@ public class ListPublishersManagedBean extends BaseManagedBean implements Serial
     private String selectedPublisherName;
     private String newPublisherName = StringUtils.EMPTY;
     
-    public void initAccess() throws Exception {
-        // To check access 
-        if (!FacesContext.getCurrentInstance().isPostback()) {
-            final HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
-            getEjbcaWebBean().initialize(request, AccessRulesConstants.REGULAR_VIEWPUBLISHER);
-        }  else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.REGULAR_VIEWPUBLISHER)) {
-            throw new AuthorizationDeniedException("You are not authorized to view this page.");
-        }
+    public ListPublishersManagedBean() {
+        super(AccessRulesConstants.REGULAR_VIEWPUBLISHER);
     }
     
     public String getSelectedPublisherName() {

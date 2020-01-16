@@ -97,14 +97,8 @@ public class RoleMembersBean extends BaseManagedBean implements Serializable {
         roleIdParam = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap().get("roleId");
     }
     
-    public void initialize(ComponentSystemEvent event) throws Exception {
-        // Invoke on initial request only
-        if (!FacesContext.getCurrentInstance().isPostback()) {
-            final HttpServletRequest req = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
-            getEjbcaWebBean().initialize(req, AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.VIEWROLES.resource());
-        } else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.VIEWROLES.resource())) {
-            throw new AuthorizationDeniedException("You are not authorized to view this page.");
-        }
+    public RoleMembersBean() {
+        super(AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.VIEWROLES.resource());
     }
     
     /** Redirect back to this page with the correct roleId for non-ajax requests */

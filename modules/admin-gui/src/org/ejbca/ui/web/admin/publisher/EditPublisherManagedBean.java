@@ -29,9 +29,7 @@ import javax.ejb.EJB;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ManagedProperty;
 import javax.faces.bean.ViewScoped;
-import javax.faces.context.FacesContext;
 import javax.faces.event.AjaxBehaviorEvent;
-import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -149,14 +147,8 @@ public class EditPublisherManagedBean extends BaseManagedBean implements Seriali
         initializePage();
     }
 
-    public void initAccess() throws Exception {
-        // To check access 
-        if (!FacesContext.getCurrentInstance().isPostback()) {
-            final HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
-            getEjbcaWebBean().initialize(request, AccessRulesConstants.REGULAR_VIEWPUBLISHER);
-        } else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.REGULAR_VIEWPUBLISHER)) {
-            throw new AuthorizationDeniedException("You are not authorized to view this page.");
-        }
+    public EditPublisherManagedBean() {
+        super(AccessRulesConstants.REGULAR_VIEWPUBLISHER);
     }
 
     public List<SortableSelectItem> getAvailablePublisherTypes() {

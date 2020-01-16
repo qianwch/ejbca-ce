@@ -61,16 +61,9 @@ public class CAActivationMBean extends BaseManagedBean implements Serializable {
 
 	private static final long serialVersionUID = -2660384552215596717L;
 	
-    // Authentication check and audit log page access request
-    public void initialize(ComponentSystemEvent event) throws Exception {
-        // Invoke on initial request only
-        if (!FacesContext.getCurrentInstance().isPostback()) {
-            final HttpServletRequest req = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
-            getEjbcaWebBean().initialize(req, AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.CAVIEW.resource());
-        } else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.CAVIEW.resource())) {
-            throw new AuthorizationDeniedException("You are not authorized to view this page.");
-        }
-    }
+	public CAActivationMBean() {
+	    super(AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.CAVIEW.resource());
+	}
 	
 	/** GUI representation of a CA for the activation view */
 	public class CaActivationGuiInfo {

@@ -84,14 +84,8 @@ public class AdminIndexMBean extends BaseManagedBean implements Serializable {
         }
     }
     
-    public void initialize(ComponentSystemEvent event) throws Exception {
-        // Invoke on initial request only
-        if (!FacesContext.getCurrentInstance().isPostback()) {
-            final HttpServletRequest req = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
-            getEjbcaWebBean().initialize(req, AccessRulesConstants.ROLE_ADMINISTRATOR);
-        } else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.ROLE_ADMINISTRATOR)) {
-            throw new AuthorizationDeniedException("You are not authorized to view this page.");
-        }
+    public AdminIndexMBean() {
+        super(AccessRulesConstants.ROLE_ADMINISTRATOR);
     }
 
     public List<CaCrlStatusInfo> getAuthorizedInternalCaCrlStatusInfos() throws Exception {

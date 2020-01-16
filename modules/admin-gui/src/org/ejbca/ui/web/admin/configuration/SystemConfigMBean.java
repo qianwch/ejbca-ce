@@ -325,22 +325,6 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
     private final RoleDataSessionLocal roleSession = getEjbcaWebBean().getEjb().getRoleDataSession();
 
 
-    // Authentication check and audit log page access request
-    public void initialize(ComponentSystemEvent event) throws Exception {
-        // Invoke on initial request only
-        if (!FacesContext.getCurrentInstance().isPostback()) {
-            final HttpServletRequest request = (HttpServletRequest)FacesContext.getCurrentInstance().getExternalContext().getRequest();
-            getEjbcaWebBean().initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR);
-            if (!authorizationSession.isAuthorized(getAdmin(), StandardRules.SYSTEMCONFIGURATION_VIEW.resource()) &&
-                    !authorizationSession.isAuthorized(getAdmin(), StandardRules.EKUCONFIGURATION_VIEW.resource()) &&
-                    !authorizationSession.isAuthorized(getAdmin(), StandardRules.CUSTOMCERTEXTENSIONCONFIGURATION_VIEW.resource())) {
-                    throw new AuthorizationDeniedException("Administrator was not authorized to any configuration.");
-                }
-        } else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.ROLE_ADMINISTRATOR)) {
-            throw new AuthorizationDeniedException("You are not authorized to view this page.");
-        }
-    }
-
     public void authorizeViewCt(ComponentSystemEvent event) throws Exception {
         if (!FacesContext.getCurrentInstance().isPostback()) {
             final HttpServletRequest request = (HttpServletRequest)FacesContext.getCurrentInstance().getExternalContext().getRequest();
@@ -359,8 +343,13 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
         }
     }
 
-    public SystemConfigMBean() {
-        super();
+    public SystemConfigMBean() throws AuthorizationDeniedException {
+        super(AccessRulesConstants.ROLE_ADMINISTRATOR);
+        if (!authorizationSession.isAuthorized(getAdmin(), StandardRules.SYSTEMCONFIGURATION_VIEW.resource()) &&
+                !authorizationSession.isAuthorized(getAdmin(), StandardRules.EKUCONFIGURATION_VIEW.resource()) &&
+                !authorizationSession.isAuthorized(getAdmin(), StandardRules.CUSTOMCERTEXTENSIONCONFIGURATION_VIEW.resource())) {
+            throw new AuthorizationDeniedException("Administrator was not authorized to any configuration.");
+        }
     }
 
     /**

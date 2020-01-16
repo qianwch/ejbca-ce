@@ -43,43 +43,32 @@ public class ViewCAInfoMBean extends BaseManagedBean implements Serializable {
     private int caId = 0;
 	private CAInfoView caInfo = null;
     
-
-    /**
-     * Method that initializes the bean.
-     *
-     * @throws Exception general exception.
-     */
-    public void initialize() throws Exception {
-        // Invoke on initial request only
-        if (!FacesContext.getCurrentInstance().isPostback()) {
-            
-            try {
-                final HttpServletRequest request = (HttpServletRequest)FacesContext.getCurrentInstance().getExternalContext().getRequest();
-                getEjbcaWebBean().initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR);
-                final CAInterfaceBean caBean = SessionBeans.getCaBean(request);
-                RequestHelper.setDefaultCharacterEncoding(request);
+	public ViewCAInfoMBean() throws Exception {
+	    super(AccessRulesConstants.ROLE_ADMINISTRATOR);
+        try {
+            final HttpServletRequest request = (HttpServletRequest)FacesContext.getCurrentInstance().getExternalContext().getRequest();
+            getEjbcaWebBean().initialize(request, AccessRulesConstants.ROLE_ADMINISTRATOR);
+            final CAInterfaceBean caBean = SessionBeans.getCaBean(request);
+            RequestHelper.setDefaultCharacterEncoding(request);
 
 
-                final String caIdParameter = request.getParameter(CA_PARAMETER);
-                if (caIdParameter != null) {
-                    try {
-                        caId = Integer.parseInt(caIdParameter);
-                    } catch (final NumberFormatException e) {
-                        addErrorMessage("YOUMUSTSPECIFYCAID");
-                    }
-                    
-                    caInfo = caBean.getCAInfo(caId);
-                    if (caInfo == null) {
-                        addErrorMessage("CADOESNTEXIST");  
-                    }
+            final String caIdParameter = request.getParameter(CA_PARAMETER);
+            if (caIdParameter != null) {
+                try {
+                    caId = Integer.parseInt(caIdParameter);
+                } catch (final NumberFormatException e) {
+                    addErrorMessage("YOUMUSTSPECIFYCAID");
                 }
-            } catch (final AuthorizationDeniedException e) {
-                addErrorMessage("NOTAUTHORIZEDTOVIEWCA");
+                
+                caInfo = caBean.getCAInfo(caId);
+                if (caInfo == null) {
+                    addErrorMessage("CADOESNTEXIST");  
+                }
             }
-        } else if (!getEjbcaWebBean().isAuthorizedNoLogSilent(AccessRulesConstants.ROLE_ADMINISTRATOR)) {
-            throw new AuthorizationDeniedException("You are not authorized to view this page.");
+        } catch (final AuthorizationDeniedException e) {
+            addErrorMessage("NOTAUTHORIZEDTOVIEWCA");
         }
-    }
+	}
 
     public CAInfoView getCaInfo() {
         return caInfo;

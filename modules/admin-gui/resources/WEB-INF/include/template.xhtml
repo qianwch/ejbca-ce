@@ -31,6 +31,9 @@
         * footer has no logo-icon
      --></ui:remove>
     <f:view encoding="UTF-8" contentType="text/html">
+        <f:metadata>
+            <f:event type="preRenderView" listener="#{resourceBean.authorizedResources}"/>
+        </f:metadata>
     <h:head dir="ltr">
         <meta charset="UTF-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
