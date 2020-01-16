@@ -53,8 +53,8 @@ public abstract class UpgradeableDataHashMap implements IUpgradeableData, Serial
      * Creates a new UpgradeableDataHashMap object.
      */
     public UpgradeableDataHashMap() {
-        data = new LinkedHashMap<Object, Object>();
-        data.put(VERSION, new Float(getLatestVersion()));
+        data = new LinkedHashMap<>();
+        data.put(VERSION, getLatestVersion());
     }
 
     /**
@@ -68,7 +68,7 @@ public abstract class UpgradeableDataHashMap implements IUpgradeableData, Serial
      */
     @Override
     public float getVersion() {
-        return ((Float) data.get(VERSION)).floatValue();
+        return (Float) data.get(VERSION);
     }
 
     /**
@@ -239,7 +239,7 @@ public abstract class UpgradeableDataHashMap implements IUpgradeableData, Serial
 
     /** Set the value for the specified key as a primitive (never null) boolean */
     protected void putBoolean(final String key, final boolean value) {
-        data.put(key, Boolean.valueOf(value));
+        data.put(key, value);
     }
 
     /**
@@ -258,6 +258,5 @@ public abstract class UpgradeableDataHashMap implements IUpgradeableData, Serial
         }
         return clonedData;
     }
-
 
 }

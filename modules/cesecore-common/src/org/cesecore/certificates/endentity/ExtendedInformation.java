@@ -181,8 +181,12 @@ public class ExtendedInformation extends UpgradeableDataHashMap implements Seria
      * @param certificateRequest a CSR in binary asn.1 format
      */
     public void setCertificateRequest(byte[] certificateRequest) {
+        if (certificateRequest == null) {
+            this.data.remove(CERTIFICATE_REQUEST);
+            return;
+        }
         // Store it in the database in base64 encoded format, without CSR headers or linebreaks (or null)
-        final String str = certificateRequest == null ? null : new String(Base64.encode(certificateRequest), StandardCharsets.UTF_8);
+        final String str = new String(Base64.encode(certificateRequest), StandardCharsets.UTF_8);
         data.put(CERTIFICATE_REQUEST, str);
     }
 
@@ -212,11 +216,10 @@ public class ExtendedInformation extends UpgradeableDataHashMap implements Seria
     /**
      * Set the number of remaining login attempts. -1 means unlimited.
      *
-     * @param remainingLoginAttempts
-     *            The number to set
+     * @param remainingLoginAttempts The number to set
      */
     public void setRemainingLoginAttempts(int remainingLoginAttempts) {
-        data.put(REMAININGLOGINATTEMPTS, Integer.valueOf(remainingLoginAttempts));
+        data.put(REMAININGLOGINATTEMPTS, remainingLoginAttempts);
     }
 
     /**
@@ -229,12 +232,23 @@ public class ExtendedInformation extends UpgradeableDataHashMap implements Seria
     /**
      * @return The certificate validity end time or null if not specified.
      */
+    public String getCertificateStartTime() {
+        return getCustomData(CUSTOM_STARTTIME);
+    }
+
+    /**
+     * Set the certificate validity end time to a user-defined value.
+     * @param value The certificate validity
+     */
+    public void setCertificateStartTime(final String value) {
+        setCustomData(CUSTOM_STARTTIME, value);
+    }
+
+    /**
+     * @return The certificate validity end time or null if not specified.
+     */
     public String getCertificateEndTime() {
-        final Object o = data.get(CUSTOMDATA + CUSTOM_ENDTIME);
-        if (o == null) {
-            return null;
-        }
-        return o.toString();
+        return getCustomData(CUSTOM_ENDTIME);
     }
 
     /**
@@ -242,17 +256,16 @@ public class ExtendedInformation extends UpgradeableDataHashMap implements Seria
      * @param value The certificate validity
      */
     public void setCertificateEndTime(final String value) {
-        data.put(CUSTOMDATA + CUSTOM_ENDTIME, value);
+        setCustomData(CUSTOM_ENDTIME, value);
     }
 
     /**
      * Set the number of maximum allowed failed login attempts. -1 means unlimited.
      *
-     * @param remainingLoginAttempts
-     *            The number to set
+     * @param maxLoginAttempts The number to set
      */
     public void setMaxLoginAttempts(int maxLoginAttempts) {
-        data.put(MAXFAILEDLOGINATTEMPTS, Integer.valueOf(maxLoginAttempts));
+        data.put(MAXFAILEDLOGINATTEMPTS, maxLoginAttempts);
     }
 
     /**
@@ -267,8 +280,7 @@ public class ExtendedInformation extends UpgradeableDataHashMap implements Seria
     }
 
     /**
-     * @param sn
-     *            the serial number to be used for the certificate
+     * @param sn the serial number to be used for the certificate
      */
     public void setCertificateSerialNumber(BigInteger sn) {
         if (sn == null) {
@@ -282,16 +294,15 @@ public class ExtendedInformation extends UpgradeableDataHashMap implements Seria
     /**
      * Returns the issuance revocation code configured on the end entity extended information.
      *
-     * @param data user data
      * @return issuance revocation code configured on the end entity extended information, a constant from RevokedCertInfo. Default
      *         RevokedCertInfo.NOT_REVOKED.
      */
     public int getIssuanceRevocationReason() {
         int ret = RevokedCertInfo.NOT_REVOKED;
-            final String revocationReason = getCustomData(ExtendedInformation.CUSTOM_REVOCATIONREASON);
-            if (revocationReason != null) {
-                ret = Integer.valueOf(revocationReason);
-            }
+        final String revocationReason = getCustomData(ExtendedInformation.CUSTOM_REVOCATIONREASON);
+        if (revocationReason != null) {
+            ret = Integer.valueOf(revocationReason);
+        }
         if (log.isDebugEnabled()) {
             log.debug("User issuance revocation reason is " + ret);
         }
@@ -330,7 +341,7 @@ public class ExtendedInformation extends UpgradeableDataHashMap implements Seria
         if (value == null || value.isEmpty()) {
             return null;
         }
-        return new ArrayList<String>(Arrays.asList(value.split(";")));
+        return new ArrayList<>(Arrays.asList(value.split(";")));
     }
 
     public void setNameConstraintsExcluded(List<String> encodedNames) {
@@ -344,7 +355,7 @@ public class ExtendedInformation extends UpgradeableDataHashMap implements Seria
     /** @return the subject DN exactly as requested (via WS ) */
     public String getRawSubjectDn() {
         final String value = (String) data.get(RAWSUBJECTDN);
-        if (value == null || value.isEmpty()) {
+        if (StringUtils.isEmpty(value)) {
             return null;
         }
         // It could/should B64 encoded to avoid XML baddies
@@ -353,6 +364,7 @@ public class ExtendedInformation extends UpgradeableDataHashMap implements Seria
 
     /**
      * Gets generic string data from the ExtendedInformation map.
+     * @return a string from the ExtendedInformation map or null.
      */
     public String getMapData(String key) {
         String ret = null;
@@ -373,17 +385,16 @@ public class ExtendedInformation extends UpgradeableDataHashMap implements Seria
     /**
      * Special method used to retrieve custom set userdata
      *
-     * @returns The data or null if no such data have been set for the user
+     * @return The data or null if no such data have been set for the user
      */
     public String getCustomData(String key) {
-        String retval = (String) data.get(CUSTOMDATA + key);
-        return retval;
+        return  (String) data.get(CUSTOMDATA + key);
     }
 
     /**
      * Sets extension data.
-     * @param customly defined key to store the data with
-     * @param the string representation of the data
+     * @param key defined key to store the data with
+     * @param value string representation of the data
      */
     public void setExtensionData(String key, String value) {
     	data.put(EXTENSIONDATA + key, value);
@@ -391,11 +402,10 @@ public class ExtendedInformation extends UpgradeableDataHashMap implements Seria
 
     /**
      * Special method used to retrieve custom extension data.
-     * @returns The data or null if no such data have been set for the user
+     * @return The data or null if no such data have been set for the user
      */
     public String getExtensionData(String key){
-    	String retval = (String) data.get(EXTENSIONDATA + key);
-    	return retval;
+    	return  (String) data.get(EXTENSIONDATA + key);
     }
 
     /**
@@ -417,10 +427,8 @@ public class ExtendedInformation extends UpgradeableDataHashMap implements Seria
     
     /**
      *
-     * @param customly
-     *            defined key to store the data with
-     * @param the
-     *            string representation of the data
+     * @param key defined key to store the data with
+     * @param value string representation of the data
      */
     public void setCustomData(String key, String value) {
         data.put(CUSTOMDATA + key, value);
@@ -448,7 +456,7 @@ public class ExtendedInformation extends UpgradeableDataHashMap implements Seria
     public void upgrade() {
         if (Float.compare(LATEST_VERSION, getVersion()) != 0) {
             // New version of the class, upgrade
-            String msg = intres.getLocalizedMessage("endentity.extendedinfoupgrade", new Float(getVersion()));
+            String msg = intres.getLocalizedMessage("endentity.extendedinfoupgrade", getVersion());
             log.info(msg);
 
             if (data.get(SUBJECTDIRATTRIBUTES) == null) {
@@ -520,7 +528,7 @@ public class ExtendedInformation extends UpgradeableDataHashMap implements Seria
 					}
     			}
         	}
-            data.put(VERSION,  Float.valueOf(LATEST_VERSION));
+            data.put(VERSION, LATEST_VERSION);
         }
     }
 
@@ -535,7 +543,7 @@ public class ExtendedInformation extends UpgradeableDataHashMap implements Seria
      * @return String containing the classpath.
      */
     public int getType() {
-        return ((Integer) data.get(TYPE)).intValue();
+        return (Integer) data.get(TYPE);
     }
 
     /**
@@ -543,7 +551,7 @@ public class ExtendedInformation extends UpgradeableDataHashMap implements Seria
      *
      * Inheriting class should call 'setClassPath(this) in it's constructor.
      *
-     * @param object
+     * @param type
      */
     private void setType(int type) {
         data.put(TYPE, type);
