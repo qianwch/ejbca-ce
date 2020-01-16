@@ -111,7 +111,7 @@ public class AcmeOrderData extends ProtectedData implements Serializable {
     @Transient
     @SuppressWarnings("unchecked")
     public LinkedHashMap<Object,Object> getDataMap() {
-        try (final SecureXMLDecoder decoder = new SecureXMLDecoder(new ByteArrayInputStream(getRawData().getBytes(StandardCharsets.UTF_8)));) {
+        try (final SecureXMLDecoder decoder = new SecureXMLDecoder(new ByteArrayInputStream(getRawData().getBytes(StandardCharsets.UTF_8)))) {
             // Handle Base64 encoded string values
             return new Base64GetHashMap((Map<?,?>)decoder.readObject());
         } catch (IOException e) {
@@ -127,7 +127,7 @@ public class AcmeOrderData extends ProtectedData implements Serializable {
     public void setDataMap(final LinkedHashMap<Object,Object> dataMap) {
         // We must base64 encode string for UTF safety
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try (final XMLEncoder encoder = new XMLEncoder(baos);) {
+        try (final XMLEncoder encoder = new XMLEncoder(baos)) {
             encoder.writeObject(new Base64PutHashMap(dataMap));
         }
         setRawData(new String(baos.toByteArray(), StandardCharsets.UTF_8));

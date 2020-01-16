@@ -53,8 +53,8 @@ public abstract class UpgradeableDataHashMap implements IUpgradeableData, Serial
      * Creates a new UpgradeableDataHashMap object.
      */
     public UpgradeableDataHashMap() {
-        data = new LinkedHashMap<Object, Object>();
-        data.put(VERSION, new Float(getLatestVersion()));
+        data = new LinkedHashMap<>();
+        data.put(VERSION, getLatestVersion());
     }
 
     /**
@@ -68,7 +68,7 @@ public abstract class UpgradeableDataHashMap implements IUpgradeableData, Serial
      */
     @Override
     public float getVersion() {
-        return ((Float) data.get(VERSION)).floatValue();
+        return (Float) data.get(VERSION);
     }
 
     /**
@@ -137,7 +137,7 @@ public abstract class UpgradeableDataHashMap implements IUpgradeableData, Serial
 	 * @return Map<Object, Object> with difference
 	 */
 	public static Map<Object, Object> diffMaps(Map<Object, Object> oldmap, Map<Object, Object> newmap) {
-		Map<Object, Object> result = new LinkedHashMap<Object, Object>();
+		Map<Object, Object> result = new LinkedHashMap<>();
     	for (Object key : oldmap.keySet()) {
 			if (newmap.containsKey(key)) {
 				// Check if the value is the same
@@ -232,7 +232,7 @@ public abstract class UpgradeableDataHashMap implements IUpgradeableData, Serial
 
     /** Set the value for the specified key as a primitive (never null) boolean */
     protected void putBoolean(final String key, final boolean value) {
-        data.put(key, Boolean.valueOf(value));
+        data.put(key, value);
     }
 
     /**
