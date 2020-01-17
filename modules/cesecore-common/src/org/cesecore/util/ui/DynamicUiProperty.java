@@ -22,6 +22,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -762,18 +763,18 @@ public class DynamicUiProperty<T extends Serializable> implements Serializable, 
     }
 
     private static <T extends Serializable> T getAsObject(final byte[] bytes, Class<T> type) {
-        try (final LookAheadObjectInputStream laois = new LookAheadObjectInputStream(new ByteArrayInputStream(bytes))) {
-            laois.setAcceptedClasses(Arrays.asList(type, LinkedHashMap.class, HashMap.class, HashSet.class, DynamicUiPropertyCallback.class, 
+        try (final LookAheadObjectInputStream lookAheadObjectInputStream = new LookAheadObjectInputStream(new ByteArrayInputStream(bytes))) {
+            lookAheadObjectInputStream.setAcceptedClasses(Arrays.asList(type, LinkedHashMap.class, HashMap.class, HashSet.class, DynamicUiPropertyCallback.class, 
                   AccessMatchType.class, UrlString.class, MultiLineString.class, String.class,
                   PositiveIntegerValidator.class, RadioButton.class, ArrayList.class, Enum.class, 
-                  Arrays.asList().getClass().asSubclass(Serializable.class), 
+                  Collections.emptyList().getClass().asSubclass(Serializable.class), 
                   Class.forName("org.cesecore.roles.RoleInformation").asSubclass(Serializable.class),
                   Class.forName("org.cesecore.roles.RoleData").asSubclass(Serializable.class),
                   Class.forName("org.cesecore.authorization.user.AccessUserAspectData").asSubclass(Serializable.class)));
-            laois.setEnabledMaxObjects(false);
-            laois.setEnabledSubclassing(false);
-            laois.setEnabledInterfaceImplementations(false);
-            return type.cast(laois.readObject());
+            lookAheadObjectInputStream.setEnabledMaxObjects(false);
+            lookAheadObjectInputStream.setEnabledSubclassing(false);
+            lookAheadObjectInputStream.setEnabledInterfaceImplementations(false);
+            return type.cast(lookAheadObjectInputStream.readObject());
         } catch (IOException | ClassNotFoundException e) {
             throw new IllegalStateException(e);
         }
