@@ -16,7 +16,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
@@ -30,11 +30,13 @@ import org.junit.Test;
  */
 public class DynamicUiPropertyTest {
 
+    final static private String roleName = "anybody";
+    
     @Test
     public void testEncodingAndDecodingOfComplexType() throws PropertyValidationException {
-        RoleData anybody = new RoleData(new Role(null, "anybody"));
+        RoleData anybody = new RoleData(new Role(null, roleName));
         DynamicUiProperty<RoleData> roleProperty = new DynamicUiProperty<>("test",
-                anybody, new HashSet<>(Arrays.asList(anybody)));
+                anybody, new HashSet<>(Collections.singletonList(anybody)));
         roleProperty.setHasMultipleValues(true);
         List<String> encodedValues = roleProperty.getEncodedValues();  
         DynamicUiProperty<RoleData> rolePropertyCopy = new DynamicUiProperty<>("test",
@@ -46,7 +48,7 @@ public class DynamicUiPropertyTest {
 
     @Test
     public void testConstructors() {
-        final RoleData anybody = new RoleData(new Role(null, "anybody"));
+        final RoleData anybody = new RoleData(new Role(null, roleName));
         DynamicUiProperty<RoleData> property = new DynamicUiProperty<>("someproperty", anybody);
         checkPropertyState(property, "constructor with default value");
 
@@ -56,7 +58,7 @@ public class DynamicUiPropertyTest {
 
     @Test
     public void testSetValue() throws PropertyValidationException {
-        final RoleData anybody = new RoleData(new Role(null, "anybody"));
+        final RoleData anybody = new RoleData(new Role(null, roleName));
         DynamicUiProperty<RoleData> property = new DynamicUiProperty<>();
         property.setType(RoleData.class);
         property.setValue(anybody);
