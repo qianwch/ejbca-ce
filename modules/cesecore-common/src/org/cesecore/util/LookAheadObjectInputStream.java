@@ -277,7 +277,9 @@ public class LookAheadObjectInputStream extends ObjectInputStream {
         for (final Field field : clazz.getDeclaredFields()) {
             if (!Modifier.isStatic(field.getModifiers()) && !Modifier.isTransient(field.getModifiers())) {
                 Class<?> type = field.getType().isArray() ? field.getType().getComponentType() : field.getType();
-                acceptedClasses.add((Class<? extends Serializable>) type);
+                if (!Object.class.equals(type)) {
+                    acceptedClasses.add((Class<? extends Serializable>) type);
+                }
                 if (field.getGenericType() instanceof ParameterizedType &&
                         (Collection.class.isAssignableFrom(field.getType()) || Map.class.isAssignableFrom(field.getType()))) {
                     Type[] actualTypeArguments = ((ParameterizedType) field.getGenericType()).getActualTypeArguments();
