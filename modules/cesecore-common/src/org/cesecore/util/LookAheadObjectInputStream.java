@@ -19,10 +19,13 @@ import java.io.ObjectStreamClass;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -185,6 +188,7 @@ public class LookAheadObjectInputStream extends ObjectInputStream {
                 return resolvedClass;
             }
             if (acceptedClassesDynamically!=null && acceptedClassesDynamically.contains(resolvedClassType)) {
+                whitelistImplementation(resolvedClassType);
                 return resolvedClass;
             }
             if (enabledSubclassing) {
@@ -258,7 +262,20 @@ public class LookAheadObjectInputStream extends ObjectInputStream {
         final Set<Class<? extends Serializable>> acceptedClasses = new HashSet<>();
         for (final Field field : clazz.getDeclaredFields()) {
             if (!Modifier.isStatic(field.getModifiers()) && !Modifier.isTransient(field.getModifiers())) {
-                acceptedClasses.add((Class<? extends Serializable>) field.getType());
+                Class<?> type = field.getType().isArray() ? field.getType().getComponentType() : field.getType();
+                acceptedClasses.add((Class<? extends Serializable>) type);
+                if (field.getGenericType() instanceof ParameterizedType &&
+                        (Collection.class.isAssignableFrom(field.getType()) || Map.class.isAssignableFrom(field.getType()))) {
+                    Type[] actualTypeArguments = ((ParameterizedType) field.getGenericType()).getActualTypeArguments();
+                    for (Type actualType : actualTypeArguments) {
+                        if (actualType instanceof ParameterizedType) {
+                            actualType = ((ParameterizedType) actualType).getRawType();
+                        }
+                        if (actualType instanceof Serializable && !Object.class.equals(actualType)) {
+                            acceptedClasses.add((Class<? extends Serializable>) actualType);
+                        }
+                    }
+                }
             }
         }
         final Class<?> superClass = clazz.getSuperclass();
