@@ -60,7 +60,7 @@ public class CertFetchAndVerify {
 	 */
 	static private class MyDataSource implements DataSource {
 		final private HttpURLConnection connection;
-		MyDataSource(URL url ) throws IOException, NoData {
+		MyDataSource(URL url) throws IOException, NoData {
 			this.connection = (HttpURLConnection)url.openConnection();
 			this.connection.connect();
 			final int responseCode = this.connection.getResponseCode();
@@ -118,6 +118,7 @@ public class CertFetchAndVerify {
 				theURL = "http://localhost:8080/certificates/search.cgi"; // Fallback, like if we run tests on a stand-alone VA
 			}
 		}
+		log.debug("theURL is [" + theURL + "]");
 		return theURL;
 	}
 	
