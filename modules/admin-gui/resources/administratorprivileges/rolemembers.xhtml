@@ -96,6 +96,8 @@
                                 <h:inputText id="tokenMatchValue" value="#{roleMembersBean.tokenMatchValue}" rendered="#{roleMembersBean.renderTokenMatchValueInput}"/>
                             </h:panelGroup>
                         </f:facet>
+                        <h:outputText value="#{roleMember.tokenMatchValue}"/>
+<ui:remove>
                         <h:outputText rendered="#{!roleMembersBean.isRenderCertificateLink(roleMember)}" value="#{roleMember.tokenMatchValue}"/>
                         <h:outputLink rendered="#{roleMembersBean.isRenderCertificateLink(roleMember)}"
                             value="#{facesContext.externalContext.context.contextPath}/ra/listendentities.jsp">
@@ -104,6 +106,7 @@
                             <f:param name="textfieldserialnumber" value="#{roleMember.tokenMatchValue}"/>
                             <h:outputText value="#{roleMember.tokenMatchValue}"/>
                         </h:outputLink>
+</ui:remove>
                     </h:column>
                     <h:column>
                         <f:facet name="header">
