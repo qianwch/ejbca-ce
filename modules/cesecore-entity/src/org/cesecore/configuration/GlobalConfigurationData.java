@@ -105,6 +105,7 @@ public class GlobalConfigurationData extends ProtectedData implements Serializab
 	    try (final LookAheadObjectInputStream laois = new LookAheadObjectInputStream(new ByteArrayInputStream(getDataUnsafe()));) {
             laois.setEnabledMaxObjects(false);
             laois.setAcceptedClasses(acceptedClassesHashSet);
+            laois.setEnabledSubclassing(true, "org.cesecore");
             return (Serializable) laois.readObject();
         } catch (IOException e) {
             log.error("Failed to load Global Configuration as byte[].", e);
