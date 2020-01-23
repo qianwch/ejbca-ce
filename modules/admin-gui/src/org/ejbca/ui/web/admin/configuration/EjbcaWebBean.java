@@ -992,7 +992,7 @@ public class EjbcaWebBean implements Serializable {
         if (!isHelpEnabled()) {
             return "";
         }
-        return "[<a href=\"" + getHelpBaseURI() + lastPart + "\" target=\"" + GlobalConfiguration.DOCWINDOW + "\" title=\""
+        return "[<a href=\"" + getHelpBaseURI() + lastPart + "\" target=\"" + GlobalConfiguration.DOCWINDOW + "\" rel=\"noopener noreferer\" title=\""
                 + getText("OPENHELPSECTION") + "\" >?</a>]";
     }
 
@@ -1000,7 +1000,7 @@ public class EjbcaWebBean implements Serializable {
         if (!isHelpEnabled()) {
             return "";
         }
-        return "[<a href=\"" + linkPart + "\" target=\"" + GlobalConfiguration.DOCWINDOW + "\" title=\"" + getText("OPENHELPSECTION") + "\" >?</a>]";
+        return "[<a href=\"" + linkPart + "\" target=\"" + GlobalConfiguration.DOCWINDOW + "\" rel=\"noopener noreferer\" title=\"" + getText("OPENHELPSECTION") + "\" >?</a>]";
     }
 
     public String[] getCertSernoAndIssuerdn(String certdata) {

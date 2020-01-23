@@ -125,7 +125,7 @@ function viewcert(link){
 		style="font-size: 0.7em;">
 		<h:column>
 			<h:outputText value="#{link.preDescription}"/>
-			<h:outputLink value="#{link.URI}" target="Viewinfo" onclick="#{approvalView.viewApproverCertLink}">
+			<h:outputLink value="#{link.URI}" target="Viewinfo" rel="noopener noreferer" onclick="#{approvalView.viewApproverCertLink}">
 				<h:outputText value="#{link.description}"/>
 			</h:outputLink>
 			<h:outputText value="#{link.postDescription}"/>
@@ -154,7 +154,7 @@ function viewcert(link){
 	      <f:facet name="header">
 	        <h:outputText value="#{web.text.ADMINISTRATOR}"/>
 	      </f:facet>
-	          <h:outputLink value="" target="Viewinfo" onclick="#{approvalView.viewApproverCertLink}">
+	          <h:outputLink value="" target="Viewinfo" rel="noopener noreferer" onclick="#{approvalView.viewApproverCertLink}">
 	            <h:outputText  value="#{approvalView.approvalAdmin}"/>            
 	          </h:outputLink>         
 	    </h:column>

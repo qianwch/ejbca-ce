@@ -683,7 +683,7 @@ org.cesecore.authorization.AuthorizationDeniedException
                  action="#{systemConfigMBean.ctLogManager.addCtLog}" 
                  rendered="#{systemConfigMBean.allowedToEditSystemConfiguration}"/>
         </h:panelGrid>
-        <h:outputLink value="https://www.certificate-transparency.org/known-logs" target="_blank" styleClass="tableFooter">
+        <h:outputLink value="https://www.certificate-transparency.org/known-logs" target="_blank" rel="noopener noreferer" styleClass="tableFooter">
         	<h:outputText value="#{web.text.CTLOGCONFIGURATION_KNOWN_LOGS}"/>
         </h:outputLink>
         <div class="section-label">
