@@ -1413,11 +1413,11 @@ public class EnrollMakeNewRequestBean implements Serializable {
      */
     public void setSelectedEndEntityProfile(final String selectedEndEntityProfile) {
         if (!StringUtils.equals(selectedEndEntityProfile, this.selectedEndEntityProfile)) {
+            this.selectedEndEntityProfile = selectedEndEntityProfile;
             // When ever the end entity profile changes this affects available request fields
             resetRequestInfo();
             setProfileDefaults();
         }
-        this.selectedEndEntityProfile = selectedEndEntityProfile;
     }
 
     /**
