@@ -38,6 +38,8 @@ import org.junit.Test;
 
 /**
  * Testing of CrlStoreServlet
+ * <br/>
+ * This test requires for configuration <b>crlstore.properties#crlstore.enabled=true</b>
  * 
  * @version $Id$
  * 

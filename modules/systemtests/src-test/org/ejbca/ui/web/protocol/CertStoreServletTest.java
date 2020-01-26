@@ -51,7 +51,9 @@ import static org.junit.Assert.assertTrue;
 
 
 /**
- * Testing of CertStoreServlet
+ * Testing of CertStoreServlet.
+ * <br/>
+ * This test requires for configuration <b>certstore.properties#certstore.enabled=true</b>
  * 
  * @version $Id$
  * 
@@ -73,8 +75,7 @@ public class CertStoreServletTest extends CaTestCase {
     public void tearDown() throws Exception {
         super.tearDown();
     }
-    
-    
+
     @Test
     public void testIt() throws Exception {
         final CAInHierarchy ca1 = new CAInHierarchy("root", this);
