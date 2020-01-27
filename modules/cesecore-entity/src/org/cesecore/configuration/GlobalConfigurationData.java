@@ -22,8 +22,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Properties;
 
 import javax.persistence.Entity;
 import javax.persistence.PostLoad;
@@ -59,9 +61,23 @@ public class GlobalConfigurationData extends ProtectedData implements Serializab
 
 	private static final long serialVersionUID = 1L;
 	private static final Logger log = Logger.getLogger(GlobalConfigurationData.class);
-	private static final HashSet<Class<? extends Serializable>> acceptedClassesHashSet = new HashSet<Class<? extends Serializable>>(Arrays.asList(LinkedHashMap.class, Base64GetHashMap.class, 
-            GoogleCtPolicy.class, OcspKeyBinding.ResponderIdType.class, CTLogInfo.class, LinkedHashSet.class, HashSet.class, HashMap.class, BasicCertificateExtension.class, CertificateExtension.class, 
-            ArrayList.class, java.lang.Enum.class, java.util.Properties.class, java.util.Hashtable.class, RaStyleInfo.class, RaCssInfo.class));
+	private static final HashSet<Class<? extends Serializable>> ACCEPTED_SERIALIZATION_CLASSES_SET = new HashSet<>(Arrays.asList(
+	        ArrayList.class,
+	        Base64GetHashMap.class,
+	        BasicCertificateExtension.class, 
+            CertificateExtension.class,
+	        CTLogInfo.class,
+	        Enum.class,
+	        GoogleCtPolicy.class,
+	        HashMap.class,
+	        HashSet.class,
+	        Hashtable.class,
+	        LinkedHashMap.class,
+	        LinkedHashSet.class,
+	        OcspKeyBinding.ResponderIdType.class, 
+            Properties.class, 
+            RaCssInfo.class, 
+            RaStyleInfo.class));
 	
 	/** Unique ID defined by respective configuration object, such as 
 	 * @link GlobalCesecoreConfiguration#CESECORE_CONFIGURATION_ID 
@@ -74,8 +90,8 @@ public class GlobalConfigurationData extends ProtectedData implements Serializab
 	/**
 	 * Entity holding data of admin's configuration.
 	 * Create by sending in the id and string representation of global configuration
-	 * @param id the unique id of global configuration.
-	 * @param globalconfiguration is the serialized string representation of the global configuration.
+	 * @param configurationId the unique id of global configuration.
+	 * @param configuration is the serialized string representation of the global configuration.
 	 */
 	public GlobalConfigurationData(String configurationId, ConfigurationBase configuration) {
 		setConfigurationId(configurationId);
@@ -105,7 +121,7 @@ public class GlobalConfigurationData extends ProtectedData implements Serializab
 	public Serializable getObjectUnsafe() {
 	    try (final LookAheadObjectInputStream laois = new LookAheadObjectInputStream(new ByteArrayInputStream(getDataUnsafe()));) {
             laois.setEnabledMaxObjects(false);
-            laois.setAcceptedClasses(acceptedClassesHashSet);
+            laois.setAcceptedClasses(/*acceptedClassesHashSet*/ACCEPTED_SERIALIZATION_CLASSES_SET);
             laois.setEnabledSubclassing(true, "org.cesecore");
             return (Serializable) laois.readObject();
         } catch (IOException e) {
@@ -202,5 +218,4 @@ public class GlobalConfigurationData extends ProtectedData implements Serializab
     //
     // End Database integrity protection methods
     //
-
 }
