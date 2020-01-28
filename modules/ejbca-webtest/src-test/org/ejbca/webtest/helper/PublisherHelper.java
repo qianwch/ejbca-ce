@@ -54,6 +54,10 @@ public class PublisherHelper extends BaseHelper {
         static final By AVAILABLE_PUBLISHERS_LABEL = By.id("selectPublisher:multigrouppublisherpage:availablepublisherslabel");
         static final By PUBLISHER_GROUPS_TEXT_AREA = By.id("selectPublisher:multigrouppublisherpage:publishergroupstextarea");
         static final By AVAILABLE_PUBLISHERS = By.id("selectPublisher:multigrouppublisherpage:availablepublishers");
+
+        static final By getDataSourceInputText() {
+            return By.xpath("//input[starts-with(@name,'selectPublisher:custompublisherpage:')]");
+        }
     } 
     
     public PublisherHelper(WebDriver webDriver) {
@@ -77,6 +81,10 @@ public class PublisherHelper extends BaseHelper {
     public void renamePublisher(final String renamePublisherName) {
         fillInput(Page.INPUT_PUBLISHER_NAME, renamePublisherName);
         clickLink(Page.BUTTON_RENAME_PUBLISHER);
+    }
+    
+    public void setDataSource(final String dataSource) {
+        fillInput(Page.getDataSourceInputText(), dataSource);
     }
 
     /**

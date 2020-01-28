@@ -49,6 +49,10 @@ public class EcaQa33_PublishersManagement extends WebTestBase {
             PUBLISHERS.put("RENAME_PUBLISHER_NAME", "NewPublisher");
         }
         static final String PUBLISHER_DELETE_MESSAGE = "Are you sure you want to delete this?";
+        static final String BAD_DATA_SOURCE_ERROR = "Invalid data source!";
+        static final String BAD_SERVER = "ldap://0.0.0.0:4001";
+        static final String GOOD_SERVER = "java://0.0.0.0:4001";
+        static final String ENTERPRISE_VA_TYPE = "1-org.ejbca.va.publisher.EnterpriseValidationAuthorityPublisher";
     }
     
     @BeforeClass
@@ -107,4 +111,27 @@ public class EcaQa33_PublishersManagement extends WebTestBase {
         publisherHelper.cancelEditPublisher();
         publisherHelper.assertBackToListPublisherPage();
     }
+    
+    @Test
+    public void stepF_invalidVaPublisherDataSource() {
+        publisherHelper.openPage(getAdminWebUrl());
+        publisherHelper.selectPublisherFromList(TestData.PUBLISHERS.get("PUBLISHER_NAME"));
+        publisherHelper.editPublisher();
+        publisherHelper.setPublisherType(TestData.ENTERPRISE_VA_TYPE);
+        publisherHelper.setDataSource(TestData.BAD_SERVER);
+        publisherHelper.save();
+        publisherHelper.assertHasErrorMessage(TestData.BAD_DATA_SOURCE_ERROR);
+    }
+    
+    @Test
+    public void stepF_validVaPublisherDataSource() {
+        publisherHelper.openPage(getAdminWebUrl());
+        publisherHelper.selectPublisherFromList(TestData.PUBLISHERS.get("PUBLISHER_NAME"));
+        publisherHelper.editPublisher();
+        publisherHelper.setPublisherType(TestData.ENTERPRISE_VA_TYPE);
+        publisherHelper.setDataSource(TestData.GOOD_SERVER);
+        publisherHelper.save();
+        publisherHelper.assertBackToListPublisherPage();
+    }
+    
 }
