@@ -121,7 +121,7 @@ public class GlobalConfigurationData extends ProtectedData implements Serializab
 	public Serializable getObjectUnsafe() {
 	    try (final LookAheadObjectInputStream laois = new LookAheadObjectInputStream(new ByteArrayInputStream(getDataUnsafe()));) {
             laois.setEnabledMaxObjects(false);
-            laois.setAcceptedClasses(/*acceptedClassesHashSet*/ACCEPTED_SERIALIZATION_CLASSES_SET);
+            laois.setAcceptedClasses(ACCEPTED_SERIALIZATION_CLASSES_SET);
             laois.setEnabledSubclassing(true, "org.cesecore");
             return (Serializable) laois.readObject();
         } catch (IOException e) {
