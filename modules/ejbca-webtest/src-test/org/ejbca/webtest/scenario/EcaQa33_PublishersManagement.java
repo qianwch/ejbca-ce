@@ -52,6 +52,7 @@ public class EcaQa33_PublishersManagement extends WebTestBase {
         static final String BAD_DATA_SOURCE_ERROR = "Invalid data source!";
         static final String BAD_SERVER = "ldap://0.0.0.0:4001";
         static final String GOOD_SERVER = "java://0.0.0.0:4001";
+        static final String MALLFORMED_SERVER = "/java://0.0.0.0:8080";
         static final String ENTERPRISE_VA_TYPE = "1-org.ejbca.va.publisher.EnterpriseValidationAuthorityPublisher";
     }
     
@@ -114,6 +115,17 @@ public class EcaQa33_PublishersManagement extends WebTestBase {
     
     @Test
     public void stepF_invalidVaPublisherDataSource() {
+        publisherHelper.openPage(getAdminWebUrl());
+        publisherHelper.selectPublisherFromList(TestData.PUBLISHERS.get("PUBLISHER_NAME"));
+        publisherHelper.editPublisher();
+        publisherHelper.setPublisherType(TestData.ENTERPRISE_VA_TYPE);
+        publisherHelper.setDataSource(TestData.MALLFORMED_SERVER);
+        publisherHelper.save();
+        publisherHelper.assertHasErrorMessage(TestData.BAD_DATA_SOURCE_ERROR);
+    }
+    
+    @Test
+    public void stepF_mallformedVaPublisherDataSource() {
         publisherHelper.openPage(getAdminWebUrl());
         publisherHelper.selectPublisherFromList(TestData.PUBLISHERS.get("PUBLISHER_NAME"));
         publisherHelper.editPublisher();
