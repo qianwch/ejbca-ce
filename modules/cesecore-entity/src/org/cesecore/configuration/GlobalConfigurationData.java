@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.persistence.Entity;
@@ -47,7 +48,6 @@ import org.cesecore.dbprotection.ProtectionStringBuilder;
 import org.cesecore.keybind.impl.OcspKeyBinding;
 import org.cesecore.util.Base64GetHashMap;
 import org.cesecore.util.CertTools;
-import org.cesecore.util.JBossUnmarshaller;
 import org.cesecore.util.LookAheadObjectInputStream;
 
 /**
@@ -156,11 +156,16 @@ public class GlobalConfigurationData extends ProtectedData implements Serializab
 	@SuppressWarnings("rawtypes")
     @Transient
 	public HashMap getData() {
-		return JBossUnmarshaller.extractLinkedHashMap(getObjectUnsafe());
+        final Serializable map = getObjectUnsafe();
+        if (map instanceof LinkedHashMap<?, ?>) {
+            return (LinkedHashMap<?, ?>) map;
+        } else {
+            return new LinkedHashMap<>((Map<?, ?>) map);
+        }
 	}
 	
 	@SuppressWarnings("rawtypes")
-    private void setData(HashMap data) { setObjectUnsafe(JBossUnmarshaller.serializeObject(data)); }
+    private void setData(HashMap data) { setObjectUnsafe(data); }
 
 	/** 
 	 * Method that saves the global configuration to database.
