@@ -17,6 +17,7 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.Entity;
 import javax.persistence.EntityManager;
@@ -31,7 +32,6 @@ import org.apache.log4j.Logger;
 import org.cesecore.dbprotection.ProtectedData;
 import org.cesecore.dbprotection.ProtectionStringBuilder;
 import org.cesecore.util.Base64;
-import org.cesecore.util.JBossUnmarshaller;
 import org.cesecore.util.StringTools;
 
 /**
@@ -114,10 +114,16 @@ public class HardTokenData extends ProtectedData implements Serializable {
 	public void setRowProtection(String rowProtection) { this.rowProtection = rowProtection; }
 
 	@Transient
-	public LinkedHashMap<?, ?> getData() {
-		return JBossUnmarshaller.extractLinkedHashMap(getDataUnsafe());
-	}
-	public void setData(LinkedHashMap<?, ?> data) { setDataUnsafe(JBossUnmarshaller.serializeObject(data)); }
+    public LinkedHashMap<?, ?> getData() {
+        final Serializable map = getDataUnsafe();
+        if (map instanceof LinkedHashMap<?, ?>) {
+            return (LinkedHashMap<?, ?>) map;
+        } else {
+            return new LinkedHashMap<>((Map<?, ?>) map);
+        }
+    }
+
+	public void setData(LinkedHashMap<?, ?> data) { setDataUnsafe(data); }
 
 	@Transient
 	public Date getCreateTime() { return new Date(getCtime()); }
