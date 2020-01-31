@@ -90,6 +90,7 @@ import org.ejbca.core.model.ca.caadmin.extendedcaservices.BaseSigningCAServiceIn
 import org.ejbca.core.model.ca.caadmin.extendedcaservices.CmsCAServiceInfo;
 import org.ejbca.ui.web.ParameterException;
 import org.ejbca.ui.web.admin.BaseManagedBean;
+import org.ejbca.ui.web.admin.attribute.AttributeMapping.REQUEST;
 import org.ejbca.ui.web.admin.bean.SessionBeans;
 import org.ejbca.ui.web.admin.cainterface.CADataHandler;
 import org.ejbca.ui.web.admin.cainterface.CAInterfaceBean;
@@ -2070,6 +2071,7 @@ public class EditCAsMBean extends BaseManagedBean implements Serializable {
             HttpServletRequest request = (HttpServletRequest) ectx.getRequest();
             HttpServletResponse response = (HttpServletResponse) ectx.getResponse();
             RequestDispatcher dispatcher = request.getRequestDispatcher(EditCaUtil.CA_EXPORT_PATH);
+            request.setAttribute(REQUEST.AUTHENTICATION_TOKEN, getAdmin());
             dispatcher.forward(request, response);
             ctx.responseComplete();
         } catch (ServletException | IOException ex) {
