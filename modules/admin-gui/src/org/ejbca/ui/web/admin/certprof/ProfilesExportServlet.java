@@ -219,9 +219,8 @@ public class ProfilesExportServlet extends BaseAdminServlet {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (XMLEncoder encoder = new XMLEncoder(baos)) {
             encoder.writeObject(profile.saveData());
-            encoder.close();
-            return baos.toByteArray();
         }
+        return baos.toByteArray();
     }
 
 }
