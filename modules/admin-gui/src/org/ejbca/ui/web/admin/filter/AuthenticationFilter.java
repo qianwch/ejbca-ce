@@ -54,6 +54,9 @@ public class AuthenticationFilter implements Filter {
         String authenticationErrorMessage = "";
         String authenticationErrorPublicMessage = "Authorization Denied";
         final String accessResourcesByRequestURI = getAccessResourcesByRequestURI(httpServletRequest.getRequestURI());
+        if (log.isTraceEnabled()) {
+            log.trace("Access rule for '" + httpServletRequest.getRequestURI() + "' is " + accessResourcesByRequestURI + " (if null, then the page should do authorization checks by itself)");
+        }
         try {
             // Check whether AuthenticationFilter has binding
             if(StringUtils.isNotBlank(accessResourcesByRequestURI)) {
@@ -108,6 +111,8 @@ public class AuthenticationFilter implements Filter {
                 return AccessRulesConstants.REGULAR_VIEWCERTIFICATE;
             }
             else if(requestURI.endsWith("/ca/exportca")) {
+                // This line is usually not reached, because the exportca servlet is accessed via an internal redirect from EditCAsMBean.
+                // So the authentication has to be done in CAExportServlet also.
                 return StandardRules.ROLE_ROOT.resource();
             }
             else if(requestURI.endsWith("/ca/endentitycert")) {
