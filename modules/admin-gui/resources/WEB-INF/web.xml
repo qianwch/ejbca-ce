@@ -132,18 +132,15 @@
     </filter>
     <!--
         Check binding of URI and AccessResources in org.ejbca.ui.web.admin.filter.AuthenticationFilter
-        /ca/certreq
-        /ca/editcas/cacertreq
-        /ca/cacert
-        /ca/exportca
-        /ca/endentitycert
-        /ca/getcrl/getcrl
-        /profilesexport
-        /cryptotoken/cryptoTokenDownloads
     -->
     <filter-mapping>
         <filter-name>AuthenticationFilter</filter-name>
-        <url-pattern>/ca/*</url-pattern>
+        <url-pattern>/ca/certreq</url-pattern>
+        <url-pattern>/ca/editcas/cacertreq</url-pattern>
+        <url-pattern>/ca/cacert</url-pattern>
+        <url-pattern>/ca/exportca</url-pattern>
+        <url-pattern>/ca/endentitycert</url-pattern>
+        <url-pattern>/ca/getcrl/getcrl</url-pattern>
         <url-pattern>/profilesexport</url-pattern>
         <url-pattern>/cryptotoken/*</url-pattern>
     </filter-mapping>

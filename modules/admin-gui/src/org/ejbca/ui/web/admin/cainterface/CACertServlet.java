@@ -17,6 +17,8 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.ejb.EJB;
 import javax.servlet.ServletConfig;
@@ -85,23 +87,19 @@ public class CACertServlet extends BaseAdminServlet {
 
         // HttpServetRequets.getParameter URLDecodes the value for you
         // No need to do it manually, that will cause problems with + characters
-        String issuerdn = req.getParameter(ISSUER_PROPERTY);
-        issuerdn = CertTools.stringToBCDNString(issuerdn);
+        final String issuerDn = CertTools.stringToBCDNString(req.getParameter(ISSUER_PROPERTY));
 
-        String command;
         // Keep this for logging.
-        log.debug("Got request from "+req.getRemoteAddr());
-        command = req.getParameter(COMMAND_PROPERTY_NAME);
-        if (command == null) {
-            command = "";
-        }
-        String lev = req.getParameter(LEVEL_PROPERTY);
-        if ((command.equalsIgnoreCase(COMMAND_NSCACERT) || command.equalsIgnoreCase(COMMAND_IECACERT) || command.equalsIgnoreCase(COMMAND_JKSTRUSTSTORE)
-        		|| command.equalsIgnoreCase(COMMAND_CACERT)) && issuerdn != null && StringUtils.isNumeric(lev)) {
+        log.debug("Got request from " + req.getRemoteAddr());
+        final String command = req.getParameter(COMMAND_PROPERTY_NAME);
+        final String lev = req.getParameter(LEVEL_PROPERTY);
+        final List<String> validCommands = Arrays.asList(COMMAND_NSCACERT, COMMAND_IECACERT, COMMAND_JKSTRUSTSTORE, COMMAND_CACERT);
+        if (StringUtils.isNotBlank(issuerDn) && StringUtils.isNumeric(lev)
+                && validCommands.stream().anyMatch(validCommand -> validCommand.equalsIgnoreCase(command))) {
             final int level = Integer.parseInt(lev);
             // Root CA is level 0, next below root level 1 etc etc
             try {
-                Certificate[] chain = signSession.getCertificateChain(issuerdn.hashCode()).toArray(new Certificate[0]);
+                Certificate[] chain = signSession.getCertificateChain(issuerDn.hashCode()).toArray(new Certificate[0]);
                                                             
                 // chain.length-1 is last cert in chain (root CA)
                 if ( (chain.length-1-level) < 0 ) {
@@ -140,7 +138,7 @@ public class CACertServlet extends BaseAdminServlet {
                     res.getOutputStream().write(out.getBytes());
                     log.debug("Sent CA cert to client, len="+out.length()+".");
                 } else if (command.equalsIgnoreCase(COMMAND_JKSTRUSTSTORE)) {
-                    final String jksPassword = (req.getParameter(JKSPASSWORD_PROPERTY) != null ? req.getParameter(JKSPASSWORD_PROPERTY).trim() : null );
+                    final String jksPassword = StringUtils.trim(req.getParameter(JKSPASSWORD_PROPERTY));
                     int passwordRequiredLength = 6;
                     if ( jksPassword != null && jksPassword.length() >= passwordRequiredLength ) {
                     	KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());

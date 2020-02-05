@@ -10,7 +10,6 @@
  *  See terms of license at gnu.org.                                     *
  *                                                                       *
  *************************************************************************/
-
 package org.ejbca.ui.web.admin;
 
 import java.security.cert.Certificate;
@@ -122,7 +121,7 @@ public class CaHttpSessionListener implements HttpSessionListener {
     }
     
     private Certificate getCertificate(final AuthenticationToken admin) {
-        if (admin != null && admin instanceof X509CertificateAuthenticationToken) {
+        if (admin instanceof X509CertificateAuthenticationToken) {
             return ((X509CertificateAuthenticationToken)admin).getCertificate();
         }
         return null;
