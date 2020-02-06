@@ -100,10 +100,10 @@ public class X509CAInfo extends CAInfo {
              -1, // Revocation reason
              null, // Revocation date
              null, // PolicyId
-             24 * SimpleTime.MILLISECONDS_PER_HOUR, // CRLPeriod
-             0 * SimpleTime.MILLISECONDS_PER_HOUR, // CRLIssueInterval
-             10 * SimpleTime.MILLISECONDS_PER_HOUR, // CRLOverlapTime
-             10 * SimpleTime.MILLISECONDS_PER_HOUR, // DeltaCRLPeriod
+             1 * SimpleTime.MILLISECONDS_PER_DAY, // CRLPeriod
+             0L, // CRLIssueInterval
+             10 * SimpleTime.MILLISECONDS_PER_MINUTE, // CRLOverlapTime
+             0L, // DeltaCRLPeriod
              new ArrayList<Integer>(),
              new ArrayList<Integer>(),
              true, // Authority Key Identifier
@@ -706,10 +706,10 @@ public class X509CAInfo extends CAInfo {
         private int revocationReason = -1;
         private Date revocationDate = null;
         private List<CertificatePolicy> policies = null;
-        private long crlPeriod = 24 * SimpleTime.MILLISECONDS_PER_HOUR;
+        private long crlPeriod = 1 * SimpleTime.MILLISECONDS_PER_DAY;
         private long crlIssueInterval = 0L;
-        private long crlOverlapTime = 10 * SimpleTime.MILLISECONDS_PER_HOUR;
-        private long deltaCrlPeriod = 10 * SimpleTime.MILLISECONDS_PER_HOUR;
+        private long crlOverlapTime = 10 * SimpleTime.MILLISECONDS_PER_MINUTE;
+        private long deltaCrlPeriod = 0L;
         private Collection<Integer> crlPublishers = new ArrayList<>();
         private Collection<Integer> validators = new ArrayList<>();
         private boolean useAuthorityKeyIdentifier = true;
