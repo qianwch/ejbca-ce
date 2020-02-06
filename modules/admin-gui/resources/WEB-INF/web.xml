@@ -142,7 +142,7 @@
         <url-pattern>/ca/endentitycert</url-pattern>
         <url-pattern>/ca/getcrl/getcrl</url-pattern>
         <url-pattern>/profilesexport</url-pattern>
-        <url-pattern>/cryptotoken/*</url-pattern>
+        <url-pattern>/cryptotoken/cryptoTokenDownloads</url-pattern>
     </filter-mapping>
 
     <servlet>
