@@ -165,7 +165,7 @@
                                     	<f:converter converterId="javax.faces.Long"/>
                                        	<f:validator validatorId="#{property.validatorType ? 'null':'dummyValidator'}"/>
                                     </h:inputText>
-                                    <h:inputText id="inputInteger" disabled="#{approvalProfilesMBean.viewOnly}" rendered="#{property.type.simpleName eq 'Integer'}" value="#{property.value}" size="6" >
+                                    <h:inputText id="inputInteger" label="The number is not formatted properly!" disabled="#{approvalProfilesMBean.viewOnly}" rendered="#{property.type.simpleName eq 'Integer'}" value="#{property.value}" size="6" >
                                        	<f:converter converterId="javax.faces.Integer"/>
                                        	<f:validator validatorId="#{property.validatorType ? 'null':'dummyValidator'}"/>
                                     </h:inputText>
