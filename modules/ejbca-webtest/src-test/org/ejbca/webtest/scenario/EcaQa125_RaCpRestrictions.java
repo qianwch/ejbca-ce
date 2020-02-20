@@ -118,7 +118,7 @@ public class EcaQa125_RaCpRestrictions extends WebTestBase {
     }
 
     @Test
-    public void stepC_KeyPairOnServer() {
+    public void stepC_KeyPairOnServer() throws InterruptedException {
         // Go to RA Web -> Make New Request
         raWebHelper.openPage(getRaWebUrl());
         raWebHelper.makeNewCertificateRequest();
@@ -142,7 +142,7 @@ public class EcaQa125_RaCpRestrictions extends WebTestBase {
     }
 
     @Test
-    public void stepD_KeyPairViaCSR() {
+    public void stepD_KeyPairViaCSR() throws InterruptedException {
         // Go to RA Web -> Make New Request
         raWebHelper.openPage(getRaWebUrl());
         raWebHelper.makeNewCertificateRequest();

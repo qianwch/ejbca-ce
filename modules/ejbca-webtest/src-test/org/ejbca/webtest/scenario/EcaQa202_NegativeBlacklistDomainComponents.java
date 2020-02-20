@@ -1,7 +1,6 @@
 package org.ejbca.webtest.scenario;
 
 import org.apache.commons.lang.StringUtils;
-import org.cesecore.authorization.AuthorizationDeniedException;
 import org.ejbca.webtest.WebTestBase;
 import org.ejbca.webtest.helper.ApprovalProfilesHelper;
 import org.ejbca.webtest.helper.CaHelper;
@@ -19,6 +18,7 @@ import org.openqa.selenium.WebDriver;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Asserts whether the blacklist validator denies a site based on the
@@ -74,7 +74,7 @@ public class EcaQa202_NegativeBlacklistDomainComponents extends WebTestBase {
     }
 
     @AfterClass
-    public static void exit() throws AuthorizationDeniedException {
+    public static void exit() {
         // super
         afterClass();
 
@@ -195,14 +195,14 @@ public class EcaQa202_NegativeBlacklistDomainComponents extends WebTestBase {
 
     @Test
     public void stepM_AddEndEntityProfile() {
-        eeProfileHelper.openPage(this.getAdminWebUrl());
+        eeProfileHelper.openPage(getAdminWebUrl());
         eeProfileHelper.addEndEntityProfile(TestData.ENTITY_NAME);
     }
 
     @Test
     public void stepN_EditEntityProfile() {
         eeProfileHelper.openEditEndEntityProfilePage(TestData.ENTITY_NAME);
-        eeProfileHelper.selectDefaultCa(this.getCaName());
+        eeProfileHelper.selectDefaultCa(getCaName());
         //Add DNS Name
         eeProfileHelper.setSubjectAlternativeName("DNS Name");
     }
@@ -215,12 +215,12 @@ public class EcaQa202_NegativeBlacklistDomainComponents extends WebTestBase {
 
     @Test
     public void stepP_MakeNewCertificate() {
-        raWebHelper.openPage(this.getRaWebUrl());
+        raWebHelper.openPage(getRaWebUrl());
         raWebHelper.makeNewCertificateRequest();
     }
 
     @Test
-    public void stepQ_SelectRequestTemplate() {
+    public void stepQ_SelectRequestTemplate() throws InterruptedException {
         raWebHelper.selectCertificateTypeByEndEntityName(TestData.ENTITY_NAME);
         raWebHelper.selectCertificationAuthorityByName(TestData.CA_NAME);
         raWebHelper.selectKeyPairGenerationProvided();
@@ -237,9 +237,10 @@ public class EcaQa202_NegativeBlacklistDomainComponents extends WebTestBase {
     }
 
     @Test
-    public void stepT_ProvideRequestInfo() {
+    public void stepT_ProvideRequestInfo() throws InterruptedException {
         raWebHelper.fillMakeRequestEditCommonName("cn" + Calendar.getInstance().toString());
         raWebHelper.fillDnsName(TestData.VALIDATOR_BLACKLIST_SITE);
+        TimeUnit.SECONDS.sleep(2);
     }
 
     @Test
