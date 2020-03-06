@@ -211,27 +211,15 @@ public class EcaQa76_AuditLogSearch extends WebTestBase {
     public void stepE_eeEvents() {
         // Add condition and check that the correct entries are displayed
         auditLogHelper.setViewFilteringCondition("Username", "Equals", TestData.ADD_EE_FIELDMAP.get("Username"));
-        assertEquals("Unexpected number of entries in the Audit Log", 2, AuditLogHelper.entryCount(webDriver));
-        assertEquals("Unexpected element found in table", "End Entity Edit",
-                webDriver.findElement(By.xpath("//table[caption[text()='Search results']]/tbody/tr[1]/td[2]")).getText());
-        assertEquals("Unexpected element found in table", "End Entity Add",
-                webDriver.findElement(By.xpath("//table[caption[text()='Search results']]/tbody/tr[2]/td[2]")).getText());
+        AuditLogHelper.assertEntries(webDriver, "End Entity Edit", "End Entity Add");
 
         // Click the down arrow in the 'Event' column and check that the order of the elements are changed
         webDriver.findElement(By.xpath("(//input[@class='sortButton'])[3]")).click();
-        assertEquals("Unexpected number of entries in the Audit Log", 2, AuditLogHelper.entryCount(webDriver));
-        assertEquals("Unexpected element found in table", "End Entity Add",
-                webDriver.findElement(By.xpath("//table[caption[text()='Search results']]/tbody/tr[1]/td[2]")).getText());
-        assertEquals("Unexpected element found in table", "End Entity Edit",
-                webDriver.findElement(By.xpath("//table[caption[text()='Search results']]/tbody/tr[2]/td[2]")).getText());
+        AuditLogHelper.assertEntries(webDriver, "End Entity Add", "End Entity Edit");
 
         // Click the up arrow in the 'Event' column and check that the order of the elements are changed back
         webDriver.findElement(By.xpath("(//input[@class='sortButton'])[4]")).click();
-        assertEquals("Unexpected number of entries in the Audit Log", 2, AuditLogHelper.entryCount(webDriver));
-        assertEquals("Unexpected element found in table", "End Entity Edit",
-                webDriver.findElement(By.xpath("//table[caption[text()='Search results']]/tbody/tr[1]/td[2]")).getText());
-        assertEquals("Unexpected element found in table", "End Entity Add",
-                webDriver.findElement(By.xpath("//table[caption[text()='Search results']]/tbody/tr[2]/td[2]")).getText());
+        AuditLogHelper.assertEntries(webDriver, "End Entity Edit", "End Entity Add");
     }
 
     @Test
@@ -244,11 +232,7 @@ public class EcaQa76_AuditLogSearch extends WebTestBase {
         } catch (NoSuchElementException e) {}
 
         // Check that the Audit Log still looks the same
-        assertEquals("Unexpected number of entries in the Audit Log", 2, AuditLogHelper.entryCount(webDriver));
-        assertEquals("Unexpected element found in table", "End Entity Edit",
-                webDriver.findElement(By.xpath("//table[caption[text()='Search results']]/tbody/tr[1]/td[2]")).getText());
-        assertEquals("Unexpected element found in table", "End Entity Add",
-                webDriver.findElement(By.xpath("//table[caption[text()='Search results']]/tbody/tr[2]/td[2]")).getText());
+        AuditLogHelper.assertEntries(webDriver, "End Entity Edit", "End Entity Add");
 
         // Clear all conditions, sort by Module and check that there are only Access Control rules listed
         auditLogHelper.clearConditions();
@@ -267,17 +251,7 @@ public class EcaQa76_AuditLogSearch extends WebTestBase {
         auditLogHelper.reloadView();
 
         // Check that the Audit Log has the expected look
-        assertEquals("Unexpected number of entries in the Audit Log", 5, AuditLogHelper.entryCount(webDriver));
-        assertEquals("Unexpected element found in table", "End Entity Add",
-                webDriver.findElement(By.xpath("//table[caption[text()='Search results']]/tbody/tr[1]/td[2]")).getText());
-        assertEquals("Unexpected element found in table", "CRL Create",
-                webDriver.findElement(By.xpath("//table[caption[text()='Search results']]/tbody/tr[2]/td[2]")).getText());
-        assertEquals("Unexpected element found in table", "CRL Store",
-                webDriver.findElement(By.xpath("//table[caption[text()='Search results']]/tbody/tr[3]/td[2]")).getText());
-        assertEquals("Unexpected element found in table", "Certificate Store",
-                webDriver.findElement(By.xpath("//table[caption[text()='Search results']]/tbody/tr[4]/td[2]")).getText());
-        assertEquals("Unexpected element found in table", "CA Edit",
-                webDriver.findElement(By.xpath("//table[caption[text()='Search results']]/tbody/tr[5]/td[2]")).getText());
+        AuditLogHelper.assertEntries(webDriver, "End Entity Add", "CRL Create", "CRL Store", "Certificate Store", "CA Edit");
 
         // Click 'Download shown results', this will automatically download the XML file
         webDriver.findElement(By.xpath("//input[contains(@value, 'Download shown results') and not(contains(@value, 'CMS'))]")).click();
