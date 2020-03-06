@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.io.filefilter.WildcardFileFilter;
+import org.apache.log4j.Logger;
 import org.ejbca.webtest.WebTestBase;
 import org.ejbca.webtest.helper.AddEndEntityHelper;
 import org.ejbca.webtest.helper.AuditLogHelper;
@@ -52,6 +53,8 @@ import org.openqa.selenium.WebElement;
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class EcaQa76_AuditLogSearch extends WebTestBase {
+    
+    private static final Logger log = Logger.getLogger(EcaQa76_AuditLogSearch.class);
 
     private static WebDriver webDriver;
     // Helpers
@@ -247,6 +250,9 @@ public class EcaQa76_AuditLogSearch extends WebTestBase {
         auditLogHelper.openPage(getAdminWebUrl());
         // Sort by time and set 'Displaying results' and 'Entries per page'
         webDriver.findElement(By.xpath("(//input[@class='sortButton'])[2]")).click();
+        if (log.isDebugEnabled()) {
+            log.debug("Displayed entries after sorting, but before pagination: " + AuditLogHelper.getEntries(webDriver));
+        }
         auditLogHelper.setViewPaginationProperties(2, 5);
         auditLogHelper.reloadView();
 
