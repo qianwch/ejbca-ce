@@ -169,14 +169,14 @@ public class EcaQa76_AuditLogSearch extends WebTestBase {
                 "Success",
                 null,
                 Arrays.asList(
-                        "msg=Edited end entity " + TestData.ADD_EE_FIELDMAP.get("Username"),
+                        "msg=Edited end entity " + TestData.EE_NAME,
                         "subjectDN=CN=" + TestData.ADD_EE_FIELDMAP.get("CN, Common name") + " -> CN=" + TestData.CN_CHANGED)
         );
         auditLogHelper.assertLogEntryByEventText(
                 "End Entity Add",
                 "Success",
                 null,
-                Collections.singletonList("msg=Added end entity " + TestData.ADD_EE_FIELDMAP.get("Username"))
+                Collections.singletonList("msg=Added end entity " + TestData.EE_NAME)
         );
         auditLogHelper.assertLogEntryByEventText(
                 "CRL Create",
@@ -213,7 +213,7 @@ public class EcaQa76_AuditLogSearch extends WebTestBase {
     @Test
     public void stepE_eeEvents() {
         // Add condition and check that the correct entries are displayed
-        auditLogHelper.setViewFilteringCondition("Username", "Equals", TestData.ADD_EE_FIELDMAP.get("Username"));
+        auditLogHelper.setViewFilteringCondition("Username", "Equals", TestData.EE_NAME);
         AuditLogHelper.assertEntries(webDriver, "End Entity Edit", "End Entity Add");
 
         // Click the down arrow in the 'Event' column and check that the order of the elements are changed
@@ -253,6 +253,7 @@ public class EcaQa76_AuditLogSearch extends WebTestBase {
         if (log.isDebugEnabled()) {
             log.debug("Displayed entries after sorting, but before pagination: " + AuditLogHelper.getEntries(webDriver));
         }
+        auditLogHelper.setViewFilteringCondition("Event", "Not equals", "Administrator Session Ended"); // this happens occasionally, how often depends on the setup 
         auditLogHelper.setViewPaginationProperties(2, 5);
         auditLogHelper.reloadView();
 
@@ -275,8 +276,8 @@ public class EcaQa76_AuditLogSearch extends WebTestBase {
             }
         });
         String results = new String(Files.readAllBytes(Paths.get(xmlFiles.get(0).getAbsolutePath())));
-        assertTrue("Results did not contain expected contents", results.contains("<string>" + TestData.ADD_EE_FIELDMAP.get("Username") + "</string>"));
-        assertTrue("Results did not contain expected contents", results.contains("&lt;string&gt;Added end entity " + TestData.ADD_EE_FIELDMAP.get("Username") + ".&lt;/string&gt;"));
+        assertTrue("Results did not contain expected contents", results.contains("<string>" + TestData.EE_NAME + "</string>"));
+        assertTrue("Results did not contain expected contents", results.contains("&lt;string&gt;Added end entity " + TestData.EE_NAME + ".&lt;/string&gt;"));
     }
 
     @Test
@@ -284,7 +285,7 @@ public class EcaQa76_AuditLogSearch extends WebTestBase {
         searchEndEntitiesHelper.openPage(getAdminWebUrl());
         searchEndEntitiesHelper.switchViewModeFromAdvancedToBasic();
         // Search for End Entity, make sure there is exactly 1 result
-        searchEndEntitiesHelper.fillSearchCriteria(TestData.ADD_EE_FIELDMAP.get("Username"), null, null, null);
+        searchEndEntitiesHelper.fillSearchCriteria(TestData.EE_NAME, null, null, null);
         searchEndEntitiesHelper.clickSearchByUsernameButton();
         searchEndEntitiesHelper.assertNumberOfSearchResults(1);
 
