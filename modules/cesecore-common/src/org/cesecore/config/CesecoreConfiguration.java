@@ -30,6 +30,8 @@ public final class CesecoreConfiguration {
 
 
     private static final Logger log = Logger.getLogger(CesecoreConfiguration.class);
+    
+    public static final String CUSTOM_CLASS_WHITELIST_KEY = "custom.class.whitelist";
 
     /** NOTE: diff between EJBCA and CESeCore */
     public static final String PERSISTENCE_UNIT = "ejbca";
@@ -505,5 +507,13 @@ public final class CesecoreConfiguration {
     public static boolean makeKeyUnmodifiableAfterGeneration() {
         final String value = ConfigurationHolder.getString("pkcs11.makeKeyUnmodifiableAfterGeneration");
         return value!=null && Boolean.parseBoolean(value.trim());
+    }
+    
+    /**
+     * 
+     * @return a list of custom classes allowed to be deserialized by cesecore.properties
+     */
+    public static String getCustomClassWhitelist() {
+        return ConfigurationHolder.getExpandedString(CUSTOM_CLASS_WHITELIST_KEY);
     }
 }
