@@ -81,16 +81,16 @@ public class GlobalConfigurationData extends ProtectedData implements Serializab
             RaStyleInfo.class));
 	
 	static {
-        for(String customClassName : CesecoreConfiguration.getCustomClassWhitelist().split(",")) {
-            Class<? extends Serializable> customClass;
+	    for(String customClassName : CesecoreConfiguration.getCustomClassWhitelist().split(",")) {
+	        Class<? extends Serializable> customClass;
             try {
                 customClass = (Class<? extends Serializable>) Class.forName(customClassName);
                 ACCEPTED_SERIALIZATION_CLASSES_SET.add(customClass);
             } catch (ClassNotFoundException e) {
                 log.info("Class " + customClassName + " was not found on classpath.");
             }
-        }
-    }
+	    }
+	}
 	
 	/** Unique ID defined by respective configuration object, such as 
 	 * @link GlobalCesecoreConfiguration#CESECORE_CONFIGURATION_ID 
