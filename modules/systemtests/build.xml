@@ -161,8 +161,8 @@
             <include name="org/cesecore/certificates/ca/TestExtendedCAServiceInfo.java"/>
             <include name="org/ejbca/core/ejb/ca/caadmin/UnAuthorizedCustomPublisherMock.java"/>			
             <include name="org/ejbca/core/ejb/ca/caadmin/AuthorizedCustomPublisherMock.java"/>
-			<!-- ECA-9129: Not included normally - doing so breakes the build unless this class is enabled in cesecore.properties
-			<include name="com/widget/WidgetCustomExtension.java"/> -->
+			<!-- ECA-9129: Not included normally - doing so breakes the build unless this class is enabled in cesecore.properties-->
+			<include name="com/widget/WidgetCustomExtension.java"/> 
 		</javac>
 	</target>
 

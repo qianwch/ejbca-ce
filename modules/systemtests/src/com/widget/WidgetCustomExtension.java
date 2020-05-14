@@ -41,12 +41,6 @@ public class WidgetCustomExtension extends CertificateExtension implements Custo
     public WidgetCustomExtension() {
     }
 
-
-    @Override
-    public int getId() {
-        return 1337;
-    }
-
     @Override
     public String getOID() {
         return "1.2.3.4";
