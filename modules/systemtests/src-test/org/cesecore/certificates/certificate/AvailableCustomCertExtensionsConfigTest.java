@@ -17,7 +17,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -29,15 +28,11 @@ import org.bouncycastle.asn1.DERIA5String;
 import org.bouncycastle.asn1.DERPrintableString;
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authentication.tokens.UsernamePrincipal;
-import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.certificates.certificate.certextensions.AvailableCustomCertificateExtensionsConfiguration;
 import org.cesecore.certificates.certificate.certextensions.BasicCertificateExtension;
-import org.cesecore.certificates.certificate.certextensions.CertificateExtentionConfigurationException;
 import org.cesecore.certificates.certificate.certextensions.CustomCertificateExtension;
 import org.cesecore.certificates.certificate.certextensions.DummyCertificateExtension;
-import org.cesecore.config.CesecoreConfiguration;
 import org.cesecore.configuration.CesecoreConfigurationProxySessionRemote;
-import org.cesecore.configuration.ConfigurationBase;
 import org.cesecore.configuration.GlobalConfigurationSessionRemote;
 import org.cesecore.mock.authentication.tokens.TestAlwaysAllowLocalAuthenticationToken;
 import org.cesecore.util.EjbRemoteHelper;
@@ -45,15 +40,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.widget.WidgetCustomExtension;
-
 /**
  * @version $Id$
  */
 public class AvailableCustomCertExtensionsConfigTest {
-    
-    private CesecoreConfigurationProxySessionRemote cesecoreConfigurationProxySession = EjbRemoteHelper.INSTANCE
-            .getRemoteSession(CesecoreConfigurationProxySessionRemote.class, EjbRemoteHelper.MODULE_TEST);
     
     private GlobalConfigurationSessionRemote globalConfigSession = EjbRemoteHelper.INSTANCE.getRemoteSession(GlobalConfigurationSessionRemote.class);
     
@@ -172,9 +162,11 @@ public class AvailableCustomCertExtensionsConfigTest {
      * 
      * We won't test adding a known class, because doing so basically permanently wrecks EJBCA. 
      */
+    /* ECA-9129: This method is difficult to test, because introducing this state normally breaks the rest of EJBCA, because 
+     * WidgetCustomExtension is hard to root out. To enable, uncomment the below, include WidgetCustomExtension in build.xml for 
+     * the systemtest module (see comment there) and add WidgetCustomExtension as a known custom class in cesecore.properties
     @Test
     public void testAddingKnownExternalExtension() throws CertificateExtentionConfigurationException, AuthorizationDeniedException {
-        String originalValue = cesecoreConfigurationProxySession.getConfigurationValue(CesecoreConfiguration.CUSTOM_CLASS_WHITELIST_KEY);
         ConfigurationBase originalGlobalConfig = globalConfigSession
                 .getCachedConfiguration(AvailableCustomCertificateExtensionsConfiguration.CONFIGURATION_ID);
         try {
@@ -185,16 +177,16 @@ public class AvailableCustomCertExtensionsConfigTest {
             cceConfig.addCustomCertExtension(1337, "1.2.3.4", "Widget Extension", WidgetCustomExtension.class.getName(), false, true, props);
             globalConfigSession.saveConfiguration(alwaysAllowToken, cceConfig);
             globalConfigSession.flushConfigurationCache(AvailableCustomCertificateExtensionsConfiguration.CONFIGURATION_ID);
-            //Here is where we should get a SecurityException if theres an error
+            //Here is where we should get a SecurityException if there's an error
             try {
                 globalConfigSession.getCachedConfiguration(AvailableCustomCertificateExtensionsConfiguration.CONFIGURATION_ID);
             } catch (SecurityException e) {
                 fail("Custom extension class could not be deserialized.");
             }
         } finally {
-            cesecoreConfigurationProxySession.setConfigurationValue(CesecoreConfiguration.CUSTOM_CLASS_WHITELIST_KEY, originalValue);
+            //Do not restore the whitelist but leave it be
             globalConfigSession.saveConfiguration(alwaysAllowToken, originalGlobalConfig);
         }
-    }
+    }*/
     
 }

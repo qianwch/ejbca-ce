@@ -13,6 +13,9 @@
 
 package org.cesecore.configuration;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.cesecore.internal.UpgradeableDataHashMap;
 
 /**
@@ -36,5 +39,23 @@ public abstract class ConfigurationBase extends UpgradeableDataHashMap {
     public abstract void upgrade();
     
     public abstract String getConfigurationId();
+    
+    /**
+     * Allows the implementing class to have dynamically configured custom classes to be serialized.
+     * 
+     * @return a set of class or package names.
+     */
+    public Set<String> getCustomClassesWhitelist() {
+        return new HashSet<>();
+    }
+
+    /**
+     * Allows the implementing class to have dynamically configured custom classes to be serialized.
+     * 
+     * @param whitelist a set of class or package names.
+     */
+    public void setCustomClassesWhitelist(Set<String> whitelist) {
+        
+    }
 
 }
