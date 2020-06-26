@@ -66,7 +66,7 @@ import org.json.simple.parser.ParseException;
  * Example usage, testing 25 threads making REST API calls to ejbca/ejbca-rest-api/v1/certificate/pkcs10enroll:
  * ./ejbcaClientToolBox.sh RESTTest localhost:8443 ~/tmp/ManagementCA.cacert.pem ManagementCA ENDUSER EMPTY ../../p12/superadmin.p12 ejbca 25 1
  *
- * @version $Id: RESTTest.java 35288 2020-06-26 06:18:02Z anatom $
+ * @version $Id$
  */
 class RESTTest extends ClientToolBox {
     static private class StressTest {
