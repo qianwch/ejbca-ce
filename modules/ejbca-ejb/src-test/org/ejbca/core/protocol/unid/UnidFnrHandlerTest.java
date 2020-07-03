@@ -130,6 +130,10 @@ public class UnidFnrHandlerTest {
 		public BigInteger getSerialNo() {
 			return null;
 		}
+	    @Override
+	    public String getCASequence() {
+	        return null;
+	    }
 		@Override
 		public String getRequestDN() {
 			return null;

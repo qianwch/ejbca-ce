@@ -134,9 +134,13 @@ public final class StringTools {
 
     private static final Pattern WS = Pattern.compile("\\s+");
 
+    /** plain numeric format 00001, 00002, etc */
     public static final int KEY_SEQUENCE_FORMAT_NUMERIC = 1;
+    /** alphanumeric format, i.e. hex AAAAA, AAAAB, etc*/
     public static final int KEY_SEQUENCE_FORMAT_ALPHANUMERIC = 2;
+    /** country code followed by a numeric sequence, i.e. SE001, SE002, etc */
     public static final int KEY_SEQUENCE_FORMAT_COUNTRY_CODE_PLUS_NUMERIC = 4;
+    /** country code followed by a alphanumeric sequence, i.e. SEFAA, SEFAB, etc */
     public static final int KEY_SEQUENCE_FORMAT_COUNTRY_CODE_PLUS_ALPHANUMERIC = 8;
 
     /**

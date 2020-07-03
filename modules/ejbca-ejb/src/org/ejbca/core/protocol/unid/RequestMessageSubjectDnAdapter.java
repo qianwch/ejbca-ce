@@ -111,6 +111,10 @@ public class RequestMessageSubjectDnAdapter implements ICrmfRequestMessage {
 	public BigInteger getCRLSerialNo() {
 		return this.original.getCRLSerialNo();
 	}
+    @Override
+    public String getCASequence() {
+        return null;
+    }
 	@Override
 	public PublicKey getRequestPublicKey() throws InvalidKeyException,
 			NoSuchAlgorithmException, NoSuchProviderException {

@@ -332,6 +332,11 @@ public class CrmfRequestMessage extends BaseCmpMessage implements ICrmfRequestMe
     }
 
     @Override
+    public String getCASequence() {
+        return null;
+    }
+
+    @Override
     public String getCRLIssuerDN() {
         return null;
     }
