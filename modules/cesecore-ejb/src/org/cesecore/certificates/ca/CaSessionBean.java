@@ -664,8 +664,8 @@ public class CaSessionBean implements CaSessionLocal, CaSessionRemote {
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     @Override
 	public CACommon getCAInternal(int caid, final String name, final String keySequence, boolean fromCache) {
-	    if (log.isDebugEnabled()) {
-	        log.debug(">getCAInternal: " + caid + ", " + name + ", " + keySequence);
+	    if (log.isTraceEnabled()) {
+	        log.trace(">getCAInternal: " + caid + ", " + name + ", " + keySequence);
 	    }
 	    Integer caIdValue = Integer.valueOf(caid);
 	    if (caid == -1) {
@@ -880,13 +880,15 @@ public class CaSessionBean implements CaSessionLocal, CaSessionRemote {
         // Using CVC (especially with multiple DVs using the same mnemoinc (CN), messes up caching big time
         if (keySequence != null && CaCache.INSTANCE.getEntry(caId) != null) {
             final CACommon ca = CaCache.INSTANCE.getEntry(caId);
-            final String sequence = CertTools.getSerialNumberAsString(ca.getCertificateChain().get(0)); // TODO: possible NPE here
-            if (!StringUtils.equals(keySequence, sequence)) {
-                // it was not the right CA, remove it from cache so we will find the right one instead
-                if (log.isDebugEnabled()) {
-                    log.debug("We had a cached CA already for " + caId + " but it was not the right with the right keySequence (" + keySequence + "), so purging from cache and looking in database.");
+            if (ca != null && ca.getCertificateChain() != null & ca.getCertificateChain().get(0) != null) {
+                final String sequence = CertTools.getSerialNumberAsString(ca.getCertificateChain().get(0));
+                if (!StringUtils.equals(keySequence, sequence)) {
+                    // it was not the right CA, remove it from cache so we will find the right one instead
+                    if (log.isDebugEnabled()) {
+                        log.debug("We had a cached CA already for " + caId + " but it was not the right with the right keySequence (" + keySequence + "), so purging from cache and looking in database.");
+                    }
+                    CaCache.INSTANCE.removeEntry(caId);
                 }
-                CaCache.INSTANCE.removeEntry(caId);
             }
         }
         // 1. Check (new) CaCache if it is time to sync-up with database (or it does not exist)
