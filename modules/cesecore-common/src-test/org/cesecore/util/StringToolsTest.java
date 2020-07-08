@@ -39,6 +39,69 @@ import org.junit.Test;
  */
 public class StringToolsTest {
     private static Logger log = Logger.getLogger(StringToolsTest.class);
+    
+    @Test
+    public void testStripLog() throws Exception{
+        log.trace(">testIpOctetsToString");       
+        
+        String str = "123 abc xyz .,!\"'@$";
+        String str1 = "test\nabc" + (char) 31 + (char) 0 + "xyz";     
+        assertEquals(str, StringTools.stripLog(str));
+        assertEquals("testabcxyz", StringTools.stripLog(str1));
+        assertNull(StringTools.stripLog(null));        
+        log.trace("<testIpOctetsToString");
+    }
+    
+    @Test
+    public void testStripFilenameReplaceSpaces() throws Exception{
+        log.trace(">testIpOctetsToString");        
+        final String str = "file name";
+        final String str1 = "file  name ";
+        final String str2 = "fileName";
+        assertEquals("file_name", StringTools.stripFilenameReplaceSpaces(str));
+        assertEquals("file__name_", StringTools.stripFilenameReplaceSpaces(str1));
+        assertEquals("fileName", StringTools.stripFilenameReplaceSpaces(str2));        
+        log.trace("<testIpOctetsToString");
+    }
+    
+    @Test
+    public void testStripFilename() {
+        log.trace(">testStripFilename");
+        String str ="<EJBCAapi>";
+        String strNull = null;
+        String strEmpty = ";";
+        assertEquals("EJBCAapi", StringTools.stripFilename(str));
+        assertEquals("", StringTools.stripFilename(strEmpty));
+        assertNull(StringTools.stripFilename(strNull));       
+        log.trace("<testStripFilename");        
+    }
+   
+    @Test
+    public void testRemoveAllWhitespaceAndColon() {
+        log.trace(">testRemoveAllWhitespaceAndColon");
+        String str1 = "aa:bb:dd";
+        String str2 = "123 456";
+        String str3 = "abc:12 3";
+        String str4 = "0x123456";
+        assertEquals("aabbdd", StringTools.removeAllWhitespaceAndColon(str1));
+        assertEquals("123456", StringTools.removeAllWhitespaceAndColon(str2));
+        assertEquals("abc123", StringTools.removeAllWhitespaceAndColon(str3));
+        assertEquals("123456", StringTools.removeAllWhitespaceAndColon(str4));
+        log.trace("<testRemoveAllWhitespaceAndColon");
+    }
+    
+    @Test
+    public void testIpOctetsToString() throws Exception {
+        log.trace(">testIpOctetsToString");
+        final byte[] octets = {(byte) 192,(byte) 168, 100, 1} ;
+        final byte[] octets1 = {1, 1, 1, 1};
+        final byte[] notValid = {1, 1, 1};
+        assertEquals("192.168.100.1", StringTools.ipOctetsToString(octets));
+        assertEquals("1.1.1.1", StringTools.ipOctetsToString(octets1));  
+        assertFalse("1.1.1.1", StringTools.ipOctetsToString(octets1).isEmpty());     
+        assertNull(StringTools.ipOctetsToString(notValid));
+        log.trace("<testIpOctetsToString");
+    }
 
     /**
      * tests stripping whitespace
@@ -51,7 +114,7 @@ public class StringToolsTest {
         log.trace(">test01StripWhitespace()");
         String test = " foo \t bar \r\n\r\n \f\f\f quu x                  ";
         assertEquals("foobarquux", StringTools.stripWhitespace(test));
-        log.trace(">test01StripWhitespace()");
+        log.trace("<test01StripWhitespace()");
     }
 
     @Test
@@ -62,7 +125,7 @@ public class StringToolsTest {
         for (int i = 0; i < octs.length; i++) {
             log.debug("octs[" + i + "]=" + (int) octs[i]);
         }
-        log.trace(">test02IpStringToOctets()");
+        log.trace("<test02IpStringToOctets()");
     }
 
     @Test

@@ -320,7 +320,7 @@ class RESTTest extends ClientToolBox {
         class SessionData {
             private int lastNextInt = 0;
             private X500Name userDN;
-            final private static int howOftenToGenerateSameUsername = 3;    // 0 = never, 1 = 100% chance, 2=50% chance etc.. 
+            final private static int howOftenToGenerateSameUsername = 3;	// 0 = never, 1 = 100% chance, 2=50% chance etc.. 
             SessionData() {
                 super();
             }
@@ -363,7 +363,7 @@ class RESTTest extends ClientToolBox {
      * @see org.ejbca.ui.cli.ClientToolBox#execute(java.lang.String[])
      */
     @Override
-    protected void execute(String[] args) {
+	protected void execute(String[] args) {
         if ( args.length < 8 ) {
             System.out.println(args[0]+" <hostname:port> <CA certificate filename> <CA name> <certificate profile name> <end entity profile name> <keystore filename> <keystore password> [<'m:n' m # of threads, n # of tests>] [<wait time (ms) between each thread is started>] [<certificate file prefix. set this if you want all received certificates stored on files>]");
             System.out.println("Tests the 'pkcs10enroll' command of the REST API");

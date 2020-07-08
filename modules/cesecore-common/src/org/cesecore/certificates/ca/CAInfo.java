@@ -25,6 +25,7 @@ import java.util.Map;
 import org.apache.commons.lang.math.IntRange;
 import org.cesecore.certificates.ca.catoken.CAToken;
 import org.cesecore.certificates.ca.extendedservices.ExtendedCAServiceInfo;
+import org.cesecore.certificates.ca.ssh.SshCa;
 import org.cesecore.certificates.certificate.CertificateConstants;
 import org.cesecore.certificates.certificate.CertificateWrapper;
 import org.cesecore.util.CertTools;
@@ -42,6 +43,7 @@ public abstract class CAInfo implements Serializable {
     private static final long serialVersionUID = 2L;
     public static final int CATYPE_X509 = 1;
     public static final int CATYPE_CVC = 2;
+    public static final int CATYPE_SSH = 3;
 
     /**
      * Constants indicating that the CA is selfsigned.
@@ -94,7 +96,7 @@ public abstract class CAInfo implements Serializable {
     protected boolean finishuser;
     protected Collection<ExtendedCAServiceInfo> extendedcaserviceinfos;
     protected boolean useNoConflictCertificateData = false; // By Default we use normal certificate data table.
-    
+
     /**
      * @deprecated since 6.8.0, where approval settings and profiles became interlinked.
      */
@@ -137,11 +139,11 @@ public abstract class CAInfo implements Serializable {
     public void setSubjectDN(final String subjectDn) {
         this.subjectdn = CertTools.stringToBCDNString(StringTools.strip(subjectDn));
     }
-    
+
     /**
      * Use issuer DN from the latest CA certificate. Might differ from the value from {@link #getSubjectDN}.
      */
-    public String getLatestSubjectDN() { 
+    public String getLatestSubjectDN() {
         final Collection<Certificate> certs = getCertificateChain();
         final Certificate cacert = !certs.isEmpty() ? certs.iterator().next(): null;
         return cacert != null ? CertTools.getSubjectDN(cacert) : null;
@@ -188,6 +190,9 @@ public abstract class CAInfo implements Serializable {
         if (catype == CAInfo.CATYPE_X509) {
             return "X.509";
         }
+        if (catype == CAInfo.CATYPE_SSH) {
+            return SshCa.CA_TYPE;
+        }
         return String.valueOf(catype);
     }
 
@@ -233,7 +238,7 @@ public abstract class CAInfo implements Serializable {
 
     /** Retrieves the certificate chain for the CA. The returned certificate chain MUST have the
      * RootCA certificate in the last position and the CAs certificate in the first.
-     * 
+     *
      * @return List of certificates, or null if no certificate chain exists for this CA
      */
     public List<Certificate> getCertificateChain() {
@@ -476,7 +481,7 @@ public abstract class CAInfo implements Serializable {
     public void setUseNoConflictCertificateData(final boolean useNoConflictCertificateData) {
         this.useNoConflictCertificateData = useNoConflictCertificateData;
     }
-    
+
     /**
      * @return true if the UserData used to issue a certificate should be kept in the database.
      */
@@ -529,7 +534,7 @@ public abstract class CAInfo implements Serializable {
     }
 
     /**
-     * @param doEnforceUniquePublicKeys
+     * @param doEnforceUniquePublicKeys enforce unique public keys flag.
      */
     public void setDoEnforceUniquePublicKeys(boolean doEnforceUniquePublicKeys) {
         this.doEnforceUniquePublicKeys = doEnforceUniquePublicKeys;
@@ -551,14 +556,14 @@ public abstract class CAInfo implements Serializable {
     }
 
     /**
-     * @param doEnforceUniqueSubjectDNSN
+     * @param doEnforceUniqueSubjectDNSN enforce unique Subject DNSN flag.
      */
     public void setDoEnforceUniqueSubjectDNSerialnumber(boolean doEnforceUniqueSubjectDNSN) {
         this.doEnforceUniqueSubjectDNSerialnumber = doEnforceUniqueSubjectDNSN;
     }
 
     /**
-     * @param doEnforceUniqueDistinguishedName
+     * @param doEnforceUniqueDistinguishedName enforce unique DN flag.
      */
     public void setDoEnforceUniqueDistinguishedName(boolean doEnforceUniqueDistinguishedName) {
         this.doEnforceUniqueDistinguishedName = doEnforceUniqueDistinguishedName;
@@ -570,7 +575,7 @@ public abstract class CAInfo implements Serializable {
     public boolean isDoEnforceUniqueDistinguishedName() {
         return this.doEnforceUniqueDistinguishedName;
     }
-    
+
     /**
      * Determines which CRL Partition Index a given certificate belongs to. This check is based on the URI in the CRL Distribution Point extension.
      * @param cert Certificate
@@ -593,7 +598,7 @@ public abstract class CAInfo implements Serializable {
 
     /**
      * Returns the CRL partitions' indexes for a given CA, or null if the CRL is not partitioned or the CA type does not support CRLs (e.g. CVC CA).
-     * This includes suspended partitions, suspended partitions will just not have new certificates assigned to them. 
+     * This includes suspended partitions, suspended partitions will just not have new certificates assigned to them.
      */
     public IntRange getAllCrlPartitionIndexes() {
         return null;

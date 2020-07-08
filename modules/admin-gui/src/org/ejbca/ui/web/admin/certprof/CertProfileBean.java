@@ -30,20 +30,24 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import javax.annotation.PostConstruct;
-import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 import javax.faces.model.ListDataModel;
 import javax.faces.model.SelectItem;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.authorization.control.StandardRules;
 import org.cesecore.certificates.ca.ApprovalRequestType;
+import org.cesecore.certificates.ca.CAFactory;
 import org.cesecore.certificates.ca.CvcCABase;
+import org.cesecore.certificates.ca.ssh.SshCa;
 import org.cesecore.certificates.certificate.CertificateConstants;
 import org.cesecore.certificates.certificate.certextensions.AvailableCustomCertificateExtensionsConfiguration;
 import org.cesecore.certificates.certificate.certextensions.CertificateExtension;
+import org.cesecore.certificates.certificate.ssh.SshCertificateType;
+import org.cesecore.certificates.certificate.ssh.SshExtension;
 import org.cesecore.certificates.certificateprofile.CertificatePolicy;
 import org.cesecore.certificates.certificateprofile.CertificateProfile;
 import org.cesecore.certificates.certificateprofile.CertificateProfileConstants;
@@ -93,7 +97,7 @@ public class CertProfileBean extends BaseManagedBean implements Serializable {
     public CertProfileBean( ) {
         super(AccessRulesConstants.ROLE_ADMINISTRATOR, StandardRules.CERTIFICATEPROFILEVIEW.resource());
     }
-    
+
     /** Since this MBean is session scoped we need to reset all the values when needed. */
     private void reset() {
         currentCertProfileId = -1;
@@ -168,7 +172,7 @@ public class CertProfileBean extends BaseManagedBean implements Serializable {
         reset();
         return "done";  // Outcome defined in faces-config.xml
     }
-    
+
     public String save() {
         boolean success = true;
         try {
@@ -180,9 +184,9 @@ public class CertProfileBean extends BaseManagedBean implements Serializable {
             }
             if(prof.isKeyAlgorithmsECType() && prof.getAvailableEcCurvesAsList().isEmpty()) {
                 addErrorMessage("NOECCURVESELECTED");
-                success = false;                
+                success = false;
             }
-            
+
             if (prof.getAvailableBitLengthsAsList().isEmpty() && prof.isKeyAlgorithmsRequireKeySizes()) {
                 addErrorMessage("ONEAVAILABLEBITLENGTH");
                 success = false;
@@ -194,16 +198,16 @@ public class CertProfileBean extends BaseManagedBean implements Serializable {
                 if (numEnabledLabels == 0) {
                     addErrorMessage("NOCTLABELSSELECTED");
                     success = false;
-                } else if (((prof.getCtMinScts() < 0 && prof.isUseCertificateTransparencyInCerts()) || 
-                            (prof.getCtMinSctsOcsp() < 0 && prof.isUseCertificateTransparencyInOCSP())) 
+                } else if (((prof.getCtMinScts() < 0 && prof.isUseCertificateTransparencyInCerts()) ||
+                            (prof.getCtMinSctsOcsp() < 0 && prof.isUseCertificateTransparencyInOCSP()))
                             && isNumOfSctsCustom) {
                     addErrorMessage("INCORRECTMINSCTS");
                     success = false;
-                } else if((prof.getCtMaxScts() < 0 && prof.isUseCertificateTransparencyInCerts()) || 
+                } else if((prof.getCtMaxScts() < 0 && prof.isUseCertificateTransparencyInCerts()) ||
                           (prof.getCtMaxSctsOcsp() < 0 && prof.isUseCertificateTransparencyInOCSP())) {
                     addErrorMessage("INCORRECTMAXSCTS");
                     success = false;
-                    
+
                 } else if (((prof.getCtMaxScts() < prof.getCtMinScts() && prof.isUseCertificateTransparencyInCerts()) ||
                             (prof.getCtMaxSctsOcsp() < prof.getCtMinSctsOcsp() && prof.isUseCertificateTransparencyInOCSP()))
                             && (isNumOfSctsCustom && isMaxNumOfSctsCustom)) {
@@ -283,8 +287,10 @@ public class CertProfileBean extends BaseManagedBean implements Serializable {
                     certificateProfile.setQCEtsiPds(pdsCleaned);
                 }
                 Map<ApprovalRequestType, Integer> approvals = new HashMap<>();
-                for(ApprovalRequestItem approvalRequestItem : approvalRequestItems) {
-                    approvals.put(approvalRequestItem.getRequestType(), approvalRequestItem.getApprovalProfileId());
+                if (CollectionUtils.isNotEmpty(approvalRequestItems)) {
+                    for (ApprovalRequestItem approvalRequestItem : approvalRequestItems) {
+                        approvals.put(approvalRequestItem.getRequestType(), approvalRequestItem.getApprovalProfileId());
+                    }
                 }
                 certificateProfile.setApprovals(approvals);
 
@@ -336,12 +342,15 @@ public class CertProfileBean extends BaseManagedBean implements Serializable {
     public boolean isTypeSubCaAvailable() { return isAuthorizedTo(StandardRules.ROLE_ROOT.resource()); }
 
     public boolean isTypeRootCaAvailable() { return isAuthorizedTo(StandardRules.ROLE_ROOT.resource()); }
+    public boolean isTypeSshAvailable() { return CAFactory.INSTANCE.existsCaType(SshCa.CA_TYPE); }
+
 
     public boolean isTypeEndEntity() { return getCertificateProfile().getType() == CertificateConstants.CERTTYPE_ENDENTITY; }
 
     public boolean isTypeSubCa() { return getCertificateProfile().getType()==CertificateConstants.CERTTYPE_SUBCA; }
 
     public boolean isTypeRootCa() { return getCertificateProfile().getType()==CertificateConstants.CERTTYPE_ROOTCA; }
+    public boolean isTypeSsh() { return getCertificateProfile().getType() == CertificateConstants.CERTTYPE_SSH; }
 
     public void setTypeEndEntity() {
         getCertificateProfile().setType(CertificateConstants.CERTTYPE_ENDENTITY);
@@ -364,6 +373,13 @@ public class CertProfileBean extends BaseManagedBean implements Serializable {
         getCertificateProfile().setDefaultExtendedKeyUsage(CertificateProfileConstants.CERTPROFILE_FIXED_ROOTCA);
     }
 
+    public void setTypeSsh() {
+        getCertificateProfile().setType(CertificateConstants.CERTTYPE_SSH);
+        getCertificateProfile().setDefaultEncodedValidity(CertificateProfileConstants.CERTPROFILE_FIXED_SSH);
+        getCertificateProfile().setDefaultKeyUsage(CertificateProfileConstants.CERTPROFILE_FIXED_SSH);
+        getCertificateProfile().setDefaultExtendedKeyUsage(CertificateProfileConstants.CERTPROFILE_FIXED_SSH);
+    }
+
     public boolean isUniqueCertificateSerialNumberIndex() {
         return getEjbcaWebBean().getEjb().getCertificateCreateSession().isUniqueCertificateSerialNumberIndex();
     }
@@ -376,7 +392,7 @@ public class CertProfileBean extends BaseManagedBean implements Serializable {
         }
         return ret;
     }
-    
+
     public int getAvailableKeyAlgorithmsSize() {
         return AlgorithmTools.getAvailableKeyAlgorithms().size();
     }
@@ -387,21 +403,21 @@ public class CertProfileBean extends BaseManagedBean implements Serializable {
         if (certificateProfile.isKeyAlgorithmsECType()) {
             final Map<String, List<String>> namedEcCurvesMap = new HashMap<>();
             if(certificateProfile.getAvailableKeyAlgorithmsAsList().contains(AlgorithmConstants.KEYALGORITHM_EC) ||
-                    certificateProfile.getAvailableKeyAlgorithmsAsList().contains(AlgorithmConstants.KEYALGORITHM_ECDSA)    ) {                
+                    certificateProfile.getAvailableKeyAlgorithmsAsList().contains(AlgorithmConstants.KEYALGORITHM_ECDSA)    ) {
                 ret.add(new SelectItem(CertificateProfile.ANY_EC_CURVE, getEjbcaWebBean().getText("AVAILABLEECDSABYBITS")));
                 namedEcCurvesMap.putAll(AlgorithmTools.getOnlyNamedEcCurvesMap(false));
             }
             if(certificateProfile.getAvailableKeyAlgorithmsAsList().contains(AlgorithmConstants.KEYALGORITHM_ECGOST3410)) {
                 namedEcCurvesMap.putAll(AlgorithmTools.getNamedGostCurvesMap(false));
-            }     
+            }
             final String[] keys = namedEcCurvesMap.keySet().toArray(new String[0]);
-            Arrays.sort(keys);        
+            Arrays.sort(keys);
             for (final String name : keys) {
                 ret.add(new SelectItem(name, StringTools.getAsStringWithSeparator(" / ", namedEcCurvesMap.get(name))));
-            }    
+            }
         } else {
             ret.add(new SelectItem(null, getEjbcaWebBean().getText("NOECCURVECHOSEN")));
-        }    
+        }
         return ret;
     }
 
@@ -409,7 +425,7 @@ public class CertProfileBean extends BaseManagedBean implements Serializable {
     public List<SelectItem> getAvailableBitLengthsAvailable() {
         Set<Integer> availableBitLengths = new TreeSet<>();
         if(certificateProfile.getAvailableKeyAlgorithmsAsList().contains(AlgorithmConstants.KEYALGORITHM_EC) ||
-                certificateProfile.getAvailableKeyAlgorithmsAsList().contains(AlgorithmConstants.KEYALGORITHM_ECDSA)    ) {                
+                certificateProfile.getAvailableKeyAlgorithmsAsList().contains(AlgorithmConstants.KEYALGORITHM_ECDSA)    ) {
             availableBitLengths.addAll(AlgorithmTools.DEFAULTBITLENGTHS_EC);
         }
         if(certificateProfile.getAvailableKeyAlgorithmsAsList().contains(AlgorithmConstants.KEYALGORITHM_DSA)) {
@@ -422,13 +438,13 @@ public class CertProfileBean extends BaseManagedBean implements Serializable {
             availableBitLengths.addAll(AlgorithmTools.DEFAULTBITLENGTHS_DSTU);
         }
         final List<SelectItem> ret = new ArrayList<>();
-        if (availableBitLengths.size() > 0 && certificateProfile.isKeyAlgorithmsRequireKeySizes()) {            
+        if (availableBitLengths.size() > 0 && certificateProfile.isKeyAlgorithmsRequireKeySizes()) {
             for (final Integer current : availableBitLengths) {
                 ret.add(new SelectItem(current, current + " " + getEjbcaWebBean().getText("BITS")));
             }
         } else {
             ret.add(new SelectItem(null, getEjbcaWebBean().getText("NOALGORITHMWITHSELECTABLEKEYSIZE")));
-        }    
+        }
         return ret;
     }
 
@@ -451,8 +467,26 @@ public class CertProfileBean extends BaseManagedBean implements Serializable {
         final List<SelectItem> ret = new ArrayList<>();
         // null becomes ""-value.
         ret.add(new SelectItem(null, getEjbcaWebBean().getText("INHERITFROMCA")));
-        for (final String current : AlgorithmConstants.AVAILABLE_SIGALGS) {
-            ret.add(new SelectItem(current, current));
+        if (certificateProfile.getType() != CertificateConstants.CERTTYPE_SSH) {
+            for (final String current : AlgorithmConstants.AVAILABLE_SIGALGS) {
+                ret.add(new SelectItem(current, current));
+            }
+        }
+        return ret;
+    }
+
+    public List<SelectItem> getSshCertificateTypes() {
+        final List<SelectItem> ret = new ArrayList<>();
+        for(SshCertificateType sshCertificateType : SshCertificateType.values()) {
+            ret.add(new SelectItem(sshCertificateType, sshCertificateType.getLabel()));
+        }
+        return ret;
+    }
+
+    public List<SelectItem> getSshExtensionsAvailable() {
+        final List<SelectItem> ret = new ArrayList<>();
+        for(SshExtension sshExtension : SshExtension.values()) {
+            ret.add(new SelectItem(sshExtension.getLabel(), sshExtension.getLabel()));
         }
         return ret;
     }
@@ -966,17 +1000,17 @@ public class CertProfileBean extends BaseManagedBean implements Serializable {
     public void toggleUseCertificateTransparencyInPublishers() throws IOException {
         getCertificateProfile().setUseCertificateTransparencyInPublishers(!getCertificateProfile().isUseCertificateTransparencyInPublishers());
     }
-    
+
     public void toggleNumberOfSctBy() throws IOException {
         getCertificateProfile().setNumberOfSctByCustom(!getCertificateProfile().isNumberOfSctByCustom());
         getCertificateProfile().setNumberOfSctByValidity(!getCertificateProfile().isNumberOfSctByValidity());
     }
-        
+
     public void toggleMaxNumberOfSctBy() throws IOException {
         getCertificateProfile().setMaxNumberOfSctByCustom(!getCertificateProfile().isMaxNumberOfSctByCustom());
         getCertificateProfile().setMaxNumberOfSctByValidity(!getCertificateProfile().isMaxNumberOfSctByValidity());
     }
-    
+
     public boolean isCtAvailable() { return CertificateTransparencyFactory.isCTAvailable(); }
 
     public boolean isCtEnabled() { return getCertificateProfile().isCtEnabled(); }
@@ -990,7 +1024,7 @@ public class CertProfileBean extends BaseManagedBean implements Serializable {
         return getCertificateProfile().isUseCertificateTransparencyInOCSP() ||
             getCertificateProfile().isUseCertificateTransparencyInPublishers();
     }
-    
+
     public boolean isNumberOfSctsByValidity() {
         return getCertificateProfile().isNumberOfSctByValidity();
     }
@@ -998,15 +1032,15 @@ public class CertProfileBean extends BaseManagedBean implements Serializable {
     public boolean isNumberOfSctsByCustom() {
         return getCertificateProfile().isNumberOfSctByCustom();
     }
-    
+
     public boolean isMaxNumberOfSctsByValidity() {
         return getCertificateProfile().isMaxNumberOfSctByValidity();
     }
-    
+
     public boolean isMaxNumberOfSctsByCustom() {
         return getCertificateProfile().isMaxNumberOfSctByCustom();
     }
-    
+
     public List<SelectItem> getDistinctCtLabelsAvailable() {
         // Since labels are members of CTlogs (and not the other way around due to legacy design) we select distinct labels this way
         final List<SelectItem> ret = new ArrayList<>();
@@ -1020,7 +1054,7 @@ public class CertProfileBean extends BaseManagedBean implements Serializable {
         ret.sort((label1, label2) -> label1.getLabel().compareToIgnoreCase(label2.getLabel()));
         return ret;
     }
-    
+
     /**
      * @return the size of the select box
      */
@@ -1029,11 +1063,11 @@ public class CertProfileBean extends BaseManagedBean implements Serializable {
     public List<String> getEnabledCtLabels() {
         return new ArrayList<>(getCertificateProfile().getEnabledCtLabels());
     }
-    
+
     public void setEnabledCtLabels(final List<String> selectedLabels) {
         getCertificateProfile().setEnabledCtLabels(new LinkedHashSet<>(selectedLabels));
     }
-    
+
     public void toggleUseMicrosoftTemplate() throws IOException {
         getCertificateProfile().setUseMicrosoftTemplate(!getCertificateProfile().getUseMicrosoftTemplate());
     }
@@ -1302,10 +1336,10 @@ public class CertProfileBean extends BaseManagedBean implements Serializable {
             Map<ApprovalRequestType, Integer> approvals = certificateProfile.getApprovals();
             for (ApprovalRequestType approvalRequestType : ApprovalRequestType.values()) {
                 int approvalProfileId = approvals.getOrDefault(approvalRequestType, -1);
-                // In certificate profiles we don't want to display the "CA Service Activation" approval type, 
+                // In certificate profiles we don't want to display the "CA Service Activation" approval type,
                 // because it is not relevant for certificate profiles But if we have a configuration here, we'll display it
                 if (!approvalRequestType.equals(ApprovalRequestType.ACTIVATECA) || approvalProfileId != -1) {
-                    approvalRequestItems.add(new ApprovalRequestItem(approvalRequestType, approvalProfileId));                    
+                    approvalRequestItems.add(new ApprovalRequestItem(approvalRequestType, approvalProfileId));
                 }
             }
         }
@@ -1352,7 +1386,7 @@ public class CertProfileBean extends BaseManagedBean implements Serializable {
         ret.sort((first, second) -> first.getLabel().compareToIgnoreCase(second.getLabel()));
         return ret;
     }
-    
+
     public int getPublisherListAvailableSize() { return Math.max(1, Math.min(5, getPublisherListAvailable().size())); }
 
 

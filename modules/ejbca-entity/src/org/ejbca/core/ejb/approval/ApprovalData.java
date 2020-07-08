@@ -61,11 +61,16 @@ public class ApprovalData extends ProtectedData implements Serializable {
 	private String requestData;
 	private long requestDate;
 	private long expireDate;
+	private String email;
+	private String subjectDn;	
 	private int remainingApprovals;
 	private int rowVersion = 0;
 	private String rowProtection;
+		
 
-	/**
+	
+
+    /**
 	 * Entity holding data of a approval data.
 	 * 
 	 * The constructor is responsible for populating all non-nullable fields!
@@ -211,6 +216,28 @@ public class ApprovalData extends ProtectedData implements Serializable {
 	 * means that the request/approval never expires
 	 */
 	public void setExpiredate(long expireDate) { this.expireDate = expireDate; }
+	
+    /**
+     * SujectDn included in user credentials
+     * @return subjectDn
+     */
+    public String getSubjectDn() { return subjectDn; }
+
+    /**
+     * Method used to set the subjectDn which included in the user credentials
+     */
+    public void setSubjectDn(String subjectDn) { this.subjectDn = subjectDn; }
+    
+    /**
+     * Email included in user Credentials
+     * @return email
+     */
+    public String getEmail() { return email; }
+
+    /**
+     * Method used to set the email which included in the user credentials
+     */
+    public void setEmail(String email) { this.email = email; }
 
 	/**
 	 * Indicates the number of approvals that remains in order to execute the action
@@ -285,13 +312,17 @@ public class ApprovalData extends ProtectedData implements Serializable {
         // rowVersion is automatically updated by JPA, so it's not important, it is only used for optimistic locking
         build.append(getId()).append(getApprovalid()).append(getApprovaltype()).append(getEndEntityProfileId()).append(getCaid()).append(getReqadmincertissuerdn());
         build.append(getReqadmincertsn()).append(getStatus()).append(getApprovaldata()).append(getRequestdata()).append(getRequestdate()).append(getExpiredate()).append(getRemainingapprovals());
+        if (version >= 3) {
+            build.append(getSubjectDn());
+            build.append(getSubjectDn());
+        }
         return build.toString();
     }
 
     @Transient
     @Override
     protected int getProtectVersion() {
-        return 2;
+        return 3;
     }
 
     @PrePersist
@@ -348,7 +379,7 @@ public class ApprovalData extends ProtectedData implements Serializable {
     
     @Transient
     public List<Approval> getApprovals() {
-        List<Approval> retval = new ArrayList<Approval>();
+        List<Approval> retval = new ArrayList<>();
         try{
             ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(Base64.decode(getApprovaldata().getBytes())));
             int size = ois.readInt();

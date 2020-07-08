@@ -46,6 +46,7 @@ import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.certificates.ca.ApprovalRequestType;
 import org.cesecore.certificates.ca.CA;
+import org.cesecore.certificates.ca.CACommon;
 import org.cesecore.certificates.ca.CADoesntExistsException;
 import org.cesecore.certificates.ca.CAInfo;
 import org.cesecore.certificates.ca.CAOfflineException;
@@ -80,7 +81,6 @@ import org.cesecore.keys.token.CryptoToken;
 import org.cesecore.keys.token.CryptoTokenOfflineException;
 import org.cesecore.keys.token.CryptoTokenSessionLocal;
 import org.cesecore.util.Base64;
-import org.cesecore.util.CertTools;
 import org.ejbca.config.EjbcaConfiguration;
 import org.ejbca.config.ScepConfiguration;
 import org.ejbca.core.ejb.approval.ApprovalProfileSessionLocal;
@@ -297,6 +297,11 @@ public class ScepMessageDispatcherSessionBean implements ScepMessageDispatcherSe
      * @throws CADoesntExistsException if CA mode if being used for the alias, no message is provided and the default SCEP CA is undefined.
      */
     private String getCAName(final String caName, final ScepConfiguration scepConfiguration, final String alias) throws CADoesntExistsException {
+        if(scepConfiguration.getUseIntune(alias)) {
+            //Always return the scep
+            return scepConfiguration.getRADefaultCA(alias);
+        }
+        
         if (!StringUtils.isEmpty(caName)) {
             // Use the CA defined by the message if present
             return caName;
@@ -393,8 +398,26 @@ public class ScepMessageDispatcherSessionBean implements ScepMessageDispatcherSe
                         throw new CertificateCreateException("Intune enrollment failed for alias " + alias, e);
                     }
                     try {
-                        intuneScepServiceClient.ValidateRequest(reqmsg.getTransactionId(),
-                                new String(Base64.encode(CertTools.buildCsr(reqmsg.getCertificationRequest()).getBytes())));
+                        //Initialize request message to get the P10. 
+                        String caName = getCaName(reqmsg, scepConfig, alias);
+                        CAInfo cainfo;
+                        CACommon ca;
+                        try {
+                            cainfo = caSession.getCAInfo(administrator, caName);
+                            if (cainfo == null) {
+                                throw new CertificateCreateException("Could not find CA set in SCEP alias '" + alias + "': " + caName);
+                            }
+                            ca = caSession.getCA(administrator, caName);
+                        } catch (AuthorizationDeniedException e) {
+                            throw new CertificateCreateException("Administator is not authorized for CA: " + caName, e);
+                        }
+                        final CAToken catoken = cainfo.getCAToken();
+                        final CryptoToken cryptoToken = cryptoTokenSession.getCryptoToken(catoken.getCryptoTokenId());
+                        reqmsg.setKeyInfo(ca.getCACertificate(),
+                                cryptoToken.getPrivateKey(catoken.getAliasFromPurpose(CATokenConstants.CAKEYPURPOSE_CERTSIGN)),
+                                cryptoToken.getSignProviderName());
+                        reqmsg.verify();
+                        intuneScepServiceClient.ValidateRequest(reqmsg.getTransactionId(), new String(Base64.encode(reqmsg.getCertificationRequest().getEncoded())));
                     } catch (IntuneScepServiceException e) {
                         log.error("Failed intunes validation for alias " + alias, e);
                         throw new CertificateCreateException("Failed intunes validation for alias ", e);
@@ -648,6 +671,32 @@ public class ScepMessageDispatcherSessionBean implements ScepMessageDispatcherSe
             log.trace("<getRequestMessage():" + ((ret == null) ? 0 : ret.length));
         }
         return ret;
+    }
+    
+    private String getCaName(final ScepRequestMessage reqmsg, final ScepConfiguration scepConfiguration, final String configAlias) throws AuthorizationDeniedException {
+        if(scepConfiguration.getUseIntune(configAlias)) {
+            //Always return the scep
+            return scepConfiguration.getRADefaultCA(configAlias);
+        }
+        
+        String issuerDN = certificateStoreSession.getCADnFromRequest(reqmsg);
+        String caName = null;     
+        if (caSession.existsCa(issuerDN.hashCode())) {
+            caName = caSession.getCAIdToNameMap().get(issuerDN.hashCode());
+            if (log.isDebugEnabled()) {
+                log.debug("Found a CA name '" + caName + "' from issuerDN: " + issuerDN);
+            }
+            if (!StringUtils.equals(caName, scepConfiguration.getRADefaultCA(configAlias))) {
+                // External message returned must contain less information than internal log message
+                final String msg = "The CA name '" + caName + "' from issuerDN in the request '" + issuerDN + "' does not match the RA CA name";
+                log.info(msg +  " '" + scepConfiguration.getRADefaultCA(configAlias) + "' configured in the SCEP alias: " + configAlias);
+                throw new AuthorizationDeniedException(msg);
+            }
+        } else {
+            caName = scepConfiguration.getRADefaultCA(configAlias);
+            log.info("Did not find a CA name from issuerDN: " + issuerDN + ", using the default CA '" + caName + "'");
+        }
+        return caName;
     }
     
     /**

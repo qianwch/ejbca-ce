@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -46,6 +45,7 @@ import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.authorization.AuthorizationSessionLocal;
 import org.cesecore.certificates.ca.CaSessionLocal;
 import org.cesecore.certificates.certificate.certextensions.standard.CabForumOrganizationIdentifier;
+import org.cesecore.certificates.certificate.ssh.SshEndEntityProfileFields;
 import org.cesecore.certificates.crl.RevocationReasons;
 import org.cesecore.certificates.endentity.EndEntityConstants;
 import org.cesecore.certificates.util.DnComponents;
@@ -64,7 +64,7 @@ import org.ejbca.util.PrinterManager;
 import org.ejbca.util.mail.MailSender;
 
 /**
- * 
+ *
  * JSF MBean backing end entity profile page.
  *
  * @version $Id$
@@ -91,9 +91,9 @@ public class EndEntityProfileMBean extends BaseManagedBean implements Serializab
     @EJB
     private EndEntityProfileSessionLocal endEntityProfileSession;
 
-    private EjbcaWebBean ejbcaWebBean = getEjbcaWebBean();
+    private final EjbcaWebBean ejbcaWebBean = getEjbcaWebBean();
     private EndEntityProfile profiledata;
-    private List<UserNotification> userNotifications; 
+    private List<UserNotification> userNotifications;
     private String[] printerNames = null;
     private Integer profileId;
     private String profileName;
@@ -101,13 +101,19 @@ public class EndEntityProfileMBean extends BaseManagedBean implements Serializab
     private final List<String> editerrors = new ArrayList<>();
     private String validityStartTime;
     private String validityEndTime;
+    private String currentSubjectDnAttribute;
+    private String currentSubjectDirectoryAttribute;
+    private String currentSshField;
+    private List<NameComponentGuiWrapper> subjectDnComponentList = null;
+    private List<NameComponentGuiWrapper> subjectAltNameComponentList;
+    private List<NameComponentGuiWrapper> sshFieldList = null;
 
     private Part templateFileUpload;
 
     public EndEntityProfileMBean() {
         super(AccessRulesConstants.REGULAR_VIEWENDENTITYPROFILES);
     }
-    
+
     public class NameComponentGuiWrapper implements Serializable {
         private static final long serialVersionUID = 1L;
 
@@ -278,7 +284,7 @@ public class EndEntityProfileMBean extends BaseManagedBean implements Serializab
         validityEndTime = ejbcaWebBean.getISO8601FromImpliedUTCOrRelative(profiledata.getValidityEndTime());
         userNotifications = new ArrayList<>(profiledata.getUserNotifications());
     }
-    
+
     public boolean isViewOnly() {
         return viewOnly;
     }
@@ -475,7 +481,7 @@ public class EndEntityProfileMBean extends BaseManagedBean implements Serializab
         profiledata.setEmailUsed(useEmail);
     }
 
-    // temporary, verify... 
+    // temporary, verify...
     public String getEmail() {
         String email = "";
         if (profiledata.getEmailDomain() != null && getUseEmail()) {
@@ -510,7 +516,7 @@ public class EndEntityProfileMBean extends BaseManagedBean implements Serializab
     public void setEmailModifiable(final boolean emailModifyable) {
         profiledata.setEmailModifiable(emailModifyable);
     }
-    
+
     public String getDescription() {
         return profiledata.getDescription();
     }
@@ -534,8 +540,6 @@ public class EndEntityProfileMBean extends BaseManagedBean implements Serializab
         }
         return attributesReturned;
     }
-
-    private String currentSubjectDnAttribute;
 
     public String getCurrentSubjectDNAttribute() {
         return currentSubjectDnAttribute;
@@ -563,7 +567,7 @@ public class EndEntityProfileMBean extends BaseManagedBean implements Serializab
         subjectDnComponentList = null; // reload state from profile
     }
 
-    public List<NameComponentGuiWrapper> subjectDnComponentList;
+
 
     public List<NameComponentGuiWrapper> getSubjectDnComponentList() {
         if (subjectDnComponentList == null) {
@@ -583,9 +587,64 @@ public class EndEntityProfileMBean extends BaseManagedBean implements Serializab
         return subjectDnComponentList;
     }
 
-    // OTHER SUBJECT ATTRIBUTES
+    public List<NameComponentGuiWrapper> getSshFieldList() {
+        if(sshFieldList == null) {
+            final List<NameComponentGuiWrapper> principals = new ArrayList<>();
+            final List<int[]> fieldDataList = new ArrayList<>();
+            final int numberOfFields = profiledata.getSshFieldOrderLength();
+            for (int i = 0; i < numberOfFields; i++) {
+                fieldDataList.add(profiledata.getSshFieldsInOrder(i));
+            }
+            for (int[] field : fieldDataList) {
+                final String fieldName = ejbcaWebBean.getText(SshEndEntityProfileFields.getLanguageKey(field[EndEntityProfile.FIELDTYPE]));
+                principals.add(new NameComponentGuiWrapper(fieldName, field, false, false));
+            }
+            sshFieldList = principals;
+        }
+        return sshFieldList;
+    }
 
-    public List<NameComponentGuiWrapper> subjectAltNameComponentList;
+    public String getCurrentSshField() {
+        return currentSshField;
+    }
+
+    public void setCurrentSshField(final String currentSshField) {
+         this.currentSshField = currentSshField;
+    }
+
+    public List<SelectItem> getSshFields() {
+        final List<SelectItem> attributesReturned = new ArrayList<>();
+        final String[] attributeStrings = EndEntityProfile.getSshFieldProfileFields();
+        Map<String, String> sshFields = SshEndEntityProfileFields.getSshFields();
+        for (final String attribute : attributeStrings) {
+            if (currentSshField == null) {
+                currentSshField = attribute;
+            }
+            final String displayText = sshFields.get(attribute);
+            attributesReturned.add(new SelectItem(attribute, displayText));
+        }
+        return attributesReturned;
+    }
+
+    public void addSshField() {
+        if (StringUtils.isBlank(currentSshField)) {
+            log.debug("No SSH Field attribute type selected");
+            return;
+        }
+        profiledata.addField(currentSshField);
+        sshFieldList = null; // reload state from profile
+    }
+
+    public void removeSshField() {
+        for (final NameComponentGuiWrapper nameComponent : getSshFieldList()) {
+            if (nameComponent.isShouldRemove()) {
+                profiledata.removeField(nameComponent.getFieldType(), nameComponent.getNumber());
+            }
+        }
+        sshFieldList = null; // reload state from profile
+    }
+
+    // OTHER SUBJECT ATTRIBUTES
 
     public List<SelectItem> getSubjectAltNameTypes() {
         final List<SelectItem> subjectAltNamesReturned = new ArrayList<>();
@@ -669,8 +728,6 @@ public class EndEntityProfileMBean extends BaseManagedBean implements Serializab
         return subjectDirectoryAttributesReturned;
     }
 
-    private String currentSubjectDirectoryAttribute;
-
     public void addSubjectDirectoryAttribute() {
         profiledata.addField(currentSubjectDirectoryAttribute);
         subjectDirectoryAttributesComponentList = null; // reload state from profile
@@ -716,9 +773,11 @@ public class EndEntityProfileMBean extends BaseManagedBean implements Serializab
         final List<SelectItem> allAuthorizedCertProfiles = new ArrayList<>();
         final TreeMap<String, Integer> eecertificateprofilenames = ejbcaWebBean.getAuthorizedEndEntityCertificateProfileNames();
         final TreeMap<String, Integer> subcacertificateprofilenames = ejbcaWebBean.getAuthorizedSubCACertificateProfileNames();
+        final TreeMap<String, Integer> sshcertificateprofilenames = ejbcaWebBean.getAuthorizedSshCertificateProfileNames();
         final TreeMap<String, Integer> mergedMap = new TreeMap<>();
         mergedMap.putAll(eecertificateprofilenames);
         mergedMap.putAll(subcacertificateprofilenames);
+        mergedMap.putAll(sshcertificateprofilenames);
         for (final Entry<String,Integer> entry : mergedMap.entrySet()) {
             final int certProfileId = entry.getValue(); // map is inverted
             final String certProfileName = entry.getKey();
@@ -755,12 +814,7 @@ public class EndEntityProfileMBean extends BaseManagedBean implements Serializab
             final String caname = caidtonamemap.get(caid);
             sortedCas.add(new SelectItem(caid, caname));
         }
-        Collections.sort(sortedCas, new Comparator<SelectItem>() {
-            @Override
-            public int compare(SelectItem o1, SelectItem o2) {
-                return o1.getLabel().compareToIgnoreCase(o2.getLabel());
-            }
-        });
+        sortedCas.sort((o1, o2) -> o1.getLabel().compareToIgnoreCase(o2.getLabel()));
         return sortedCas;
     }
 
@@ -771,9 +825,9 @@ public class EndEntityProfileMBean extends BaseManagedBean implements Serializab
         return list;
     }
 
-    public Collection<Integer> getAvailableCas() {    
+    public Collection<Integer> getAvailableCas() {
         return profiledata.getAvailableCAs();
-                
+
     }
 
     public void setAvailableCas(final Collection<Integer> availableCas) {
@@ -1022,7 +1076,7 @@ public class EndEntityProfileMBean extends BaseManagedBean implements Serializab
             final String humanReadable = revocationReason.getHumanReadable();
             if (revocationReason == RevocationReasons.NOT_REVOKED) {
                 revocationReasonsReturned.add(0, new SelectItem(revocationReason, ejbcaWebBean.getText("ACTIVE")));
-            } else if (revocationReason == RevocationReasons.CERTIFICATEHOLD) {    
+            } else if (revocationReason == RevocationReasons.CERTIFICATEHOLD) {
                 revocationReasonsReturned.add(1, new SelectItem(revocationReason, ejbcaWebBean.getText("SUSPENDED") + ": " + humanReadable));
             } else {
                 revocationReasonsReturned.add(new SelectItem(revocationReason, ejbcaWebBean.getText("REVOKED") + ": " + humanReadable));
@@ -1058,7 +1112,7 @@ public class EndEntityProfileMBean extends BaseManagedBean implements Serializab
     public boolean isNotificationAdded() {
         return getUserNotifications().size() > 0;
     }
-    
+
     public void addNotification() {
         log.debug("Adding UserNotification");
         final UserNotification newNotification = new UserNotification();
@@ -1081,7 +1135,7 @@ public class EndEntityProfileMBean extends BaseManagedBean implements Serializab
     public List<SelectItem> getAllNotificationEvents() {
         final List<SelectItem> allEvents = new ArrayList<>();
         for (int eventCode : EndEntityConstants.getAllStatusCodes()) {
-            // for compatibility with existing manuals etc. the values are shown as "STATUSNEW" etc. rather than being translated to "New" 
+            // for compatibility with existing manuals etc. the values are shown as "STATUSNEW" etc. rather than being translated to "New"
             final String displayText = EndEntityConstants.getTranslatableStatusText(eventCode);
             allEvents.add(new SelectItem(eventCode, displayText));
         }

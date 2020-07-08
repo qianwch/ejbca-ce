@@ -19,10 +19,13 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
@@ -57,7 +60,6 @@ public class ExtendedInformation extends UpgradeableDataHashMap implements Seria
     private static final long serialVersionUID = 3981761824188420320L;
 
     private static final float LATEST_VERSION = 4;
-
 
     /**
      * Used to store subject directory attributes, which are put in an extension in the certificate. SubjectDirectoryAttributes are standard
@@ -130,7 +132,6 @@ public class ExtendedInformation extends UpgradeableDataHashMap implements Seria
     private static String SCEP_CACHED_REQUEST = "SCEP_CACHED_REQUEST";
     /** If using SCEP in RA mode with approvals, the incoming approval type (add or edit) needs to be cached. */
     private static String SCEP_CACHED_APROVAL_TYPE = "SCEP_CACHED_APROVAL_TYPE";
-    
 
     /** Creates a new instance of ExtendedInformation */
     public ExtendedInformation() {
@@ -246,7 +247,7 @@ public class ExtendedInformation extends UpgradeableDataHashMap implements Seria
             data.put(SUBJECTDIRATTRIBUTES, subjdirattr);
         }
     }
-
+    
     /**
      * @return The number of remaining allowed failed login attempts or -1 for unlimited
      */
