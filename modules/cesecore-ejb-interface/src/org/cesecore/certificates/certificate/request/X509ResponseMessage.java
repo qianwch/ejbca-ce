@@ -195,7 +195,7 @@ public class X509ResponseMessage implements CertificateResponseMessage {
      * called the response message can be retrieved with getResponseMessage();
      *
      * @return True if signature/encryption was successful, false if it failed, request should not
-     *         be sent back if failed.
+     *         be sent back i failed.
      *
      * @throws IOException If input/output or encoding failed.
      * @throws InvalidKeyException If the key used for signing/encryption is invalid.
@@ -207,13 +207,12 @@ public class X509ResponseMessage implements CertificateResponseMessage {
      */
     @Override
     public boolean create() {
+
         if (status.equals(ResponseStatus.SUCCESS)) {
             log.debug("Creating a STATUS_OK message.");
         } else {
             if (status.equals(ResponseStatus.FAILURE)) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Creating a STATUS_FAILED message (or throwing an exception): " + failInfo);
-                }
+                log.debug("Creating a STATUS_FAILED message (or throwing an exception).");
                 if (failInfo.equals(FailInfo.WRONG_AUTHORITY)) {
                     return false;
                 }

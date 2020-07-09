@@ -282,11 +282,6 @@ public class NestedMessageContent extends BaseCmpMessage implements RequestMessa
     }
 
     @Override
-    public String getCASequence() {
-        return null;
-    }
-
-    @Override
     public String getUsername() {
         return null;
     }

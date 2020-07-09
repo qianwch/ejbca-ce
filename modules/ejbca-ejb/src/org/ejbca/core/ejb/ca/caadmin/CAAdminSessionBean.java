@@ -1135,26 +1135,10 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
                     ca.setSignedBy(CAInfo.SIGNEDBYEXTERNALCA);
                 }
                 // Check that CA DN is equal to the certificate response.
-                final String cacertSubjectDN = CertTools.getSubjectDN(cacert);
-                if (!cacertSubjectDN.equals(CertTools.stringToBCDNString(ca.getSubjectDN()))) {
-                    boolean fail = true;
-                    if (cacert.getType().equals("CVC") && CertTools.getPartFromDN(ca.getSubjectDN(), "OU") != null) {
-                        // If this is a CVC certificate, we have the ability to have more DN components in the CA subject DN than in the actual 
-                        // CVC CA certificate (which is limited to C and CN)
-                        final String limitedCVCADN = "CN=" + CertTools.getPartFromDN(ca.getSubjectDN(), "CN") + ",C=" + CertTools.getPartFromDN(ca.getSubjectDN(), "C");
-                        if (log.isDebugEnabled()) {
-                            log.debug("Comparing CVC subjectDN '" + cacertSubjectDN + "' to limited CVC CA DN '" + limitedCVCADN + "' after stripping away OU component " + CertTools.getPartFromDN(ca.getSubjectDN(), "OU"));
-                        }
-                        if (cacertSubjectDN.equals(limitedCVCADN)) {
-                            // We did have a CVC CA where the database CA DN has an additional OU component, a special case, allow this
-                            fail = false;
-                        }
-                    } 
-                    if (fail) {
-                        String msg = intres.getLocalizedMessage("caadmin.errorcertrespwrongdn", CertTools.getSubjectDN(cacert), ca.getSubjectDN());
-                        log.info(msg);
-                        throw new EjbcaException(msg);
-                    }
+                if (!CertTools.getSubjectDN(cacert).equals(CertTools.stringToBCDNString(ca.getSubjectDN()))) {
+                    String msg = intres.getLocalizedMessage("caadmin.errorcertrespwrongdn", CertTools.getSubjectDN(cacert), ca.getSubjectDN());
+                    log.info(msg);
+                    throw new EjbcaException(msg);
                 }
                 List<Certificate> tmpchain = new ArrayList<Certificate>();
                 tmpchain.add(cacert);
@@ -2253,7 +2237,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
     @Override
     public byte[] getLatestLinkCertificate(final int caId) {
         try {
-            CACommon ca = caSession.getCANoLog(new AlwaysAllowLocalAuthenticationToken(new UsernamePrincipal("Fetching link certificate user.")), caId, null);
+            CACommon ca = caSession.getCANoLog(new AlwaysAllowLocalAuthenticationToken(new UsernamePrincipal("Fetching link certificate user.")), caId);
             return ca.getLatestLinkCertificate();
         } catch (AuthorizationDeniedException e) {
             throw new RuntimeException(e); // Should always be allowed
@@ -2742,7 +2726,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
         // Create a new CA
         int signedby = CAInfo.SIGNEDBYEXTERNALCA;
         int certprof = CertificateProfileConstants.CERTPROFILE_FIXED_SUBCA;
-        String description = "Imported external signed CA: " + caname;
+        String description = "Imported external signed CA";
         Certificate caSignatureCertificate = signatureCertChain[0];
         ArrayList<Certificate> certificatechain = new ArrayList<Certificate>();
         for (int i = 0; i < signatureCertChain.length; i++) {
@@ -2752,7 +2736,7 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
             if (verifyIssuer(caSignatureCertificate, caSignatureCertificate)) {
                 signedby = CAInfo.SELFSIGNED;
                 certprof = CertificateProfileConstants.CERTPROFILE_FIXED_ROOTCA;
-                description = "Imported root CA: " + caname;
+                description = "Imported root CA";
             } else {
                 // A less strict strategy can be to assume a certificate signed
                 // by an external CA. Useful if the admin forgot to create a
@@ -3416,25 +3400,9 @@ public class CAAdminSessionBean implements CAAdminSessionLocal, CAAdminSessionRe
      */
     private boolean verifyIssuer(Certificate subject, Certificate issuer) {
         try {
-            final PublicKey issuerKey = issuer.getPublicKey();
-            // Make an algorithm check first so we don't try to verify an RSA signature with an ECDSA key
-            final String certSigAlg = AlgorithmTools.getCertSignatureAlgorithmNameAsString(subject);
-            final List<String> keySigAlgs = AlgorithmTools.getSignatureAlgorithms(issuerKey);
-            // SHA1WithECDSA returns as ECDSA for certSigAlg (has been always, don't know why), while keySigAlgs will contain SHA1WithECDSA
-            // therefore we need to make a more complex match, checking if keySigAlgs contains the part,
-            // ignoring case so that SHA256WITHRSA matches SHA256WithRSA, and ECDSA matches SHA1WithECDSA (or SHA256WithECDSA)
-            // But SHA1WithECDSA, or ECDSA does not match SHA1WithRSA, or Ed448, or SHA256WithDSA, or... 
-            boolean containsAlg = keySigAlgs.stream().anyMatch(x -> StringUtils.containsIgnoreCase(x, certSigAlg));
-            if (certSigAlg == null || keySigAlgs == null || !containsAlg) {
-                if (log.isDebugEnabled()) {
-                    log.info("Not trying to verify certificate signed with algorithm " + certSigAlg + " because key is only suitable for " + keySigAlgs);
-                }
-                return false;
-            } else {
-                // Algorithms match, verify signature
-                subject.verify(issuerKey);
-                return true;
-            }
+            PublicKey issuerKey = issuer.getPublicKey();
+            subject.verify(issuerKey);
+            return true;
         } catch (java.security.GeneralSecurityException e) {
             return false;
         }

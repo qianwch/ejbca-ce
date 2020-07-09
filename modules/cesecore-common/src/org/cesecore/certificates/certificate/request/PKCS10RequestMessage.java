@@ -297,11 +297,6 @@ public class PKCS10RequestMessage implements RequestMessage {
     }
 
     @Override
-    public String getCASequence() {
-        return null;
-    }
-
-    @Override
     public String getCRLIssuerDN() {
         return null;
     }

@@ -211,7 +211,7 @@ public class CaSessionBean implements CaSessionLocal, CaSessionRemote {
         		log.trace(">editCA (CAInfo): "+cainfo.getName());
         	}
     		try {
-    			final CACommon ca = getCAInternal(cainfo.getCAId(), null, null, false);
+    			final CACommon ca = getCAInternal(cainfo.getCAId(), null, false);
     			// Check if we can edit the CA (also checks authorization)
     			int newCryptoTokenId = ca.getCAToken().getCryptoTokenId();
     			if (cainfo.getCAToken() != null) {
@@ -257,7 +257,7 @@ public class CaSessionBean implements CaSessionLocal, CaSessionRemote {
             if (log.isTraceEnabled()) {
                 log.trace(">editCA (CA): "+ca.getName());
             }
-            final CACommon orgca = getCAInternal(ca.getCAId(), null, null, true);
+            final CACommon orgca = getCAInternal(ca.getCAId(), null, true);
             // Check if we can edit the CA (also checks authorization)
             assertAuthorizationAndTarget(admin, ca.getName(), ca.getSubjectDN(), ca.getCAToken().getCryptoTokenId(), orgca);
             if (auditlog) {
@@ -349,22 +349,17 @@ public class CaSessionBean implements CaSessionLocal, CaSessionRemote {
     @Override
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public CACommon getCA(final AuthenticationToken admin, final int caid) throws AuthorizationDeniedException {
-        return getCA(admin, caid, null);
-    }
-    @Override
-    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
-    public CACommon getCA(final AuthenticationToken admin, final int caid, final String keySequence) throws AuthorizationDeniedException {
         if (!authorizedToCA(admin, caid)) {
             String msg = intres.getLocalizedMessage("caadmin.notauthorizedtoca", admin.toString(), Integer.valueOf(caid));
             throw new AuthorizationDeniedException(msg);
         }
-        return getCAInternal(caid, null, keySequence, true);
+        return getCAInternal(caid, null, true);
     }
 
     @Override
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public CACommon getCA(final AuthenticationToken admin, final String name) throws AuthorizationDeniedException {
-        CACommon ca = getCAInternal(-1, name, null, true);
+        CACommon ca = getCAInternal(-1, name, true);
         if(ca != null) { 
             if (!authorizedToCA(admin, ca.getCAId())) {
                 String msg = intres.getLocalizedMessage("caadmin.notauthorizedtoca", admin.toString(), name);
@@ -376,18 +371,18 @@ public class CaSessionBean implements CaSessionLocal, CaSessionRemote {
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     @Override
-    public CACommon getCANoLog(final AuthenticationToken admin, final int caid, final String keySequence) throws AuthorizationDeniedException {
+    public CACommon getCANoLog(final AuthenticationToken admin, final int caid) throws AuthorizationDeniedException {
         if (!authorizedToCANoLogging(admin, caid)) {
             String msg = intres.getLocalizedMessage("caadmin.notauthorizedtoca", admin.toString(), Integer.valueOf(caid));
             throw new AuthorizationDeniedException(msg);
         }
-        return getCAInternal(caid, null, keySequence, true);
+        return getCAInternal(caid, null, true);
     }
 
     @Override
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public CACommon getCAForEdit(final AuthenticationToken admin, final int caid) throws AuthorizationDeniedException {
-        CACommon ca = getCAInternal(caid, null, null, false);
+        CACommon ca = getCAInternal(caid, null, false);
         if (ca != null) {
             if (!authorizedToCA(admin, ca.getCAId())) {
                 String msg = intres.getLocalizedMessage("caadmin.notauthorizedtoca", admin.toString(), Integer.valueOf(caid));
@@ -400,7 +395,7 @@ public class CaSessionBean implements CaSessionLocal, CaSessionRemote {
     @Override
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public CACommon getCAForEdit(final AuthenticationToken admin, final String name) throws AuthorizationDeniedException {
-        CACommon ca = getCAInternal(-1, name, null, false);
+        CACommon ca = getCAInternal(-1, name, false);
         if(ca == null) {
             return null;
         }
@@ -428,7 +423,7 @@ public class CaSessionBean implements CaSessionLocal, CaSessionRemote {
     @Override
     public CAInfo getCAInfo(final AuthenticationToken admin, final int caid) throws AuthorizationDeniedException {
         // Authorization is handled by getCA
-        CACommon ca = getCA(admin, caid, null);
+        CACommon ca = getCA(admin, caid);
         if (ca == null) {
             return null;
         } else {
@@ -440,7 +435,7 @@ public class CaSessionBean implements CaSessionLocal, CaSessionRemote {
     @Override
     public CAInfo getCAInfoInternal(final int caid) {
         // Authorization is handled by getCA
-        CACommon ca = getCAInternal(caid, null, null, true);
+        CACommon ca = getCAInternal(caid, null, true);
         if (ca == null) {
             return null;
         } else {
@@ -470,7 +465,7 @@ public class CaSessionBean implements CaSessionLocal, CaSessionRemote {
     @Override
     public CAInfo getCAInfoInternal(final int caid, final String name, boolean fromCache) {
         // Authorization is handled by getCA
-        CACommon ca = getCAInternal(caid, name, null, fromCache);
+        CACommon ca = getCAInternal(caid, name, fromCache);
         if (ca == null) {
             return null;
         } else {
@@ -645,7 +640,7 @@ public class CaSessionBean implements CaSessionLocal, CaSessionRemote {
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     @Override
     public void verifyExistenceOfCA(int caid) throws CADoesntExistsException {
-        if( getCAInternal(caid, null, null, true) == null) {
+        if( getCAInternal(caid, null, true) == null) {
             throw new CADoesntExistsException("CA with id " + caid + " does not exist.");
         }
        
@@ -663,29 +658,29 @@ public class CaSessionBean implements CaSessionLocal, CaSessionRemote {
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     @Override
-	public CACommon getCAInternal(int caid, final String name, final String keySequence, boolean fromCache) {
+	public CACommon getCAInternal(int caid, final String name, boolean fromCache) {
 	    if (log.isTraceEnabled()) {
-	        log.trace(">getCAInternal: " + caid + ", " + name + ", " + keySequence);
+	        log.trace(">getCAInternal: " + caid + ", " + name);
 	    }
 	    Integer caIdValue = Integer.valueOf(caid);
 	    if (caid == -1) {
 	        caIdValue = CaCache.INSTANCE.getNameToIdMap().get(name);
 	    }
 	    CACommon ca = null;
-	    if (fromCache && caIdValue != null) {
-	        ca = getCa(caIdValue.intValue(), keySequence);
+	    if (fromCache && caIdValue!=null) {
+	        ca = getCa(caIdValue.intValue());
 	        if (ca != null && hasCAExpiredNow(ca)) {
 	            // CA has expired, re-read from database with the side affect that the status will be updated
-	            ca = getCAData(caid, name, keySequence).getCA();
+	            ca = getCAData(caid, name).getCA();
 	        }
 	    } else {
-            CAData caData = getCAData(caid, name, keySequence);
+            CAData caData = getCAData(caid, name);
             if (caData != null) {
                 ca = caData.getCA();
             }
         }
 	    if (log.isTraceEnabled()) {
-	        log.trace("<getCAInternal: " + caid + ", " + name + ", " + keySequence);
+	        log.trace("<getCAInternal: " + caid + ", " + name);
 	    }
 	    return ca;
 	}
@@ -717,13 +712,7 @@ public class CaSessionBean implements CaSessionLocal, CaSessionRemote {
     }
 
     /**
-     * Internal method for getting CAData. Tries to find the CA even if the CAId is wrong due to CA certificate DN not being the same as CA DN,
-     * i.e. using a subject of the CA DN in the actual issues CA certificate. This can be the case if you want to add more meta-data to the CA DN, or
-     * it can be the case if you have EAC (CVC CAs) DVs where the same mnemonic and country is used for multiple DVs, signed by different countred CVCAs.
-     * 
-     * CVC Example: CA DNs "C=SE,OU=Norway,CN=DVCA - sequence (serialNo) = NO002" for a DV signed by Norways vs "C=SE,OU=Finland,CN=DVCA - sequence (serialNo) = FI002" for a DV signed by Finland,
-     * in this case the CA certificate DN is only "C=SE,CN=DVCA - sequence (serialNo) = NO002" and "C=SE,CN=DVCA - sequence (serialNo) = FI002" as
-     * CVC (EAC BSI TR 03-110) only allow country (C) and mnemonic (CN) in the certificate
+     * Internal method for getting CAData. Tries to find the CA even if the CAId is wrong due to CA certificate DN not being the same as CA DN.
      *
      * The returned CAData object is guaranteed to be upgraded and these upgrades merged back to the database.
      *
@@ -732,10 +721,7 @@ public class CaSessionBean implements CaSessionLocal, CaSessionRemote {
      * 
      * @return the CA, or null if it was not found
      */
-    private CAData getCAData(final int caid, final String name, final String keySequence)  {
-        if (log.isTraceEnabled()) {
-            log.trace(">getCAData: " + caid + ", " + name + ", " + keySequence);
-        }
+    private CAData getCAData(final int caid, final String name)  {
         CAData cadata = null;
         if (caid != -1) {
             cadata = upgradeAndMergeToDatabase(findById(Integer.valueOf(caid)));
@@ -748,32 +734,7 @@ public class CaSessionBean implements CaSessionLocal, CaSessionRemote {
                 log.debug("Unable to get CAData with name: "+name);
             }
         }
-        // Do we have a keySequence? In that case we're in trouble, the CA ID we just might have been the completely wrong one. 
-        // Using CVC, especially with multiple DVs using the same mnemonic (CN), messes up caching big time
-        if (keySequence != null && cadata != null) {
-            final List<Certificate> certChain = cadata.getCA().getCertificateChain();
-            final String sequence;
-            if (certChain != null && certChain.size() > 0) { // make sure it's not a CA without certs, no NPEs here
-                sequence = CertTools.getSerialNumberAsString(certChain.get(0));
-            } else {
-                if (log.isDebugEnabled()) {
-                    log.debug("Found a cached CA for " + caid + "/" + name + " that didn't have any certificate chain.");
-                }
-                // If this CA didn't have any certificates, it surely wasn't the right one if we are looking for a specific key sequence
-                sequence = null;
-            }
-            if (!StringUtils.equals(keySequence, sequence)) {
-                // it was not the right CA, remove it from cache so we will find the right one instead
-                if (log.isDebugEnabled()) {
-                    log.debug("We had a cached CA already for " + caid + "/" + name + " but it was not the right with the right keySequence (" + keySequence + "), so ignoring this find and looking again...");
-                }
-                cadata = null;
-            }
-        }
         if (cadata == null) {
-            if (log.isDebugEnabled()) {
-                log.debug("cadata is null, trying to find a mapping from CA ID "+caid+" to another CA ID");
-            }
             // We should never get to here if we are searching for name, in any
             // case if the name does not exist, the CA really does not exist
             // We don't have to try to find another mapping for the CAId
@@ -795,32 +756,6 @@ public class CaSessionBean implements CaSessionLocal, CaSessionRemote {
                         final CAData currentUpgradedCaData = upgradeAndMergeToDatabase(currentCaData);
                         final Certificate caCert = currentUpgradedCaData.getCA().getCACertificate();
                         if (caCert != null && caid == CertTools.getSubjectDN(caCert).hashCode()) {
-                            // we may have several to choose from here, this is the tricky part, how to 
-                            // figure out which of the multiple DVs that is the right one?
-                            // We will use the serial number (CVC sequence that is) for that, which gives one remaining limitation, that they can not use the same 
-                            // sequence, i.e. a DV signed by Finland can not have the same sequence as a DV signed by Norway, _if_ they share the same country+mnemonic (C and CN)
-                            final String caKeySeq = CertTools.getSerialNumberAsString(caCert);
-                            if (log.isDebugEnabled()) {
-                                log.debug("CA cert type " + caCert.getType() + ", sequence: " + caKeySeq + ", sought keySequence: " + keySequence);
-                            }
-                            if (caCert.getType().equals("CVC")) {
-                                // It's a CVC certificate, check that the sequence (if we passed one as argument) matches the CA
-                                if (StringUtils.isNotEmpty(keySequence)) {
-                                    if (StringUtils.equals(keySequence, caKeySeq)) {
-                                        // Yes, we were looking for exactly this CA certificate
-                                        if (log.isDebugEnabled()) {
-                                            log.debug("We were looking for a CA with ID " + caid + " and keySequence " + keySequence + ", and found another CA to map to with the same keySequence and CA ID " + currentUpgradedCaData.getCaId());
-                                        }
-                                    } else {
-                                        // No, we were not looking for exactly this CA certificate/CA
-                                        // move on and look for another CA
-                                        if (log.isDebugEnabled()) {
-                                            log.debug("We were looking for a CA with ID " + caid + " and keySequence " + keySequence + ", but found another CA with keySequence " + caKeySeq + ", not found continuing search...");
-                                        }
-                                        continue;
-                                    }
-                                }
-                            }
                             cadata = currentUpgradedCaData; // found.
                             // Do also cache it if someone else is needing it later
                         	if (log.isDebugEnabled()) {
@@ -870,39 +805,22 @@ public class CaSessionBean implements CaSessionLocal, CaSessionRemote {
     }
 
     /** @return the CA object, from the database (including any upgrades) is necessary */
-    private CACommon getCa(int caId, final String keySequence) {
+    private CACommon getCa(int caId) {
         final Integer realCAId = CACacheHelper.getCaCertHash(Integer.valueOf(caId));
-        if (realCAId != null) {
+        if (realCAId!=null) {
             // Since we have found a cached "real" CA Id and the cache will use this one (if cached)
             caId = realCAId.intValue();
         }
-        // 0. Do we have a keySequence? In that case we're in trouble, the CA ID we just have might be the completely wrong one.
-        // Using CVC (especially with multiple DVs using the same mnemoinc (CN), messes up caching big time
-        if (keySequence != null && CaCache.INSTANCE.getEntry(caId) != null) {
-            final CACommon ca = CaCache.INSTANCE.getEntry(caId);
-            if (ca != null && ca.getCertificateChain() != null & ca.getCertificateChain().get(0) != null) {
-                final String sequence = CertTools.getSerialNumberAsString(ca.getCertificateChain().get(0));
-                if (!StringUtils.equals(keySequence, sequence)) {
-                    // it was not the right CA, remove it from cache so we will find the right one instead
-                    if (log.isDebugEnabled()) {
-                        log.debug("We had a cached CA already for " + caId + " but it was not the right with the right keySequence (" + keySequence + "), so purging from cache and looking in database.");
-                    }
-                    CaCache.INSTANCE.removeEntry(caId);
-                }
-            }
-        }
-        // 1. Check (new) CaCache if it is time to sync-up with database (or it does not exist)
+        // 1. Check (new) CaCache if it is time to sync-up with database
         if (CaCache.INSTANCE.shouldCheckForUpdates(caId)) {
-            if (log.isDebugEnabled()) {
-                log.debug("CA with ID " + caId + " will be checked for updates.");
-            }
+            log.debug("CA with ID " + caId + " will be checked for updates.");
             // 2. If cache is expired or missing, first thread to discover this reloads item from database and sends it to the cache         
-            final CAData caData = getCAData(caId, null, keySequence);
+            CAData caData = getCAData(caId, null);
             if (caData != null) {
                 final int digest = caData.getProtectString(0).hashCode();
                 // Special for splitting out the CAToken and committing it..
                 // Since getCAData has already run upgradeAndMergeToDatabase we can just get the CA here..
-                final CACommon ca = caData.getCA();
+                CACommon ca = caData.getCA();
                 if (ca != null) {
                     // Note that we store using the "real" CAId in the cache.
                     CaCache.INSTANCE.updateWith(caData.getCaId(), digest, ca.getName(), ca);
@@ -917,9 +835,6 @@ public class CaSessionBean implements CaSessionLocal, CaSessionRemote {
             // 4. If database is different from cache, replace it in the cache
         }
         // 5. Get CA from cache (or null) and be merry
-        if (log.isDebugEnabled()) {
-            log.debug("Returning CA from cache for CA ID: " + caId);
-        }
         return CaCache.INSTANCE.getEntry(caId);
     }
 
@@ -1079,7 +994,7 @@ public class CaSessionBean implements CaSessionLocal, CaSessionRemote {
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     @Override
     public Certificate getFutureRolloverCertificate(int caid) throws CADoesntExistsException {
-        final CACommon ca = getCa(caid, null);
+        final CACommon ca = getCa(caid);
         if (ca == null) {
             throw new CADoesntExistsException("Method called on non-existent CA");
         }
@@ -1091,7 +1006,7 @@ public class CaSessionBean implements CaSessionLocal, CaSessionRemote {
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     @Override
     public int determineCrlPartitionIndex(final int caid, final CertificateWrapper cert) {
-        final CACommon ca = getCa(caid, null);
+        final CACommon ca = getCa(caid);
         return ca.getCAInfo().determineCrlPartitionIndex(EJBTools.unwrap(cert));
     }
 }
