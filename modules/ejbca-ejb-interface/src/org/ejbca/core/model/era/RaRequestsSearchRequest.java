@@ -32,26 +32,7 @@ public class RaRequestsSearchRequest implements Serializable {
     private Date endDate;
     private Date expiresBefore;
     private boolean includeOtherAdmins;
-    private String subjectDn;
-    private String email;
     
-    
-    
-    public String getCustomSearchSubjectDn() {
-        return subjectDn;
-    }
-
-    public void setCustomSearchSubjectDn(String subjectDn) {
-        this.subjectDn = subjectDn;
-    }
-
-    public String getCustomSearchEmail() {
-        return email;
-    }
-
-    public void setCustomSearchEmail(String email) {
-        this.email = email;
-    }
 
     public boolean isSearchingWaitingForMe() {
         return searchingWaitingForMe;

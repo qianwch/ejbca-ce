@@ -236,11 +236,6 @@ public class ApprovalSessionBean implements ApprovalSessionLocal, ApprovalSessio
         approvalData.setExpiredate((new Date()).getTime() + approvalRequest.getRequestValidity());
         //Kept for legacy reasons
         approvalData.setRemainingapprovals(approvalRequest.getNumOfRequiredApprovals());
-        if (approvalRequest instanceof AddEndEntityApprovalRequest) {
-            AddEndEntityApprovalRequest addEndEntity = (AddEndEntityApprovalRequest) approvalRequest;           
-            approvalData.setEmail(addEndEntity.getEndEntityInformation().getEmail());
-            approvalData.setSubjectDn(addEndEntity.getEndEntityInformation().getDN());
-        }   
     }
 
     @Override
@@ -478,12 +473,6 @@ public class ApprovalSessionBean implements ApprovalSessionLocal, ApprovalSessio
         }
         if (endDate != null) {
             queryWrapper.add(" AND requestDate <? ", endDate.getTime());
-        }
-        if (subjectDn != null) {
-            queryWrapper.add(" AND subjectDn LIKE '%' || ? || '%'", subjectDn);
-        }
-        if (email != null) {
-            queryWrapper.add(" AND email LIKE '%' || ? || '%'", email);
         }
         final List<ApprovalDataVO> ret = queryInternal(queryWrapper, index, numberofrows, caAuthorizationString, endEntityProfileAuthorizationString,
                 orderByString);
