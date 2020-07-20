@@ -530,7 +530,7 @@ public class BaseHelper {
      * @param failureMessage failure message.
      */
     protected void assertElementExists(final By elementId, final String failureMessage) {
-        if(findElement(elementId) == null) {
+        if (findElement(elementId) == null) {
             fail(failureMessage);
         }
     }
@@ -542,7 +542,7 @@ public class BaseHelper {
      * @param failureMessage failure message.
      */
     void assertElementDoesNotExist(final By elementId, final String failureMessage) {
-        if(findElementWithoutWait(elementId, false) != null) {
+        if (findElementWithoutWait(elementId, false) != null) {
             fail(failureMessage);
         }
     }
@@ -781,7 +781,7 @@ public class BaseHelper {
     /**
      * Switches to 'next' browser window e.g. a pop-up or a new tab
      * Use return value to return to main window.
-     * @return The main window (switched from). 
+     * @return The main window (switched from).
      */
     String switchToNextWindow() {
         final String mainWindow = webDriver.getWindowHandle();
@@ -792,7 +792,7 @@ public class BaseHelper {
         }
         return mainWindow;
     }
-    
+
     /**
      * Switch to the specified window
      * @param windowId of the window to switch to.
@@ -800,7 +800,7 @@ public class BaseHelper {
     void switchToWindow(final String windowId) {
         webDriver.switchTo().window(windowId);
     }
-    
+
     /**
      * Asserts the appearance of the alert popup, its message and accepts/discards it.
      *

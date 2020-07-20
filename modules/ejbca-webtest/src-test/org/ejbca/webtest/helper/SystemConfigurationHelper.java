@@ -29,24 +29,33 @@ public class SystemConfigurationHelper extends BaseHelper {
         // General
         static final String PAGE_URI = "/ejbca/adminweb/sysconfig/systemconfiguration.xhtml";
         static final By PAGE_LINK = By.id("sysConfigGlobal");
-        
+
         // Buttons
         static final By BUTTON_SAVE_BASIC_CONFIG = By.xpath("//input[@value='Save']");
         static final By BUTTON_CANCEL_BASIC_CONFIG = By.xpath("//input[@value='Cancel']");
-        
+
         // Check boxes
         static final By CHECKBOX_ENABLE_KEY_RECOVERY = By.id("systemconfiguration:keyrecoverycheckbox");
         static final By CHECKBOX_ENABLE_CA_NAME_CHANGE = By.id("systemconfiguration:enableicaocanamechange");
-        
+
         // Dynamic references
         static By getSystemConfigTabContainingText(final String text) {
             return By.xpath("//div/span/a[contains(text(),'" + text + "' )]");
         }
-        static By getEnableButtonFromProtocolssTableRowContainingText(final String text) {
+        static By getEnableButtonFromProtocolsTableRowContainingText(final String text) {
             return By.xpath("//tr/td[contains(text(), '" + text + "')]/following-sibling::td//input[@value='Enable']");
         }
+        static By getDisableButtonFromProtocolsTableRowContainingText(final String text) {
+            return By.xpath("//tr/td[contains(text(), '" + text + "')]/following-sibling::td//input[@value='Disable']");
+        }
+        static By getEnabledStatusFromProtocolsTableRowContainingText(final String text) {
+            return By.xpath("//tr/td[contains(text(), '" + text + "')]/following-sibling::td/div[contains(text(), 'Enabled')]");
+        }
+        static By getDisabledStatusFromProtocolsTableRowContainingText(final String text) {
+            return By.xpath("//tr/td[contains(text(), '" + text + "')]/following-sibling::td/div[contains(text(), 'Disabled')]");
+        }
     }
-    
+
     /**
      * Enum of available tabs with corresponding locator
      */
@@ -90,11 +99,11 @@ public class SystemConfigurationHelper extends BaseHelper {
             return label;
         }
     }
-    
+
     public SystemConfigurationHelper(final WebDriver webDriver) {
         super(webDriver);
     }
-    
+
     /**
      * Opens the page 'System Configuration' by clicking menu link on home page and asserts the correctness of resulting URI.
      *
@@ -103,7 +112,7 @@ public class SystemConfigurationHelper extends BaseHelper {
     public void openPage(final String webUrl) {
         openPageByLinkAndAssert(webUrl, Page.PAGE_LINK, Page.PAGE_URI);
     }
-    
+
     /**
      * Opens the given tab in the 'System Configuration' page by clicking on the tab link
      * @param tab enum of type SysConfigTabs
@@ -111,7 +120,7 @@ public class SystemConfigurationHelper extends BaseHelper {
     public void openTab(final SysConfigTabs tab) {
         clickLink(Page.getSystemConfigTabContainingText(tab.getLocatorId()));
     }
-    
+
     /**
      * Toggles 'Enabled CA Name Change'
      * @param enable true if button should be enabled (checked)
@@ -119,7 +128,7 @@ public class SystemConfigurationHelper extends BaseHelper {
     public void triggerEnableCaNameChange(boolean enable) {
         toggleCheckbox(Page.CHECKBOX_ENABLE_CA_NAME_CHANGE, enable);
     }
-    
+
     /**
      * Asserts the check box 'Enable CA Name Change' is enabled/disabled.
      *
@@ -132,7 +141,7 @@ public class SystemConfigurationHelper extends BaseHelper {
                 isSelectedElement(Page.CHECKBOX_ENABLE_CA_NAME_CHANGE)
         );
     }
-    
+
     /**
      * Toggles 'Enabled Key Recovery'
      * @param enable true if button should be enabled (checked)
@@ -140,7 +149,7 @@ public class SystemConfigurationHelper extends BaseHelper {
     public void triggerEnableKeyRecovery(boolean enable) {
         toggleCheckbox(Page.CHECKBOX_ENABLE_KEY_RECOVERY, enable);
     }
-    
+
     /**
      * Asserts the check box 'Enable Key Recovery' is enabled/disabled.
      *
@@ -153,14 +162,14 @@ public class SystemConfigurationHelper extends BaseHelper {
                 isSelectedElement(Page.CHECKBOX_ENABLE_KEY_RECOVERY)
         );
     }
-    
+
     /**
      * Saves configuration by clicking the 'Save' Button on the 'Basic Configuration' page (tab in 'System Configuration')
      */
     public void saveBasicConfiguration() {
         clickLink(Page.BUTTON_SAVE_BASIC_CONFIG);
     }
-    
+
     /**
      * Cancels configuration by clicking the 'Cancel' Button on the 'Basic Configuration' page (tab in 'System Configuration')
      */
@@ -170,10 +179,33 @@ public class SystemConfigurationHelper extends BaseHelper {
 
     /**
      * Enables selected protocol
-     * @param protocol protocol to enable.
+     * @param protocol protocol to enable
      */
     public void enableProtocol(SysConfigProtokols protocol) {
-        clickLinkIfExists(Page.getEnableButtonFromProtocolssTableRowContainingText(protocol.getLabel()));
+        clickLinkIfExists(Page.getEnableButtonFromProtocolsTableRowContainingText(protocol.getLabel()));
     }
 
+    /**
+     * Disables selected protocol
+     * @param protocol protocol to disable
+     */
+    public void disableProtocol(SysConfigProtokols protocol) {
+        clickLinkIfExists(Page.getDisableButtonFromProtocolsTableRowContainingText(protocol.getLabel()));
+    }
+
+    /**
+     * Asserts the specified protocol is enabled
+     * @param protocol protocol to assert
+     */
+    public void assertProtocolEnabled(SysConfigProtokols protocol) {
+        assertElementExists(Page.getEnabledStatusFromProtocolsTableRowContainingText(protocol.getLabel()), protocol.getLabel() + " is not in enabled state");
+    }
+
+    /**
+     * Asserts the specified protocol is disabled
+     * @param protocol protocol to assert
+     */
+    public void assertProtocolDisabled(SysConfigProtokols protocol) {
+        assertElementExists(Page.getDisabledStatusFromProtocolsTableRowContainingText(protocol.getLabel()), protocol.getLabel() + " is not in disabled state");
+    }
 }
