@@ -21,13 +21,13 @@ import org.openqa.selenium.WebDriver;
 /**
  * ACME helper class for EJBCA Web Tests.
  *
- *  @version $Id: AcmeHelper.java 2020-04-21 15:00 tobiasM$
+ *  @version $Id$
  */
 public class AcmeHelper extends BaseHelper {
 
     /**
      * Contains references of the 'ACME Configuration' page.
-     * 
+     *
      */
     public static class Page {
         //General
@@ -95,7 +95,7 @@ public class AcmeHelper extends BaseHelper {
     };
 
     /**
-     * Switches to the alert window. 
+     * Switches to the alert window.
      *
      */
     public Alert alertWindow() {
@@ -110,7 +110,7 @@ public class AcmeHelper extends BaseHelper {
     public void clickAlias(String name) {
         clickLink(Page.getAliasEditButton(name));
     }
-    
+
     /**
      * Clicks the 'Add' button
      *
@@ -120,16 +120,16 @@ public class AcmeHelper extends BaseHelper {
     }
 
     /**
-     * Clicks the 'Rename' button for the correct Alias. 
+     * Clicks the 'Rename' button for the correct Alias.
      *
      * @param name The name of the Alias.
      */
     public void rename(String name) {
         clickLink(Page.getActionsButton(name, "Rename"));
     }
-    
+
     /**
-     * Clicks the 'Add' button
+     * Clicks the 'Switch to edit mode' button
      *
      */
     public void clickEdit() {
@@ -137,7 +137,7 @@ public class AcmeHelper extends BaseHelper {
     }
 
     /**
-     * Clicks the 'Delete' button for the correct Alias. 
+     * Clicks the 'Delete' button for the correct Alias.
      *
      * @param name The name of the Alias.
      */
@@ -147,7 +147,7 @@ public class AcmeHelper extends BaseHelper {
     }
 
     /**
-     * Checks that ACME alias already exists when trying to add a new alias. 
+     * Checks that ACME alias already exists when trying to add a new alias.
      *
      *@param name The alias name to check.
      */
@@ -158,7 +158,7 @@ public class AcmeHelper extends BaseHelper {
     }
 
     /**
-     * Checks that ACME alias already exists when renaming an alias. 
+     * Checks that ACME alias already exists when renaming an alias.
      *
      *@param name The alias name to check.
      */
@@ -207,7 +207,7 @@ public class AcmeHelper extends BaseHelper {
         );
     }
 
-    
+
     /**
      * Asserts the element 'Wildcard Certificate Issuance Allowed' is enabled/disabled.
      *
@@ -220,7 +220,7 @@ public class AcmeHelper extends BaseHelper {
                 isEnabledElement(Page.WILDCARD_ALLOWED)
         );
     }
-    
+
     /**
      * Asserts the element 'Wildcard Certificate Issuance Allowed' is/isn't selected.
      *
@@ -272,7 +272,7 @@ public class AcmeHelper extends BaseHelper {
                 isEnabledElement(Page.TERMS_INPUT_URL)
         );
     }
-    
+
     /**
      * Asserts the element 'Terms of Service URL' has the correct text.
      *
@@ -298,7 +298,7 @@ public class AcmeHelper extends BaseHelper {
                 isEnabledElement(Page.VERSION_APPROVAL)
         );
     }
-    
+
     /**
      * Asserts the element 'Require client approval for Terms of Service changes' is/isn't selected.
      *
@@ -324,7 +324,7 @@ public class AcmeHelper extends BaseHelper {
                 isEnabledElement(Page.DNS_RESOLVER)
         );
     }
-    
+
     /**
      * Asserts the element 'DNS Resolver' has the correct text.
      *
@@ -350,7 +350,7 @@ public class AcmeHelper extends BaseHelper {
                 isEnabledElement(Page.DNS_PORT)
         );
     }
-    
+
     /**
      * Asserts the element 'DNS Port' has the correct text.
      *
@@ -376,7 +376,7 @@ public class AcmeHelper extends BaseHelper {
                 isEnabledElement(Page.USE_DNSSEC)
         );
     }
-    
+
     /**
      * Asserts the element 'Validate DNSSEC' is/isn't selected.
      *
@@ -402,7 +402,7 @@ public class AcmeHelper extends BaseHelper {
                 isEnabledElement(Page.DNSSEC_TRUST_ANCHOR)
         );
     }
-    
+
     /**
      * Asserts the element 'DNSSEC Trust Anchor' has the correct text.
      *
