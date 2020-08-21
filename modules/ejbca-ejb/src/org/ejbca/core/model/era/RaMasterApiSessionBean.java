@@ -346,8 +346,9 @@ public class RaMasterApiSessionBean implements RaMasterApiSessionLocal {
      * <tr><th>7<td>=<td>7.1.0
      * <tr><th>8<td>=<td>7.3.0
      * <tr><th>9<td>=<td>7.4.1
+     * <tr><th>9<td>=<td>7.4.2
      */
-    private static final int RA_MASTER_API_VERSION = 9;
+    private static final int RA_MASTER_API_VERSION = 10;
 
     /** Cached value of an active CA, so we don't have to list through all CAs every time as this is a critical path executed every time */
     private int activeCaIdCache = -1;
@@ -1022,6 +1023,18 @@ public class RaMasterApiSessionBean implements RaMasterApiSessionLocal {
             return null;
         }
         return cdw;
+    }
+
+    @Override
+    public List<CertificateWrapper> searchForCertificateChain(AuthenticationToken authenticationToken, String fingerprint) {
+        final CertificateDataWrapper cdw = certificateStoreSession.getCertificateData(fingerprint);
+        if (cdw==null || !authorizedToCert(authenticationToken, cdw)) {
+            return null;
+        }
+        final List<CertificateWrapper> retval = new ArrayList<>();
+        retval.add(cdw);
+        appendCaChain(retval, cdw.getCertificate());
+        return retval;
     }
 
     @Override
@@ -1997,31 +2010,7 @@ public class RaMasterApiSessionBean implements RaMasterApiSessionLocal {
                         log.debug("Found certificate for user with subjectDN: "+CertTools.getSubjectDN(lastcert)+" and serialNo: "+CertTools.getSerialNumberAsString(lastcert));
                     }
                     // If we added a certificate, we will also append the CA certificate chain
-                    boolean selfSigned = false;
-                    int iteration = 0; // to control so we don't enter an infinite loop. Max chain length is 10
-                    while (!selfSigned && iteration < 10) {
-                        iteration++;
-                        final String issuerDN = CertTools.getIssuerDN(lastcert);
-                        final Collection<Certificate> cacerts = certificateStoreSession.findCertificatesBySubject(issuerDN);
-                        if (cacerts == null || cacerts.size() == 0) {
-                            log.info("No certificate found for CA with subjectDN: "+issuerDN);
-                            break;
-                        }
-                        for (final Certificate cert : cacerts) {
-                            try {
-                                lastcert.verify(cert.getPublicKey());
-                                // this was the right certificate
-                                retval.add(EJBTools.wrap(cert));
-                                // To determine if we have found the last certificate or not
-                                selfSigned = CertTools.isSelfSigned(cert);
-                                // Find the next certificate in the chain now
-                                lastcert = cert;
-                                break; // Break of iteration over this CAs certs
-                            } catch (Exception e) {
-                                log.debug("Failed verification when looking for CA certificate, this was not the correct CA certificate. IssuerDN: "+issuerDN+", serno: "+CertTools.getSerialNumberAsString(cert));
-                            }
-                        }
-                    }
+                    appendCaChain(retval, lastcert);
 
                 } else {
                     log.debug("Found no certificate (in non null list??) for user "+username);
@@ -2037,6 +2026,34 @@ public class RaMasterApiSessionBean implements RaMasterApiSessionLocal {
             log.trace("<getLastCertChain: "+username);
         }
         return retval;
+    }
+
+    private void appendCaChain(List<CertificateWrapper> certificateList, Certificate certificate) {
+        boolean selfSigned = false;
+        int iteration = 0; // to control so we don't enter an infinite loop. Max chain length is 10
+        while (!selfSigned && iteration < 10) {
+            iteration++;
+            final String issuerDN = CertTools.getIssuerDN(certificate);
+            final Collection<Certificate> cacerts = certificateStoreSession.findCertificatesBySubject(issuerDN);
+            if (cacerts == null || cacerts.size() == 0) {
+                log.info("No certificate found for CA with subjectDN: "+issuerDN);
+                break;
+            }
+            for (final Certificate cert : cacerts) {
+                try {
+                    certificate.verify(cert.getPublicKey());
+                    // this was the right certificate
+                    certificateList.add(EJBTools.wrap(cert));
+                    // To determine if we have found the last certificate or not
+                    selfSigned = CertTools.isSelfSigned(cert);
+                    // Find the next certificate in the chain now
+                    certificate = cert;
+                    break; // Break of iteration over this CAs certs
+                } catch (Exception e) {
+                    log.debug("Failed verification when looking for CA certificate, this was not the correct CA certificate. IssuerDN: "+issuerDN+", serno: "+CertTools.getSerialNumberAsString(cert));
+                }
+            }
+        }
     }
 
     @Override
