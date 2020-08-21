@@ -362,7 +362,7 @@ public interface RaMasterApi {
      * Searches for a certificate. If present locally, then the data (revocation status etc.) from the local database will be returned.
      * Returns a certificate and its Ca chain
      * @return CertificateDataWrapper if it exists and the caller is authorized to see the data or null otherwise
-     * @since Initial RA Master API version (EJBCA 6.6.0)
+     * @since Initial RA Master API version (EJBCA 7.4.2)
      */
     List<CertificateWrapper> searchForCertificateChain(AuthenticationToken authenticationToken, String fingerprint);
 
@@ -735,7 +735,7 @@ public interface RaMasterApi {
      *
      * @param authenticationToken the administrator performing the action
      * @param endEntityInformation an EndEntityInformation object with the new information
-     * @param clearpwd true if the password will be stored in clear form in the  db, otherwise it is hashed.
+     * @param clearPwd true if the password will be stored in clear form in the  db, otherwise it is hashed.
      * @throws AuthorizationDeniedException administrator not authorized to edit user
      * @throws EndEntityProfileValidationException data doesn't fulfill EEP requirements
      * @throws ApprovalException if an approval already is waiting for specified action
