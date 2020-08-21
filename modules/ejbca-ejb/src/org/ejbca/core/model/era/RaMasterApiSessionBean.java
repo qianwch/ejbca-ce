@@ -1010,7 +1010,7 @@ public class RaMasterApiSessionBean implements RaMasterApiSessionLocal {
         if (authorizedEepIds.contains(EndEntityConstants.EMPTY_END_ENTITY_PROFILE)) {
             authorizedEepIds.add(EndEntityConstants.NO_END_ENTITY_PROFILE);
         }
-        if (!accessAnyEepAvailable && !authorizedEepIds.contains(Integer.valueOf(cdw.getCertificateData().getEndEntityProfileIdOrZero()))) {
+        if (!accessAnyEepAvailable && !authorizedEepIds.contains(cdw.getCertificateData().getEndEntityProfileIdOrZero())) {
             return false;
         }
         return true;
@@ -1916,7 +1916,7 @@ public class RaMasterApiSessionBean implements RaMasterApiSessionLocal {
         } catch (NotFoundException e) {
             log.debug("EJBCA WebService error", e);
             throw e; // NFE extends EjbcaException
-        } catch (CertificateExtensionException e) {
+        } catch (CertificateExtensionException | NoSuchAlgorithmException | NoSuchProviderException | CertificateException | IOException e) {
             log.debug("EJBCA WebService error", e);
             throw new EjbcaException(ErrorCode.INTERNAL_ERROR, e.getMessage());
         } catch (InvalidKeyException e) {
@@ -1940,9 +1940,6 @@ public class RaMasterApiSessionBean implements RaMasterApiSessionLocal {
         } catch (InvalidKeySpecException e) {
             log.debug("EJBCA WebService error", e);
             throw new EjbcaException(ErrorCode.INVALID_KEY_SPEC, e.getMessage());
-        } catch (NoSuchAlgorithmException | NoSuchProviderException | CertificateException | IOException e) {
-            log.debug("EJBCA WebService error", e);
-            throw new EjbcaException(ErrorCode.INTERNAL_ERROR, e.getMessage());
         } catch (CesecoreException e) {
             log.debug("EJBCA WebService error", e);
             // Will convert the CESecore exception to an EJBCA exception with the same error code
@@ -2035,7 +2032,7 @@ public class RaMasterApiSessionBean implements RaMasterApiSessionLocal {
             iteration++;
             final String issuerDN = CertTools.getIssuerDN(certificate);
             final Collection<Certificate> cacerts = certificateStoreSession.findCertificatesBySubject(issuerDN);
-            if (cacerts == null || cacerts.size() == 0) {
+            if (cacerts == null || cacerts.isEmpty()) {
                 log.info("No certificate found for CA with subjectDN: "+issuerDN);
                 break;
             }
@@ -2235,17 +2232,9 @@ public class RaMasterApiSessionBean implements RaMasterApiSessionLocal {
                 final Enumeration<String> en = keyStore.aliases();
                 final String alias = en.nextElement();
                 final X509Certificate cert = (X509Certificate) keyStore.getCertificate(alias);
-            } catch (CertificateParsingException e) {
-                throw new EjbcaException(ErrorCode.CERT_COULD_NOT_BE_PARSED, e.getMessage());
-            } catch (NoSuchAlgorithmException e) {
-                throw new EjbcaException(ErrorCode.NOT_SUPPORTED_KEY_STORE, e.getMessage());
             } catch (CertificateException e) {
                 throw new EjbcaException(ErrorCode.CERT_COULD_NOT_BE_PARSED, e.getMessage());
-            } catch (IOException e) {
-                throw new EjbcaException(ErrorCode.NOT_SUPPORTED_KEY_STORE, e.getMessage());
-            } catch (KeyStoreException e) {
-                throw new EjbcaException(ErrorCode.NOT_SUPPORTED_KEY_STORE, e.getMessage());
-            } catch (NoSuchProviderException e) {
+            } catch (NoSuchAlgorithmException | IOException | KeyStoreException | NoSuchProviderException e) {
                 throw new EjbcaException(ErrorCode.NOT_SUPPORTED_KEY_STORE, e.getMessage());
             }
         }

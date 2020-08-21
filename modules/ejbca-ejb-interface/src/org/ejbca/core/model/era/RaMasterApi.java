@@ -603,7 +603,7 @@ public interface RaMasterApi {
      * @throws ApprovalException if the request requires approval
      * @since RA Master API version 9 (EJBCA 7.4.1)
      */
-    byte[] enrollAndIssueSshCertificateWs(AuthenticationToken authenticationToken, UserDataVOWS userDataVOW, SshRequestMessage sshRequestMessage)
+    byte[] enrollAndIssueSshCertificateWs(AuthenticationToken authenticationToken, UserDataVOWS userDataVOWS, SshRequestMessage sshRequestMessage)
             throws AuthorizationDeniedException, ApprovalException, EjbcaException, EndEntityProfileValidationException;
 
     /**
