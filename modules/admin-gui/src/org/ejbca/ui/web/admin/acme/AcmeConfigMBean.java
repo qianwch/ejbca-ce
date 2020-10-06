@@ -13,12 +13,16 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.SessionScoped;
+import javax.faces.component.html.HtmlPanelGrid;
+import javax.faces.component.html.HtmlSelectOneMenu;
 import javax.faces.context.FacesContext;
+import javax.faces.event.AjaxBehaviorEvent;
 import javax.faces.model.ListDataModel;
 import javax.faces.model.SelectItem;
 
@@ -30,11 +34,17 @@ import org.cesecore.authorization.AuthorizationSessionLocal;
 import org.cesecore.authorization.control.StandardRules;
 import org.cesecore.certificates.endentity.EndEntityConstants;
 import org.cesecore.configuration.GlobalConfigurationSessionLocal;
+import org.cesecore.util.ui.DynamicUiModel;
+import org.cesecore.util.ui.DynamicUiModelAware;
+import org.cesecore.util.ui.DynamicUiModelException;
 import org.ejbca.config.AcmeConfiguration;
 import org.ejbca.config.GlobalAcmeConfiguration;
 import org.ejbca.core.EjbcaException;
 import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileSessionLocal;
 import org.ejbca.core.model.authorization.AccessRulesConstants;
+import org.ejbca.core.protocol.acme.eab.AcmeExternalAccountBinding;
+import org.ejbca.core.protocol.acme.eab.AcmeExternalAccountBindingFactory;
+import org.ejbca.ui.psm.jsf.JsfDynamicUiPsmFactory;
 import org.ejbca.ui.web.admin.BaseManagedBean;
 
 /**
@@ -222,6 +232,7 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
             acmeConfig.setEndEntityProfileId(Integer.valueOf(currentAlias.endEntityProfileId));
             acmeConfig.setPreAuthorizationAllowed(currentAlias.isPreAuthorizationAllowed());
             acmeConfig.setRequireExternalAccountBinding(currentAlias.isRequireExternalAccountBinding());
+            acmeConfig.setExternalAccountBinding(currentAlias.getEab());
             acmeConfig.setWildcardCertificateIssuanceAllowed(currentAlias.isWildcardCertificateIssuanceAllowed());
             acmeConfig.setWebSiteUrl(currentAlias.getUrlTemplate());
             acmeConfig.setDnsResolver(currentAlias.getDnsResolver());
@@ -297,6 +308,7 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
         private String endEntityProfileId;
         private boolean preAuthorizationAllowed;
         private boolean requireExternalAccountBinding;
+        private AcmeExternalAccountBinding eab;
         private String urlTemplate;
         private boolean wildcardCertificateIssuanceAllowed;
         private String dnsResolver;
@@ -315,6 +327,7 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
                     this.endEntityProfileId = String.valueOf(acmeConfiguration.getEndEntityProfileId());
                     this.preAuthorizationAllowed = acmeConfiguration.isPreAuthorizationAllowed();
                     this.requireExternalAccountBinding = acmeConfiguration.isRequireExternalAccountBinding();
+                    this.eab = acmeConfiguration.getExternalAccountBinding();
                     this.urlTemplate = acmeConfiguration.getWebSiteUrl();
                     this.wildcardCertificateIssuanceAllowed = acmeConfiguration.isWildcardCertificateIssuanceAllowed();
                     this.dnsResolver = acmeConfiguration.getDnsResolver();
@@ -358,6 +371,14 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
 
         public void setRequireExternalAccountBinding(boolean requireExternalAccountBinding) {
             this.requireExternalAccountBinding = requireExternalAccountBinding;
+        }
+        
+        public AcmeExternalAccountBinding getEab() {
+            return eab;
+        }
+        
+        public void setEab(AcmeExternalAccountBinding eab) {
+            this.eab = eab;
         }
 
         public String getUrlTemplate() {
@@ -459,4 +480,151 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
             this.replayNonceValidity = replayNonceValidity;
         }
     }
+    
+    // ACME external account binding (EAB)
+    
+    /** The EAB ID. */
+    private int eabId;
+
+    /** Dynamic UI PIM component. */
+    private DynamicUiModel uiModel;
+
+    /** Dynamic UI PSM component. */
+    private HtmlPanelGrid dataGrid;
+    
+    /**
+     * Resets the dynamic UI properties PSM.
+     */
+    private void reset() {
+        setEabId(-1);
+        currentAlias.eab = null;
+    }
+    
+    /**
+     * Gets the selected EAB.
+     * @return the EAB or null if no EAB is selected.
+     */
+    public AcmeExternalAccountBinding getEab() {
+        // (Re-)initialize dynamic UI PSM.        
+        final AcmeExternalAccountBinding eab = currentAlias.eab;
+        if (eab instanceof DynamicUiModelAware) {
+            if (uiModel == null || !uiModel.equals(((DynamicUiModelAware) eab).getDynamicUiModel())) {
+                ((DynamicUiModelAware) eab).initDynamicUiModel();
+                uiModel = ((DynamicUiModelAware) eab).getDynamicUiModel();
+                if (log.isDebugEnabled()) {
+                    log.debug("Request dynamic UI properties for ACME EAB with (id=" + eab.getProfileId() + ") with properties " + eab.getFilteredDataMapForLogging());
+                }
+                try {
+                    initGrid(uiModel, eab.getClass().getSimpleName());
+                } catch (DynamicUiModelException e) {
+                    log.warn("Could not initialize dynamic UI PSM: " + e.getMessage(), e);
+                }
+            }
+        }
+        return eab;
+     }
+    
+    /**
+     * Sets the current external account binding EAB.
+     * @param eab the EAB.
+     */
+    public void setEab(final AcmeExternalAccountBinding eab) {
+        currentAlias.eab = eab;
+    }
+
+    /**
+     * Gets the EABs ID.
+     * @return the ID.
+     */
+   public int getEabId() {
+       return eabId;
+   }
+
+   /**
+    * Sets the EABs ID.
+    * @param eabId the ID.
+    */
+   public void setEabId(int eabId) {
+       this.eabId = eabId;
+   }
+
+   /**
+    * Gets the dynamic UI properties PSM component as HTML data grid.
+    * @return the data grid.
+    * @throws DynamicUiModelException if the PSM could not be initialized.
+    */
+   public HtmlPanelGrid getDataGrid() throws DynamicUiModelException {
+       return dataGrid;
+   }
+
+   /**
+    * Sets the dynamic UI properties PSM component as HTML data grid.
+    * @param dataGrid the data grid.
+    */
+   public void setDataGrid(final HtmlPanelGrid dataGrid) {
+       this.dataGrid = dataGrid;
+   }
+   
+   /**
+    * Initializes the dynamic UI model grid panel.
+    * @param pim the PIM.
+    * @param prefix the HTML components ID prefix.
+    * @throws DynamicUiModelException if the PSM could not be created.
+    */
+   private void initGrid(final DynamicUiModel pim, final String prefix) throws DynamicUiModelException {
+       if (dataGrid == null) {
+           dataGrid = new HtmlPanelGrid();
+           dataGrid.setId(getClass().getSimpleName()+"-dataGrid");
+       }
+       uiModel.setDisabled(!this.isAllowedToEdit());
+       JsfDynamicUiPsmFactory.initGridInstance(dataGrid, pim, prefix);
+   }
+   
+   
+   /**
+    * Gets the available ACME EAB types.
+    *
+    * @return List of the available EAB types.
+    */
+   public List<SelectItem> getAvailableEabs() {
+       final List<Class<?>> excludeClasses = new ArrayList<>();
+       final List<SelectItem> result = new ArrayList<>();
+       for (final AcmeExternalAccountBinding eab : AcmeExternalAccountBindingFactory.INSTANCE.getAllImplementations(excludeClasses)) {
+           result.add(new SelectItem(eab.getAccountBindingTypeIdentifier(), eab.getLabel()));
+       }
+       Collections.sort(result, new Comparator<SelectItem>() {
+           @Override
+           public int compare(SelectItem o1, SelectItem o2) {
+               return o1.getLabel().compareToIgnoreCase(o2.getLabel());
+           }
+       });
+       return result;
+   }
+   
+   /**
+    * Processes the EAB type changed event and renders the concrete EAB implementation view. 
+    * 
+    * @param e the event.
+    * @throws DynamicUiModelException if the PSM could not be initialized.
+    */
+   public void eabTypeChanged(final AjaxBehaviorEvent e) throws DynamicUiModelException {
+       setEabType((String) ((HtmlSelectOneMenu) e.getComponent()).getValue());
+       FacesContext.getCurrentInstance().renderResponse();
+   }
+   
+   public String getEabType() {
+       final AcmeExternalAccountBinding eab = getEab();
+       return eab == null ? null : eab.getAccountBindingTypeIdentifier();
+   }
+   
+   public void setEabType(final String type) {
+       if (type != null && currentAlias != null && currentAlias.eab != null) {
+           String oldType = currentAlias.eab.getAccountBindingTypeIdentifier();
+           if (!type.equals(oldType)) {
+               // TODO ECA-9474 Change and initialize new EAB type.
+               currentAlias.eab = AcmeExternalAccountBindingFactory.INSTANCE.getArcheType(type);
+               currentAlias.eab.init();
+           }
+       }
+   }
 }

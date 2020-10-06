@@ -120,9 +120,16 @@
                     <h:outputLabel for="externalAccountBinding" value="#{web.text.ACME_REQUIRE_EXTERNAL_ACCOUNT_BINDING}" />
                     <h:selectBooleanCheckbox id="externalAccountBinding" value="#{acmeConfigMBean.currentAlias.requireExternalAccountBinding}" disabled="#{!acmeConfigMBean.currentAliasEditMode}" />
                     
-                    <h:panelGroup/>
-
-                    <h:panelGroup>
+                    <h:outputLabel for="eabType" value="#{web.text.ACME_EAB_TYPE}"/>
+					<h:selectOneMenu id="eabType" value="#{acmeConfigMBean.eabType}" disabled="#{!acmeConfigMBean.currentAliasEditMode || !acmeConfigMBean.currentAlias.requireExternalAccountBinding}">
+						<f:ajax listener="#{acmeConfigMBean.eabTypeChanged}" render="@all"/>
+						<f:selectItems value="#{acmeConfigMBean.availableEabs}" />
+					</h:selectOneMenu>	                    
+                </h:panelGrid>
+                <h:panelGrid binding="#{acmeConfigMBean.dataGrid}" cellspacing="3" cellpadding="3" border="0" width="100%" rowClasses="Row0,Row1" columnClasses="editColumn1,editColumn2">
+				</h:panelGrid>
+                <h:panelGrid columns="1">
+                <h:panelGroup>
                         <h:commandButton action="#{acmeConfigMBean.cancelCurrentAlias}" value="#{web.text.CANCEL}" rendered="#{acmeConfigMBean.currentAliasEditMode}" style="margin-right:3px;" immediate="true"/>
                         <h:commandButton action="#{acmeConfigMBean.saveCurrentAlias}" value="#{web.text.SAVE}" rendered="#{acmeConfigMBean.currentAliasEditMode}"
                         	disabled="#{acmeConfigMBean.saveCurrentAliasDisabled}"/>
