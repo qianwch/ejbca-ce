@@ -19,18 +19,28 @@ import java.util.Map.Entry;
 import org.apache.log4j.Logger;
 import org.cesecore.accounts.AccountBinding;
 import org.cesecore.accounts.AccountBindingBase;
+import org.cesecore.util.ui.DynamicUiModel;
+import org.cesecore.util.ui.DynamicUiModelAware;
 
 /**
  * Base class for all ACME external account bindings (EAB) strategy objects.
  * 
  * @version $Id$
  */
-public abstract class AcmeExternalAccountBindingBase extends AccountBindingBase implements AcmeExternalAccountBinding {
+public abstract class AcmeExternalAccountBindingBase extends AccountBindingBase implements AcmeExternalAccountBinding, DynamicUiModelAware {
 
     private static final long serialVersionUID = 3018936825885684493L;
 
     /** Class logger. */
     private static final Logger log = Logger.getLogger(AcmeExternalAccountBindingBase.class);
+
+    /** Dynamic UI model extension. */
+    protected DynamicUiModel uiModel;
+    
+    @Override
+    public boolean isDefault() {
+        return false;
+    }
 
     @Override
     public String getProfileType() {
@@ -44,12 +54,11 @@ public abstract class AcmeExternalAccountBindingBase extends AccountBindingBase 
 
     @Override
     public AcmeExternalAccountBinding clone() {
-        getType();
         AcmeExternalAccountBinding clone;
         try {
-            clone = (AcmeExternalAccountBinding) getType().getConstructor().newInstance();
+            clone = (AcmeExternalAccountBinding) getClass().getConstructor().newInstance();
         } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException("Could not instantiate class of type " + getType().getCanonicalName());
+            throw new IllegalStateException("Could not instantiate class of type " + getClass().getCanonicalName());
         }
         clone.setProfileName(getProfileName());
         clone.setProfileId(getProfileId());

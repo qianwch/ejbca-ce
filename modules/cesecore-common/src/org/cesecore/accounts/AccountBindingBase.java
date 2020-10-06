@@ -34,9 +34,6 @@ public abstract class AccountBindingBase extends ProfileBase implements Serializ
 
     /** Message resources. */
     protected static final InternalResources intres = InternalResources.getInstance();
-    
-    /** Dynamic UI model extension. */
-    protected DynamicUiModel uiModel;
 
     /**
      * Default constructor.
@@ -52,8 +49,13 @@ public abstract class AccountBindingBase extends ProfileBase implements Serializ
     }
     
     @Override
+    public void initialize() {
+        data.put(PROFILE_TYPE, getImplementationClass().getName()); 
+    }
+    
+    @Override
     public void init() {
-        super.initialize();
+        initialize();
         if (null == data.get(VERSION)) {
             data.put(VERSION, LATEST_VERSION);
         }

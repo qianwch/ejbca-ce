@@ -84,4 +84,14 @@ public enum AcmeExternalAccountBindingFactory {
     public AcmeExternalAccountBinding getArcheType(String identifier) {
         return identifierToImplementationMap.get(identifier).clone();
     }
+    
+    public AcmeExternalAccountBinding getDefaultImplementation() {
+        for (AcmeExternalAccountBinding implementation : getAllImplementations()) {
+            if (implementation.isDefault()) {
+                return implementation;
+            }
+        }
+        // TODO Handle out of bounds properly ...
+        return getAllImplementations().iterator().next();
+    }
 }

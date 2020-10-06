@@ -11,11 +11,14 @@ package org.ejbca.config;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Objects;
 
 import org.cesecore.certificates.endentity.EndEntityConstants;
 import org.cesecore.internal.UpgradeableDataHashMap;
+import org.ejbca.core.protocol.acme.eab.AcmeExternalAccountBinding;
+import org.ejbca.core.protocol.acme.eab.AcmeExternalAccountBindingFactory;
 import org.ejbca.core.protocol.dnssec.DnsSecDefaults;
 
 /**
@@ -31,6 +34,7 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
     private List<String> caaIdentities = new ArrayList<>();
 
     private static final String KEY_REQUIRE_EXTERNAL_ACCOUNT_BINDING = "requireExternalAccountBinding";
+    private static final String KEY_EXTERNAL_ACCOUNT_BINDING = "externalAccountBinding";
     private static final String KEY_PRE_AUTHORIZATION_ALLOWED = "preAuthorizationAllowed";
     private static final String KEY_END_ENTITY_PROFILE_ID = "endEntityProfileId";
     private static final String KEY_VALIDATION_HTTP_CALLBACK_URL_TEMPLATE = "valiationHttpCallbackUrlTemplate";
@@ -91,6 +95,23 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
     }
     public void setRequireExternalAccountBinding(final boolean requireExternalAccountBinding) {
         super.data.put(KEY_REQUIRE_EXTERNAL_ACCOUNT_BINDING, String.valueOf(requireExternalAccountBinding));
+    }
+
+    @SuppressWarnings("unchecked")
+    public AcmeExternalAccountBinding getExternalAccountBinding() {
+        if (data.get(KEY_EXTERNAL_ACCOUNT_BINDING) instanceof LinkedHashMap) {
+            final LinkedHashMap<Object,Object> eabData = (LinkedHashMap<Object,Object>) data.get(KEY_EXTERNAL_ACCOUNT_BINDING);
+            final AcmeExternalAccountBinding eab = AcmeExternalAccountBindingFactory.INSTANCE.getArcheType((String)eabData.get("typeIdentifier"));
+            eab.getDataMap().putAll(eabData);
+            return eab;
+        }
+        return null;
+    }
+
+    public void setExternalAccountBinding(final AcmeExternalAccountBinding eab) {
+        if (eab != null) {
+            data.put(KEY_EXTERNAL_ACCOUNT_BINDING, eab.getDataMap());
+        }
     }
 
     /**
@@ -237,6 +258,7 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
         alias += ".";
         setEndEntityProfileId(DEFAULT_END_ENTITY_PROFILE_ID);
         setRequireExternalAccountBinding(DEFAULT_REQUIRE_EXTERNAL_ACCOUNT_BINDING);
+        setExternalAccountBinding(AcmeExternalAccountBindingFactory.INSTANCE.getDefaultImplementation());
         setPreAuthorizationAllowed(DEFAULT_PRE_AUTHORIZATION_ALLOWED);
         setTermsOfServiceUrl(DEFAULT_TERMS_OF_SERVICE_URL);
         setTermsOfServiceRequireNewApproval(DEFAULT_REQUIRE_NEW_APPROVAL);

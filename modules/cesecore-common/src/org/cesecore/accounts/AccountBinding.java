@@ -22,7 +22,7 @@ import org.cesecore.profiles.Profile;
  */
 public interface AccountBinding extends Profile, Cloneable {
 
-    static final String TYPE_NAME = "ACME_EXTERNAL_ACCOUNT_BINDING";
+    static final String TYPE_NAME = "ACCOUNT_BINDING";
     
     /**
      * Initializes the account binding. Called from the constructor.

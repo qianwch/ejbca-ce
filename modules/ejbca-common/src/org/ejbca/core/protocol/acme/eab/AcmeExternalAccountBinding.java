@@ -23,6 +23,8 @@ import org.cesecore.accounts.AccountBinding;
  */
 public interface AcmeExternalAccountBinding extends AccountBinding {
 
+    static final String TYPE_NAME = "ACME_EXTERNAL_ACCOUNT_BINDING";
+    
     /**
      * Parses the EAB message ({@link Acme}. The RFC8555 compliant EAB 
      * implementation uses a JWS protected message. Other implementation 
@@ -53,4 +55,10 @@ public interface AcmeExternalAccountBinding extends AccountBinding {
      * @return a deep copied clone of this account binding implementation.
      */
     AcmeExternalAccountBinding clone();
+    
+    /**
+     * Returns true, if this implementation is the default implementation. 
+     * @return
+     */
+    boolean isDefault();
 }
