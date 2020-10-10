@@ -43,10 +43,12 @@ public interface AcmeExternalAccountBinding extends AccountBinding {
      *  }
      * 
      * @param message the message string.
-     * @return true if the message could be parsed (technically and well-formed).
-     * @throws AcmeEabRequestParsingException if the message could not be parsed.
+     * @param requestUrl the ACME newAccount URL.
+     * @param jwk the base64 encoded account key in JWK form.
+     * @return the external account identifier.
+     * @throws AcmeEabRequestParsingException if the message could not be verified (technically, well-formed or by content).
      */
-    boolean parseEabRequestMessage(String message) throws AcmeEabRequestParsingException;
+    String parseEabRequestMessage(String message, String requestUrl, String jwk) throws AcmeEabRequestParsingException;
     
     /**
      * Clone has to be implemented instead of a copy constructor due to the 

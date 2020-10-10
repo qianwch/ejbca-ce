@@ -101,8 +101,8 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
     public AcmeExternalAccountBinding getExternalAccountBinding() {
         if (data.get(KEY_EXTERNAL_ACCOUNT_BINDING) instanceof LinkedHashMap) {
             final LinkedHashMap<Object,Object> eabData = (LinkedHashMap<Object,Object>) data.get(KEY_EXTERNAL_ACCOUNT_BINDING);
-            final AcmeExternalAccountBinding eab = AcmeExternalAccountBindingFactory.INSTANCE.getArcheType((String)eabData.get("typeIdentifier"));
-            eab.getDataMap().putAll(eabData);
+            final AcmeExternalAccountBinding eab = AcmeExternalAccountBindingFactory.INSTANCE.getArcheType((String) eabData.get("typeIdentifier"));
+            eab.setDataMap(eabData);
             return eab;
         }
         return null;
@@ -110,7 +110,7 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
 
     public void setExternalAccountBinding(final AcmeExternalAccountBinding eab) {
         if (eab != null) {
-            data.put(KEY_EXTERNAL_ACCOUNT_BINDING, eab.getDataMap());
+            data.put(KEY_EXTERNAL_ACCOUNT_BINDING, eab.clone().getDataMap());
         }
     }
 
