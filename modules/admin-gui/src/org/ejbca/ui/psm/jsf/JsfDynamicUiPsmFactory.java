@@ -14,6 +14,7 @@ package org.ejbca.ui.psm.jsf;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -295,10 +296,17 @@ public class JsfDynamicUiPsmFactory {
         setUIInputAttributes(result, property);
         result.setDisabled(property.getDynamicUiModel().isDisabled() || property.isDisabled());
         final List<SelectItem> items = new ArrayList<>();
-        final Map<?, String> labels = property.getLabels();
-        for (Entry<?, String> entry : labels.entrySet()) {
-            items.add(new SelectItem(entry.getKey(),
-                    property.isI18NLabeled() ? EjbcaJSFHelper.getBean().getEjbcaWebBean().getText(entry.getValue()) : entry.getValue()));
+        if (property.isI18NLabeled()) {
+            final Map<?, String> labels = property.getLabels();
+            for (Entry<?, String> entry : labels.entrySet()) {
+                items.add(new SelectItem(entry.getKey(), EjbcaJSFHelper.getBean().getEjbcaWebBean().getText(entry.getValue())));
+                
+            }
+        } else {
+            final Collection<String> entries = property.getPossibleValuesAsStrings();
+            for (String entry : entries) {
+                items.add(new SelectItem(entry,entry));
+            }
         }
         final UISelectItems selectItems = new UISelectItems();
         selectItems.setValue(items);

@@ -13,6 +13,7 @@
 package org.ejbca.core.protocol.acme.eab;
 
 import org.cesecore.accounts.AccountBinding;
+import org.ejbca.core.protocol.acme.AcmeProblemException;
 
 /**
  * Base interface for all ACME external account bindings (EAB).
@@ -48,7 +49,7 @@ public interface AcmeExternalAccountBinding extends AccountBinding {
      * @return the external account identifier.
      * @throws AcmeEabRequestParsingException if the message could not be verified (technically, well-formed or by content).
      */
-    String parseEabRequestMessage(String message, String requestUrl, String jwk) throws AcmeEabRequestParsingException;
+    String parseEabRequestMessage(String message, String requestUrl, String jwk) throws AcmeProblemException;
     
     /**
      * Clone has to be implemented instead of a copy constructor due to the 
