@@ -28,6 +28,7 @@ import javax.faces.model.SelectItem;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.cesecore.CesecoreException;
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.authorization.AuthorizationSessionLocal;
@@ -43,6 +44,7 @@ import org.ejbca.core.EjbcaException;
 import org.ejbca.core.ejb.ra.raadmin.EndEntityProfileSessionLocal;
 import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.core.protocol.acme.eab.AcmeExternalAccountBinding;
+import org.ejbca.core.protocol.acme.eab.AcmeExternalAccountBindingBase;
 import org.ejbca.core.protocol.acme.eab.AcmeExternalAccountBindingFactory;
 import org.ejbca.ui.psm.jsf.JsfDynamicUiPsmFactory;
 import org.ejbca.ui.web.admin.BaseManagedBean;
@@ -226,8 +228,13 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
 
     /** Invoked when admin saves the ACME alias configurations 
      * @throws EjbcaException */
-    public void saveCurrentAlias() throws EjbcaException {
+    public void saveCurrentAlias() throws CesecoreException, EjbcaException {
         if (currentAlias != null) {
+        	// Copy data from dynamic UI properties.
+            if (currentAlias.getEab() instanceof DynamicUiModelAware) {
+                ((DynamicUiModelAware) currentAlias.getEab()).getDynamicUiModel().writeProperties(
+                        ((AcmeExternalAccountBindingBase) currentAlias.getEab()).getRawData());
+            }
             AcmeConfiguration acmeConfig = globalAcmeConfigurationConfig.getAcmeConfiguration(currentAliasStr);
             acmeConfig.setEndEntityProfileId(Integer.valueOf(currentAlias.endEntityProfileId));
             acmeConfig.setPreAuthorizationAllowed(currentAlias.isPreAuthorizationAllowed());
@@ -621,9 +628,11 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
        if (type != null && currentAlias != null && currentAlias.eab != null) {
            String oldType = currentAlias.eab.getAccountBindingTypeIdentifier();
            if (!type.equals(oldType)) {
-               // TODO ECA-9474 Change and initialize new EAB type.
                currentAlias.eab = AcmeExternalAccountBindingFactory.INSTANCE.getArcheType(type);
                currentAlias.eab.init();
+               if (log.isDebugEnabled()) {
+                   log.debug("Changed EAB type from '" + oldType + "' to '" + type + "'.");
+               }
            }
        }
    }
