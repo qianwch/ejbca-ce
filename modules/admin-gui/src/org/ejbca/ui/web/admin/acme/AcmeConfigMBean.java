@@ -29,6 +29,7 @@ import javax.faces.model.SelectItem;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.cesecore.CesecoreException;
+import org.cesecore.accounts.AccountBindingException;
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.authorization.AuthorizationSessionLocal;
@@ -334,7 +335,11 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
                     this.endEntityProfileId = String.valueOf(acmeConfiguration.getEndEntityProfileId());
                     this.preAuthorizationAllowed = acmeConfiguration.isPreAuthorizationAllowed();
                     this.requireExternalAccountBinding = acmeConfiguration.isRequireExternalAccountBinding();
-                    this.eab = acmeConfiguration.getExternalAccountBinding();
+                    try {
+                        this.eab = acmeConfiguration.getExternalAccountBinding();
+                    } catch (AccountBindingException e) {
+                        // NOOP
+                    }
                     this.urlTemplate = acmeConfiguration.getWebSiteUrl();
                     this.wildcardCertificateIssuanceAllowed = acmeConfiguration.isWildcardCertificateIssuanceAllowed();
                     this.dnsResolver = acmeConfiguration.getDnsResolver();
@@ -601,10 +606,14 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
        if (type != null && currentAlias != null && currentAlias.eab != null) {
            String oldType = currentAlias.eab.getAccountBindingTypeIdentifier();
            if (!type.equals(oldType)) {
-               currentAlias.eab = AcmeExternalAccountBindingFactory.INSTANCE.getArcheType(type);
-               currentAlias.eab.init();
-               if (log.isDebugEnabled()) {
-                   log.debug("Changed EAB type from '" + oldType + "' to '" + type + "'.");
+               try {
+                   currentAlias.eab = AcmeExternalAccountBindingFactory.INSTANCE.getArcheType(type);
+                   currentAlias.eab.init();
+                   if (log.isDebugEnabled()) {
+                       log.debug("Changed EAB type from '" + oldType + "' to '" + type + "'.");
+                   }
+               } catch (AccountBindingException e) {
+                    // NOOP
                }
            }
        }

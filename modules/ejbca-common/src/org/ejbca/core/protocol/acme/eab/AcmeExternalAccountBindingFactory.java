@@ -21,6 +21,7 @@ import java.util.ServiceLoader;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.log4j.Logger;
+import org.cesecore.accounts.AccountBindingException;
 
 /**
  * Locates all implementations of the {@link #AcmeExternalAccountBinding} 
@@ -81,17 +82,37 @@ public enum AcmeExternalAccountBindingFactory {
         }
     }
 
-    public AcmeExternalAccountBinding getArcheType(String identifier) {
-        return identifierToImplementationMap.get(identifier).clone();
+    /**
+     * Returns the ACME EAB implementation for the type identifier.
+     * 
+     * @param identifier the type identifier, i.e. ACME_EAB_RFC_COMPLIANT.
+     * @return the implementation.
+     * @throws AccountBindingException if no implementation could be found.
+     */
+    public AcmeExternalAccountBinding getArcheType(final String identifier) throws AccountBindingException {
+        try {
+            return identifierToImplementationMap.get(identifier).clone();
+        } catch (NullPointerException e) {
+            final String message = "No ACME EAB implementation found.";
+            log.warn(message);
+            throw new AccountBindingException(message);
+        }
     }
     
-    public AcmeExternalAccountBinding getDefaultImplementation() {
+    /**
+     * Returns the default ACME EAB implementation.
+     * 
+     * @return the implementation.
+     * @throws AccountBindingException if no default implementation could be found.
+     */
+    public AcmeExternalAccountBinding getDefaultImplementation() throws AccountBindingException {
         for (AcmeExternalAccountBinding implementation : getAllImplementations()) {
             if (implementation.isDefault()) {
                 return implementation;
             }
         }
-        // TODO Handle out of bounds properly ...
-        return getAllImplementations().iterator().next();
+        final String message = "No ACME EAB implementation found.";
+        log.warn(message);
+        throw new AccountBindingException(message);
     }
 }
