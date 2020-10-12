@@ -118,7 +118,9 @@
                     </h:panelGroup>
                     
                     <h:outputLabel for="externalAccountBinding" value="#{web.text.ACME_REQUIRE_EXTERNAL_ACCOUNT_BINDING}" />
-                    <h:selectBooleanCheckbox id="externalAccountBinding" value="#{acmeConfigMBean.currentAlias.requireExternalAccountBinding}" disabled="#{!acmeConfigMBean.currentAliasEditMode}" />
+                    <h:selectBooleanCheckbox id="externalAccountBinding" value="#{acmeConfigMBean.currentAlias.requireExternalAccountBinding}" disabled="#{!acmeConfigMBean.currentAliasEditMode}">
+                    	<f:ajax listener="#{acmeConfigMBean.toggleCurrentEabEditMode}" render="@all"></f:ajax>
+                    </h:selectBooleanCheckbox>
                     
                     <h:outputLabel for="eabType" value="#{web.text.ACME_EAB_TYPE}"/>
 					<h:selectOneMenu id="eabType" value="#{acmeConfigMBean.eabType}" disabled="#{!acmeConfigMBean.currentAliasEditMode or !acmeConfigMBean.currentAlias.requireExternalAccountBinding}">
@@ -127,7 +129,7 @@
 					</h:selectOneMenu>	                    
                 </h:panelGrid>
                 <!-- rowClasses="Row0,Row1" columnClasses="editColumn1,editColumn2" -->
-                <h:panelGrid binding="#{acmeConfigMBean.dataGrid}" cellspacing="3" cellpadding="3" border="0" width="100%" disabled="#{!acmeConfigMBean.currentAliasEditMode or !acmeConfigMBean.currentAlias.requireExternalAccountBinding}">
+                <h:panelGrid binding="#{acmeConfigMBean.dataGrid}" cellspacing="3" cellpadding="3" border="0" width="100%" disabled="#{!acmeConfigMBean.currentAliasEditMode or !acmeConfigMBean.eabEditMode}">
 				</h:panelGrid>
                 <h:panelGrid columns="1">
                 <h:panelGroup>

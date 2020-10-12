@@ -501,6 +501,9 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
     /** Dynamic UI PSM component. */
     private HtmlPanelGrid dataGrid;
     
+    // ECA-9474 Fix enabling/disabling of EAB panel.
+    private boolean eabEditMode = true; 
+    
     /**
      * Gets the selected EAB.
      * @return the EAB or null if no EAB is selected.
@@ -536,9 +539,8 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
    /**
     * Gets the dynamic UI properties PSM component as HTML data grid.
     * @return the data grid.
-    * @throws DynamicUiModelException if the PSM could not be initialized.
     */
-   public HtmlPanelGrid getDataGrid() throws DynamicUiModelException {
+   public HtmlPanelGrid getDataGrid() {
        return dataGrid;
    }
 
@@ -618,4 +620,18 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
            }
        }
    }
+   
+   public void toggleCurrentEabEditMode(AjaxBehaviorEvent e) {
+       eabEditMode = !eabEditMode;
+       FacesContext.getCurrentInstance().renderResponse();
+   }
+
+   public boolean isEabEditMode() {
+       return eabEditMode;
+   }
+    
+   public void setEabEditMode(boolean eabEditMode) {
+       this.eabEditMode = eabEditMode;
+   }
+   
 }
