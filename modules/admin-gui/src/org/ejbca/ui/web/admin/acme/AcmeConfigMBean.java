@@ -490,22 +490,11 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
     
     // ACME external account binding (EAB)
     
-    /** The EAB ID. */
-    private int eabId;
-
     /** Dynamic UI PIM component. */
     private DynamicUiModel uiModel;
 
     /** Dynamic UI PSM component. */
     private HtmlPanelGrid dataGrid;
-    
-    /**
-     * Resets the dynamic UI properties PSM.
-     */
-    private void reset() {
-        setEabId(-1);
-        currentAlias.eab = null;
-    }
     
     /**
      * Gets the selected EAB.
@@ -538,22 +527,6 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
     public void setEab(final AcmeExternalAccountBinding eab) {
         currentAlias.eab = eab;
     }
-
-    /**
-     * Gets the EABs ID.
-     * @return the ID.
-     */
-   public int getEabId() {
-       return eabId;
-   }
-
-   /**
-    * Sets the EABs ID.
-    * @param eabId the ID.
-    */
-   public void setEabId(int eabId) {
-       this.eabId = eabId;
-   }
 
    /**
     * Gets the dynamic UI properties PSM component as HTML data grid.
