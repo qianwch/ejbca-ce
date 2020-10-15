@@ -48,13 +48,13 @@ import org.cesecore.util.StringTools;
                 @ColumnResult(name = "notBefore"), @ColumnResult(name = "expireDate"), @ColumnResult(name = "revocationDate"),
                 @ColumnResult(name = "revocationReason"), @ColumnResult(name = "username"), @ColumnResult(name = "tag"),
                 @ColumnResult(name = "certificateProfileId"), @ColumnResult(name = "endEntityProfileId"), @ColumnResult(name = "updateTime"),
-                @ColumnResult(name = "subjectKeyId"), @ColumnResult(name = "subjectAltName") }),
+                @ColumnResult(name = "subjectKeyId"), @ColumnResult(name = "subjectAltName"), @ColumnResult(name = "accountBindingId") }),
         @SqlResultSetMapping(name = "NoConflictCertificateInfoSubset2", columns = { @ColumnResult(name = "fingerprint"), @ColumnResult(name = "subjectDN"),
                 @ColumnResult(name = "cAFingerprint"), @ColumnResult(name = "status"), @ColumnResult(name = "type"),
                 @ColumnResult(name = "notBefore"), @ColumnResult(name = "expireDate"), @ColumnResult(name = "revocationDate"),
                 @ColumnResult(name = "revocationReason"), @ColumnResult(name = "username"), @ColumnResult(name = "tag"),
                 @ColumnResult(name = "certificateProfileId"), @ColumnResult(name = "endEntityProfileId"), @ColumnResult(name = "updateTime"),
-                @ColumnResult(name = "subjectKeyId"), @ColumnResult(name = "subjectAltName") }),
+                @ColumnResult(name = "subjectKeyId"), @ColumnResult(name = "subjectAltName"), @ColumnResult(name = "accountBindingId") }),
         @SqlResultSetMapping(name = "NoConflictCertificateFingerprintUsernameSubset", columns = { @ColumnResult(name = "fingerprint"), @ColumnResult(name = "username") }) })
 public class NoConflictCertificateData extends BaseCertificateData implements Serializable {
     
@@ -85,6 +85,7 @@ public class NoConflictCertificateData extends BaseCertificateData implements Se
     private Integer crlPartitionIndex = null; // @since EJBCA 7.1.0
     private long updateTime = 0;
     private String subjectKeyId;
+    private String accountBindingId;    // @since EJBCA 7.5.0
     private String certificateRequest;  // @since EJBCA 7.0.0
     private int rowVersion = 0;
     private String rowProtection;
@@ -114,6 +115,7 @@ public class NoConflictCertificateData extends BaseCertificateData implements Se
         setEndEntityProfileId(copy.getEndEntityProfileId());
         setCrlPartitionIndex(copy.getCrlPartitionIndex());
         setSubjectKeyId(copy.getSubjectKeyId());
+        setAccountBindingId(copy.getAccountBindingId());
         setTag(copy.getTag());
         setCertificateRequest(copy.getCertificateRequest());
         setRowVersion(copy.getRowVersion());
@@ -358,6 +360,18 @@ public class NoConflictCertificateData extends BaseCertificateData implements Se
     }
     
     @Override
+    public String getAccountBindingId() {
+        return accountBindingId;
+    }
+    
+    /**
+     * The ID of the account binding, i.E. ACME EAB.
+     */
+    public void setAccountBindingId(String accountBindingId) {
+        this.accountBindingId = accountBindingId;
+    }
+    
+    @Override
     public int getRowVersion() {
         return rowVersion;
     }
@@ -431,7 +445,6 @@ public class NoConflictCertificateData extends BaseCertificateData implements Se
     public void setCertificateRequest(String certificateRequest) {
         this.setZzzCertificateRequest(certificateRequest);
     }
-    
 
     /**
      * Horrible work-around due to the fact that Oracle needs to have (LONG and) CLOB values last in order to avoid ORA-24816.
