@@ -27,7 +27,7 @@ public interface AcmeExternalAccountBinding extends AccountBinding {
     static final String TYPE_NAME = "ACME_EXTERNAL_ACCOUNT_BINDING";
     
     /**
-     * Parses the EAB message ({@link Acme}. The RFC8555 compliant EAB 
+     * Parses the EAB request ({@link Acme}. The RFC8555 compliant EAB 
      * implementation uses a JWS protected message. Other implementation 
      * may use their individual message format. 
      * 
@@ -43,13 +43,14 @@ public interface AcmeExternalAccountBinding extends AccountBinding {
      *   "signature": // MAC using MAC key from CA //
      *  }
      * 
-     * @param message the message string.
+     * @param request the ACME protected request.
      * @param requestUrl the ACME newAccount URL.
      * @param jwk the base64 encoded account key in JWK form.
      * @return the external account identifier.
      * @throws AcmeEabRequestParsingException if the message could not be verified (technically, well-formed or by content).
      */
-    String parseEabRequestMessage(String message, String requestUrl, String jwk) throws AcmeProblemException;
+    // ECA-9474 Refactor method signature.
+    String parseEabRequestMessage(Object request, String requestUrl, String jwk) throws AcmeProblemException;
     
     /**
      * Clone has to be implemented instead of a copy constructor due to the 
