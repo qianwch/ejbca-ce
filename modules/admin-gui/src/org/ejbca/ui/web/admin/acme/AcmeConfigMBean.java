@@ -89,6 +89,7 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
         currentAliasEditMode = false;
         globalAcmeConfigurationConfig = (GlobalAcmeConfiguration) globalConfigSession.getCachedConfiguration(GlobalAcmeConfiguration.ACME_CONFIGURATION_ID);
         globalInfo = new AcmeGlobalGuiInfo(globalAcmeConfigurationConfig);
+        uiModel = null;
 
     }
     /** Build a list sorted by name from the existing ACME configuration aliases */
@@ -232,7 +233,8 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
     public void saveCurrentAlias() throws CesecoreException, EjbcaException {
         if (currentAlias != null) {
         	// Copy data from dynamic UI properties.
-            if (currentAlias.getEab() instanceof DynamicUiModelAware) {
+            if (currentAlias.getEab() instanceof DynamicUiModelAware 
+                    && ((DynamicUiModelAware) currentAlias.getEab()).getDynamicUiModel() != null) {
                 ((DynamicUiModelAware) currentAlias.getEab()).getDynamicUiModel().writeProperties(
                         ((AcmeExternalAccountBindingBase) currentAlias.getEab()).getRawData());
             }
@@ -501,9 +503,6 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
     /** Dynamic UI PSM component. */
     private HtmlPanelGrid dataGrid;
     
-    // ECA-9474 Fix enabling/disabling of EAB panel.
-    private boolean eabEditMode = true; 
-    
     /**
      * Gets the selected EAB.
      * @return the EAB or null if no EAB is selected.
@@ -563,7 +562,7 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
            dataGrid = new HtmlPanelGrid();
            dataGrid.setId(getClass().getSimpleName()+"-dataGrid");
        }
-       uiModel.setDisabled(!this.isAllowedToEdit());
+//       uiModel.setDisabled(!this.isAllowedToEdit() || !currentAliasEditMode || !currentAlias.requireExternalAccountBinding);
        JsfDynamicUiPsmFactory.initGridInstance(dataGrid, pim, prefix);
    }
    
@@ -622,16 +621,7 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
    }
    
    public void toggleCurrentEabEditMode(AjaxBehaviorEvent e) {
-       eabEditMode = !eabEditMode;
        FacesContext.getCurrentInstance().renderResponse();
-   }
-
-   public boolean isEabEditMode() {
-       return eabEditMode;
-   }
-    
-   public void setEabEditMode(boolean eabEditMode) {
-       this.eabEditMode = eabEditMode;
    }
    
 }
