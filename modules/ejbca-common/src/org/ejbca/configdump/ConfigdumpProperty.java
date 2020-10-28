@@ -146,4 +146,16 @@ public class ConfigdumpProperty<T extends Serializable> {
         return StringUtils.uncapitalize(key.toString());
     }
     
+    public static final ConfigdumpProperty<String> stringInstance(final String key, final String value) {
+        return new ConfigdumpProperty<String>(String.class, key, value);
+    }
+    
+    public static final ConfigdumpProperty<String> stringInstance(final String key, final String value, 
+            final DynamicUiPropertyValidator<String> validator) {
+        return new ConfigdumpProperty<String>(String.class, key, value, validator);
+    }
+    
+    public static final ConfigdumpProperty<Float> floatInstance(final String key, final float value) {
+        return new ConfigdumpProperty<Float>(Float.class, key, value);
+    }
 }
