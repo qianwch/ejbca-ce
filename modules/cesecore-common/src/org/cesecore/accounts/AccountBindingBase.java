@@ -18,7 +18,6 @@ import org.apache.log4j.Logger;
 import org.cesecore.internal.InternalResources;
 import org.cesecore.internal.UpgradeableDataHashMap;
 import org.cesecore.profiles.ProfileBase;
-import org.cesecore.util.ui.DynamicUiModel;
 
 /**
  * Base class for all account binding strategy objects. 

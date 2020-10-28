@@ -1,5 +1,6 @@
 package org.ejbca.core.protocol.acme.eab;
 
+import java.io.Serializable;
 /*************************************************************************
  *                                                                       *
  *  EJBCA Community: The OpenSource Certificate Authority                *
@@ -14,6 +15,7 @@ package org.ejbca.core.protocol.acme.eab;
  *************************************************************************/
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
@@ -21,6 +23,7 @@ import org.cesecore.accounts.AccountBinding;
 import org.cesecore.accounts.AccountBindingBase;
 import org.cesecore.util.ui.DynamicUiModel;
 import org.cesecore.util.ui.DynamicUiModelAware;
+import org.ejbca.configdump.ConfigdumpProperty;
 
 /**
  * Base class for all ACME external account bindings (EAB) strategy objects.
@@ -36,6 +39,9 @@ public abstract class AcmeExternalAccountBindingBase extends AccountBindingBase 
 
     /** Dynamic UI model extension. */
     protected DynamicUiModel uiModel;
+    
+    /** Config dump extension. */
+    protected List<ConfigdumpProperty<?>> configdumpProperties;
     
     @Override
     public boolean isDefault() {
@@ -77,4 +83,14 @@ public abstract class AcmeExternalAccountBindingBase extends AccountBindingBase 
         return clone;
     }
 
+    // Configdump
+    
+    @Override
+    public List<ConfigdumpProperty<? extends Serializable>> getConfigDumpProperties() {
+        if (configdumpProperties == null) {
+            initConfigdumpProperties();
+            log.debug("Initialized config dump properties: " + configdumpProperties);
+        }
+        return new ArrayList<ConfigdumpProperty<?>>(configdumpProperties);
+    }
 }

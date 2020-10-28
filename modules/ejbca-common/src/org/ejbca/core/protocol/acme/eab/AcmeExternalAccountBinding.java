@@ -13,6 +13,7 @@
 package org.ejbca.core.protocol.acme.eab;
 
 import org.cesecore.accounts.AccountBinding;
+import org.ejbca.configdump.ConfigDumpItemAware;
 import org.ejbca.core.protocol.acme.AcmeProblemException;
 
 /**
@@ -22,7 +23,7 @@ import org.ejbca.core.protocol.acme.AcmeProblemException;
  * 
  * @version $Id$
  */
-public interface AcmeExternalAccountBinding extends AccountBinding {
+public interface AcmeExternalAccountBinding extends AccountBinding, ConfigDumpItemAware {
 
     static final String TYPE_NAME = "ACME_EXTERNAL_ACCOUNT_BINDING";
     
