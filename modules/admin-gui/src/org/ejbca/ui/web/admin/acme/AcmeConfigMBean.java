@@ -39,6 +39,7 @@ import org.cesecore.configuration.GlobalConfigurationSessionLocal;
 import org.cesecore.util.ui.DynamicUiModel;
 import org.cesecore.util.ui.DynamicUiModelAware;
 import org.cesecore.util.ui.DynamicUiModelException;
+import org.cesecore.util.ui.PropertyValidationException;
 import org.ejbca.config.AcmeConfiguration;
 import org.ejbca.config.GlobalAcmeConfiguration;
 import org.ejbca.core.EjbcaException;
@@ -241,8 +242,6 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
             AcmeConfiguration acmeConfig = globalAcmeConfigurationConfig.getAcmeConfiguration(currentAliasStr);
             acmeConfig.setEndEntityProfileId(Integer.valueOf(currentAlias.endEntityProfileId));
             acmeConfig.setPreAuthorizationAllowed(currentAlias.isPreAuthorizationAllowed());
-            acmeConfig.setRequireExternalAccountBinding(currentAlias.isRequireExternalAccountBinding());
-            acmeConfig.setExternalAccountBinding(currentAlias.getEab());
             acmeConfig.setWildcardCertificateIssuanceAllowed(currentAlias.isWildcardCertificateIssuanceAllowed());
             acmeConfig.setWebSiteUrl(currentAlias.getUrlTemplate());
             acmeConfig.setDnsResolver(currentAlias.getDnsResolver());
@@ -253,17 +252,33 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
             acmeConfig.setTermsOfServiceUrl(currentAlias.getTermsOfServiceUrl());
             acmeConfig.setRetryAfter(currentAlias.getRetryAfter());
             
-            if(StringUtils.isEmpty(acmeConfig.getTermsOfServiceUrl())) {
+            if (StringUtils.isEmpty(acmeConfig.getTermsOfServiceUrl())) {
+                // Usually not invoked because the required attribute is set in facelet.
                 throw new EjbcaException("Please enter Terms of Service URL");
             }
             
-            globalAcmeConfigurationConfig.updateAcmeConfiguration(acmeConfig);
-            try {
-                globalConfigSession.saveConfiguration(authenticationToken, globalAcmeConfigurationConfig);
-            } catch (AuthorizationDeniedException e) {
-                String msg = "Cannot save alias. Administrator is not authorized.";
-                log.info(msg + e.getLocalizedMessage());
-                super.addNonTranslatedErrorMessage(msg);
+            acmeConfig.setRequireExternalAccountBinding(currentAlias.isRequireExternalAccountBinding());
+            boolean validated = false;
+            if (currentAlias.getEab() instanceof DynamicUiModelAware) {
+                try {
+                    log.debug("Validate ACME EAB data: " + currentAlias.getEab().getDataMap());
+                    ((DynamicUiModelAware) currentAlias.getEab()).getDynamicUiModel().validate();
+                    acmeConfig.setExternalAccountBinding(currentAlias.getEab());
+                    validated = true;
+                } catch (PropertyValidationException e) {
+                    super.addNonTranslatedErrorMessage(e.getMessage());
+                }
+            }
+            
+            if (validated) {
+                globalAcmeConfigurationConfig.updateAcmeConfiguration(acmeConfig);
+                try {
+                    globalConfigSession.saveConfiguration(authenticationToken, globalAcmeConfigurationConfig);
+                } catch (AuthorizationDeniedException e) {
+                    String msg = "Cannot save alias. Administrator is not authorized.";
+                    log.info(msg + e.getLocalizedMessage());
+                    super.addNonTranslatedErrorMessage(msg);
+                }
             }
         }
         flushCache();

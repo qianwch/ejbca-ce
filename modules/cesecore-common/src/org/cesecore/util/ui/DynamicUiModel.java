@@ -279,4 +279,17 @@ public class DynamicUiModel {
     public void setDisabled(boolean disabled) {
         this.disabled = disabled;
     }
+    
+    /**
+     * Validates the UI model data including all DynmicUiProperty. 
+     * 
+     * @throws PropertyValidationException if validation fails.
+     */
+    public void validate() throws PropertyValidationException {
+        for (Map.Entry<String,DynamicUiProperty<?>> entry : getProperties().entrySet()) {        
+            if (entry.getValue() != null && entry.getValue().getValidator() != null) {
+                entry.getValue().validate();
+            }
+        }
+    }
 }

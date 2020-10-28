@@ -16,7 +16,7 @@ import org.apache.log4j.Logger;
 import org.cesecore.internal.InternalResources;
 
 /**
- * Validator which will validate an integer to greater or equal to 0
+ * DynamicUiModel / DynamicUiProperty String Validator.
  * 
  * @version $Id$
  *
@@ -25,7 +25,7 @@ public final class StringValidator implements DynamicUiPropertyValidator<String>
   
     private static final Logger log = Logger.getLogger(StringValidator.class);
     
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = -9056661127174836804L;
 
     private static final String VALIDATOR_TYPE = "stringValidator";
     
@@ -39,6 +39,14 @@ public final class StringValidator implements DynamicUiPropertyValidator<String>
     
     private String messageKey;
 
+    /**
+     * Creates a string validator.
+     *  
+     * @param minLength minimum length.
+     * @param maxLength maximum length.
+     * @param regex matching regular expression or null.
+     * @param shortName short name to build message resource key.
+     */
     private StringValidator(final int minLength, final int maxLength, final String regex, final String shortName) {
         if (maxLength < minLength) {
             throw new IllegalStateException("Maximum string length must not be smaller than its minimum length.");
@@ -59,24 +67,52 @@ public final class StringValidator implements DynamicUiPropertyValidator<String>
         return VALIDATOR_TYPE;
     }
     
+    /**
+     * Creates a string validator.
+     * 
+     * @param minLength minimum length.
+     * @param maxLength maximum length.
+     * @return the new instance.
+     */
     public static final StringValidator instance(final int minLength, final int maxLength) {
         return new StringValidator(minLength, maxLength, null, "");
     }
     
+    /**
+     * Returns a string validator for ASCII strings.
+     * 
+     * @param minLength minimum length.
+     * @param maxLength maximum length.
+     * @return the new instance.
+     */
     public static final StringValidator asciiInstance(final int minLength, final int maxLength) {
         return new StringValidator(minLength, maxLength, "\\A\\p{ASCII}*\\z", "stringnotascii");
     }
     
+    /**
+     * Returns a string validator for base64 encoded strings.
+     * 
+     * @param minLength minimum length.
+     * @param maxLength maximum length.
+     * @return the new instance.
+     */
     public static final StringValidator base64Instance(final int minLength, final int maxLength) {
         return new StringValidator(minLength, maxLength, "[A-Za-z0-9+/]*", "stringnotbase64");
     }   
     
+    /**
+     * Returns a string validator for PEM (base64) strings (including optional boundaries).
+     * 
+     * @param minLength minimum length.
+     * @param maxLength maximum length.
+     * @return the new instance.
+     */
     public static final StringValidator pemInstance(final int minLength, final int maxLength) {
         return new StringValidator(minLength, maxLength, "[A-Za-z0-9+/=\\-\\s]*", "stringnotpem");
     }
     
     /**
-     * Return a string validator for base64url encoded strings.
+     * Returns a string validator for base64url encoded strings.
      * 
      *  @see <a href="https://tools.ietf.org/html/rfc4648#section-5">RFC 4648: Base 64 Encoding with URL and Filename Safe Alphabet</a> 
      *  
@@ -90,7 +126,7 @@ public final class StringValidator implements DynamicUiPropertyValidator<String>
     
     public static final void validateString(String value, final int minLength, final int maxLength, final String regex, final String messageKey) throws PropertyValidationException{
         if (log.isDebugEnabled()) {
-            log.info( "Validate string '" + value + "' with min " + minLength + " and max " + maxLength + " characters.");
+            log.debug( "Validate string '" + value + "' with min " + minLength + " and max " + maxLength + " characters.");
         }
         if (value != null) {
             value = value.trim();

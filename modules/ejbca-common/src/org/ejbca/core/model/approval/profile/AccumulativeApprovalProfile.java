@@ -24,7 +24,7 @@ import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.internal.InternalResources;
 import org.cesecore.profiles.Profile;
 import org.cesecore.util.ui.DynamicUiProperty;
-import org.cesecore.util.ui.PositiveIntegerValidator;
+import org.cesecore.util.ui.IntegerValidator;
 import org.cesecore.util.ui.PropertyValidationException;
 import org.ejbca.core.model.approval.Approval;
 import org.ejbca.core.model.approval.ApprovalException;
@@ -147,7 +147,7 @@ public class AccumulativeApprovalProfile extends ApprovalProfileBase {
     @Override
     protected ApprovalPartition addConstantProperties(ApprovalPartition approvalPartition) {
         DynamicUiProperty<Integer> numberOfRequiredApprovals = new DynamicUiProperty<>(PROPERTY_NUMBER_OF_REQUIRED_APPROVALS, 1);
-        numberOfRequiredApprovals.setValidator(new PositiveIntegerValidator());
+        numberOfRequiredApprovals.setValidator(IntegerValidator.minInstance(0));
         approvalPartition.addProperty(numberOfRequiredApprovals);
         return approvalPartition;
     }
