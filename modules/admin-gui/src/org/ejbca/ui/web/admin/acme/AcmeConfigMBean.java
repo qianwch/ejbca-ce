@@ -317,6 +317,12 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
     public void toggleCurrentAliasEditMode() {
         currentAliasEditMode ^= true;
         currentAliasEditMode = currentAliasEditMode && isAllowedToEdit();
+        // Somehow uiModel.setDisabled(false); is not effective for the first UI component, 
+        // equal what component it is (textfield, textarea, etc.). So reinitialize the HTML 
+        // data grid. This is related to ECA-9545.
+        if (uiModel != null) {
+            uiModel = null;
+        }
     }
     public boolean isAllowedToEdit() {
         return authorizationSession.isAuthorizedNoLogging(getAdmin(), StandardRules.SYSTEMCONFIGURATION_EDIT.resource());
@@ -357,7 +363,7 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
                     try {
                         this.eab = acmeConfiguration.getExternalAccountBinding();
                     } catch (AccountBindingException e) {
-                        // NOOP
+                        log.warn("Failed to initialize ACME external account binding.");
                     }
                     this.urlTemplate = acmeConfiguration.getWebSiteUrl();
                     this.wildcardCertificateIssuanceAllowed = acmeConfiguration.isWildcardCertificateIssuanceAllowed();
@@ -579,10 +585,9 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
            dataGrid = new HtmlPanelGrid();
            dataGrid.setId(getClass().getSimpleName()+"-dataGrid");
        }
-//       uiModel.setDisabled(!this.isAllowedToEdit() || !currentAliasEditMode || !currentAlias.requireExternalAccountBinding);
+       uiModel.setDisabled(!this.isAllowedToEdit() || !currentAliasEditMode || !currentAlias.requireExternalAccountBinding);
        JsfDynamicUiPsmFactory.initGridInstance(dataGrid, pim, prefix);
    }
-   
    
    /**
     * Gets the available ACME EAB types.
@@ -631,7 +636,7 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
                        log.debug("Changed EAB type from '" + oldType + "' to '" + type + "'.");
                    }
                } catch (AccountBindingException e) {
-                    // NOOP
+                   log.warn("Failed to initialize ACME external account binding.");
                }
            }
        }
