@@ -262,7 +262,9 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
             if (currentAlias.getEab() instanceof DynamicUiModelAware) {
                 try {
                     log.debug("Validate ACME EAB data: " + currentAlias.getEab().getDataMap());
-                    ((DynamicUiModelAware) currentAlias.getEab()).getDynamicUiModel().validate();
+                    if (((DynamicUiModelAware) currentAlias.getEab()).getDynamicUiModel() != null) {
+                        ((DynamicUiModelAware) currentAlias.getEab()).getDynamicUiModel().validate();
+                    }
                     acmeConfig.setExternalAccountBinding(currentAlias.getEab());
                     validated = true;
                 } catch (PropertyValidationException e) {
