@@ -273,11 +273,21 @@ public class DynamicUiModel {
     }
 
     /**
-     * Sets if the dynamic UI input components shall be disabled.
+     * Enables or disables the dynamic UI properties components.
+     * 
      * @param disabled if the dynamic UI input components shall be disabled (i.e. view only).
      */
     public void setDisabled(boolean disabled) {
         this.disabled = disabled;
+        for (DynamicUiProperty<?> property : properties.values()) {
+            property.setDisabled(disabled);
+        }
+        // Should have been done with the component reference in the property. But. Do again.
+        for (List<DynamicUiComponent> components : viewComponents.values()) {
+            for (DynamicUiComponent component : components) {
+                component.setDisabled(disabled);
+            }
+        }
     }
     
     /**
