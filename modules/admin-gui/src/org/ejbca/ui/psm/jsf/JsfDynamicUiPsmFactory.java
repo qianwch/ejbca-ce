@@ -59,8 +59,6 @@ public class JsfDynamicUiPsmFactory {
     /** Class logger. */
     private static final Logger log = Logger.getLogger(JsfDynamicUiPsmFactory.class);
 
-    private static final String STYLE_CLASS_SUB_ITEM = "subItem";
-
     /**
      * Initializes the dynamic UI properties on a grid panel with two columns, label on the left, UI component on the right,
      * and an optional help text below the UI component.
@@ -79,14 +77,9 @@ public class JsfDynamicUiPsmFactory {
         panelGrid.getChildren().clear();
         panelGrid.setColumns(2);
         // Build PSM fields by PIM.
-        int index = 0;
         for (final DynamicUiProperty<? extends Serializable> property : model.getProperties().values()) {
             final HtmlOutputLabel label = new HtmlOutputLabel();
             label.setValue(getText(i18nPrefix, property.getName()));
-            label.setStyleClass(STYLE_CLASS_SUB_ITEM);
-            if (index == 0) { // Re-factor: Set header bold.
-                label.setStyle("font-weight: bold;");
-            }
             panelGrid.getChildren().add(label);
 
             if (!property.isLabelOnly()) {
@@ -114,7 +107,6 @@ public class JsfDynamicUiPsmFactory {
                 label.setStyleClass(StringUtils.EMPTY);
                 panelGrid.getChildren().add(new HtmlPanelGroup());
             }
-            index++;
         }
     }
 
