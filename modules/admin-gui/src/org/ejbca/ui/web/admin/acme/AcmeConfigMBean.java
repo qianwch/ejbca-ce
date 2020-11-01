@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.faces.bean.ManagedBean;
-import javax.faces.bean.SessionScoped;
+import javax.faces.bean.ViewScoped;
 import javax.faces.component.html.HtmlPanelGrid;
 import javax.faces.component.html.HtmlSelectOneMenu;
 import javax.faces.context.FacesContext;
@@ -29,6 +29,7 @@ import javax.faces.model.SelectItem;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.cesecore.CesecoreException;
+import org.cesecore.ErrorCode;
 import org.cesecore.accounts.AccountBindingException;
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authorization.AuthorizationDeniedException;
@@ -58,7 +59,7 @@ import org.ejbca.ui.web.admin.BaseManagedBean;
  */
 
 @ManagedBean
-@SessionScoped
+@ViewScoped
 public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
     private static final long serialVersionUID = 1L;
     private static final Logger log = Logger.getLogger(AcmeConfigMBean.class);
@@ -231,14 +232,8 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
 
     /** Invoked when admin saves the ACME alias configurations 
      * @throws EjbcaException */
-    public void saveCurrentAlias() throws CesecoreException, EjbcaException {
+    public void saveCurrentAlias() throws EjbcaException {
         if (currentAlias != null) {
-        	// Copy data from dynamic UI properties.
-            if (currentAlias.getEab() instanceof DynamicUiModelAware 
-                    && ((DynamicUiModelAware) currentAlias.getEab()).getDynamicUiModel() != null) {
-                ((DynamicUiModelAware) currentAlias.getEab()).getDynamicUiModel().writeProperties(
-                        ((AcmeExternalAccountBindingBase) currentAlias.getEab()).getRawData());
-            }
             AcmeConfiguration acmeConfig = globalAcmeConfigurationConfig.getAcmeConfiguration(currentAliasStr);
             acmeConfig.setEndEntityProfileId(Integer.valueOf(currentAlias.endEntityProfileId));
             acmeConfig.setPreAuthorizationAllowed(currentAlias.isPreAuthorizationAllowed());
@@ -259,17 +254,30 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
             
             acmeConfig.setRequireExternalAccountBinding(currentAlias.isRequireExternalAccountBinding());
             boolean validated = false;
-            if (currentAlias.getEab() instanceof DynamicUiModelAware) {
+            if (uiModel != null) {
+                try {
+                    // Copy data from dynamic UI properties.
+                    // Here upload file data validation and processing is invoked.
+                    uiModel.writeProperties(((AcmeExternalAccountBindingBase) currentAlias.getEab()).getRawData());
+                } catch (CesecoreException e) {
+                    if (e.getErrorCode().equals(ErrorCode.ACME_EAB_PARSING_FAILED)) {
+                        super.addNonTranslatedErrorMessage("Failed to save uploaded file. " + e.getMessage());
+                    } else {
+                        super.addNonTranslatedErrorMessage("An exception occured: " + e.getMessage());
+                    }
+                    return;
+                }
                 try {
                     log.debug("Validate ACME EAB data: " + currentAlias.getEab().getDataMap());
-                    if (((DynamicUiModelAware) currentAlias.getEab()).getDynamicUiModel() != null) {
-                        ((DynamicUiModelAware) currentAlias.getEab()).getDynamicUiModel().validate();
-                    }
+                    uiModel.validate();
                     acmeConfig.setExternalAccountBinding(currentAlias.getEab());
                     validated = true;
                 } catch (PropertyValidationException e) {
                     super.addNonTranslatedErrorMessage(e.getMessage());
+                    return;
                 }
+            } else {
+                validated = true;
             }
             
             if (validated) {

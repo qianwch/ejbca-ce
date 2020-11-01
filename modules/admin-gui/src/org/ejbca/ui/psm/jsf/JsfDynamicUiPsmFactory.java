@@ -373,7 +373,8 @@ public class JsfDynamicUiPsmFactory {
      * @return the file chooser instance.
      */
     public static final HtmlInputFileUpload createFileChooserInstance(final DynamicUiProperty<?> property) {
-        final HtmlInputFileUpload result = new HtmlInputFileUpload();
+        final JsfDynamicUiHtmlInputFileUpload result = new JsfDynamicUiHtmlInputFileUpload();
+        result.setDynamicUiProperty(property);
         setUIInputAttributes(result, property);
         result.setStorage("file");
         result.setDisabled(property.getDynamicUiModel().isDisabled() || property.isDisabled());
