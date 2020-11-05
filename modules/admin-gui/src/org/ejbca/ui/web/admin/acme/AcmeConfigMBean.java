@@ -268,10 +268,12 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
                     return;
                 }
                 try {
-                    log.debug("Validate ACME EAB data: " + currentAlias.getEab().getDataMap());
-                    uiModel.validate();
-                    acmeConfig.setExternalAccountBinding(currentAlias.getEab());
-                    validated = true;
+                    if (acmeConfig.isRequireExternalAccountBinding()) {
+                        log.debug("Validate ACME EAB data: " + currentAlias.getEab().getDataMap());
+                        uiModel.validate();
+                        acmeConfig.setExternalAccountBinding(currentAlias.getEab());
+                        validated = true;
+                    }
                 } catch (PropertyValidationException e) {
                     super.addNonTranslatedErrorMessage(e.getMessage());
                     return;
