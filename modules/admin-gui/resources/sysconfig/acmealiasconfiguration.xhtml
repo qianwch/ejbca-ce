@@ -31,10 +31,9 @@
             <h:form id="currentAliasForm" enctype="multipart/form-data">
                 <h:panelGrid columns="2" columnClasses="fixEditColumn1,fixEditColumn2">
                     <h:outputLink value="acmeconfiguration.xhtml"><h:outputText value="#{web.text.ACME_ALIAS_NAV_BACK}"/></h:outputLink>
-                    <h:commandButton action="#{acmeConfigMBean.toggleCurrentAliasEditMode}" value="#{web.text.CRYPTOTOKEN_NAV_EDIT}" rendered="#{!acmeConfigMBean.currentAliasEditMode and acmeConfigMBean.allowedToEdit}">
-                    	<f:ajax execute="@this" render="@all" event="click"></f:ajax>
-                    </h:commandButton>
-
+                    <h:commandButton  actionListener="#{acmeConfigMBean.toggleCurrentAliasEditMode}" value="#{web.text.CRYPTOTOKEN_NAV_EDIT}" 
+                    	rendered="#{!acmeConfigMBean.currentAliasEditMode and acmeConfigMBean.allowedToEdit}"/>
+                    	
                     <h:panelGroup id="placeholder1" />
                     <h:panelGroup id="placeholder2" rendered="#{!acmeConfigMBean.currentAliasEditMode and acmeConfigMBean.allowedToEdit}"/>
 
