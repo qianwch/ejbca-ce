@@ -15,8 +15,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Objects;
 
+import org.apache.log4j.Logger;
 import org.cesecore.accounts.AccountBindingException;
 import org.cesecore.certificates.endentity.EndEntityConstants;
+import org.cesecore.internal.InternalResources;
 import org.cesecore.internal.UpgradeableDataHashMap;
 import org.ejbca.core.protocol.acme.eab.AcmeExternalAccountBinding;
 import org.ejbca.core.protocol.acme.eab.AcmeExternalAccountBindingFactory;
@@ -29,8 +31,13 @@ import org.ejbca.core.protocol.dnssec.DnsSecDefaults;
  */
 public class AcmeConfiguration extends UpgradeableDataHashMap implements Serializable {
 
+    /** Class logger. */
+    private static final Logger log = Logger.getLogger(AcmeConfiguration.class);
+    
     private static final long serialVersionUID = 1L;
-
+    
+    protected static final InternalResources intres = InternalResources.getInstance();
+    
     private String configurationId = null;
     private List<String> caaIdentities = new ArrayList<>();
 
@@ -53,7 +60,6 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
     private static final int DNS_SERVER_PORT_DEFAULT = 53;
     private static final String KEY_RETRY_AFTER = "retryAfter";
 
-
     private static final int DEFAULT_END_ENTITY_PROFILE_ID = EndEntityConstants.NO_END_ENTITY_PROFILE;
     private static final boolean DEFAULT_REQUIRE_EXTERNAL_ACCOUNT_BINDING = false;
     private static final boolean DEFAULT_PRE_AUTHORIZATION_ALLOWED = false;
@@ -63,7 +69,6 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
     private static final String DEFAULT_WEBSITE_URL = "https://www.example.com/";
     private static final boolean DEFAULT_USE_DNSSEC_VALIDATION = true;
 
-
     public AcmeConfiguration() {}
 
     public AcmeConfiguration(final Object upgradeableDataHashMapData) {
@@ -72,11 +77,24 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
 
     @Override
     public float getLatestVersion() {
-        return 0;
+        return 2;
     }
 
     @Override
-    public void upgrade() {}
+    public void upgrade() {
+        if (Float.compare(getLatestVersion(), getVersion()) > 0) {
+            // New version of the class, upgrade.
+            log.info(intres.getLocalizedMessage("acmeconfiguration.upgrade", getVersion()));
+            // v2. ACME external account binding implementation.
+            try {
+                if (getExternalAccountBinding() == null) {
+                    setExternalAccountBinding(AcmeExternalAccountBindingFactory.INSTANCE.getDefaultImplementation());
+                }
+            } catch (AccountBindingException e) {
+                log.error("Could not upgrade ACME configuration with default ACME EAB implementation: " + e.getMessage());
+            }
+        }
+    }
 
     /** @return the configuration ID as used in the request URL path */
     public String getConfigurationId() { return configurationId; }
