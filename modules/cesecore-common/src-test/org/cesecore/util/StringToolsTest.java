@@ -92,16 +92,33 @@ public class StringToolsTest {
     }
     
     @Test
-    public void testIpOctetsToString() throws Exception {
-        log.trace(">testIpOctetsToString");
+    public void testIOctetsToStringIPv4() throws Exception {
+        log.trace(">testIOctetsToStringIPv4");
+        
         final byte[] octets = {(byte) 192,(byte) 168, 100, 1} ;
         final byte[] octets1 = {1, 1, 1, 1};
         final byte[] notValid = {1, 1, 1};
         assertEquals("192.168.100.1", StringTools.ipOctetsToString(octets));
-        assertEquals("1.1.1.1", StringTools.ipOctetsToString(octets1));  
-        assertFalse("1.1.1.1", StringTools.ipOctetsToString(octets1).isEmpty());     
+        assertEquals("1.1.1.1", StringTools.ipOctetsToString(octets1));
         assertNull(StringTools.ipOctetsToString(notValid));
-        log.trace("<testIpOctetsToString");
+
+        log.trace("<testIOctetsToStringIPv4");
+    }
+    
+    @Test
+    public static void testIOctetsToStringIPv6() throws Exception {
+        log.trace(">testIOctetsToStringIPv6");
+
+        final byte[] octets = { 32, 67, -67, -72, -84, 16, -82, 34, 0, 0, 0, 0, 0, 0, 0, 0 };
+        final byte[] octets1 = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
+        // Too short.
+        final byte[] notValid = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
+        
+        assertEquals("2043:bdb8:ac10:ae22:0:0:0:0", StringTools.ipOctetsToString(octets));
+        assertEquals("0:0:0:0:0:0:0:1", StringTools.ipOctetsToString(octets1));
+        assertNull(StringTools.ipOctetsToString(notValid));
+
+        log.trace("<testIOctetsToStringIPv6");
     }
 
     /**

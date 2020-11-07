@@ -427,7 +427,20 @@ public final class StringTools {
             }
             ret = ip;
         }
-        // TODO: IPv6
+        
+        // IPv6
+        try {
+            InetAddress a = InetAddress.getByAddress(octets);
+            ret = a.toString();
+            if (ret.startsWith("/")) {
+                ret = ret.replaceFirst("/", "");
+            }
+        } catch (UnknownHostException e) {
+            // java.net.UnknownHostException: addr is of illegal length is thrown if byte length 
+            // does not match 16, i.e. if you try to use short notation for IPv6 addresses.
+            log.warn("Failed to parse IPv6 address. Use full 128 bits notation. " + e.getMessage());
+        }
+                
         return ret;
     }
 
@@ -473,8 +486,22 @@ public final class StringTools {
       if (m1.matches()) {
         return true;
       }
-      Matcher m2 = StringTools.VALID_IPV6_PATTERN.matcher(ipAddress);
-      return m2.matches();
+      return isIPv6Address(ipAddress);
+    }
+    
+    /**
+     * Determine if the given string is a valid IPv6 address using pattern matching.
+     * Snitched from http://www.java2s.com/Code/Java/Network-Protocol/DetermineifthegivenstringisavalidIPv4orIPv6address.htm
+     * Under LGPLv2 license.
+     *
+     * @param ipAddress A string that is to be examined to verify whether or not
+     *  it could be a valid IPv6 address.
+     * @return <code>true</code> if the string is a value that is a valid IPv6 address,
+     *  <code>false</code> otherwise.
+     */
+    public static boolean isIPv6Address(String ipAddress) {
+        final Matcher m2 = StringTools.VALID_IPV6_PATTERN.matcher(ipAddress);
+        return m2.matches();
     }
 
     /**

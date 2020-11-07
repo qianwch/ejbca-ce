@@ -16,12 +16,18 @@ import java.util.LinkedHashMap;
 import static org.ejbca.core.protocol.acme.AcmeIdentifier.AcmeIdentifierTypes;
 
 /**
- * An ACME Challenge is a proof a client needs to provide in order to be authorized to get a certificate for an identifier.
+ * An ACME Challenge is a proof a client needs to provide in order to be 
+ * authorized to get a certificate for an identifier.
  * 
- * PROCESSING constant in AcmeChallengeStatus ENUM is a requirement imposed by draft-ietf-acme-acme-12 and is preserved for
+ * One of:
+ * 
+ * DNS_HTTP_01 http-01 challenge for DNS identifier as specified in RFC8555
+ * DNS_DNS_01 dns-01 challenge for DNS identifier as specified in RFC8555
+ * IP_HTTP_01 http-01 challenge for IP identifier as specified in RFC8738 
+ * 
+ * PROCESSING constant in AcmeChallengeStatus ENUM is a requirement imposed 
+ * by draft-ietf-acme-acme-12 and is preserved for
  * future use. 
- * 
- * @version $Id$
  */
 public interface AcmeChallenge {
 
@@ -63,20 +69,22 @@ public interface AcmeChallenge {
     
     LinkedHashMap<Object, Object> getRawData();
 
+    /* Contains RFC8555 challenge DNS_* and RFC8738 IP challenge IP_HTTP_01. */
     enum AcmeChallengeType {
 
         DNS_HTTP_01(AcmeIdentifierTypes.DNS, "http-01"),
-        DNS_DNS_01(AcmeIdentifierTypes.DNS, "dns-01");
+        DNS_DNS_01(AcmeIdentifierTypes.DNS, "dns-01"),
+        IP_HTTP_01(AcmeIdentifierTypes.IP, "http-01");
 
-        private final AcmeIdentifierTypes acmeIdentifierType;
+        private final AcmeIdentifierTypes identifierTypes;
         private final String challengeType;
 
-        AcmeChallengeType(final AcmeIdentifierTypes acmeIdentifierType, final String challengeType) {
-            this.acmeIdentifierType = acmeIdentifierType;
+        AcmeChallengeType(final AcmeIdentifierTypes identifierTypes, final String challengeType) {
+            this.identifierTypes = identifierTypes;
             this.challengeType = challengeType;
         }
 
-        public AcmeIdentifierTypes getAcmeIdentifierType() { return acmeIdentifierType; }
+        public AcmeIdentifierTypes getAcmeIdentifierTypes() { return identifierTypes; }
         public String getChallengeType() { return challengeType; }
     }
 }
