@@ -27,8 +27,6 @@ import org.ejbca.configdump.ConfigdumpProperty;
 
 /**
  * Base class for all ACME external account bindings (EAB) strategy objects.
- * 
- * @version $Id$
  */
 public abstract class AcmeExternalAccountBindingBase extends AccountBindingBase implements AcmeExternalAccountBinding, DynamicUiModelAware {
 

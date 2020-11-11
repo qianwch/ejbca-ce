@@ -21,8 +21,6 @@ import org.cesecore.profiles.ProfileBase;
 
 /**
  * Base class for all account binding strategy objects. 
- * 
- * @version $Id$
  */
 public abstract class AccountBindingBase extends ProfileBase implements Serializable, Cloneable, AccountBinding {
 

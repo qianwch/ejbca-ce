@@ -20,8 +20,6 @@ import org.ejbca.core.protocol.acme.AcmeProblemException;
 
 /**
  * ACME configuration handling business logic.
- *
- * @version $Id$
  */
 @Local
 public interface AcmeConfigurationSessionLocal {

@@ -26,8 +26,6 @@ import org.ejbca.core.protocol.dnssec.DnsSecDefaults;
 
 /**
  * Configuration used by specifying the configurationId as part of the request URL path.
- *
- * @version $Id$
  */
 public class AcmeConfiguration extends UpgradeableDataHashMap implements Serializable {
 

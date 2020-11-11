@@ -20,8 +20,6 @@ import org.ejbca.core.protocol.acme.AcmeProblemException;
  * Base interface for all ACME external account bindings (EAB).
  * 
  * https://tools.ietf.org/html/rfc8555#section-7.3.4 
- * 
- * @version $Id$
  */
 public interface AcmeExternalAccountBinding extends AccountBinding, ConfigDumpItemAware {
 

@@ -17,8 +17,6 @@ import org.cesecore.profiles.Profile;
 
 /**
  * Base interface for all account bindings. 
- * 
- * @version $Id$
  */
 public interface AccountBinding extends Profile, Cloneable {
 

@@ -13,8 +13,9 @@
 package org.ejbca.core.protocol.acme.response;
 
 /**
- * @version $Id$
- *
+ * Enumeration of ACME problem types.
+ * 
+ * @see https://tools.ietf.org/html/rfc8555#section-6.7
  */
 public enum AcmeProblem {
     PROBLEM_BAD_CSR("badCSR", "The CSR is unacceptable (e.g., due to a short key)"),

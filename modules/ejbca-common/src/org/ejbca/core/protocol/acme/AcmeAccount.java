@@ -21,12 +21,8 @@ import java.util.List;
 import org.cesecore.internal.IUpgradeableData;
 
 /**
- * Interface for AcmeAccount implementations
- * 
- * @version $Id$
- *
+ * Interface for AcmeAccount implementations.
  */
-
 public interface AcmeAccount extends Serializable, IUpgradeableData {
 
     String URL_PROTOCOL_MAILTO_START = "mailto:";

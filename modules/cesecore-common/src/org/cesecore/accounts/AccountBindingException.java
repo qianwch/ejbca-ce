@@ -14,8 +14,6 @@ package org.cesecore.accounts;
 
 /**
  * Custom exception for account binding identifier verification.
- * 
- * @version $Id$
  */
 public class AccountBindingException extends Exception {
 

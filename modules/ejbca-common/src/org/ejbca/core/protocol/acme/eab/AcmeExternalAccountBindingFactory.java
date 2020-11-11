@@ -26,8 +26,6 @@ import org.cesecore.accounts.AccountBindingException;
 /**
  * Locates all implementations of the {@link #AcmeExternalAccountBinding} 
  * interface found in the system.
- * 
- * @version $Id$
  */
 public enum AcmeExternalAccountBindingFactory {
 
