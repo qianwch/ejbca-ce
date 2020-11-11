@@ -34,6 +34,7 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
     private static final String KEY_PRE_AUTHORIZATION_ALLOWED = "preAuthorizationAllowed";
     private static final String KEY_END_ENTITY_PROFILE_ID = "endEntityProfileId";
     private static final String KEY_VALIDATION_HTTP_CALLBACK_URL_TEMPLATE = "valiationHttpCallbackUrlTemplate";
+    private static final String KEY_VALIDATION_TLS_ALPN_CALLBACK_URL_TEMPLATE = "valiationTlsAlpnCallbackUrlTemplate";
     private static final String KEY_TERMS_OF_SERVICE_URL = "termsOfServiceUrl";
     private static final String KEY_WEB_SITE_URL = "webSiteUrl";
     private static final String KEY_ORDER_VALIDITY = "orderValidity";
@@ -47,8 +48,7 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
     private static final String DNS_RESOLVER_DEFAULT = "8.8.8.8";
     private static final int DNS_SERVER_PORT_DEFAULT = 53;
     private static final String KEY_RETRY_AFTER = "retryAfter";
-
-
+    private static final String KEY_TLS_ALPN_CHALLENGE_VALIDATION_ALLOWED = "tlsAlpnChallengeValidationAllowed";
     private static final int DEFAULT_END_ENTITY_PROFILE_ID = EndEntityConstants.NO_END_ENTITY_PROFILE;
     private static final boolean DEFAULT_REQUIRE_EXTERNAL_ACCOUNT_BINDING = false;
     private static final boolean DEFAULT_PRE_AUTHORIZATION_ALLOWED = false;
@@ -57,7 +57,7 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
     private static final String DEFAULT_TERMS_OF_SERVICE_URL = "https://example.com/acme/terms";
     private static final String DEFAULT_WEBSITE_URL = "https://www.example.com/";
     private static final boolean DEFAULT_USE_DNSSEC_VALIDATION = true;
-
+    private static final boolean DEFAULT_TLS_ALPN_CHALLENGE_VALIDATION_ALLOWED = false;
 
     public AcmeConfiguration() {}
 
@@ -123,6 +123,20 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
     }
     public void setValidationHttpCallBackUrlTemplate(final String urlTemplate) {
         super.data.put(KEY_VALIDATION_HTTP_CALLBACK_URL_TEMPLATE, urlTemplate);
+    }
+    
+    /**  
+     * Gets the URL template for the tls-alpn-01 challenge validation. 
+     * Port MUST be 443 (see https://tools.ietf.org/html/rfc8737 section 3).
+     * 
+     * @return the URL template.
+     */
+    public String getValidationTlsAlpnCallBackUrlTemplate() {
+        final String urlTemplate = (String) super.data.get(KEY_VALIDATION_TLS_ALPN_CALLBACK_URL_TEMPLATE);
+        return urlTemplate==null ? "https://{identifer}:443" : urlTemplate;
+    }
+    public void setValidationTlsAlpnCallBackUrlTemplate(final String urlTemplate) {
+        super.data.put(KEY_VALIDATION_TLS_ALPN_CALLBACK_URL_TEMPLATE, urlTemplate);
     }
 
     /** @return an URL of where the current Terms Of Services can be located. */
@@ -206,6 +220,13 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
         super.data.put(KEY_DNS_PORT, dnsPort);
     }
     
+    public boolean isTlsAlpnChallengeValidationAllowed() {
+        return Boolean.valueOf((String)super.data.get(KEY_TLS_ALPN_CHALLENGE_VALIDATION_ALLOWED));
+    }
+    public void setTlsAlpnChallengeValidationAllowed(final boolean allowed) {
+        super.data.put(KEY_TLS_ALPN_CHALLENGE_VALIDATION_ALLOWED, String.valueOf(allowed));
+    }
+
     public int getRetryAfter() {
         final Integer retryAfter = (Integer)data.get(KEY_RETRY_AFTER);
         return Objects.isNull(retryAfter) ? 0 : retryAfter.intValue();
@@ -222,7 +243,6 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
     public void setTermsOfServiceRequireNewApproval(boolean termsOfServiceRequireNewApproval) {
         super.data.put(KEY_TERMS_OF_SERVICE_REQUIRE_NEW_APPROVAL, String.valueOf(termsOfServiceRequireNewApproval));
     }
-    
     
     public boolean isUseDnsSecValidation() {
         return Boolean.valueOf((String) super.data.get(KEY_USE_DNSSEC_VALIDATION));
@@ -246,5 +266,6 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
         setDnssecTrustAnchor(DnsSecDefaults.IANA_ROOT_ANCHORS_DEFAULT);
         setDnsPort(DNS_SERVER_PORT_DEFAULT);
         setUseDnsSecValidation(DEFAULT_USE_DNSSEC_VALIDATION);
+        setTlsAlpnChallengeValidationAllowed(DEFAULT_TLS_ALPN_CHALLENGE_VALIDATION_ALLOWED);
     }
 }

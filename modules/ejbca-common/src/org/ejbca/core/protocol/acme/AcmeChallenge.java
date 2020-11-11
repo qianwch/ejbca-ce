@@ -24,6 +24,7 @@ import static org.ejbca.core.protocol.acme.AcmeIdentifier.AcmeIdentifierTypes;
  * DNS_HTTP_01 http-01 challenge for DNS identifier as specified in RFC8555
  * DNS_DNS_01 dns-01 challenge for DNS identifier as specified in RFC8555
  * IP_HTTP_01 http-01 challenge for IP identifier as specified in RFC8738 
+ * IP_TLS_ALPN_01 tls-alpn-01 challenge for IP identifier as specified in RFC8738
  * 
  * PROCESSING constant in AcmeChallengeStatus ENUM is a requirement imposed 
  * by draft-ietf-acme-acme-12 and is preserved for
@@ -74,7 +75,8 @@ public interface AcmeChallenge {
 
         DNS_HTTP_01(AcmeIdentifierTypes.DNS, "http-01"),
         DNS_DNS_01(AcmeIdentifierTypes.DNS, "dns-01"),
-        IP_HTTP_01(AcmeIdentifierTypes.IP, "http-01");
+        IP_HTTP_01(AcmeIdentifierTypes.IP, "http-01"),
+        IP_TLS_ALPN_01(AcmeIdentifierTypes.IP, "tls-alpn-01");
 
         private final AcmeIdentifierTypes identifierTypes;
         private final String challengeType;

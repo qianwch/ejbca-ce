@@ -108,6 +108,9 @@
                         <pre><h:outputText value="#{acmeConfigMBean.currentAlias.dnssecTrustAnchor}" rendered="#{!acmeConfigMBean.currentAliasEditMode}"/></pre>
                     </h:panelGroup>
                     
+                    <h:outputLabel for="tlsAlpnChallengeValidation" value="#{web.text.ACME_TLS_ALPN_CHALLENGE_VALIDATION_ALLOWED}" />
+                    <h:selectBooleanCheckbox id="tlsAlpnChallengeValidation" value="#{acmeConfigMBean.currentAlias.tlsAlpnChallengeValidationAllowed}" disabled="#{!acmeConfigMBean.currentAliasEditMode}" />
+                    
                     <h:outputLabel for="retryAfter" value="#{web.text.ACME_RETRY_AFTER}" />
                     <h:panelGroup id="retryAfter" >
                         <h:inputText title="#{web.text.FORMAT_INTEGER}" value="#{acmeConfigMBean.currentAlias.retryAfter}" 

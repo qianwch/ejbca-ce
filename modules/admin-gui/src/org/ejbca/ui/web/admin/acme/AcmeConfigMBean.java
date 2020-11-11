@@ -220,6 +220,7 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
             AcmeConfiguration acmeConfig = globalAcmeConfigurationConfig.getAcmeConfiguration(currentAliasStr);
             acmeConfig.setEndEntityProfileId(Integer.valueOf(currentAlias.endEntityProfileId));
             acmeConfig.setPreAuthorizationAllowed(currentAlias.isPreAuthorizationAllowed());
+            acmeConfig.setTlsAlpnChallengeValidationAllowed(currentAlias.isTlsAlpnChallengeValidationAllowed());
             acmeConfig.setRequireExternalAccountBinding(currentAlias.isRequireExternalAccountBinding());
             acmeConfig.setWildcardCertificateIssuanceAllowed(currentAlias.isWildcardCertificateIssuanceAllowed());
             acmeConfig.setWebSiteUrl(currentAlias.getUrlTemplate());
@@ -304,8 +305,9 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
         private String termsOfServiceUrl;
         private boolean termsOfServiceApproval;
         private boolean useDnsSecValidation;
+        private boolean tlsAlpnChallengeValidationAllowed; 
         private int retryAfter;
-
+        
         public AcmeAliasGuiInfo(GlobalAcmeConfiguration globalAcmeConfigurationConfig, String alias) {
             if (alias != null) {
                 this.alias = alias;
@@ -313,6 +315,7 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
                 if(acmeConfiguration != null) {
                     this.endEntityProfileId = String.valueOf(acmeConfiguration.getEndEntityProfileId());
                     this.preAuthorizationAllowed = acmeConfiguration.isPreAuthorizationAllowed();
+                    this.tlsAlpnChallengeValidationAllowed = acmeConfiguration.isTlsAlpnChallengeValidationAllowed();
                     this.requireExternalAccountBinding = acmeConfiguration.isRequireExternalAccountBinding();
                     this.urlTemplate = acmeConfiguration.getWebSiteUrl();
                     this.wildcardCertificateIssuanceAllowed = acmeConfiguration.isWildcardCertificateIssuanceAllowed();
@@ -399,6 +402,14 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
             this.dnsPort = dnsPort;
         }
         
+        public boolean isTlsAlpnChallengeValidationAllowed() {
+            return tlsAlpnChallengeValidationAllowed;
+        }
+
+        public void setTlsAlpnChallengeValidationAllowed(boolean tlsAlpnChallengeValidationAllowed) {
+            this.tlsAlpnChallengeValidationAllowed = tlsAlpnChallengeValidationAllowed;
+        }
+
         public int getRetryAfter() {
             return retryAfter;
         }
