@@ -146,6 +146,10 @@ public class ConfigdumpProperty<T extends Serializable> {
         return StringUtils.uncapitalize(key.toString());
     }
     
+    public static final ConfigdumpProperty<Boolean> booleanInstance(final String key, final boolean value) {
+        return new ConfigdumpProperty<Boolean>(Boolean.class, key, value);
+    }
+    
     public static final ConfigdumpProperty<String> stringInstance(final String key, final String value) {
         return new ConfigdumpProperty<String>(String.class, key, value);
     }
