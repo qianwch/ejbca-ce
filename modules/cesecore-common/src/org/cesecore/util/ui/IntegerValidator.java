@@ -17,9 +17,6 @@ import org.cesecore.internal.InternalResources;
 
 /**
  * DynamicUiModel / DynamicUiProperty Integer Validator.
- * 
- * @version $Id$
- *
  */
 public final class IntegerValidator implements DynamicUiPropertyValidator<Integer> {
 

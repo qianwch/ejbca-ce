@@ -123,7 +123,7 @@
                     	<f:ajax listener="#{acmeConfigMBean.toggleCurrentEabEditMode}" render="@all"></f:ajax>
                     </h:selectBooleanCheckbox>
                     
-                    <h:outputLabel for="eabType" value="#{web.text.ACME_EAB_TYPE}"/>
+                    <h:outputLabel for="eabType" value="#{web.text.ACME_EAB_TYPE}" rendered="#{acmeConfigMBean.currentAlias.requireExternalAccountBinding}"/>
 					<h:selectOneMenu id="eabType" value="#{acmeConfigMBean.eabType}" 
 						rendered="#{acmeConfigMBean.currentAlias.requireExternalAccountBinding}"
 						disabled="#{!acmeConfigMBean.currentAliasEditMode}">

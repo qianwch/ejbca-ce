@@ -17,9 +17,6 @@ import org.cesecore.internal.InternalResources;
 
 /**
  * DynamicUiModel / DynamicUiProperty String Validator.
- * 
- * @version $Id$
- *
  */
 public final class StringValidator implements DynamicUiPropertyValidator<String> {
   
