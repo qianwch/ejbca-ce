@@ -21,7 +21,7 @@ public class PaymentVerificationModule {
     private String horizonServer;
     private String mininumAcceptedPayment;
 
-    public PaymentVerificationModule(final Pkcs10PaymentVerificationModuleBuilder builder) {
+    public PaymentVerificationModule(final PaymentVerificationModuleBuilder builder) {
         this.paymentReference = builder.getPaymentReference();
         this.horizonServer = builder.getHorizonServer();
         this.mininumAcceptedPayment = builder.getMinimumAcceptedPayment();
