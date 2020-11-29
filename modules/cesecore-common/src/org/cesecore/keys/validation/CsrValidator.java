@@ -19,5 +19,13 @@ import org.cesecore.util.ui.DynamicUiModelAware;
  * Describes a validator of certificate signing requests (CSRs).
  */
 public interface CsrValidator extends Validator, DynamicUiModelAware {
-    void validate(final byte[] csr) throws ValidationException;
+
+    /**
+     * Validate a certificate signing request.
+     *
+     * @param csr the certificate signing request (CSR) sent from the client.
+     * @throws ValidationException if the validation failed.
+     * @throws ValidatorNotApplicableException if no validation could be performed.
+     */
+    void validate(final byte[] csr) throws ValidationException, ValidatorNotApplicableException;
 }

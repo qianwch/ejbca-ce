@@ -13,28 +13,6 @@
 
 package org.cesecore.keys.validation;
 
-import java.io.Serializable;
-import java.security.PublicKey;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.x509.Extension;
@@ -66,10 +44,29 @@ import org.cesecore.profiles.ProfileData;
 import org.cesecore.profiles.ProfileSessionLocal;
 import org.cesecore.util.CertTools;
 
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import java.io.Serializable;
+import java.security.PublicKey;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 /**
  * Handles management of key validators.
- *
- * @version $Id$
  */
 @Stateless(mappedName = JndiConstants.APP_JNDI_PREFIX + "KeyValidatorSessionRemote")
 @TransactionAttribute(TransactionAttributeType.REQUIRED)
@@ -382,6 +379,27 @@ public class KeyValidatorSessionBean implements KeyValidatorSessionLocal, KeyVal
             log.debug("Found validators for applicable CAs " + applicableCa + ": " + result);
         }
         return result;
+    }
+
+    @Override
+    public void validateCsr(final byte[] csr, final int certificateProfileId, final CA ca) throws ValidationException {
+        for (final int validatorId : ca.getValidators()) {
+            final Validator validator = getValidatorInternal(validatorId, true);
+            if (validator.getValidatorSubType() != CsrValidator.class) {
+                continue;
+            }
+            final CsrValidator csrValidator = (CsrValidator) validator;
+            if (!filterCertificateProfileAwareValidator(csrValidator, certificateProfileId)) {
+                continue;
+            }
+            try {
+                csrValidator.validate(csr);
+            } catch (final ValidationException e) {
+                performValidationFailedActions(validator.getFailedAction(), e.getMessage(), validator.getValidatorTypeIdentifier());
+            } catch (ValidatorNotApplicableException e) {
+                performValidationFailedActions(validator.getNotApplicableAction(), e.getMessage(), validator.getValidatorTypeIdentifier());
+            }
+        }
     }
 
     @Override
@@ -836,7 +854,7 @@ public class KeyValidatorSessionBean implements KeyValidatorSessionLocal, KeyVal
      *
      * @param failedAction
      * @param message
-     * @param validatortype the type of validator that performed the failed validation
+     * @param validatorType the type of validator that performed the failed validation
      * @throws ValidationException
      */
     private void performValidationFailedActions(final int failedAction, final String message, final String validatorType) throws ValidationException {

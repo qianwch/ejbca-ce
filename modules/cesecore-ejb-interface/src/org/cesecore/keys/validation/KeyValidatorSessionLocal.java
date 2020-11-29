@@ -13,16 +13,6 @@
 
 package org.cesecore.keys.validation;
 
-import java.security.PublicKey;
-import java.security.cert.X509Certificate;
-import java.util.Collection;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.ejb.Local;
-
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.certificates.ca.CA;
@@ -30,6 +20,15 @@ import org.cesecore.certificates.ca.IllegalValidityException;
 import org.cesecore.certificates.certificate.request.RequestMessage;
 import org.cesecore.certificates.certificateprofile.CertificateProfile;
 import org.cesecore.certificates.endentity.EndEntityInformation;
+
+import javax.ejb.Local;
+import java.security.PublicKey;
+import java.security.cert.X509Certificate;
+import java.util.Collection;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Local interface for key validator operations.
@@ -170,6 +169,17 @@ public interface KeyValidatorSessionLocal extends KeyValidatorSession, Certifica
      */
     List<ValidationResult> validateDnsNames(final AuthenticationToken authenticationToken, final IssuancePhase phase, final CA ca, final EndEntityInformation endEntityInformation,
             final RequestMessage requestMessage) throws ValidationException;
+
+    /**
+     * Invoke all validators of type {@link CsrValidator} attached to the CA and validate the
+     * CSR if the certificate profile is selected in the validator.
+     *
+     * @param csr the certificate signing request (CSR) sent from the client.
+     * @param certificateProfileId the certificate profile to use when issuing the certificate.
+     * @param ca The certificate authority (CA) to sign the certificate.
+     * @throws ValidationException if issuance should be aborted.
+     */
+    void validateCsr(byte[] csr, int certificateProfileId, CA ca) throws ValidationException;
 
     /**
      * Validates a generated certificate during issuance.

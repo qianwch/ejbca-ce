@@ -12,35 +12,6 @@
  *************************************************************************/
 package org.cesecore.certificates.certificate;
 
-import java.io.IOException;
-import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.PublicKey;
-import java.security.SignatureException;
-import java.security.cert.CRLException;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateEncodingException;
-import java.security.cert.X509Certificate;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-
-import javax.annotation.PostConstruct;
-import javax.ejb.EJB;
-import javax.ejb.EJBException;
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.DERBitString;
@@ -110,6 +81,34 @@ import org.cesecore.util.Base64;
 import org.cesecore.util.CertTools;
 import org.cesecore.util.CryptoProviderTools;
 import org.cesecore.util.EJBTools;
+
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
+import javax.ejb.EJBException;
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.PublicKey;
+import java.security.SignatureException;
+import java.security.cert.CRLException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Session bean for creating certificates.
@@ -375,11 +374,16 @@ public class CertificateCreateSessionBean implements CertificateCreateSessionLoc
         
         // Validate ValidatorPhase.DATA_VALIDATION
         try {
+            keyValidatorSession.validateCsr(endEntityInformation.getExtendedInformation().getCertificateRequest(), certProfileId, ca);
+        } catch (ValidationException e) {
+            throw new CertificateCreateException(e.getErrorCode(), e);
+        }
+        try {
             // Which public key to validate follows the criteria established in RequestAndPublicKeySelector, which is the same as used in the CA.
             final RequestAndPublicKeySelector pkSelector = new RequestAndPublicKeySelector(request, pk, ei);
             keyValidatorSession.validatePublicKey(admin, ca, endEntityInformation, certProfile, notBefore, notAfter,
                     pkSelector.getPublicKey());
-        } catch(ValidationException e) {
+        } catch (ValidationException e) {
             throw new CertificateCreateException(ErrorCode.ILLEGAL_KEY, e);
         }
         try {

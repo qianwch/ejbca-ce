@@ -13,21 +13,6 @@
 
 package org.cesecore.keys.validation;
 
-import java.security.PublicKey;
-import java.security.cert.X509Certificate;
-import java.util.Collection;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.certificates.ca.CA;
@@ -38,6 +23,20 @@ import org.cesecore.certificates.endentity.EndEntityInformation;
 import org.cesecore.jndi.JndiConstants;
 import org.cesecore.profiles.ProfileData;
 import org.cesecore.profiles.ProfileSessionLocal;
+
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.security.PublicKey;
+import java.security.cert.X509Certificate;
+import java.util.Collection;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @version $Id$
@@ -175,6 +174,11 @@ public class KeyValidatorProxySessionBean implements KeyValidatorProxySessionRem
     public List<ValidationResult> validateDnsNames(AuthenticationToken authenticationToken, IssuancePhase issuancePhase, CA ca, EndEntityInformation endEntityInformation,
             RequestMessage requestMessage) throws ValidationException {
         return keyValidatorSession.validateDnsNames(authenticationToken, issuancePhase, ca, endEntityInformation, requestMessage);
+    }
+
+    @Override
+    public void validateCsr(byte[] csr, int certificateProfileId, CA ca) throws ValidationException {
+        keyValidatorSession.validateCsr(csr, certificateProfileId, ca);
     }
 
     @Override
