@@ -13,11 +13,11 @@
 
 package org.cesecore.keys.validation;
 
-import java.util.List;
-
 import org.cesecore.certificates.ca.CAInfo;
 import org.cesecore.internal.UpgradeableDataHashMap;
 import org.cesecore.profiles.Profile;
+
+import java.util.List;
 
 /**
  * Base interface for validators. All validators must implement this interface.
@@ -119,8 +119,8 @@ public interface Validator extends PhasedValidator, CertificateProfileAwareValid
       UpgradeableDataHashMap getUpgradableHashmap();
       
       /**
-       * Returns an identifier for the type of the approval profile.
-       * @return type of approval, e.g. "RSA_KEY_VALIDATOR"
+       * Returns an identifier for the type of the validator.
+       * @return type of validator, e.g. "RSA_KEY_VALIDATOR"
        */
       String getValidatorTypeIdentifier();
       
