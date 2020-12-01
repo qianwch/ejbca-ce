@@ -72,9 +72,25 @@
                         </h:inputText>
                         <h:outputText value="#{acmeConfigMBean.currentAlias.termsOfServiceUrl}" rendered="#{!acmeConfigMBean.currentAliasEditMode}"/>
                     </h:panelGroup>
+                    
+                    <h:outputLabel for="termsChangeUrl" value="#{web.text.ACME_TERMS_CHANGE_URL}"/>
+                    <h:panelGroup id="termsChangeUrl" >
+                        <h:inputText id="termsOfServiceChangeUrl" value="#{acmeConfigMBean.currentAlias.termsOfServiceChangeUrl}" size="45" 
+                        rendered="#{acmeConfigMBean.currentAliasEditMode}" required="true" requiredMessage="#{web.text.ACME_TERMS_CHANGE_URL_REQUIRED}">
+                            <f:validator validatorId="urlValidator"/>
+                        </h:inputText>
+                        <h:outputText value="#{acmeConfigMBean.currentAlias.termsOfServiceChangeUrl}" rendered="#{!acmeConfigMBean.currentAliasEditMode}"/>
+                    </h:panelGroup>
 
-                    <h:outputLabel for="versionApproval" value="#{web.text.ACME_TERMS_APPROVAL}" />
-                    <h:selectBooleanCheckbox id="versionApproval" value="#{acmeConfigMBean.currentAlias.termsOfServiceApproval}" disabled="#{!acmeConfigMBean.currentAliasEditMode}" />
+                    <h:outputLabel id="changedApprovalLabel" for="versionApproval" value="#{web.text.ACME_TERMS_APPROVAL}" />
+                    <h:selectBooleanCheckbox id="versionApproval" value="#{acmeConfigMBean.currentAlias.termsOfServiceApproval}" 
+                    	disabled="#{!acmeConfigMBean.currentAliasEditMode}" >
+                    	<f:ajax render=":currentAliasForm:changedApproval :currentAliasForm:changedApprovalLabel"/>
+                   	</h:selectBooleanCheckbox>
+                    
+                    <h:outputLabel for="changedApproval" value="#{web.text.ACME_TERMS_CHANGED_APPROVAL}" />
+                    <h:selectBooleanCheckbox id="changedApproval" value="#{acmeConfigMBean.currentAlias.agreeToNewTermsOfServiceAllowed}" 
+                    	disabled="#{!acmeConfigMBean.currentAliasEditMode or !acmeConfigMBean.currentAlias.termsOfServiceApproval}"/>
                     
                     <h:outputLabel for="dnsResolver" value="#{web.text.ACME_DNS_RESOLVER}" />
                     <h:panelGroup id="dnsResolver" >

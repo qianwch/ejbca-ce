@@ -36,6 +36,8 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
     
     protected static final InternalResources intres = InternalResources.getInstance();
     
+    protected static final float LATEST_VERSION = 3;
+    
     private String configurationId = null;
     private List<String> caaIdentities = new ArrayList<>();
 
@@ -45,6 +47,7 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
     private static final String KEY_END_ENTITY_PROFILE_ID = "endEntityProfileId";
     private static final String KEY_VALIDATION_HTTP_CALLBACK_URL_TEMPLATE = "valiationHttpCallbackUrlTemplate";
     private static final String KEY_TERMS_OF_SERVICE_URL = "termsOfServiceUrl";
+    private static final String KEY_TERMS_OF_SERVICE_CHANGE_URL = "termsOfServiceChangeUrl";
     private static final String KEY_WEB_SITE_URL = "webSiteUrl";
     private static final String KEY_ORDER_VALIDITY = "orderValidity";
     private static final String KEY_PRE_AUTHORIZATION_VALIDITY = "preAuthorizationValidity";
@@ -54,6 +57,7 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
     private static final String KEY_DNS_PORT = "dnsPort";
     private static final String KEY_USE_DNSSEC_VALIDATION = "useDnssecValidation";
     private static final String KEY_TERMS_OF_SERVICE_REQUIRE_NEW_APPROVAL = "termsOfServiceRequireNewApproval";
+    private static final String KEY_AGREE_TO_NEW_TERMS_OF_SERVICE_ALLOWED = "agreeToNewTermsOfServiceAllowed";
     private static final String DNS_RESOLVER_DEFAULT = "8.8.8.8";
     private static final int DNS_SERVER_PORT_DEFAULT = 53;
     private static final String KEY_RETRY_AFTER = "retryAfter";
@@ -62,8 +66,10 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
     private static final boolean DEFAULT_REQUIRE_EXTERNAL_ACCOUNT_BINDING = false;
     private static final boolean DEFAULT_PRE_AUTHORIZATION_ALLOWED = false;
     private static final boolean DEFAULT_REQUIRE_NEW_APPROVAL = true;
-    private static final boolean DEFAULT__WILDCARD_CERTIFICATE_ISSUANCE_ALLOWED = false;
+    private static final boolean DEFAULT_AGREE_TO_TERMS_OF_SERVICE_CHANGED = true;
+    private static final boolean DEFAULT_WILDCARD_CERTIFICATE_ISSUANCE_ALLOWED = false;
     private static final String DEFAULT_TERMS_OF_SERVICE_URL = "https://example.com/acme/terms";
+    private static final String DEFAULT_TERMS_OF_SERVICE_CHANGE_URL = "https://example.com/acme/termsChanged";
     private static final String DEFAULT_WEBSITE_URL = "https://www.example.com/";
     private static final boolean DEFAULT_USE_DNSSEC_VALIDATION = true;
 
@@ -75,7 +81,7 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
 
     @Override
     public float getLatestVersion() {
-        return 2;
+        return LATEST_VERSION;
     }
 
     @Override
@@ -83,6 +89,10 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
         if (Float.compare(getLatestVersion(), getVersion()) > 0) {
             // New version of the class, upgrade.
             log.info(intres.getLocalizedMessage("acmeconfiguration.upgrade", getVersion()));
+            // v3. Change of ToS URL is set to ToS URL and MUST be changed by the user if feature is used (but 
+            // it's a required field on GUI).
+            setTermsOfServiceChangeUrl(getTermsOfServiceUrl());
+            setAgreeToNewTermsOfServiceAllowed(DEFAULT_AGREE_TO_TERMS_OF_SERVICE_CHANGED);
             // v2. ACME external account binding implementation.
             try {
                 if (getExternalAccountBinding() == null) {
@@ -170,6 +180,15 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
     
     public void setTermsOfServiceUrl(final String termsOfServiceUrl) {
         super.data.put(KEY_TERMS_OF_SERVICE_URL, termsOfServiceUrl);
+    }
+    
+    /** @return a URL pointing to a location where advice how to agree to a new terms Of services version can be found. */
+    public String getTermsOfServiceChangeUrl() {
+        return (String) super.data.get(KEY_TERMS_OF_SERVICE_CHANGE_URL);
+    }
+    
+    public void setTermsOfServiceChangeUrl(final String url) {
+        super.data.put(KEY_TERMS_OF_SERVICE_CHANGE_URL, url);
     }
     
     /** @return the web site URL presented in the directory meta data */
@@ -261,6 +280,13 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
         super.data.put(KEY_TERMS_OF_SERVICE_REQUIRE_NEW_APPROVAL, String.valueOf(termsOfServiceRequireNewApproval));
     }
     
+    public boolean isAgreeToNewTermsOfServiceAllowed() {
+        return Boolean.valueOf((String) super.data.get(KEY_AGREE_TO_NEW_TERMS_OF_SERVICE_ALLOWED));
+    }
+    
+    public void setAgreeToNewTermsOfServiceAllowed(boolean allowed) {
+        super.data.put(KEY_AGREE_TO_NEW_TERMS_OF_SERVICE_ALLOWED, String.valueOf(allowed));
+    }
     
     public boolean isUseDnsSecValidation() {
         return Boolean.valueOf((String) super.data.get(KEY_USE_DNSSEC_VALIDATION));
@@ -282,8 +308,10 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
         }
         setPreAuthorizationAllowed(DEFAULT_PRE_AUTHORIZATION_ALLOWED);
         setTermsOfServiceUrl(DEFAULT_TERMS_OF_SERVICE_URL);
+        setTermsOfServiceChangeUrl(DEFAULT_TERMS_OF_SERVICE_CHANGE_URL);
         setTermsOfServiceRequireNewApproval(DEFAULT_REQUIRE_NEW_APPROVAL);
-        setWildcardCertificateIssuanceAllowed(DEFAULT__WILDCARD_CERTIFICATE_ISSUANCE_ALLOWED);
+        setAgreeToNewTermsOfServiceAllowed(DEFAULT_AGREE_TO_TERMS_OF_SERVICE_CHANGED);
+        setWildcardCertificateIssuanceAllowed(DEFAULT_WILDCARD_CERTIFICATE_ISSUANCE_ALLOWED);
         setWebSiteUrl(DEFAULT_WEBSITE_URL);
         setDnsResolver(DNS_RESOLVER_DEFAULT);
         setDnssecTrustAnchor(DnsSecDefaults.IANA_ROOT_ANCHORS_DEFAULT);

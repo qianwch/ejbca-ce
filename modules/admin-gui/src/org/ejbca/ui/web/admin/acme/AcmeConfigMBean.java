@@ -241,7 +241,9 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
             acmeConfig.setDnssecTrustAnchor(currentAlias.getDnssecTrustAnchor());
             acmeConfig.setUseDnsSecValidation(currentAlias.isUseDnsSecValidation());
             acmeConfig.setTermsOfServiceRequireNewApproval(currentAlias.getTermsOfServiceApproval());
+            acmeConfig.setAgreeToNewTermsOfServiceAllowed(currentAlias.getAgreeToNewTermsOfServiceAllowed());
             acmeConfig.setTermsOfServiceUrl(currentAlias.getTermsOfServiceUrl());
+            acmeConfig.setTermsOfServiceChangeUrl(currentAlias.getTermsOfServiceChangeUrl());
             acmeConfig.setRetryAfter(currentAlias.getRetryAfter());
             
             if (StringUtils.isEmpty(acmeConfig.getTermsOfServiceUrl())) {
@@ -356,6 +358,8 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
         private String dnssecTrustAnchor;
         private String termsOfServiceUrl;
         private boolean termsOfServiceApproval;
+        private boolean agreeToNewTermsOfServiceAllowed;
+        private String termsOfServiceChangeUrl;
         private boolean useDnsSecValidation;
         private int retryAfter;
 
@@ -377,9 +381,11 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
                     this.dnsResolver = acmeConfiguration.getDnsResolver();
                     this.dnsPort = acmeConfiguration.getDnsPort();
                     this.dnssecTrustAnchor = acmeConfiguration.getDnssecTrustAnchor();
-                    this.termsOfServiceUrl = String.valueOf(acmeConfiguration.getTermsOfServiceUrl());
                     this.useDnsSecValidation = acmeConfiguration.isUseDnsSecValidation();
+                    this.termsOfServiceUrl = String.valueOf(acmeConfiguration.getTermsOfServiceUrl());
+                    this.termsOfServiceChangeUrl = String.valueOf(acmeConfiguration.getTermsOfServiceChangeUrl());
                     this.termsOfServiceApproval = acmeConfiguration.isTermsOfServiceRequireNewApproval();
+                    this.agreeToNewTermsOfServiceAllowed = acmeConfiguration.isAgreeToNewTermsOfServiceAllowed();
                     this.retryAfter = acmeConfiguration.getRetryAfter();
                 }
             }
@@ -473,13 +479,20 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
             this.retryAfter = retryAfter;
         }
 
-
         public String getTermsOfServiceUrl() {
             return termsOfServiceUrl;
         }
 
         public void setTermsOfServiceUrl(String termsOfServiceUrl) {
             this.termsOfServiceUrl = termsOfServiceUrl;
+        }
+        
+        public String getTermsOfServiceChangeUrl() {
+            return termsOfServiceChangeUrl;
+        }
+
+        public void setTermsOfServiceChangeUrl(String url) {
+            this.termsOfServiceChangeUrl = url;
         }
 
         public boolean getTermsOfServiceApproval() {
@@ -488,6 +501,14 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
 
         public void setTermsOfServiceApproval(final boolean termsOfServiceApproval) {
             this.termsOfServiceApproval = termsOfServiceApproval;
+        }
+        
+        public boolean getAgreeToNewTermsOfServiceAllowed() {
+            return agreeToNewTermsOfServiceAllowed;
+        }
+
+        public void setAgreeToNewTermsOfServiceAllowed(final boolean allowed) {
+            this.agreeToNewTermsOfServiceAllowed = allowed;
         }
         
         public boolean isUseDnsSecValidation() {
