@@ -13,6 +13,12 @@
 
 package org.cesecore.certificates.util;
 
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.cesecore.util.CeSecoreNameStyle;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,12 +29,6 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
-
-import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
-import org.bouncycastle.asn1.ASN1ObjectIdentifier;
-import org.cesecore.util.CeSecoreNameStyle;
 
 /** Class holding information and utilities for handling different DN components, CN, O etc
  * 
@@ -84,14 +84,49 @@ public class DnComponents {
         oids.put("jurisdictionstate", CeSecoreNameStyle.JURISDICTION_STATE);
         oids.put("jurisdictioncountry", CeSecoreNameStyle.JURISDICTION_COUNTRY);
         oids.put("organizationidentifier", CeSecoreNameStyle.ORGANIZATION_IDENTIFIER);
+        oids.put("uniqueidentifier", CeSecoreNameStyle.UNIQUE_IDENTIFIER);
 
     }
     /** Default values used when constructing DN strings that are put in the database
      * 
      */
-    private static String[] dNObjectsForward = { "description", "jurisdictioncountry", "jurisdictionstate", "jurisdictionlocality", "role", "street", "pseudonym",
-            "telephonenumber", "postaladdress", "businesscategory", "postalcode", "unstructuredaddress", "unstructuredname", "emailaddress", "e",
-            "email", "dn", "uid", "cn", "name", "sn", "serialnumber", "gn", "givenname", "initials", "surname", "t", "ou", "organizationidentifier", "o", "l", "st", "dc", "c" };
+    private static String[] dNObjectsForward = {
+            "description",
+            "jurisdictioncountry",
+            "jurisdictionstate",
+            "jurisdictionlocality",
+            "role",
+            "uniqueidentifier",
+            "street",
+            "pseudonym",
+            "telephonenumber",
+            "postaladdress",
+            "businesscategory",
+            "postalcode",
+            "unstructuredaddress",
+            "unstructuredname",
+            "emailaddress",
+            "e",
+            "email",
+            "dn",
+            "uid",
+            "cn",
+            "name",
+            "sn",
+            "serialnumber",
+            "gn",
+            "givenname",
+            "initials",
+            "surname",
+            "t",
+            "ou",
+            "organizationidentifier",
+            "o",
+            "l",
+            "st",
+            "dc",
+            "c"
+    };
     // Default values    
     private static String[] dNObjectsReverse = null;
 
@@ -128,6 +163,7 @@ public class DnComponents {
     public static final String STREETADDRESS = "STREETADDRESS";
     public static final String NAME = "NAME";
     public static final String ROLE = "ROLE";
+    public static final String UNIQUE_IDENTIFIER = "UNIQUEIDENTIFIER";
     public static final String DESCRIPTION = "DESCRIPTION";
     public static final String JURISDICTIONLOCALITY = "JURISDICTIONLOCALITY";
     public static final String JURISDICTIONSTATE = "JURISDICTIONSTATE";

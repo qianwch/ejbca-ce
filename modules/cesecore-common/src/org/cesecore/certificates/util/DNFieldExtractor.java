@@ -13,13 +13,6 @@
 
 package org.cesecore.certificates.util;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
@@ -31,6 +24,13 @@ import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.cesecore.util.CeSecoreNameStyle;
 import org.cesecore.util.CertTools;
 import org.ietf.ldap.LDAPDN;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * A class used to retrieve different fields from a Distinguished Name or Subject Alternate Name or Subject Directory Attributes strings.
@@ -73,6 +73,7 @@ public class DNFieldExtractor implements Serializable {
     public static final int STREET = 38;
     public static final int NAME = 55;
     public static final int ROLE = 70;
+    public static final int UNIQUE_IDENTIFIER = 71;
     public static final int DESCRIPTION = 60;
     public static final int ORGANIZATIONIDENTIFIER = 106;
 
@@ -332,7 +333,7 @@ public class DNFieldExtractor implements Serializable {
      * @param field
      *            the DN component, one of the constants DNFieldExtractor.CN, ...
      * @param number
-     *            the number of the component if several entries for this component exists, normally 0 fir the first
+     *            the number of the component if several entries for this component exists, normally 0 for the first
      * 
      * @return A String for example "PrimeKey" if DNFieldExtractor.O and 0 was passed, "PrimeKey" if DNFieldExtractor.DC and 0 was passed or "com" if
      *         DNFieldExtractor.DC and 1 was passed. Returns an empty String "", if no such field with the number exists.

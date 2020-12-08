@@ -12,20 +12,6 @@
  *************************************************************************/
 package org.ejbca.ui.web.admin.configuration;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.SessionScoped;
-import javax.faces.context.FacesContext;
-import javax.faces.model.ListDataModel;
-import javax.faces.model.SelectItem;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.cesecore.authentication.tokens.AuthenticationToken;
@@ -43,6 +29,19 @@ import org.ejbca.core.model.authorization.AccessRulesConstants;
 import org.ejbca.core.model.ra.raadmin.EndEntityProfile;
 import org.ejbca.ui.web.admin.BaseManagedBean;
 import org.ejbca.util.SelectItemComparator;
+
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.SessionScoped;
+import javax.faces.context.FacesContext;
+import javax.faces.model.ListDataModel;
+import javax.faces.model.SelectItem;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * JavaServer Faces Managed Bean for managing SCEP configuration.
@@ -620,6 +619,7 @@ public class ScepConfigMBean extends BaseManagedBean implements Serializable {
         ret.add(new SelectItem("streetAddress", "streetAddress"));
         ret.add(new SelectItem("name", "name"));
         ret.add(new SelectItem("role", "role"));
+        ret.add(new SelectItem("uniqueIdentifier", "uniqueIdentifier"));
         ret.add(new SelectItem("CIF", "CIF"));
         ret.add(new SelectItem("NIF", "NIF"));
         return ret;

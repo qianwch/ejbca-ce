@@ -13,10 +13,6 @@
 
 package org.cesecore.certificates.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
-
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.BCStyle;
@@ -24,78 +20,37 @@ import org.cesecore.util.CeSecoreNameStyle;
 import org.cesecore.util.CertTools;
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
+
 /**
  * Tests the DnComponents class.
  */
 public class DnComponentsTest {
 
     @Test
-    public void test01CheckObjects() throws Exception {
-        String[] s = DnComponents.getDnObjects(true);
-        assertEquals(34, s.length);
-        int i = 0;
-        assertEquals("description", s[i++]);
-        assertEquals("jurisdictioncountry", s[i++]);
-        assertEquals("jurisdictionstate", s[i++]);
-        assertEquals("jurisdictionlocality", s[i++]);
-        assertEquals("role", s[i++]);
-        assertEquals("street", s[i++]);
-        assertEquals("pseudonym", s[i++]);
-        assertEquals("telephonenumber", s[i++]);
-        i++;
-        assertEquals("businesscategory", s[i++]);
-        assertEquals("postalcode", s[i++]);
-        assertEquals("unstructuredaddress", s[i++]);
-        assertEquals("unstructuredname", s[i++]);
-        i += 3;
-        assertEquals("dn", s[i++]);
-        assertEquals("uid", s[i++]);
-        assertEquals("cn", s[i++]);
-        assertEquals("name", s[i++]);
-        i += 6;
-        assertEquals("t", s[i]);
-        i += 2;
-        assertEquals("organizationidentifier", s[i]);
-        i += 5;
-        assertEquals("c", s[i]);
-
-        String[] s1 = DnComponents.getDnObjectsReverse();
-        assertEquals(34, s1.length);
-        assertEquals("description", s1[33]);
-        assertEquals("jurisdictioncountry", s1[32]);
-        assertEquals("jurisdictionstate", s1[31]);
-        assertEquals("jurisdictionlocality", s1[30]);
-        assertEquals("role", s1[29]);
-        assertEquals("street", s1[28]);
-        assertEquals("telephonenumber", s1[26]);
-        assertEquals("businesscategory", s1[24]);
-        assertEquals("postalcode", s1[23]);
-        assertEquals("unstructuredaddress", s1[22]);
-        assertEquals("unstructuredname", s1[21]);
-        assertEquals("uid", s1[16]);
-        assertEquals("cn", s1[15]);
-        assertEquals("name", s1[14]);
-        assertEquals("t", s1[7]);
-        assertEquals("organizationidentifier", s1[5]);
-        assertEquals("c", s1[0]);
-
-        String[] s2 = DnComponents.getDnObjects(true);
-        assertEquals(34, s2.length);
-        i = 0;
-        assertEquals("description", s[i++]);
-        i += 7;
-        assertEquals("postaladdress", s2[i++]);
-        assertEquals("businesscategory", s2[i++]);
-        assertEquals("postalcode", s2[i++]);
-        assertEquals("unstructuredaddress", s2[i++]);
-        assertEquals("unstructuredname", s2[i++]);
-        i += 4;
-        assertEquals("uid", s2[i++]);
-        assertEquals("cn", s2[i++]);
-        i += 7;
-        assertEquals("t", s2[i++]);
-        i += 6;
-        assertEquals("c", s2[i++]);
+    public void test01CheckObjects() {
+        final List<String> expectedDnObjects = Arrays.asList(
+                "description", "jurisdictioncountry", "jurisdictionstate",
+                "jurisdictionlocality", "role", "uniqueidentifier",
+                "street",  "pseudonym", "telephonenumber",  "postaladdress",
+                "businesscategory", "postalcode", "unstructuredaddress",
+                "unstructuredname", "emailaddress", "e", "email", "dn",
+                "uid", "cn", "name", "sn", "serialnumber", "gn", "givenname",
+                "initials", "surname", "t", "ou", "organizationidentifier", "o",
+                "l", "st", "dc", "c");
+        String[] dnObjects = DnComponents.getDnObjects(true);
+        assertEquals(35, dnObjects.length);
+        assertEquals(expectedDnObjects, Arrays.asList(dnObjects));
+        String[] reversedDnObjects = DnComponents.getDnObjectsReverse();
+        assertEquals(35, reversedDnObjects.length);
+        Collections.reverse(expectedDnObjects);
+        assertEquals(expectedDnObjects, Arrays.asList(reversedDnObjects));
 
         assertEquals("2.5.4.6", DnComponents.getOid("c").toString());
         assertEquals("2.5.4.3", DnComponents.getOid("cn").toString());

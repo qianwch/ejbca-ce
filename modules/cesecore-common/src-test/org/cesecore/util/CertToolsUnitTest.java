@@ -13,33 +13,7 @@
 
 package org.cesecore.util;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.math.BigInteger;
-import java.net.InetAddress;
-import java.security.KeyPair;
-import java.security.PublicKey;
-import java.security.cert.CertPathValidatorException;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateExpiredException;
-import java.security.cert.CertificateNotYetValidException;
-import java.security.cert.CertificateParsingException;
-import java.security.cert.X509CRL;
-import java.security.cert.X509Certificate;
-import java.security.interfaces.DSAPublicKey;
-import java.security.interfaces.RSAPublicKey;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-
 import com.novell.ldap.LDAPDN;
-
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1EncodableVector;
@@ -92,6 +66,31 @@ import org.ejbca.cvc.CertificateParser;
 import org.ejbca.cvc.HolderReferenceField;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.math.BigInteger;
+import java.net.InetAddress;
+import java.security.KeyPair;
+import java.security.PublicKey;
+import java.security.cert.CertPathValidatorException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateExpiredException;
+import java.security.cert.CertificateNotYetValidException;
+import java.security.cert.CertificateParsingException;
+import java.security.cert.X509CRL;
+import java.security.cert.X509Certificate;
+import java.security.interfaces.DSAPublicKey;
+import java.security.interfaces.RSAPublicKey;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -1828,16 +1827,17 @@ public class CertToolsUnitTest {
     }
     
     @Test
-    public void testPseudonymNameAndRole() throws Exception {
-        String dn1 = "c=SE,O=Prime,OU=Tech,Role=Roll,TelephoneNumber=555-666,Name=Kalle,PostalAddress=footown,PostalCode=11122,Pseudonym=Shredder,cn=Tomas Gustavsson";
+    public void testStringToBCDNString() {
+        String dn1 = "c=SE,O=Prime,OU=Tech,Role=Roll,uniqueIdentifier=1337,TelephoneNumber=555-666,Name=Kalle,PostalAddress=footown," +
+                "PostalCode=11122,Pseudonym=Shredder,cn=Tomas Gustavsson";
         String bcdn1 = CertTools.stringToBCDNString(dn1);
-        assertEquals(
-                "Role=Roll,Pseudonym=Shredder,TelephoneNumber=555-666,PostalAddress=footown,PostalCode=11122,CN=Tomas Gustavsson,Name=Kalle,OU=Tech,O=Prime,C=SE",
+        assertEquals("Role=Roll,uniqueIdentifier=1337,Pseudonym=Shredder,TelephoneNumber=555-666,PostalAddress=footown," +
+                        "PostalCode=11122,CN=Tomas Gustavsson,Name=Kalle,OU=Tech,O=Prime,C=SE",
                 bcdn1);
     }
 
     @Test
-    public void testEscapedCharacters() throws Exception {
+    public void testEscapedCharacters() {
         final String input = "O=\\<fff\\>\\\",CN=oid,SN=12345,NAME=name,C=se";
         final String dn = CertTools.stringToBCDNString(input);
         assertEquals("Conversion of: "+input, "CN=oid,Name=name,SN=12345,O=\\<fff\\>\\\",C=se", dn);

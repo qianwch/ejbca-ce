@@ -13,13 +13,13 @@
 
 package org.cesecore.certificates.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 import java.util.HashMap;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 
 /**
@@ -28,16 +28,18 @@ import org.junit.Test;
 public class DnFieldExtractorTest {
  
     @Test
-    public void test01CheckDnFields() throws Exception {
+    public void test01CheckDnFields() {
     	final String comp = DnComponents.getDnExtractorFieldFromDnId(34);
     	assertEquals("DN=", comp);
-    	String dn = "name=tomas,street=a street, role=Test Role, pseudonym=pseudo,cn=Tomas Gustavsson,o=PrimeKey,organizationidentifier=12345,L=Stockholm,dc=PrimeKey,DC=com,description=Test DN";
+    	String dn = "name=tomas,street=a street, role=Test Role, uniqueidentifier=Unique Identifier, " +
+				"pseudonym=pseudo,cn=Tomas Gustavsson,o=PrimeKey,organizationidentifier=12345," +
+				"L=Stockholm,dc=PrimeKey,DC=com,description=Test DN";
     	DNFieldExtractor extractor = new DNFieldExtractor(dn, DNFieldExtractor.TYPE_SUBJECTDN);
     	final HashMap<Integer, Integer> i = extractor.getNumberOfFields();
         if (DnComponents.enterpriseMappingsExist()) {
-            assertEquals(32, i.size());
+            assertEquals(33, i.size());
         } else {
-            assertEquals(28, i.size());
+            assertEquals(29, i.size());
         }
     	String cn = extractor.getField(DNFieldExtractor.CN, 0);
     	assertEquals("Tomas Gustavsson", cn);
@@ -59,6 +61,8 @@ public class DnFieldExtractorTest {
         assertEquals("Test DN", description);
         final String role = extractor.getField(DNFieldExtractor.ROLE, 0);
         assertEquals("Test Role", role);
+		final String uniqueIdentifier = extractor.getField(DNFieldExtractor.UNIQUE_IDENTIFIER, 0);
+		assertEquals("Unique Identifier", uniqueIdentifier);
     	int num = extractor.getNumberOfFields(DNFieldExtractor.DC);
     	assertEquals(2, num);
     	num = extractor.getNumberOfFields(DNFieldExtractor.O);

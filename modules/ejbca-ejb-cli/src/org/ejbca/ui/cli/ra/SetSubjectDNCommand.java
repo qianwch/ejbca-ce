@@ -95,14 +95,35 @@ public class SetSubjectDNCommand extends BaseRaCommand {
     @Override
     public String getFullHelpText() {
         return getCommandDescription()
-                + "\n\nThe SubjectDN fields are: emailAddress=<string>, UID=< unique identifier>, CN=<common name>, serialNumber=<serialnumber>, "
-                + "givenName=<string>, initials=<string>, surname=<string>, title=<string>, "
-                + "OU=<the organizational unit>, O=<the organization>, L=<locality>, ST=<state of province>, "
-                + "DC=<domain component>, C=<two letter ISO3166>, unstructuredAddress=<IP address>, "
-                + "unstructuredName=<domain name>, postalCode=<string>, businessCategory=<organization type>, "
-                + "dnQualifier=<string>, postalAddress=<the postal address>, telephoneNumber=<telephone number>, "
-                + "pseudonym=<string>, streetAddress=<string>, name=<string>, role=<string>, CIF=<tax ID code for companies in Spain>, "
-                + "NIF=<tax ID number for companied in Spain>";
+                + "\n\nThe SubjectDN fields are:\n" +
+                "    emailAddress=<string>\n" +
+                "    uniqueIdentifier = <unique identifier>" +
+                "    UID=<user ID>\n " +
+                "    CN=<common name>\n" +
+                "    serialNumber=<serialnumber>\n" +
+                "    givenName=<string>\n" +
+                "    initials=<string>\n" +
+                "    surname=<string>\n" +
+                "    title=<string>\n" +
+                "    OU=<the organizational unit>\n" +
+                "    O=<the organization>\n" +
+                "    L=<locality>\n" +
+                "    ST=<state of province>\n" +
+                "    DC=<domain component>\n" +
+                "    C=<two letter ISO3166>\n" +
+                "    unstructuredAddress=<IP address>\n" +
+                "    unstructuredName=<domain name>\n" +
+                "    postalCode=<string>\n" +
+                "    businessCategory=<organization type>\n" +
+                "    dnQualifier=<string>\n" +
+                "    postalAddress=<the postal address>\n" +
+                "    telephoneNumber=<telephone number>\n" +
+                "    pseudonym=<string>\n" +
+                "    streetAddress=<string>\n" +
+                "    name=<string>\n" +
+                "    role=<string>\n" +
+                "    CIF=<tax ID code for companies in Spain>\n" +
+                "    NIF=<tax ID number for companied in Spain>";
     }
 
     protected Logger getLogger() {
