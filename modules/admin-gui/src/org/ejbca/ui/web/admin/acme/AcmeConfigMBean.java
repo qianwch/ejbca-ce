@@ -235,6 +235,7 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
             acmeConfig.setEndEntityProfileId(Integer.valueOf(currentAlias.endEntityProfileId));
             acmeConfig.setPreAuthorizationAllowed(currentAlias.isPreAuthorizationAllowed());
             acmeConfig.setWildcardCertificateIssuanceAllowed(currentAlias.isWildcardCertificateIssuanceAllowed());
+            acmeConfig.setWildcardWithHttp01ChallengeAllowed(currentAlias.isWildcardWithHttp01ChallengeAllowed());
             acmeConfig.setWebSiteUrl(currentAlias.getUrlTemplate());
             acmeConfig.setDnsResolver(currentAlias.getDnsResolver());
             acmeConfig.setDnsPort(currentAlias.getDnsPort());
@@ -353,6 +354,7 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
         private AcmeExternalAccountBinding eab;
         private String urlTemplate;
         private boolean wildcardCertificateIssuanceAllowed;
+        private boolean wildcardWithHttp01ChallengeAllowed;
         private String dnsResolver;
         private int dnsPort;
         private String dnssecTrustAnchor;
@@ -378,6 +380,7 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
                     }
                     this.urlTemplate = acmeConfiguration.getWebSiteUrl();
                     this.wildcardCertificateIssuanceAllowed = acmeConfiguration.isWildcardCertificateIssuanceAllowed();
+                    this.wildcardWithHttp01ChallengeAllowed = acmeConfiguration.isWildcardWithHttp01ChallengeAllowed();
                     this.dnsResolver = acmeConfiguration.getDnsResolver();
                     this.dnsPort = acmeConfiguration.getDnsPort();
                     this.dnssecTrustAnchor = acmeConfiguration.getDnssecTrustAnchor();
@@ -446,7 +449,15 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
         public void setWildcardCertificateIssuanceAllowed(boolean wildcardCertificateIssuanceAllowed) {
             this.wildcardCertificateIssuanceAllowed = wildcardCertificateIssuanceAllowed;
         }
+        
+        public boolean isWildcardWithHttp01ChallengeAllowed() {
+            return wildcardWithHttp01ChallengeAllowed;
+        }
 
+        public void setWildcardWithHttp01ChallengeAllowed(boolean allowed) {
+            this.wildcardWithHttp01ChallengeAllowed = allowed;
+        }
+        
         public String getDnssecTrustAnchor() {
             return dnssecTrustAnchor;
         }

@@ -36,7 +36,7 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
     
     protected static final InternalResources intres = InternalResources.getInstance();
     
-    protected static final float LATEST_VERSION = 3;
+    protected static final float LATEST_VERSION = 4;
     
     private String configurationId = null;
     private List<String> caaIdentities = new ArrayList<>();
@@ -52,6 +52,7 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
     private static final String KEY_ORDER_VALIDITY = "orderValidity";
     private static final String KEY_PRE_AUTHORIZATION_VALIDITY = "preAuthorizationValidity";
     private static final String KEY_WILDCARD_CERTIFICATE_ISSUANCE_ALLOWED = "wildcardCertificateIssuanceAllowed";
+    private static final String KEY_WILDCARD_WITH_HTTP_01_CHALLENGE_ALLOWED = "wildcardWithHttp01ChallengeAllowed";
     private static final String KEY_DNS_RESOLVER = "dnsResolver";
     private static final String KEY_DNSSEC_TRUST_ANCHOR = "dnssecTrustAnchor";
     private static final String KEY_DNS_PORT = "dnsPort";
@@ -68,6 +69,8 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
     private static final boolean DEFAULT_REQUIRE_NEW_APPROVAL = true;
     private static final boolean DEFAULT_AGREE_TO_TERMS_OF_SERVICE_CHANGED = true;
     private static final boolean DEFAULT_WILDCARD_CERTIFICATE_ISSUANCE_ALLOWED = false;
+    private static final boolean DEFAULT_KEY_WILDCARD_WITH_HTTP_01_CHALLENGE_ALLOWED = true;
+    
     private static final String DEFAULT_TERMS_OF_SERVICE_URL = "https://example.com/acme/terms";
     private static final String DEFAULT_TERMS_OF_SERVICE_CHANGE_URL = "https://example.com/acme/termsChanged";
     private static final String DEFAULT_WEBSITE_URL = "https://www.example.com/";
@@ -89,6 +92,8 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
         if (Float.compare(getLatestVersion(), getVersion()) > 0) {
             // New version of the class, upgrade.
             log.info(intres.getLocalizedMessage("acmeconfiguration.upgrade", getVersion()));
+            // v4. Added wildcard certificate issuance with http-01 challenge allowed.
+            setWildcardWithHttp01ChallengeAllowed(DEFAULT_KEY_WILDCARD_WITH_HTTP_01_CHALLENGE_ALLOWED);
             // v3. Change of ToS URL is set to ToS URL and MUST be changed by the user if feature is used (but 
             // it's a required field on GUI).
             setTermsOfServiceChangeUrl(getTermsOfServiceUrl());
@@ -237,6 +242,14 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
     public void setWildcardCertificateIssuanceAllowed(final boolean wildcardCertificateIssuanceAllowed) {
         super.data.put(KEY_WILDCARD_CERTIFICATE_ISSUANCE_ALLOWED, String.valueOf(wildcardCertificateIssuanceAllowed));
     }
+    
+    public boolean isWildcardWithHttp01ChallengeAllowed() {
+        return Boolean.valueOf((String) super.data.get(KEY_WILDCARD_WITH_HTTP_01_CHALLENGE_ALLOWED));
+    }
+
+    public void setWildcardWithHttp01ChallengeAllowed(final boolean allowed) {
+        super.data.put(KEY_WILDCARD_WITH_HTTP_01_CHALLENGE_ALLOWED, String.valueOf(allowed));
+    }
 
     public String getDnssecTrustAnchor() {
         return (String) super.data.get(KEY_DNSSEC_TRUST_ANCHOR);
@@ -312,6 +325,7 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
         setTermsOfServiceRequireNewApproval(DEFAULT_REQUIRE_NEW_APPROVAL);
         setAgreeToNewTermsOfServiceAllowed(DEFAULT_AGREE_TO_TERMS_OF_SERVICE_CHANGED);
         setWildcardCertificateIssuanceAllowed(DEFAULT_WILDCARD_CERTIFICATE_ISSUANCE_ALLOWED);
+        setWildcardWithHttp01ChallengeAllowed(DEFAULT_KEY_WILDCARD_WITH_HTTP_01_CHALLENGE_ALLOWED);
         setWebSiteUrl(DEFAULT_WEBSITE_URL);
         setDnsResolver(DNS_RESOLVER_DEFAULT);
         setDnssecTrustAnchor(DnsSecDefaults.IANA_ROOT_ANCHORS_DEFAULT);
