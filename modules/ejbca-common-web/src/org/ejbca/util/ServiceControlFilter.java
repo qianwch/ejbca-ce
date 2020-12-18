@@ -13,7 +13,9 @@
 
 package org.ejbca.util;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -88,6 +90,27 @@ public class ServiceControlFilter implements Filter {
         if (log.isDebugEnabled()) {
             log.debug("Access to service " + serviceName + " is allowed. HTTP request " + httpRequest.getRequestURL() + " is let through.");
         }
+        
+        log.info("RequestURL: '" + httpRequest.getRequestURL().toString() "'");
+        if (httpRequest.getRequestURL().toString().equals("https://msae-ejbca-server.msae-domain.com:8442/ejbca/msae/CEPService")) {
+            final int contentLength = request.getContentLength();
+            final char[] cbuf = new char[contentLength];
+            String enc = request.getCharacterEncoding();
+            if (enc == null) {
+                enc = "UTF-8";
+            }
+            final BufferedReader reader = new BufferedReader(new InputStreamReader(request.getInputStream(), enc));
+            int offset = 0;
+            int numRead = 0;
+            while (0 < (numRead = reader.read(cbuf, offset, contentLength - offset))) {
+                offset += numRead;
+            }
+            
+            final String contents = new String(cbuf);
+            log.debug("Content:\n");
+            log.debug(contents);
+        }
+        
         chain.doFilter(request, response);
     }
 }
