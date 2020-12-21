@@ -139,6 +139,18 @@
                         <h:outputText value="#{acmeConfigMBean.currentAlias.retryAfter}" rendered="#{!acmeConfigMBean.currentAliasEditMode}"/>
                     </h:panelGroup>
                     
+                    <h:outputLabel for="orderValidity" value="#{web.text.ACME_ORDER_VALIDITY}" />
+                    <h:panelGroup id="orderValidity" >
+                        <h:inputText title="#{web.text.FORMAT_LONG}" value="#{acmeConfigMBean.currentAlias.orderValidity}" 
+                        			 validatorMessage="#{web.text.ONLYVALIDITY_INORDERVALIDATY}" rendered="#{acmeConfigMBean.currentAliasEditMode}">
+                        			<f:validator validatorId="validityDateValidator" />
+                        			<f:attribute name="precision" value="seconds" />
+                        			<f:attribute name="minimumValue" value="1000" />
+                        			<f:attribute name="allowNull" value="false" />
+                        </h:inputText>
+                        <h:outputText value="#{acmeConfigMBean.currentAlias.orderValidity}" rendered="#{!acmeConfigMBean.currentAliasEditMode}"/>
+                    </h:panelGroup>
+                    
                     <h:outputLabel for="externalAccountBinding" value="#{web.text.ACME_REQUIRE_EXTERNAL_ACCOUNT_BINDING}" />
                     <h:selectBooleanCheckbox id="externalAccountBinding" value="#{acmeConfigMBean.currentAlias.requireExternalAccountBinding}" disabled="#{!acmeConfigMBean.currentAliasEditMode}">
                     	<f:ajax listener="#{acmeConfigMBean.toggleCurrentEabEditMode}" render="@all"></f:ajax>

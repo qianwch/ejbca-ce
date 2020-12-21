@@ -36,7 +36,7 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
     
     protected static final InternalResources intres = InternalResources.getInstance();
     
-    protected static final float LATEST_VERSION = 4;
+    protected static final float LATEST_VERSION = 5;
     
     private String configurationId = null;
     private List<String> caaIdentities = new ArrayList<>();
@@ -74,6 +74,8 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
     private static final String DEFAULT_TERMS_OF_SERVICE_URL = "https://example.com/acme/terms";
     private static final String DEFAULT_TERMS_OF_SERVICE_CHANGE_URL = "https://example.com/acme/termsChanged";
     private static final String DEFAULT_WEBSITE_URL = "https://www.example.com/";
+    private static final long DEFAULT_ORDER_VALIDITY = 3600000L;
+    
     private static final boolean DEFAULT_USE_DNSSEC_VALIDATION = true;
 
     public AcmeConfiguration() {}
@@ -92,6 +94,8 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
         if (Float.compare(getLatestVersion(), getVersion()) > 0) {
             // New version of the class, upgrade.
             log.info(intres.getLocalizedMessage("acmeconfiguration.upgrade", getVersion()));
+            // v5. Added configurable order validity.
+            setOrderValidity(DEFAULT_ORDER_VALIDITY);
             // v4. Added wildcard certificate issuance with http-01 challenge allowed.
             setWildcardWithHttp01ChallengeAllowed(DEFAULT_KEY_WILDCARD_WITH_HTTP_01_CHALLENGE_ALLOWED);
             // v3. Change of ToS URL is set to ToS URL and MUST be changed by the user if feature is used (but 
@@ -215,11 +219,11 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
 
     /** @return how long a new order will be valid for in milliseconds */
     public long getOrderValidity() {
-        final Long orderValidity = (Long) super.data.get(KEY_ORDER_VALIDITY);
-        return orderValidity==null ? 3600000L : orderValidity.intValue();
+        final Long orderValidity = (Long) data.get(KEY_ORDER_VALIDITY);
+        return Objects.isNull(orderValidity) ? DEFAULT_ORDER_VALIDITY : orderValidity;
     }
-    public void setOrderValidity(final int orderValidity) {
-        super.data.put(KEY_ORDER_VALIDITY, Long.valueOf(orderValidity));
+    public void setOrderValidity(final long orderValidity) {
+        super.data.put(KEY_ORDER_VALIDITY, orderValidity);
     }
 
     /** @return how long a new pre-authorizations will be valid for in milliseconds */
@@ -328,6 +332,7 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
         setWildcardCertificateIssuanceAllowed(DEFAULT_WILDCARD_CERTIFICATE_ISSUANCE_ALLOWED);
         setWildcardWithHttp01ChallengeAllowed(DEFAULT_KEY_WILDCARD_WITH_HTTP_01_CHALLENGE_ALLOWED);
         setWebSiteUrl(DEFAULT_WEBSITE_URL);
+        setOrderValidity(DEFAULT_ORDER_VALIDITY);
         setDnsResolver(DNS_RESOLVER_DEFAULT);
         setDnssecTrustAnchor(DnsSecDefaults.IANA_ROOT_ANCHORS_DEFAULT);
         setDnsPort(DNS_SERVER_PORT_DEFAULT);

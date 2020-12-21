@@ -37,6 +37,7 @@ import org.cesecore.authorization.AuthorizationSessionLocal;
 import org.cesecore.authorization.control.StandardRules;
 import org.cesecore.certificates.endentity.EndEntityConstants;
 import org.cesecore.configuration.GlobalConfigurationSessionLocal;
+import org.cesecore.util.SimpleTime;
 import org.cesecore.util.ui.DynamicUiModel;
 import org.cesecore.util.ui.DynamicUiModelAware;
 import org.cesecore.util.ui.DynamicUiModelException;
@@ -245,6 +246,7 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
             acmeConfig.setAgreeToNewTermsOfServiceAllowed(currentAlias.getAgreeToNewTermsOfServiceAllowed());
             acmeConfig.setTermsOfServiceUrl(currentAlias.getTermsOfServiceUrl());
             acmeConfig.setTermsOfServiceChangeUrl(currentAlias.getTermsOfServiceChangeUrl());
+            acmeConfig.setOrderValidity(SimpleTime.parseMillies(currentAlias.getOrderValidity()));
             acmeConfig.setRetryAfter(currentAlias.getRetryAfter());
             
             if (StringUtils.isEmpty(acmeConfig.getTermsOfServiceUrl())) {
@@ -363,6 +365,7 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
         private boolean agreeToNewTermsOfServiceAllowed;
         private String termsOfServiceChangeUrl;
         private boolean useDnsSecValidation;
+        private String orderValidity;
         private int retryAfter;
 
         public AcmeAliasGuiInfo(GlobalAcmeConfiguration globalAcmeConfigurationConfig, String alias) {
@@ -389,6 +392,7 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
                     this.termsOfServiceChangeUrl = String.valueOf(acmeConfiguration.getTermsOfServiceChangeUrl());
                     this.termsOfServiceApproval = acmeConfiguration.isTermsOfServiceRequireNewApproval();
                     this.agreeToNewTermsOfServiceAllowed = acmeConfiguration.isAgreeToNewTermsOfServiceAllowed();
+                    this.orderValidity = SimpleTime.getInstance(acmeConfiguration.getOrderValidity()).toString();
                     this.retryAfter = acmeConfiguration.getRetryAfter();
                 }
             }
@@ -482,6 +486,14 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
             this.dnsPort = dnsPort;
         }
         
+        public String getOrderValidity() {
+            return orderValidity;
+        }
+
+        public void setOrderValidity(String orderValidity) {
+            this.orderValidity = orderValidity;
+        }
+
         public int getRetryAfter() {
             return retryAfter;
         }
