@@ -106,6 +106,7 @@ public class AcmeConfiguration extends UpgradeableDataHashMap implements Seriali
             } catch (AccountBindingException e) {
                 log.error("Could not upgrade ACME configuration with default ACME EAB implementation: " + e.getMessage());
             }
+            data.put(VERSION, LATEST_VERSION);
         }
     }
 
