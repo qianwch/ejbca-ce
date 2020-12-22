@@ -252,9 +252,9 @@ public class EndEntityProfileHelper extends BaseHelper {
     }
 
     /**
-     * Selects Available CAs by single name.
+     * Selects Available CA.
      *
-     * @param caName Certificate Profile name.
+     * @param caName Name of CA to be selected
      */
     public void selectAvailableCa(String caName) {
         deselectOptions(Page.SELECT_AVAILABLE_CAS);

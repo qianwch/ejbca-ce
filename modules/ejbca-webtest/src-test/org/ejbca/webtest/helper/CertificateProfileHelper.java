@@ -88,8 +88,8 @@ public class CertificateProfileHelper extends BaseHelper {
         static final By TEXT_TITLE_RENAME_CERTIFICATE_PROFILE = By.id("editcertificateprofilesForm:renameProfileOld");
         static final By TEXT_TITLE_CLONE_CERTIFICATE_PROFILE = By.id("editcertificateprofilesForm:addFromTemplateProfileOld");
         static final By TEXT_TITLE_DELETE_CERTIFICATE_PROFILE = By.id("editcertificateprofilesForm:deleteProfileName");
-        static final By SELECT_AVAILABLE_CA = By.id("content:selectavailablecas");
         static final By FORM_ALGORITHMS = By.id("algorithms");
+
         /**
          * 'Available Key Algorithms'
          */
@@ -368,6 +368,14 @@ public class CertificateProfileHelper extends BaseHelper {
          * Approval Settings / '*'
          */
         static final By SELECT_APPROVAL_SETTINGS_ALL = By.cssSelector("[id$=approvalProfile]");
+        /**
+         * Select Ca
+         */
+        static final By SELECT_AVAILABLE_CA = By.id("content:selectavailablecas");
+        /**
+         * Select extended key usage
+         */
+        static final By SELECT_EXTENDED_KEY_USAGE = By.id("content:selectextendedkeyusage");
         // Buttons
         static final By BUTTON_CANCEL_PROFILE = By.id("content:cancelEditButton");
         static final By BUTTON_SAVE_PROFILE = By.id("content:saveProfileButton");
@@ -511,6 +519,18 @@ public class CertificateProfileHelper extends BaseHelper {
     }
 
     /**
+     * Selects available Bit Lengths
+     *
+     * @param selectedBitLengths    List of Bit Lengths to be selected
+     */
+    public void editAvailableBitLengthsInCertificateProfile(final List<String>selectedBitLengths){
+        if(selectedBitLengths != null) {
+            deselectOptions(Page.SELECT_BIT_LENGTHS);
+            selectOptionsByNameWithAjax(Page.SELECT_BIT_LENGTHS, selectedBitLengths, Page.FORM_ALGORITHMS);
+        }
+    }
+
+    /**
      * Triggers the input 'Allow Validity Override'.
      */
     public void triggerPermissionsValidityOverride() {
@@ -614,6 +634,14 @@ public class CertificateProfileHelper extends BaseHelper {
     public void triggerX509v3ExtensionsUsagesExtendedKeyUsageCritical() {
         clickLink(Page.INPUT_X509V3_EXTENSIONS_USAGES_EXTENDED_KEY_USAGE_CRITICAL);
     }
+
+    /**
+     * List of Selected Extended  Key Usage
+     */
+    public void selectExtendedKeyUsage(String selectedExtendedKeyUsage){
+            deselectOptions(Page.SELECT_EXTENDED_KEY_USAGE);
+            selectOptionsByName(Page.SELECT_EXTENDED_KEY_USAGE, Collections.singletonList(selectedExtendedKeyUsage));
+        }
 
     /**
      * Triggers the input 'Certificate Policies' Use.

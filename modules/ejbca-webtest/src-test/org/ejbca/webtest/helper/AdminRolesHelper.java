@@ -199,6 +199,15 @@ public class AdminRolesHelper extends BaseHelper {
         }
     }
 
+    /**
+     * Selects one single EndEntityProfile
+     * @param endEntityProfile  name EndEntityProfile
+     */
+    public void selectAvailableSingleEndEntityProfile(String endEntityProfile){
+        deselectOptions(Page.SELECT_END_ENTITY_PROFILES);
+        selectOptionByName(Page.SELECT_END_ENTITY_PROFILES, endEntityProfile);
+    }
+
     public void selectMatchWith(final String matchWith) {
         if(viewContext == ViewMode.VIEW_MODE_MEMBERS) {
             selectOptionByName(Page.SELECT_MATCH_WITH, matchWith);
@@ -216,14 +225,19 @@ public class AdminRolesHelper extends BaseHelper {
             fail("Please check your test scenario action, this action cannot be applied.");
         }
     }
-    public void selectAvailableSingleCa(String caName){
-            deselectOptions(Page.SELECT_AUTHORIZED_CAS);
-            selectOptionByName(Page.SELECT_AUTHORIZED_CAS, caName);
-        }
 
     public void selectAvailableMultipleCa(List<String>listOfCas){
         deselectOptions(Page.SELECT_AUTHORIZED_CAS);
         selectOptionsByName(Page.SELECT_AUTHORIZED_CAS, listOfCas );
+    }
+
+    /**
+     * Selects one single available CA
+     * @param caName    Name of ca to be selected
+     */
+    public void selectAvailableSingleCa(String caName){
+        deselectOptions(Page.SELECT_AUTHORIZED_CAS);
+        selectOptionByName(Page.SELECT_AUTHORIZED_CAS, caName);
     }
 
     public void setMatchValue(final String matchValue) {
@@ -411,6 +425,14 @@ public class AdminRolesHelper extends BaseHelper {
         assertNotNull("'End Entity Rules' was not found", allNames);
         assertEquals("'End Entity Rules' selection mismatch - not all selected", selectedNames.size(), allNames.size());
     }
+
+    /**
+     * Asserts only ViewEndEntities and ViewHistory is selected by default in EndEntityRules
+     */
+    public void assertEndEntityRulesHasViewEndEntitiesAndViewHistorySelected(){
+        final List<String> selectedNames = getSelectNames(Page.SELECT_END_ENTITY_RULES);
+            assertTrue(selectedNames.contains("View End Entities") && selectedNames.contains("View History"));
+        }
 
     /**
      * Asserts the element 'End Entity Profiles' has selected name.
