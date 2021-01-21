@@ -39,6 +39,7 @@ import org.cesecore.accounts.AccountBindingException;
 import org.cesecore.authentication.tokens.AuthenticationToken;
 import org.cesecore.authorization.AuthorizationDeniedException;
 import org.cesecore.authorization.AuthorizationSessionLocal;
+import org.cesecore.authorization.control.CryptoTokenRules;
 import org.cesecore.authorization.control.StandardRules;
 import org.cesecore.certificates.endentity.EndEntityConstants;
 import org.cesecore.configuration.GlobalConfigurationSessionLocal;
@@ -296,8 +297,8 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
                                     log.debug("Validate ACME EAB key encryption for key '" + eab.getSymmetricKey() + "'.");
                                 }
                                 
-                                // A crypto token must have been selected by the user. 
-                                if ("null".equals(eab.getDataMap().get("encryptionKeyId"))) {
+                                // A crypto token must have been selected by the user.
+                                if ("null".equals(eab.getEncryptionKeyId())) {
                                     throw new PropertyValidationException(getEjbcaWebBean().getText("SELECTCRYPTOTOKEN_INENCRYPTIONKEY"));
                                 }
                                 final int cryptoTokenId = Integer.valueOf(eab.getEncryptionKeyId());
@@ -308,22 +309,28 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
                                     throw new PropertyValidationException(getEjbcaWebBean().getText("CRYPTOTOKENINVALID_INENCRYPTIONKEY"));
                                 }
                                 
-                                // ECA-9729 Limitation: Encryption with PK of first alias!
                                 try {
                                     // The crypto must have a key pair generated.
                                     final List<KeyPairInfo> keyPairs = cryptoTokenManagementSession.getKeyPairInfos(authenticationToken, cryptoTokenId);
                                     if (keyPairs.size() == 0) {
                                         throw new PropertyValidationException(getEjbcaWebBean().getText("CRYPTOTOKENINVALID_INENCRYPTIONKEY"));
                                     }
-                                    
                                     final CryptoToken token = cryptoTokenManagementSession.getCryptoToken(cryptoTokenId);
                                     final byte[] keyBytes = AcmeJwsHelper.base64UrlDecode(eab.getSymmetricKey());
                                     final SecretKeySpec secretKeySpec = new SecretKeySpec(keyBytes, "AES");
-                                    final byte[] encryptedKey = CryptoTools.encryptKey(token, token.getAliases().get(0), secretKeySpec);
-                                    log.info("Encrypted ACME EAB symmetric key '" + eab.getSymmetricKey() + "' with crypto token '" + token.getId() + "'.");
+                                    final String keyAlias = eab.getEncryptionKeyAlias();
+                                    
+                                    // First alias is selected if not changed by the user. But validate it.
+                                    final List<String> keyAliases = token.getAliases();
+                                    if (!keyAliases.contains(keyAlias)) {
+                                        throw new PropertyValidationException(getEjbcaWebBean().getText("CRYPTOTOKENINVALID_INENCRYPTIONKEY", false, keyAlias));
+                                    }
+                                    
+                                    final byte[] encryptedKey = CryptoTools.encryptKey(token, keyAlias, secretKeySpec);
+                                    log.info("Encrypted ACME EAB symmetric key '" + eab.getSymmetricKey() + "' with crypto token '" + token.getId() + "' key alias '" + keyAlias + "'.");
                                     eab.setSymmetricKey(AcmeJwsHelper.base64UrlEncode(encryptedKey)); 
                                 } catch (CryptoTokenOfflineException | AuthorizationDeniedException | KeyStoreException e) {
-                                    log.debug(e);
+                                    log.debug("Failed to validate shared key encryption data given: " + e.getMessage(), e);
                                     throw new PropertyValidationException(getEjbcaWebBean().getText("CRYPTOTOKENINVALID_INENCRYPTIONKEY"));
                                 }
                             }
@@ -436,20 +443,22 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
                         if (this.eab instanceof AcmeEabWithHMac) {
                             final AcmeEabWithHMac myEab = (AcmeEabWithHMac) this.eab; 
                             myEab.setAvailableCryptoTokenIdToNameMap(getAvailableCryptoTokenIdToNameMap());
+                            myEab.setAvailableCryptoTokenIdToAliasesMap(getAvailableCryptoTokenIdToAliasesMap());
                             if (myEab.getEncryptKey() != null && myEab.getEncryptKey()) {
                                 int tokenId = 0;
+                                String keyAlias = null; 
                                 try {
                                     tokenId = Integer.parseInt(myEab.getEncryptionKeyId());
                                     final CryptoToken token = cryptoTokenManagementSession.getCryptoToken(tokenId);
                                     if (token != null && token.getAliases().size() > 0) {
-                                        final String firstAlias = token.getAliases().get(0);
+                                        keyAlias = myEab.getEncryptionKeyAlias();
                                         final byte[] encryptedKey = AcmeJwsHelper.base64UrlDecode(myEab.getSymmetricKey());
-                                        final String decryptedKey = AcmeJwsHelper.base64UrlEncode(CryptoTools.decryptKey(token, firstAlias, 
+                                        final String decryptedKey = AcmeJwsHelper.base64UrlEncode(CryptoTools.decryptKey(token, keyAlias, 
                                                 encryptedKey).getEncoded());
                                         myEab.setSymmetricKey(decryptedKey);
                                     }
                                 } catch (KeyStoreException | CryptoTokenOfflineException | IOException | NumberFormatException e) {
-                                    log.warn("Failed to decrypt shared key with crypto token '" + tokenId + "'.");
+                                    log.warn("Failed to decrypt shared key with crypto token '" + tokenId + "' and key alias '" + keyAlias + "'.");
                                     addInfoMessage(getEjbcaWebBean().getText("CRYPTOTOKENINVALID_INENCRYPTIONKEY"), "");
                                 }
                             }
@@ -761,6 +770,7 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
                    currentAlias.eab.init();
                    if (currentAlias.eab instanceof AcmeEabWithHMac) {
                        ((AcmeEabWithHMac) currentAlias.eab).setAvailableCryptoTokenIdToNameMap(getAvailableCryptoTokenIdToNameMap());
+                       ((AcmeEabWithHMac) currentAlias.eab).setAvailableCryptoTokenIdToAliasesMap(getAvailableCryptoTokenIdToAliasesMap());
                    }
                    if (log.isDebugEnabled()) {
                        log.debug("Changed EAB type from '" + oldType + "' to '" + type + "'.");
@@ -779,16 +789,42 @@ public class AcmeConfigMBean extends BaseManagedBean implements Serializable {
    public Map<String,String> getAvailableCryptoTokenIdToNameMap() {
        final Map<String,String> map = new HashMap<>();
        map.put("null", "--- Select crypto token ---");
-       // ECA-9729 Load all or handle errors?
        for (CryptoTokenInfo current : cryptoTokenManagementSession.getCryptoTokenInfos(authenticationToken)) {
-           //if (current.isActive() && authorizationSession.isAuthorizedNoLogging(authenticationToken,
-           //                CryptoTokenRules.USE.resource() + "/" + current.getCryptoTokenId())) {
+           if (isCryptoTokenAvailable(current)) {
                map.put(Integer.toString(current.getCryptoTokenId()), current.getName());
-           //}
+           }
        }
        final Map<String,String> result = new LinkedHashMap<>();
        map.entrySet().stream().sorted((e1,e2) -> e1.getValue().compareTo( 
                e2.getValue())).forEachOrdered(e -> result.put(e.getKey(), e.getValue()));
+       return result;
+   }
+   
+   public Map<String,List<String>> getAvailableCryptoTokenIdToAliasesMap() {
+       final Map<String,List<String>> map = new HashMap<>();
+       List<String> aliases;
+       for (CryptoTokenInfo current : cryptoTokenManagementSession.getCryptoTokenInfos(authenticationToken)) {
+           if (isCryptoTokenAvailable(current)) {
+               aliases = new ArrayList<String>();
+               try {
+                    aliases.addAll(cryptoTokenManagementSession.getKeyPairAliases(authenticationToken, current.getCryptoTokenId()));
+                    map.put(Integer.toString(current.getCryptoTokenId()), aliases);
+                } catch (CryptoTokenOfflineException e) { // Should not happen here.
+                	log.warn("Crypto token is not available because it is offline: " +  e.getMessage());
+                } catch (AuthorizationDeniedException e) { // Should not happen here.
+                    log.warn("Crypto token cannot be accessed: " +  e.getMessage());
+                }
+           }
+       }
+       return map;
+   }
+   
+   private boolean isCryptoTokenAvailable(final CryptoTokenInfo info) {
+       boolean result = false;
+       if (info.isActive() && authorizationSession.isAuthorizedNoLogging(authenticationToken,
+               CryptoTokenRules.USE.resource() + "/" + info.getCryptoTokenId())) {
+           result = true;
+       }
        return result;
    }
 }
