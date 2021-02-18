@@ -162,8 +162,6 @@ import java.util.Map;
 
 /**
  * Creates and signs certificates.
- *
- * @version $Id$
  */
 @Stateless(mappedName = JndiConstants.APP_JNDI_PREFIX + "SignSessionRemote")
 @TransactionAttribute(TransactionAttributeType.REQUIRED)
@@ -1340,17 +1338,9 @@ public class SignSessionBean implements SignSessionLocal, SignSessionRemote {
                 log.debug("SingleActiveCertificateConstraint, found " + cdws.size() + " old (non expired, active) certificates and "
                         + publishers.size() + " publishers.");
             }
-            for (final CertificateDataWrapper cdw : cdws) {
-                final CertificateData certificateData = cdw.getCertificateData();
-                if (certificateData.getStatus() == CertificateConstants.CERT_REVOKED
-                        && certificateData.getRevocationReason() != RevokedCertInfo.REVOCATION_REASON_CERTIFICATEHOLD) {
-                    continue;
-                }
-                //Go directly to RevocationSession and not via EndEntityManagementSession because we don't care about approval checks and so forth, 
-                //the certificate must be revoked nonetheless. 
-                revocationSession.revokeCertificate(admin, cdw, publishers, new Date(), RevokedCertInfo.REVOCATION_REASON_SUPERSEDED,
-                        endEntityInformation.getDN());
-            }
+            // Go directly to RevocationSession and not via EndEntityManagementSession because we don't care about approval checks and so forth, 
+            // the certificate must be revoked nonetheless. 
+            revocationSession.revokeCertificates(admin, cdws, publishers, RevokedCertInfo.REVOCATION_REASON_SUPERSEDED);
         }
         if (log.isTraceEnabled()) {
             log.trace("<singleActiveCertificateConstraint()");

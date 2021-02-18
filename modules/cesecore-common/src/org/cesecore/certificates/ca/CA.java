@@ -48,8 +48,6 @@ import org.cesecore.util.CertTools;
 
 /**
  * Common methods for unrestricted X509 and CVC CA implementations.
- * 
- * @version $Id$
  */
 public interface CA extends CACommon {
     
@@ -69,6 +67,10 @@ public interface CA extends CACommon {
 
     void setCRLOverlapTime(long crlOverlapTime);
 
+    boolean getGenerateCrlUponRevocation();
+
+    void setGenerateCrlUponRevocation(boolean generate);
+    
     boolean getKeepExpiredCertsOnCRL();
 
     void setKeepExpiredCertsOnCRL(boolean keepexpiredcertsoncrl);
