@@ -14,6 +14,7 @@
 package org.ejbca.util;
 
 import java.io.IOException;
+import java.util.Enumeration;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -75,6 +76,18 @@ public class ServiceControlFilter implements Filter {
         final HttpServletResponse httpResponse = (HttpServletResponse) response;
         availableProtocolsConfiguration = (AvailableProtocolsConfiguration) globalConfigurationSession
                 .getCachedConfiguration(AvailableProtocolsConfiguration.CONFIGURATION_ID);
+        
+        // TODO REMVOE THIS
+        if (serviceName.equals("MSAE")) {
+            Enumeration<String> headerNames = httpRequest.getHeaderNames();
+            if (headerNames != null) {
+                while (headerNames.hasMoreElements()) {
+                    log.info("Header: " + httpRequest.getHeader(headerNames.nextElement()));
+                }
+            } else {
+                log.info("No headers found in request");
+            }
+        }
         
         // Note: Swagger gets serviceName == AvailableProtocols.REST_CERTIFICATE_MANAGEMENT
         if (!availableProtocolsConfiguration.getProtocolStatus(serviceName)) {
