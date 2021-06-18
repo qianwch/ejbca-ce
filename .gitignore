@@ -8,3 +8,6 @@ velocity.log
 src/java/jndi.properties
 validationtool.log
 reports/
+target
+*.iml
+.idea
