@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="ejbca-rest-api" default="build">
+
+  <target name="build">
+    <exec executable="mvn" dir="ejbca-rest-api">
+      <arg value="install:install-file"/>
+      <arg value="-Dfile=../dist/ejbca-rest-endentity.jar"/>
+      <arg value="-DgroupId=org.ejbca"/>
+      <arg value="-DartifactId=ejbca-rest-endentity"/>
+      <arg value="-Dversion=7.4.3.2"/>
+      <arg value="-Dpackaging=jar"/>
+    </exec>
+    <exec executable="mvn" dir="ejbca-rest-api">
+      <arg value="install:install-file"/>
+      <arg value="-Dfile=../dist/ejbca-rest-common.jar"/>
+      <arg value="-DgroupId=org.ejbca"/>
+      <arg value="-DartifactId=ejbca-rest-common"/>
+      <arg value="-Dversion=7.4.3.2"/>
+      <arg value="-Dpackaging=jar"/>
+    </exec>
+    <exec executable="mvn" dir="ejbca-rest-api">
+      <arg value="package"/>
+    </exec>
+    <copy file="ejbca-rest-api/target/ejbca-rest-api.war" todir="dist"/>
+  </target>
+  <target name="clean">
+    <exec executable="mvn" dir="modules/ejbca-rest-api">
+      <arg value="clean"/>
+    </exec>
+  </target>
+</project>
