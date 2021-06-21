@@ -18,6 +18,20 @@
     <listener-class>org.jboss.resteasy.plugins.server.servlet.ResteasyBootstrap</listener-class>
   </listener>
 
+  <filter>
+    <filter-name>ServiceControlFilter</filter-name>
+    <filter-class>org.ejbca.util.ServiceControlFilter</filter-class>
+    <init-param>
+      <param-name>serviceName</param-name>
+      <param-value>Public Web</param-value>
+    </init-param>
+  </filter>
+
+  <filter-mapping>
+    <filter-name>ServiceControlFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
   <servlet>
     <servlet-name>Resteasy</servlet-name>
     <servlet-class>org.jboss.resteasy.plugins.server.servlet.HttpServlet30Dispatcher</servlet-class>
