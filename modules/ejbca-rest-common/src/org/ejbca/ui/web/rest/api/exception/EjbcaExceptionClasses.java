@@ -28,7 +28,7 @@ import org.ejbca.core.model.ra.RevokeBackDateNotAllowedForProfileException;
  */
 public enum EjbcaExceptionClasses {
 
-    // 400
+    // 200000
     ApprovalException(ApprovalException.class),
     KeyStoreGeneralRaException(KeyStoreGeneralRaException.class),
     // 403

@@ -27,7 +27,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * <ul>
  *     <li>Not null;</li>
  *     <li>Not negative or equal to zero;</li>
- *     <li>Not more than maximum 400.</li>
+ *     <li>Not more than maximum 200000.</li>
  * </ul>
  *
  * @version $Id: ValidSearchCertificateMaxNumberOfResults.java 29436 2018-07-03 11:12:13Z andrey_s_helmes $
@@ -47,7 +47,7 @@ public @interface ValidSearchCertificateMaxNumberOfResults {
     class Validator implements ConstraintValidator<ValidSearchCertificateMaxNumberOfResults, Integer> {
 
         private static final int MINIMUM_INCLUSIVE = 0;
-        private static final int MAXIMUM_EXCLUSIVE = 400;
+        private static final int MAXIMUM_EXCLUSIVE = 200000;
 
         @Override
         public void initialize(final ValidSearchCertificateMaxNumberOfResults validSearchCertificateMaxNumberOfResults) {

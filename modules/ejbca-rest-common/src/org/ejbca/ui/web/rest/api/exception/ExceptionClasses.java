@@ -36,7 +36,7 @@ public enum ExceptionClasses {
 
     // 202
     WaitingForApprovalException(WaitingForApprovalException.class),
-    // 400
+    // 200000
     ApprovalRequestExecutionException(ApprovalRequestExecutionException.class),
     ApprovalRequestExpiredException(ApprovalRequestExpiredException.class),
     RoleExistsException(RoleExistsException.class),
