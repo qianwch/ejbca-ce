@@ -58,6 +58,7 @@ import org.ejbca.ui.web.rest.api.io.request.AddEndEntityRestRequest;
 import org.ejbca.ui.web.rest.api.io.request.EndEntityRevocationRestRequest;
 import org.ejbca.ui.web.rest.api.io.request.SearchEndEntitiesRestRequest;
 import org.ejbca.ui.web.rest.api.io.request.SearchEndEntityCriteriaRestRequest;
+import org.ejbca.ui.web.rest.api.io.request.EditEndEntityRequest;
 import org.ejbca.ui.web.rest.api.io.request.SetEndEntityStatusRestRequest;
 import org.ejbca.ui.web.rest.api.io.response.RestResourceStatusRestResponse;
 import org.ejbca.ui.web.rest.api.io.response.SearchEndEntitiesRestResponse;
@@ -239,7 +240,41 @@ public class EndEntityRestResource extends BaseRestResource {
         }
         return Response.status(Status.OK).build();
     }
-    
+
+    @PUT
+    @Path("/")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Edits end entity",
+        notes = "Edit status, email, password and token type of related end entity",
+        code = 200)
+    public Response edit(
+        @Context HttpServletRequest requestContext,
+        @ApiParam (value="request") EditEndEntityRequest request) throws AuthorizationDeniedException, RestException, NoSuchEndEntityException, CADoesntExistsException, ApprovalException, CertificateSerialNumberException, IllegalNameException, CustomFieldException, EndEntityProfileValidationException, WaitingForApprovalException {
+        final AuthenticationToken admin = getAdmin(requestContext, false);
+        validateObject(request);
+
+        EndEntityInformation endEntityInformation = raMasterApiProxy.searchUser(admin, request.getUsername());
+        if (endEntityInformation == null) {
+            if (log.isDebugEnabled()) {
+                log.debug("Could not find  End Entity for the username='" + request.getUsername() + "'");
+            }
+            throw new NoSuchEndEntityException("Could not find  End Entity for the username='" + request.getUsername() + "'");
+        } else {
+            final String email = request.getEmail();
+            endEntityInformation.setEmail(email);
+            boolean result = raMasterApiProxy.editUser(admin, endEntityInformation, false);
+            if (result) {
+                log.info("End entity '" + request.getUsername() + "' successfuly edited by administrator " + admin.toString());
+            } else {
+                log.info("Error during end entity '" + request.getUsername() + "' edit by administrator " + admin.toString() +
+                    " . Edit operation failed");
+                return Response.status(Status.NOT_MODIFIED).build();
+            }
+        }
+        return Response.status(Status.OK).build();
+    }
+
     @DELETE
     @Path("/{endentity_name}")
     @Consumes(MediaType.APPLICATION_JSON)
