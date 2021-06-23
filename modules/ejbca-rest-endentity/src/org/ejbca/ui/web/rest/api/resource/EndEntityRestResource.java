@@ -242,7 +242,7 @@ public class EndEntityRestResource extends BaseRestResource {
     }
 
     @PUT
-    @Path("/")
+    @Path("/{endentity_name}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Edits end entity",
@@ -250,24 +250,26 @@ public class EndEntityRestResource extends BaseRestResource {
         code = 200)
     public Response edit(
         @Context HttpServletRequest requestContext,
+        @ApiParam(value = "Name of the end entity to edit status for")
+        @PathParam("endentity_name") String endEntityName,
         @ApiParam (value="request") EditEndEntityRequest request) throws AuthorizationDeniedException, RestException, NoSuchEndEntityException, CADoesntExistsException, ApprovalException, CertificateSerialNumberException, IllegalNameException, CustomFieldException, EndEntityProfileValidationException, WaitingForApprovalException {
         final AuthenticationToken admin = getAdmin(requestContext, false);
         validateObject(request);
 
-        EndEntityInformation endEntityInformation = raMasterApiProxy.searchUser(admin, request.getUsername());
+        EndEntityInformation endEntityInformation = raMasterApiProxy.searchUser(admin, endEntityName);
         if (endEntityInformation == null) {
             if (log.isDebugEnabled()) {
-                log.debug("Could not find  End Entity for the username='" + request.getUsername() + "'");
+                log.debug("Could not find  End Entity for the username='" + endEntityName + "'");
             }
-            throw new NoSuchEndEntityException("Could not find  End Entity for the username='" + request.getUsername() + "'");
+            throw new NoSuchEndEntityException("Could not find  End Entity for the username='" + endEntityName + "'");
         } else {
             final String email = request.getEmail();
             endEntityInformation.setEmail(email);
             boolean result = raMasterApiProxy.editUser(admin, endEntityInformation, false);
             if (result) {
-                log.info("End entity '" + request.getUsername() + "' successfuly edited by administrator " + admin.toString());
+                log.info("End entity '" + endEntityName + "' successfuly edited by administrator " + admin.toString());
             } else {
-                log.info("Error during end entity '" + request.getUsername() + "' edit by administrator " + admin.toString() +
+                log.info("Error during end entity '" + endEntityName + "' edit by administrator " + admin.toString() +
                     " . Edit operation failed");
                 return Response.status(Status.NOT_MODIFIED).build();
             }
