@@ -130,7 +130,7 @@ public class ExceptionHandler implements ExceptionMapper<Exception> {
     // Map EjbcaException extending exceptions
     private ExceptionErrorRestResponse mapEjbcaException(final EjbcaException ejbcaException) {
         switch (EjbcaExceptionClasses.fromClass(ejbcaException.getClass())) {
-            // 200000
+            // 400
             case ApprovalException:
             case KeyStoreGeneralRaException:
                 return ExceptionErrorRestResponse.builder()
@@ -175,7 +175,7 @@ public class ExceptionHandler implements ExceptionMapper<Exception> {
     // Map CesecoreException extending exceptions
     private ExceptionErrorRestResponse mapCesecoreException(final CesecoreException cesecoreException) {
         switch (CesecoreExceptionClasses.fromClass(cesecoreException.getClass())) {
-            // 200000
+            // 400
             case CertificateRevokeException:
             case CertificateSerialNumberException:
             case EndEntityExistsException:
@@ -224,7 +224,7 @@ public class ExceptionHandler implements ExceptionMapper<Exception> {
 
     private ExceptionErrorRestResponse mapException(final Exception exception) {
         switch (ExceptionClasses.fromClass(exception.getClass())) {
-            // 200000
+            // 400
             case ApprovalRequestExecutionException:
             case ApprovalRequestExpiredException:
             case RoleExistsException:

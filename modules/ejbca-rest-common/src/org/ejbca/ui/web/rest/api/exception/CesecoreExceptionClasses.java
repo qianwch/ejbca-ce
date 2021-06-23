@@ -31,7 +31,7 @@ import org.ejbca.core.ejb.ra.EndEntityExistsException;
  */
 public enum CesecoreExceptionClasses {
 
-    // 200000
+    // 400
     CertificateRevokeException(CertificateRevokeException.class),
     CertificateSerialNumberException(CertificateSerialNumberException.class),
     EndEntityExistsException(EndEntityExistsException.class),
