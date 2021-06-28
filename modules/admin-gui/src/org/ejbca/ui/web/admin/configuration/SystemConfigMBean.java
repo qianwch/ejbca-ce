@@ -1264,7 +1264,7 @@ public class SystemConfigMBean extends BaseManagedBean implements Serializable {
                 available = false;
             }
             if (protocol.equals(AvailableProtocols.REST_ENDENTITY_MANAGEMENT.getName())) {
-                available = false;
+                available = true;
             }
             if (protocol.equals(AvailableProtocols.ACME.getName()) && !isAcmeAvailable()) {
                 available = false;
